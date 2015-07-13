@@ -1,3 +1,4 @@
+
 #!/usr/bin/env genome-perl
 
 use strict;
@@ -24,12 +25,15 @@ my $profile_item = Genome::Config::Profile::Item->create(
     status => 'active',
 );  
 
-my $cmd = $class->create(analysis_projects => [$ap]);
-$cmd->execute();
+my $cmd = $class->create(analysis_project => $ap);
+ok($cmd->execute(), 'succesful command execution');
 
 is($ap->status, 'Deprecated', 'it should set the status to hold');
 
 is($profile_item->status, 'disabled', 'profile item is disabled');     
+
+my $fail_cmd = $class->create(analysis_project => $ap);
+ok(!$fail_cmd->execute(), 'fail command execution');
 
 done_testing();
 

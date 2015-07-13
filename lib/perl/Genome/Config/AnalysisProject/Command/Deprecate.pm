@@ -6,15 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::Command::Deprecate {
-    is => 'Command::V2',
-    has_input => [
-       analysis_projects  => {
-            is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis projects to deprecate',
-            is_many             => 1,
-            shell_args_position => 1,
-        }
-    ],
+    is => 'Genome::Config::AnalysisProject::Command::Base',
 };
 
 sub help_brief {
@@ -22,31 +14,34 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    return "genome config analysis-project deprecate <analysis-projects>";
+    return "genome config analysis-project deprecate <analysis-project>";
 }
 
 sub help_detail {
     return <<"EOS"
-Deprecate each of the input analysis projects.  Deprecate includes setting all config profile items to disabled and updating the project status to Deprecated.
+Deprecate the input analysis project.  Deprecate includes setting all config profile items to disabled and updating the project status to Deprecated.
 EOS
+}
+
+sub valid_statuses {
+    return ("Pending", "Hold", "In Progress", "Template");
 }
 
 sub execute {
     my $self = shift;
 
-    for my $anp ($self->analysis_projects) {
-        my @active_config_profile_items = grep {$_->status eq 'active'} $anp->config_items;
-        for my $config_profile_item (@active_config_profile_items) {
-            my $cmd = Genome::Config::AnalysisProject::Command::DisableConfigFile->create(
-                profile_item => $config_profile_item,
-            );
-            unless ( $cmd->execute() ) {
-                $self->error_message('Failed to disable config profile item: '. $config_profile_item->id);
-                die($self->error_message);
-            }
+    my $anp = $self->analysis_project;
+    my @active_config_profile_items = grep {$_->status eq 'active'} $anp->config_items;
+    for my $config_profile_item (@active_config_profile_items) {
+        my $cmd = Genome::Config::AnalysisProject::Command::DisableConfigFile->create(
+            profile_item => $config_profile_item,
+        );
+        unless ( $cmd->execute() ) {
+            $self->error_message('Failed to disable config profile item: '. $config_profile_item->id);
+            die($self->error_message);
         }
-        $anp->status('Deprecated');
     }
+    $anp->status('Deprecated');
 
     return 1;
 }
