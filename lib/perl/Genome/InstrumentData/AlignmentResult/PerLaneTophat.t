@@ -22,8 +22,8 @@ sub _join {
 my $class = 'Genome::InstrumentData::AlignmentResult::PerLaneTophat';
 use_ok($class);
 
-do { # _aliger_params_has_gtf tests
-    my $f = \&Genome::InstrumentData::AlignmentResult::PerLaneTophat::_aliger_params_has_gtf;
+do { # _aligner_params_include_gtf tests
+    my $f = \&Genome::InstrumentData::AlignmentResult::PerLaneTophat::_aligner_params_include_gtf;
     my @tests = (
         ['-G foo',     1],
         [' -G foo',    1],
@@ -34,7 +34,7 @@ do { # _aliger_params_has_gtf tests
     );
     for my $test (@tests) {
         my ($s, $e) = @$test;
-        my $n = '_aliger_params_has_gtf: ' . ($e ? "did match: $s" : "did not match: $s");
+        my $n = '_aligner_params_include_gtf: ' . ($e ? "did match: $s" : "did not match: $s");
         is($f->($s), $e, $n);
     }
 };
