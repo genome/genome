@@ -63,7 +63,7 @@ sub get {
     for my $obj (@objects) {
         next unless ref($obj); # sometimes UR gives us back the package name when deleting?
 
-        unless ($obj->check_dependencies()) {
+        unless ($obj->generate_dependencies_as_needed()) {
             $obj->error_message("Failed to get AnnotationIndex objects for dependencies of " . $obj->__display_name__);
             return;
         }
@@ -114,7 +114,7 @@ sub create {
         return;
     }
 
-    unless ($self->check_dependencies()) {
+    unless ($self->generate_dependencies_as_needed()) {
         $self->error_message("Failed to create AnnotationIndex objects for dependencies");
         return;
     }
@@ -122,7 +122,7 @@ sub create {
     return $self;
 }
 
-sub check_dependencies {
+sub generate_dependencies_as_needed {
     my $self = shift;
 
     my %params = (
@@ -142,7 +142,7 @@ sub check_dependencies {
                 $self->error_message("Failed to create AlignmentIndex for dependency " . $b->name);
                 return;
             }
-            unless ($result->check_dependencies()) {
+            unless ($result->generate_dependencies_as_needed()) {
                 $self->error_message("Failed while checking dependencies of " . $b->name);
                 return;
             }
