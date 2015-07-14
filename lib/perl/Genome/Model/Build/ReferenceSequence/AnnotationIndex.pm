@@ -69,7 +69,7 @@ sub __display_name__ {
     my @class_name = split("::", $self->class);
     my $class_name = $class_name[-1];
     
-    return sprintf("%s for reference build %s  and annotation build %s with %s, version %s, params='%s'",
+    return sprintf("%s for reference build %s and annotation build %s with %s, version %s, params='%s'",
                    $class_name,
                    $self->reference_name,
                    $self->annotation_name,
