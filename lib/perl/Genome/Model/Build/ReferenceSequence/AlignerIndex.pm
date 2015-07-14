@@ -49,14 +49,6 @@ sub aligner_requires_param_masking {
     return 1;
 }
 
-sub _supports_multiple_reference {
-    my $self = shift;
-    my $aligner_name = $self->aligner_name;
-    my $aligner_class = 'Genome::Model::Tools::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner_name);
-    return unless $aligner_class->can('supports_multiple_reference');
-    return $aligner_class->supports_multiple_reference($self->aligner_version);
-}
-
 sub get_or_create {
     my $class = shift;
     my %params = @_;
