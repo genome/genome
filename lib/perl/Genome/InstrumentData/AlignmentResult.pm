@@ -1515,7 +1515,7 @@ sub _extract_input_fastq_filenames {
         }
 
         if (defined $self->filter_name) {
-            $self->error_message("filtering reads is currently not supported with segmented inputs, FIXME.");
+            $self->error_message("filtering reads is currently not supported with segmented inputs.");
             die $self->error_message;
         }
 
@@ -1534,7 +1534,6 @@ sub _extract_input_fastq_filenames {
         }
     }
     else {
-        # FIXME - getting a warning about undefined string with 'eq'
         if (! defined($self->filter_name)) {
             $self->debug_message('No special filter for this input');
         }
