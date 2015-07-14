@@ -28,7 +28,7 @@ my $profile_item = Genome::Config::Profile::Item->create(
 my $cmd = $class->create(analysis_project => $ap);
 ok($cmd->execute(), 'succesful command execution');
 
-is($ap->status, 'Deprecated', 'it should set the status to hold');
+is($ap->status, 'Deprecated', 'it should set the status to Deprecated');
 
 is($profile_item->status, 'disabled', 'profile item is disabled');     
 
