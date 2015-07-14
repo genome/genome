@@ -6,7 +6,7 @@ use strict;
 
 
 class Genome::Model::Build::ReferenceSequence::AlignerIndex {
-    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
+    is => ['Genome::Model::Build::ReferenceSequence::IndexBase'],
 
     has => [
 

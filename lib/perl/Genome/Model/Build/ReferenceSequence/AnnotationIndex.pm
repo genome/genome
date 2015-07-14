@@ -6,8 +6,7 @@ use strict;
 
 
 class Genome::Model::Build::ReferenceSequence::AnnotationIndex {
-    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
-
+    is => ['Genome::Model::Build::ReferenceSequence::IndexBase'],
     has => [
 
         reference_build         => {
