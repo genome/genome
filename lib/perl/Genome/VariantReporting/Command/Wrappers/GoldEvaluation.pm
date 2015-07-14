@@ -114,7 +114,6 @@ sub get_somatic_translations {
         library_name_labels => {
             $self->get_library_name_labels('discovery'),
             $self->get_library_name_labels('normal'),
-            $self->get_library_name_labels('gold'),
         },
     };
 }
@@ -131,7 +130,6 @@ sub get_germline_translations {
         },
         library_name_labels => {
             $self->get_library_name_labels('discovery'),
-            $self->get_library_name_labels('gold'),
         },
     };
 }
@@ -154,11 +152,6 @@ sub normal_sample {
 sub discovery_sample {
     my $self = shift;
     return $self->model->tumor_sample;
-}
-
-sub gold_sample {
-    my $self = shift;
-    return Genome::Sample->get(name => $self->gold_sample_name);
 }
 
 my %counters;

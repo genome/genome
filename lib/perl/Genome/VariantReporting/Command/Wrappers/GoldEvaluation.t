@@ -29,7 +29,6 @@ my $gold_sample = Genome::Test::Factory::Sample->setup_object(name => "GOLD");
 # setup the libraries
 my $normal_library = Genome::Test::Factory::Library->setup_object(sample => $normal_sample);
 my $tumor_library = Genome::Test::Factory::Library->setup_object(sample => $tumor_sample);
-my $gold_library = Genome::Test::Factory::Library->setup_object(sample => $gold_sample);
 
 # create the build
 my $build1 = get_build($roi_name, $tumor_sample, $normal_sample);
@@ -57,7 +56,6 @@ sub get_expected_labels {
         'library_name_labels' => {
             'library_name_1' => 'Normal-Library1(library_name_1)',
             'library_name_2' => 'Discovery-Library1(library_name_2)',
-            'library_name_3' => 'Gold-Library1(library_name_3)',
         },
         'sample_name_labels' => {
             'GOLD'          => 'Gold(GOLD)',
