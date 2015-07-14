@@ -49,4 +49,10 @@ class Genome::Model::Build::ReferenceSequence::IndexBase {
     ]
 };
 
+sub required_rusage {
+    # override in subclasses
+    # e.x.: "-R 'span[hosts=1] rusage[tmp=50000:mem=12000]' -M 12000000";
+    ''
+}
+
 1;
