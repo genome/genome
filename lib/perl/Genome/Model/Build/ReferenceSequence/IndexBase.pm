@@ -50,6 +50,46 @@ class Genome::Model::Build::ReferenceSequence::IndexBase {
     ]
 };
 
+sub create {
+    my $class = shift;
+    my %p = @_;
+
+    my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($p{aligner_name});
+    $class->debug_message(sprintf("Resolved aligner class %s, making sure it's real and can be loaded.", $aligner_class));
+    unless ($aligner_class->class) {
+        $class->error_message(sprintf("Failed to load aligner class (%s).", $aligner_class));
+        return;
+    }
+
+    my $self = $class->SUPER::create(%p);
+    return unless $self;
+    $self->aligner_class_name($aligner_class);
+
+    $self->debug_message("Prepare staging directories...");
+    unless ($self->_prepare_staging_directory) {
+        $self->error_message("Failed to prepare working directory");
+        return;
+    }
+
+    unless ($self->_prepare_index) {
+        $self->error_message("Failed to prepare reference index!");
+        return;
+    }
+
+    unless ($self->generate_dependencies_as_needed($self->_user_data_for_nested_results)) {
+        $self->error_message("Failed to create AlignmentIndex objects for dependencies");
+        return;
+    }
+
+    return $self;
+}
+
+sub _prepare_index {
+    my $self = shift;
+
+    Carp::confess('Class must implement _prepare_index.');
+}
+
 sub aligner_requires_param_masking {
     my $class = shift;
     my $aligner_name = shift;

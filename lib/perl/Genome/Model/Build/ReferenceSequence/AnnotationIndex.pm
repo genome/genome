@@ -41,41 +41,6 @@ sub __display_name__ {
                );
 }
 
-sub create {
-    my $class = shift;
-    my %p = @_;
-
-    my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($p{aligner_name});
-
-    $class->debug_message(sprintf("Resolved aligner class %s, making sure it's real and can be loaded.", $aligner_class));
-    unless ($aligner_class->class) {
-        $class->error_message(sprintf("Failed to load aligner class (%s).", $aligner_class));
-        return;
-    }
-
-    my $self = $class->SUPER::create(%p);
-    return unless $self;
-    $self->aligner_class_name($aligner_class);
-
-    $self->debug_message("Prepare staging directories...");
-    unless ($self->_prepare_staging_directory) {
-        $self->error_message("Failed to prepare working directory");
-        return;
-    }
-
-    unless ($self->_prepare_index) {
-        $self->error_message("Failed to prepare annotation index!");
-        return;
-    }
-
-    unless ($self->generate_dependencies_as_needed()) {
-        $self->error_message("Failed to create AnnotationIndex objects for dependencies");
-        return;
-    }
-
-    return $self;
-}
-
 sub generate_dependencies_as_needed {
     my $self = shift;
 
