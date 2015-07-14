@@ -46,7 +46,6 @@ sub create {
     my %p = @_;
 
     my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($p{aligner_name});
-    $class->debug_message("Aligner class name is $aligner_class");
 
     $class->debug_message(sprintf("Resolved aligner class %s, making sure it's real and can be loaded.", $aligner_class));
     unless ($aligner_class->class) {
