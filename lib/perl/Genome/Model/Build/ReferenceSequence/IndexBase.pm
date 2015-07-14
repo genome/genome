@@ -84,6 +84,53 @@ sub full_consensus_path {
     return $path;
 }
 
+sub get_or_create {
+    my $class = shift;
+    my %params = @_;
+
+    my @objects = $class->SUPER::get_or_create(%params);
+
+    for my $obj (@objects) {
+        next unless ref($obj); # sometimes UR gives us back the package name when deleting?
+        unless ($obj->generate_dependencies_as_needed($params{users})) {
+            $obj->error_message("Failed to get AlignmentIndex objects for dependencies of " . $obj->__display_name__);
+            return;
+        }
+    }
+
+    if (@objects > 1) {
+        return @objects if wantarray;
+        my @ids = map { $_->id } @objects;
+        die "Multiple matches for $class but get or create was called in scalar context! Found ids: @ids";
+    }
+    else {
+        return $objects[0];
+    }
+}
+
+sub _gather_params_for_get_or_create {
+    my $class = shift;
+    my $p = $class->SUPER::_gather_params_for_get_or_create(@_);
+
+    unless ($p->{params}{test_name}) {
+        $p->{params}{test_name} = (Genome::Config::get('aligner_index_test_name') || undef);
+    }
+    if (exists $p->{params}{aligner_name} && $class->aligner_requires_param_masking($p->{params}{aligner_name})) {
+        $p->{params}{aligner_params} = undef;
+    }
+
+    return $p;
+}
+
+sub _modify_params_for_lookup_hash {
+    my ($class, $params_ref) = @_;
+
+    if (exists $params_ref->{aligner_name} &&
+            $class->aligner_requires_param_masking($params_ref->{aligner_name})) {
+        $params_ref->{aligner_params} = undef;
+    }
+}
+
 sub required_rusage {
     # override in subclasses
     # e.x.: "-R 'span[hosts=1] rusage[tmp=50000:mem=12000]' -M 12000000";

@@ -41,50 +41,9 @@ sub __display_name__ {
                );
 }
 
-sub get {
-    my $class = shift;
-
-    my @objects;
-    if (@_ % 2 == 0) {
-        my %p = @_;
-        unless ($p{test_name}) {
-            $p{test_name} = (Genome::Config::get('aligner_index_test_name') || undef);
-        }
-        if (exists $p{aligner_name} && $class->aligner_requires_param_masking($p{aligner_name})) {
-            $p{aligner_params} = undef;
-        }
-        @objects = $class->SUPER::get(%p);
-    } else {
-        @objects = $class->SUPER::get(@_);
-    }
-
-    return unless @objects;
-
-    for my $obj (@objects) {
-        next unless ref($obj); # sometimes UR gives us back the package name when deleting?
-
-        unless ($obj->generate_dependencies_as_needed()) {
-            $obj->error_message("Failed to get AnnotationIndex objects for dependencies of " . $obj->__display_name__);
-            return;
-        }
-    }
-
-    if (@objects > 1) {
-        return @objects if wantarray;
-        my @ids = map { $_->id } @objects;
-        die "Multiple matches for $class but get or create was called in scalar context! Found ids: @ids";
-    } else {
-        return $objects[0];
-    }
-}
-
 sub create {
     my $class = shift;
     my %p = @_;
-
-    unless ($p{test_name}) {
-        $p{test_name} = (Genome::Config::get('aligner_index_test_name') || undef);
-    }
 
     my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($p{aligner_name});
     $class->debug_message("Aligner class name is $aligner_class");
@@ -93,10 +52,6 @@ sub create {
     unless ($aligner_class->class) {
         $class->error_message(sprintf("Failed to load aligner class (%s).", $aligner_class));
         return;
-    }
-
-    if ($class->aligner_requires_param_masking($p{aligner_name})) {
-        $p{aligner_params} = undef;
     }
 
     my $self = $class->SUPER::create(%p);
