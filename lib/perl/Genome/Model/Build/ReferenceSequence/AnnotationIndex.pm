@@ -63,7 +63,7 @@ sub create {
         return;
     }
 
-    unless ($self->_prepare_annotation_index) {
+    unless ($self->_prepare_index) {
         $self->error_message("Failed to prepare annotation index!");
         return;
     }
@@ -87,7 +87,7 @@ sub generate_dependencies_as_needed {
     return 1;
 }
 
-sub _prepare_annotation_index {
+sub _prepare_index {
     my $self = shift;
 
     my $reference_fasta_file;
