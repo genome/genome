@@ -249,14 +249,6 @@ sub resolve_allocation_subdirectory {
     return $directory;
 }
 
-sub resolve_allocation_disk_group_name {
-    if ($_[0]->reference_build->model->is_rederivable) {
-        return Genome::Config::get('disk_group_models');
-    } else {
-        return Genome::Config::get('disk_group_references');
-    }
-}
-
 sub full_consensus_path {
     my $self = shift;
     my $extension = shift;

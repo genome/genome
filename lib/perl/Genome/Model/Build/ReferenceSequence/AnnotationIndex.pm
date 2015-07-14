@@ -240,10 +240,6 @@ sub resolve_allocation_subdirectory {
     return $directory;
 }
 
-sub resolve_allocation_disk_group_name {
-    Genome::Config::get('disk_group_references');
-}
-
 sub full_consensus_path {
     my $self = shift;
     my $extension = shift;
