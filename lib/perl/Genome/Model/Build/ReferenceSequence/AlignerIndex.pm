@@ -115,11 +115,6 @@ sub create {
     return $self;
 }
 
-# TODO:
-# get() calls this method, and has a side-effect of creating dependent aligner indexes
-# 1. if you have side effects (avoid in general where possible), don't put them in a method called check_*
-# 2. don't override get(), make another method with the combined effect of getting data and doing work
-# -ssmith
 sub generate_dependencies_as_needed {
     my $self = shift;
     my $users = shift;
