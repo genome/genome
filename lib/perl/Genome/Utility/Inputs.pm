@@ -118,7 +118,7 @@ sub _get_decoder {
         return \&_decode_array;
     }
 
-    # no encoding to be done
+    # no decoding to be done
     return;
 }
 
