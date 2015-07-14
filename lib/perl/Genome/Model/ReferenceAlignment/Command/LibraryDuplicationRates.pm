@@ -25,8 +25,8 @@ sub help_synopsis {
 
 sub help_detail{
     return <<"EOS"
-All reference alignment builds currently use Picard MarkDuplicates to flag PCR duplicates after merging the individual instrument data alignments.
-One output from Picard MarkDuplicates is a metrics file that provides a per library breakdown of PCR and optical duplicate reads.  This tool simply parses the metrics file and dumps those metrics along with basic build/model information in tab-delimited form.
+All reference alignment builds with duplicate marking currently use Picard MarkDuplicates to flag PCR duplicates after merging the individual instrument data alignments.
+One output from Picard MarkDuplicates is a metrics file that provides a per library breakdown of PCR and optical duplicate reads.  This tool returns the database stored build metrics or parses the metric files in the alignment directory. The tab-delimited output also includes basic model and build information.
 EOS
 }
 
