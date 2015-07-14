@@ -125,29 +125,11 @@ sub create {
 sub generate_dependencies_as_needed {
     my $self = shift;
 
-    my %params = (
-        aligner_name => $self->aligner_name,
-        aligner_params => $self->aligner_params,
-        aligner_version => $self->aligner_version,
-    );
-
     # if the reference is a compound reference
     if ($self->reference_build->append_to and $self->_supports_multiple_reference) {
         die('Compound references are not currently supported in '. __PACKAGE__);
-        for my $b ($self->reference_build->append_to) { # (append_to is_many)
-            $params{reference_build} = $b;
-            $self->debug_message("Creating AlignmentIndex for build dependency " . $b->name);
-            my $result = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(%params);
-            unless($result) {
-                $self->error_message("Failed to create AlignmentIndex for dependency " . $b->name);
-                return;
-            }
-            unless ($result->generate_dependencies_as_needed()) {
-                $self->error_message("Failed while checking dependencies of " . $b->name);
-                return;
-            }
-        }
     }
+
     return 1;
 }
 
