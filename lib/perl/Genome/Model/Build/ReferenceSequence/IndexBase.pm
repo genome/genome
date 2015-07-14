@@ -3,6 +3,7 @@ package Genome::Model::Build::ReferenceSequence::IndexBase;
 use strict;
 use warnings;
 
+use Carp;
 use Genome;
 
 class Genome::Model::Build::ReferenceSequence::IndexBase {
@@ -72,6 +73,41 @@ sub resolve_allocation_disk_group_name {
     } else {
         return Genome::Config::get('disk_group_references');
     }
+}
+
+sub resolve_allocation_subdirectory {
+    my $self = shift;
+    my $aligner_name_tag = $self->aligner_name;
+    $aligner_name_tag =~ s/[^\w]/_/g;
+
+    my $staged_basename = File::Basename::basename($self->temp_staging_directory);
+    my @path_components = ('model_data', $self->_resolve_allocation_subdirectory_components, $staged_basename);
+    if ($self->test_name) {
+        push @path_components, "test_".$self->test_name;
+    }
+
+    push @path_components, $aligner_name_tag;
+
+    my $aligner_version_tag = $self->aligner_version;
+    $aligner_version_tag =~ s/[^\w]/_/g;
+    push @path_components, $aligner_version_tag;
+
+    if ($self->aligner_params) {
+        my $aligner_params_tag = $self->aligner_params;
+        $aligner_params_tag =~ s/[^\w]/_/g;
+        push @path_components, $aligner_params_tag;
+    }
+
+    my $directory = join('/', @path_components);
+
+    $self->debug_message(sprintf("Resolved allocation subdirectory to %s", $directory));
+    return $directory;
+}
+
+sub _resolve_allocation_subdirectory_components {
+    my $self = shift;
+
+    Carp::confess('Class must implement _resolve_allocation_subdirectory_components');
 }
 
 1;

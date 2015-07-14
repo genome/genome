@@ -219,34 +219,10 @@ sub _gather_params_for_get_or_create {
     return $p;
 }
 
-sub resolve_allocation_subdirectory {
+sub _resolve_allocation_subdirectory_components {
     my $self = shift;
-    my $aligner_name_tag = $self->aligner_name;
-    $aligner_name_tag =~ s/[^\w]/_/g;
 
-    my $staged_basename = File::Basename::basename($self->temp_staging_directory);
-    my @path_components = ('model_data','ref_build_aligner_index_data',$self->reference_build->model->id,'build'.$self->reference_build->id, $staged_basename);
-
-    if ($self->test_name) {
-        push @path_components, "test_".$self->test_name;
-    }
-
-    push @path_components, $aligner_name_tag;
-
-    my $aligner_version_tag = $self->aligner_version;
-    $aligner_version_tag =~ s/[^\w]/_/g;
-    push @path_components, $aligner_version_tag;
-
-    if ($self->aligner_params) {
-        my $aligner_params_tag = $self->aligner_params;
-        $aligner_params_tag =~ s/[^\w]/_/g;
-        push @path_components, $aligner_params_tag;
-    }
-
-    my $directory = join('/', @path_components);
-
-    $self->debug_message(sprintf("Resolved allocation subdirectory to %s", $directory));
-    return $directory;
+    return ('ref_build_aligner_index_data',$self->reference_build->model->id,'build'.$self->reference_build->id);
 }
 
 1;
