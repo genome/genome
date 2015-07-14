@@ -49,4 +49,11 @@ ok($b2->status eq 'new', 'second instrument data set to new');
 
 ok(UR::Context->commit(), 'created objects are valid');
 
+$ap->status('Deprecated');
+my $fail_cmd = $class->create(
+    analysis_project => $ap,
+    analysis_menu_items => [$item],
+);
+ok(!$fail_cmd->execute,'fail command on project with invalid status');
+
 done_testing();
