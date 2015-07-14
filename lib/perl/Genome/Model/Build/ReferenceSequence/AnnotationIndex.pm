@@ -54,20 +54,7 @@ sub generate_dependencies_as_needed {
 
 sub _prepare_index {
     my $self = shift;
-
-    my $reference_fasta_file;
-    if ($self->_supports_multiple_reference) {
-        $reference_fasta_file = $self->reference_build->primary_consensus_path('fa');
-    } else {
-        $reference_fasta_file = $self->reference_build->full_consensus_path('fa');
-    }
-
-    unless (-s $reference_fasta_file) {
-        $self->error_message(sprintf("Reference fasta file %s does not exist", $reference_fasta_file));
-        return;
-    }
-
-    $self->debug_message(sprintf("Confirmed non-zero reference fasta file is %s", $reference_fasta_file));
+    my $reference_fasta_file = shift;
 
     unless ($self->aligner_class_name->prepare_annotation_index($self)) {
         $self->error_message("Failed to prepare annotation index.");

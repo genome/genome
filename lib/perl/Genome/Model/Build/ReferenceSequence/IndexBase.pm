@@ -71,7 +71,15 @@ sub create {
         return;
     }
 
-    unless ($self->_prepare_index) {
+    my $reference_fasta_file = $self->_resolve_reference_fasta_file;
+    unless (-s $reference_fasta_file) {
+        $self->error_message(sprintf("Reference fasta file %s does not exist", $reference_fasta_file));
+        return;
+    } else {
+        $self->debug_message(sprintf("Confirmed non-zero reference fasta file is %s", $reference_fasta_file));
+    }
+
+    unless ($self->_prepare_index($reference_fasta_file)) {
         $self->error_message("Failed to prepare reference index!");
         return;
     }
@@ -87,6 +95,16 @@ sub create {
     }
 
     return $self;
+}
+
+sub _resolve_reference_fasta_file {
+    my $self = shift;
+
+    if ($self->_supports_multiple_reference) {
+        return $self->reference_build->primary_consensus_path('fa');
+    } else {
+        return $self->reference_build->full_consensus_path('fa');
+    }
 }
 
 sub _prepare_index {
