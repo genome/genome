@@ -41,21 +41,6 @@ sub __display_name__ {
                );
 }
 
-sub aligner_requires_param_masking {
-    my $class = shift;
-    my $aligner_name = shift;
-
-    my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner_name);
-
-    # if aligner params are not required for index, and we can   generically create an index for that version, then filter it out.
-    if ($aligner_class->aligner_params_required_for_index) {
-        $class->debug_message("This aligner requires a parameter-specific index.  Can't mask params out.");
-        return 0;
-    }
-
-    return 1;
-}
-
 sub get {
     my $class = shift;
 
