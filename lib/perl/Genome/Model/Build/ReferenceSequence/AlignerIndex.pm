@@ -249,14 +249,4 @@ sub resolve_allocation_subdirectory {
     return $directory;
 }
 
-sub full_consensus_path {
-    my $self = shift;
-    my $extension = shift;
-
-    return $self->output_dir . "/all_sequences." . $extension;
-}
-
-
-
-
 1;

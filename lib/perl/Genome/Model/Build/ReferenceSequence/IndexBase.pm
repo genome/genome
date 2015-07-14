@@ -49,6 +49,17 @@ class Genome::Model::Build::ReferenceSequence::IndexBase {
     ]
 };
 
+sub full_consensus_path {
+    my $self = shift;
+    my $extension = shift;
+
+    my $path = $self->output_dir . '/all_sequences';
+    if ($extension) {
+        $path .= '.'. $extension;
+    }
+    return $path;
+}
+
 sub required_rusage {
     # override in subclasses
     # e.x.: "-R 'span[hosts=1] rusage[tmp=50000:mem=12000]' -M 12000000";
