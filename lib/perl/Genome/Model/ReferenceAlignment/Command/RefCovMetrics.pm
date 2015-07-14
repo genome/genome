@@ -6,6 +6,7 @@ use warnings 'FATAL';
 use Genome;
 
 require List::MoreUtils;
+use Params::Validate ':types';
 
 class Genome::Model::ReferenceAlignment::Command::RefCovMetrics {
     is => 'Command::V2',
@@ -28,6 +29,17 @@ class Genome::Model::ReferenceAlignment::Command::RefCovMetrics {
             is => 'Text',
             default_value => "\t",
             doc => 'Separator to use. Default value is tab (\t).',
+        },
+        row_ids => {
+            is => 'Text',
+            is_many => 1,
+            valid_values => [qw/
+                model_id model_name
+                result_id
+                sample_name sample_common_name
+            /],
+            default_value => [qw/ model_name /],
+            doc => 'The values to use to as the row identifier(s).',
         },
     },
     has_optional_output => {
@@ -52,7 +64,7 @@ sub execute {
     my ($metrics_method, $extract_metrics_method) = $self->_resolve_methods;
     my $fh = Genome::Sys->open_file_for_writing($self->output_path);
 
-    my @data;
+    my (@headers, @data);
     MODEL: for my $model ( $self->models ) {
         BUILD: for my $build ( $model->builds(status => 'Succeeded', -order => 'date_completed') ) {
             if ( not $build->is_current ) {
@@ -69,8 +81,9 @@ sub execute {
             RESULT: for my $result ( @coverage_stats ) {
                 my $metrics = $result->$metrics_method;
                 next RESULT if not $metrics;
+                push @headers, keys %$metrics;
                 my $row = $self->$extract_metrics_method($metrics);
-                $row->{model_name} = $model->name;
+                $self->_add_row_ids($metrics, {model => $model, result => $result});
                 push @data, $row;
                 next MODEL;
             }
@@ -80,10 +93,8 @@ sub execute {
 
     return 1 if not @data;
 
-    my @headers = List::MoreUtils::uniq(sort map { keys %$_ } @data);
-    my $idx = List::MoreUtils::firstidx { $_ eq 'model_name' } @headers;
-    splice(@headers, $idx, 1);
-    unshift @headers, 'model_name';
+    my @headers = List::MoreUtils::uniq(sort @headers);
+    unshift @headers, $self->row_ids;
     $fh->print( join($self->separator, @headers)."\n" );
     for my $data ( @data ) {
         $fh->print( join($self->separator, map { $data->{$_} } @headers)."\n" );
@@ -102,6 +113,25 @@ sub _resolve_methods {
     else { 
         return (qw/ coverage_stats_summary_hash_ref _extract_coverage_metrics /);
     }
+}
+
+sub _add_row_ids {
+    my ($self, $metrics, $objects)= Params::Validate::validate_pos(@_, {type => SCALAR}, {type => HASHREF});
+
+    my @samples = List::MoreUtils::uniq(
+        map { $_->sample } $objects->{result}->alignment_result->instrument_data
+    );
+    $objects->{sample} = ( @samples == 1 )
+    ? $samples[0]
+    : $objects->{model}->subject; # this could be an individual
+
+    my @ids;
+    for my $row_id ( $self->row_ids ) {
+        my ($object, $method) = split(/_/, $row_id, 2);
+        $metrics->{$row_id} = $objects->{$object}->$method;
+    }
+
+    return @ids;
 }
 
 sub _extract_alignment_metrics {

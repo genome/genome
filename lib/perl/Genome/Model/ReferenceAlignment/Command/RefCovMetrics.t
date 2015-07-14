@@ -20,7 +20,8 @@ my $model = Test::MockObject->new();
 $model->set_isa('Genome::Model::ReferenceAlignment', 'Genome::Model');
 $model->set_always('name', 'JohnnyVegas');
 $model->set_always('__display_name__', 'JohnnyVegas (1)');
-$model->set_always('builds', ($build));
+$model->set_always('subject', Genome::Sample->__define__(name => '_TEST_SAMPLE_', common_name => 'tumor'));
+$model->set_series('builds', $build);
 
 subtest 'no results' => sub{
     plan tests => 2;
@@ -33,9 +34,15 @@ subtest 'no results' => sub{
 
 my $result = Test::MockObject->new();
 $result->set_isa('Genome::InstrumentData::AlignmentResult::Merged::CoverageStats');
-$build->set_always('results', $result);
+$result->set_always('id', 11);
+$build->set_series('results', $result);
 
-subtest 'coverage' => sub{
+my $instrument_data = Test::MockObject->new;
+$instrument_data->set_always('sample_name', 'SAMPLE'.$_);
+$instrument_data->set_always('common_name', 'normal');
+$result->set_series('instrument_data', $instrument_data);
+
+subtest 'coverage from ref-align' => sub{
     plan tests => 2;
 
     my $coverage_stats_summary = {
@@ -66,32 +73,47 @@ subtest 'coverage' => sub{
 
 };
 
-subtest 'alignment' => sub{
+$model->set_isa('Genome::Model::SomaticValidation', 'Genome::Model');
+my $tumor_result = Test::MockObject->new();
+$tumor_result->set_isa('Genome::InstrumentData::AlignmentResult::Merged::CoverageStats');
+$tumor_result->set_always('id', 22);
+$build->set_series('results', $result, $tumor_result);
+
+my @instrument_data;
+for (0..1) {
+    push @instrument_data, Test::MockObject->new;
+    $instrument_data[$_]->set_always('sample_name', 'SAMPLE-T');
+    $instrument_data[$_]->set_always('common_name', 'tumor');
+}
+$result->set_series('instrument_data', @instrument_data);
+
+subtest 'alignment from som-val' => sub{
     plan tests => 2;
 
     my $alignment_summary_hash_ref = {
         '0' => {
-            'total_bp' => '366769868',
-            'unique_off_target_aligned_bp' => '299651882',
-            'unique_target_aligned_bp' => '29092686',
+            'total_bp' => '123456789',
+            'unique_off_target_aligned_bp' => '12345',
+            'unique_target_aligned_bp' => '6789',
         },
         '500' => {
-            'total_bp' => '366769868',
-            'unique_off_target_aligned_bp' => '298629738',
-            'unique_target_aligned_bp' => '30114830',
+            'total_bp' => '987654321',
+            'unique_off_target_aligned_bp' => '98765',
+            'unique_target_aligned_bp' => '4321',
         }
     };
-    $result->set_always('alignment_summary_hash_ref', $alignment_summary_hash_ref);
+    $tumor_result->set_always('alignment_summary_hash_ref', $alignment_summary_hash_ref);
 
     my $out = Genome::Sys->create_temp_file_path('model.alignment');
-    my $cmd = $class->execute(models => $model, type => 'alignment', output_path => $out);
+    my $cmd = $class->execute(models => $model, type => 'alignment', row_ids => [qw/ sample_name sample_common_name result_id /], output_path => $out);
     ok($cmd->result, 'execute for alignment');
     my @lines = Genome::Sys->read_file($out);
     is_deeply(
         \@lines,
         [
-            join("\t", (qw/ model_name	alignment-wingspan_0_total_bp	alignment-wingspan_0_unique_off_target_aligned_bp	alignment-wingspan_0_unique_target_aligned_bp	alignment-wingspan_500_total_bp	alignment-wingspan_500_unique_off_target_aligned_bp	alignment-wingspan_500_unique_target_aligned_bp /))."\n",
-            join("\t", (qw/ JohnnyVegas 366769868 299651882 29092686 366769868 298629738 30114830 /))."\n",
+            join("\t", (qw/ sample_name	sample_common_name result_id alignment-wingspan_0_total_bp	alignment-wingspan_0_unique_off_target_aligned_bp	alignment-wingspan_0_unique_target_aligned_bp	alignment-wingspan_500_total_bp	alignment-wingspan_500_unique_off_target_aligned_bp	alignment-wingspan_500_unique_target_aligned_bp /))."\n",
+            join("\t", (qw/ SAMPLE-N normal 11 366769868 299651882 29092686 366769868 298629738 30114830 /))."\n",
+            join("\t", (qw/ SAMPLE-T tumor 22 123456789 12345 6789 987654321 98765 4321 /))."\n",
         ],
         'output matches',
     );
