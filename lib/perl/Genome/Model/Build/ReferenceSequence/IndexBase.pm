@@ -76,6 +76,11 @@ sub create {
         return;
     }
 
+    unless ($self->_promote_prepared_index) {
+        $self->error_message("Failed to save reference index to output location!");
+        return;
+    }
+
     unless ($self->generate_dependencies_as_needed($self->_user_data_for_nested_results)) {
         $self->error_message("Failed to create AlignmentIndex objects for dependencies");
         return;
@@ -88,6 +93,24 @@ sub _prepare_index {
     my $self = shift;
 
     Carp::confess('Class must implement _prepare_index.');
+}
+
+sub _promote_prepared_index {
+    my $self = shift;
+
+    my $output_dir = $self->output_dir || $self->_prepare_output_directory;
+    $self->debug_message("Alignment output path is $output_dir");
+
+    unless ($self->_promote_data)  {
+        $self->error_message("Failed to de-stage data into output path " . $self->output_dir);
+        return;
+    }
+
+    $self->_reallocate_disk_allocation;
+
+    $self->debug_message("Prepared alignment reference index!");
+
+    return 1;
 }
 
 sub aligner_requires_param_masking {

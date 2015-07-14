@@ -74,18 +74,6 @@ sub _prepare_index {
         return;
     }
 
-    my $output_dir = $self->output_dir || $self->_prepare_output_directory;
-    $self->debug_message("Alignment output path is $output_dir");
-
-    unless ($self->_promote_data)  {
-        $self->error_message("Failed to de-stage data into output path " . $self->output_dir);
-        return;
-    }
-
-    $self->_reallocate_disk_allocation;
-
-    $self->debug_message("Prepared alignment reference index!");
-
     return $self;
 }
 
