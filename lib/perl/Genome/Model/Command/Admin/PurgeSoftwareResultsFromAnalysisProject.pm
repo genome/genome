@@ -69,9 +69,20 @@ my $sql = qq(
 sub execute {
     my $self = shift;
 
+    my $sth = $self->_prepare_sql_statement();
     foreach my $anp ( $self->analysis_projects ) {
-        $self->purge_one_analysis_project($anp);
+        $self->purge_one_analysis_project($anp, $sth);
     }
+}
+
+sub _prepare_sql_statement {
+    my $self = shift;
+    my $dbh = Genome::DataSource::GMSchema->get_default_handle();
+    die $self->error_message('Cannot get default database handle') unless $dbh;
+
+    my $sth = $dbh->prepare($sql);
+    die $self->error_message("preparing SQL failed : $DBI::errstr") unless $sth;
+    return $sth;
 }
 
 sub analysis_project_is_old_enough_to_purge {
@@ -120,7 +131,7 @@ sub _get_lock_for_analysis_project {
 }
 
 sub purge_one_analysis_project {
-    my($self, $anp) = @_;
+    my($self, $anp, $sth) = @_;
 
     if ($anp->is_cle) {
         die $self->error_message('Failed to process CLE analysis project: '. $anp->id);
@@ -130,9 +141,6 @@ sub purge_one_analysis_project {
         $self->warning_message('Analysis project \''. $anp->id .'\' was updated at '. $anp->updated_at .' which is less than the '. $self->days_to_retain .' days to retain disabled results');
         return;
     }
-
-    my $dbh = Genome::DataSource::GMSchema->get_default_handle();
-    die $self->error_message('Cannot get default database handle') unless $dbh;
 
     my $unlocker = $self->_get_lock_for_analysis_project($anp);
 
@@ -145,9 +153,6 @@ sub purge_one_analysis_project {
                                 int($total_kb_purged / KB_IN_ONE_GB),
                                 $software_result_count);
     });
-
-    my $sth = $dbh->prepare($sql);
-    die $self->error_message("preparing SQL failed : $DBI::errstr") unless $sth;
 
     $sth->execute($anp->id);
 
