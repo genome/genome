@@ -81,12 +81,12 @@ sub execute {
             RESULT: for my $result ( @coverage_stats ) {
                 my $metrics = $result->$metrics_method;
                 next RESULT if not $metrics;
-                push @headers, keys %$metrics;
                 my $row = $self->$extract_metrics_method($metrics);
-                $self->_add_row_ids($metrics, {model => $model, result => $result});
+                push @headers, keys %$row;
+                $self->_add_row_ids($row, {model => $model, result => $result});
                 push @data, $row;
-                next MODEL;
             }
+            next MODEL;
         }
         $self->warning_message('No results for model: '.$model->__display_name__);
     }
@@ -116,7 +116,9 @@ sub _resolve_methods {
 }
 
 sub _add_row_ids {
-    my ($self, $metrics, $objects)= Params::Validate::validate_pos(@_, {type => SCALAR}, {type => HASHREF});
+    my ($self, $row, $objects)= Params::Validate::validate_pos(
+        @_, {isa => __PACKAGE__}, {type => HASHREF}, {type => HASHREF},
+    );
 
     my @samples = List::MoreUtils::uniq(
         map { $_->sample } $objects->{result}->alignment_result->instrument_data
@@ -125,13 +127,12 @@ sub _add_row_ids {
     ? $samples[0]
     : $objects->{model}->subject; # this could be an individual
 
-    my @ids;
     for my $row_id ( $self->row_ids ) {
         my ($object, $method) = split(/_/, $row_id, 2);
-        $metrics->{$row_id} = $objects->{$object}->$method;
+        $row->{$row_id} = $objects->{$object}->$method;
     }
 
-    return @ids;
+    return 1;
 }
 
 sub _extract_alignment_metrics {
