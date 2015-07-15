@@ -174,6 +174,8 @@ sub _do_expunge {
     $self->status_message('%s software result %s',
                             $action_message,
                             $sr->id);
-    $sr->expunge($reason);
-    UR::Context->commit() || die "commit() failed while expunging software result ".$sr->id;
+    unless ($self->dry_run) {
+        $sr->expunge($reason);
+        UR::Context->commit() || die "commit() failed while expunging software result ".$sr->id;
+    }
 }
