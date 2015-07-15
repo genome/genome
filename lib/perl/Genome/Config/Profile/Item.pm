@@ -182,7 +182,7 @@ sub _is_created {
 sub is_current {
     my $self = shift;
 
-    return $self->status eq 'active' and $self->analysis_project->is_current;
+    return $self->status ne 'disabled' and $self->analysis_project->is_current;
 }
 
 1;
