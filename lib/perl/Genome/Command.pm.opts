@@ -1225,6 +1225,13 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>analysis-project',
   [
+    '>deprecate',
+    [
+      'analysis-project=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>tag-config-file',
     [
       'tag=s',
@@ -1269,32 +1276,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>view',
-    [
-      'color!',
-      undef,
-      'config=s',
-      [
-        'parsed',
-        'verbose',
-        'terse',
-        'quiet'
-      ],
-      'disabled-configs!',
-      undef,
-      'instrument-data!',
-      undef,
-      'models!',
-      undef,
-      'timeline!',
-      undef,
-      'fast-model-summary!',
-      undef,
-      'analysis-project=s',
-      undef,
-      'help!',
-      undef
-    ],
     '>show-config',
     [
       'style=s',
@@ -1319,6 +1300,32 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'filter=s',
       'files',
+      'help!',
+      undef
+    ],
+    '>view',
+    [
+      'color!',
+      undef,
+      'config=s',
+      [
+        'parsed',
+        'verbose',
+        'terse',
+        'quiet'
+      ],
+      'disabled-configs!',
+      undef,
+      'instrument-data!',
+      undef,
+      'models!',
+      undef,
+      'timeline!',
+      undef,
+      'fast-model-summary!',
+      undef,
+      'analysis-project=s',
+      undef,
       'help!',
       undef
     ],
@@ -1384,6 +1391,13 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>update-config-to-current',
+    [
+      'profile-item=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>add-menu-item',
     [
       'reprocess-existing!',
@@ -1414,23 +1428,9 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>update-config-to-current',
-    [
-      'profile-item=s',
-      undef,
-      'help!',
-      undef
-    ],
     '>reprocess',
     [
       'analysis-project=s',
-      undef,
-      'help!',
-      undef
-    ],
-    '>release',
-    [
-      'analysis-projects=s@',
       undef,
       'help!',
       undef
@@ -1440,6 +1440,13 @@ $Genome::Command::OPTS_SPEC = [
       'tag=s',
       undef,
       'profile-items=s@',
+      undef,
+      'help!',
+      undef
+    ],
+    '>release',
+    [
+      'analysis-projects=s@',
       undef,
       'help!',
       undef
@@ -38309,6 +38316,13 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>analysis-project',
     [
+      '>deprecate',
+      [
+        'analysis-project=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>tag-config-file',
       [
         'tag=s',
@@ -38353,32 +38367,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>view',
-      [
-        'color!',
-        undef,
-        'config=s',
-        [
-          'parsed',
-          'verbose',
-          'terse',
-          'quiet'
-        ],
-        'disabled-configs!',
-        undef,
-        'instrument-data!',
-        undef,
-        'models!',
-        undef,
-        'timeline!',
-        undef,
-        'fast-model-summary!',
-        undef,
-        'analysis-project=s',
-        undef,
-        'help!',
-        undef
-      ],
       '>show-config',
       [
         'style=s',
@@ -38403,6 +38391,32 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'filter=s',
         'files',
+        'help!',
+        undef
+      ],
+      '>view',
+      [
+        'color!',
+        undef,
+        'config=s',
+        [
+          'parsed',
+          'verbose',
+          'terse',
+          'quiet'
+        ],
+        'disabled-configs!',
+        undef,
+        'instrument-data!',
+        undef,
+        'models!',
+        undef,
+        'timeline!',
+        undef,
+        'fast-model-summary!',
+        undef,
+        'analysis-project=s',
+        undef,
         'help!',
         undef
       ],
@@ -38468,6 +38482,13 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>update-config-to-current',
+      [
+        'profile-item=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>add-menu-item',
       [
         'reprocess-existing!',
@@ -38498,23 +38519,9 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>update-config-to-current',
-      [
-        'profile-item=s',
-        undef,
-        'help!',
-        undef
-      ],
       '>reprocess',
       [
         'analysis-project=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>release',
-      [
-        'analysis-projects=s@',
         undef,
         'help!',
         undef
@@ -38524,6 +38531,13 @@ $Genome::Command::OPTS_SPEC = [
         'tag=s',
         undef,
         'profile-items=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>release',
+      [
+        'analysis-projects=s@',
         undef,
         'help!',
         undef
