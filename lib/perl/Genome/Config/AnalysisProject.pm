@@ -135,7 +135,7 @@ sub is_current {
     my $self = shift;
 
     my $status = $self->status;
-    return if any { $_ eq $status } (qw(Completed Archived Template));
+    return if any { $_ eq $status } (qw(Completed Archived Template Deprecated));
 
     return 1;
 }
