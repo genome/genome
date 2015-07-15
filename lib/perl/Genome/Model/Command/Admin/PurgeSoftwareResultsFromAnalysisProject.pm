@@ -160,12 +160,18 @@ sub purge_one_analysis_project {
         $software_result_count++;
         $total_kb_purged += $data->{kilobytes_requested};
 
-        if ($self->dry_run) {
-            $self->warning_message('Dry run, not removing software result '.$sr->id);
-        } else {
-            $self->status_message($reason);
-            $sr->expunge($reason);
-            UR::Context->commit();
-        }
+        $self->_do_expunge($sr, $reason);
+    }
+}
+
+sub _do_expunge {
+    my($self, $sr, $reason) = @_;
+
+    if ($self->dry_run) {
+        $self->warning_message('Dry run, not removing software result '.$sr->id);
+    } else {
+        $self->status_message($reason);
+        $sr->expunge($reason);
+        UR::Context->commit() || die "commit() failed while expunging software result ".$sr->id;
     }
 }
