@@ -32,7 +32,7 @@ class Genome::Config::Profile::Item {
         },
         status => {
             is => 'Text',
-            valid_values => [ "disabled", "active" ],
+            valid_values => [ "disabled", "active", "inactive" ],
             default_value => 'active',
         },
         model_bridges => {
