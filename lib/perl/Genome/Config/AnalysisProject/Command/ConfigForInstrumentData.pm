@@ -10,8 +10,9 @@ class Genome::Config::AnalysisProject::Command::ConfigForInstrumentData {
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',
-            shell_args_position => 1,
             is_many => 1,
+            shell_args_position => 1,
+            require_user_verify => 0,
         },
         color => {
             is => 'Boolean',
