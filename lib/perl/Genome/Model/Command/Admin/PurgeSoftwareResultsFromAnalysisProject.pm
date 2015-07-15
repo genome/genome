@@ -167,11 +167,13 @@ sub purge_one_analysis_project {
 sub _do_expunge {
     my($self, $sr, $reason) = @_;
 
-    if ($self->dry_run) {
-        $self->warning_message('Dry run, not removing software result '.$sr->id);
-    } else {
-        $self->status_message($reason);
-        $sr->expunge($reason);
-        UR::Context->commit() || die "commit() failed while expunging software result ".$sr->id;
-    }
+    my $action_message = $self->dry_run
+                            ? 'Dry run, would remove'
+                            : 'Removing';
+
+    $self->status_message('%s software result %s',
+                            $action_message,
+                            $sr->id);
+    $sr->expunge($reason);
+    UR::Context->commit() || die "commit() failed while expunging software result ".$sr->id;
 }
