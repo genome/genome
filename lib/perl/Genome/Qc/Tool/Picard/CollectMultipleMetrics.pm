@@ -31,6 +31,10 @@ sub metrics {
                 metric_key    => 'CATEGORY-SECOND_OF_PAIR',
                 picard_metric => 'PF_MISMATCH_RATE',
             },
+            reads_properly_paired => {
+                metric_key    => 'CATEGORY-PAIR',
+                picard_metric => 'READS_ALIGNED_IN_PAIRS',
+            },
             pct_properly_paired => {
                 metric_key    => 'CATEGORY-PAIR',
                 picard_metric => 'PCT_READS_ALIGNED_IN_PAIRS',
