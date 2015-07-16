@@ -16,33 +16,47 @@ use File::Compare qw(compare);
 use Genome::Utility::Test qw(compare_ok);
 use Genome::Test::Factory::SoftwareResult::User;
 
-my $test_dir = "/gscmnt/gc2801/analytics/mfulton/test1";
+my $test_dir = "/gscmnt/gc2801/analytics/mfulton/testData";
 	my $output = Genome::Sys->create_temp_directory();
-        my $temp_directory = Genome::Sys->create_temp_directory();
         my $data_dir = '/gscmnt/gc2801/analytics/mfulton/genome2/lib/perl/Genome/Test/Data.pm.d/NA12878';
         my $bam = "$data_dir/NA12878.20slice.30X.aligned.bam";
+	my $bam2 = "$data_dir/NA12878.20slice.30X2.aligned.bam";
         my $split_bam = "$data_dir/NA12878.20slice.30X.splitters.bam";
         my $discordant_bam = "$data_dir/NA12878.20slice.30X.discordants.bam";
         my $reference_fasta = "$data_dir/human_g1k_v37_20_42220611-42542245.fasta";        
 	my $pkg2 = 'Genome::Model::Tools::DetectVariants2::SpeedseqSv';
 	my $refbuild_id = 101947881;
 	my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
-    reference_sequence_build_id => $refbuild_id,
-);
+    reference_sequence_build_id => $refbuild_id,);
+	my $int = 1;
+	my $bedExclude;
+	my $genotyper = 'true';
+	my $CNVnator = 'true';
+	my $annotate = 'true';
+	my $min_weight = 4;
+	my $trim = 0.0;
+	my $temp_dir = 'true'; 
 
-
+	my $params = "-R:$reference_fasta,-g,-d";
 
 my $command2 = $pkg2->create(
 	output_directory => $output,
 	reference_build_id => $refbuild_id,
 	result_users => $result_users,	
+	aligned_reads_input => $bam,
+	params => $params,
+	control_aligned_reads_input => $bam2,
 );
+
 
 ok($command2->execute, 'Executed `gmt detect-variants2 Speedseq` command');
 
-compare_ok("$output/svs.hq.sv.vcf.gz","$test_dir/test1.sv.vcf.gz");
-compare_ok("$output/svs.hq.sv.vcf.gz.tbi","$test_dir/test1.sv.vcf.gz.tbi");
-compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed","$test_dir/test1.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed");
-compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt","$test_dir/test1.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt");
+$DB::single=1;
+
+compare_ok("$output/svs.hq.sv.vcf.gz","$test_dir/svs.hq.sv2.vcf.gz");
+
+compare_ok("$output/svs.hq.sv.vcf.gz.tbi","$test_dir/svs.hq.sv2.vcf.gz.tbi");
+compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed2");
+compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt2");
 
 done_testing();
