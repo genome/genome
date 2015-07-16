@@ -117,5 +117,20 @@ sub _tool_subcommand_name {
 	return 'sv';
 }
 
+sub _resolve_input_files {
+	my $self = shift;
+	my $full_file_list = $self->full_bam_file; 
+	my $split_file_list = $self->split_read_bam_file;
+	my $discord_file_list = $self->discordant_read_bam_file;
+	my @full_params = split(',',$full_file_list);
+	my @split_params = split(',',$split_file_list);
+	my @discord_params = split(',',$discord_file_list);
+
+	my @final_list = (@full_params, @split_params, @discord_params);
+
+	$self->input_files(\@final_list);
+
+	return (@final_list);
+}
 
 
