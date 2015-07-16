@@ -20,11 +20,8 @@ class Genome::Model::Tools::DetectVariants2::SpeedseqSv {
     ]
 };
 
-	my $test_dir = "/gscmnt/gc2801/analytics/mfulton/test1";
 	my $temp_directory = Genome::Sys->create_temp_directory();
-	my $data_dir = '/gscmnt/gc2801/analytics/mfulton/genome2/lib/perl/Genome/Test/Data.pm.d/NA12878';
 	my $pkg = 'Genome::Model::Tools::Speedseq::Sv';
-        my $reference_fasta_loc = "$data_dir/human_g1k_v37_20_42220611-42542245.fasta";
 
 # For the Parameters what I need to do is make two hashes.
 # The first one will have the name of the command in the SV class and the letter calling it.  

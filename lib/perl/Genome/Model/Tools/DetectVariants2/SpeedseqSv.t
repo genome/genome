@@ -14,6 +14,7 @@ use Test::More;
 use Test::Exception;
 use File::Compare qw(compare);
 use Genome::Utility::Test qw(compare_ok);
+use Genome::File::Vcf::Differ;
 use Genome::Test::Factory::SoftwareResult::User;
 
 	my $test_dir = "/gscmnt/gc2801/analytics/mfulton/testData";
@@ -57,9 +58,19 @@ my $command2 = $pkg2->create(
 
 ok($command2->execute, 'Executed `gmt detect-variants2 Speedseq` command');
 
-compare_ok("$output/svs.hq.sv.vcf.gz","$test_dir/svs.hq.sv2.vcf.gz",filters => [qr(^##fileDate.*$),]);
 
-compare_ok("$output/svs.hq.sv.vcf.gz.tbi","$test_dir/svs.hq.sv2.vcf.gz.tbi");
-compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed2");
-compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt2");
+$DB::single=1;
 
+my $differ = Genome::File::Vcf::Differ->new("$output/svs.hq.sv.vcf.gz", "$test_dir/svs.hq.sv.vcf.gz");
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $output/svs.hq.sv.vcf.gz and (expected) $test_dir/svs.hq.sv.vcf.gz") ||
+       diag $diff->to_string;
+
+
+#compare_ok("$output/svs.hq.sv.vcf.gz","$test_dir/svs.hq.sv2.vcf.gz");
+
+compare_ok("$output/svs.hq.sv.vcf.gz.tbi","$test_dir/svs.hq.sv.vcf.gz.tbi");
+compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed");
+compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt");
+
+done_testing();
