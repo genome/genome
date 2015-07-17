@@ -267,7 +267,7 @@ sub _validate_required_for_start_properties {
 sub reference_being_replaced_for_input {
     my ($self, $input) = @_;
 
-    if($input->name eq "target_region_set"){
+    if($input->name eq "target_region_set" or $input->name eq "design_set"){
         return 1;
     }
 

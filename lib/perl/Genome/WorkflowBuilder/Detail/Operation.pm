@@ -168,10 +168,7 @@ sub _get_operation_type_xml_element {
 
     $element->setAttribute('typeClass', $self->operation_type);
 
-    map {$self->_add_property_xml_element($element, 'inputproperty', $_)}
-        $self->input_properties;
-    map {$self->_add_property_xml_element($element, 'outputproperty', $_)}
-        $self->output_properties;
+    $self->_add_property_xml_elements($element);
 
     my %attributes = $self->operation_type_attributes;
     for my $attr_name (keys(%attributes)) {
@@ -179,6 +176,17 @@ sub _get_operation_type_xml_element {
     }
 
     return $element;
+}
+
+sub _add_property_xml_elements {
+    my ($self, $element) = @_;
+
+    map {$self->_add_property_xml_element($element, 'inputproperty', $_)}
+        $self->input_properties;
+    map {$self->_add_property_xml_element($element, 'outputproperty', $_)}
+        $self->output_properties;
+
+    return;
 }
 
 sub _add_property_xml_element {

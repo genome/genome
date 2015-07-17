@@ -50,10 +50,13 @@ my %expected_metrics = (
     'read_1_mismatch_rate' => 0,
     'pct_read_2_aligned' => 0,
     'read_2_mismatch_rate' => 0,
+    'reads_properly_paired' => 0,
     'pct_properly_paired' => 0,
     'pct_chimeric' => 0,
     'mean_insert_size' => 144.111111,
     'median_insert_size' => 139,
+    'insert_size_standard_deviation' => '24.353873',
+    'insert_size_median_absolute_deviation' => '12',
 );
 is_deeply({$tool->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
 

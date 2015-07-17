@@ -194,6 +194,11 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Boolean',
               doc => 'Allow imported instrument data to be included',
         },
+        add_validation_data_to_exome => {
+              is => 'text',
+              doc => 'Includes instrument data from validation capture in exome reference alignment model. Specify which instrument data to derive the target-set-region-name and region-of-interest from.',
+              valid_values => ['exome','validation']
+        },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
 };
@@ -224,8 +229,8 @@ sub help_detail {
     return <<EOS
 For a given individual, find the available samples and display to the user to select those desired for clinseq analysis
 
-A clin-seq model can consist of various combinations of reference alignment, wgs somatic, exome somatic, and rna-seq models, 
-
+A clin-seq model can consist of various combinations of reference alignment, wgs somatic, exome somatic, and rna-seq models,
+ 
 Only up to two DNA and two RNA samples may be specified. You can run with only DNA, only RNA or both.
 
 Once samples are set by the user, search for reference alignment, somatic variation, and rna-seq models for these samples
@@ -247,7 +252,7 @@ sub execute {
     $self->status_message("\nExiting...  --display-defaults mode is used for summarizing purposes only\n\n");
     return 1;
   }
-
+  
   #Make sure an individual is defined
   unless ($self->individual){
     $self->error_message("Missing required parameter: --individual.");
@@ -682,12 +687,16 @@ sub get_dna_instrument_data{
     my $trsn = $instrument_data->target_region_set_name;
     if ($trsn){
       my $fl = Genome::FeatureList->get(name => $trsn);
+      my @valid_types = "exome";
+      if ($self->add_validation_data_to_exome) {
+        push(@valid_types, "validation");
+      }
       if (not $fl or not $fl->content_type) {
         push @unknown, $instrument_data;
-      }elsif ($fl->content_type eq 'exome') {
+      }elsif (grep {$fl->content_type eq $_} @valid_types) {
         push @exome, $instrument_data;
         $trsns{$trsn}=1;
-      }else {
+      }else{
         push @other, $instrument_data;
       }
     }else{
@@ -776,7 +785,7 @@ sub check_model_trsn_and_roi{
       $trsn_ref = $trsn;
     }
   }
-  
+
   #Watch out for cases where multiple TRSNs have been combined...
   my $trsn_count = keys %trsns;
   if ($trsn_count >= 2){
@@ -820,12 +829,37 @@ sub get_trsn{
 
   my %trsns;
   my $trsn_ref;
+  
+  #When using add-validation-data-to-exome, allow user-defined target region set name (exome or validation)
+  if ($self->add_validation_data_to_exome) {
+    my $user_trsn = $self->add_validation_data_to_exome;
+    $self->warning_message("Using '$user_trsn' target region specified by add-validation-data-to-exome.");
+    
+    #Assigns the target-region-set-name to the value defined by the user
+    foreach my $instrument_data (@instrument_data){
+      my $trsn = $instrument_data->target_region_set_name;
+      if ($trsn){
+        my $fl = Genome::FeatureList->get(name => $trsn);
+        $trsns{$trsn}=1;
+        if ($fl->content_type eq $user_trsn) {
+          $trsn_ref = $trsn;
+        }
+      }
+    }
+    
+    #Checks that $trsn_ref has been initialized
+    if(!defined $trsn_ref) {
+      die $self->error_message("Cannot provide --add-validation-data-to-exome specified target region set name. Feature list of the target region set name does not have expected 'exome' or 'validation' content type.");
+    }
 
-  foreach my $instrument_data (@instrument_data){
-    my $trsn = $instrument_data->target_region_set_name;
-    if ($trsn){
-      $trsns{$trsn}=1;
-      $trsn_ref = $trsn;
+  #Default behavior for choosing target-region-set-name   
+  }else{
+    foreach my $instrument_data (@instrument_data){
+      my $trsn = $instrument_data->target_region_set_name;
+      if ($trsn){
+        $trsns{$trsn}=1;
+        $trsn_ref = $trsn;
+      }
     }
   }
   

@@ -143,22 +143,6 @@ subtest 'multiple shortcutters result in only one user' => sub {
     }
     UR::Context->commit();
 
-    subtest 'lock not still held after commit is complete' => sub {
-        my $resource = Genome::SoftwareResult::User->_resolve_lock_name({
-                label => 'sponsor',
-                user => $users_hash{users}{sponsor},
-                software_result => $sr,
-        });
-        my $lock = Genome::Sys::LockProxy->new(
-            resource => $resource,
-            scope => 'site',
-        )->lock(
-            max_try => 1,
-        );
-        ok($lock, 'got lock');
-        $lock->unlock();
-    };
-
     my @users = $sr->users;
     is(scalar(@users), 2, 'users only added once across all three calls');
     my @sponsors = grep { $_->label eq 'sponsor' } @users;

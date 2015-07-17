@@ -104,14 +104,16 @@ sub _process {
             }
         }
 
-        if ($ar_subclass->can('prepare_annotation_index')) {
-            $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_or_create(
-                %params_for_reference, 
-                annotation_build => $self->annotation_build,
-            );
-            unless($annotation_index) {
-                $self->error_message('Error getting or creating annotation index!');
-                push @errors, $self->error_message;
+        if ($self->annotation_build_id) {
+            if ($ar_subclass->can('prepare_annotation_index')) {
+                $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_or_create(
+                    %params_for_reference, 
+                    annotation_build => $self->annotation_build,
+                );
+                unless($annotation_index) {
+                    $self->error_message('Error getting or creating annotation index!');
+                    push @errors, $self->error_message;
+                }
             }
         }
     } 
@@ -123,13 +125,15 @@ sub _process {
             }
         }
 
-        if ($ar_subclass->can('prepare_annotation_index')) {
-            $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_with_lock(
-                %params_for_reference, 
-                annotation_build => $self->annotation_build,
-            );
-            unless($annotation_index) {
-                return undef;
+        if ($self->annotation_build_id) {
+            if ($ar_subclass->can('prepare_annotation_index')) {
+                $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->get_with_lock(
+                    %params_for_reference, 
+                    annotation_build => $self->annotation_build,
+                );
+                unless($annotation_index) {
+                    return undef;
+                }
             }
         }
     } 

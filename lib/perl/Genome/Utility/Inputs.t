@@ -79,7 +79,6 @@ subtest "ARRAY" => sub {
 };
 
 subtest "Mixed ARRAY" => sub {
-    plan skip_all => "We don't currently support mixed arrays";
     my $inputs = {
         a => ['taco', Test::URObject->create()],
     };
@@ -91,9 +90,8 @@ subtest "Mixed ARRAY" => sub {
 };
 
 subtest "Nested ARRAY" => sub {
-    plan skip_all => "We don't currently support nested arrays";
     my $inputs = {
-        a => [[TestObject->create()]],
+        a => [[Test::URObject->create()]],
     };
 
     ok(Scalar::Util::blessed($inputs->{a}->[0]->[0]), "Raw ARRAY element is a blessed reference");
@@ -102,13 +100,37 @@ subtest "Nested ARRAY" => sub {
     cmp_deeply(decode(encode($inputs)), $inputs, "Roundtrip successful");
 };
 
+subtest "Non-object HASHREF" => sub {
+    my $inputs = {
+        a => {one => 1, two => 2},
+    };
+
+    cmp_deeply(decode(encode($inputs)), $inputs, "Roundtrip successful");
+};
+
+subtest "Nested HASHREFs and ARRAYs" => sub {
+    my $inputs = {
+        a => {one => 1, two => ['a', {three => 3}] },
+    };
+
+    cmp_deeply(decode(encode($inputs)), $inputs, "Roundtrip successful");
+};
+
+subtest "Ensure UR objects are encoded with proper encoder" => sub {
+    my $inputs = {
+        a => Test::URObject->create(),
+    };
+
+    my $encoded_inputs = encode($inputs);
+    cmp_deeply($encoded_inputs->{a}->{__decoder_type__}, 'UR object', "__decoder_type__ properly set");
+};
+
 subtest "Failure to convert hash to UR::Object" => sub {
     my $hash = { class => 'Test::URObject', id => 'blah', };
-    my $msg = "Couldn't convert hash to class: ".pp($hash);
     throws_ok(
-        sub{ Genome::Utility::Inputs::convert_hash_to_obj($hash);},
-        qr/$msg/,
-        'convert_hash_to_obj fails when object cannot be found',
+        sub{ Genome::Utility::Inputs::_decode_ur_object($hash);},
+        qr/Nothing returned/,
+        '_decode_ur_object fails when object cannot be found',
     );
 };
 

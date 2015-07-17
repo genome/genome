@@ -72,8 +72,12 @@ sub sample {
     my $self = shift;
 
     my @samples = uniq map {$_->sample} $self->alignment_result->instrument_data;
-    die "More than one sample" if scalar(@samples) > 1;
-    return $samples[0];
+    if (scalar(@samples) > 1) {
+        die $self->error_message("More than one sample for alignment result (%s): %s", $self->alignment_result->id, join(', ', map {$_->name} @samples));
+    }
+    else {
+        return $samples[0];
+    }
 }
 
 sub sample_id {

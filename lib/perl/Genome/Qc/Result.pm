@@ -3,6 +3,7 @@ package Genome::Qc::Result;
 use strict;
 use warnings;
 use Genome;
+use List::MoreUtils qw(uniq);
 
 class Genome::Qc::Result {
     is => 'Genome::SoftwareResult::StageableSimple',
@@ -158,7 +159,15 @@ sub _add_metrics {
 
 sub is_capture {
     my $self = shift;
-    return $self->alignment_result->instrument_data->is_capture;
+
+    my @instrument_data = $self->alignment_result->instrument_data;
+    my @is_capture = uniq map {$_->is_capture} @instrument_data;
+    if (scalar(@is_capture) > 1) {
+        die $self->error_message("Some instrument data in alignment result (%s) are capture and others aren't.", $self->alignment_result->id);
+    }
+    else {
+        return $is_capture[0];
+    }
 }
 
 1;

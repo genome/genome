@@ -13,6 +13,8 @@ require File::Compare;
 use Workflow::Simple;
 use Test::More;
 
+use Genome::Test::Factory::AnalysisProject;
+
 ok(init(), 'succesfully completed init');
 ok(test_dependent_cron_ref_align(), 'successfully completed test_dependent_cron_ref_align');
 ok(test_run_build(), 'successfully completed test_run_build');
@@ -93,6 +95,8 @@ sub test_dependent_cron_ref_align_init {
 
     $other_subject->default_genotype_data($genotype_data);
 
+    my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+
     my $build_36 = Genome::Model::Build::ReferenceSequence->get(name => 'NCBI-human-build36');
     isa_ok($build_36, 'Genome::Model::Build::ReferenceSequence', 'build_36') or return;
     my $dbsnp_36 = Genome::Model::ImportedVariationList->dbsnp_build_for_reference($build_36); # FIXME!
@@ -161,6 +165,27 @@ sub test_dependent_cron_ref_align_init {
         auto_assign_inst_data => 1,
     );
     isa_ok($build_37_ref_align, 'Genome::Model::ReferenceAlignment', 'build_37_ref_align') or return;
+
+    my ($c) = $anp->config_items;
+    $c->status('active');
+    map $anp->add_model_bridge(config_profile_item => $c, model => $_), $build_37_ref_align, $build_36_ref_align_with_existing_gm_model, $other_build_36_ref_align, $build_36_ref_align;
+
+    my $disabled_anp = Genome::Test::Factory::AnalysisProject->setup_object();
+
+    my $disabled_build_36_ref_align = Genome::Model::ReferenceAlignment->create(
+        name => 'Test Build 36 Reference Alignment, but with disabled config',
+        processing_profile => $ra_pp,
+        subject_id => $subject->id,
+        subject_class_name => $subject->class,
+        reference_sequence_build => $build_36,
+        auto_assign_inst_data => 1,
+    );
+    isa_ok($build_36_ref_align, 'Genome::Model::ReferenceAlignment', 'build_36_ref_align') or return;
+
+    my ($disabled_c) = $disabled_anp->config_items;
+    $disabled_c->status('disabled');
+
+    $disabled_anp->add_model_bridge(config_profile_item => $disabled_c, model => $disabled_build_36_ref_align);
 
     return 1;
 }

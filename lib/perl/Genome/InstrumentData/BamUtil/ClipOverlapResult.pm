@@ -93,8 +93,7 @@ sub create {
         return;
     }
 
-    my $allocation = $self->disk_allocations;
-    eval { $allocation->reallocate }; # FIXME pasted from GATk... I don't think this is needed? Should happen automatically
+    $self->_reallocate_disk_allocation;
 
     return $self;
 }

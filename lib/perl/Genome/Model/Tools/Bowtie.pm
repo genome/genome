@@ -24,7 +24,7 @@ class Genome::Model::Tools::Bowtie {
                     doc => 'a temporary directory for storing files',
                 },
     ],
-    doc => 'tools to work with the Bowtie aliger'
+    doc => 'tools to work with the Bowtie aligner'
 };
 
 sub help_detail {                           # This is what the user will see with --help <---
