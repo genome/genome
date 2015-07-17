@@ -28,6 +28,7 @@ $model->set_list('builds', $build);
 subtest 'no results' => sub{
     plan tests => 2;
 
+    $build->set_list('results',);
     my $cmd = $class->execute(models => $model, type => 'coverage');
     ok($cmd->result, 'execute for coverage');
     is($cmd->warning_message, 'No results for model: '.$model->__display_name__, 'correct warning mesage');

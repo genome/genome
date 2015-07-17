@@ -51,7 +51,7 @@ class Genome::Model::ReferenceAlignment::Command::RefCovMetrics {
     },
 };
 
-sub help_brief { 'get ref cov metrics from models' }
+sub help_brief { 'get coverage metrics from models' }
 sub help_detail {
     return <<HELP;
 This command will get reference coverage from a model's succeeded builds. It goes directly to the refcof software result, and does not look at the model/build metrics.
