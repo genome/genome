@@ -16,33 +16,24 @@ use File::Compare qw(compare);
 use Genome::Utility::Test qw(compare_ok);
 use Genome::File::Vcf::Differ;
 use Genome::Test::Factory::SoftwareResult::User;
+use Genome::Test::Data qw(get_test_file);
 
-	my $test_dir = "/gscmnt/gc2801/analytics/mfulton/testData";
+
+	my $test_dir = __FILE__.".d";
 	
 	my $output = Genome::Sys->create_temp_directory();
         
-	my $data_dir = '/gscmnt/gc2801/analytics/mfulton/genome2/lib/perl/Genome/Test/Data.pm.d/NA12878';
-        
-	my $bam = "$data_dir/NA12878.20slice.30X.aligned.bam";
-	my $bam2 = "$data_dir/NA12878.20slice.30X2.aligned.bam";
-        
-	my $split_bam = "$data_dir/NA12878.20slice.30X.splitters.bam";
-        
-	my $discordant_bam = "$data_dir/NA12878.20slice.30X.discordants.bam";
-        
-	my $reference_fasta = "$data_dir/human_g1k_v37_20_42220611-42542245.fasta";        
+	my $reference_fasta = get_test_file('NA12878', 'human_g1k_v37_20_42220611-42542245.fasta');
+	my $bam = get_test_file('NA12878', 'NA12878.20slice.30X.aligned.bam');
+	my $bam2 = get_test_file('NA12878', 'NA12878.20slice.30X.aligned.bam');
+	my $split_bam = get_test_file('NA12878','NA12878.20slice.30X.splitters.bam');
+	my $discordant_bam = get_test_file('NA12878','NA12878.20slice.30X.discordants.bam');
+
+ 
 	my $pkg2 = 'Genome::Model::Tools::DetectVariants2::SpeedseqSv';
 	
 	my $refbuild_id = 101947881;
 	my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(reference_sequence_build_id => $refbuild_id,);
-	my $int = 1;
-	my $bedExclude;
-	my $genotyper = 'true';
-	my $CNVnator = 'true';
-	my $annotate = 'true';
-	my $min_weight = 4;
-	my $trim = 0.0;
-	my $temp_dir = 'true'; 
 
 	my $params = "-R:$reference_fasta,-g,-d";
 
@@ -69,7 +60,6 @@ my $differ = Genome::File::Vcf::Differ->new("$output/svs.hq.sv.vcf.gz", "$test_d
 
 #compare_ok("$output/svs.hq.sv.vcf.gz","$test_dir/svs.hq.sv2.vcf.gz");
 
-compare_ok("$output/svs.hq.sv.vcf.gz.tbi","$test_dir/svs.hq.sv.vcf.gz.tbi");
 compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed");
 compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt");
 
