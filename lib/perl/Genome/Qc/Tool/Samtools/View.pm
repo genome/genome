@@ -1,10 +1,10 @@
-package Genome::Qc::Tool::BamFile;
+package Genome::Qc::Tool::Samtools::View;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Qc::Tool::BamFile {
+class Genome::Qc::Tool::Samtools::View {
     is => 'Genome::Qc::Tool',
 };
 
