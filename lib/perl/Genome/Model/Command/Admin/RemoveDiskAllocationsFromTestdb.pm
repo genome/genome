@@ -5,8 +5,8 @@ use warnings;
 
 use Genome;
 use DBI;
+use TestDbServer::CmdLine qw(search_databases get_template_by_id get_database_by_id);
 
-$DB::single=1;
 class Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb {
     is => 'Command::V2',
     doc => 'Remove disk allocations that were created while running under a test database',
@@ -51,7 +51,8 @@ sub _parse_database_port_from_env_var {
 }
 
 sub _resolve_template_name_from_env_var {
-    return 1;
+    my $test_db_name = _parse_database_name_from_env_var();
+    return __PACKAGE__->get_template_name_from_database_name($test_db_name);
 }
 
 sub _parse_database_connection_info_from_env_var {
@@ -94,6 +95,19 @@ sub report_allocations_to_delete {
 sub delete_allocations {
     my $self = shift;
 
+}
+
+sub get_template_name_for_database_name {
+    my($self, $db_name) = @_;
+
+    my @database_ids = search_databases(name => $db_name);
+    unless (@database_ids == 1) {
+        die $self->error_message('Expected 1 database named %s but got %d', $db_name, scalar(@database_ids));
+    }
+
+    my $database = get_database_by_id($databases[0]);
+    my $tmpl = get_template_by_id($database->{template_id});
+    return $tmpl->{name};
 }
 
 1;
