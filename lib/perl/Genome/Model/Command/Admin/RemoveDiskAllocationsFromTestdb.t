@@ -22,13 +22,13 @@ subtest 'default values' => sub {
     my $expected_port = '8394';
     local $ENV{XGENOME_DS_GMSCHEMA_SERVER} = qq(dbname=${expected_dbname};host=${expected_host};port=${expected_port});
 
-    is(Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_parse_database_name_from_env_var(),
+    is(Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_get_default_database_name(),
         $expected_dbname,
         'dbname');
-    is(Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_parse_database_server_from_env_var(),
+    is(Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_get_default_database_server(),
         $expected_host,
         'host');
-    is(Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_parse_database_port_from_env_var(),
+    is(Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_get_default_database_port(),
         $expected_port,
         'port');
 };

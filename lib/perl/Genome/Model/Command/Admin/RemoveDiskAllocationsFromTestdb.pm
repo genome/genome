@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use DBI;
 use TestDbServer::CmdLine qw(search_databases get_template_by_id get_database_by_id);
+use Genome::Config;
 
 class Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb {
     is => 'Command::V2',
@@ -13,45 +14,45 @@ class Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb {
     has => [
         database_name => {
             is => 'Text',
-            default_value => _parse_database_name_from_env_var(),
-            doc => 'test database name, derived from XGENOME_DS_GMSCHEMA_SERVER env var',
+            default_value => _get_default_database_name(),
+            doc => 'test database name, derived from the ds_gmschema_server config value',
         },
         database_server => {
             is => 'Text',
-            default_value => _parse_database_server_from_env_var(),
-            doc => 'database server name, derived from XGENOME_DS_GMSCHEMA_SERVER env var',
+            default_value => _get_default_database_server(),
+            doc => 'database server name, derived from the ds_gmschema_server config value',
         
         },
         database_port => {
             is => 'Text',
-            default_value => _parse_database_port_from_env_var(),
-            doc => 'database listening port, derived from XGENOME_DS_GMSCHEMA_SERVER env var',
+            default_value => _get_default_database_port(),
+            doc => 'database listening port, derived from the ds_gmschema_server config value',
         },
         template_name => {
             is => 'Text',
-            default_value => _resolve_template_name_from_env_var(),
-            doc => 'template database name, resolved from the database host in env XGENOME_DS_GMSCHEMA_SERVER env var',
+            default_value => _get_default_template_name(),
+            doc => 'template database name, resolved from the database host in the ds_gmschema_server config value',
         },
     ],
 };
 
-sub _parse_database_name_from_env_var {
+sub _get_default_database_name {
     my $conn = _parse_database_connection_info_from_env_var();
     return $conn->{dbname};
 }
 
-sub _parse_database_server_from_env_var {
+sub _get_default_database_server {
     my $conn = _parse_database_connection_info_from_env_var();
     return $conn->{host};
 }
 
-sub _parse_database_port_from_env_var {
+sub _get_default_database_port {
     my $conn = _parse_database_connection_info_from_env_var();
-    return $conn->{port};
+    return( $conn->{port} // 5432 );
 }
 
-sub _resolve_template_name_from_env_var {
-    my $test_db_name = _parse_database_name_from_env_var();
+sub _get_default_template_name {
+    my $test_db_name = __PACKAGE__->_get_default_database_name();
     return __PACKAGE__->get_template_name_from_database_name($test_db_name);
 }
 
