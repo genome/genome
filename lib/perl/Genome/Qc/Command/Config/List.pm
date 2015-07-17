@@ -15,7 +15,4 @@ class Genome::Qc::Command::Config::List {
     doc => 'List Qc configurations',
 };
 
-sub sub_command_sort_position { 3 }
-
 1;
-
