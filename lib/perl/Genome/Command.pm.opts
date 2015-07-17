@@ -4438,37 +4438,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>fix-orphaned-allocations-for-dv2-results',
-      [
-        'dry-run!',
-        undef,
-        'build=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>failed-model-ticket-status',
-      [
-        'color!',
-        undef,
-        'owner=s',
-        'files',
-        'summary-only!',
-        undef,
-        'include-subjects!',
-        undef,
-        'tickets=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>cleanup-succeeded',
-      [
-        'models=s@',
-        undef,
-        'help!',
-        undef
-      ],
       '>find-in-latest-build',
       [
         'search-string=s',
@@ -4491,6 +4460,48 @@ $Genome::Command::OPTS_SPEC = [
         'hide-statuses=s@',
         'files',
         'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>cleanup-succeeded',
+      [
+        'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>failed-model-ticket-status',
+      [
+        'color!',
+        undef,
+        'owner=s',
+        'files',
+        'summary-only!',
+        undef,
+        'include-subjects!',
+        undef,
+        'tickets=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>fix-orphaned-allocations-for-dv2-results',
+      [
+        'dry-run!',
+        undef,
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>purge-software-results-from-analysis-project',
+      [
+        'days-to-retain=s',
+        undef,
+        'dry-run!',
+        undef,
+        'analysis-projects=s@',
         undef,
         'help!',
         undef
