@@ -4706,6 +4706,30 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>ref-cov-metrics',
+      [
+        'type=s',
+        [
+          'alignment',
+          'coverage'
+        ],
+        'output-path=s',
+        'files',
+        'row-ids=s@',
+        [
+          'model_id',
+          'model_name',
+          'result_id',
+          'sample_name',
+          'sample_common_name'
+        ],
+        'separator=s',
+        'files',
+        'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>submission-summary',
       [
         'sample-mapping-file=s',
