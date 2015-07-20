@@ -412,7 +412,7 @@ sub get_trash_folder {
 }
 
 sub _extract_aggr {
-    return (shift =~ m!/(aggr\d{2})/!)[0];
+    return (shift =~ m!/(aggr\d+)/!)[0];
 }
 
 
