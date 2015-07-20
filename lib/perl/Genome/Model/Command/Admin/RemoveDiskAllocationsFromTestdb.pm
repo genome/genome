@@ -83,10 +83,73 @@ sub is_running_in_test_env {
 
 }
 
+my $sql_for_allocations = q(SELECT id FROM disk.allocation ORDER BY id);
 sub collect_newly_created_allocations {
     my $self = shift;
 
+    my $tmpl_dbh = $self->_dbh_for_template();
+    my $db_dbh = $self->_dbh_for_database();
+
+    my $tmpl_sth = $tmpl_dbh->prepare($sql_for_allocations);
+    $tmpl_sth->execute();
+    my $db_sth = $db_dbh->prepare($sql_for_allocations);
+    $db_sth->execute();
+
+    my @new_allocations_in_database;
+    my($next_tmpl_allocation_id, $next_db_allocation_id)
+    while(1) {
+        unless (defined $next_tmpl_allocation_id) {
+            ($next_tmpl_allocation_id) = $tmpl_sth->fetchrow_array();
+        }
+        unless (defined $next_db_allocation_id) {
+            ($next_db_allocation_id) = $db_sth->fetchrow_array();
+        }
+
+        last unless defined($next_db_allocation_id);
+
+        if ($next_tmpl_allocation_id eq $next_db_allocation_id) {
+            # this allocation exists in both the template and test database, ignore it
+            undef($next_tmpl_allocation_id);
+            undef($next_db_allocation_id);
+
+        } elsif ($next_tmpl_allocation_id lt $next_db_allocation_id) {
+            # This allocation was deleted in the test database?!
+            undef($next_tmpl_allocation_id);
+
+        } else {
+            # This allocation was created in the test database
+            push @new_allocations_in_database, $next_db_allocation_id;
+            undef($next_db_allocation_id);
+        }
+    }
+    return @new_allocations_in_database;
 }
+
+sub _dbh_for_template {
+    my $self = shift;
+    return $self->_dbh_for('template');
+}
+
+sub _dbh_for_database {
+    my $self = shift;
+    return $self->_dbh_for('database');
+}
+
+sub _dbh_for {
+    my($self, $db_or_tmpl) = @_;
+
+    my $db_name = $db_or_tmpl eq 'database'
+                    ? $self->database_name
+                    : $self->template_name;
+    my $db_host = $self->database_server;
+    my $db_port = $self->database_port;
+
+    return DBI->connect("dbi:Pg:dbname=${db_name};host=${db_host};port=${db_port}",
+                        Genome::Config::get('ds_gmschema_login'),
+                        Genome::Config::get('ds_gmschema_auth'),
+                        { AutoCommit => 0, RaiseError => 1, PrintError => 0 });
+}
+
 
 sub report_allocations_to_delete {
     my $self = shift;
