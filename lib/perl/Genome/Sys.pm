@@ -841,6 +841,8 @@ sub create_directory {
 sub make_path {
     my ($path) = validate_pos(@_, {type => SCALAR});
 
+    return 1 if -d $path; #This also triggers the automounter so mkdir() gets EEXIST instead of EACCES.
+
     my $gid = gidgrnam(Genome::Config::get('sys_group'));
 
     my @dirs = File::Spec->splitdir($path);
