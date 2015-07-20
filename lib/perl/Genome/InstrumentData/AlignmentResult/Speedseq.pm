@@ -184,4 +184,10 @@ sub bwa_version {
     return $bwa_version;
 }
 
+sub _modify_params_for_lookup_hash {
+    my $class = shift;
+
+    return Genome::InstrumentData::AlignmentResult::Merged::Speedseq->_modify_params_for_lookup_hash(@_);
+}
+
 1;
