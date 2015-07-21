@@ -42,25 +42,25 @@ subtest 'collect_newly_created_allocations' => sub {
     no warnings 'redefine';
 
     local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_template_allocations = sub {
-        make_iterator_from_list(qw(b c e f i j));
+        make_iterator_from_list(map { Genome::Disk::StrippedDownAllocation->new(id => $_) } qw(b c e f i j));
     };
 
     local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_database_allocations = sub {
-        make_iterator_from_list(qw(a b c e f h i j k));
+        make_iterator_from_list(map { Genome::Disk::StrippedDownAllocation->new(id => $_) } qw(a b c e f h i j k));
     };
 
-    my @expected = qw(a h k);
+    my @expected = map { Genome::Disk::StrippedDownAllocation->new(id => $_) } qw(a h k);
     my @got = $cmd->collect_newly_created_allocations();
     is_deeply(\@got,
               \@expected,
               'got differences');
 
     local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_template_allocations = sub {
-        make_iterator_from_list(qw(b c e f i j));
+        make_iterator_from_list(map { Genome::Disk::StrippedDownAllocation->new(id => $_) } qw(b c e f i j));
     };
 
     local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_database_allocations = sub {
-        make_iterator_from_list(qw(b c e f i j));
+        make_iterator_from_list(map { Genome::Disk::StrippedDownAllocation->new(id => $_) } qw(b c e f i j));
     };
     @got = $cmd->collect_newly_created_allocations();
     is_deeply([],

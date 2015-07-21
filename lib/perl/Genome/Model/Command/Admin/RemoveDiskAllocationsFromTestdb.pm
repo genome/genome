@@ -8,6 +8,8 @@ use DBI;
 use TestDbServer::CmdLine qw(search_databases get_template_by_id get_database_by_id);
 use Genome::Config;
 use Try::Tiny;
+use Sub::Install qw();
+use Sub::Name qw();
 
 class Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb {
     is => 'Command::V2',
@@ -92,33 +94,33 @@ sub collect_newly_created_allocations {
     my $db_allocations = $self->_make_iterator_for_database_allocations();
 
     my @new_allocations_in_database;
-    my($next_tmpl_allocation_id, $next_db_allocation_id);
+    my($next_tmpl_allocation, $next_db_allocation);
     while(1) {
-        unless (defined $next_tmpl_allocation_id) {
-            $next_tmpl_allocation_id = $tmpl_allocations->();
+        unless (defined $next_tmpl_allocation) {
+            $next_tmpl_allocation = $tmpl_allocations->();
         }
-        unless (defined $next_db_allocation_id) {
-            $next_db_allocation_id = $db_allocations->();
+        unless (defined $next_db_allocation) {
+            $next_db_allocation = $db_allocations->();
         }
 
-        last unless defined($next_db_allocation_id);
+        last unless defined($next_db_allocation);
 
-        if (!defined($next_tmpl_allocation_id)
+        if (!defined($next_tmpl_allocation)
             or
-            $next_tmpl_allocation_id gt $next_db_allocation_id
+            $next_tmpl_allocation->id gt $next_db_allocation->id
         ) {
             # This allocation was created in the test database
-            push @new_allocations_in_database, $next_db_allocation_id;
-            undef($next_db_allocation_id);
+            push @new_allocations_in_database, $next_db_allocation;
+            undef($next_db_allocation);
 
-        } elsif ($next_tmpl_allocation_id eq $next_db_allocation_id) {
+        } elsif ($next_tmpl_allocation->id eq $next_db_allocation->id) {
             # this allocation exists in both the template and test database, ignore it
-            undef($next_tmpl_allocation_id);
-            undef($next_db_allocation_id);
+            undef($next_tmpl_allocation);
+            undef($next_db_allocation);
 
         } else {
             # This allocation was deleted in the test database?!
-            undef($next_tmpl_allocation_id);
+            undef($next_tmpl_allocation);
 
         }
     }
@@ -145,7 +147,7 @@ sub _make_iterator_for_fetching_allocations {
 
     return sub {
         my @row = $sth->fetchrow_array;
-        return $row[0];
+        return Genome::Disk::StrippedDownAllocation->new(id => $row[0]);
     };
 }
 
@@ -201,6 +203,35 @@ sub get_template_name_for_database_name {
         $tmpl_name = $tmpl->{name};
     };
     return $tmpl_name;
+}
+
+package Genome::Disk::StrippedDownAllocation;
+
+use constant required_attrs => qw(id);
+
+sub new {
+    my($class, %params) = @_;
+    foreach my $attr_name ( required_attrs ) {
+        unless (exists $params{$attr_name}) {
+            Carp::croak("$attr_name is a required atrtibute of ".__PACKAGE__);
+        }
+    }
+    return bless \%params, $class;
+}
+
+foreach my $attr_name ( required_attrs ) {
+    my $full_name = join('::', __PACKAGE__, $attr_name);
+    my $code = Sub::Name::subname $full_name => sub {
+        my $self = shift;
+        if (@_) {
+            $self->{$attr_name} = shift;
+        }
+        return $self->{$attr_name};
+    };
+    Sub::Install::install_sub({
+        code => $code,
+        as => $attr_name,
+    });
 }
 
 1;
