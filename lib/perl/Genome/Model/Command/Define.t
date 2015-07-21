@@ -251,14 +251,5 @@ sub delete_model {
     ok($model->delete,'delete model');
 }
 
-sub is_group_writable {
-    my $path = shift;
-    my $mode = (stat($path))[2];
-
-    my $group_write = ($mode & S_IWGRP);
-
-    ok($group_write>0, "data directory is group writable");    
-
-}
-
 1;
+
