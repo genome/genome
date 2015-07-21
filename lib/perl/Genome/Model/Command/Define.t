@@ -25,9 +25,7 @@ successful_create_model({
 
 my $group1 = Genome::ModelGroup->create(name => "test 1");
 my $group2 = Genome::ModelGroup->create(name => "test 2");
-
-my $groups = join ",", ($group1->name, $group2->name);
-test_model_from_params_with_group($groups);
+test_model_from_params_with_group($group1, $group2);
 
 done_testing();
 
@@ -36,14 +34,11 @@ done_testing();
 
 my $cnt = 0;
 sub test_model_from_params_with_group {
-    my $model_group_name_string = shift;
+    my (@groups) = @_;
     # Get all convergence models associated with each model group we are testing and turn off their automatic building 
     # so nothing happens when we add to a model group in the next test
-    my @model_group_names = split ",", $model_group_name_string;
-    my @groups;
-    for my $model_group_name (@model_group_names) {
-        push @groups, Genome::ModelGroup->get(name => $model_group_name); 
-        my @convergence_models = Genome::Model::Convergence->get(name => $model_group_name);
+    for my $model_group (@groups) {
+        my @convergence_models = Genome::Model::Convergence->get(name => $model_group->name);
         for my $convergence_model (@convergence_models) {
             $convergence_model->auto_build_alignments(0);
         }
