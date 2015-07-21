@@ -22,7 +22,7 @@ my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 # test create for a genome model with defined model_name
 test_model_from_params(
     model_params => {
-        model_name              => "test_model_" . Genome::Sys->username,
+        model_name              => "test_model_1",
         subject_name            => $default_subject_name,
         processing_profile_name => $default_pp_name,
         reference_sequence_build => '93636924', #NCBI-human build 36
@@ -32,7 +32,7 @@ test_model_from_params(
 # test create with a different reference_sequence_build name
 test_model_from_params(
     model_params => {
-        model_name              => "test_model_" . Genome::Sys->username,
+        model_name              => "test_model_2",
         subject_name            => $default_subject_name,
         processing_profile_name => $default_pp_name,
         reference_sequence_build => '102835775'
@@ -195,15 +195,7 @@ sub successful_create_model {
         is($model->$accessor,$value,$accessor .' model indirect accessor');
     }
 
-    SKIP: {
-        skip 'no model to delete', 2 unless $model;
-        # This would normally emit a warning message about deleting the create command object
-        # but in the process of deleting the model it will also delete the command object,
-        # leaving us no way to get the warning messages back.  Punt and just ignore them...
-        delete_model($model);
-    }
 }
-
 
 sub failed_create_model {
     my $reason = shift;
@@ -235,20 +227,6 @@ sub failed_create_model {
     #like($error_messages[0], qr($reason), 'Error message about '. $reason);
     ok(!scalar(@warning_messages), 'no warning message');
     ok(!scalar(@status_messages), 'no status message');
-}
-
-sub delete_model {
-    my $model = shift;
-
-    # Remove the model from any model groups to which it is a member, so that deletion will succeed
-    for my $model_group ($model->model_groups) {
-        if ($model_group->convergence_model) {
-            $model_group->convergence_model->auto_build_alignments(0);
-        }
-        $model_group->unassign_models($model);
-    }
-    
-    ok($model->delete,'delete model');
 }
 
 1;
