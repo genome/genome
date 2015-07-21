@@ -40,7 +40,7 @@ EOS
 sub _create_profile_items {
     my $self = shift;
 
-    my $status = $self->store_only ? 'disabled' : 'active';
+    my $status = $self->store_only ? 'inactive' : 'active';
 
     my $result = Genome::Config::Profile::Item->create_from_file_path(
         file_path => $self->config_file,
