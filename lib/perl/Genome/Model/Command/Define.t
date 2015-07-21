@@ -18,13 +18,12 @@ my $processing_profile = Genome::Test::Factory::ProcessingProfile::ReferenceAlig
 my $refseq = Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build;
 
 # test create for a genome model with defined model_name
-my $group1 = Genome::ModelGroup->create(name => "test 1");
 successful_create_model({
         model_name               => "test_model_1",
         subject_name             => $subject->name,
         processing_profile       => $processing_profile,
         reference_sequence_build => $refseq->id,
-        groups => [ map { Genome::ModelGroup->create(name => "test ".$_); } (1..2) ],
+        groups => [ sort { $a->id cmp $b->id }  map { Genome::ModelGroup->create(name => "test ".$_); } (1..2) ],
     });
 
 done_testing();
@@ -92,14 +91,7 @@ sub successful_create_model {
     is($model->processing_profile,$processing_profile,'model processing_profile_id indirect accessor');
     is($model->type_name,$processing_profile->type_name,'model type_name indirect accessor');
 
-
-    # test that model group membership is as expected
-    SKIP: {
-        skip 'only test group membership if one is expected', 1 unless $params{groups};
-        my @groups_expected = @{$params{groups}};
-        my @groups_actual = $model->model_groups;
-        is(scalar(@groups_actual), scalar(@groups_expected), "Model is a member of the correct number of groups");
-    }
+    is_deeply([$model->model_groups], $params{groups}, "Model is a member of the correct number of groups");
 
 }
 
