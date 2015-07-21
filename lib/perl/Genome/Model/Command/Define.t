@@ -31,8 +31,6 @@ sub successful_create_model {
     my $params = shift;
     my %params = %{$params};
 
-    my $expected_user_name = Genome::Sys->username;
-  
     my $create_command = Genome::Model::Command::Define::ReferenceAlignment->create(%params);
     isa_ok($create_command,'Genome::Model::Command::Define::Helper');
 
@@ -53,19 +51,13 @@ sub successful_create_model {
 
     my @create_status_messages = grep { /Created model:/ } @status_messages;
     ok(@create_status_messages, 'Got create status message');
-    # FIXME - some of those have a second message about creating a directory
-    # should probably test for that too
-    delete($params{model_name});
-    delete($params{reference_sequence_build}); #This property will be the build, not the name/ID
     my $model_id = $create_command->result_model_id;
     ok($model_id, 'got created model id') or die;
     my $model = Genome::Model->get($model_id,);
     ok($model, 'creation worked for '. $model->name .' model');
-    for my $property_name (keys %params) {
-        # Don't test this one, since it comes in as a string and gets split. They will not be equal
-        next if ($property_name eq "groups");
-        is($model->$property_name,$params{$property_name},$property_name .' model indirect accessor');
-    }
+    is($model->name, $params{model_name}, 'model_name');
+    is($model->reference_sequence_build->id, $params{reference_sequence_build}, 'reference_sequence_build');
+    my $expected_user_name = Genome::Sys->username;
     is($model->run_as,$expected_user_name,'model run_as accesssor');
     is($model->created_by,$expected_user_name,'model created_by accesssor');
     ok($model->creation_date, 'model creation_date accessor');
