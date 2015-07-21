@@ -17,7 +17,6 @@ my $subject = Genome::Test::Factory::Sample->setup_object;
 my $processing_profile = Genome::Test::Factory::ProcessingProfile::ReferenceAlignment->setup_object;
 my $refseq = Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build;
 
-# test create for a genome model with defined model_name
 successful_create_model({
         model_name               => "test_model_1",
         subject_name             => $subject->name,
@@ -32,12 +31,7 @@ sub successful_create_model {
     my $params = shift;
     my %params = %{$params};
 
-    if (!$params{subject_name}) {
-        $params{subject_name} = 'invalid_subject_name';
-    }
     my $expected_user_name = Genome::Sys->username;
-    my $current_time = UR::Context->current->now;
-    my ($expected_date) = split('\w',$current_time);
   
     my $create_command = Genome::Model::Command::Define::ReferenceAlignment->create(%params);
     isa_ok($create_command,'Genome::Model::Command::Define::Helper');
@@ -73,7 +67,6 @@ sub successful_create_model {
     ok(@create_status_messages, 'Got create status message');
     # FIXME - some of those have a second message about creating a directory
     # should probably test for that too
-    delete($params{bare_args});
     delete($params{model_name});
     delete($params{reference_sequence_build}); #This property will be the build, not the name/ID
     my $model_id = $create_command->result_model_id;
