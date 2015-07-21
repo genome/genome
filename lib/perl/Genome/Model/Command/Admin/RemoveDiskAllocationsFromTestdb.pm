@@ -7,6 +7,7 @@ use Genome;
 use DBI;
 use TestDbServer::CmdLine qw(search_databases get_template_by_id get_database_by_id);
 use Genome::Config;
+use Try::Tiny;
 
 class Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb {
     is => 'Command::V2',
@@ -81,49 +82,73 @@ sub execute {
 sub is_running_in_test_env {
     my $self = shift;
 
+    return $ENV{XGENOME_TESTING};
 }
 
-my $sql_for_allocations = q(SELECT id FROM disk.allocation ORDER BY id);
 sub collect_newly_created_allocations {
     my $self = shift;
 
-    my $tmpl_dbh = $self->_dbh_for_template();
-    my $db_dbh = $self->_dbh_for_database();
-
-    my $tmpl_sth = $tmpl_dbh->prepare($sql_for_allocations);
-    $tmpl_sth->execute();
-    my $db_sth = $db_dbh->prepare($sql_for_allocations);
-    $db_sth->execute();
+    my $tmpl_allocations = $self->_make_iterator_for_template_allocations();
+    my $db_allocations = $self->_make_iterator_for_database_allocations();
 
     my @new_allocations_in_database;
-    my($next_tmpl_allocation_id, $next_db_allocation_id)
+    my($next_tmpl_allocation_id, $next_db_allocation_id);
     while(1) {
         unless (defined $next_tmpl_allocation_id) {
-            ($next_tmpl_allocation_id) = $tmpl_sth->fetchrow_array();
+            $next_tmpl_allocation_id = $tmpl_allocations->();
         }
         unless (defined $next_db_allocation_id) {
-            ($next_db_allocation_id) = $db_sth->fetchrow_array();
+            $next_db_allocation_id = $db_allocations->();
         }
 
         last unless defined($next_db_allocation_id);
 
-        if ($next_tmpl_allocation_id eq $next_db_allocation_id) {
+        if (!defined($next_tmpl_allocation_id)
+            or
+            $next_tmpl_allocation_id gt $next_db_allocation_id
+        ) {
+            # This allocation was created in the test database
+            push @new_allocations_in_database, $next_db_allocation_id;
+            undef($next_db_allocation_id);
+
+        } elsif ($next_tmpl_allocation_id eq $next_db_allocation_id) {
             # this allocation exists in both the template and test database, ignore it
             undef($next_tmpl_allocation_id);
             undef($next_db_allocation_id);
 
-        } elsif ($next_tmpl_allocation_id lt $next_db_allocation_id) {
+        } else {
             # This allocation was deleted in the test database?!
             undef($next_tmpl_allocation_id);
 
-        } else {
-            # This allocation was created in the test database
-            push @new_allocations_in_database, $next_db_allocation_id;
-            undef($next_db_allocation_id);
         }
     }
     return @new_allocations_in_database;
 }
+
+sub _make_iterator_for_template_allocations {
+    my $self = shift;
+    my $dbh = $self->_dbh_for_template();
+    return $self->_make_iterator_for_fetching_allocations($dbh);
+}
+
+sub _make_iterator_for_database_allocations {
+    my $self = shift;
+    my $dbh = $self->_dbh_for_database();
+    return $self->_make_iterator_for_fetching_allocations($dbh);
+}
+
+my $sql_for_allocations = q(SELECT id FROM disk.allocation ORDER BY id);
+sub _make_iterator_for_fetching_allocations {
+    my($self, $dbh) = @_;
+    my $sth = $dbh->prepare($sql_for_allocations);
+    $sth->execute();
+
+    return sub {
+        my @row = $sth->fetchrow_array;
+        return $row[0];
+    };
+}
+
 
 sub _dbh_for_template {
     my $self = shift;
@@ -164,14 +189,18 @@ sub delete_allocations {
 sub get_template_name_for_database_name {
     my($self, $db_name) = @_;
 
-    my @database_ids = search_databases(name => $db_name);
-    unless (@database_ids == 1) {
-        die $self->error_message('Expected 1 database named %s but got %d', $db_name, scalar(@database_ids));
-    }
+    my $tmpl_name;
+    try {
+        my @database_ids = search_databases(name => $db_name);
+        unless (@database_ids == 1) {
+            die $self->error_message('Expected 1 database named %s but got %d', $db_name, scalar(@database_ids));
+        }
 
-    my $database = get_database_by_id($databases[0]);
-    my $tmpl = get_template_by_id($database->{template_id});
-    return $tmpl->{name};
+        my $database = get_database_by_id($database_ids[0]);
+        my $tmpl = get_template_by_id($database->{template_id});
+        $tmpl_name = $tmpl->{name};
+    };
+    return $tmpl_name;
 }
 
 1;

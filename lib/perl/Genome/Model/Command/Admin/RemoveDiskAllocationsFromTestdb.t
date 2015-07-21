@@ -11,7 +11,7 @@ use warnings;
 use above 'Genome';
 use Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb;
 
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 
 subtest 'default values' => sub {
@@ -33,3 +33,42 @@ subtest 'default values' => sub {
         'port');
 };
 
+subtest 'collect_newly_created_allocations' => sub {
+    plan tests => 3;
+
+    my $cmd = Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb->create();
+    ok($cmd, 'created Command');
+
+    no warnings 'redefine';
+
+    local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_template_allocations = sub {
+        make_iterator_from_list(qw(b c e f i j));
+    };
+
+    local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_database_allocations = sub {
+        make_iterator_from_list(qw(a b c e f h i j k));
+    };
+
+    my @expected = qw(a h k);
+    my @got = $cmd->collect_newly_created_allocations();
+    is_deeply(\@got,
+              \@expected,
+              'got differences');
+
+    local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_template_allocations = sub {
+        make_iterator_from_list(qw(b c e f i j));
+    };
+
+    local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_database_allocations = sub {
+        make_iterator_from_list(qw(b c e f i j));
+    };
+    @got = $cmd->collect_newly_created_allocations();
+    is_deeply([],
+              \@got,
+              'no differences');
+};
+
+sub make_iterator_from_list {
+    my @list = @_;
+    return sub { return shift @list };
+}
