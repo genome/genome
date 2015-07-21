@@ -53,7 +53,7 @@ sub _get_default_database_port {
 
 sub _get_default_template_name {
     my $test_db_name = __PACKAGE__->_get_default_database_name();
-    return __PACKAGE__->get_template_name_from_database_name($test_db_name);
+    return __PACKAGE__->get_template_name_for_database_name($test_db_name);
 }
 
 sub _parse_database_connection_info_from_env_var {
