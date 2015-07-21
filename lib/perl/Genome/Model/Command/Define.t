@@ -16,24 +16,20 @@ my $subject = Genome::Test::Factory::Sample->setup_object;
 my $processing_profile = Genome::Test::Factory::ProcessingProfile::ReferenceAlignment->setup_object;
 
 # test create for a genome model with defined model_name
-test_model_from_params(
-    model_params => {
+successful_create_model({
         model_name              => "test_model_1",
         subject_name            => $subject->name,
         processing_profile      => $processing_profile,
         reference_sequence_build => '93636924', #NCBI-human build 36
-    },
-);
+    });
 
 # test create with a different reference_sequence_build name
-test_model_from_params(
-    model_params => {
+successful_create_model({
         model_name              => "test_model_2",
         subject_name            => $subject->name,
         processing_profile      => $processing_profile,
         reference_sequence_build => '102835775'
-    },
-);
+    });
 
 my $group1 = Genome::ModelGroup->create(name => "test 1");
 my $group2 = Genome::ModelGroup->create(name => "test 2");
@@ -62,25 +58,13 @@ sub test_model_from_params_with_group {
     }
 
     # test normal model and processing profile creation for reference alignment with a model group addition
-    test_model_from_params(
-        model_params => {
+    successful_create_model({
             model_name              => "test_model_incomplete_data_dir_" . Genome::Sys->username,
             subject_name            => $subject->name,
             processing_profile      => $processing_profile,
             reference_sequence_build => '93636924', #NCBI-human build 36
             groups => \@groups,
-        },
-    );
-}
-
-
-sub test_model_from_params {
-    my %params = @_;
-    my %test_params = %{$params{'test_params'}} if defined $params{'test_params'};
-
-    diag("Test: ".++$cnt);
-    my %model_params = %{$params{'model_params'}};
-    &successful_create_model(\%model_params);
+        });
 }
 
 sub successful_create_model {
