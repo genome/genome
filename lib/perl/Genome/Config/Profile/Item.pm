@@ -134,7 +134,7 @@ sub _create_allocation_for_file {
 
     my $allocation = Genome::Disk::Allocation->create(
         owner_id            => $self->id,
-        disk_group_name     => 'info_apipe_ref',
+        disk_group_name     => Genome::Config::get('disk_group_references'),
         allocation_path     => 'analysis_configuration/' . $self->id,
         owner_class_name    => $self->class,
         kilobytes_requested => $self->_get_size_in_kb($file_to_store),
