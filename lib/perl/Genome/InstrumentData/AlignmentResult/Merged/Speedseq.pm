@@ -85,7 +85,7 @@ sub create {
         version => $self->aligner_version,
         temp_directory => $temp_directory,
     );
-    my %aligner_params = eval($self->aligner_params);
+    my %aligner_params = $class->_parse_aligner_params($self->aligner_params);
     $aligner_params{threads} = $self->_available_cpu_count;
     my $command = Genome::Model::Tools::Speedseq::Realign->create(%params, %aligner_params);
     unless ($command->execute) {
@@ -139,7 +139,7 @@ sub _modify_params_for_lookup_hash {
     my $aligner_param_str = delete $params_ref->{aligner_params};
     return unless $aligner_param_str;
 
-    my %aligner_params = eval($aligner_param_str);
+    my %aligner_params = $class->_parse_aligner_params($aligner_param_str);
 
     delete $aligner_params{sort_memory};
     delete $aligner_params{verbose};
@@ -152,6 +152,20 @@ sub _modify_params_for_lookup_hash {
     $params_ref->{aligner_params} = $aligner_param_str;
 
     return $params_ref;
+}
+
+sub _parse_aligner_params {
+    my $class = shift;
+    my $param_str = shift;
+
+    local $@;
+    my %params_parsed = eval($param_str);
+    my $error = $@;
+    if($error) {
+        die $class->error_message('Failed to parse aligner params: %s', $error);
+    }
+
+    return %params_parsed;
 }
 
 1;
