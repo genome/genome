@@ -11,6 +11,8 @@ use Try::Tiny;
 use Sub::Install qw();
 use Sub::Name qw();
 
+use constant KB_IN_ONE_GB => 1024 * 1024;
+
 class Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb {
     is => 'Command::V2',
     doc => 'Remove disk allocations that were created while running under a test database',
@@ -180,8 +182,16 @@ sub _dbh_for {
 
 
 sub report_allocations_to_delete {
-    my $self = shift;
+    my($self, @allocations) = @_;
 
+    my $kb_sum = 0;
+    foreach my $alloc ( @allocations ) {
+        $kb_sum += $alloc->kilobytes_requested;
+    }
+
+    $self->status_message('Removing %d GB in %d allocations.',
+                          int($kb_sum / KB_IN_ONE_GB),
+                          scalar(@allocations));
 }
 
 sub delete_allocations {

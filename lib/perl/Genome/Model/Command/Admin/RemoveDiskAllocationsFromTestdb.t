@@ -11,7 +11,7 @@ use warnings;
 use above 'Genome';
 use Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb;
 
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 
 subtest 'default values' => sub {
@@ -68,11 +68,59 @@ subtest 'collect_newly_created_allocations' => sub {
               'no differences');
 };
 
+subtest 'report_allocations_to_delete' => sub {
+    plan tests => 2;
+
+    my $cmd = Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb->create();
+    $cmd->dump_status_messages(0);
+    $cmd->queue_status_messages(1);
+
+    my $three_gb_in_kb = 3 * 1024 * 1024;
+    my $one_gb_in_kb = 1024 * 1024;
+    my @allocations = ( Genome::Disk::StrippedDownAllocation->new(id => 'a', kilobytes_requested => $three_gb_in_kb),
+                        Genome::Disk::StrippedDownAllocation->new(id => 'b', kilobytes_requested => $three_gb_in_kb),
+                        Genome::Disk::StrippedDownAllocation->new(id => 'c', kilobytes_requested => $one_gb_in_kb),
+                      );
+
+    $cmd->report_allocations_to_delete(@allocations);
+    is_deeply([ $cmd->status_messages ],
+              [ 'Removing 7 GB in 3 allocations.'],
+              'report on deleted allocations');
+
+
+    $cmd->report_allocations_to_delete();
+    is_deeply([ $cmd->status_messages ],
+              [ 'Removing 7 GB in 3 allocations.',
+                'Removing 0 GB in 0 allocations.' ],
+              'Report when no allocations are to be deleted');
+};
+
+#
+#    no warnings 'redefine';
+#
+#    local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_template_allocations = sub {
+#        make_allocation_iterator_from_list_with_kb_requested(b => 1, c => 2);
+#    };
+#    local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_database_allocations = sub {
+#        make_allocation_iterator_from_list_with_kb_requested(a => $three_gb_in_kb, b => 1, c => 2, d => $one_gb_in_kb);
+#    };
+#};
+
 sub make_allocation_iterator_from_list {
     my @list = @_;
     return sub {
         my $alloc_id = shift @list;
         return unless defined $alloc_id;
         return Genome::Disk::StrippedDownAllocation->new(id => $alloc_id, kilobytes_requested => 1);
+    };
+}
+
+sub make_allocation_iterator_from_list_with_kb_requested {
+    my @list = @_;
+    return sub {
+        my $alloc_id = shift @list;
+        return unless defiled $alloc_id;
+        my $kb_requested = shift @list;
+        return Genome::Disk::StrippedDownAllocation->new(id => $alloc_id, kilobytes_requested => $kb_requested);
     };
 }
