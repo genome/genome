@@ -139,7 +139,7 @@ sub _make_iterator_for_database_allocations {
     return $self->_make_iterator_for_fetching_allocations($dbh);
 }
 
-my $sql_for_allocations = q(SELECT id FROM disk.allocation ORDER BY id);
+my $sql_for_allocations = q(SELECT id, kilobytes_requested FROM disk.allocation ORDER BY id);
 sub _make_iterator_for_fetching_allocations {
     my($self, $dbh) = @_;
     my $sth = $dbh->prepare($sql_for_allocations);
@@ -147,7 +147,8 @@ sub _make_iterator_for_fetching_allocations {
 
     return sub {
         my @row = $sth->fetchrow_array;
-        return Genome::Disk::StrippedDownAllocation->new(id => $row[0]);
+        return unless @row;
+        return Genome::Disk::StrippedDownAllocation->new(id => $row[0], kilobytes_requested => $row[1]);
     };
 }
 
@@ -207,7 +208,7 @@ sub get_template_name_for_database_name {
 
 package Genome::Disk::StrippedDownAllocation;
 
-use constant required_attrs => qw(id);
+use constant required_attrs => qw(id kilobytes_requested);
 
 sub new {
     my($class, %params) = @_;
