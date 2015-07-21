@@ -199,10 +199,10 @@ sub do_pap_workflow {
     else {
         for my $error (@Workflow::Simple::ERROR) {
             my @attributes = grep { defined $error->$_ } qw/ dispatch_identifier name start_time end_time exit_code /;
-            $self->debug_message(join("\t", @attributes));
-            $self->debug_message(join("\t", map {$error->$_} @attributes));
-            $self->debug_message($error->stdout);
-            $self->debug_message($error->stderr);
+            $self->error_message(join("\t", @attributes));
+            $self->error_message(join("\t", map {$error->$_} @attributes));
+            $self->error_message($error->stdout);
+            $self->error_message($error->stderr);
         }
         confess 'Protein annotation workflow errors encountered, see above error messages!';
     }
