@@ -35,14 +35,6 @@ done_testing();
 my $cnt = 0;
 sub test_model_from_params_with_group {
     my (@groups) = @_;
-    # Get all convergence models associated with each model group we are testing and turn off their automatic building 
-    # so nothing happens when we add to a model group in the next test
-    for my $model_group (@groups) {
-        my @convergence_models = Genome::Model::Convergence->get(name => $model_group->name);
-        for my $convergence_model (@convergence_models) {
-            $convergence_model->auto_build_alignments(0);
-        }
-    }
 
     # test normal model and processing profile creation for reference alignment with a model group addition
     successful_create_model({
