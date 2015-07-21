@@ -63,12 +63,7 @@ sub successful_create_model {
     my $current_time = UR::Context->current->now;
     my ($expected_date) = split('\w',$current_time);
   
-    my $define_class = $pp->class;
-    $define_class =~ s/Genome::ProcessingProfile:://;
-    $define_class =~ s/::.*//;
-    $define_class = "Genome::Model::Command::Define::$define_class";
-
-    my $create_command = $define_class->create(%params);
+    my $create_command = Genome::Model::Command::Define::ReferenceAlignment->create(%params);
     isa_ok($create_command,'Genome::Model::Command::Define::Helper');
 
     $create_command->dump_error_messages(0);
