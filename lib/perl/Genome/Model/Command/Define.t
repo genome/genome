@@ -80,11 +80,7 @@ sub test_model_from_params {
 
     diag("Test: ".++$cnt);
     my %model_params = %{$params{'model_params'}};
-    if ($test_params{'fail'}) {
-        &failed_create_model($test_params{'fail'},\%model_params);
-    } else {
-        &successful_create_model(\%model_params);
-    }
+    &successful_create_model(\%model_params);
 }
 
 sub successful_create_model {
@@ -169,38 +165,6 @@ sub successful_create_model {
         is(scalar(@groups_actual), scalar(@groups_expected), "Model is a member of the correct number of groups");
     }
 
-}
-
-sub failed_create_model {
-    my $reason = shift;
-    my $params = shift;
-    my %params = %{$params};
-    my  $create_command = Genome::Model::Command::Define::ReferenceAlignment->create(%params);
-    isa_ok($create_command,'Genome::Model::Command::Define::Helper');
-
-    $create_command->dump_error_messages(0);
-    $create_command->dump_warning_messages(0);
-    $create_command->dump_status_messages(0);
-    $create_command->dump_usage_messages(0);
-    $create_command->queue_error_messages(1);
-    $create_command->queue_warning_messages(1);
-    $create_command->queue_status_messages(1);
-    {
-        *OLD = *STDOUT;
-        my $variable;
-        open OUT ,'>',\$variable;
-        *STDOUT = *OUT;
-        ok(!$create_command->execute, 'create command execution failed');
-        *STDOUT = *OLD;
-    };
-
-    my @error_messages = $create_command->error_messages();
-    my @warning_messages = $create_command->warning_messages();
-    my @status_messages = $create_command->status_messages();
-    ok(scalar(@error_messages), 'There are error messages');
-    #like($error_messages[0], qr($reason), 'Error message about '. $reason);
-    ok(!scalar(@warning_messages), 'no warning message');
-    ok(!scalar(@status_messages), 'no status message');
 }
 
 1;
