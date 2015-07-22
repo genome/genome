@@ -126,7 +126,11 @@ sub _execute_with_workflow {
 
     my ($self, $inputs) = @_;
 
-    my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, %$inputs);
+    my $xml = $self->get_xml;
+
+    Genome::Sys->disconnect_default_handles;
+
+    my $result = Workflow::Simple::run_workflow_lsf($xml, %$inputs);
     unless (defined($result)) {
         die $self->error_message(
             "Workflow failed with these errors: %s",
