@@ -176,7 +176,7 @@ sub dependent_cron_ref_align {
     # limit to models that either don't have a genotype_microarray_model yet or have the same genotype_microarray_model
     my @dependent_models = grep {
         my $gmm = $_->genotype_microarray_model;
-        (not $gmm || ($gmm && $gmm->id == $self->id));
+        (!$gmm or ($gmm && $gmm->id == $self->id));
     } @compatible_ref_align_models;
 
     # limit to models for which new results might still be useful
