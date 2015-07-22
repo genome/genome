@@ -195,8 +195,16 @@ sub report_allocations_to_delete {
 }
 
 sub delete_allocations {
-    my $self = shift;
+    my($self, @stripped_allocations) = @_;
 
+    foreach my $alloc ( @stripped_allocations ) {
+        my $real_allocation = Genome::Disk::Allocation->get($alloc->id);
+        $self->debug_message('Deleting %d GB for allocation %s',
+                             int($real_allocation->kilobytes_requested / KB_IN_ONE_GB ),
+                             $alloc->id);
+        $real_allocation->delete();
+    }
+    return 1;
 }
 
 sub get_template_name_for_database_name {

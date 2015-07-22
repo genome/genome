@@ -10,8 +10,9 @@ use warnings;
 
 use above 'Genome';
 use Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb;
+use Genome::Disk::Allocation;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 
 subtest 'default values' => sub {
@@ -95,6 +96,24 @@ subtest 'report_allocations_to_delete' => sub {
               'Report when no allocations are to be deleted');
 };
 
+subtest 'delete_allocations' => sub {
+    plan tests => 2;
+
+    my @allocation_ids = qw(a b c d);
+    my @allocations_to_delete = map { Genome::Disk::StrippedDownAllocation->new(id => $_, kilobytes_requested => 1) }
+                                @allocation_ids;
+    my $manager = Genome::Disk::FakeAllocationManager->create(@allocations_to_delete);
+    my $cmd = Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb->create();
+    is( $cmd->delete_allocations(@allocations_to_delete),
+        1,
+        'delete allocations function');
+
+    is_deeply( [ map { $_->id } $manager->deleted_allocations ],
+               \@allocation_ids,
+               'called delete() on all the allocation objects');
+
+};
+
 #
 #    no warnings 'redefine';
 #
@@ -124,3 +143,92 @@ sub make_allocation_iterator_from_list_with_kb_requested {
         return Genome::Disk::StrippedDownAllocation->new(id => $alloc_id, kilobytes_requested => $kb_requested);
     };
 }
+
+
+package Genome::Disk::FakeAllocationManager;
+
+use Scalar::Util qw(weaken);
+
+my @fake_allocations;
+my @deleted_allocations;
+
+use constant original_genome_disk_allocation_get => Genome::Disk::Allocation->can('get');
+
+sub create {
+    my $class = shift;
+
+    do { Genome::Disk::FakeAllocation->create_from_stripped_allocation($_) } foreach @_;
+
+    no warnings 'redefine';
+    *Genome::Disk::Allocation::get = \&Genome::Disk::FakeAllocation::get;
+
+    return bless \$class, $class;
+}
+
+sub DESTROY {
+    my $self = shift;
+
+    @fake_allocations = ();
+    @deleted_allocations = ();
+
+    no warnings 'redefine';
+    *Genome::Disk::Allocation::get = original_genome_disk_allocation_get;
+}
+
+sub allocations {
+    return @fake_allocations;
+}
+
+sub deleted_allocations {
+    return @deleted_allocations;
+}
+
+package Genome::Disk::FakeAllocation;
+
+sub create_from_stripped_allocation {
+    my($class, $stripped_alloc) = @_;
+    my $self = { id => $stripped_alloc->id, kilobytes_requested => $stripped_alloc->kilobytes_requested};
+
+    push @fake_allocations, $self;
+    return bless $self, $class;
+}
+
+sub id {
+    my $self = shift;
+    return $self->{id};
+}
+
+sub kilobytes_requested {
+    my $self = shift;
+    return $self->{kilobytes_requested};
+}
+
+sub get {
+    if (@_ != 2) {
+        die 'Unexpected args passed to get(), expected only ($class, $id) but got '
+            . join(', ', @_);
+    }
+
+    my $class = shift;
+    my $id = shift;
+    my($alloc) = grep { $_->id eq $id } @fake_allocations;
+    unless ($alloc) {
+        die "Couldn't find fake allocation with id $id in get()";
+    }
+    return $alloc;
+}
+
+sub delete {
+    my $self = shift;
+
+    my $id = $self->id;
+    for (my $i = 0; $i < @fake_allocations; $i++) {
+        if ($fake_allocations[$i]->id eq $id) {
+            splice(@fake_allocations, $i, 1);
+            push @deleted_allocations, $self;
+            return $self;
+        }
+    }
+    die "Couldn't find fake allocation with id $id in delete()";
+}
+
