@@ -84,6 +84,8 @@ sub lock_resource {
         }
     };
 
+    Genome::Sys->disconnect_default_handles;
+
     for my $backend (backends($args{scope})) {
         my @lock_args = $backend->translate_lock_args(%args);
         my $lock = $backend->lock(@lock_args);
