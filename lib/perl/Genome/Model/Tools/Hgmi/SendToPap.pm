@@ -29,14 +29,14 @@ class Genome::Model::Tools::Hgmi::SendToPap (
             is  => 'Integer',
             doc => 'Sequence set id in MGAP database',
         },
-	    sequence_name => {
-	        is  => 'String',
-	        doc => 'Assembly name in MGAP database',
-	    },
-	    organism_name => {
-	        is  => 'String',
-	        doc => 'Organism name in MGAP database',
-	    },
+        sequence_name => {
+            is  => 'String',
+            doc => 'Assembly name in MGAP database',
+        },
+        organism_name => {
+            is  => 'String',
+            doc => 'Organism name in MGAP database',
+        },
         gram_stain => {
             is => 'String',
             doc => 'Gram Stain',
@@ -81,7 +81,7 @@ class Genome::Model::Tools::Hgmi::SendToPap (
             doc => 'Chunk size parameter',
             default => 10,
         },
-        resume_workflow => { 
+        resume_workflow => {
             is => 'String',
             doc => 'resume (crashed) workflow from previous invocation',
         },
@@ -143,7 +143,7 @@ sub do_pap_workflow {
     my $chunk_size = $self->chunk_size;
 
     my $previous_workflow_id = $self->resume_workflow();
-   
+
     unless (defined $previous_workflow_id) {
         unless (-f $fasta_file) {
             confess "Could not find fasta file at $fasta_file";
@@ -163,7 +163,7 @@ sub do_pap_workflow {
 
         # FIXME Temp directory shouldn't be hard-coded
         my $tempdir = tempdir(
-            CLEANUP => 0, 
+            CLEANUP => 0,
             DIR => '/gscmnt/temp212/info/annotation/pap_workflow_logs/',
         );
         chmod(0750, $tempdir);
@@ -180,7 +180,7 @@ sub do_pap_workflow {
             'interpro archive dir' => $self->interpro_archive_dir(),
             'keggscan archive dir' => $self->keggscan_archive_dir(),
             'psortb archive dir' => $self->psortb_archive_dir(),
-			'locus tag'			  => $self->locus_tag(),
+            'locus tag' => $self->locus_tag(),
             'keggscan_version' => $self->keggscan_version(),
             'interpro_version' => $self->interpro_version(),
         );
@@ -199,10 +199,10 @@ sub do_pap_workflow {
     else {
         for my $error (@Workflow::Simple::ERROR) {
             my @attributes = grep { defined $error->$_ } qw/ dispatch_identifier name start_time end_time exit_code /;
-            $self->debug_message(join("\t", @attributes));
-            $self->debug_message(join("\t", map {$error->$_} @attributes));
-            $self->debug_message($error->stdout);
-            $self->debug_message($error->stderr);
+            $self->error_message(join("\t", @attributes));
+            $self->error_message(join("\t", map {$error->$_} @attributes));
+            $self->error_message($error->stdout);
+            $self->error_message($error->stderr);
         }
         confess 'Protein annotation workflow errors encountered, see above error messages!';
     }
@@ -298,5 +298,3 @@ SQL
 }
 
 1;
-
-# $Id$
