@@ -642,20 +642,19 @@ sub get_mem_limit_from_bjobs {
 sub mem_limit_kb {
     my $class = shift;
 
-    my $mem_limit_kb;
-
     # get LSF memory limit
     if ($ENV{LSB_JOBID}) {
         my $mem_limit = $class->get_mem_limit_from_bjobs;
-        $mem_limit_kb = $mem_limit if $mem_limit;
+        return $mem_limit if $mem_limit;
     }
+
     # get physical total memory
     elsif (-e '/proc/meminfo') {
         my $mem_total = $class->get_mem_total_from_proc;
-        $mem_limit_kb = $mem_total if $mem_total;
+        return $mem_total if $mem_total;
     }
 
-    return $mem_limit_kb;
+    return undef;
 }
 
 1;
