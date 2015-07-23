@@ -3,7 +3,6 @@ package Genome::WorkflowBuilder::StreamGraph;
 use strict;
 use warnings;
 use Genome;
-use IPC::Run qw(run);
 use XML::LibXML;
 
 class Genome::WorkflowBuilder::StreamGraph {
@@ -71,7 +70,7 @@ sub execute {
     unless ($output_xml) {
         $output_xml = Genome::Sys->create_temp_file_path;
     }
-    run(qw(/usr/bin/streamgraph run -x), $xml_file, '-o', $output_xml);
+    Genome::Sys->shellcmd(cmd =>[qw(/usr/bin/streamgraph run -x), $xml_file, '-o', $output_xml]);
     return 1;
 }
 
