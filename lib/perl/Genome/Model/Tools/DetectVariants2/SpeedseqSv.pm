@@ -6,7 +6,8 @@ use warnings;
 use strict;
 
 use Genome;
-use File::Basename;
+use File::Basename qw(basename dirname);
+use File::Spec;
 use IPC::System::Simple;
 use Genome::File::Tsv;
 
@@ -53,16 +54,24 @@ sub _detect_variants {
 
 	my $aligned_bams = join(',',@fullBam);
 
-	my %final_cmd = (
+	my %library = $self->get_parameter_hash();
+
+	while (my ($key, $value) = each(%library)){
+		print "$key => $value\n";
+	}
+	my %final_cmd = ();
+
+	my %list_params = $self->split_params_to_letter();
+ 	
+	while (my ($key, $value) = each(%library)) {$final_cmd{$value} = $list_params{$key} if exists $list_params{$key};}
+
+	%final_cmd = (
+		%final_cmd,
    		output_prefix => $self->_sv_staging_output,
    		full_bam_file => $aligned_bams,
 		$self->find_split(@fullBam),
 		$self->find_discord(@fullBam),
 	);	
-
-	my %list_params = $self->split_params_to_letter();
- 	
-	while (my ($key, $value) = each(%ref_library)) {$final_cmd{$value} = $list_params{$key} if exists $list_params{$key};}
 
 	my $set = $pkg->create(%final_cmd);
 	$set->execute();
@@ -74,13 +83,12 @@ sub find_split{
 	my @final = ();
         
 	foreach(@bam_dir){
-		my $split;
-        	my @dir_split = split('/',$_);
-        	my $editor = pop(@dir_split);
-        	$editor =~ s/aligned/splitters/g;
-        	push (@dir_split, $editor);
-        	$split = join('/', @dir_split);
-        	push (@final, $split);
+        	my $editor = basename($_);
+		my $dir = dirname($_);
+		$editor =~ s/\.bam/\.splitters\.bam/g;
+		my $split = "$dir/$editor";
+		if (!-s $split) {die $self->error_message("File couldn't be found: $split")};
+		push (@final, $split); 
 	}
 	my $combined_splits = join (',',@final);
         return (
@@ -94,12 +102,11 @@ sub find_discord{
 	my @final = ();
 	
 	foreach (@bam_dir){
-		my $discord;		
-		my @dir_split = split('/',$_);
-		my $editor = pop(@dir_split);
-		$editor =~ s/aligned/discordants/g;
-		push (@dir_split, $editor);
-		$discord = join('/', @dir_split);
+		my $editor = basename($_);
+		my $dir = dirname($_);
+		$editor =~ s/\.bam/\.discordants\.bam/g;
+		my $discord = "$dir/$editor";
+		if (!-s $discord) {die $self->error_message("File couldn't be found: $discord")};
 		push (@final, $discord);
 	}
 	my $combined_splits = join (',',@final);
@@ -116,9 +123,11 @@ sub split_params_to_letter {
 	my @params = split(',',$parms);
 	foreach (@params){
 		if ($_ =~ /:/){
-			my $num = substr($_,1,1);
-			my $value = substr($_,3);
-	                $params_hash{$num} = $value; 
+			my @options = split(':',$_);
+			my $value = pop(@options);
+			my $num = shift(@options);
+	                $num =~ s/-//gi;
+			$params_hash{$num} = $value; 
 		}
                 else {
 			my $num = substr($_,1,1);
@@ -129,4 +138,14 @@ sub split_params_to_letter {
 
 };
 
-
+sub get_parameter_hash{
+	my $self = shift;
+	my @meta_array = Genome::Model::Tools::Speedseq::Sv-> _tool_param_metas();
+	
+	my %library = ();
+	
+	foreach my $meta (@meta_array){
+		$library{$meta->tool_param_name} = $meta->property_name; 
+	}
+	return %library;
+}

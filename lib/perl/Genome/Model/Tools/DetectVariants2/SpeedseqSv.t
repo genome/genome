@@ -13,6 +13,7 @@ use Genome::SoftwareResult;
 use Test::More;
 use Test::Exception;
 use File::Compare qw(compare);
+use File::Basename qw(basename);
 use Genome::Utility::Test qw(compare_ok);
 use Genome::File::Vcf::Differ;
 use Genome::Test::Factory::SoftwareResult::User;
@@ -35,7 +36,11 @@ use Genome::Test::Data qw(get_test_file);
 	my $refbuild_id = 101947881;
 	my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(reference_sequence_build_id => $refbuild_id,);
 
-	my $params = "-R:$reference_fasta,-g,-d";
+	my $params = "-R:$reference_fasta,-g,-d,-o:Hello";
+
+	print "Here is the base name of the bam variable: \t";
+	print basename($bam);
+	print "\n\n";
 
 my $command2 = $pkg2->create(
 	output_directory => $output,
@@ -45,7 +50,6 @@ my $command2 = $pkg2->create(
 	params => $params,
 	control_aligned_reads_input => $bam2,
 );
-
 
 ok($command2->execute, 'Executed `gmt detect-variants2 Speedseq` command');
 
@@ -62,5 +66,16 @@ my $differ = Genome::File::Vcf::Differ->new("$output/svs.hq.sv.vcf.gz", "$test_d
 
 compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed");
 compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt");
+
+my $commandDie = $pkg2->create(
+        output_directory => $output,
+        reference_build_id => $refbuild_id,
+        result_users => $result_users,
+        aligned_reads_input => "Bad.bam",
+        params => $params,
+        control_aligned_reads_input => $bam2,
+);
+
+dies_ok( sub {$commandDie->execute}, "Executing a command that I expect to fail");
 
 done_testing();
