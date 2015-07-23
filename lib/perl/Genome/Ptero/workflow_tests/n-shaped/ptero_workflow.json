@@ -1,70 +1,81 @@
 {
    "links" : [
       {
+         "dataFlow" : {
+            "a" : "param"
+         },
          "destination" : "A",
-         "destinationProperty" : "param",
-         "source" : "input connector",
-         "sourceProperty" : "a"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "b" : "param"
+         },
          "destination" : "B",
-         "destinationProperty" : "param",
-         "source" : "input connector",
-         "sourceProperty" : "b"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "c" : "param"
+         },
          "destination" : "C",
-         "destinationProperty" : "param",
-         "source" : "input connector",
-         "sourceProperty" : "c"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "d" : "param"
+         },
          "destination" : "D",
-         "destinationProperty" : "param",
-         "source" : "input connector",
-         "sourceProperty" : "d"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "result" : "out_a"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out_a",
-         "source" : "A",
-         "sourceProperty" : "result"
+         "source" : "A"
       },
       {
+         "dataFlow" : {
+            "result" : "out_b"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out_b",
-         "source" : "B",
-         "sourceProperty" : "result"
+         "source" : "B"
       },
       {
+         "dataFlow" : {
+            "result" : "out_c"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out_c",
-         "source" : "C",
-         "sourceProperty" : "result"
+         "source" : "C"
       },
       {
+         "dataFlow" : {
+            "result" : "out_d"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out_d",
-         "source" : "D",
-         "sourceProperty" : "result"
+         "source" : "D"
       },
       {
+         "dataFlow" : {
+            "result" : "res1"
+         },
          "destination" : "C",
-         "destinationProperty" : "res1",
-         "source" : "A",
-         "sourceProperty" : "result"
+         "source" : "A"
       },
       {
+         "dataFlow" : {
+            "result" : "res1"
+         },
          "destination" : "D",
-         "destinationProperty" : "res1",
-         "source" : "A",
-         "sourceProperty" : "result"
+         "source" : "A"
       },
       {
+         "dataFlow" : {
+            "result" : "res2"
+         },
          "destination" : "D",
-         "destinationProperty" : "res2",
-         "source" : "B",
-         "sourceProperty" : "result"
+         "source" : "B"
       }
    ],
    "tasks" : {
@@ -85,8 +96,8 @@
                      "test_logs/n-shaped"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             },
@@ -105,8 +116,8 @@
                      "test_logs/n-shaped"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }
@@ -129,8 +140,8 @@
                      "test_logs/n-shaped"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             },
@@ -149,8 +160,8 @@
                      "test_logs/n-shaped"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }
@@ -173,8 +184,8 @@
                      "test_logs/n-shaped"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             },
@@ -193,8 +204,8 @@
                      "test_logs/n-shaped"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }
@@ -217,8 +228,8 @@
                      "test_logs/n-shaped"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             },
@@ -237,8 +248,8 @@
                      "test_logs/n-shaped"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }

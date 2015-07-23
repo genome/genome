@@ -1,40 +1,46 @@
 {
    "links" : [
       {
+         "dataFlow" : {
+            "model_prefix_lists" : "prefix_list"
+         },
          "destination" : "Outer",
-         "destinationProperty" : "prefix_list",
-         "source" : "input connector",
-         "sourceProperty" : "model_prefix_lists"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "model_suffixes" : "suffixes"
+         },
          "destination" : "Outer",
-         "destinationProperty" : "suffixes",
-         "source" : "input connector",
-         "sourceProperty" : "model_suffixes"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "outputs" : "model_outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "model_outputs",
-         "source" : "Outer",
-         "sourceProperty" : "outputs"
+         "source" : "Outer"
       },
       {
+         "dataFlow" : {
+            "command_prefixes" : "prefix"
+         },
          "destination" : "Appender",
-         "destinationProperty" : "prefix",
-         "source" : "input connector",
-         "sourceProperty" : "command_prefixes"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "command_suffix" : "suffix"
+         },
          "destination" : "Appender",
-         "destinationProperty" : "suffix",
-         "source" : "input connector",
-         "sourceProperty" : "command_suffix"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "output" : "command_outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "command_outputs",
-         "source" : "Appender",
-         "sourceProperty" : "output"
+         "source" : "Appender"
       }
    ],
    "tasks" : {
@@ -55,8 +61,8 @@
                      "test_logs/nested-parallel-models"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             },
@@ -75,8 +81,8 @@
                      "test_logs/nested-parallel-models"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }
@@ -90,22 +96,25 @@
                "parameters" : {
                   "links" : [
                      {
+                        "dataFlow" : {
+                           "prefix_list" : "prefixes"
+                        },
                         "destination" : "Inner",
-                        "destinationProperty" : "prefixes",
-                        "source" : "input connector",
-                        "sourceProperty" : "prefix_list"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "suffixes" : "suffixes"
+                        },
                         "destination" : "Inner",
-                        "destinationProperty" : "suffixes",
-                        "source" : "input connector",
-                        "sourceProperty" : "suffixes"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "outputs" : "outputs"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "outputs",
-                        "source" : "Inner",
-                        "sourceProperty" : "outputs"
+                        "source" : "Inner"
                      }
                   ],
                   "tasks" : {
@@ -116,22 +125,25 @@
                               "parameters" : {
                                  "links" : [
                                     {
+                                       "dataFlow" : {
+                                          "prefixes" : "prefix"
+                                       },
                                        "destination" : "Appender",
-                                       "destinationProperty" : "prefix",
-                                       "source" : "input connector",
-                                       "sourceProperty" : "prefixes"
+                                       "source" : "input connector"
                                     },
                                     {
+                                       "dataFlow" : {
+                                          "suffixes" : "suffix"
+                                       },
                                        "destination" : "Appender",
-                                       "destinationProperty" : "suffix",
-                                       "source" : "input connector",
-                                       "sourceProperty" : "suffixes"
+                                       "source" : "input connector"
                                     },
                                     {
+                                       "dataFlow" : {
+                                          "output" : "outputs"
+                                       },
                                        "destination" : "output connector",
-                                       "destinationProperty" : "outputs",
-                                       "source" : "Appender",
-                                       "sourceProperty" : "output"
+                                       "source" : "Appender"
                                     }
                                  ],
                                  "tasks" : {
@@ -152,8 +164,8 @@
                                                    "test_logs/nested-parallel-models"
                                                 ],
                                                 "environment" : {},
-                                                "user" : null,
-                                                "workingDirectory" : ""
+                                                "user" : "dmorton",
+                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                                              },
                                              "service" : "shell-command"
                                           },
@@ -172,8 +184,8 @@
                                                    "test_logs/nested-parallel-models"
                                                 ],
                                                 "environment" : {},
-                                                "user" : null,
-                                                "workingDirectory" : ""
+                                                "user" : "dmorton",
+                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                                              },
                                              "service" : "shell-command"
                                           }

@@ -1,64 +1,74 @@
 {
    "links" : [
       {
+         "dataFlow" : {
+            "a" : "a"
+         },
          "destination" : "Mark likes the letter N",
-         "destinationProperty" : "a",
-         "source" : "input connector",
-         "sourceProperty" : "a"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "b" : "b"
+         },
          "destination" : "Mark likes the letter N",
-         "destinationProperty" : "b",
-         "source" : "input connector",
-         "sourceProperty" : "b"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "c" : "c"
+         },
          "destination" : "Mark likes the letter N",
-         "destinationProperty" : "c",
-         "source" : "input connector",
-         "sourceProperty" : "c"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "d" : "d"
+         },
          "destination" : "Mark likes the letter N",
-         "destinationProperty" : "d",
-         "source" : "input connector",
-         "sourceProperty" : "d"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "out_a" : "out_a"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out_a",
-         "source" : "Mark likes the letter N",
-         "sourceProperty" : "out_a"
+         "source" : "Mark likes the letter N"
       },
       {
+         "dataFlow" : {
+            "out_b" : "out_b"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out_b",
-         "source" : "Mark likes the letter N",
-         "sourceProperty" : "out_b"
+         "source" : "Mark likes the letter N"
       },
       {
+         "dataFlow" : {
+            "out_c" : "out_c"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out_c",
-         "source" : "Mark likes the letter N",
-         "sourceProperty" : "out_c"
+         "source" : "Mark likes the letter N"
       },
       {
+         "dataFlow" : {
+            "out_d" : "out_d"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out_d",
-         "source" : "Mark likes the letter N",
-         "sourceProperty" : "out_d"
+         "source" : "Mark likes the letter N"
       },
       {
+         "dataFlow" : {
+            "out_d" : "out_d"
+         },
          "destination" : "set status Succeeded",
-         "destinationProperty" : "out_d",
-         "source" : "Mark likes the letter N",
-         "sourceProperty" : "out_d"
+         "source" : "Mark likes the letter N"
       },
       {
+         "dataFlow" : {
+            "dummy_output" : "dummy_output for Genome::Process(123)"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "dummy_output for Genome::Process(123)",
-         "source" : "set status Succeeded",
-         "sourceProperty" : "dummy_output"
+         "source" : "set status Succeeded"
       }
    ],
    "tasks" : {
@@ -80,7 +90,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             },
@@ -89,70 +99,81 @@
                "parameters" : {
                   "links" : [
                      {
+                        "dataFlow" : {
+                           "a" : "param"
+                        },
                         "destination" : "A",
-                        "destinationProperty" : "param",
-                        "source" : "input connector",
-                        "sourceProperty" : "a"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "b" : "param"
+                        },
                         "destination" : "B",
-                        "destinationProperty" : "param",
-                        "source" : "input connector",
-                        "sourceProperty" : "b"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "c" : "param"
+                        },
                         "destination" : "C",
-                        "destinationProperty" : "param",
-                        "source" : "input connector",
-                        "sourceProperty" : "c"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "d" : "param"
+                        },
                         "destination" : "D",
-                        "destinationProperty" : "param",
-                        "source" : "input connector",
-                        "sourceProperty" : "d"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "result" : "out_a"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "out_a",
-                        "source" : "A",
-                        "sourceProperty" : "result"
+                        "source" : "A"
                      },
                      {
+                        "dataFlow" : {
+                           "result" : "out_b"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "out_b",
-                        "source" : "B",
-                        "sourceProperty" : "result"
+                        "source" : "B"
                      },
                      {
+                        "dataFlow" : {
+                           "result" : "out_c"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "out_c",
-                        "source" : "C",
-                        "sourceProperty" : "result"
+                        "source" : "C"
                      },
                      {
+                        "dataFlow" : {
+                           "result" : "out_d"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "out_d",
-                        "source" : "D",
-                        "sourceProperty" : "result"
+                        "source" : "D"
                      },
                      {
+                        "dataFlow" : {
+                           "result" : "res1"
+                        },
                         "destination" : "C",
-                        "destinationProperty" : "res1",
-                        "source" : "A",
-                        "sourceProperty" : "result"
+                        "source" : "A"
                      },
                      {
+                        "dataFlow" : {
+                           "result" : "res1"
+                        },
                         "destination" : "D",
-                        "destinationProperty" : "res1",
-                        "source" : "A",
-                        "sourceProperty" : "result"
+                        "source" : "A"
                      },
                      {
+                        "dataFlow" : {
+                           "result" : "res2"
+                        },
                         "destination" : "D",
-                        "destinationProperty" : "res2",
-                        "source" : "B",
-                        "sourceProperty" : "result"
+                        "source" : "B"
                      }
                   ],
                   "tasks" : {
@@ -176,7 +197,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            },
@@ -198,7 +219,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            }
@@ -224,7 +245,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            },
@@ -246,7 +267,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            }
@@ -272,7 +293,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            },
@@ -294,7 +315,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            }
@@ -320,7 +341,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            },
@@ -342,7 +363,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            }
@@ -368,7 +389,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }
@@ -392,7 +413,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }
