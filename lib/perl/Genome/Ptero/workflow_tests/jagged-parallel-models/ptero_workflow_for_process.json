@@ -1,52 +1,60 @@
 {
    "links" : [
       {
+         "dataFlow" : {
+            "model_prefix_lists" : "model_prefix_lists"
+         },
          "destination" : "Parallel Model Test",
-         "destinationProperty" : "model_prefix_lists",
-         "source" : "input connector",
-         "sourceProperty" : "model_prefix_lists"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "model_suffixes" : "model_suffixes"
+         },
          "destination" : "Parallel Model Test",
-         "destinationProperty" : "model_suffixes",
-         "source" : "input connector",
-         "sourceProperty" : "model_suffixes"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "model_outputs" : "model_outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "model_outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "model_outputs"
+         "source" : "Parallel Model Test"
       },
       {
+         "dataFlow" : {
+            "command_prefixes" : "command_prefixes"
+         },
          "destination" : "Parallel Model Test",
-         "destinationProperty" : "command_prefixes",
-         "source" : "input connector",
-         "sourceProperty" : "command_prefixes"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "command_suffix" : "command_suffix"
+         },
          "destination" : "Parallel Model Test",
-         "destinationProperty" : "command_suffix",
-         "source" : "input connector",
-         "sourceProperty" : "command_suffix"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "command_outputs" : "command_outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "command_outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "command_outputs"
+         "source" : "Parallel Model Test"
       },
       {
+         "dataFlow" : {
+            "command_outputs" : "command_outputs"
+         },
          "destination" : "set status Succeeded",
-         "destinationProperty" : "command_outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "command_outputs"
+         "source" : "Parallel Model Test"
       },
       {
+         "dataFlow" : {
+            "dummy_output" : "dummy_output for Genome::Process(123)"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "dummy_output for Genome::Process(123)",
-         "source" : "set status Succeeded",
-         "sourceProperty" : "dummy_output"
+         "source" : "set status Succeeded"
       }
    ],
    "tasks" : {
@@ -68,7 +76,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             },
@@ -77,40 +85,46 @@
                "parameters" : {
                   "links" : [
                      {
+                        "dataFlow" : {
+                           "model_prefix_lists" : "prefix_list"
+                        },
                         "destination" : "Outer",
-                        "destinationProperty" : "prefix_list",
-                        "source" : "input connector",
-                        "sourceProperty" : "model_prefix_lists"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "model_suffixes" : "suffixes"
+                        },
                         "destination" : "Outer",
-                        "destinationProperty" : "suffixes",
-                        "source" : "input connector",
-                        "sourceProperty" : "model_suffixes"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "outputs" : "model_outputs"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "model_outputs",
-                        "source" : "Outer",
-                        "sourceProperty" : "outputs"
+                        "source" : "Outer"
                      },
                      {
+                        "dataFlow" : {
+                           "command_prefixes" : "prefix"
+                        },
                         "destination" : "Appender",
-                        "destinationProperty" : "prefix",
-                        "source" : "input connector",
-                        "sourceProperty" : "command_prefixes"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "command_suffix" : "suffix"
+                        },
                         "destination" : "Appender",
-                        "destinationProperty" : "suffix",
-                        "source" : "input connector",
-                        "sourceProperty" : "command_suffix"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "output" : "command_outputs"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "command_outputs",
-                        "source" : "Appender",
-                        "sourceProperty" : "output"
+                        "source" : "Appender"
                      }
                   ],
                   "tasks" : {
@@ -134,7 +148,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            },
@@ -156,7 +170,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            }
@@ -170,22 +184,25 @@
                               "parameters" : {
                                  "links" : [
                                     {
+                                       "dataFlow" : {
+                                          "prefix_list" : "prefixes"
+                                       },
                                        "destination" : "Inner",
-                                       "destinationProperty" : "prefixes",
-                                       "source" : "input connector",
-                                       "sourceProperty" : "prefix_list"
+                                       "source" : "input connector"
                                     },
                                     {
+                                       "dataFlow" : {
+                                          "suffixes" : "suffixes"
+                                       },
                                        "destination" : "Inner",
-                                       "destinationProperty" : "suffixes",
-                                       "source" : "input connector",
-                                       "sourceProperty" : "suffixes"
+                                       "source" : "input connector"
                                     },
                                     {
+                                       "dataFlow" : {
+                                          "outputs" : "outputs"
+                                       },
                                        "destination" : "output connector",
-                                       "destinationProperty" : "outputs",
-                                       "source" : "Inner",
-                                       "sourceProperty" : "outputs"
+                                       "source" : "Inner"
                                     }
                                  ],
                                  "tasks" : {
@@ -196,22 +213,25 @@
                                              "parameters" : {
                                                 "links" : [
                                                    {
+                                                      "dataFlow" : {
+                                                         "prefixes" : "prefix"
+                                                      },
                                                       "destination" : "Appender",
-                                                      "destinationProperty" : "prefix",
-                                                      "source" : "input connector",
-                                                      "sourceProperty" : "prefixes"
+                                                      "source" : "input connector"
                                                    },
                                                    {
+                                                      "dataFlow" : {
+                                                         "suffixes" : "suffix"
+                                                      },
                                                       "destination" : "Appender",
-                                                      "destinationProperty" : "suffix",
-                                                      "source" : "input connector",
-                                                      "sourceProperty" : "suffixes"
+                                                      "source" : "input connector"
                                                    },
                                                    {
+                                                      "dataFlow" : {
+                                                         "output" : "outputs"
+                                                      },
                                                       "destination" : "output connector",
-                                                      "destinationProperty" : "outputs",
-                                                      "source" : "Appender",
-                                                      "sourceProperty" : "output"
+                                                      "source" : "Appender"
                                                    }
                                                 ],
                                                 "tasks" : {
@@ -235,7 +255,7 @@
                                                                   "FOO" : "bar"
                                                                },
                                                                "user" : "dmorton",
-                                                               "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                                               "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                                                             },
                                                             "service" : "shell-command"
                                                          },
@@ -257,7 +277,7 @@
                                                                   "FOO" : "bar"
                                                                },
                                                                "user" : "dmorton",
-                                                               "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                                               "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                                                             },
                                                             "service" : "shell-command"
                                                          }
@@ -298,7 +318,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }
@@ -322,7 +342,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }

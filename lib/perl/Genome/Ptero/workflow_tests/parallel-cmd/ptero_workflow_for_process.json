@@ -1,34 +1,39 @@
 {
    "links" : [
       {
+         "dataFlow" : {
+            "prefixes" : "prefixes"
+         },
          "destination" : "Parallel Model Test",
-         "destinationProperty" : "prefixes",
-         "source" : "input connector",
-         "sourceProperty" : "prefixes"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "suffix" : "suffix"
+         },
          "destination" : "Parallel Model Test",
-         "destinationProperty" : "suffix",
-         "source" : "input connector",
-         "sourceProperty" : "suffix"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "outputs" : "outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "outputs"
+         "source" : "Parallel Model Test"
       },
       {
+         "dataFlow" : {
+            "outputs" : "outputs"
+         },
          "destination" : "set status Succeeded",
-         "destinationProperty" : "outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "outputs"
+         "source" : "Parallel Model Test"
       },
       {
+         "dataFlow" : {
+            "dummy_output" : "dummy_output for Genome::Process(123)"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "dummy_output for Genome::Process(123)",
-         "source" : "set status Succeeded",
-         "sourceProperty" : "dummy_output"
+         "source" : "set status Succeeded"
       }
    ],
    "tasks" : {
@@ -50,7 +55,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             },
@@ -59,22 +64,25 @@
                "parameters" : {
                   "links" : [
                      {
+                        "dataFlow" : {
+                           "prefixes" : "prefix"
+                        },
                         "destination" : "Appender",
-                        "destinationProperty" : "prefix",
-                        "source" : "input connector",
-                        "sourceProperty" : "prefixes"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "suffix" : "suffix"
+                        },
                         "destination" : "Appender",
-                        "destinationProperty" : "suffix",
-                        "source" : "input connector",
-                        "sourceProperty" : "suffix"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "output" : "outputs"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "outputs",
-                        "source" : "Appender",
-                        "sourceProperty" : "output"
+                        "source" : "Appender"
                      }
                   ],
                   "tasks" : {
@@ -98,7 +106,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            },
@@ -120,7 +128,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            }
@@ -147,7 +155,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }
@@ -171,7 +179,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                },
                "service" : "shell-command"
             }

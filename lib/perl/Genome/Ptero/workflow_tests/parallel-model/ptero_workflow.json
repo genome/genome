@@ -1,22 +1,25 @@
 {
    "links" : [
       {
+         "dataFlow" : {
+            "prefixes" : "prefix"
+         },
          "destination" : "Inner",
-         "destinationProperty" : "prefix",
-         "source" : "input connector",
-         "sourceProperty" : "prefixes"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "suffix" : "suffix"
+         },
          "destination" : "Inner",
-         "destinationProperty" : "suffix",
-         "source" : "input connector",
-         "sourceProperty" : "suffix"
+         "source" : "input connector"
       },
       {
+         "dataFlow" : {
+            "output" : "outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "outputs",
-         "source" : "Inner",
-         "sourceProperty" : "output"
+         "source" : "Inner"
       }
    ],
    "tasks" : {
@@ -27,22 +30,25 @@
                "parameters" : {
                   "links" : [
                      {
+                        "dataFlow" : {
+                           "prefix" : "prefix"
+                        },
                         "destination" : "Appender",
-                        "destinationProperty" : "prefix",
-                        "source" : "input connector",
-                        "sourceProperty" : "prefix"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "suffix" : "suffix"
+                        },
                         "destination" : "Appender",
-                        "destinationProperty" : "suffix",
-                        "source" : "input connector",
-                        "sourceProperty" : "suffix"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "output" : "output"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "output",
-                        "source" : "Appender",
-                        "sourceProperty" : "output"
+                        "source" : "Appender"
                      }
                   ],
                   "tasks" : {
@@ -63,8 +69,8 @@
                                     "test_logs/parallel-model"
                                  ],
                                  "environment" : {},
-                                 "user" : null,
-                                 "workingDirectory" : ""
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            },
@@ -83,8 +89,8 @@
                                     "test_logs/parallel-model"
                                  ],
                                  "environment" : {},
-                                 "user" : null,
-                                 "workingDirectory" : ""
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
                               },
                               "service" : "shell-command"
                            }
