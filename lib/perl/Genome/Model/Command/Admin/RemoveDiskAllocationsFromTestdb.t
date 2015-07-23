@@ -42,6 +42,9 @@ subtest 'collect_newly_created_allocations' => sub {
 
     no warnings 'redefine';
 
+    # we're not using real databases for this test
+    local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::disconnect_database_handles = sub {};
+
     local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_template_allocations = sub {
         make_allocation_iterator_from_list(qw(b c e f i j));
     };

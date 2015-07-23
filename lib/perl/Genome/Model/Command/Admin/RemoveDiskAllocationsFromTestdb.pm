@@ -126,6 +126,8 @@ sub collect_newly_created_allocations {
 
         }
     }
+
+    $self->disconnect_database_handles();
     return @new_allocations_in_database;
 }
 
@@ -154,6 +156,11 @@ sub _make_iterator_for_fetching_allocations {
     };
 }
 
+sub disconnect_database_handles {
+    my $self = shift;
+    $_->disconnect foreach ( $self->_dbh_for_template, $self->_dbh_for_database);
+}
+
 
 sub _dbh_for_template {
     my $self = shift;
@@ -168,16 +175,20 @@ sub _dbh_for_database {
 sub _dbh_for {
     my($self, $db_or_tmpl) = @_;
 
-    my $db_name = $db_or_tmpl eq 'database'
-                    ? $self->database_name
-                    : $self->template_name;
-    my $db_host = $self->database_server;
-    my $db_port = $self->database_port;
+    my $cache_key = "_cached_${db_or_tmpl}_handle";
+    unless ($self->{$cache_key}) {
+        my $db_name = $db_or_tmpl eq 'database'
+                        ? $self->database_name
+                        : $self->template_name;
+        my $db_host = $self->database_server;
+        my $db_port = $self->database_port;
 
-    return DBI->connect("dbi:Pg:dbname=${db_name};host=${db_host};port=${db_port}",
-                        Genome::Config::get('ds_gmschema_login'),
-                        Genome::Config::get('ds_gmschema_auth'),
-                        { AutoCommit => 0, RaiseError => 1, PrintError => 0 });
+        $self->{$cache_key} = DBI->connect("dbi:Pg:dbname=${db_name};host=${db_host};port=${db_port}",
+                                           Genome::Config::get('ds_gmschema_login'),
+                                           Genome::Config::get('ds_gmschema_auth'),
+                                           { AutoCommit => 0, RaiseError => 1, PrintError => 0 });
+    }
+    return $self->{$cache_key};
 }
 
 
