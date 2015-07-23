@@ -631,8 +631,11 @@ sub get_mem_limit_from_bjobs {
         chomp $bjobs_cmd;
         my $bjobs = qx($bjobs_cmd -l $LSB_JOBID);
         my $bjobs_mem_limit_kb;
-        my ($bjobs_mem_limit, $bjobs_mem_limit_units) = $bjobs =~ /MEMLIMIT\s+(\d+\.?\d*)\s+([GMK])\b/;
-        if ($bjobs_mem_limit_units eq 'G') {
+        my ($bjobs_mem_limit, $bjobs_mem_limit_units) = $bjobs =~ /MEMLIMIT\s+(\d+\.?\d*)\s+([TGMK])\b/;
+        if ($bjobs_mem_limit_units eq 'T') {
+            $bjobs_mem_limit_kb = int($bjobs_mem_limit * 1024 * 1024 * 1024);
+        }
+        elsif ($bjobs_mem_limit_units eq 'G') {
             $bjobs_mem_limit_kb = int($bjobs_mem_limit * 1024 * 1024);
         }
         elsif ($bjobs_mem_limit_units eq 'M') {
