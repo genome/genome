@@ -5,6 +5,7 @@ use warnings;
 
 use above 'Genome';
 use Test::More tests => 11;
+use Genome::File::Vcf::Differ;
 use Genome::Utility::Test qw(compare_ok);
 use Genome::Test::Data qw(get_test_file);
 
@@ -39,7 +40,7 @@ ok($sv_cmd->execute,'execute command '. $pkg);
 #VCF Difference
 my $output_file = "$output_prefix.sv.vcf.gz";
 
-my $expected_output_file = ('/gscmnt/gc2801/analytics/mfulton/genome2/lib/perl/Genome/Model/Tools/Speedseq/Sv.t.out/Sv.t.out.sv.vcf.gz');
+my $expected_output_file = ("$expected_output_dir/Sv.t.out.sv.vcf.gz");
 
 compare_ok($output_file, $expected_output_file);
 compare_ok("$output_file.tbi", "$expected_output_file.tbi");
@@ -49,9 +50,8 @@ compare_ok("$output_file.tbi", "$expected_output_file.tbi");
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 my $output_prefix3 = Genome::Sys->create_temp_directory() .'/example.CNV';
-#my $output_prefix3 = ('/gscmnt/gc2801/analytics/mfulton/genome/lib/perl/Genome/Model/Tools/Speedseq/Sv.t.out/Sv.t.out3');
 # Do not use the same temp directory for output.  speedseq cleans up the temp directory.
-my $expected_output_prefix3 = ('/gscmnt/gc2801/analytics/mfulton/genome2/lib/perl/Genome/Model/Tools/Speedseq/Sv.t.out/Sv.t.out3');
+my $expected_output_prefix3 = ("$expected_output_dir/Sv.t.out3");
 
 
 my $sv_cmd3 = $pkg->create(
@@ -71,9 +71,14 @@ ok($sv_cmd3->execute,'execute command '. $pkg);
 #VCF Difference
 my $output_file3 = "$output_prefix3.sv.vcf.gz";
 
-my $expected_output_file3 = ('/gscmnt/gc2801/analytics/mfulton/genome2/lib/perl/Genome/Model/Tools/Speedseq/Sv.t.out/Sv.t.out3.sv.vcf.gz');
+my $expected_output_file3 = ("$expected_output_dir/Sv.t.out3.sv.vcf.gz");
 
-compare_ok($output_file3, $expected_output_file3);
+my $differ = Genome::File::Vcf::Differ->new($output_file3, $expected_output_file3);
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $output_file3 and (expected) $expected_output_file3") ||
+       diag $diff->to_string;
+
+#compare_ok($output_file3, $expected_output_file3);
 compare_ok("$output_file3.tbi", "$expected_output_file3.tbi");
 compare_ok("$output_prefix3.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed", "$expected_output_prefix3.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed");
 compare_ok("$output_prefix3.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt", "$expected_output_prefix3.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt");
