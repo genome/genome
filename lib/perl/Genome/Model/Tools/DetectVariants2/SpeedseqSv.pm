@@ -27,25 +27,6 @@ class Genome::Model::Tools::DetectVariants2::SpeedseqSv {
 # For the Parameters what I need to do is make two hashes.
 # The first one will have the name of the command in the SV class and the letter calling it.  
 # The second Hash will have the class string name and the value wil be either a boolean or a file location.
-	my %ref_library = (
-		B => 'full_bam_file',
-		S => 'split_read_bam_file',
-		D => 'discordant_read_bam_file',
-		R => 'reference_fasta',
-		g => 'genotype_svtyper',
-		d => 'CNVnator_read_depth',
-		A => 'annotate_vcf',
-		k => 'keep_temp_files',
-		#End of Boolean files#
-		t => 'threads',
-		x => 'exclude_bed_file',
-		m => 'min_sample_weight',
-		r => 'trim_threshold',
-		T => 'temp_directory',	
-		K => 'config_file',
-		v => 'verbose',
-	);
-
 
 sub _detect_variants {
 	my $self = shift;
@@ -69,51 +50,34 @@ sub _detect_variants {
 		%final_cmd,
    		output_prefix => $self->_sv_staging_output,
    		full_bam_file => $aligned_bams,
-		$self->find_split(@fullBam),
-		$self->find_discord(@fullBam),
+		temp_directory => Genome::Sys->create_temp_directory(),
+		$self->find_file("splitters","split_read_bam_file",@fullBam),
+		$self->find_file("discordants","discordant_read_bam_file",@fullBam),
 	);	
 
 	my $set = $pkg->create(%final_cmd);
 	$set->execute();
 };
 
-sub find_split{
+sub find_file{
         my $self = shift;
-        my @bam_dir = @_;
-	my @final = ();
-        
-	foreach(@bam_dir){
-        	my $editor = basename($_);
-		my $dir = dirname($_);
-		$editor =~ s/\.bam/\.splitters\.bam/g;
-		my $split = "$dir/$editor";
-		if (!-s $split) {die $self->error_message("File couldn't be found: $split")};
-		push (@final, $split); 
-	}
-	my $combined_splits = join (',',@final);
-        return (
-		split_read_bam_file => $combined_splits,
-	);
-};
-
-sub find_discord{
-        my $self = shift;
+	my $disc = shift;
+	my $value = shift;
 	my @bam_dir = @_;
 	my @final = ();
 	
 	foreach (@bam_dir){
 		my $editor = basename($_);
 		my $dir = dirname($_);
-		$editor =~ s/\.bam/\.discordants\.bam/g;
+		$editor =~ s/\.bam/\.$disc\.bam/g;
 		my $discord = "$dir/$editor";
 		if (!-s $discord) {die $self->error_message("File couldn't be found: $discord")};
 		push (@final, $discord);
 	}
 	my $combined_splits = join (',',@final);
         return (
-                discordant_read_bam_file => $combined_splits,
+                $value => $combined_splits,
         );
-
 };
 
 sub split_params_to_letter {
