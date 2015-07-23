@@ -649,7 +649,7 @@ sub mem_limit_kb {
     }
 
     # get physical total memory
-    elsif (-e '/proc/meminfo') {
+    if (-e '/proc/meminfo') {
         my $mem_total = $class->get_mem_total_from_proc;
         return $mem_total if $mem_total;
     }
