@@ -113,6 +113,7 @@ sub collect_newly_created_allocations {
         ) {
             # This allocation was created in the test database
             push @new_allocations_in_database, $next_db_allocation;
+            $self->debug_message("Found allocation %s with %d kB", $next_db_allocation->id, $next_db_allocation->kilobytes_requested);
             undef($next_db_allocation);
 
         } elsif ($next_tmpl_allocation->id eq $next_db_allocation->id) {
@@ -200,8 +201,8 @@ sub report_allocations_to_delete {
         $kb_sum += $alloc->kilobytes_requested;
     }
 
-    $self->status_message('Removing %d GB in %d allocations.',
-                          int($kb_sum / KB_IN_ONE_GB),
+    $self->status_message('Removing %.3f GB in %d allocations.',
+                          $kb_sum / KB_IN_ONE_GB,
                           scalar(@allocations));
 }
 
@@ -210,9 +211,9 @@ sub delete_allocations {
 
     foreach my $alloc ( @stripped_allocations ) {
         my $real_allocation = Genome::Disk::Allocation->get($alloc->id);
-        $self->debug_message('Deleting %d GB for allocation %s',
-                             int($real_allocation->kilobytes_requested / KB_IN_ONE_GB ),
-                             $alloc->id);
+        $self->debug_message('Deleting %.3f GB for allocation %s',
+                             $real_allocation->kilobytes_requested / KB_IN_ONE_GB,
+                             $real_allocation->id);
         $real_allocation->delete();
     }
     return 1;
