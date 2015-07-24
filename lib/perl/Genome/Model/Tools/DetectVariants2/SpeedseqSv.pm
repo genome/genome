@@ -13,12 +13,6 @@ use Genome::File::Tsv;
 
 class Genome::Model::Tools::DetectVariants2::SpeedseqSv {
     is => 'Genome::Model::Tools::DetectVariants2::Detector',
-    has_optional => [
-        _legend_output => {
-            calculate_from => ['_temp_staging_directory'],
-            calculate => q{ File::Spec->join($_temp_staging_directory, 'legend.tsv'); },
-        },
-    ]
 };
 
 	my $temp_directory = Genome::Sys->create_temp_directory();
