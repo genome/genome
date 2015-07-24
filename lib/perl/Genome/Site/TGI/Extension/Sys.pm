@@ -624,13 +624,12 @@ sub get_mem_total_from_proc {
 }
 
 sub get_mem_limit_from_bjobs {
-    my $mem_limit;
+    my $bjobs_mem_limit_kb;
     my $LSB_JOBID = $ENV{LSB_JOBID};
     my $bjobs_cmd = qx(which bjobs);
     if ($bjobs_cmd && $LSB_JOBID) {
         chomp $bjobs_cmd;
         my $bjobs = qx($bjobs_cmd -l $LSB_JOBID);
-        my $bjobs_mem_limit_kb;
         my ($bjobs_mem_limit, $bjobs_mem_limit_units) = $bjobs =~ /MEMLIMIT\s+(\d+\.?\d*)\s+([TGMK])\b/;
         if ($bjobs_mem_limit_units eq 'T') {
             $bjobs_mem_limit_kb = int($bjobs_mem_limit * 1024 * 1024 * 1024);
@@ -647,9 +646,8 @@ sub get_mem_limit_from_bjobs {
         else {
             # failed to parse
         }
-        $mem_limit = $bjobs_mem_limit_kb if ($bjobs_mem_limit_kb);
     }
-    return $mem_limit;
+    return $bjobs_mem_limit_kb;
 }
 
 
