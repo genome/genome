@@ -1,28 +1,18 @@
 {
    "links" : [
       {
-         "dataFlow" : {
-            "a" : "a"
-         },
-         "destination" : "Mark likes the letter N",
+         "destination" : "set status Running",
          "source" : "input connector"
       },
       {
-         "dataFlow" : {
-            "b" : "b"
-         },
          "destination" : "Mark likes the letter N",
-         "source" : "input connector"
+         "source" : "set status Running"
       },
       {
          "dataFlow" : {
-            "c" : "c"
-         },
-         "destination" : "Mark likes the letter N",
-         "source" : "input connector"
-      },
-      {
-         "dataFlow" : {
+            "a" : "a",
+            "b" : "b",
+            "c" : "c",
             "d" : "d"
          },
          "destination" : "Mark likes the letter N",
@@ -30,43 +20,19 @@
       },
       {
          "dataFlow" : {
-            "out_a" : "out_a"
-         },
-         "destination" : "output connector",
-         "source" : "Mark likes the letter N"
-      },
-      {
-         "dataFlow" : {
-            "out_b" : "out_b"
-         },
-         "destination" : "output connector",
-         "source" : "Mark likes the letter N"
-      },
-      {
-         "dataFlow" : {
-            "out_c" : "out_c"
-         },
-         "destination" : "output connector",
-         "source" : "Mark likes the letter N"
-      },
-      {
-         "dataFlow" : {
+            "out_a" : "out_a",
+            "out_b" : "out_b",
+            "out_c" : "out_c",
             "out_d" : "out_d"
          },
          "destination" : "output connector",
          "source" : "Mark likes the letter N"
       },
       {
-         "dataFlow" : {
-            "out_d" : "out_d"
-         },
          "destination" : "set status Succeeded",
          "source" : "Mark likes the letter N"
       },
       {
-         "dataFlow" : {
-            "dummy_output" : "dummy_output for Genome::Process(123)"
-         },
          "destination" : "output connector",
          "source" : "set status Succeeded"
       }
@@ -74,26 +40,6 @@
    "tasks" : {
       "Mark likes the letter N" : {
          "methods" : [
-            {
-               "name" : "set status Running",
-               "parameters" : {
-                  "commandLine" : [
-                     "genome",
-                     "process",
-                     "set-status",
-                     "123",
-                     "Running",
-                     "--exit-code",
-                     1
-                  ],
-                  "environment" : {
-                     "FOO" : "bar"
-                  },
-                  "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
-               },
-               "service" : "shell-command"
-            },
             {
                "name" : "Mark likes the letter N",
                "parameters" : {
@@ -197,7 +143,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "shell-command"
                            },
@@ -219,7 +165,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "shell-command"
                            }
@@ -245,7 +191,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "shell-command"
                            },
@@ -267,7 +213,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "shell-command"
                            }
@@ -293,7 +239,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "shell-command"
                            },
@@ -315,7 +261,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "shell-command"
                            }
@@ -341,7 +287,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "shell-command"
                            },
@@ -363,7 +309,7 @@
                                     "FOO" : "bar"
                                  },
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "shell-command"
                            }
@@ -389,7 +335,31 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "set status Running" : {
+         "methods" : [
+            {
+               "name" : "set status Running",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Running",
+                     "--exit-code",
+                     0
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "shell-command"
             }
@@ -413,7 +383,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "shell-command"
             }

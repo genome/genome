@@ -1,14 +1,16 @@
 {
    "links" : [
       {
-         "dataFlow" : {
-            "a" : "a"
-         },
-         "destination" : "Converge Test",
+         "destination" : "set status Running",
          "source" : "input connector"
       },
       {
+         "destination" : "Converge Test",
+         "source" : "set status Running"
+      },
+      {
          "dataFlow" : {
+            "a" : "a",
             "b" : "b"
          },
          "destination" : "Converge Test",
@@ -22,16 +24,10 @@
          "source" : "Converge Test"
       },
       {
-         "dataFlow" : {
-            "out" : "out"
-         },
          "destination" : "set status Succeeded",
          "source" : "Converge Test"
       },
       {
-         "dataFlow" : {
-            "dummy_output" : "dummy_output for Genome::Process(123)"
-         },
          "destination" : "output connector",
          "source" : "set status Succeeded"
       }
@@ -40,38 +36,12 @@
       "Converge Test" : {
          "methods" : [
             {
-               "name" : "set status Running",
-               "parameters" : {
-                  "commandLine" : [
-                     "genome",
-                     "process",
-                     "set-status",
-                     "123",
-                     "Running",
-                     "--exit-code",
-                     1
-                  ],
-                  "environment" : {
-                     "FOO" : "bar"
-                  },
-                  "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
-               },
-               "service" : "shell-command"
-            },
-            {
                "name" : "Converge Test",
                "parameters" : {
                   "links" : [
                      {
                         "dataFlow" : {
-                           "a" : "a"
-                        },
-                        "destination" : "Convergence",
-                        "source" : "input connector"
-                     },
-                     {
-                        "dataFlow" : {
+                           "a" : "a",
                            "b" : "b"
                         },
                         "destination" : "Convergence",
@@ -122,7 +92,31 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "set status Running" : {
+         "methods" : [
+            {
+               "name" : "set status Running",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Running",
+                     "--exit-code",
+                     0
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "shell-command"
             }
@@ -146,7 +140,7 @@
                      "FOO" : "bar"
                   },
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "shell-command"
             }

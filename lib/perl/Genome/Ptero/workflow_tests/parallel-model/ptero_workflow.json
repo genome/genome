@@ -2,13 +2,7 @@
    "links" : [
       {
          "dataFlow" : {
-            "prefixes" : "prefix"
-         },
-         "destination" : "Inner",
-         "source" : "input connector"
-      },
-      {
-         "dataFlow" : {
+            "prefixes" : "prefix",
             "suffix" : "suffix"
          },
          "destination" : "Inner",
@@ -31,13 +25,7 @@
                   "links" : [
                      {
                         "dataFlow" : {
-                           "prefix" : "prefix"
-                        },
-                        "destination" : "Appender",
-                        "source" : "input connector"
-                     },
-                     {
-                        "dataFlow" : {
+                           "prefix" : "prefix",
                            "suffix" : "suffix"
                         },
                         "destination" : "Appender",
@@ -70,7 +58,7 @@
                                  ],
                                  "environment" : {},
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "shell-command"
                            },
@@ -90,7 +78,7 @@
                                  ],
                                  "environment" : {},
                                  "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "shell-command"
                            }
