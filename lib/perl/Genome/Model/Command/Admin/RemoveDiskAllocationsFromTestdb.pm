@@ -209,14 +209,33 @@ sub report_allocations_to_delete {
 sub delete_allocations {
     my($self, @stripped_allocations) = @_;
 
+    my @allocations;
     foreach my $alloc ( @stripped_allocations ) {
         my $real_allocation = Genome::Disk::Allocation->get($alloc->id);
+        push @allocations, $real_allocation;
+    }
+
+    $self->_delete_genome_process_given_allocations(\@allocations);
+
+    foreach my $real_allocation ( @allocations ) {
         $self->debug_message('Deleting %.3f GB for allocation %s',
                              $real_allocation->kilobytes_requested / KB_IN_ONE_GB,
                              $real_allocation->id);
         $real_allocation->delete();
     }
     return 1;
+}
+
+sub _delete_genome_process_given_allocations {
+    my($self, $allocations) = @_;
+    return unless $allocations and @$allocations;
+
+    my @allocation_ids = map { $_->id } @$allocations;
+    my @processes = Genome::Process->get(disk_allocation_id => \@allocation_ids);
+    foreach my $process ( @processes ) {
+        $self->debug_message('Deleting Genome::Process %s', $process->id);
+        $process->delete();
+    }
 }
 
 sub get_template_name_for_database_name {
