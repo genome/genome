@@ -1,4 +1,31 @@
 $Genome::Command::OPTS_SPEC = [
+  '>test',
+  [
+    '>run-simple-process',
+    [
+      'statement=s',
+      'files',
+      'wait-and-check-outputs!',
+      undef,
+      'fail-intentionally!',
+      undef,
+      'help!',
+      undef
+    ],
+    '>echo',
+    [
+      'input-statement=s',
+      'files',
+      'fail-intentionally!',
+      undef,
+      'output-statement=s',
+      'files',
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
   '>search',
   [
     'rows=s',
