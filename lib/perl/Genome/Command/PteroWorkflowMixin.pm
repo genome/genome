@@ -178,7 +178,7 @@ sub _write_ptero_workflow {
 sub _top_level_dag {
     my ($self, $workflow) = @_;
 
-    return $workflow->{tasks}{$workflow->{name}}{methods}[1];
+    return $workflow->{tasks}{$workflow->{name}}{methods}[0];
 }
 
 sub _top_level_tasks {

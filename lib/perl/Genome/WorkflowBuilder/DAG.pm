@@ -172,12 +172,12 @@ sub get_ptero_builder {
         unless (defined $self->log_dir) {
             die sprintf("DAG (%s) has no log_dir set!", $self->name);
         }
-        $dag_method->_add_task($operation->get_ptero_builder_task($self->log_dir));
+        $dag_method->add_task($operation->get_ptero_builder_task($self->log_dir));
     }
 
     for my $link (@{$self->links}) {
         $link->validate;
-        $dag_method->link_tasks(
+        $dag_method->add_data_flow(
             source => $link->source_operation_name,
             source_property => $link->source_property,
             destination => $link->destination_operation_name,
@@ -216,59 +216,45 @@ sub get_ptero_builder_for_process {
 
     my $outer_dag = Ptero::Builder::Workflow->new(name => $process->workflow_name);
 
-    my $inner_task = $self->get_ptero_builder_task();
-    $inner_task->methods([
-        $self->_get_method_to_set_status($process_id, 'Running', 1),
-        @{$inner_task->methods},
+    my $set_to_running_task = $outer_dag->add_task(
+        $self->_get_task_to_set_status($process_id, 'Running', 0)
+    );
+    $outer_dag->create_link(destination => $set_to_running_task);
+
+    my $payload_task = $self->get_ptero_builder_task();
+    $payload_task->methods([
+        @{$payload_task->methods},
         $self->_get_method_to_set_status($process_id, 'Crashed', 1),
     ]);
+    $outer_dag->add_task($payload_task);
+    $outer_dag->create_link(
+        source => $set_to_running_task,
+        destination => $payload_task,
+    );
+    for my $input_property ($self->input_properties) {
+        $outer_dag->add_data_flow(
+            destination => $payload_task,
+            source_property => $input_property,
+            destination_property => $input_property,
+        );
+    }
+    for my $output_property ($self->output_properties) {
+        $outer_dag->add_data_flow(
+            source => $payload_task,
+            source_property => $output_property,
+            destination_property => $output_property,
+        );
+    }
 
-    $outer_dag->_add_task($inner_task);
-    my $success_task = $outer_dag->_add_task(
+    my $set_to_succeeded_task = $outer_dag->add_task(
         $self->_get_task_to_set_status($process_id, 'Succeeded', 0)
     );
-
-    my $last_destination;
-    my $linked_inputs = Set::Scalar->new();
-    my $linked_outputs = Set::Scalar->new();
-    for my $link (@{$self->links}) {
-        $link->validate;
-
-        my $source = $link->source_property;
-        my $destination = $link->destination_property;
-
-        if ($link->external_input and
-                !$linked_inputs->contains($source)) {
-            $linked_inputs->insert($source);
-            $outer_dag->link_tasks(
-                source => $link->source_operation_name,
-                source_property => $source,
-                destination => $inner_task->name,
-                destination_property => $source,
-            );
-        } elsif ($link->external_output and
-                !$linked_outputs->contains($destination)) {
-            $linked_outputs->insert($destination);
-            $last_destination = $destination;
-            $outer_dag->link_tasks(
-                source => $inner_task->name,
-                source_property => $destination,
-                destination => $link->destination_operation_name,
-                destination_property => $destination,
-            );
-        }
-    }
-    $outer_dag->link_tasks(
-        source => $inner_task->name,
-        source_property => $last_destination,
-        destination => $success_task->name,
-        destination_property => $last_destination,
+    $outer_dag->create_link(
+        source => $payload_task,
+        destination => $set_to_succeeded_task,
     );
-    $outer_dag->link_tasks(
-        source => $success_task->name,
-        source_property => "dummy_output",
-        destination => 'output connector',
-        destination_property => "dummy_output for Genome::Process($process_id)",
+    $outer_dag->create_link(
+        source => $set_to_succeeded_task,
     );
 
     return $outer_dag;

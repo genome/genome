@@ -2,13 +2,7 @@
    "links" : [
       {
          "dataFlow" : {
-            "prefix_lists" : "prefix_list"
-         },
-         "destination" : "Outer",
-         "source" : "input connector"
-      },
-      {
-         "dataFlow" : {
+            "prefix_lists" : "prefix_list",
             "suffixes" : "suffixes"
          },
          "destination" : "Outer",
@@ -31,13 +25,7 @@
                   "links" : [
                      {
                         "dataFlow" : {
-                           "prefix_list" : "prefixes"
-                        },
-                        "destination" : "Inner",
-                        "source" : "input connector"
-                     },
-                     {
-                        "dataFlow" : {
+                           "prefix_list" : "prefixes",
                            "suffixes" : "suffixes"
                         },
                         "destination" : "Inner",
@@ -60,13 +48,7 @@
                                  "links" : [
                                     {
                                        "dataFlow" : {
-                                          "prefixes" : "prefix"
-                                       },
-                                       "destination" : "Appender",
-                                       "source" : "input connector"
-                                    },
-                                    {
-                                       "dataFlow" : {
+                                          "prefixes" : "prefix",
                                           "suffixes" : "suffix"
                                        },
                                        "destination" : "Appender",
@@ -99,7 +81,7 @@
                                                 ],
                                                 "environment" : {},
                                                 "user" : "dmorton",
-                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                                              },
                                              "service" : "shell-command"
                                           },
@@ -119,7 +101,7 @@
                                                 ],
                                                 "environment" : {},
                                                 "user" : "dmorton",
-                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                                              },
                                              "service" : "shell-command"
                                           }

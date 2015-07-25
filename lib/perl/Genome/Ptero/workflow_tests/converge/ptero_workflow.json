@@ -2,13 +2,7 @@
    "links" : [
       {
          "dataFlow" : {
-            "a" : "a"
-         },
-         "destination" : "Convergence",
-         "source" : "input connector"
-      },
-      {
-         "dataFlow" : {
+            "a" : "a",
             "b" : "b"
          },
          "destination" : "Convergence",

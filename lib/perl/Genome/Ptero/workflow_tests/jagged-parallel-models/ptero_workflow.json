@@ -2,13 +2,7 @@
    "links" : [
       {
          "dataFlow" : {
-            "model_prefix_lists" : "prefix_list"
-         },
-         "destination" : "Outer",
-         "source" : "input connector"
-      },
-      {
-         "dataFlow" : {
+            "model_prefix_lists" : "prefix_list",
             "model_suffixes" : "suffixes"
          },
          "destination" : "Outer",
@@ -23,13 +17,7 @@
       },
       {
          "dataFlow" : {
-            "command_prefixes" : "prefix"
-         },
-         "destination" : "Appender",
-         "source" : "input connector"
-      },
-      {
-         "dataFlow" : {
+            "command_prefixes" : "prefix",
             "command_suffix" : "suffix"
          },
          "destination" : "Appender",
@@ -62,7 +50,7 @@
                   ],
                   "environment" : {},
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "shell-command"
             },
@@ -82,7 +70,7 @@
                   ],
                   "environment" : {},
                   "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "shell-command"
             }
@@ -97,13 +85,7 @@
                   "links" : [
                      {
                         "dataFlow" : {
-                           "prefix_list" : "prefixes"
-                        },
-                        "destination" : "Inner",
-                        "source" : "input connector"
-                     },
-                     {
-                        "dataFlow" : {
+                           "prefix_list" : "prefixes",
                            "suffixes" : "suffixes"
                         },
                         "destination" : "Inner",
@@ -126,13 +108,7 @@
                                  "links" : [
                                     {
                                        "dataFlow" : {
-                                          "prefixes" : "prefix"
-                                       },
-                                       "destination" : "Appender",
-                                       "source" : "input connector"
-                                    },
-                                    {
-                                       "dataFlow" : {
+                                          "prefixes" : "prefix",
                                           "suffixes" : "suffix"
                                        },
                                        "destination" : "Appender",
@@ -165,7 +141,7 @@
                                                 ],
                                                 "environment" : {},
                                                 "user" : "dmorton",
-                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                                              },
                                              "service" : "shell-command"
                                           },
@@ -185,7 +161,7 @@
                                                 ],
                                                 "environment" : {},
                                                 "user" : "dmorton",
-                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome/Ptero"
+                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                                              },
                                              "service" : "shell-command"
                                           }
