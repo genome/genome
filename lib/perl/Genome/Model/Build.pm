@@ -1597,7 +1597,6 @@ sub success {
         $self->debug_message('Firing build success commit callback.');
         my $result = eval {
             Genome::Search->queue_for_update($self->model);
-            $self->model->_trigger_downstream_builds($self);
         };
         if($@) {
             $self->error_message('Error executing success callback: ' . $@);
