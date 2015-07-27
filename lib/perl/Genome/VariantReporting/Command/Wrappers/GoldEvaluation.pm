@@ -25,6 +25,32 @@ class Genome::VariantReporting::Command::Wrappers::GoldEvaluation {
             is => 'Path',
         },
     },
+
+    has => [
+        normal_sample => {
+          is => 'Genome::Sample',
+          via => 'model',
+          to => 'normal_sample',
+        },
+
+        normal_sample_name => {
+          is => 'Text',
+          via => 'normal_sample',
+          to => 'name',
+        },
+
+        discovery_sample => {
+          is => 'Genome::Sample',
+          via => 'model',
+          to => 'tumor_sample',
+        },
+
+        discovery_sample_name => {
+          is => 'Text',
+          via => 'discovery_sample',
+          to => 'name',
+        },
+    ],
 };
 
 sub execute {
@@ -132,26 +158,6 @@ sub get_germline_translations {
             $self->get_library_name_labels('discovery'),
         },
     };
-}
-
-sub discovery_sample_name {
-    my $self = shift;
-    return $self->discovery_sample->name;
-}
-
-sub normal_sample_name {
-    my $self = shift;
-    return $self->normal_sample->name;
-}
-
-sub normal_sample {
-    my $self = shift;
-    return $self->model->normal_sample;
-}
-
-sub discovery_sample {
-    my $self = shift;
-    return $self->model->tumor_sample;
 }
 
 my %counters;
