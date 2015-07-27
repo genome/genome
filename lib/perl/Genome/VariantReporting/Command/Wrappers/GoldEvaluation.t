@@ -42,7 +42,6 @@ subtest "sample and library labels" => sub {
         indels_input_vcf => Genome::Sys->create_temp_file_path,
     );
 
-    $DB::single = 1;
     is_deeply(
         $cmd->get_common_translations(),
         get_expected_labels(),
