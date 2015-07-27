@@ -58,7 +58,7 @@ sub available_bedtools_versions {
     return sort { $sort->($b, $a) } keys %BEDTOOLS_VERSIONS;
 }
 
-sub latest_bedtools_Version {
+sub latest_bedtools_version {
     return (available_bedtools_versions())[0];
 }
 
