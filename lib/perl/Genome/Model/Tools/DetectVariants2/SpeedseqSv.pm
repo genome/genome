@@ -65,7 +65,7 @@ sub find_file{
 		my $dir = dirname($_);
 		$editor =~ s/\.bam/\.$disc\.bam/g;
 		my $discord = "$dir/$editor";
-		if (!-s $discord) {die $self->error_message("File couldn't be found: $discord")};
+		if (!-s $discord) {die $self->error_message("File couldn't be found: $discord  Bam Files Must be aligned with Speedseq.")};
 		push (@final, $discord);
 	}
 	my $combined_splits = join (',',@final);
