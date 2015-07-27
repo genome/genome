@@ -41,11 +41,11 @@ sub required_rusage {
 sub _run_aligner {
     my $self = shift;
     my @input_pathnames = @_;
-    
+
     my $tmp_dir = $self->temp_scratch_directory;
     my $fq_file = "$tmp_dir/merged.fq";
     my $staging_sam_file = "$tmp_dir/all_sequences.sam";
-    
+
     # get refseq info
     my $ref_file = $self->get_reference_sequence_index->full_consensus_path('fa');
 
@@ -115,12 +115,12 @@ sub _run_aligner {
                     -file   => ">".$chunk{'fasta_infile'},
                     -format => 'fasta'
                 );
-                 
+
                 my $out_qual_obj = Bio::SeqIO->new(
                     -file   => ">".$chunk{'qual_infile'},
                     -format => 'qual',
                 );
-                         
+
                 my $counter = 0;
                 while ($counter < 25000 && $reached_end == 0) {
                     my $fastq_obj = $in_seq_obj->next_seq;
@@ -159,7 +159,7 @@ sub _run_aligner {
                         skip_if_output_is_present => 0,
                     );
                 }
-                
+
                 # save the actual async shellcmd object in the hash as well
                 $chunk{'cv'} = $cv;
                 # push this chunk's hash to the big list
@@ -277,7 +277,7 @@ sub _run_aligner {
                     }
 
                     # put your output file here, append to this file!
-                        #my $output_file = $self->temp_staging_directory . "/all_sequences.sam"
+                    #my $output_file = $self->temp_staging_directory . "/all_sequences.sam"
                     die "Failed to process sam command line, error_message is ".$self->error_message unless $self->_filter_sam_output($cv->{'sam_output'}, $staging_sam_file);
                 }
 
@@ -301,8 +301,8 @@ sub _filter_sam_output {
 
     my $aligned_fh = IO::File->new( $aligned_sam_file );
     if ( !$aligned_fh ) {
-            $self->error_message("Error opening output sam file for reading: $!");
-            return;
+        $self->error_message("Error opening output sam file for reading: $!");
+        return;
     }
     $self->debug_message("Opened $aligned_sam_file");
 
@@ -312,7 +312,7 @@ sub _filter_sam_output {
         return;
     }
     $self->debug_message("Opened $all_sequences_sam_file");
-    
+
     while (<$aligned_fh>) {
         #write out the aligned map, excluding the default header- all lines starting with @.
         $all_seq_fh->print($_) unless $_ =~ /^@/;
@@ -326,7 +326,7 @@ sub _filter_sam_output {
 sub decomposed_aligner_params {
     my $self = shift;
     my $params = $self->aligner_params || "-raw -tags -bandwidth 3 -penalty -1 -gap_init -1 -gap_ext -1 -masklevel 0 -minscore 70";
-    
+
     my @spar = split /\:/, $params;
 
     # TODO (iferguso) this could be changed: we currently specify number of cores to use right here:
@@ -335,9 +335,9 @@ sub decomposed_aligner_params {
 
 sub aligner_params_for_sam_header {
     my $self = shift;
-    
+
     my %params = $self->decomposed_aligner_params;
-    
+
     return 'cross_match' . $params{align_params};
 }
 
