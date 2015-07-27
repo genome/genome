@@ -123,3 +123,6 @@ sub aligner_params_for_sam_header {
     
     return "blat $params";
 }
+
+1;
+
