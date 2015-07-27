@@ -79,7 +79,7 @@ class Genome::Model::Tools::Speedseq::Sv {
                         tool_param_name => 'A',
                 },
 		min_sample_weight => {
-                        is => 'Integar',
+                        is => 'Integer',
                         doc => 'minimum sample weight for a call [default: 4]',
                         default_value => 4,
 			is_optional => 1,
@@ -93,6 +93,7 @@ class Genome::Model::Tools::Speedseq::Sv {
                 },
 		temp_directory => {
             		is => 'Text',
+			default_value => Genome::Sys->create_temp_directory(),
             		doc => 'temp directory',
             		example_values => ['./output_prefix.XXXXXXXXXXXX'],
             		is_optional => 1,

@@ -27,7 +27,7 @@ my $output_prefix = Genome::Sys->create_temp_directory() .'/example';
 
 my $sv_cmd = $pkg->create(
    version => $speedseq_version,
-   temp_directory => $temp_directory,
+
    reference_fasta => $reference_fasta,
    full_bam_file => $bam,
    output_prefix => $output_prefix,
