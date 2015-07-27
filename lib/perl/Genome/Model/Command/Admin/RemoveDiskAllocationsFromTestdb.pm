@@ -12,6 +12,7 @@ use Sub::Install qw();
 use Sub::Name qw();
 
 use constant KB_IN_ONE_GB => 1024 * 1024;
+use constant KB_IN_ONE_MB => 1024;
 
 class Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb {
     is => 'Command::V2',
@@ -220,9 +221,7 @@ sub delete_allocations {
 
     my @allocations = Genome::Disk::Allocation->get(id => [ keys %allocation_ids ]);
     foreach my $real_allocation ( @allocations ) {
-        $self->debug_message('Deleting %.3f GB for allocation %s',
-                             $real_allocation->kilobytes_requested / KB_IN_ONE_GB,
-                             $real_allocation->id);
+        $self->_print_debug_message_about_deleting_allocation($real_allocation);
         $real_allocation->delete();
     }
 
@@ -230,12 +229,31 @@ sub delete_allocations {
     return 1;
 }
 
+sub _print_debug_message_about_deleting_allocation {
+    my($self, $allocation, $process) = @_;
+
+    my($scale, $divisor) = $allocation->kilobytes_requested < KB_IN_ONE_GB
+                            ? ('MB', KB_IN_ONE_MB)
+                            : ('GB', KB_IN_ONE_GB);
+
+    my $process_message = $process
+                            ? ' from Process ' . $process->id
+                            : '';
+
+    $self->debug_message('Deleting %.3f %s for allocation %s%s',
+                         $allocation->kilobytes_requested / $divisor,
+                         $scale,
+                         $allocation->id,
+                         $process_message);
+}
+
 # Genome::Process objects delete their own allocations
 sub _delete_processes {
     my($self, $processes) = @_;
 
     foreach my $process ( @$processes ) {
-        $self->debug_message('Deleting Genome::Process %s', $process->id);
+        my $allocation = $process->disk_allocation;
+        $self->_print_debug_message_about_deleting_allocation($allocation, $process);
         $process->delete();
     }
 }

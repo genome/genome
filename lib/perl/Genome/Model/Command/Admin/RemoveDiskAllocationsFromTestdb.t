@@ -88,14 +88,14 @@ subtest 'report_allocations_to_delete' => sub {
 
     $cmd->report_allocations_to_delete(@allocations);
     is_deeply([ $cmd->status_messages ],
-              [ 'Removing 7 GB in 3 allocations.'],
+              [ 'Removing 7.000 GB in 3 allocations.'],
               'report on deleted allocations');
 
 
     $cmd->report_allocations_to_delete();
     is_deeply([ $cmd->status_messages ],
-              [ 'Removing 7 GB in 3 allocations.',
-                'Removing 0 GB in 0 allocations.' ],
+              [ 'Removing 7.000 GB in 3 allocations.',
+                'Removing 0.000 GB in 0 allocations.' ],
               'Report when no allocations are to be deleted');
 };
 
