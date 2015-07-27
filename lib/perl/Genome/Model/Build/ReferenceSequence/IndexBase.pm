@@ -27,7 +27,7 @@ class Genome::Model::Build::ReferenceSequence::IndexBase {
     ],
     has_input => [
         reference_build_id  => {
-            is => 'Number',
+            is => 'Text',
             doc => 'the reference to use by id',
         },
     ],
