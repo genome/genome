@@ -50,9 +50,6 @@ sub _run_aligner {
     my $ref_file = $self->get_reference_sequence_index->full_consensus_path('fa');
 
     my $crossmatch_path = Genome::Model::Tools::Crossmatch->path_for_crossmatch_version($self->aligner_version);
-    # TODO (iferguso) figure out how to get nonmatching to work correctly. it currently seems to cause crashes.
-    my $nonmatching = 0;
-
     my %aligner_params = $self->decomposed_aligner_params;
     my $cores_to_use = $aligner_params{'cores_to_use'};
     if ($cores_to_use =~ /(\d+)/) {
@@ -123,31 +120,17 @@ sub _run_aligner {
                 my $cv; 
 
                 # start our job
-                if ($nonmatching) {
-                    my $cmdline = $crossmatch_path . sprintf(' %s %s %s -output_nonmatching_queries > %s',
-                        $chunk{'fasta_infile'}, $ref_file, $aligner_params{align_params}, $chunk{'align_output'});
+                my $cmdline = $crossmatch_path . sprintf(' %s %s %s > %s',
+                    $chunk{'fasta_infile'}, $ref_file, $aligner_params{align_params}, $chunk{'align_output'});
 
-                    $cv = Genome::Utility::AsyncFileSystem->shellcmd(
-                        cmd             => $cmdline,
-                        '>'             => $chunk{'stdout_file'},
-                        '2>'            => $chunk{'stderr_file'},
-                        input_files     => [ $chunk{'fasta_infile'}, $chunk{'qual_infile'}, $ref_file ],
-                        output_files    => [ $chunk{'align_output'}, $chunk{'nonmatching_fa_output'}, $chunk{'nonmatching_qual_output'}, $chunk{'log_output'} ],
-                        skip_if_output_is_present => 0,
-                    );
-                } else {
-                    my $cmdline = $crossmatch_path . sprintf(' %s %s %s > %s',
-                        $chunk{'fasta_infile'}, $ref_file, $aligner_params{align_params}, $chunk{'align_output'});
-
-                    $cv = Genome::Utility::AsyncFileSystem->shellcmd(
-                        cmd             => $cmdline,
-                        '>'             => $chunk{'stdout_file'},
-                        '2>'            => $chunk{'stderr_file'},
-                        input_files     => [ $chunk{'fasta_infile'}, $chunk{'qual_infile'}, $ref_file ],
-                        output_files    => [ $chunk{'align_output'}, $chunk{'log_output'} ],
-                        skip_if_output_is_present => 0,
-                    );
-                }
+                $cv = Genome::Utility::AsyncFileSystem->shellcmd(
+                    cmd             => $cmdline,
+                    '>'             => $chunk{'stdout_file'},
+                    '2>'            => $chunk{'stderr_file'},
+                    input_files     => [ $chunk{'fasta_infile'}, $chunk{'qual_infile'}, $ref_file ],
+                    output_files    => [ $chunk{'align_output'}, $chunk{'log_output'} ],
+                    skip_if_output_is_present => 0,
+                );
 
                 # save the actual async shellcmd object in the hash as well
                 $chunk{'cv'} = $cv;
