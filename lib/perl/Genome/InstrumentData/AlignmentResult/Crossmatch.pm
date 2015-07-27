@@ -87,28 +87,19 @@ sub _run_aligner {
         while ($reached_end == 0 || @cvs > 0 || $started_jobs != $finished_jobs) {
             # now, as long as there are open jobs slots AND we have fq to read in...
             while (scalar @cvs < $cores_to_use && $reached_end == 0) {
-                my %chunk;
-
                 #### STEP 1: Convert fastq files into fasta+qual files
-                # TODO (iferguso) instead of testing the filetype by looking at the extension, i'm just assuming it is a .fq file
-                #if ($input_file =~ /(.+)\.fq$/) {
-                if ($input_file =~ /(.+)/) {
-                    $chunk{'fastq_infile'} = $input_file;
-                    $chunk{'fasta_infile'} = "$1.$minor.fa";
-                    $chunk{'qual_infile'}  = "$1.$minor.fa.qual";
-                    $chunk{'align_output'} = "$1.$minor.cm.aligned.out";
-                    $chunk{'sam_output'}   = "$1.$minor.sam.aligned.out";
-                    $chunk{'nonmatching_fa_output'}   = "$1.$minor.fa.nonmatching";
-                    $chunk{'nonmatching_qual_output'} = "$1.$minor.fa.nonmatching.qual";
-                    $chunk{'log_output'}  = "$1.$minor.fa.log";
-                    $chunk{'stdout_file'} = "$1.$minor.cm.stdout";
-                    $chunk{'stderr_file'} = "$1.$minor.cm.stderr";
-                } else {
-                    $self->error_message(
-                        "Problem parsing filename of input fq $input_file.\n".
-                        "Possibly didn't end with .fq so couldn't extract name?");
-                    $self->die($self->error_message);
-                }
+                my %chunk = (
+                    fastq_infile => $input_file,
+                    fasta_infile => "$1.$minor.fa",
+                    qual_infile => "$1.$minor.fa.qual",
+                    align_output => "$1.$minor.cm.aligned.out",
+                    sam_output => "$1.$minor.sam.aligned.out",
+                    nonmatching_fa_output => "$1.$minor.fa.nonmatching",
+                    nonmatching_qual_output => "$1.$minor.fa.nonmatching.qual",
+                    log_output => "$1.$minor.fa.log",
+                    stdout_file => "$1.$minor.cm.stdout",
+                    stderr_file => "$1.$minor.cm.stderr",
+                );
                 $self->debug_message("Iteration $minor of splitting fq '$input_file' into '".$chunk{'qual_infile'}."' and '".$chunk{'fasta_infile'}."'.");
 
                 my $out_seq_obj = Bio::SeqIO->new(
