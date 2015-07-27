@@ -66,8 +66,7 @@ sub _run_aligner {
             skip_if_output_is_present => 0,
         );
 
-        # TODO (iferguso) is this kosher? blast2sam.pl refers to /gsc/bin/blast2sam.pl
-        my $convert_cmd = "blast2sam.pl" . sprintf(' %s > %s',
+        my $convert_cmd = "/usr/bin/blast2sam.pl" . sprintf(' %s > %s',
             $tmp_blastn_file, $tmp_sam_file);
 
         Genome::Sys->shellcmd(
