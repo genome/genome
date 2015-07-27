@@ -62,8 +62,6 @@ sub _run_aligner {
     }
 
 
-    # TODO (iferguso) i don't believe cross_match handles paired end reads. if it does then this needs to be changed:
-    # TODO (iferguso) should do something to handle the log files
     foreach my $input_file (@input_pathnames) {
         my $in_seq_obj = Bio::SeqIO->new(
             -file   => $input_file,
@@ -320,7 +318,6 @@ sub decomposed_aligner_params {
 
     my @spar = split /\:/, $params;
 
-    # TODO (iferguso) this could be changed: we currently specify number of cores to use right here:
     return ('align_params' => $spar[0], 'cores_to_use' => 4);
 }
 
