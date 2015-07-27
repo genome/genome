@@ -207,18 +207,34 @@ sub kilobytes_requested {
 }
 
 sub get {
-    if (@_ != 2) {
-        die 'Unexpected args passed to get(), expected only ($class, $id) but got '
+    unless (@_ == 2
+        or
+        ( @_ == 3 and $_[1] eq 'id' and ref($_[2]) eq 'ARRAY')
+    ) {
+        die 'Unexpected args passed to get(), expected only ($class, $id) or ($class, $id, arrayref) but got '
             . join(', ', @_);
     }
 
     my $class = shift;
-    my $id = shift;
-    my($alloc) = grep { $_->id eq $id } @fake_allocations;
-    unless ($alloc) {
-        die "Couldn't find fake allocation with id $id in get()";
+
+    my %ids;
+    if ($_[0] eq 'id') {
+        %ids = map { $_ => 1 } @{ $_[1] };
+    } else {
+        $ids{$_[0]} = 1;
     }
-    return $alloc;
+    my @alloc = grep { exists $ids{$_->id} } @fake_allocations;
+    unless (@alloc) {
+        die "Couldn't find fake allocation with id " . join(', ', keys %ids) . " in get()";
+    }
+    if (wantarray) {
+        return @alloc;
+    } else {
+        if (@alloc > 1) {
+            die "Returning ".scalar(@alloc)." allocations in scalar context";
+        }
+        return $alloc[0];
+    }
 }
 
 sub delete {

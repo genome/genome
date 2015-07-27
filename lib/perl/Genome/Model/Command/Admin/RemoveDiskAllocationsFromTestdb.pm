@@ -209,30 +209,32 @@ sub report_allocations_to_delete {
 sub delete_allocations {
     my($self, @stripped_allocations) = @_;
 
-    my @allocations;
-    foreach my $alloc ( @stripped_allocations ) {
-        my $real_allocation = Genome::Disk::Allocation->get($alloc->id);
-        push @allocations, $real_allocation;
-    }
+    my %allocation_ids = map { $_ => 1 }
+                         map { $_->id } @stripped_allocations;
 
-    $self->_delete_genome_process_given_allocations(\@allocations);
+    # remove allocations tied to Genome::Process objects.  We'll delete those
+    # separately
+    my @processes = Genome::Process->get(disk_allocation_id => [ keys %allocation_ids ]);
+    my @allocation_ids_from_processes = map { $_->disk_allocation_id } @processes;
+    delete @allocation_ids{ @allocation_ids_from_processes };
 
+    my @allocations = Genome::Disk::Allocation->get(id => [ keys %allocation_ids ]);
     foreach my $real_allocation ( @allocations ) {
         $self->debug_message('Deleting %.3f GB for allocation %s',
                              $real_allocation->kilobytes_requested / KB_IN_ONE_GB,
                              $real_allocation->id);
         $real_allocation->delete();
     }
+
+    $self->_delete_processes(\@processes);
     return 1;
 }
 
-sub _delete_genome_process_given_allocations {
-    my($self, $allocations) = @_;
-    return unless $allocations and @$allocations;
+# Genome::Process objects delete their own allocations
+sub _delete_processes {
+    my($self, $processes) = @_;
 
-    my @allocation_ids = map { $_->id } @$allocations;
-    my @processes = Genome::Process->get(disk_allocation_id => \@allocation_ids);
-    foreach my $process ( @processes ) {
+    foreach my $process ( @$processes ) {
         $self->debug_message('Deleting Genome::Process %s', $process->id);
         $process->delete();
     }
