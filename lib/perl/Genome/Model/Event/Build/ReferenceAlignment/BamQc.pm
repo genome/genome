@@ -154,7 +154,7 @@ sub _select_error_rate_version_for_pp {
     ) {
         my $mem_version = $self->_bwa_mem_version_object($pp->read_aligner_version);
         if($mem_version > $self->_bwa_mem_version_object("0.7.5")) {
-            $error_rate_version = '1.0a2';
+            $error_rate_version = '1.0a3';
         }
     }
 
