@@ -94,7 +94,7 @@ sub _get_true_positives {
 
 sub _sv_with_min_support_count {
     my ($self, $file, $original_file, $output) = @_;
-    my $f = new IO::File($file, "r");
+    my $f = Genome::Sys->open_file_for_reading($file);
     my %results;
 
     my $id_index = _count_cols($original_file) + 6;
@@ -120,8 +120,7 @@ sub _sv_with_min_support_count {
     }
     $f->close();
 
-    my $in = new IO::File($original_file, "r");
-
+    my $in = Genome::Sys->open_file_for_reading($original_file);
     my %seen;
     my $count = 0;
     while (my $line = $in->getline) {
@@ -148,7 +147,7 @@ sub _sv_with_min_support_count {
 
 sub _count_cols {
     my $path = shift;
-    my $f = new IO::File($path, "r");
+    my $f = Genome::Sys->open_file_for_reading($path);
     my $line = $f->getline;
     $f->close();
     my @f = split("\t", $line);
