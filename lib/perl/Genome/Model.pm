@@ -233,17 +233,6 @@ class Genome::Model {
             where => [ -order_by => '-created_at' ],
             doc => 'Versions of a model over time, with varying quantities of evidence',
         },
-        downstream_model_associations => {
-            is => 'Genome::Model::Input',
-            reverse_as => '_model_value',
-            doc => 'links to models which use this model as an input',
-        },
-        downstream_models => {
-            is => 'Genome::Model',
-            via => 'downstream_model_associations',
-            to => 'model',
-            doc => 'models which use this model as an input',
-        },
         inputs => {
             is => 'Genome::Model::Input',
             reverse_as => 'model',
