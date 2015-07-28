@@ -16,8 +16,8 @@ sub execute {
     my @db_users = Genome::Sys::User->fix_params_and_get();
 
     my $changes = get_changes($ldap_user,\@db_users);
-    my $creates = $changes->{'create'};  
-    my $deletes = $changes->{'deletes'};  
+    my $creates = $changes->{'create'};
+    my $deletes = $changes->{'deletes'};
 
     my $create_count = $creates ? scalar(@$creates) : 0;
     my $delete_count = $deletes ? scalar(@$deletes) : 0;
@@ -40,12 +40,12 @@ sub execute {
             name => $u->{'cn'},
             username => $u->{'uid'},
         );
-    } 
+    }
 
     for my $u (@{ $changes->{'delete'} }) {
         $self->status("DELETE: " . $u->email . "\n");
         $u->delete();
-    } 
+    }
 
     $self->status("done- $create_count creates, $delete_count deletes, $changes_count total\n");
 }
@@ -67,7 +67,7 @@ sub get_ldap_users {
             undef $user;
         } else {
             my ($key, $value) = split(/\:\s+/,$c);
-            $user->{$key} = $value;       
+            $user->{$key} = $value;
         }
     }
 
