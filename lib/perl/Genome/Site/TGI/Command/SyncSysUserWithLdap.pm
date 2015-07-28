@@ -17,7 +17,7 @@ sub execute {
 
     my $changes = get_changes($ldap_user,\@db_users);
     my $creates = $changes->{'create'};
-    my $deletes = $changes->{'deletes'};
+    my $deletes = $changes->{'delete'};
 
     my $create_count = $creates ? scalar(@$creates) : 0;
     my $delete_count = $deletes ? scalar(@$deletes) : 0;
