@@ -89,11 +89,11 @@ sub _get_false_negatives {
 sub _get_true_positives {
     my $self = shift;
     my $output_file = $self->_get_pair_to_pair_output($self->bedpe, $self->gold_bedpe, 'both');
-    return $self->_sv_with_min_support_count($output_file, $self->bedpe, $self->min_hit_support, $self->true_positive_file);
+    return $self->_sv_with_min_support_count($output_file, $self->bedpe, $self->true_positive_file);
 }
 
 sub _sv_with_min_support_count {
-    my ($self, $file, $original_file, $min_hit_support, $output) = @_;
+    my ($self, $file, $original_file, $output) = @_;
     my $f = new IO::File($file, "r");
     my %results;
 
@@ -134,7 +134,7 @@ sub _sv_with_min_support_count {
         next if exists $seen{$sv_name};
         $seen{$sv_name} = 1;
 
-        next unless exists $results{$sv_name} && ($results{$sv_name}{count} >= $min_hit_support);
+        next unless exists $results{$sv_name} && ($results{$sv_name}{count} >= $self->min_hit_support);
         $count++;
         if ($out) {
             print $out "$line\n";
