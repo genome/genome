@@ -41,18 +41,15 @@ sub required_rusage {
 sub _run_aligner {
     my $self = shift;
     my @input_pathnames = @_;
-    
+
     my $tmp_dir = $self->temp_scratch_directory;
     my $fq_file = "$tmp_dir/merged.fq";
     my $staging_sam_file = "$tmp_dir/all_sequences.sam";
-    
+
     # get refseq info
     my $ref_file = $self->get_reference_sequence_index->full_consensus_path('fa');
 
     my $crossmatch_path = Genome::Model::Tools::Crossmatch->path_for_crossmatch_version($self->aligner_version);
-    # TODO (iferguso) figure out how to get nonmatching to work correctly. it currently seems to cause crashes.
-    my $nonmatching = 0;
-
     my %aligner_params = $self->decomposed_aligner_params;
     my $cores_to_use = $aligner_params{'cores_to_use'};
     if ($cores_to_use =~ /(\d+)/) {
@@ -62,8 +59,6 @@ sub _run_aligner {
     }
 
 
-    # TODO (iferguso) i don't believe cross_match handles paired end reads. if it does then this needs to be changed:
-    # TODO (iferguso) should do something to handle the log files
     foreach my $input_file (@input_pathnames) {
         my $in_seq_obj = Bio::SeqIO->new(
             -file   => $input_file,
@@ -87,40 +82,31 @@ sub _run_aligner {
         while ($reached_end == 0 || @cvs > 0 || $started_jobs != $finished_jobs) {
             # now, as long as there are open jobs slots AND we have fq to read in...
             while (scalar @cvs < $cores_to_use && $reached_end == 0) {
-                my %chunk;
-
                 #### STEP 1: Convert fastq files into fasta+qual files
-                # TODO (iferguso) instead of testing the filetype by looking at the extension, i'm just assuming it is a .fq file
-                #if ($input_file =~ /(.+)\.fq$/) {
-                if ($input_file =~ /(.+)/) {
-                    $chunk{'fastq_infile'} = $input_file;
-                    $chunk{'fasta_infile'} = "$1.$minor.fa";
-                    $chunk{'qual_infile'}  = "$1.$minor.fa.qual";
-                    $chunk{'align_output'} = "$1.$minor.cm.aligned.out";
-                    $chunk{'sam_output'}   = "$1.$minor.sam.aligned.out";
-                    $chunk{'nonmatching_fa_output'}   = "$1.$minor.fa.nonmatching";
-                    $chunk{'nonmatching_qual_output'} = "$1.$minor.fa.nonmatching.qual";
-                    $chunk{'log_output'}  = "$1.$minor.fa.log";
-                    $chunk{'stdout_file'} = "$1.$minor.cm.stdout";
-                    $chunk{'stderr_file'} = "$1.$minor.cm.stderr";
-                } else {
-                    $self->error_message(
-                        "Problem parsing filename of input fq $input_file.\n".
-                        "Possibly didn't end with .fq so couldn't extract name?");
-                    $self->die($self->error_message);
-                }
+                my %chunk = (
+                    fastq_infile => $input_file,
+                    fasta_infile => "$1.$minor.fa",
+                    qual_infile => "$1.$minor.fa.qual",
+                    align_output => "$1.$minor.cm.aligned.out",
+                    sam_output => "$1.$minor.sam.aligned.out",
+                    nonmatching_fa_output => "$1.$minor.fa.nonmatching",
+                    nonmatching_qual_output => "$1.$minor.fa.nonmatching.qual",
+                    log_output => "$1.$minor.fa.log",
+                    stdout_file => "$1.$minor.cm.stdout",
+                    stderr_file => "$1.$minor.cm.stderr",
+                );
                 $self->debug_message("Iteration $minor of splitting fq '$input_file' into '".$chunk{'qual_infile'}."' and '".$chunk{'fasta_infile'}."'.");
 
                 my $out_seq_obj = Bio::SeqIO->new(
                     -file   => ">".$chunk{'fasta_infile'},
                     -format => 'fasta'
                 );
-                 
+
                 my $out_qual_obj = Bio::SeqIO->new(
                     -file   => ">".$chunk{'qual_infile'},
                     -format => 'qual',
                 );
-                         
+
                 my $counter = 0;
                 while ($counter < 25000 && $reached_end == 0) {
                     my $fastq_obj = $in_seq_obj->next_seq;
@@ -134,32 +120,18 @@ sub _run_aligner {
                 my $cv; 
 
                 # start our job
-                if ($nonmatching) {
-                    my $cmdline = $crossmatch_path . sprintf(' %s %s %s -output_nonmatching_queries > %s',
-                        $chunk{'fasta_infile'}, $ref_file, $aligner_params{align_params}, $chunk{'align_output'});
+                my $cmdline = $crossmatch_path . sprintf(' %s %s %s > %s',
+                    $chunk{'fasta_infile'}, $ref_file, $aligner_params{align_params}, $chunk{'align_output'});
 
-                    $cv = Genome::Utility::AsyncFileSystem->shellcmd(
-                        cmd             => $cmdline,
-                        '>'             => $chunk{'stdout_file'},
-                        '2>'            => $chunk{'stderr_file'},
-                        input_files     => [ $chunk{'fasta_infile'}, $chunk{'qual_infile'}, $ref_file ],
-                        output_files    => [ $chunk{'align_output'}, $chunk{'nonmatching_fa_output'}, $chunk{'nonmatching_qual_output'}, $chunk{'log_output'} ],
-                        skip_if_output_is_present => 0,
-                    );
-                } else {
-                    my $cmdline = $crossmatch_path . sprintf(' %s %s %s > %s',
-                        $chunk{'fasta_infile'}, $ref_file, $aligner_params{align_params}, $chunk{'align_output'});
+                $cv = Genome::Utility::AsyncFileSystem->shellcmd(
+                    cmd             => $cmdline,
+                    '>'             => $chunk{'stdout_file'},
+                    '2>'            => $chunk{'stderr_file'},
+                    input_files     => [ $chunk{'fasta_infile'}, $chunk{'qual_infile'}, $ref_file ],
+                    output_files    => [ $chunk{'align_output'}, $chunk{'log_output'} ],
+                    skip_if_output_is_present => 0,
+                );
 
-                    $cv = Genome::Utility::AsyncFileSystem->shellcmd(
-                        cmd             => $cmdline,
-                        '>'             => $chunk{'stdout_file'},
-                        '2>'            => $chunk{'stderr_file'},
-                        input_files     => [ $chunk{'fasta_infile'}, $chunk{'qual_infile'}, $ref_file ],
-                        output_files    => [ $chunk{'align_output'}, $chunk{'log_output'} ],
-                        skip_if_output_is_present => 0,
-                    );
-                }
-                
                 # save the actual async shellcmd object in the hash as well
                 $chunk{'cv'} = $cv;
                 # push this chunk's hash to the big list
@@ -277,7 +249,7 @@ sub _run_aligner {
                     }
 
                     # put your output file here, append to this file!
-                        #my $output_file = $self->temp_staging_directory . "/all_sequences.sam"
+                    #my $output_file = $self->temp_staging_directory . "/all_sequences.sam"
                     die "Failed to process sam command line, error_message is ".$self->error_message unless $self->_filter_sam_output($cv->{'sam_output'}, $staging_sam_file);
                 }
 
@@ -301,8 +273,8 @@ sub _filter_sam_output {
 
     my $aligned_fh = IO::File->new( $aligned_sam_file );
     if ( !$aligned_fh ) {
-            $self->error_message("Error opening output sam file for reading: $!");
-            return;
+        $self->error_message("Error opening output sam file for reading: $!");
+        return;
     }
     $self->debug_message("Opened $aligned_sam_file");
 
@@ -312,7 +284,7 @@ sub _filter_sam_output {
         return;
     }
     $self->debug_message("Opened $all_sequences_sam_file");
-    
+
     while (<$aligned_fh>) {
         #write out the aligned map, excluding the default header- all lines starting with @.
         $all_seq_fh->print($_) unless $_ =~ /^@/;
@@ -326,18 +298,17 @@ sub _filter_sam_output {
 sub decomposed_aligner_params {
     my $self = shift;
     my $params = $self->aligner_params || "-raw -tags -bandwidth 3 -penalty -1 -gap_init -1 -gap_ext -1 -masklevel 0 -minscore 70";
-    
+
     my @spar = split /\:/, $params;
 
-    # TODO (iferguso) this could be changed: we currently specify number of cores to use right here:
     return ('align_params' => $spar[0], 'cores_to_use' => 4);
 }
 
 sub aligner_params_for_sam_header {
     my $self = shift;
-    
+
     my %params = $self->decomposed_aligner_params;
-    
+
     return 'cross_match' . $params{align_params};
 }
 

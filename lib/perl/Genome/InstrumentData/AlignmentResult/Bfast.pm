@@ -214,8 +214,6 @@ sub _run_aligner {
         #<STDIN>;
     }
 
-    # TODO (iferguso) should do something to handle the log files
-
     return 1;
 }
 
