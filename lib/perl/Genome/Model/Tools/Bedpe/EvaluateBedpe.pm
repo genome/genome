@@ -136,7 +136,7 @@ sub _sv_with_min_support_count {
 
         next unless exists $results{$sv_name} && ($results{$sv_name}{count} >= $min_hit_support);
         $count++;
-        if ($output) {
+        if ($out) {
             print $out "$line\n";
         }
     }
