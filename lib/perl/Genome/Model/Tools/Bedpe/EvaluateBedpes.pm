@@ -61,9 +61,7 @@ sub execute {
 sub _read_tps {
     my $file = shift;
     my @tps = Genome::Sys->read_file($file);
-    for my $tp (@tps) {
-        chomp $tp;
-    }
+    chomp @tps;
     return @tps;
 }
 
