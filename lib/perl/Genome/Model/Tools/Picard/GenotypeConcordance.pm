@@ -92,6 +92,8 @@ Note that for any pair of variants to compare, only the alleles for the samples 
 EOS
 }
 
+sub minimum_version_required { return 1.122; }
+
 sub execute {
     my $self = shift;
 

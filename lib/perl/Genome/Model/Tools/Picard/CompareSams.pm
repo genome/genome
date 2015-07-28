@@ -35,6 +35,8 @@ sub help_detail {
 EOS
 }
 
+sub minimum_version_required { '1.17'; }
+
 sub _jar_name {
     return 'CompareSAMs.jar';
 }

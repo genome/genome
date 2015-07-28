@@ -32,6 +32,8 @@ sub help_detail {
 EOS
 }
 
+sub minimum_version_required { '1.29'; }
+
 sub _jar_name {
     return 'BamIndexStats.jar';
 }

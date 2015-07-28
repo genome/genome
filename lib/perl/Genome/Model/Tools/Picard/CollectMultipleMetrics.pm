@@ -61,6 +61,8 @@ sub help_detail {
 EOS
 }
 
+sub minimum_version_required { '1.40'; }
+
 sub _jar_name {
     return 'CollectMultipleMetrics.jar';
 }

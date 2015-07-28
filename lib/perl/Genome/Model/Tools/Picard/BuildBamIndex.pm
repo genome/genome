@@ -34,6 +34,8 @@ sub help_detail {
 EOS
 }
 
+sub minimum_version_required { '1.23'; }
+
 sub _jar_name {
     return 'BuildBamIndex.jar';
 }

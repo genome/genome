@@ -40,6 +40,8 @@ Converts a BED file to an Picard Interval List.
 EOS
 }
 
+sub minimum_version_required { '1.120'; }
+
 sub _jar_name {
     return 'BedToIntervalList.jar';
 }
