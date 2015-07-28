@@ -29,7 +29,7 @@ sub execute {
     }
 
     if ($changes_count > 10) {
-        print "Too many changes ($create_count creates, $delete_count deletes, $changes_count total). Sync manually if this is OK.";
+        print "Too many changes ($create_count creates, $delete_count deletes, $changes_count total). Sync manually if this is OK.\n";
         return;
     }
 
