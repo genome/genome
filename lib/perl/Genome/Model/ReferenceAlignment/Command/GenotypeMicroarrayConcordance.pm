@@ -21,8 +21,7 @@ class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance 
         },
         bedtools_version => {
             is => 'Text',
-            doc => 'Version of bed tools intersect to use.',
-            default_value => Genome::Model::Tools::BedTools->latest_bedtools_version,
+            doc => 'Version of bed tools intersect to use. Recommended version: '.Genome::Model::Tools::BedTools->latest_bedtools_version,
             valid_values => [ Genome::Model::Tools::BedTools->available_bedtools_versions ],
         },
         picard_version => {
