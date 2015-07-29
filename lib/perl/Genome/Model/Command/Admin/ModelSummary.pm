@@ -84,9 +84,11 @@ sub execute {
         }
     };
 
+    Genome::Model::Build::Set->class; #generate type before creating pool
+
     for my $model (@models) {
-        my $per_model_txn = UR::Context::Transaction->begin();
         my $guard = UR::Context::AutoUnloadPool->create();
+        my $per_model_txn = UR::Context::Transaction->begin();
 
         my $summary = $self->generate_model_summary($model);
 
