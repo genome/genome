@@ -28,7 +28,7 @@ my $class = 'Genome::Model::Tools::DetectVariants2::Filter::NovoRealign';
 use_ok($class);
 
 my $file_name = 'svs.hq';
-my $test_input_dir  = Genome::Utility::Test->data_dir_ok($class);
+my $test_input_dir  = Genome::Utility::Test->data_dir_ok($class, 'v2');
 my $normal_bam  = $test_input_dir . 'chr16_17.normal.bam';
 my $tumor_bam   = $test_input_dir . 'chr16_17.tumor.bam';
 my $sv_file     = $test_input_dir . $file_name;
