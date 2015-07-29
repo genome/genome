@@ -41,9 +41,6 @@ my $tmp_base = File::Temp::tempdir(
 ok(-d $tmp_base, "temp output directory made at $tmp_base");
 my $tmp_dir = $tmp_base . '/filter';
 
-#my $ref_seq = Genome::Model::ImportedReferenceSequence->get(name => 'NCBI-human');
-#my $build = $ref_seq->build_by_version('36');
-#my $refbuild_id = 101947881;
 my $refbuild_id = 109104543;   #human36_chr16_17_for_novo_test ref_seq_build I made for this test
 
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
