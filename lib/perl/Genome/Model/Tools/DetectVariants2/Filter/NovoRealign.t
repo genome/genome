@@ -14,18 +14,20 @@ use File::Compare;
 use File::Temp;
 use IO::File;
 use Genome::Test::Factory::SoftwareResult::User;
+use Genome::Utility::Test;
 
 if (Genome::Sys->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 7;
+    plan tests => 8;
 }
 
-use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::NovoRealign');
+my $class = 'Genome::Model::Tools::DetectVariants2::Filter::NovoRealign';
+use_ok($class);
 
 my $file_name = 'svs.hq';
-my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-NovoRealign/';
+my $test_input_dir  = Genome::Utility::Test->data_dir_ok($class);
 my $normal_bam  = $test_input_dir . 'chr16_17.normal.bam';
 my $tumor_bam   = $test_input_dir . 'chr16_17.tumor.bam';
 my $sv_file     = $test_input_dir . $file_name;
