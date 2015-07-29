@@ -216,12 +216,12 @@ sub _filter_variants {
             my $fout_novo = "$prefix.$conv_lib.$i.novo";
             $cmd = $novo_path . ' -d '. $novo_idx . " -f $read1s[$i] $read2s[$i] -i $mean_insertsize{$lib} $std_insertsize{$lib} > $fout_novo";
 
-            $self->_run_cmd($cmd);
+            Genome::Sys->shellcmd(cmd => $cmd);
             push @novoaligns,$fout_novo;
             
             my $sort_prefix = "$prefix.$conv_lib.$i";
             $cmd = $novosam_path . " -g $conv_lib -f ".$self->platform." -l $conv_lib $fout_novo | ". $samtools_path. " view -b -S - -t ". $ref_seq_idx .' | ' . $samtools_path." sort - $sort_prefix";
-            $self->_run_cmd($cmd);
+            Genome::Sys->shellcmd(cmd => $cmd);
             push @bams, $sort_prefix.'.bam';
             push @bams2remove, $sort_prefix.'.bam';
         }
@@ -229,7 +229,7 @@ sub _filter_variants {
         if ($#bams>0) {
             #TODO using gmt command modules
             $cmd = $samtools_path ." merge $prefix.$conv_lib.bam ". join(' ', @bams);
-            $self->_run_cmd($cmd);
+            Genome::Sys->shellcmd(cmd => $cmd);
             push @bams2remove, "$prefix.$conv_lib.bam";
         }
         else {
@@ -237,7 +237,7 @@ sub _filter_variants {
         }
 
         $cmd = $samtools_path." rmdup $prefix.$conv_lib.bam $prefix.$conv_lib.rmdup.bam"; #using $conv_lib here will properly parse ()
-        $self->_run_cmd($cmd);
+        Genome::Sys->shellcmd(cmd => $cmd);
         push @librmdupbams, "$prefix.$conv_lib.rmdup.bam";
     }
 
@@ -260,7 +260,7 @@ sub _filter_variants {
             $header->close;
 
             $cmd = $samtools_path . " merge -h $header_file $merge_bam ". join(' ', @librmdupbams);
-            $self->_run_cmd($cmd);
+            Genome::Sys->shellcmd(cmd => $cmd);
             unlink $header_file;
         }
     }
@@ -316,7 +316,7 @@ sub _filter_variants {
     my $bd_path            = $self->breakdancer_path;
 
     my $cmd = $bd_path . ' -t -a '. $novo_cfg .' > '. $bd_out_hq_filtered; #-a to print out copy number per lib so tigra can skip normal lib
-    $self->_run_cmd($cmd);
+    Genome::Sys->shellcmd(cmd => $cmd);
 
     my $bd_in_hq_fh  = Genome::Sys->open_file_for_reading($bd_in_hq) or die "Failed to open $bd_in_hq for reading\n";
     my $bd_out_hq_fh = Genome::Sys->open_file_for_reading($bd_out_hq_filtered) or die "Failed to open $bd_out_hq_filtered for reading\n";
@@ -368,19 +368,8 @@ sub _get_match_key {
 }
 
 
-sub _run_cmd {
-    my ($self, $cmd) = @_;
-    
-    unless (Genome::Sys->shellcmd(cmd => $cmd)) {
-        $self->error_message("Failed to run $cmd");
-        die $self->error_message;
-    }
-    return 1;
-}
-
 sub _create_bed_file {
     return 1;
 }
-
 
 1;
