@@ -5,15 +5,6 @@ use warnings;
 
 use Genome;
 
-my %STATES_TO_IGNORE = (
-    'MISSING' => 1,
-    'NO_CALL' => 1,
-    'VC_FILTERED' => 1,
-    'LOW_DP' => 1,
-    'LOW_GQ' => 1,
-    'GT_FILTERED' => 1,
-);
-
 class Genome::Model::Tools::Picard::GenotypeConcordance {
     is  => 'Genome::Model::Tools::Picard::Base',
     has_input => [
@@ -140,15 +131,6 @@ sub parse_file_into_metrics_hashref {
         }
     }
     return \%data;
-}
-
-sub ignore_state {
-    my $class = shift;
-    my $state = shift;
-    if ( defined($STATES_TO_IGNORE{$state}) ) {
-        return $STATES_TO_IGNORE{$state};
-    }
-    return 0;
 }
 
 1;
