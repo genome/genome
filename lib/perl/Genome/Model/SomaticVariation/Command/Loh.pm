@@ -130,6 +130,12 @@ sub should_skip_run {
         return 1;
     }
 
+    my $normal_build = $build->normal_build;
+    unless($normal_build->can('snv_detection_strategy') and $normal_build->snv_detection_strategy) {
+        $self->debug_message("No SNV Detection Strategy on normal build, skipping LOH.");
+        return 1;
+    }
+
     return;
 }
 
