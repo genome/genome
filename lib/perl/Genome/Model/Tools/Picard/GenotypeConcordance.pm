@@ -15,61 +15,72 @@ my %STATES_TO_IGNORE = (
 );
 
 class Genome::Model::Tools::Picard::GenotypeConcordance {
-    is  => 'Genome::Model::Tools::Picard',
+    is  => 'Genome::Model::Tools::Picard::Base',
     has_input => [
         truth_vcf => {
             is  => 'String',
+            picard_param_name => 'TRUTH_VCF',
             doc => 'The VCF containing the truth sample',
         },
         call_vcf => {
             is  => 'String',
+            picard_param_name => 'CALL_VCF',
             doc => 'The VCF containing the call sample',
         },
         output => {
             is  => 'String',
+            picard_param_name => 'OUTPUT',
             doc => 'Basename for the two metrics files that are to be written. Resulting files will be <OUTPUT>.summary_metrics.txt and <OUTPUT>.detailed_metrics.txt.',
         },
         truth_sample => {
             is  => 'String',
+            picard_param_name => 'TRUTH_SAMPLE',
             doc => 'The name of the truth sample within the truth VCF',
         },
         call_sample => {
             is => 'String',
+            picard_param_name => 'CALL_SAMPLE',
             doc => 'The name of the call sample within the call VCF',
         },
         intervals => {
             is => 'String',
             is_many => 1,
+            picard_param_name => 'INTERVALS',
             doc => 'One or more interval list files that will be used to limit the genotype concordance. This option may be specified 0 or more times.',
             is_optional => 1,
         },
         intersect_intervals => {
             is => 'Boolean',
             default_value => 1,
+            picard_param_name => 'INTERSECT_INTERVALS',
             doc => 'If true, multiple interval lists will be intersected. If false multiple lists will be unioned.',
             is_optional => 1,
         },
         min_gq => {
             is => 'Integer',
             default_value => 0,
+            picard_param_name => 'MIN_GQ',
             doc => 'Genotypes below this genotype quality will have genotypes classified as LowGq.',
             is_optional => 1,
         },
         min_dp => {
             is => 'Integer',
             default_value => 0,
+            picard_param_name => 'MIN_DP',
             doc => 'Genotypes below this depth will have genotypes classified as LowDp.',
             is_optional => 1,
         },
         output_all_rows => {
             is => 'Boolean',
             default_value => 0,
+            picard_param_name => 'OUTPUT_ALL_ROWS',
             doc => 'If true, output all rows in detailed statistics even when count == 0. When false only output rows with non-zero counts.',
             is_optional => 1,
         },
         use_vcf_index => {
             is => 'Boolean',
             default_value => 0,
+            picard_param_name => 'USE_VCF_INDEX',
             doc => 'If true, use the VCF index, else iterate over the entire VCF.',
             is_optional => 1,
         },
@@ -93,48 +104,15 @@ EOS
 }
 
 sub minimum_version_required { return 1.122; }
+sub _jar_name { 'GenotypeConcordance.jar'; }
+sub _java_class { 'picard.vcf.GenotypeConcordance'; }
 
-sub execute {
+sub _shellcmd_extra_params {
     my $self = shift;
-
-    my $jar_path = $self->picard_path .'/GenotypeConcordance.jar';
-    unless (-e $jar_path) {
-        $self->error_message('Failed to find '. $jar_path .'!  GenotypeConcordance is only available in Picard version 1.122 or greater.  The version requested is '. $self->use_version);
-        die($self->error_message);
-    }
-
-    my $gc_cmd = $jar_path .' picard.vcf.GenotypeConcordance TRUTH_VCF='. $self->truth_vcf .' CALL_VCF='.$self->call_vcf .' OUTPUT='. $self->output .' TRUTH_SAMPLE='. $self->truth_sample .' CALL_SAMPLE='. $self->call_sample;
-    if (defined($self->min_dp)) {
-        $gc_cmd .= ' MIN_DP='. $self->min_dp;
-    }
-    if (defined($self->min_gq)) {
-        $gc_cmd .= ' MIN_GQ='. $self->min_gq;
-    }
-    if (defined($self->intervals)) {
-        $gc_cmd .= ' INTERVALS='. $self->intervals;
-    }
-    if (defined($self->intersect_intervals)) {
-        if ($self->intersect_intervals) {
-            $gc_cmd .= ' INTERSECT_INTERVALS=TRUE';
-        }
-    }
-    if (defined($self->output_all_rows)) {
-        if ($self->output_all_rows) {
-            $gc_cmd .= ' OUTPUT_ALL_ROWS=TRUE';
-        }
-    }
-    if (defined($self->use_vcf_index)) {
-        if ($self->use_vcf_index) {
-            $gc_cmd .= ' USE_VCF_INDEX=TRUE';
-        }
-    }
-    $self->run_java_vm(
-        cmd => $gc_cmd,
-        input_files => [$self->truth_vcf,$self->call_vcf],
+    return (
+        input_files => [ $self->truth_vcf, $self->call_vcf ],
         skip_if_output_is_present => 0,
     );
-    
-    return 1;
 }
 
 sub parse_file_into_metrics_hashref {
