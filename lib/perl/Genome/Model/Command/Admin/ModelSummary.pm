@@ -61,7 +61,6 @@ sub execute {
     $self->print_message(join("\t", @headers));
     $self->print_message(join("\t", qw(-------- ------ ------------------- ------------------ ---------------- ---------- ------- ----------)));
 
-    my %classes_to_unload;
     my $build_requested_count = 0;
     my %cleanup_rv;
     my $change_count = 0;
@@ -78,12 +77,6 @@ sub execute {
                 die "Commit failed! Bailing out.";
             }
 
-            $self->debug_message('Unloading...');
-            # Unload to free up memory.
-            for my $class (keys %classes_to_unload) {
-                $class->unload;
-            }
-
             $change_count = 0;
             $auto_batch_size_txn = UR::Context::Transaction->begin;
         } else {
@@ -94,6 +87,7 @@ sub execute {
     for my $model (@models) {
         my $per_model_txn = UR::Context::Transaction->begin();
 
+        my $guard = UR::Context::AutoUnloadPool->create();
         my ($latest_build, $latest_build_status) = $self->_build_and_status_for_model($model);
 
         my $summary = $self->generate_model_summary($model, $latest_build, $latest_build_status);
@@ -101,21 +95,16 @@ sub execute {
         #take action if requested
         my $action = $summary->{action};
         if ($self->auto) {
-            my $track_change = sub {
-                $change_count++;
-                $classes_to_unload{$latest_build->class}++ if $latest_build;
-            };
-
             if ($action eq 'rebuild' or $action eq 'build-needed') {
                 $model->build_requested(1, 'ModelSummary recommended rebuild.');
                 $build_requested_count++;
-                $track_change->();
+                $change_count++;
             }
             elsif ($action eq 'cleanup') {
                 my $cleanup_succeeded = Genome::Model::Command::Admin::CleanupSucceeded->create(models => [$model]);
                 $cleanup_succeeded->execute;
                 $cleanup_rv{$cleanup_succeeded->result}++;
-                $track_change->();
+                $change_count++;
             }
         }
 
