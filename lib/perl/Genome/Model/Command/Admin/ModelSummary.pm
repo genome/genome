@@ -113,7 +113,6 @@ sub execute {
         $latest_build_revision ||= '-';
         ($latest_build_revision) =~ /\/(genome-[^\/])/ if $latest_build_revision =~ /\/genome-[^\/]/;
 
-        $model_name =~ s/\.?$pp_name\.?/.../;
 
         my $action;
         if (!$latest_build && $model->build_requested){
