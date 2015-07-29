@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use version;
+
 my $BEDTOOLS_DEFAULT = '2.9.0';
 
 class Genome::Model::Tools::BedTools {
@@ -50,12 +52,7 @@ my %BEDTOOLS_VERSIONS = (
 );
 
 sub available_bedtools_versions {
-    my $sort = sub{ 
-        my @a = split(/\./, $_[0]);
-        my @b = split(/\./, $_[1]);
-        return $a[0] <=> $b[0] || $a[1] <=> $b[1] || $a[2] <=> $b[2];
-    }; # could use Sort::Versions it has a lucid pkg
-    return sort { $sort->($b, $a) } keys %BEDTOOLS_VERSIONS;
+    return sort { $b <=> $a } map { version->parse($_) } keys %BEDTOOLS_VERSIONS;
 }
 
 sub latest_bedtools_version {
