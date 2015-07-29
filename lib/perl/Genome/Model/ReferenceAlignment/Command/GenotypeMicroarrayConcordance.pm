@@ -19,10 +19,15 @@ class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance 
             doc => 'The minimum depth required to consider concordant.',
             example_values => ['4'],
         },
+        bedtools_version => {
+            is => 'Text',
+            doc => 'Version of bed tools intersect to use. Recommended version: '.Genome::Model::Tools::BedTools->latest_bedtools_version,
+            valid_values => [ Genome::Model::Tools::BedTools->available_bedtools_versions ],
+        },
         picard_version => {
             is => 'Text',
             doc => 'The version of picard to use.',
-            example_values => ['1.123'],
+            valid_values => [ Genome::Model::Tools::Picard->available_picard_versions ],
         },
         dbsnp_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
@@ -69,6 +74,7 @@ sub execute {
             input_file_b => $microarray_vcf,
             output_file => $intersect_vcf,
             header => 1,
+            use_version => $self->bedtools_version,
         );
         unless ($intersect_cmd) {
             $self->error_message('Failed to create bedtools intersect!');
