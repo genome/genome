@@ -84,9 +84,4 @@ sub _cmdline_args {
     return @args;
 }
 
-sub _validate_params {
-    my $self = shift;
-    $self->enforce_minimum_version('1.40');
-}
-
 1;

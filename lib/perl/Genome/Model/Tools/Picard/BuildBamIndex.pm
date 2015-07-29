@@ -44,11 +44,6 @@ sub _java_class {
     return qw(picard sam BuildBamIndex);
 }
 
-sub _validate_params {
-    my $self = shift;
-    $self->enforce_minimum_version("1.23");
-}
-
 sub _shellcmd_extra_params {
     my $self = shift;
     return (

@@ -229,9 +229,12 @@ sub version_at_least {
     return $self->version_compare($self->use_version, $version) >= 0;
 }
 
-# die if $self->use_version is less than the $min_version argument passed here
-sub enforce_minimum_version {
-    my ($self, $min_version) = @_;
+sub minimum_version_required { return; }
+sub enforce_minimum_version_required {
+    my $self = shift;
+
+    my $min_version = $self->minimum_version_required;
+    return 1 if not defined $min_version;
 
     if ($self->version_older_than($min_version)) {
         confess sprintf "This module requires picard version >= %s (%s requested)",

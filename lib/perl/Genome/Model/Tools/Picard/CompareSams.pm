@@ -48,11 +48,6 @@ sub _java_class {
         : qw(picard sam CompareSAMs); # 1.21 and later
 }
 
-sub _validate_params {
-    my $self = shift;
-    $self->enforce_minimum_version('1.17');
-}
-
 sub _redirects {
     my $self = shift;
     return sprintf('> %s', $self->output_file);
