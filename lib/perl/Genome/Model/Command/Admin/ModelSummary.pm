@@ -86,11 +86,9 @@ sub execute {
 
     for my $model (@models) {
         my $per_model_txn = UR::Context::Transaction->begin();
-
         my $guard = UR::Context::AutoUnloadPool->create();
-        my ($latest_build, $latest_build_status) = $self->_build_and_status_for_model($model);
 
-        my $summary = $self->generate_model_summary($model, $latest_build, $latest_build_status);
+        my $summary = $self->generate_model_summary($model);
 
         #take action if requested
         my $action = $summary->{action};
@@ -133,8 +131,6 @@ sub execute {
 sub generate_model_summary {
     my $self = shift;
     my $model = shift;
-    my $latest_build = shift;
-    my $latest_build_status = shift;
 
     my %summary;
 
@@ -144,6 +140,7 @@ sub generate_model_summary {
     $summary{model_name}   = ($model ? $model->name                     : '-');
     $summary{pp_name}      = ($model ? $model->processing_profile->name : '-');
 
+    my ($latest_build, $latest_build_status) = $self->_build_and_status_for_model($model);
     $summary{latest_build_status} = $latest_build_status;
 
     my $first_nondone_step;
