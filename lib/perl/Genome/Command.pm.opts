@@ -4686,6 +4686,13 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>library-duplication-rates',
+      [
+        'builds=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>list',
       [
         'show=s',
