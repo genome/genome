@@ -106,16 +106,6 @@ sub execute {
         }
         $first_nondone_step ||= '-';
 
-        my $track_change = sub {
-            $change_count++;
-            $classes_to_unload{$latest_build->class}++ if $latest_build;
-        };
-
-        my $request_build = sub {
-            $model->build_requested(1, 'ModelSummary recommended rebuild.');
-            $build_requested_count++;
-        };
-
         $first_nondone_step =~ s/^\d+\s+//;
         $first_nondone_step =~ s/\s+\d+$//;
 
@@ -150,8 +140,14 @@ sub execute {
 
         #take action if requested
         if ($self->auto) {
+            my $track_change = sub {
+                $change_count++;
+                $classes_to_unload{$latest_build->class}++ if $latest_build;
+            };
+
             if ($action eq 'rebuild' or $action eq 'build-needed') {
-                $request_build->();
+                $model->build_requested(1, 'ModelSummary recommended rebuild.');
+                $build_requested_count++;
                 $track_change->();
             }
             elsif ($action eq 'cleanup') {
