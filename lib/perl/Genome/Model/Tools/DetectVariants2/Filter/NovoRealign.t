@@ -15,7 +15,7 @@ use File::Spec;
 use File::Temp;
 use IO::File;
 use Genome::Test::Factory::SoftwareResult::User;
-use Genome::Utility::Test;
+use Genome::Utility::Test 'compare_ok';
 
 if (Genome::Sys->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -73,7 +73,7 @@ ok($sv_valid->execute(), 'executed NovoRealign object OK');
 my $tmp_out_file = File::Spec->join($tmp_dir, 'svs.lq');
 my $expect_file  = File::Spec->join($test_input_dir, 'output_dir', 'svs.lq');
 ok(-s $tmp_out_file, "output file svs.lq generated ok"); 
-is(compare($tmp_out_file, $expect_file), 0, "output svs.lq matches as expected");
+compare_ok($tmp_out_file, $expect_file, name => "output svs.lq matches as expected");
 
 $tmp_out_file = File::Spec->join($tmp_dir, 'svs.hq');
 my $tmp_out_file_noheader = $tmp_out_file.'.noheader';
@@ -90,6 +90,6 @@ $fh->close;
 $out_fh->close;
 
 $expect_file = File::Spec->join($test_input_dir, 'output_dir', 'svs.hq.noheader');
-is(compare($tmp_out_file_noheader, $expect_file), 0, "output svs.hq matches as expected");
+compare_ok($tmp_out_file_noheader, $expect_file, name => "output svs.hq matches as expected");
 
 done_testing();
