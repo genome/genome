@@ -131,22 +131,12 @@ sub execute {
         }
         elsif (!$latest_build) {
             $action = 'build-needed';
-            if ($self->auto) {
-                $request_build->();
-                $track_change->();
-            }
         }
         elsif ($latest_build_status eq 'Scheduled' || $latest_build_status eq 'Running' || $latest_build_status eq 'Requested') {
             $action = 'none';
         }
         elsif ($latest_build && $latest_build_status eq 'Succeeded' && $fail_count) {
             $action = 'cleanup';
-            if ($self->auto) {
-                my $cleanup_succeeded = Genome::Model::Command::Admin::CleanupSucceeded->create(models => [$model]);
-                $cleanup_succeeded->execute;
-                $cleanup_rv{$cleanup_succeeded->result}++;
-                $track_change->();
-            }
         }
         elsif ($latest_build_status eq 'Succeeded') {
             $action = 'none';
@@ -156,8 +146,18 @@ sub execute {
         }
         else {
             $action = 'rebuild';
-            if ($self->auto) {
+        }
+
+        #take action if requested
+        if ($self->auto) {
+            if ($action eq 'rebuild' or $action eq 'build-needed') {
                 $request_build->();
+                $track_change->();
+            }
+            elsif ($action eq 'cleanup') {
+                my $cleanup_succeeded = Genome::Model::Command::Admin::CleanupSucceeded->create(models => [$model]);
+                $cleanup_succeeded->execute;
+                $cleanup_rv{$cleanup_succeeded->result}++;
                 $track_change->();
             }
         }
