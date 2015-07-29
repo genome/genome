@@ -11,6 +11,7 @@ BEGIN {
 use above "Genome";
 use Test::More; 
 use File::Compare;
+use File::Spec;
 use File::Temp;
 use IO::File;
 use Genome::Test::Factory::SoftwareResult::User;
@@ -39,7 +40,7 @@ my $tmp_base = File::Temp::tempdir(
 );
 
 ok(-d $tmp_base, "temp output directory made at $tmp_base");
-my $tmp_dir = $tmp_base . '/filter';
+my $tmp_dir = File::Spec->join($tmp_base, 'filter');
 
 my $refbuild_id = 109104543;   #human36_chr16_17_for_novo_test ref_seq_build I made for this test
 
@@ -69,12 +70,12 @@ $sv_valid->dump_status_messages(1);
 ok($sv_valid, 'created NovoRealign object');
 ok($sv_valid->execute(), 'executed NovoRealign object OK');
 
-my $tmp_out_file = $tmp_dir.'/svs.lq';
-my $expect_file  = $test_input_dir.'/output_dir/svs.lq';
+my $tmp_out_file = File::Spec->join($tmp_dir, 'svs.lq');
+my $expect_file  = File::Spec->join($test_input_dir, 'output_dir', 'svs.lq');
 ok(-s $tmp_out_file, "output file svs.lq generated ok"); 
 is(compare($tmp_out_file, $expect_file), 0, "output svs.lq matches as expected");
 
-$tmp_out_file = $tmp_dir.'/svs.hq';
+$tmp_out_file = File::Spec->join($tmp_dir, 'svs.hq');
 my $tmp_out_file_noheader = $tmp_out_file.'.noheader';
 
 my $fh = IO::File->new($tmp_out_file) or die "Failed to open $tmp_out_file\n";
@@ -88,7 +89,7 @@ while (my $line = $fh->getline) {
 $fh->close;
 $out_fh->close;
 
-$expect_file = $test_input_dir.'/output_dir/svs.hq.noheader';
+$expect_file = File::Spec->join($test_input_dir, 'output_dir', 'svs.hq.noheader');
 is(compare($tmp_out_file_noheader, $expect_file), 0, "output svs.hq matches as expected");
 
 done_testing();
