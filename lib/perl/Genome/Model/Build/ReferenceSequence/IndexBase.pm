@@ -130,6 +130,9 @@ sub _promote_prepared_index {
     }
 
     $self->_reallocate_disk_allocation;
+    unless ($self->reference_build->is_rederivable) {
+        $self->disk_allocation->archivable(0);
+    }
 
     $self->debug_message("Prepared alignment reference index!");
 
