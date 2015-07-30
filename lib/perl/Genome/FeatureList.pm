@@ -157,6 +157,7 @@ sub create {
     #This wouldn't be necessary, but the differing block sizes between disks sometimes make the estimate
     #above off by a small amount.
     $self->disk_allocation->reallocate;
+    $self->disk_allocation->archivable(0);
 
     return $self;
 }
