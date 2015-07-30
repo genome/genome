@@ -16990,6 +16990,10 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'slop=s',
       undef,
+      'min-hit-support=s',
+      undef,
+      'true-positive-file=s',
+      undef,
       'help!',
       undef
     ],
