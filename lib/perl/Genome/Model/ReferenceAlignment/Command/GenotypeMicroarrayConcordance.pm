@@ -27,7 +27,7 @@ class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance 
         picard_version => {
             is => 'Text',
             doc => 'The version of picard to use.',
-            valid_values => [ Genome::Model::Tools::Picard->available_picard_versions ],
+            valid_values => [ Genome::Model::Tools::Picard::GenotypeConcordance->available_picard_versions ],
         },
         dbsnp_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
