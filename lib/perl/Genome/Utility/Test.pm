@@ -17,6 +17,7 @@ use File::Find::Rule qw();
 use File::Spec qw();
 use IPC::System::Simple qw(capture);
 use List::MoreUtils qw(uniq);
+use Params::Validate ':types';
 use Set::Scalar;
 use Sub::Install;
 
@@ -312,7 +313,9 @@ sub data_dir_ok {
 }
 
 sub data_dir {
-    my ($class, $package, $test_version) = @_;
+    my ($class, $package, $test_version) = Params::Validate::validate_pos(
+        @_, {isa => __PACKAGE__}, {can => 'class'}, {type => SCALAR, optional => 1},
+    );
 
     # "validate" package
     $package->class;
