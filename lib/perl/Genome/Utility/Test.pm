@@ -532,6 +532,34 @@ Like command_execute_ok(), but this test fails if the command's execution return
 
 =back
 
+=item data_dir
+
+  my $dir = Genome::Utility::Test->data_dir($package, $version);
+
+  Synopsis
+  Given a package name and optional version, locate the directory for test data.
+
+  Params
+  $package => package name
+  $version => optionally, the version of the test data
+
+  Returns
+  $dir     => test data diretor for package/version
+
+=back
+
+=item data_dir_ok
+
+  my $dir = Genome::Utility::Test->data_dir_ok($package, $version);
+
+  Synopsis
+  Params and return are the same as data_dir(), but tests (via ok) if the directory exists.
+
+  Returns
+  $dir     => test data diretor for package/version regardless if the test for existance passes
+
+=back
+
 =head1 SEE ALSO
 
 Test::More
