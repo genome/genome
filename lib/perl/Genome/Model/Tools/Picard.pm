@@ -246,8 +246,15 @@ sub enforce_minimum_version_required {
 
 # in decreasing order of recency
 sub available_picard_versions {
+    my $self = shift;
     my @all_versions = uniq(installed_picard_versions(), keys %PICARD_VERSIONS);
-    return sort { __PACKAGE__->version_compare($b, $a) } @all_versions;
+    my $minimum_version_required = $self->minimum_version_required || 0;
+    return sort { 
+        $self->version_compare($b, $a)
+    }
+    grep {
+        $self->version_compare($_, $minimum_version_required) >= 0 
+    } @all_versions;
 }
 
 sub path_for_picard_version {

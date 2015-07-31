@@ -77,13 +77,14 @@ subtest "Version compare" => sub {
     }
 };
 
+class PicardTest {
+    is => $pkg,
+    has => { minimum_version_required => { is => 'Text', }, },
+};
+my $obj = PicardTest->create;
+
 subtest "Enforce minimum version" => sub {
 
-    class PicardTest {
-        is => $pkg,
-        has => { minimum_version_required => { is => 'Text', }, },
-    };
-    my $obj = PicardTest->create;
 
     # These are ordered from greatest to least
     my @versions = $pkg->_versions_serial;
@@ -116,6 +117,23 @@ subtest "Enforce minimum version" => sub {
         ok(!@failures, "version $ver behaves as expected")
             or diag("Failures: " . Data::Dumper::Dumper(\@failures));
     }
+
+};
+
+subtest 'Available picard versions' => sub{
+    plan tests => 3;
+
+    $obj->minimum_version_required(undef);
+    my @versions = $obj->available_picard_versions;
+    ok(@versions, 'all available picard versions');
+
+    $obj->minimum_version_required($versions[2]);
+    my @versions_with_miniumum_required = $obj->available_picard_versions;
+    is(@versions_with_miniumum_required, 3, '3 available verions with minimum required version set');
+    cmp_ok(
+        @versions, '>', @versions_with_miniumum_required, 
+        'less versions available with minimum set',
+    );
 
 };
 
