@@ -152,6 +152,7 @@ sub _copy_file_to_allocation {
     my $destination_file_path = File::Spec->catdir($allocation->absolute_path, $filename);
     Genome::Sys->copy_file($original_file_path, $destination_file_path);
     $allocation->reallocate();
+    $allocation->archivable(0);
     return $destination_file_path;
 }
 

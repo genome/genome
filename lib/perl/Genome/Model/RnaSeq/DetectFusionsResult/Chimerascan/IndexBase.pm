@@ -65,6 +65,9 @@ sub create {
     $self->_prepare_output_directory;
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
+    unless ($self->reference_build->is_rederivable) {
+        $self->disk_allocation->archivable(0);
+    }
 
     return $self;
 }
