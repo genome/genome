@@ -114,17 +114,6 @@ sub is_single_bam {
     return (!defined($model->normal_sample));
 }
 
-sub get_common_translations {
-    my $self = shift;
-    my $model = $self->model;
-    if ($self->is_single_bam($model)) {
-        return $self->get_germline_translations();
-    }
-    else {
-        return $self->get_somatic_translations();
-    }
-}
-
 sub get_somatic_translations {
     my $self = shift;
 

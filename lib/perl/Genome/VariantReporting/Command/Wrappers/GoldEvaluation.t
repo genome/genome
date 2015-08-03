@@ -43,7 +43,7 @@ subtest "sample and library labels" => sub {
     );
 
     is_deeply(
-        $cmd->get_common_translations(),
+        $cmd->get_somatic_translations(),
         get_expected_labels(),
         'Sample & Library labels are as expected'
     );
