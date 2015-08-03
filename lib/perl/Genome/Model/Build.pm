@@ -2135,9 +2135,6 @@ sub compare_output {
     my $other_build = Genome::Model::Build->get($other_build_id);
     confess "Could not get build $other_build_id!" unless $other_build;
 
-    unless ($self->model_id eq $other_build->model_id) {
-        confess "Builds $build_id and $other_build_id are not from the same model!";
-    }
     unless ($self->class eq $other_build->class) {
         confess "Builds $build_id and $other_build_id are not the same type!";
     }
