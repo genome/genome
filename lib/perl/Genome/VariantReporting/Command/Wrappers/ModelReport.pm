@@ -9,12 +9,24 @@ use File::Basename qw(dirname);
 use File::Spec;
 
 class Genome::VariantReporting::Command::Wrappers::ModelReport {
-    is => 'Command::V2',
+    is => ['Command::V2', 'Genome::VariantReporting::Command::Wrappers::Utils'],
     has_input => {
         model => {
             is => 'Genome::Model::SomaticValidation',
         },
     },
+
+    has => [
+        normal_sample => {
+          is => 'Genome::Sample',
+          via => 'model',
+        },
+
+        tumor_sample => {
+          is => 'Genome::Sample',
+          via => 'model',
+        },
+    ],
 };
 
 sub execute {
@@ -92,23 +104,6 @@ sub get_sample_name_labels {
     return (
         $self->model->$accessor->name  => sprintf('%s(%s)', ucfirst($category), $self->model->$accessor->name),
     );
-}
-
-sub get_library_name_labels {
-    my ($self, $category) = @_;
-
-    my %labels;
-    my $counter = 1;
-
-    my $accessor = sprintf('%s_sample', $category);
-    for my $library ($self->model->$accessor->libraries) {
-        $labels{$library->name} = sprintf('%s-Library%d(%s)',
-            ucfirst($category),
-            $counter++,
-            $library->name,
-        );
-    }
-    return %labels;
 }
 
 sub is_valid {

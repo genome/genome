@@ -9,7 +9,7 @@ use File::Basename qw(dirname);
 use File::Spec;
 
 class Genome::VariantReporting::Command::Wrappers::GoldEvaluation {
-    is => 'Command::V2',
+    is => ['Command::V2', 'Genome::VariantReporting::Command::Wrappers::Utils'],
     has_input => {
         model => {
             is => 'Genome::Model::SomaticValidation',
@@ -149,23 +149,4 @@ sub get_germline_translations {
     };
 }
 
-my %counters;
-sub get_library_name_labels {
-    my ($self, $category) = @_;
-
-    my %labels;
-    $counters{$category} = 1;
-
-    my $accessor = sprintf('%s_sample', $category);
-    for my $library ($self->$accessor->libraries) {
-        $labels{$library->name} = sprintf('%s-Library%d(%s)',
-            ucfirst($category),
-            $counters{$category}++,
-            $library->name,
-        );
-    }
-    return %labels;
-}
-
 1;
-
