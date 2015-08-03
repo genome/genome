@@ -129,7 +129,7 @@ subtest 'Available picard versions' => sub{
 
     $obj->minimum_version_required($versions[2]);
     my @versions_with_miniumum_required = $obj->available_picard_versions;
-    is(@versions_with_miniumum_required, 3, '3 available verions with minimum required version set');
+    is(@versions_with_miniumum_required, 3, '3 available versions with minimum required version set');
     cmp_ok(
         @versions, '>', @versions_with_miniumum_required, 
         'less versions available with minimum set',
