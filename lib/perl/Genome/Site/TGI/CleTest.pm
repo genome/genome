@@ -138,6 +138,7 @@ sub get_sample_from_subject_mapping {
 }
 
 sub diff_build {
+    my $self = shift;
     my $build = shift;
 
     printf("Starting diff (new build = %s)...\n", $build->id);
@@ -181,6 +182,7 @@ sub diff_build {
 }
 
 sub diff_process {
+    my $self = shift;
     my $process = shift;
 
     my $blessed_process = Genome::Process->get("2b2b3d8481284fcf8a1632d65ba58083");
