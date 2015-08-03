@@ -455,14 +455,9 @@ sub execute {
     unless ($workflow->is_valid) {
         die('Errors encountered while validating workflow: '. join("\n", @validation_errors));
     }
-    my $output = Workflow::Simple::run_workflow_lsf($workflow,%workflow_params);
-    my @execution_errors = @Workflow::Simple::ERROR;
-    if (@execution_errors) {
-        for (@execution_errors) {
-            print STDERR $_->error ."\n";
-        }
-        return;
-    }
+
+    my $dag = Genome::WorkflowBuilder::DAG->from_xml($workflow->save_to_xml());
+    $dag->execute(inputs => \%workflow_params);
 
     # SUMMARY
     # TODO: Eventually create and xls spreadsheet or consolidated PDF report
