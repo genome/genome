@@ -85,9 +85,9 @@ SUBJECT_MAPPINGS
     my $expected_number_of_models = 7;
     my $actual_number_of_models = $post_cqid_model_count - $pre_cqid_model_count;
     unless ($actual_number_of_models == $expected_number_of_models) {
-        fail(sprintf("We expected CQID to create %s models and it actually created %s\n",
+        die $self->error_message("We expected CQID to create %s models and it actually created %s\n",
                 $expected_number_of_models,
-                $actual_number_of_models));
+                $actual_number_of_models);
     }
 
     my @models = Genome::Model->get(analysis_projects => [$analysis_project]);
@@ -163,7 +163,7 @@ sub diff_build {
             }
     }
     unless (defined $matching_blessed_build) {
-        fail(sprintf("No matching blessed build found for build %s\n", $build->id));
+        die $self->error_message("No matching blessed build found for build %s\n", $build->id);
     }
 
     my $diff_cmd = Genome::Model::Build::Command::Diff->create(
@@ -171,7 +171,7 @@ sub diff_build {
         blessed_build => $matching_blessed_build,
     );
     unless ($diff_cmd->execute) {
-        fail(sprintf("Diff command failed to execute for build %s!\n", $build->id));
+        die $self->error_message("Diff command failed to execute for build %s!\n", $build->id);
     }
 
     if ($diff_cmd->has_diffs) {
@@ -191,7 +191,7 @@ sub diff_process {
         blessed_process => $blessed_process,
     );
     unless ($diff_cmd->execute) {
-        fail("Diff command failed to execute!\n");
+        die $self->error_message("Diff command failed to execute!\n");
     }
 
     if ($diff_cmd->has_diffs) {
