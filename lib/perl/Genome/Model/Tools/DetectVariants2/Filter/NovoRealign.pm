@@ -201,35 +201,37 @@ sub _filter_variants {
                 next;
             }
 
-            my $fout_novo = "$prefix.$conv_lib.$i.novo";
+            my $fout_novo = join('.', $prefix, $conv_lib, $i, 'novo');
             $cmd = $novo_path . ' -d '. $novo_idx . " -f $read1s[$i] $read2s[$i] -i $mean_insertsize{$lib} $std_insertsize{$lib} > $fout_novo";
 
             Genome::Sys->shellcmd(cmd => $cmd);
             push @novoaligns,$fout_novo;
             
-            my $sort_prefix = "$prefix.$conv_lib.$i";
+            my $sort_prefix = join('.', $prefix, $conv_lib, $i);
             $cmd = $novosam_path . " -g $conv_lib -f ".$self->platform." -l $conv_lib $fout_novo | ". $samtools_path. " view -b -S - -t ". $ref_seq_idx .' | ' . $samtools_path." sort - $sort_prefix";
             Genome::Sys->shellcmd(cmd => $cmd);
             push @bams, $sort_prefix.'.bam';
             push @bams2remove, $sort_prefix.'.bam';
         }
-    
+
+        my $conv_lib_bam = join('.', $prefix, Genome::Sys->quote_for_shell($conv_lib), 'bam');
         if ($#bams>0) {
             #TODO using gmt command modules
-            $cmd = $samtools_path ." merge $prefix.$conv_lib.bam ". join(' ', @bams);
+            $cmd = $samtools_path ." merge $conv_lib_bam ". join(' ', @bams);
             Genome::Sys->shellcmd(cmd => $cmd);
-            push @bams2remove, "$prefix.$conv_lib.bam";
+            push @bams2remove, $conv_lib_bam;
         }
         else {
-            Genome::Sys->rename($bams[0], "$prefix.$conv_lib.bam");
+            Genome::Sys->rename($bams[0], $conv_lib_bam);
         }
 
-        $cmd = $samtools_path." rmdup $prefix.$conv_lib.bam $prefix.$conv_lib.rmdup.bam"; #using $conv_lib here will properly parse ()
+        my $conv_lib_rmdup_bam =  join('.', $prefix, $conv_lib, 'rmdup', 'bam');
+        $cmd = $samtools_path." rmdup $conv_lib_bam $conv_lib_rmdup_bam"; #using $conv_lib here will properly parse ()
         Genome::Sys->shellcmd(cmd => $cmd);
-        push @librmdupbams, "$prefix.$conv_lib.rmdup.bam";
+        push @librmdupbams, $conv_lib_rmdup_bam;
     }
 
-    my $merge_bam = "$prefix.novo.rmdup.bam";
+    my $merge_bam = join('.', $prefix, 'novo', 'rmdup', 'bam');
 
     if (@librmdupbams) {
         my $cmd;
