@@ -6,17 +6,14 @@ use warnings;
 use strict;
 
 use Genome;
-use File::Basename qw(basename dirname);
+use File::Basename qw(fileparse);
 use File::Spec;
-use IPC::System::Simple;
-use Genome::File::Tsv;
 
 class Genome::Model::Tools::DetectVariants2::SpeedseqSv {
     is => 'Genome::Model::Tools::DetectVariants2::Detector',
 };
 
 	my $temp_directory = Genome::Sys->create_temp_directory();
-	my $pkg = 'Genome::Model::Tools::Speedseq::Sv';
 
 # For the Parameters what I need to do is make two hashes.
 # The first one will have the name of the command in the SV class and the letter calling it.  
@@ -32,7 +29,7 @@ sub _detect_variants {
 	my %library = $self->get_parameter_hash();
 
 	while (my ($key, $value) = each(%library)){
-		print "$key => $value\n";
+		$self->debug_message("$key => $value");
 	}
 	my %final_cmd = ();
 
@@ -49,7 +46,7 @@ sub _detect_variants {
 		$self->find_file("discordants","discordant_read_bam_file",@fullBam),
 	);	
 
-	my $set = $pkg->create(%final_cmd);
+	my $set = Genome::Model::Tools::Speedseq::Sv->create(%final_cmd);
 	$set->execute();
 };
 
@@ -61,10 +58,8 @@ sub find_file{
 	my @final = ();
 	
 	foreach (@bam_dir){
-		my $editor = basename($_);
-		my $dir = dirname($_);
-		$editor =~ s/\.bam/\.$disc\.bam/g;
-		my $discord = "$dir/$editor";
+		my ($editor, $dir, $suffix) = fileparse($_, '.bam');
+		my $discord = "$dir$editor.$disc$suffix";
 		if (!-s $discord) {die $self->error_message("File couldn't be found: $discord  Bam Files Must be aligned with Speedseq.")};
 		push (@final, $discord);
 	}
@@ -81,9 +76,7 @@ sub split_params_to_letter {
 	my @params = split(',',$parms);
 	foreach (@params){
 		if ($_ =~ /:/){
-			my @options = split(':',$_);
-			my $value = pop(@options);
-			my $num = shift(@options);
+			my ($num, $value) = split(':',$_, 2);
 	                $num =~ s/-//gi;
 			$params_hash{$num} = $value; 
 		}

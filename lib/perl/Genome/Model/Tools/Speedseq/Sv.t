@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 11;
+use Test::More;
 use Genome::File::Vcf::Differ;
 use Genome::Utility::Test qw(compare_ok);
 use Genome::Test::Data qw(get_test_file);
@@ -71,15 +71,19 @@ ok($sv_cmd3->execute,'execute command '. $pkg);
 #VCF Difference
 my $output_file3 = "$output_prefix3.sv.vcf.gz";
 
-my $expected_output_file3 = ("$expected_output_dir/Sv.t.out3.sv.vcf.gz");
+my $expected_output_file3 = ("$expected_output_prefix3.sv.vcf.gz");
+
 
 my $differ = Genome::File::Vcf::Differ->new($output_file3, $expected_output_file3);
     my $diff = $differ->diff;
     is($diff, undef, "Found No differences between $output_file3 and (expected) $expected_output_file3") ||
        diag $diff->to_string;
 
+
+
 #compare_ok($output_file3, $expected_output_file3);
 compare_ok("$output_file3.tbi", "$expected_output_file3.tbi");
 compare_ok("$output_prefix3.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed", "$expected_output_prefix3.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed");
 compare_ok("$output_prefix3.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt", "$expected_output_prefix3.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt");
 
+done_testing();

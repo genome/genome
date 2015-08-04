@@ -38,9 +38,6 @@ use Genome::Test::Data qw(get_test_file);
 
 	my $params = "-R:$reference_fasta,-g,-d,-o:Hello";
 
-	print "Here is the base name of the bam variable: \t";
-	print basename($bam);
-	print "\n\n";
 
 my $command2 = $pkg2->create(
 	output_directory => $output,
@@ -53,8 +50,6 @@ my $command2 = $pkg2->create(
 
 ok($command2->execute, 'Executed `gmt detect-variants2 Speedseq` command');
 
-
-$DB::single=1;
 
 my $differ = Genome::File::Vcf::Differ->new("$output/svs.hq.sv.vcf.gz", "$test_dir/svs.hq.sv.vcf.gz");
     my $diff = $differ->diff;
