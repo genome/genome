@@ -63,7 +63,7 @@ SUBJECT_MAPPINGS
     }
 
     Genome::Config::AnalysisProject::Command::Release->execute(
-        analysis_project => $analysis_project,
+        analysis_projects => [$analysis_project],
     );
 
     my @instrument_data_objects = Genome::InstrumentData->get(id => \@instrument_data);
