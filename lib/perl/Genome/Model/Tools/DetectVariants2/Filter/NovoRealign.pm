@@ -202,11 +202,12 @@ sub _filter_variants {
             }
 
             my $fout_novo = join('.', $prefix, $conv_lib, $i, 'novo');
-            $cmd = $novo_path . ' -d '. $novo_idx . " -f $read1s[$i] $read2s[$i] -i $mean_insertsize{$lib} $std_insertsize{$lib} > $fout_novo";
+            Genome::Sys->shellcmd(
+                cmd => [ $novo_path, '-d', $novo_idx, '-f', $read1s[$i], $read2s[$i], '-i', $mean_insertsize{$lib}, $std_insertsize{$lib}, ],
+                redirect_stdout => $fout_novo,
+            );
+            push @novoaligns, $fout_novo;
 
-            Genome::Sys->shellcmd(cmd => $cmd);
-            push @novoaligns,$fout_novo;
-            
             my $sort_prefix = join('.', $prefix, $conv_lib, $i);
             $cmd = $novosam_path . " -g $conv_lib -f ".$self->platform." -l $conv_lib $fout_novo | ". $samtools_path. " view -b -S - -t ". $ref_seq_idx .' | ' . $samtools_path." sort - $sort_prefix";
             Genome::Sys->shellcmd(cmd => $cmd);
