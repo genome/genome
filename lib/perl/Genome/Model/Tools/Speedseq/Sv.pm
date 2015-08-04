@@ -48,14 +48,14 @@ class Genome::Model::Tools::Speedseq::Sv {
         	},
 		threads => {
         		is => 'Integer',
-        		doc => 'threads [1]',
+        		doc => 'threads',
        			default_value => 1,
         		is_optional => 1,
         		tool_param_name => 't',
         	},
 		exclude_bed_file => {
                         is => 'Text',
-                        doc => 'BED file to exlude',
+                        doc => 'BED file to exclude',
                         is_optional => 1,
 			tool_input_file => 1,
                         tool_param_name => 'x',
