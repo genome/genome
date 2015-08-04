@@ -35,7 +35,7 @@ class Genome::Model::Tools::Speedseq::Sv {
 		reference_fasta => {
 			is => 'Text',
 			doc => 'fasta file (indexed with bwa)',
-			example_values => ['refernce.fa'],
+			example_values => ['reference.fa'],
 			tool_input_file => 1,
 			tool_param_name => 'R',
 		},
