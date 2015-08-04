@@ -459,7 +459,12 @@ sub get_lane_qc_models {
         my $lane_qc_model_name = $self->default_lane_qc_model_name_for_instrument_data($instrument_data);
 
         my $existing_model = Genome::Model->get(name => $lane_qc_model_name);
-        if ($existing_model) {
+        my $has_current_qc =
+            $existing_model &&
+            $existing_model->analysis_project_bridges &&
+            $existing_model->analysis_project_bridges->config_profile_item &&
+            $existing_model->analysis_project_bridges->config_profile_item->is_current;
+        if ($has_current_qc) {
             $self->debug_message("Default lane QC model " . $existing_model->__display_name__ . " already exists.");
 
             my @existing_instrument_data = $existing_model->instrument_data;
