@@ -69,7 +69,7 @@ SUBJECT_MAPPINGS
     }
 
     my $cmd5 = Genome::Config::AnalysisProject::Command::Release->create(
-        analysis_projects => [$analysis_project],
+        analysis_project => $analysis_project,
     );
     $cmd5->execute;
 
@@ -90,7 +90,7 @@ SUBJECT_MAPPINGS
                 $actual_number_of_models);
     }
 
-    my @models = Genome::Model->get(analysis_projects => [$analysis_project]);
+    my @models = Genome::Model->get(analysis_project => $analysis_project);
     my $start_cmd = Genome::Model::Build::Command::Start->create(
         models => \@models,
     );
@@ -111,9 +111,9 @@ sub get_process {
     my $followup_subject = $self->get_sample_from_subject_mapping('followup');
     my $germline_subject = $self->get_sample_from_subject_mapping('germline');
 
-    my @models_for_process = Genome::Model::SomaticValidation->get(analysis_projects => [$analysis_project],
+    my @models_for_process = Genome::Model::SomaticValidation->get(analysis_project => $analysis_project,
         region_of_interest_set_name => 'SeqCap EZ Human Exome v3.0 + AML RMG pooled probes + WO2830729 pooled probes + WO2840081 pooled probes');
-    my @coverage_models_for_process = Genome::Model::SomaticValidation->get(analysis_projects => [$analysis_project],
+    my @coverage_models_for_process = Genome::Model::SomaticValidation->get(analysis_project => $analysis_project,
         tumor_sample => [$discovery_subject, $followup_subject]);
     my @germline_models = grep {$_->tumor_sample eq $germline_subject} @models_for_process;
     my $process_command = Genome::VariantReporting::Command::Wrappers::Trio->create(
