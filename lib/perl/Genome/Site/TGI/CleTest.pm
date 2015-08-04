@@ -11,7 +11,7 @@ class Genome::Site::TGI::CleTest {
         },
     },
 };
-
+##NOTE: Do not change this file without approval from the CLE staff
 sub get_builds {
     my $self = shift;
     my $cmd0 = Genome::Config::AnalysisProject::Command::Create->create(
