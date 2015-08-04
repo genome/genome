@@ -117,22 +117,10 @@ sub _filter_variants {
     for my $fastq (grep{/\.fastq/} readdir(DIR)){
         for my $lib (keys %mean_insertsize) {
             my $conv_lib = $lib;
-
-            if ($lib =~ /[\(\)]/) {  #sometimes the library name is like H_KU-15901-D108132(2)-lib2
-                $self->warning_message("$conv_lib contains parentesis");
-                $conv_lib =~ s{\(}{\\(}g;
-                $conv_lib =~ s{\)}{\\)}g;
-            }
-
             $conv_libs{$lib} = $conv_lib;
-
-            if ($fastq =~/^(\S+)\.${conv_lib}\.\S*([12])\.fastq/) {
+            if ($fastq =~/^(\S+)\.\Q$conv_lib\E\.\S*([12])\.fastq/) {
                 $prefix = $1;
                 my $id  = $2;
-                if ($lib =~ /[\(\)]/) {
-                    $fastq =~ s{\(}{\\(}g;
-                    $fastq =~ s{\)}{\\)}g;
-                }
                 push @{$fastqs{$lib}{$id}}, $dir.'/'.$fastq if defined $id;
                 last;
             }
