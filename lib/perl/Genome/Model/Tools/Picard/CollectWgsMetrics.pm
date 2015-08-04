@@ -66,17 +66,14 @@ sub help_detail {
 EOS
 }
 
+sub minimum_version_required { '1.114'; }
+
 sub _jar_name {
     return 'CollectWgsMetrics.jar';
 }
 
 sub _java_class {
     return qw(picard analysis CollectWgsMetrics);
-}
-
-sub _validate_params {
-    my $self = shift;
-    $self->enforce_minimum_version('1.114');
 }
 
 1;

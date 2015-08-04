@@ -66,8 +66,8 @@ ok(-e $output_detailed_metrics, 'detailed metrics exist');
 my $filters = [
    qr(^# .*$),
 ];
-compare_ok($expected_detailed_metrics,$output_detailed_metrics, filters => $filters );
-compare_ok($expected_summary_metrics,$output_summary_metrics, filters => $filters );
+compare_ok($expected_detailed_metrics,$output_detailed_metrics, name => 'detailed metrics files mactch', filters => $filters );
+compare_ok($expected_summary_metrics,$output_summary_metrics, name => 'summary metrics files match', filters => $filters );
 
 # test the parsing of the metrics
 my $expected_summary_metrics_hashref = Genome::Model::Tools::Picard->parse_file_into_metrics_hashref($expected_summary_metrics);  

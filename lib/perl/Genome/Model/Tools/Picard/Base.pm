@@ -109,7 +109,6 @@ sub _cmdline_args {
 sub _validate_params {
     # example:
     # my $self = shift;
-    # $self->enforce_minimum_version('1.85');
     # die unless -s $self->input_file;
     # $self->be_noisy(0) unless $self->log_file;
 }
@@ -170,6 +169,7 @@ sub build_cmdline_string {
 sub execute {
     my $self = shift;
 
+    $self->enforce_minimum_version_required;
     $self->_validate_params;
 
     my %params = (

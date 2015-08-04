@@ -61,6 +61,8 @@ sub help_detail {
 EOS
 }
 
+sub minimum_version_required { '1.40'; }
+
 sub _jar_name {
     return 'CollectMultipleMetrics.jar';
 }
@@ -80,11 +82,6 @@ sub _cmdline_args {
         unshift @args, 'PROGRAM=null';
     }
     return @args;
-}
-
-sub _validate_params {
-    my $self = shift;
-    $self->enforce_minimum_version('1.40');
 }
 
 1;
