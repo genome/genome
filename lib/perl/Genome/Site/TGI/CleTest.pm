@@ -67,20 +67,9 @@ SUBJECT_MAPPINGS
     );
 
     my @instrument_data_objects = Genome::InstrumentData->get(id => \@instrument_data);
-    my @pre_cqid_models = Genome::Model->get();
-    my $pre_cqid_model_count = scalar @pre_cqid_models;
     Genome::Config::Command::ConfigureQueuedInstrumentData->execute(
         instrument_data => \@instrument_data_objects,
     );
-    my @post_cqid_models = Genome::Model->get();
-    my $post_cqid_model_count = scalar @post_cqid_models;
-    my $expected_number_of_models = 7;
-    my $actual_number_of_models = $post_cqid_model_count - $pre_cqid_model_count;
-    unless ($actual_number_of_models == $expected_number_of_models) {
-        die $self->error_message("We expected CQID to create %s models and it actually created %s\n",
-                $expected_number_of_models,
-                $actual_number_of_models);
-    }
 
     my @models = Genome::Model->get(analysis_project => $analysis_project);
     Genome::Model::Build::Command::Start->execute(
