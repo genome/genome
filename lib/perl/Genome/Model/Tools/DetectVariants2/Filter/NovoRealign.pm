@@ -209,8 +209,14 @@ sub _filter_variants {
             push @novoaligns, $fout_novo;
 
             my $sort_prefix = join('.', $prefix, $conv_lib, $i);
-            $cmd = $novosam_path . " -g $conv_lib -f ".$self->platform." -l $conv_lib $fout_novo | ". $samtools_path. " view -b -S - -t ". $ref_seq_idx .' | ' . $samtools_path." sort - $sort_prefix";
-            Genome::Sys->shellcmd(cmd => $cmd);
+            Genome::Sys->shellcmd(
+                cmd => join(
+                    ' ', $novosam_path, '-g', Genome::Sys->quote_for_shell($conv_lib), '-f', $self->platform,
+                    '-l', Genome::Sys->quote_for_shell($conv_lib), Genome::Sys->quote_for_shell($fout_novo), '|',
+                    $samtools_path, 'view', '-b', '-S', '-', '-t', $ref_seq_idx, '|',
+                    $samtools_path, 'sort', '-', Genome::Sys->quote_for_shell($sort_prefix),
+                ),
+            );
             push @bams, $sort_prefix.'.bam';
             push @bams2remove, $sort_prefix.'.bam';
         }
