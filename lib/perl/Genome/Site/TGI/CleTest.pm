@@ -23,27 +23,22 @@ sub get_builds {
     $self->analysis_project($analysis_project);
     my $menu_item1 = Genome::Config::AnalysisMenu::Item->get("9ab6e28f832a428393b87b171d444401");
     my $menu_item2 = Genome::Config::AnalysisMenu::Item->get("3770b8510d5a459f9c0bb01fabf56337");
-    my $discovery_tag = Genome::Config::Tag->get(name => 'discovery');
-    my $followup_tag = Genome::Config::Tag->get(name => 'followup');
-    my $germline_tag = Genome::Config::Tag->get(name => 'germline');
-    my $cmd1 = Genome::Config::AnalysisProject::Command::AddMenuItem->create(
-        analysis_menu_items => $menu_item1,
-        tags => $discovery_tag,
-        analysis_project => $analysis_project,
-    );
-    $cmd1->execute;
-    my $cmd2 = Genome::Config::AnalysisProject::Command::AddMenuItem->create(
-        analysis_menu_items => $menu_item1,
-        tags => $followup_tag,
-        analysis_project => $analysis_project,
-    );
-    $cmd2->execute;
-    my $cmd3 = Genome::Config::AnalysisProject::Command::AddMenuItem->create(
-        analysis_menu_items => $menu_item2,
-        tags => $germline_tag,
-        analysis_project => $analysis_project,
-    );
-    $cmd3->execute;
+    for my $tag_name (qw(discovery followup)) {
+        my $tag = Genome::Config::Tag->get(name => $tag_name);
+        Genome::Config::AnalysisProject::Command::AddMenuItem->execute(
+            analysis_menu_items => $menu_item1,
+            tags => $tag,
+            analysis_project => $analysis_project,
+        );
+    }
+    for my $tag_name (qw(germline)) {
+        my $tag = Genome::Config::Tag->get(name => $tag_name);
+        Genome::Config::AnalysisProject::Command::AddMenuItem->execute(
+            analysis_menu_items => $menu_item2,
+            tags => $tag,
+            analysis_project => $analysis_project,
+        );
+    }
     my $subject_mapping_file = Genome::Sys->create_temp_file_path;
     my $subject_mapping = <<'SUBJECT_MAPPINGS';
 H_KA-174556-1309237	H_KA-174556-1309246				followup
