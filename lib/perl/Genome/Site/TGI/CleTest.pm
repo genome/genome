@@ -47,11 +47,10 @@ H_KA-174556-1309246					germline
 SUBJECT_MAPPINGS
 
     Genome::Sys->write_file($subject_mapping_file, $subject_mapping);
-    my $cmd4 = Genome::Config::AnalysisProject::SubjectMapping::Command::Import::SomaticValidation->create(
+    Genome::Config::AnalysisProject::SubjectMapping::Command::Import::SomaticValidation->execute(
         analysis_project => $analysis_project,
         file_path => $subject_mapping_file,
     );
-    $cmd4->execute;
 
     my @instrument_data = qw(2893814999 2893815000 2893815001 2893815002 2893815003 2893815016 2893815018 2893815020 2893815023 2893815024 2893815447 2893815448 2893815449 2893815451 2893815484 2893815485 2893815489 2893815492);
     for my $id (@instrument_data) {
@@ -63,18 +62,16 @@ SUBJECT_MAPPINGS
         );
     }
 
-    my $cmd5 = Genome::Config::AnalysisProject::Command::Release->create(
+    Genome::Config::AnalysisProject::Command::Release->execute(
         analysis_project => $analysis_project,
     );
-    $cmd5->execute;
 
     my @instrument_data_objects = Genome::InstrumentData->get(id => \@instrument_data);
     my @pre_cqid_models = Genome::Model->get();
     my $pre_cqid_model_count = scalar @pre_cqid_models;
-    my $cmd6 = Genome::Config::Command::ConfigureQueuedInstrumentData->create(
+    Genome::Config::Command::ConfigureQueuedInstrumentData->execute(
         instrument_data => \@instrument_data_objects,
     );
-    $cmd6->execute;
     my @post_cqid_models = Genome::Model->get();
     my $post_cqid_model_count = scalar @post_cqid_models;
     my $expected_number_of_models = 7;
@@ -86,10 +83,9 @@ SUBJECT_MAPPINGS
     }
 
     my @models = Genome::Model->get(analysis_project => $analysis_project);
-    my $start_cmd = Genome::Model::Build::Command::Start->create(
+    Genome::Model::Build::Command::Start->execute(
         models => \@models,
     );
-    $start_cmd->execute;
     UR::Context->commit;
     my @builds = Genome::Model::Build->get(model_id => [map {$_->id} @models]);
     return @builds;
@@ -111,14 +107,13 @@ sub get_process {
     my @coverage_models_for_process = Genome::Model::SomaticValidation->get(analysis_project => $analysis_project,
         tumor_sample => [$discovery_subject, $followup_subject]);
     my @germline_models = grep {$_->tumor_sample eq $germline_subject} @models_for_process;
-    my $process_command = Genome::VariantReporting::Command::Wrappers::Trio->create(
+    Genome::VariantReporting::Command::Wrappers::Trio->execute(
         models => \@models_for_process,
         coverage_models => \@coverage_models_for_process,
         tumor_sample => $discovery_subject,
         followup_sample => $followup_subject,
         normal_sample => $germline_subject,
     );
-    my $process = $process_command->execute;
     UR::Context->commit;
     return $process;
 }
