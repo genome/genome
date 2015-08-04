@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Command::Wrappers::ModelPairFactory {
+    is => ['Genome::VariantReporting::Command::Wrappers::Utils'],
     has => {
         models => {
             is => 'Genome::Model::SomaticValidation',
@@ -145,24 +146,6 @@ sub get_common_translations {
     };
 }
 
-my %counters;
-sub get_library_name_labels {
-    my ($self, $category) = @_;
-
-    my %labels;
-    $counters{$category} = 1;
-
-    my $accessor = sprintf('%s_sample', $category);
-    for my $library ($self->$accessor->libraries) {
-        $labels{$library->name} = sprintf('%s-Library%d(%s)',
-            ucfirst($category),
-            $counters{$category}++,
-            $library->name,
-        );
-    }
-    return %labels;
-}
-
 sub is_model_discovery {
     my ($self, $model) = @_;
     return $self->discovery_sample->id eq $model->tumor_sample->id;
@@ -179,4 +162,3 @@ sub is_single_bam {
 }
 
 1;
-
