@@ -1081,6 +1081,7 @@ sub validate_for_start_methods {
     # Be very wary of removing any of these as many subclasses use SUPER::validate_for_start_methods.
     # Each method should return tags.
     my @methods = (
+        'validate_model_is_not_disabled',
         # 'validate_inputs_have_values' should be checked first.
         'validate_inputs_have_values',
         'inputs_have_compatible_reference',
@@ -1106,6 +1107,20 @@ sub validate_for_start {
         push @tags, @returned_tags if @returned_tags;
     }
 
+    return @tags;
+}
+
+sub validate_model_is_not_disabled {
+    my $self = shift;
+    my @tags;
+
+    if($self->model->status eq 'Disabled') {
+        push @tags, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['model'],
+            desc => 'Model has been disabled.',
+        );
+    }
     return @tags;
 }
 
