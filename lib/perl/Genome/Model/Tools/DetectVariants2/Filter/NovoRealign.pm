@@ -223,9 +223,7 @@ sub _filter_variants {
 
         my $conv_lib_bam = join('.', $prefix, Genome::Sys->quote_for_shell($conv_lib), 'bam');
         if ($#bams>0) {
-            #TODO using gmt command modules
-            $cmd = $samtools_path ." merge $conv_lib_bam ". join(' ', @bams);
-            Genome::Sys->shellcmd(cmd => $cmd);
+            Genome::Sys->shellcmd(cmd => [ $samtools_path, 'merge', $conv_lib_bam, @bams ]);
             push @bams2remove, $conv_lib_bam;
         }
         else {
@@ -233,8 +231,7 @@ sub _filter_variants {
         }
 
         my $conv_lib_rmdup_bam =  join('.', $prefix, $conv_lib, 'rmdup', 'bam');
-        $cmd = $samtools_path." rmdup $conv_lib_bam $conv_lib_rmdup_bam"; #using $conv_lib here will properly parse ()
-        Genome::Sys->shellcmd(cmd => $cmd);
+        Genome::Sys->shellcmd(cmd => [ $samtools_path, 'rmdup', $conv_lib_bam, $conv_lib_rmdup_bam ]);
         push @librmdupbams, $conv_lib_rmdup_bam;
     }
 
@@ -256,8 +253,7 @@ sub _filter_variants {
             }
             $header->close;
 
-            $cmd = $samtools_path . " merge -h $header_file $merge_bam ". join(' ', @librmdupbams);
-            Genome::Sys->shellcmd(cmd => $cmd);
+            Genome::Sys->shellcmd(cmd => [ $samtools_path, 'merge', '-h', $header_file, $merge_bam, @librmdupbams ]);
             unlink $header_file;
         }
     }
