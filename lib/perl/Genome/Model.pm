@@ -195,11 +195,11 @@ class Genome::Model {
             to => 'analysis_project',
             is_many => 0,
         },
-        config_profile_items => {
+        config_profile_item => {
             is => 'Genome::Config::Profile::Item',
             via => 'analysis_project_bridges',
             to => 'config_profile_item',
-            is_many => 1,
+            is_many => 0,
         },
     ],
     has_many_optional_deprecated => [
