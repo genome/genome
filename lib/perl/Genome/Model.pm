@@ -736,7 +736,10 @@ sub build_needed {
 sub status_with_build {
     my $self = shift;
     my ($status, $build);
-    if ($self->build_requested) {
+
+    if ($self->config_profile_item and $self->config_profile_item->status eq 'disabled') {
+        $status = 'Disabled';
+    } elsif ($self->build_requested) {
         $status = 'Build Requested';
     } elsif ($self->build_needed) {
         $status = 'Build Needed';
