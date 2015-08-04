@@ -86,7 +86,7 @@ subtest 'new_from_file: sticky' => sub {
     }
 };
 
-subtest 'new_from_file: non-existant validator' => sub {
+subtest 'new_from_file: non-existent validator' => sub {
     plan tests => 1;
 
     my %data = (

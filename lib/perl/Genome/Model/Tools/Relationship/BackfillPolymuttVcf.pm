@@ -261,18 +261,18 @@ sub polymutt_dir_for_build {
 # Return the variant vcf (from the model group) for this build.
 # This will be the original vcf if region limiting was not requested. If it was requested, return the post-region-limiting file
 sub variant_vcf_for_build {
-    my ($self, $build, $verify_existance) = @_;
+    my ($self, $build, $verify_existence) = @_;
     if ($self->roi_file) {
-        return $self->region_limited_variant_vcf_for_build($build, $verify_existance);
+        return $self->region_limited_variant_vcf_for_build($build, $verify_existence);
     } else {
         return $self->original_vcf_for_build($build);
     }
 }
 
 sub region_limited_variant_vcf_for_build {
-    my ($self, $build, $verify_existance) = @_;
+    my ($self, $build, $verify_existence) = @_;
     my $vcf = $self->subdir_for_build($build) . "/snvs.region_limited.vcf.gz"; 
-    if ($verify_existance && !(-s $vcf)) {
+    if ($verify_existence && !(-s $vcf)) {
         die $self->error_message("Region limited variant vcf $vcf does not exist or has no size");
     }
     return $vcf;
@@ -341,9 +341,9 @@ sub subdir_for_build {
 
 # Return the force-genotype vcf that has been created for this build
 sub force_genotype_vcf_for_build {
-    my ($self, $build, $verify_existance) = @_;
+    my ($self, $build, $verify_existence) = @_;
     my $vcf = $self->subdir_for_build($build) . "/snvs.vcf.gz";
-    if ($verify_existance && !(-s $vcf)) {
+    if ($verify_existence && !(-s $vcf)) {
         die $self->error_message("Force genotyped vcf $vcf does not exist or has no size");
     }
     return $vcf;
@@ -351,9 +351,9 @@ sub force_genotype_vcf_for_build {
 
 # Return the backfilled vcf which was created from the force genotype vcf and the original vcf combined
 sub backfilled_vcf_for_build {
-    my ($self, $build, $verify_existance) = @_;
+    my ($self, $build, $verify_existence) = @_;
     my $vcf = $self->subdir_for_build($build) . "/snvs.backfilled.vcf.gz";
-    if ($verify_existance && !(-s $vcf)) {
+    if ($verify_existence && !(-s $vcf)) {
         die $self->error_message("Backfilled vcf $vcf does not exist or has no size");
     }
     return $vcf;

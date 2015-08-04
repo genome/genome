@@ -269,7 +269,7 @@ sub gather_details
     
         if ((-z $fasta_file) ) 
         {
-            croak "fasta-file: '$fasta_file 'is empty or non-existant! Predict.pm\n";
+            croak "fasta-file: '$fasta_file 'is empty or non-existent! Predict.pm\n";
         }
 
 
