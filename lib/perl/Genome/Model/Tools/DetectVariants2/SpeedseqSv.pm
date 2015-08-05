@@ -1,6 +1,3 @@
-#SpeedseqSv.pm
-
-
 package Genome::Model::Tools::DetectVariants2::SpeedseqSv;
 use warnings;
 use strict;
@@ -13,8 +10,6 @@ class Genome::Model::Tools::DetectVariants2::SpeedseqSv {
     is => 'Genome::Model::Tools::DetectVariants2::Detector',
 };
 
-	my $temp_directory = Genome::Sys->create_temp_directory();
-
 # For the Parameters what I need to do is make two hashes.
 # The first one will have the name of the command in the SV class and the letter calling it.  
 # The second Hash will have the class string name and the value wil be either a boolean or a file location.
@@ -22,6 +17,8 @@ class Genome::Model::Tools::DetectVariants2::SpeedseqSv {
 sub _detect_variants {
 	my $self = shift;
 	
+	my $version = '0.0.3a-gms';
+		
 	my @fullBam = ($self->aligned_reads_input,$self->control_aligned_reads_input);
 
 	my $aligned_bams = join(',',@fullBam);
@@ -35,12 +32,15 @@ sub _detect_variants {
 
 	my %list_params = $self->split_params_to_letter();
  	
-	while (my ($key, $value) = each(%library)) {$final_cmd{$value} = $list_params{$key} if exists $list_params{$key};}
+	while (my ($key, $value) = each(%library)) {
+		$final_cmd{$value} = $list_params{$key} if exists $list_params{$key};
+	}
 
 	%final_cmd = (
 		%final_cmd,
    		output_prefix => $self->_sv_staging_output,
    		full_bam_file => $aligned_bams,
+		version => $version,
 		temp_directory => Genome::Sys->create_temp_directory(),
 		$self->find_file("splitters","split_read_bam_file",@fullBam),
 		$self->find_file("discordants","discordant_read_bam_file",@fullBam),

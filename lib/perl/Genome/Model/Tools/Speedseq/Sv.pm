@@ -93,7 +93,6 @@ class Genome::Model::Tools::Speedseq::Sv {
                 },
 		temp_directory => {
             		is => 'Text',
-			default_value => Genome::Sys->create_temp_directory(),
             		doc => 'temp directory',
             		example_values => ['./output_prefix.XXXXXXXXXXXX'],
             		is_optional => 1,
@@ -111,9 +110,6 @@ class Genome::Model::Tools::Speedseq::Sv {
 };
 
 
-sub path_for_version {
-	return '/gscmnt/gc2719/halllab/users/cchiang/bin/speedseq';
-}
 sub _tool_subcommand_name {
 	return 'sv';
 }
