@@ -559,7 +559,7 @@ Like command_execute_ok(), but this test fails if the command's execution return
   Params and return are the same as data_dir(), but tests (via ok) if the directory exists.
 
   Returns
-  $dir     => test data directory for package/version regardless if the test for existance passes
+  $dir     => test data directory for package/version regardless if the test for existence passes
 
 =back
 

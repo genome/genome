@@ -43,7 +43,7 @@ do {
 };
 
 # We had builds fail with a permission error on a directory we expected to
-# already exist so assumed that mkdir might check permissions before existance
+# already exist so assumed that mkdir might check permissions before existence
 # but since this passes now we think it was probably just an NFS failure.
 subtest 'create_directory with intermediate read-only directory' => sub {
     plan tests => 4;

@@ -499,7 +499,7 @@ sub execute {
 
         #genes that didn't find a match go here, will check for position matches later
         unless (defined($cosmic_hugo)) {
-            if (-e "$cosmic_dir/$hugo\.csv") { #database flatfile has only genes with AA changes, check source files for gene existance
+            if (-e "$cosmic_dir/$hugo\.csv") { #database flatfile has only genes with AA changes, check source files for gene existence
                 $results_hash{NT}{NOVEL}{COSMIC}{$transcript}=": Gene $hugo in Cosmic but No Amino Acid Results for Gene";
             }
             else {

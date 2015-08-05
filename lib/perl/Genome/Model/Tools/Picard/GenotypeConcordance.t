@@ -66,7 +66,7 @@ ok(-e $output_detailed_metrics, 'detailed metrics exist');
 my $filters = [
    qr(^# .*$),
 ];
-compare_ok($expected_detailed_metrics,$output_detailed_metrics, name => 'detailed metrics files mactch', filters => $filters );
+compare_ok($expected_detailed_metrics,$output_detailed_metrics, name => 'detailed metrics files match', filters => $filters );
 compare_ok($expected_summary_metrics,$output_summary_metrics, name => 'summary metrics files match', filters => $filters );
 
 # test the parsing of the metrics

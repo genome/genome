@@ -168,7 +168,7 @@ subtest 'no_plan_file' => sub {
         translations_file => get_translations_file($input_vcf),
     );
 
-    dies_ok { $cmd->execute } 'Command fails with nonexistant plan_file';
+    dies_ok { $cmd->execute } 'Command fails with nonexistent plan_file';
 };
 
 subtest 'no_vcf' => sub {
@@ -188,7 +188,7 @@ subtest 'no_vcf' => sub {
         translations_file => get_translations_file($input_vcf),
     );
 
-    ok(!$cmd->execute, 'Command fails with nonexistant input_vcf');
+    ok(!$cmd->execute, 'Command fails with nonexistent input_vcf');
 };
 
 done_testing;

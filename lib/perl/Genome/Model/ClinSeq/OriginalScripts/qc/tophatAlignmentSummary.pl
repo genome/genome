@@ -360,7 +360,7 @@ sub calculateGeneExpression{
   my $observed_junction_file = $args{'-observed_junction_file'};
   my $gene_info_file = $args{'-gene_info_file'};
 
-  #Check for existance of files
+  #Check for existence of files
   unless (-e $known_junction_file){
     print RED, "\n\nKnown junction file not found: $known_junction_file\n\n", RESET;
     exit();
