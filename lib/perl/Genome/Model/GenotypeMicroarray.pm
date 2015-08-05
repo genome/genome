@@ -19,12 +19,6 @@ class Genome::Model::GenotypeMicroarray{
             doc => 'dbsnp build that this model is built against'
         },
     },
-    has_param => {
-        instrument_type => {
-            doc => 'the type of microarray instrument',
-            valid_values => [qw/ affymetrix illumina infinium plink unknown /],
-        },
-    },
     has => {
         dbsnp_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
