@@ -64,5 +64,10 @@ sub diffs_message {
     }
     return $diff_string;
 }
+
+sub has_diffs {
+    my $self = shift;
+    return scalar(keys %{$self->_diffs});
+}
 1;
 
