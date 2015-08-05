@@ -52,7 +52,7 @@ my $expected_config = {
     '2893815492'
     ],
     'region_of_interest_set_name' => 'SeqCap EZ Human Exome v3.0 + AML RMG pooled probes + WO2830729 pooled probes + WO2840081 pooled probes',
-    'subject_mapping_string' => "H_KA-174556-1309237\tH_KA-174556-1309246\t\t\t\tfollowup\nH_KA-174556-1309245\tH_KA-174556-1309246\t\t\t\tdiscovery\nH_KA-174556-1309246\t\t\t\t\tgermline"
+    'subject_mapping_string' => "H_KA-174556-1309237\tH_KA-174556-1309246\t\t\t\tfollowup\nH_KA-174556-1309245\tH_KA-174556-1309246\t\t\t\tdiscovery\nH_KA-174556-1309246\t\t\t\t\tgermline\n"
 };
 is_deeply($config, $expected_config, "Config read in correctly");
 

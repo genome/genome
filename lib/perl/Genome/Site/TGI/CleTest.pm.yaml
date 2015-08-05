@@ -2,7 +2,10 @@ tag_to_menu_item:
     discovery: "9ab6e28f832a428393b87b171d444401"
     followup: "9ab6e28f832a428393b87b171d444401"
     germline: "3770b8510d5a459f9c0bb01fabf56337"
-subject_mapping_string: "H_KA-174556-1309237\tH_KA-174556-1309246\t\t\t\tfollowup\nH_KA-174556-1309245\tH_KA-174556-1309246\t\t\t\tdiscovery\nH_KA-174556-1309246\t\t\t\t\tgermline"
+subject_mapping_string: |
+    H_KA-174556-1309237	H_KA-174556-1309246				followup
+    H_KA-174556-1309245	H_KA-174556-1309246				discovery
+    H_KA-174556-1309246					germline
 instrument_data:
     - 2893814999
     - 2893815000
