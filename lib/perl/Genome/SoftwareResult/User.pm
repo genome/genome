@@ -67,13 +67,13 @@ sub with_registered_users {
         allow_extra => 1,
     );
 
-    my $user_hash = delete $params{users};
+    my %user_hash = %{delete $params{users}}; #dereference to save a copy
     my $sr_callback = delete $params{callback};
 
     my ($software_result, $newly_created) = $sr_callback->(%params);
     return unless $software_result;
 
-    $class->_register_users($software_result, $user_hash, $newly_created);
+    $class->_register_users($software_result, \%user_hash, $newly_created);
 
     return $software_result;
 }
