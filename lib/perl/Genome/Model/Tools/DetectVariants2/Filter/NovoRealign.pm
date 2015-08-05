@@ -241,7 +241,7 @@ sub _filter_variants {
         my $cmd;
         if (@librmdupbams == 1) {
             $self->warning_message('There is only 1 per library rmdup bam. Probably for germline purpose');
-            `mv $librmdupbams[0] $merge_bam`;  #rg header already made during novo2sam step
+            File::Copy::move($librmdupbams[0], $merge_bam); #rg header already made during novo2sam step
         }
         else {
             $self->debug_message('Now merge per library rmdup bam files');
