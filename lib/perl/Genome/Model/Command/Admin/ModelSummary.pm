@@ -55,11 +55,12 @@ sub execute {
     my @models = $self->models;
     my @hide_statuses = $self->hide_statuses;
 
+    my @headers = qw(model_id action latest_build_status first_nondone_step latest_build_rev model_name pp_name fail_count);
+
     # Header for the report produced at the end of the loop
-    $self->print_message(join("\t", qw(model_id action latest_build_status first_nondone_step latest_build_rev model_name pp_name fail_count)));
+    $self->print_message(join("\t", @headers));
     $self->print_message(join("\t", qw(-------- ------ ------------------- ------------------ ---------------- ---------- ------- ----------)));
 
-    my %classes_to_unload;
     my $build_requested_count = 0;
     my %cleanup_rv;
     my $change_count = 0;
@@ -76,12 +77,6 @@ sub execute {
                 die "Commit failed! Bailing out.";
             }
 
-            $self->debug_message('Unloading...');
-            # Unload to free up memory.
-            for my $class (keys %classes_to_unload) {
-                $class->unload;
-            }
-
             $change_count = 0;
             $auto_batch_size_txn = UR::Context::Transaction->begin;
         } else {
@@ -89,83 +84,34 @@ sub execute {
         }
     };
 
+    Genome::Model::Build::Set->class; #generate type before creating pool
+
     for my $model (@models) {
+        my $guard = UR::Context::AutoUnloadPool->create();
         my $per_model_txn = UR::Context::Transaction->begin();
 
-        my ($latest_build, $latest_build_status) = $self->_build_and_status_for_model($model);
+        my $summary = $self->generate_model_summary($model);
 
-        my $failure_set  = $self->failure_build_set($model);
-        my $fail_count   = $failure_set->count;
-        my $model_id     = ($model ? $model->id                       : '-');
-        my $model_name   = ($model ? $model->name                     : '-');
-        my $pp_name      = ($model ? $model->processing_profile->name : '-');
-
-        my $first_nondone_step;
-        if ($latest_build) {
-           $first_nondone_step = find_first_nondone_step($latest_build);
-        }
-        $first_nondone_step ||= '-';
-
-        my $track_change = sub {
-            $change_count++;
-            $classes_to_unload{$latest_build->class}++ if $latest_build;
-        };
-
-        my $request_build = sub {
-            $model->build_requested(1, 'ModelSummary recommended rebuild.');
-            $build_requested_count++;
-        };
-
-        $first_nondone_step =~ s/^\d+\s+//;
-        $first_nondone_step =~ s/\s+\d+$//;
-
-        my $latest_build_revision = $latest_build->software_revision if $latest_build;
-        $latest_build_revision ||= '-';
-        ($latest_build_revision) =~ /\/(genome-[^\/])/ if $latest_build_revision =~ /\/genome-[^\/]/;
-
-        $model_name =~ s/\.?$pp_name\.?/.../;
-
-        my $action;
-        if (!$latest_build && $model->build_requested){
-            $action = 'none';
-        }
-        elsif (!$latest_build) {
-            $action = 'build-needed';
-            if ($self->auto) {
-                $request_build->();
-                $track_change->();
+        #take action if requested
+        my $action = $summary->{action};
+        if ($self->auto) {
+            if ($action eq 'rebuild' or $action eq 'build-needed') {
+                $model->build_requested(1, 'ModelSummary recommended rebuild.');
+                $build_requested_count++;
+                $change_count++;
             }
-        }
-        elsif ($latest_build_status eq 'Scheduled' || $latest_build_status eq 'Running' || $latest_build_status eq 'Requested') {
-            $action = 'none';
-        }
-        elsif ($latest_build && $latest_build_status eq 'Succeeded' && $fail_count) {
-            $action = 'cleanup';
-            if ($self->auto) {
+            elsif ($action eq 'cleanup') {
                 my $cleanup_succeeded = Genome::Model::Command::Admin::CleanupSucceeded->create(models => [$model]);
                 $cleanup_succeeded->execute;
                 $cleanup_rv{$cleanup_succeeded->result}++;
-                $track_change->();
-            }
-        }
-        elsif ($latest_build_status eq 'Succeeded') {
-            $action = 'none';
-        }
-        elsif ($self->should_review_model($model, $latest_build_status)) {
-            $action = 'review';
-        }
-        else {
-            $action = 'rebuild';
-            if ($self->auto) {
-                $request_build->();
-                $track_change->();
+                $change_count++;
             }
         }
 
-        my $has_hidden_status = grep { lc $_ eq lc $latest_build_status } @hide_statuses;
+        my $has_hidden_status = grep { lc $_ eq lc $summary->{latest_build_status} } @hide_statuses;
         my $should_hide_none = $self->hide_no_action_needed && $action eq 'none';
         unless ($has_hidden_status || $should_hide_none) {
-            $self->print_message(join "\t", $model_id, $action, $latest_build_status, $first_nondone_step, $latest_build_revision, $model_name, $pp_name, $fail_count);
+            $self->print_message(join "\t", @$summary{@headers});
         }
 
         # help avoid bad state in the larger auto_batch_size transaction
@@ -182,6 +128,62 @@ sub execute {
     $self->print_message("Cleaned up " . $cleanup_rv{1} . ".") if $cleanup_rv{1};
     $self->print_message("Failed to clean up " . $cleanup_rv{0} . ".") if $cleanup_rv{0};
     return 1;
+}
+
+sub generate_model_summary {
+    my $self = shift;
+    my $model = shift;
+
+    my %summary;
+
+    my $failure_set  = $self->failure_build_set($model);
+    $summary{fail_count}   = $failure_set->count;
+    $summary{model_id}     = ($model ? $model->id                       : '-');
+    $summary{model_name}   = ($model ? $model->name                     : '-');
+    $summary{pp_name}      = ($model ? $model->processing_profile->name : '-');
+
+    my ($latest_build, $latest_build_status) = $self->_build_and_status_for_model($model);
+    $summary{latest_build_status} = $latest_build_status;
+
+    my $first_nondone_step;
+    if ($latest_build) {
+       $first_nondone_step = find_first_nondone_step($latest_build);
+    }
+    $first_nondone_step ||= '-';
+    $first_nondone_step =~ s/^\d+\s+//;
+    $first_nondone_step =~ s/\s+\d+$//;
+    $summary{first_nondone_step} = $first_nondone_step;
+
+    my $latest_build_revision = $latest_build->software_revision if $latest_build;
+    $latest_build_revision ||= '-';
+    ($latest_build_revision) =~ /\/(genome-[^\/])/ if $latest_build_revision =~ /\/genome-[^\/]/;
+    $summary{latest_build_rev} = $latest_build_revision;
+
+    my $action;
+    if (!$latest_build && $model->build_requested){
+        $action = 'none';
+    }
+    elsif (!$latest_build) {
+        $action = 'build-needed';
+    }
+    elsif ($latest_build_status eq 'Scheduled' || $latest_build_status eq 'Running' || $latest_build_status eq 'Requested') {
+        $action = 'none';
+    }
+    elsif ($latest_build && $latest_build_status eq 'Succeeded' && $summary{fail_count}) {
+        $action = 'cleanup';
+    }
+    elsif ($latest_build_status eq 'Succeeded') {
+        $action = 'none';
+    }
+    elsif ($self->should_review_model($model, $latest_build_status)) {
+        $action = 'review';
+    }
+    else {
+        $action = 'rebuild';
+    }
+    $summary{action} = $action;
+
+    return \%summary;
 }
 
 sub _build_and_status_for_model {
