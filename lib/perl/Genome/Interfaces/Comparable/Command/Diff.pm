@@ -67,7 +67,7 @@ sub diffs_message {
 
 sub has_diffs {
     my $self = shift;
-    return (defined ($self->_diffs) && scalar(keys %{$self->_diffs})) || 0;
+    return scalar(keys %{$self->_diffs});
 }
 1;
 
