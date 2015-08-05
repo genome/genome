@@ -80,14 +80,15 @@ class Genome::Model::Tools::Speedseq::Sv {
                 },
 		min_sample_weight => {
                         is => 'Integer',
-                        doc => 'minimum sample weight for a call [default: 4]',
+                        doc => 'minimum sample weight for a call',
                         default_value => 4,
 			is_optional => 1,
                         tool_param_name => 'm',
                 },
 		trim_threshold => {
                         is => 'Float',
-                        doc => 'trim threshold [0]',
+                        doc => 'trim threshold',
+			default_value => 0,
                         is_optional => 1,
                         tool_param_name => 'r',
                 },

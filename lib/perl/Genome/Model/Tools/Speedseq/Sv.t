@@ -26,13 +26,13 @@ my $output_prefix = Genome::Sys->create_temp_directory() .'/example';
 # Do not use the same temp directory for output.  speedseq cleans up the temp directory.
 
 my $sv_cmd = $pkg->create(
-   version => $speedseq_version,
-   temp_directory => Genome::Sys->create_temp_directory(),
-   reference_fasta => $reference_fasta,
-   full_bam_file => $bam,
-   output_prefix => $output_prefix,
-   split_read_bam_file => $split_bam,
-   discordant_read_bam_file => $discordant_bam,
+	version => $speedseq_version,
+	temp_directory => Genome::Sys->create_temp_directory(),
+	reference_fasta => $reference_fasta,
+	full_bam_file => $bam,
+	output_prefix => $output_prefix,
+	split_read_bam_file => $split_bam,
+	discordant_read_bam_file => $discordant_bam,
 );
 isa_ok($sv_cmd,$pkg);
 ok($sv_cmd->execute,'execute command '. $pkg);
@@ -55,15 +55,15 @@ my $expected_output_prefix3 = ("$expected_output_dir/Sv.t.out3");
 
 
 my $sv_cmd3 = $pkg->create(
-   version => $speedseq_version,
-   temp_directory => $temp_directory,
-   reference_fasta => $reference_fasta,
-   full_bam_file => $bam,
-   output_prefix => $output_prefix3,
-   CNVnator_read_depth => 'true',
-   split_read_bam_file => $split_bam,
-   genotype_svtyper => 1,
-   discordant_read_bam_file => $discordant_bam,
+	version => $speedseq_version,
+	temp_directory => $temp_directory,
+	reference_fasta => $reference_fasta,
+	full_bam_file => $bam,
+	output_prefix => $output_prefix3,
+	CNVnator_read_depth => 'true',
+	split_read_bam_file => $split_bam,
+	genotype_svtyper => 1,
+	discordant_read_bam_file => $discordant_bam,
 );
 isa_ok($sv_cmd3,$pkg);
 ok($sv_cmd3->execute,'execute command '. $pkg);
@@ -75,8 +75,8 @@ my $expected_output_file3 = ("$expected_output_prefix3.sv.vcf.gz");
 
 
 my $differ = Genome::File::Vcf::Differ->new($output_file3, $expected_output_file3);
-    my $diff = $differ->diff;
-    is($diff, undef, "Found No differences between $output_file3 and (expected) $expected_output_file3") ||
+	my $diff = $differ->diff;
+	is($diff, undef, "Found No differences between $output_file3 and (expected) $expected_output_file3") ||
        diag $diff->to_string;
 
 ok(-e "$output_file3.tbi");

@@ -55,9 +55,9 @@ ok($command2->execute, 'Executed `gmt detect-variants2 Speedseq` command');
 
 
 my $differ = Genome::File::Vcf::Differ->new("$output/svs.hq.sv.vcf.gz", "$test_dir/svs.hq.sv.vcf.gz");
-    my $diff = $differ->diff;
-    is($diff, undef, "Found No differences between $output/svs.hq.sv.vcf.gz and (expected) $test_dir/svs.hq.sv.vcf.gz") ||
-       diag $diff->to_string;
+	my $diff = $differ->diff;
+	is($diff, undef, "Found No differences between $output/svs.hq.sv.vcf.gz and (expected) $test_dir/svs.hq.sv.vcf.gz") ||
+	diag $diff->to_string;
 
 
 compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed");

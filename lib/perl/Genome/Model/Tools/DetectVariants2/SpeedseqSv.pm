@@ -52,16 +52,16 @@ sub _detect_variants {
 
 sub find_file{
         my $self = shift;
-	my $disc = shift;
+	my $file = shift;
 	my $value = shift;
 	my @bam_dir = @_;
 	my @final = ();
 	
 	foreach (@bam_dir){
 		my ($editor, $dir, $suffix) = fileparse($_, '.bam');
-		my $discord = "$dir$editor.$disc$suffix";
-		if (!-s $discord) {die $self->error_message("File couldn't be found: $discord  Bam Files Must be aligned with Speedseq.")};
-		push (@final, $discord);
+		my $newFile = "$dir$editor.$file$suffix";
+		if (!-s $newFile) {die $self->error_message("File couldn't be found: $newFile Bam Files Must be aligned with Speedseq.")};
+		push (@final, $newFile);
 	}
 	my $combined_splits = join (',',@final);
         return (
