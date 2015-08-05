@@ -742,7 +742,7 @@ sub status_with_build {
     my $self = shift;
     my ($status, $build);
 
-    if ($self->config_profile_item and $self->config_profile_item->status eq 'disabled') {
+    if ($self->is_disabled) {
         $status = 'Disabled';
     } elsif ($self->build_requested) {
         $status = 'Build Requested';
@@ -760,6 +760,12 @@ sub status {
     my $self = shift;
     my ($status) = $self->status_with_build;
     return $status;
+}
+
+sub is_disabled {
+    my $self = shift;
+
+    return ($self->config_profile_item and $self->config_profile_item->status eq 'disabled');
 }
 
 # Copy model to a new model, overridding some properties
