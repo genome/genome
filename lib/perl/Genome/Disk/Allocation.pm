@@ -149,11 +149,6 @@ class Genome::Disk::Allocation {
                 return $owner_exists ? 1 : 0;
             ),
         },
-        file_summaries => {
-            is => 'Genome::Disk::Allocation::FileSummary',
-            reverse_as => 'allocation',
-            is_many => 1,
-        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -1017,29 +1012,6 @@ sub _purge {
         %parameters);
 
     return $purger->purge;
-}
-
-sub _create_file_summaries {
-    my $self = shift;
-
-    my $old_cwd = getcwd;
-    chdir($self->absolute_path)
-        or return $self->warning_message('Failed to chdir to %s. Skipping file summaries.', $self->absolute_path);
-
-    my @files;
-    #why is File::Find this stupid? who knows...
-    File::Find::find(sub { push(@files, $File::Find::name) unless (-d $_) }, '.');
-    chdir($old_cwd)
-        or die $self->error_message('Failed to chdir back to %s.', $old_cwd);
-
-    for my $file (@files) {
-        Genome::Disk::Allocation::FileSummary->create_or_update(
-            allocation => $self,
-            file => $file
-        );
-    }
-
-    return 1;
 }
 
 sub _symlink_new_path_from_old {
