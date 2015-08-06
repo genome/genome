@@ -44,5 +44,4 @@ sub create_sireport_min_mq_bq {
     return "30,40;10,20";
 }
 
-
 1;
