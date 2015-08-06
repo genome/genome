@@ -29,7 +29,10 @@ class Genome::Model::ClinSeq {
 
         #processing_profile      => { is => 'Genome::ProcessingProfile::ClinSeq', id_by => 'processing_profile_id', default_value => { } },
     ],
-    has_param => [ # Processing profile parameters
+    #Processing profile parameters
+    #If you add/modify params here make sure to add/modify params in
+    # Genome/Test/Factory/ProcessingProfile/ClinSeq.pm
+    has_param => [
         bam_readcount_version => { is => 'Text', doc => 'The bam readcount version to use during clonality analysis' },
         sireport_min_tumor_vaf => { is => 'Number', doc => 'Variants with a tumor VAF less than this (in any tumor sample) will be filtered out.'},
         sireport_max_normal_vaf => { is => 'Number', doc => 'Variants with a normal VAF greater than this (in any normal sample) will be filtered out.'},
