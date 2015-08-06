@@ -49,29 +49,32 @@ sub generate {
     #Connect input connectors to the operation
     my $inputs = [];
     for my $input_property (@$input_properties) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
+        $class->_add_link_to_workflow(
+            $workflow,
+            left_workflow_operation_id => $workflow->get_input_connector->id,
             left_property => $input_property,
-            right_operation => $operation,
+            right_workflow_operation_id => $operation->id,
             right_property => $input_property,
         );
         push @$inputs, ( 'm_' . $input_property => $input_data->{$input_property} );
     }
     for my $input_property (@$tree_properties) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
+        $class->_add_link_to_workflow(
+            $workflow,
+            left_workflow_operation_id => $workflow->get_input_connector->id,
             left_property => $input_property,
-            right_operation => $operation,
+            right_workflow_operation_id => $operation->id,
             right_property => $input_property,
         );
         push @$inputs, ( 'm_' . $input_property => $tree->{'action'}->[0]->{$input_property} );
     }
 
     #Connect output connectors to the operation
-    $workflow->add_link(
-        left_operation => $operation,
+    $class->_add_link_to_workflow(
+        $workflow,
+        left_workflow_operation_id => $operation->id,
         left_property => 'result_id',
-        right_operation => $workflow->get_output_connector,
+        right_workflow_operation_id => $workflow->get_output_connector->id,
         right_property => 'result_id',
     );
 
