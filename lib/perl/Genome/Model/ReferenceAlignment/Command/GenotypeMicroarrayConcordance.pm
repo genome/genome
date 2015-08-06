@@ -37,6 +37,7 @@ class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance 
     ],
     has_optional =>[
         _seqdict => {},
+        _genotype_samples_and_sorted_vcfs => { is => 'HASH', default_value => {}, },
     ],
 };
 
@@ -214,6 +215,10 @@ sub resolve_genotype_microarray_vcf_and_sample {
         }
     }
 
+    # Check if we've seen this genotype sample and have sorted it's VCF
+    my $sorted_microarray_vcf = $self->_genotype_samples_and_sorted_vcfs->{$genotype_sample->id};
+    return ($sorted_microarray_vcf, $genotype_sample) if $sorted_microarray_vcf;
+
     # there is no existing microarray build or the VCF does not exist (ie. old genotype build)
     unless (-e $microarray_vcf) {
         $self->debug_message('Get or create genotype VCF result for sample: '. $genotype_sample->__display_name__);
@@ -229,8 +234,12 @@ sub resolve_genotype_microarray_vcf_and_sample {
             die($self->error_message);
         }
     }
-    
-    my $sorted_microarray_vcf = Genome::Sys->create_temp_file_path($genotype_sample->name .'_microarray_sorted.vcf');
+
+    $sorted_microarray_vcf = Genome::Sys->create_temp_file_path(
+        Genome::Utility::Text::sanitize_string_for_filesystem($genotype_sample->name).'_microarray_sorted.vcf'
+    );
+    $self->_genotype_samples_and_sorted_vcfs->{$genotype_sample->id} = $sorted_microarray_vcf;
+
     my $sort_cmd = Genome::Model::Tools::Picard::SortVcf->create(
         input_vcf => $microarray_vcf,
         output_vcf => $sorted_microarray_vcf,
