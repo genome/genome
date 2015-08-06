@@ -68,7 +68,9 @@ sub execute {
         my $lane_qc_vcf = $self->resolve_lane_qc_vcf($qc_build);
         my ($microarray_vcf,$genotype_sample) = $self->resolve_genotype_microarray_vcf_and_sample($qc_build);
         
-        my $intersect_vcf = Genome::Sys->create_temp_file_path($genotype_sample->name .'_x_'. $instrument_data->id .'.vcf');
+        my $intersect_vcf = Genome::Sys->create_temp_file_path(
+            Genome::Utility::Text::sanitize_string_for_filesystem($genotype_sample->name) .'_x_'. $instrument_data->id .'.vcf'
+        );
         my $intersect_cmd = Genome::Model::Tools::BedTools::Intersect->create(
             input_file_a => $lane_qc_vcf,
             input_file_a_format => 'bed',
