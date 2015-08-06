@@ -49,7 +49,6 @@ sub generate {
     return (\@refinement_operations, \@inputs, \@refiners);
 }
 
-my $_refinealignments_command_id;
 my $_generate_refinement_operation_tmpl;
 sub _generate_refinement_operation {
     my $class = shift;
@@ -57,15 +56,14 @@ sub _generate_refinement_operation {
     my $refiner = shift;
 
     unless ($_generate_refinement_operation_tmpl) {
-        $_generate_refinement_operation_tmpl = UR::BoolExpr::Template->resolve('Workflow::Operation', 'id','name','workflow_operationtype_id')->get_normalized_template_equivalent();
-        $_refinealignments_command_id = Workflow::OperationType::Command->get('Genome::InstrumentData::Command::RefineReads')->id;
+        $_generate_refinement_operation_tmpl = UR::BoolExpr::Template->resolve('Genome::WorkflowBuilder::Command', 'id','name','command')->get_normalized_template_equivalent();
     }
 
-    my $operation = Workflow::Operation->create(
+    my $operation = Genome::WorkflowBuilder::Command->create(
         $_generate_refinement_operation_tmpl->get_rule_for_values(
+                'Genome::InstrumentData::Command::RefineReads',
                 UR::Object::Type->autogenerate_new_object_id_urinternal(),
                 'refine_' . $refiner,
-                $_refinealignments_command_id
         )
     );
 

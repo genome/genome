@@ -67,16 +67,14 @@ sub _generate_step {
     my ($aligner, $version, $reference, $annotation, $params, $inputs) = @_;
 
     my $index_num = $class->next_counter_value;
-    my $operation = Workflow::Operation->create(
+    my $operation = Genome::WorkflowBuilder::Command->create(
         name => "$aligner index #" . $index_num,
-        operation_type => Workflow::OperationType::Command->create(
-            command_class_name => 'Genome::Model::ReferenceSequence::Command::CreateAlignerIndex',
-        ),
+        command => 'Genome::Model::ReferenceSequence::Command::CreateAlignerIndex',
     );
 
     #overwrite lsf_resource for star aligner
     if ($aligner eq 'star') {
-        $operation->operation_type->lsf_resource("-R \'select[ncpus>=12 && mem>=48000] span[hosts=1] rusage[mem=48000]\' -M 48000000 -n 12");
+        $operation->lsf_resource("-R \'select[ncpus>=12 && mem>=48000] span[hosts=1] rusage[mem=48000]\' -M 48000000 -n 12");
     }
 
     return {

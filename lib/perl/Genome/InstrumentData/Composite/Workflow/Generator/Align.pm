@@ -59,15 +59,12 @@ sub _generate_workflow_for_instrument_data {
         $workflow_name .= ' (segment ' . $options{instrument_data_segment_id} . ')';
     }
 
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $workflow_name,
-        input_properties => \@input_properties,
-        optional_input_properties => \@input_properties,
-        output_properties => \@output_properties,
     );
 
     for my $op (@operations) {
-        $op->workflow_model($workflow);
+        $workflow->add_operation($op);
     }
 
     #Last wire up the workflow
@@ -131,10 +128,10 @@ sub _generate_alignment_workflow_links {
         #create link for final result of that subtree
         my $op = $subtree->{$class->_operation_key($instrument_data, %options)};
         $class->_add_link_to_workflow($workflow,
-            left_workflow_operation_id => $op->id,
-            left_property => 'result_id',
-            right_workflow_operation_id => $workflow->get_output_connector->id,
-            right_property => join('_', 'result_id', $op->name),
+            source => $op,
+            source_property => 'result_id',
+            destination => $workflow,
+            destination_property => join('_', 'result_id', $op->name),
         );
     }
 
@@ -164,12 +161,12 @@ sub _create_links_for_subtree {
 
     my $inputs = [];
     for my $property (@properties) {
-        my $left_property = join('_', $property, $operation->name);
+        my $source_property = join('_', $property, $operation->name);
         $class->_add_link_to_workflow($workflow,
-            left_workflow_operation_id => $workflow->get_input_connector->id,
-            left_property => $left_property,
-            right_workflow_operation_id => $operation->id,
-            right_property => $property,
+            source => $workflow,
+            source_property => $source_property,
+            destination => $operation,
+            destination_property => $property,
         );
 
         my $value;
@@ -191,26 +188,26 @@ sub _create_links_for_subtree {
         }
 
         push @$inputs, (
-            'm_'.$left_property => $value,
+            'm_'.$source_property => $value,
         );
     }
 
     for my $property ($class->_general_workflow_input_properties) {
         $class->_add_link_to_workflow($workflow,
-            left_workflow_operation_id => $workflow->get_input_connector->id,
-            left_property => $property,
-            right_workflow_operation_id => $operation->id,
-            right_property => $property,
+            source => $workflow,
+            source_property => $property,
+            destination => $operation,
+            destination_property => $property,
         );
     }
 
     if(exists $tree->{parent}) {
         my $parent_operation = $tree->{parent}{$class->_operation_key($instrument_data, %options)};
         $class->_add_link_to_workflow($workflow,
-            left_workflow_operation_id => $parent_operation->id,
-            left_property => 'output_result_id',
-            right_workflow_operation_id => $operation->id,
-            right_property => 'alignment_result_input_id',
+            source => $parent_operation,
+            source_property => 'output_result_id',
+            destination => $operation,
+            destination_property => 'alignment_result_input_id',
         );
 
         return $class->_create_links_for_subtree($workflow, $tree->{parent}, $instrument_data, %options);
@@ -219,10 +216,10 @@ sub _create_links_for_subtree {
         for my $property ($class->_instrument_data_workflow_input_properties($instrument_data, %options)) {
             my ($simple_property_name) = $property =~ m/^(.+?)__/;
             $class->_add_link_to_workflow($workflow,
-                left_workflow_operation_id => $workflow->get_input_connector->id,
-                left_property => $property,
-                right_workflow_operation_id => $operation->id,
-                right_property => $simple_property_name,
+                source => $workflow,
+                source_property => $property,
+                destination => $operation,
+                destination_property => $simple_property_name,
             );
 
             push @$inputs, (
@@ -285,16 +282,16 @@ sub _generate_operation {
     }
 
     unless ($_generate_operation_tmpl) {
-        # 'id' will still be first, since they're sorted alpha order
-#ccc
         $_generate_operation_tmpl
-            = UR::BoolExpr::Template->resolve('Workflow::Operation', 'id','name','workflow_operationtype_id')->get_normalized_template_equivalent();
+            = UR::BoolExpr::Template->resolve('Genome::WorkflowBuilder::Command', 'id','name','command')->get_normalized_template_equivalent();
     }
 
-    my $operation = Workflow::Operation->create(
-        $_generate_operation_tmpl->get_rule_for_values(UR::Object::Type->autogenerate_new_object_id_urinternal(),
-        $class->get_unique_action_name($action),
-        Workflow::OperationType::Command->get($class_name)->id),
+    my $operation = Genome::WorkflowBuilder::Command->create(
+        $_generate_operation_tmpl->get_rule_for_values(
+            $class_name,
+            UR::Object::Type->autogenerate_new_object_id_urinternal(),
+            $class->get_unique_action_name($action),
+        ),
     );
 
     $action->{$key} = $operation;

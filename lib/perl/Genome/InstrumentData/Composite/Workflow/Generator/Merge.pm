@@ -45,7 +45,6 @@ sub generate {
     return ($merge_operation, \@inputs);
 }
 
-my $_mergealignments_command_id;
 my $_generate_merge_operation_tmpl;
 sub _generate_merge_operation {
     my $class = shift;
@@ -53,19 +52,15 @@ sub _generate_merge_operation {
     my $grouping = shift;
 
     unless ($_generate_merge_operation_tmpl) {
-        $_generate_merge_operation_tmpl = UR::BoolExpr::Template->resolve('Workflow::Operation', 'id','name','workflow_operationtype_id')->get_normalized_template_equivalent();
-        $_mergealignments_command_id = Workflow::OperationType::Command->get('Genome::InstrumentData::Command::MergeAlignments')->id;
+        $_generate_merge_operation_tmpl = UR::BoolExpr::Template->resolve('Genome::WorkflowBuilder::Command', 'id','name','command')->get_normalized_template_equivalent();
     }
 
-    my $operation = Workflow::Operation->create(
+    my $operation = Genome::WorkflowBuilder::Command->create(
         $_generate_merge_operation_tmpl->get_rule_for_values(
+                'Genome::InstrumentData::Command::MergeAlignments',
                 UR::Object::Type->autogenerate_new_object_id_urinternal(),
                 'merge_' . $grouping,
-                $_mergealignments_command_id
         )
-
-        #name => 'merge_' . $grouping,
-        #operation_type => $_mergealignments_command_id
     );
 
     return $operation;

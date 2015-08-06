@@ -175,26 +175,21 @@ sub _generate_master_workflow {
 
     my ($input_properties_list, $output_properties_list) = $class->_inputs_and_outputs_for_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations, $refiners);
 
-    my $master_workflow = Workflow::Model->create(
+    my $master_workflow = Genome::WorkflowBuilder::DAG->create(
         name => 'Master Alignment Dispatcher',
-        input_properties => $input_properties_list,
-        optional_input_properties => $input_properties_list,
-        output_properties => $output_properties_list,
     );
 
     my @block_operation_inputs = map { 'index_' . $_->{index} . '_result' } values %$index_operations;
-    my $block_operation = Workflow::Operation->create(
+    my $block_operation = Genome::WorkflowBuilder::Block->create(
         name => 'Wait for aligner indicies to be built',
-        operation_type => Workflow::OperationType::Block->create(
-            properties => [@block_operation_inputs,'force_fragment'],
-        ),
+        properties => [@block_operation_inputs,'force_fragment'],
     );
-    $block_operation->workflow_model($master_workflow);
+    $master_workflow->add_operation($block_operation);
     $class->_add_link_to_workflow($master_workflow,
-        left_workflow_operation_id => $master_workflow->get_input_connector->id,
-        left_property => "m_force_fragment",
-        right_workflow_operation_id => $block_operation->id,
-        right_property => "force_fragment",
+        source => $master_workflow,
+        source_property => "m_force_fragment",
+        destination => $block_operation,
+        destination_property => "force_fragment",
     );
 
     for my $index_operation (values %$index_operations){
@@ -316,11 +311,8 @@ sub _wire_index_operation_to_master_workflow {
     my $block_operation = shift;
     my $operation = shift;
 
-    $operation->{operation}->workflow_model($master_workflow);
-        my $input_connector = $master_workflow->get_input_connector;
-        my $output_connector = $master_workflow->get_output_connector;
-
-        my $cname = $operation->{operation}->operation_type->command_class_name;
+    $master_workflow->add_operation($operation->{operation});
+        my $cname = $operation->{operation}->command;
         my $cmeta = $cname->__meta__;
         for my $property (@{$operation->{operation}->operation_type->input_properties}){
             # This was written before the id_by properties were supported as inputs
@@ -338,27 +330,27 @@ sub _wire_index_operation_to_master_workflow {
             if($property eq 'result_users') {
                 #result users are the same for all steps in workflow
                 $class->_add_link_to_workflow($master_workflow,
-                    left_workflow_operation_id => $input_connector->id,
-                    left_property => 'm_' . $property,
-                    right_workflow_operation_id => $operation->{operation}->id,
-                    right_property => $property,
+                    source => $master_workflow,
+                    source_property => 'm_' . $property,
+                    destination => $operation->{operation},
+                    destination_property => $property,
                 );
                 next;
             }
 
             $class->_add_link_to_workflow($master_workflow,
-                left_workflow_operation_id => $input_connector->id,
-                left_property => join('_', "index", $operation->{index}, $property),
-                right_workflow_operation_id => $operation->{operation}->id,
-                right_property => $property,
+                source => $master_workflow,
+                source_property => join('_', "index", $operation->{index}, $property),
+                destination => $operation->{operation},
+                destination_property => $property,
             );
         }
 
         $class->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $operation->{operation}->id,
-            left_property => "result",
-            right_workflow_operation_id => $block_operation->id,
-            right_property => join("_", "index", $operation->{index}, "result"),
+            source => $operation->{operation},
+            source_property => "result",
+            destination => $block_operation,
+            destination_property => join("_", "index", $operation->{index}, "result"),
         );
 
     return 1;
@@ -370,37 +362,33 @@ sub _wire_object_workflow_to_master_workflow {
     my $block_operation = shift;
     my $workflow = shift;
 
-    $workflow->workflow_model($master_workflow);
+    $master_workflow->add_operation($workflow);
 
     #wire up the master to the inner workflows (just pass along the inputs and outputs)
-    my $master_input_connector = $master_workflow->get_input_connector;
-    my $workflow_input_connector = $workflow; #implicitly uses input connector
     for my $property (@{ $workflow->operation_type->input_properties }) {
         if($property eq 'force_fragment'){
             $class->_add_link_to_workflow($master_workflow,
-                left_workflow_operation_id => $block_operation->id,
-                left_property => $property,
-                right_workflow_operation_id => $workflow_input_connector->id,
-                right_property => $property,
+                source => $block_operation,
+                source_property => $property,
+                destination => $workflow,
+                destination_property => $property,
             );
         }else {
             $class->_add_link_to_workflow($master_workflow,
-                left_workflow_operation_id => $master_input_connector->id,
-                left_property => 'm_' . $property,
-                right_workflow_operation_id => $workflow_input_connector->id,
-                right_property => $property,
+                source => $master_workflow,
+                source_property => 'm_' . $property,
+                destination => $workflow,
+                destination_property => $property,
             );
         }
     }
 
-    my $master_output_connector = $master_workflow->get_output_connector;
-    my $workflow_output_connector = $workflow; #implicitly uses output connector
     for my $property (@{ $workflow->operation_type->output_properties }) {
         $class->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $workflow_output_connector->id,
-            left_property => $property,
-            right_workflow_operation_id => $master_output_connector->id,
-            right_property => 'm_' . $property,
+            source => $workflow,
+            source_property => $property,
+            destination => $master_workflow,
+            destination_property => 'm_' . $property,
         );
     }
 
@@ -414,27 +402,23 @@ sub _wire_merge_operation_to_master_workflow {
     my $merge = shift;
     my $refinements = shift;
 
-    my $master_input_connector = $master_workflow->get_input_connector;
-    my $master_output_connector = $master_workflow->get_output_connector;
-
-    $merge->workflow_model($master_workflow);
-
+    $master_workflow->add_operation($merge);
     for my $property ($class->_merge_workflow_input_properties) {
         $class->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $master_input_connector->id,
-            left_property => 'm_' . $property,
-            right_workflow_operation_id => $merge->id,
-            right_property => $property,
+            source => $master_workflow,
+            source_property => 'm_' . $property,
+            destination => $merge,
+            destination_property => $property,
         );
     }
 
     unless (%$refinements) {
         for my $property (@{ $merge->operation_type->output_properties }) {
             $class->_add_link_to_workflow($master_workflow,
-                left_workflow_operation_id => $merge->id,
-                left_property => $property,
-                right_workflow_operation_id => $master_output_connector->id,
-                right_property => 'm_' . join('_', $property, $merge->name),
+                source => $merge,
+                source_property => $property,
+                destination => $master_workflow,
+                destination_property => 'm_' . join('_', $property, $merge->name),
             );
         }
     }
@@ -449,39 +433,36 @@ sub _wire_refinement_operation_to_master_workflow {
     my $refinement_operation = shift;
     my $refiners = shift;
 
-    my $master_input_connector = $master_workflow->get_input_connector;
-    my $master_output_connector = $master_workflow->get_output_connector;
-
     for my $refinement (@$refinement_operation) {
-        $refinement->workflow_model($master_workflow);
+        $master_workflow->add_operation($refinement);
         my ($refiner) = grep { $refinement->name =~ /$_/ } @$refiners;
 
         for my $property ($class->_base_refinement_workflow_input_properties) {
-            my $left_property = "m_" . $class->_construct_refiner_input_property($property, $refiner);
-            my $right_property = $property;
+            my $source_property = "m_" . $class->_construct_refiner_input_property($property, $refiner);
+            my $destination_property = $property;
             $class->_add_link_to_workflow($master_workflow,
-                left_workflow_operation_id => $master_input_connector->id,
-                left_property => $left_property,
-                right_workflow_operation_id => $refinement->id,
-                right_property => $right_property,
+                source => $master_workflow,
+                source_property => $source_property,
+                destination => $refinement,
+                destination_property => $destination_property,
             );
         }
 
         $class->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $master_input_connector->id,
-            left_property => 'm_result_users',
-            right_workflow_operation_id => $refinement->id,
-            right_property => 'result_users',
+            source => $master_workflow,
+            source_property => 'm_result_users',
+            destination => $refinement,
+            destination_property => 'result_users',
         );
     }
 
     my $last_refinement = $refinement_operation->[-1];
     for my $property (@{ $last_refinement->operation_type->output_properties }) {
         $class->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $last_refinement->id,
-            left_property => $property,
-            right_workflow_operation_id => $master_output_connector->id,
-            right_property => 'm_' . join('_', $property, $last_refinement->name),
+            source => $last_refinement,
+            source_property => $property,
+            destination => $master_workflow,
+            destination_property => 'm_' . join('_', $property, $last_refinement->name),
         );
     }
 
@@ -497,10 +478,10 @@ sub _wire_merge_to_refinement_operations {
     for my $group_key (keys %$merge_operations ) {
         my $refinement_operation = $refinement_operations->{$group_key};
         $class->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $merge_operations->{$group_key}->id,
-            left_property => 'result_id',
-            right_workflow_operation_id => $refinement_operation->[0]->id,
-            right_property => 'input_result_id',
+            source => $merge_operations->{$group_key},
+            source_property => 'result_id',
+            destination => $refinement_operation->[0],
+            destination_property => 'input_result_id',
         );
     }
 
@@ -516,10 +497,10 @@ sub _wire_refinement_to_refinement_operations {
         next unless (scalar @$refinement_operation > 1);
         for my $i (1..$#$refinement_operation) {
             $class->_add_link_to_workflow($master_workflow,
-                left_workflow_operation_id => $refinement_operation->[$i-1]->id,
-                left_property => 'result_id',
-                right_workflow_operation_id => $refinement_operation->[$i]->id,
-                right_property => 'input_result_id',
+                source => $refinement_operation->[$i-1],
+                source_property => 'result_id',
+                destination => $refinement_operation->[$i],
+                destination_property => 'input_result_id',
             );
         }
     }
@@ -553,20 +534,18 @@ sub _wire_object_workflows_to_merge_operations {
             my $merge_op = $merge_operations->{$group};
 
             unless(exists $converge_operation_for_group{$group}) {
-                my $converge_operation = Workflow::Operation->create(
+                my $converge_operation = Genome::WorkflowBuilder::Converge->create(
                     name => join('_', 'converge', $group),
-                    operation_type => Workflow::OperationType::Converge->create(
-                        input_properties => $converge_inputs_for_group{$group},
-                        output_properties => ['alignment_result_ids'],
-                    ),
+                    input_properties => $converge_inputs_for_group{$group},
+                    output_properties => ['alignment_result_ids'],
                 );
 
-                $converge_operation->workflow_model($master_workflow);
+                $master_workflow->add_operation($converge_operation);
                 $class->_add_link_to_workflow($master_workflow,
-                    left_workflow_operation_id => $converge_operation->id,
-                    left_property => 'alignment_result_ids',
-                    right_workflow_operation_id => $merge_op->id,
-                    right_property => 'alignment_result_ids',
+                    source => $converge_operation,
+                    source_property => 'alignment_result_ids',
+                    destination => $merge_op,
+                    destination_property => 'alignment_result_ids',
                 );
 
                 $converge_operation_for_group{$group} = $converge_operation;
@@ -574,10 +553,10 @@ sub _wire_object_workflows_to_merge_operations {
 
             for my $property (@{ $align_wf->operation_type->output_properties }) {
                 $class->_add_link_to_workflow($master_workflow,
-                    left_workflow_operation_id => $align_wf->id,
-                    left_property => $property,
-                    right_workflow_operation_id => $converge_operation_for_group{$group}->id,
-                    right_property => $property,
+                    source => $align_wf,
+                    source_property => $property,
+                    destination => $converge_operation_for_group{$group},
+                    destination_property => $property,
                 );
             }
         }
