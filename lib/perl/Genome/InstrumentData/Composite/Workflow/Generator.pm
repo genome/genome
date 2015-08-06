@@ -45,7 +45,11 @@ sub generate {
     my $input_data = shift;
     my $merge_group = shift;
 
-    my ($index_operations, $index_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::AlignerIndex->generate($tree, $input_data);
+    my $master_workflow = Genome::WorkflowBuilder::DAG->create(
+        name => 'Master Alignment Dispatcher',
+    );
+
+    my ($index_operations, $block_operation) = Genome::InstrumentData::Composite::Workflow::Generator::AlignerIndex->generate($master_workflow, $tree, $input_data);
 
     my @inputs;
     my ($object_workflows, $merge_operations, $refinement_operations, $refiners) = ({}, {}, {});
@@ -74,9 +78,7 @@ sub generate {
         }
     }
 
-    push @inputs, @$index_inputs;
-
-    return $class->_generate_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations, \@inputs, $objects_by_group, $refiners, $tree->{api_version}, $input_data, $merge_group);
+    return $class->_generate_master_workflow($master_workflow, $block_operation, $index_operations, $object_workflows, $merge_operations, $refinement_operations, \@inputs, $objects_by_group, $refiners, $tree->{api_version}, $input_data, $merge_group);
 }
 
 sub _alignment_objects {
@@ -162,6 +164,8 @@ sub _instrument_data_params {
 
 sub _generate_master_workflow {
     my $class = shift;
+    my $master_workflow = shift;
+    my $block_operation = shift;
     my $index_operations = shift;
     my $object_workflows = shift;
     my $merge_operations = shift;
@@ -175,26 +179,6 @@ sub _generate_master_workflow {
 
     my ($input_properties_list, $output_properties_list) = $class->_inputs_and_outputs_for_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations, $refiners);
 
-    my $master_workflow = Genome::WorkflowBuilder::DAG->create(
-        name => 'Master Alignment Dispatcher',
-    );
-
-    my @block_operation_inputs = map { 'index_' . $_->{index} . '_result' } values %$index_operations;
-    my $block_operation = Genome::WorkflowBuilder::Block->create(
-        name => 'Wait for aligner indicies to be built',
-        properties => [@block_operation_inputs,'force_fragment'],
-    );
-    $master_workflow->add_operation($block_operation);
-    $class->_add_link_to_workflow($master_workflow,
-        source => $master_workflow,
-        source_property => "m_force_fragment",
-        destination => $block_operation,
-        destination_property => "force_fragment",
-    );
-
-    for my $index_operation (values %$index_operations){
-        $class->_wire_index_operation_to_master_workflow($master_workflow, $block_operation, $index_operation);
-    }
 
     for my $workflow (values %$object_workflows) {
         $class->_wire_object_workflow_to_master_workflow($master_workflow, $block_operation, $workflow);
@@ -305,56 +289,7 @@ sub _inputs_and_outputs_for_master_workflow {
     return (\@input_properties_list, \@output_properties_list);
 }
 
-sub _wire_index_operation_to_master_workflow {
-    my $class = shift;
-    my $master_workflow = shift;
-    my $block_operation = shift;
-    my $operation = shift;
 
-    $master_workflow->add_operation($operation->{operation});
-        my $cname = $operation->{operation}->command;
-        my $cmeta = $cname->__meta__;
-        for my $property (@{$operation->{operation}->operation_type->input_properties}){
-            # This was written before the id_by properties were supported as inputs
-            # so they were previously ignored.  We ignore them explicitly here
-            # in this link autogen code because the associated ID property is
-            # assigned directly.
-            # In an updated version of the code we might skip things with implied_by
-            # set to true, which would go the other way and capture the object,
-            # while ignoring its supporting identity property.
-            my $pmeta = $cmeta->property($property);
-            if ($pmeta->id_by) {
-                next;
-            }
-
-            if($property eq 'result_users') {
-                #result users are the same for all steps in workflow
-                $class->_add_link_to_workflow($master_workflow,
-                    source => $master_workflow,
-                    source_property => 'm_' . $property,
-                    destination => $operation->{operation},
-                    destination_property => $property,
-                );
-                next;
-            }
-
-            $class->_add_link_to_workflow($master_workflow,
-                source => $master_workflow,
-                source_property => join('_', "index", $operation->{index}, $property),
-                destination => $operation->{operation},
-                destination_property => $property,
-            );
-        }
-
-        $class->_add_link_to_workflow($master_workflow,
-            source => $operation->{operation},
-            source_property => "result",
-            destination => $block_operation,
-            destination_property => join("_", "index", $operation->{index}, "result"),
-        );
-
-    return 1;
-}
 
 sub _wire_object_workflow_to_master_workflow {
     my $class = shift;

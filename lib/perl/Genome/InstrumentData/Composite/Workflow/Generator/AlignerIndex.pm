@@ -11,6 +11,7 @@ class Genome::InstrumentData::Composite::Workflow::Generator::AlignerIndex {
 
 sub generate {
     my $class = shift;
+    my $master_workflow = shift;
     my $tree = shift;
     my $inputs = shift;
 
@@ -51,15 +52,9 @@ sub generate {
         }
     }
 
-    my @inputs;
-    for my $operation (values %$workflow_operations) {
-        for my $property (@{ $operation->{operation}->operation_type->input_properties }) {
-            my $property_name = join('_', 'index', $operation->{index}, $property);
-            push @inputs, $property_name => $operation->{$property};
-        }
-    }
+    my $block_operation = $class->_wire_operations_to_master_workflow($master_workflow, $workflow_operations);
 
-    return ($workflow_operations, \@inputs);
+    return ($workflow_operations, $block_operation);
 }
 
 sub _generate_step {
@@ -77,15 +72,69 @@ sub _generate_step {
         $operation->lsf_resource("-R \'select[ncpus>=12 && mem>=48000] span[hosts=1] rusage[mem=48000]\' -M 48000000 -n 12");
     }
 
-    return {
-        operation => $operation,
-        index => $index_num,
+    $operation->declare_constant(
         aligner_name => $aligner,
         aligner_version => $version,
         reference_sequence_build_id => $inputs->{$reference}->id,
         annotation_build_id => ($annotation? $inputs->{$annotation}->id : undef),
         aligner_params => (defined $params? $params : ''),
+    );
+
+    return {
+        operation => $operation,
+        index => $index_num,
     };
+}
+
+sub _wire_operations_to_master_workflow {
+    my $class = shift;
+    my $master_workflow = shift;
+    my $index_operations = shift;
+
+    my @block_operation_inputs = map { 'index_' . $_->{index} . '_result' } values %$index_operations;
+    my $block_operation = Genome::WorkflowBuilder::Block->create(
+        name => 'Wait for aligner indicies to be built',
+        properties => [@block_operation_inputs,'force_fragment'],
+    );
+    $master_workflow->add_operation($block_operation);
+    $class->_add_link_to_workflow($master_workflow,
+        source => $master_workflow,
+        source_property => "m_force_fragment",
+        destination => $block_operation,
+        destination_property => "force_fragment",
+    );
+
+    for my $index_operation (values %$index_operations){
+        $class->_wire_index_operation_to_master_workflow($master_workflow, $block_operation, $index_operation);
+    }
+
+    return $block_operation;
+}
+
+sub _wire_index_operation_to_master_workflow {
+    my $class = shift;
+    my $master_workflow = shift;
+    my $block_operation = shift;
+    my $operation = shift;
+
+    $master_workflow->add_operation($operation->{operation});
+
+    #result users are the same for all steps in workflow
+    $class->_add_link_to_workflow($master_workflow,
+        source => $master_workflow,
+        source_property => 'm_result_users',
+        destination => $operation->{operation},
+        destination_property => 'result_users',
+    );
+
+    $class->_add_link_to_workflow($master_workflow,
+        source => $operation->{operation},
+        source_property => "result",
+        destination => $block_operation,
+        destination_property => join("_", "index", $operation->{index}, "result"),
+    );
+
+    return 1;
 }
 
 1;
