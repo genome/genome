@@ -1956,8 +1956,6 @@ $Genome::Command::OPTS_SPEC = [
       [
         'name=s',
         'files',
-        'instrument-type=s',
-        'files',
         'based-on=s',
         undef,
         'describe!',
