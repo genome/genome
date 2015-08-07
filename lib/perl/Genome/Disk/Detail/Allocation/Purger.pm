@@ -86,8 +86,6 @@ sub _purge_unarchived {
     my $self = shift;
     my $allocation_object = shift;
 
-    $allocation_object->_create_file_summaries();
-
     unless ($ENV{UR_DBI_NO_COMMIT}) {
         my $destination_directory = $allocation_object->_get_trash_folder();
         Genome::Sys->create_directory($destination_directory);
