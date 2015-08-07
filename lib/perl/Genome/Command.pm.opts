@@ -13581,7 +13581,7 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'output-file=s',
         'files',
-        'reference-genome=s',
+        'reference-fasta=s',
         'files',
         'help!',
         undef
