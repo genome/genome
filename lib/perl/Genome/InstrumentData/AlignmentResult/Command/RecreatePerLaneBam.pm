@@ -168,13 +168,13 @@ sub _compare_flagstat {
     
     if ($ignore_duplicates) { #expect only one line diff on duplicates
         unless (_parse_flagstat_ignore_duplicates($temp_flagstat, $flagstat)) {
-            $self->debug_flagstats($temp_flagstat, $flagstat);
+            $self->_debug_flagstats($temp_flagstat, $flagstat);
             die $self->error_message("The diff between extracting bam flagstat and the comparison flagstat $flagstat is not expected");
         }
     }
     else {
         unless (compare($temp_flagstat, $flagstat) == 0) {
-            $self->debug_flagstats($temp_flagstat, $flagstat);
+            $self->_debug_flagstats($temp_flagstat, $flagstat);
             die $self->error_message("The bam flagstat after reverting markdup is unexpectedly different from the comparison flagstat $flagstat");
         }
     }
