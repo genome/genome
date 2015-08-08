@@ -31,6 +31,11 @@ class Genome::WorkflowBuilder::DAG {
             doc => 'Genome::WorkflowBuilder::Link objects',
         },
 
+        _links => {
+            is => 'HASH',
+            default => {},
+        },
+
         log_dir => {
             is => 'Text',
             is_optional => 1,
@@ -71,7 +76,8 @@ sub add_operation {
 
 sub add_link {
     my ($self, $link) = Params::Validate::validate_pos(@_, 1, 1);
-    push @{$self->links}, $link;
+    $self->_links->{$link->to_string} = $link;
+    $self->links([values %{$self->_links}]);
     return $link;
 }
 

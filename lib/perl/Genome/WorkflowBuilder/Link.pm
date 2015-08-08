@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use XML::LibXML qw();
+use Data::Dump qw(pp);
 
 
 class Genome::WorkflowBuilder::Link {
@@ -44,6 +45,15 @@ sub create {
     }
 
     return $self;
+}
+
+sub to_string {
+    my $self = shift;
+    return sprintf("%s.%s => %s.%s",
+        pp($self->source_operation_name),
+        pp($self->source_property),
+        pp($self->destination_operation_name),
+        pp($self->destination_property))
 }
 
 # ------------------------------------------------------------------------------
