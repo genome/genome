@@ -193,9 +193,12 @@ sub _validate_destination_property {
     if (defined($self->destination)) {
         unless ($self->destination->is_input_property(
                 $self->destination_property)) {
-            die sprintf("Destination property '%s' to operation " .
-                "(%s) is not an input or param", $self->destination_property,
-                $self->destination->name);
+            unless ($self->destination->is_optional_input_property(
+                    $self->destination_property)) {
+                die sprintf("Destination property '%s' to operation " .
+                    "(%s) is not an input or param", $self->destination_property,
+                    $self->destination->name);
+            }
         }
     }
 

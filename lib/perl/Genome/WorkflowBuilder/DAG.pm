@@ -15,6 +15,10 @@ class Genome::WorkflowBuilder::DAG {
     is => 'Genome::WorkflowBuilder::Detail::Operation',
 
     has => [
+        _optional_input_properties => {
+            is => 'ARRAY',
+            default => [],
+        },
         operations => {
             is => 'ARRAY',
             default => [],
@@ -352,6 +356,12 @@ sub is_input_property {
     return List::MoreUtils::any {$property_name eq $_} $self->input_properties;
 }
 
+sub is_optional_input_property {
+    my ($self, $property_name) = @_;
+
+    return List::MoreUtils::any {$property_name eq $_} $self->optional_input_properties;
+}
+
 sub is_output_property {
     my ($self, $property_name) = @_;
 
@@ -380,8 +390,24 @@ sub from_xml_element {
 
     $self->_add_operations_from_xml_element($element);
     $self->_add_links_from_xml_element($element);
+    $self->_add_optional_inputs_from_xml_element($element);
 
     return $self;
+}
+
+sub _add_optional_inputs_from_xml_element {
+    my ($self, $element) = @_;
+
+    my $ot_nodelist = $element->find('operationtype');
+    for my $ot_node ($ot_nodelist->get_nodelist) {
+        my $input_nodelist = $ot_node->find('inputproperty');
+        for my $input_node ($input_nodelist->get_nodelist) {
+            if ($input_node->getAttribute('isOptional')) {
+                my $input_name = $input_node->textContent();
+                push @{$self->_optional_input_properties}, $input_name;
+            }
+        }
+    }
 }
 
 
@@ -406,6 +432,11 @@ sub input_properties {
     my $self = shift;
     return sort $self->_property_names_from_links('external_input',
         'source_property');
+}
+
+sub optional_input_properties {
+    my $self = shift;
+    return sort @{$self->_optional_input_properties};
 }
 
 sub output_properties {

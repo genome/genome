@@ -59,10 +59,12 @@ sub from_xml_element {
 }
 
 sub input_properties {}
+sub optional_input_properties {}
 sub output_properties {}
 sub operation_type_attributes {}
 
 sub is_input_property {}
+sub is_optional_input_property {}
 sub is_output_property {}
 sub is_many_property {}
 
@@ -180,8 +182,10 @@ sub _get_operation_type_xml_element {
 sub _add_property_xml_elements {
     my ($self, $element) = @_;
 
+    my @input_properties = sort Set::Scalar->new($self->input_properties,
+        $self->optional_input_properties)->members;
     map {$self->_add_property_xml_element($element, 'inputproperty', $_)}
-        $self->input_properties;
+        @input_properties;
     map {$self->_add_property_xml_element($element, 'outputproperty', $_)}
         $self->output_properties;
 
@@ -193,6 +197,9 @@ sub _add_property_xml_element {
 
     my $inner_element = XML::LibXML::Element->new($xml_tag);
     $inner_element->appendText($text);
+    if ($self->is_optional_input_property($text)) {
+        $inner_element->setAttribute('isOptional', 'Y');
+    }
     $element->addChild($inner_element);
 
     return;
