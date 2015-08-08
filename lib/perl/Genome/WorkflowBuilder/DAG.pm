@@ -93,7 +93,7 @@ sub execute {
         return $self->_execute_with_workflow($inputs);
 
     } else {
-        die $self->error_message("Unknown backend specified: %s", $backend);
+        die sprintf("Unknown backend specified: %s", $backend);
     }
 }
 
@@ -117,7 +117,8 @@ sub submit {
             $wf_proxy->url);
         return $wf_proxy;
     } else {
-        die $self->error_message("Only the ptero backend is supported for 'submit' not: %s", $backend);
+        die sprintf("Only the ptero backend is supported " .
+            "for 'submit' not: %s", $backend);
     }
 }
 
@@ -128,8 +129,7 @@ sub _execute_with_workflow {
 
     my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, %$inputs);
     unless (defined($result)) {
-        die $self->error_message(
-            "Workflow failed with these errors: %s",
+        die sprintf("Workflow failed with these errors: %s",
             Data::Dumper::Dumper(map {$_->error} @Workflow::Simple::ERROR)
         );
     }
@@ -148,14 +148,14 @@ sub _execute_with_ptero {
 
     if ($wf_proxy->has_succeeded) {
         if (!defined($wf_proxy->outputs)) {
-            die $self->error_message('PTero workflow (%s) returned no results', $wf_proxy->url);
+            die sprintf('PTero workflow (%s) returned no results',
+                $wf_proxy->url);
         } else {
             return decode($wf_proxy->outputs);
         }
     }
     else {
-        die $self->error_message('PTero workflow (%s) did not succeed',
-            $wf_proxy->url);
+        die sprintf('PTero workflow (%s) did not succeed', $wf_proxy->url);
     }
 }
 
@@ -497,9 +497,8 @@ sub _validate_operation_names_are_unique {
     my $operation_names = new Set::Scalar;
     for my $op (@{$self->operations}) {
         if ($operation_names->contains($op->name)) {
-            die $self->error_message(sprintf(
-                    "Workflow DAG '%s' contains multiple operations named '%s'",
-                    $self->name, $op->name));
+            die sprintf("DAG '%s' contains multiple operations named '%s'",
+                    $self->name, $op->name);
         }
         $operation_names->insert($op->name);
     }
@@ -526,10 +525,9 @@ sub _validate_operation_ownership {
 
     if (defined($op)) {
         unless ($operations_hash->{$op}) {
-            die $self->error_message(sprintf(
-                    "Unowned operation (%s) linked in DAG (%s)",
+            die sprintf("Unowned operation (%s) linked in DAG (%s)",
                     $op->name, $self->name,
-            ));
+            );
         }
     }
 }
@@ -547,10 +545,9 @@ sub _validate_mandatory_inputs {
     }
 
     unless ($mandatory_inputs->is_empty) {
-        die $self->error_message(sprintf(
-            "%d mandatory input(s) missing in DAG: %s",
+        die sprintf("%d mandatory input(s) missing in DAG: %s",
             $mandatory_inputs->size, $mandatory_inputs
-        ));
+        );
     }
 }
 
@@ -586,11 +583,11 @@ sub _validate_non_conflicting_inputs {
         my $ei = $self->_encode_input($link->destination_operation_name,
             $link->destination_property);
         if ($encoded_inputs->contains($ei)) {
-            die $self->error_message(sprintf(
-"Conflicting input to '%s' on (%s) found.  One link is from '%s' on (%s)",
+            die sprintf("Conflicting input to '%s' on (%s) found.  " .
+                "One link is from '%s' on (%s)",
                 $link->destination_property, $link->destination_operation_name,
                 $link->source_property, $link->source_operation_name
-            ));
+            );
         }
         $encoded_inputs->insert($ei);
     }

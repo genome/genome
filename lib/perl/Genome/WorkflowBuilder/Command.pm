@@ -177,9 +177,9 @@ sub validate {
         my $prop = $self->command->__meta__->properties(
             property_name => $self->parallel_by, is_input => 1);
         if (!defined($prop)) {
-            die $self->error_message(sprintf("Failed to verify that requested "
-                    . "parallel_by property '%s' was an input",
-                    $self->parallel_by));
+            die sprintf("Failed to verify that requested " .
+                    "parallel_by property '%s' was an input",
+                    $self->parallel_by);
         }
     }
 }

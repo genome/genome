@@ -164,9 +164,9 @@ sub _validate_general_operation_type {
     if (defined($self->$property_name)) {
         unless ($self->$property_name->isa(
                 'Genome::WorkflowBuilder::Detail::Operation')) {
-            die $self->error_message(sprintf(
+            die sprintf(
                 "Expected %s => Genome::WorkflowBuilder::Detail::Operation, "
-                . "got '%s' instead", $property_name, $self->$property_name));
+                . "got '%s' instead", $property_name, $self->$property_name);
         }
     }
 
@@ -178,10 +178,9 @@ sub _validate_source_property {
 
     if (defined($self->source)) {
         unless ($self->source->is_output_property($self->source_property)) {
-            die $self->error_message(sprintf(
-"Source property '%s' from operation (%s) is not an output",
-                    $self->source_property, $self->source->name
-            ));
+            die sprintf("Source property '%s' from operation (%s) " .
+                "is not an output", $self->source_property,
+                $self->source->name);
         }
     }
 
@@ -194,10 +193,9 @@ sub _validate_destination_property {
     if (defined($self->destination)) {
         unless ($self->destination->is_input_property(
                 $self->destination_property)) {
-            die $self->error_message(sprintf(
-"Destination property '%s' from operation (%s) is not an input or param",
-                    $self->destination_property, $self->destination->name
-            ));
+            die sprintf("Destination property '%s' to operation " .
+                "(%s) is not an input or param", $self->destination_property,
+                $self->destination->name);
         }
     }
 
@@ -211,12 +209,11 @@ sub _validate_parallel_by_destination {
         if (defined($self->destination->parallel_by) &&
             $self->destination->parallel_by eq $self->destination_property) {
             unless ($self->source->is_many_property($self->source_property) or $self->source->parallel_by eq $self->source_property) {
-                die $self->error_message(sprintf(
-                    "Source property '%s' (%s) is not is_many for parallel_by "
-                    . "destination property '%s' (%s)",
+                die sprintf("Source property '%s' (%s) is not is_many " .
+                    "for parallel_by destination property '%s' (%s)",
                     $self->source_property, $self->source->name,
                     $self->destination_property, $self->destination->name
-                ));
+                );
             }
         }
     }

@@ -149,8 +149,7 @@ sub validate {
     my $self = shift;
 
     if ($_INVALID_NAMES->contains($self->name)) {
-        die $self->error_message(sprintf("Operation name '%s' is not allowed",
-            $self->name));
+        die sprintf("Operation name '%s' is not allowed", $self->name);
     }
 
     return;
