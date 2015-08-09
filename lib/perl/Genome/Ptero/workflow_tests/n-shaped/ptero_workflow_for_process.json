@@ -46,9 +46,58 @@
                   "links" : [
                      {
                         "dataFlow" : {
+                           "result" : "out_b"
+                        },
+                        "destination" : "output connector",
+                        "source" : "B"
+                     },
+                     {
+                        "dataFlow" : {
+                           "result" : "out_d"
+                        },
+                        "destination" : "output connector",
+                        "source" : "D"
+                     },
+                     {
+                        "dataFlow" : {
+                           "result" : "out_a"
+                        },
+                        "destination" : "output connector",
+                        "source" : "A"
+                     },
+                     {
+                        "dataFlow" : {
+                           "result" : "out_c"
+                        },
+                        "destination" : "output connector",
+                        "source" : "C"
+                     },
+                     {
+                        "dataFlow" : {
+                           "result" : "res1"
+                        },
+                        "destination" : "D",
+                        "source" : "A"
+                     },
+                     {
+                        "dataFlow" : {
                            "a" : "param"
                         },
                         "destination" : "A",
+                        "source" : "input connector"
+                     },
+                     {
+                        "dataFlow" : {
+                           "result" : "res2"
+                        },
+                        "destination" : "D",
+                        "source" : "B"
+                     },
+                     {
+                        "dataFlow" : {
+                           "d" : "param"
+                        },
+                        "destination" : "D",
                         "source" : "input connector"
                      },
                      {
@@ -67,59 +116,10 @@
                      },
                      {
                         "dataFlow" : {
-                           "d" : "param"
-                        },
-                        "destination" : "D",
-                        "source" : "input connector"
-                     },
-                     {
-                        "dataFlow" : {
-                           "result" : "out_a"
-                        },
-                        "destination" : "output connector",
-                        "source" : "A"
-                     },
-                     {
-                        "dataFlow" : {
-                           "result" : "out_b"
-                        },
-                        "destination" : "output connector",
-                        "source" : "B"
-                     },
-                     {
-                        "dataFlow" : {
-                           "result" : "out_c"
-                        },
-                        "destination" : "output connector",
-                        "source" : "C"
-                     },
-                     {
-                        "dataFlow" : {
-                           "result" : "out_d"
-                        },
-                        "destination" : "output connector",
-                        "source" : "D"
-                     },
-                     {
-                        "dataFlow" : {
                            "result" : "res1"
                         },
                         "destination" : "C",
                         "source" : "A"
-                     },
-                     {
-                        "dataFlow" : {
-                           "result" : "res1"
-                        },
-                        "destination" : "D",
-                        "source" : "A"
-                     },
-                     {
-                        "dataFlow" : {
-                           "result" : "res2"
-                        },
-                        "destination" : "D",
-                        "source" : "B"
                      }
                   ],
                   "tasks" : {

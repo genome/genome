@@ -2,6 +2,21 @@
    "links" : [
       {
          "dataFlow" : {
+            "output" : "command_outputs"
+         },
+         "destination" : "output connector",
+         "source" : "Appender"
+      },
+      {
+         "dataFlow" : {
+            "command_prefixes" : "prefix",
+            "command_suffix" : "suffix"
+         },
+         "destination" : "Appender",
+         "source" : "input connector"
+      },
+      {
+         "dataFlow" : {
             "model_prefix_lists" : "prefix_list",
             "model_suffixes" : "suffixes"
          },
@@ -14,21 +29,6 @@
          },
          "destination" : "output connector",
          "source" : "Outer"
-      },
-      {
-         "dataFlow" : {
-            "command_prefixes" : "prefix",
-            "command_suffix" : "suffix"
-         },
-         "destination" : "Appender",
-         "source" : "input connector"
-      },
-      {
-         "dataFlow" : {
-            "output" : "command_outputs"
-         },
-         "destination" : "output connector",
-         "source" : "Appender"
       }
    ],
    "tasks" : {
