@@ -10,13 +10,6 @@ class Genome::InstrumentData::Composite::Workflow::Generator::Base {
     is_abstract => 1,
 };
 
-
-sub _add_link_to_workflow {
-    my($class, $workflow_obj, %params) = @_;
-
-    return $workflow_obj->add_link(Genome::WorkflowBuilder::Link->create(%params));
-}
-
 my $counter = 0;
 sub next_counter_value {
     return ++$counter;

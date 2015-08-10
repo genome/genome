@@ -47,33 +47,29 @@ sub generate {
     #Connect input connectors to the operation
     my $inputs = [];
     for my $input_property (@$input_properties) {
-        $class->_add_link_to_workflow(
-            $workflow,
-            source => $workflow,
-            source_property => $input_property,
+        $workflow->connect_input(
+            input_property => $input_property,
             destination => $operation,
             destination_property => $input_property,
+            is_optional => 1,
         );
         push @$inputs, ( 'm_' . $input_property => $input_data->{$input_property} );
     }
     for my $input_property (@$tree_properties) {
-        $class->_add_link_to_workflow(
-            $workflow,
-            source => $workflow,
-            source_property => $input_property,
+        $workflow->connect_input(
+            input_property => $input_property,
             destination => $operation,
             destination_property => $input_property,
+            is_optional => 1,
         );
         push @$inputs, ( 'm_' . $input_property => $tree->{'action'}->[0]->{$input_property} );
     }
 
     #Connect output connectors to the operation
-    $class->_add_link_to_workflow(
-        $workflow,
+    $workflow->connect_output(
         source => $operation,
         source_property => 'result_id',
-        destination => $workflow,
-        destination_property => 'result_id',
+        output_property => 'result_id',
     );
 
     if (exists $tree->{'action'}->[0]->{decoration}) {
@@ -96,26 +92,27 @@ sub _wire_object_workflow_to_master_workflow {
     #wire up the master to the inner workflows (just pass along the inputs and outputs)
     for my $property ($workflow->input_properties) {
         if($property eq 'force_fragment'){
-            $class->_add_link_to_workflow($master_workflow,
+            $master_workflow->create_link(
                 source => $block_operation,
                 source_property => $property,
                 destination => $workflow,
                 destination_property => $property,
             );
         }else {
-            $class->_add_link_to_workflow($master_workflow,
-                source_property => 'm_' . $property,
+            $master_workflow->connect_input(
+                input_property => 'm_' . $property,
                 destination => $workflow,
                 destination_property => $property,
+                is_optional => 1,
             );
         }
     }
 
     for my $property ($workflow->output_properties) {
-        $class->_add_link_to_workflow($master_workflow,
+            $master_workflow->connect_output(
             source => $workflow,
             source_property => $property,
-            destination_property => 'm_' . $property,
+            output_property => 'm_' . $property,
         );
     }
 

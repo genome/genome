@@ -75,18 +75,18 @@ sub _wire_merge_operation_to_master_workflow {
 
     $master_workflow->add_operation($merge);
     for my $property ($class->_merge_workflow_input_properties) {
-        $class->_add_link_to_workflow($master_workflow,
-            source_property => 'm_' . $property,
+        $master_workflow->connect_input(
+            input_property => 'm_' . $property,
             destination => $merge,
             destination_property => $property,
         );
     }
 
     for my $property ($merge->output_properties) {
-        $class->_add_link_to_workflow($master_workflow,
+        $master_workflow->connect_output(
             source => $merge,
             source_property => $property,
-            destination_property => 'm_' . join('_', $property, $merge->name),
+            output_property => 'm_' . join('_', $property, $merge->name),
         );
     }
 

@@ -94,15 +94,15 @@ sub _wire_refinement_operation_to_master_workflow {
         for my $property ($class->_base_refinement_workflow_input_properties) {
             my $source_property = "m_" . $class->_construct_refiner_input_property($property, $refiner);
             my $destination_property = $property;
-            $class->_add_link_to_workflow($master_workflow,
-                source_property => $source_property,
+            $master_workflow->connect_input(
+                input_property => $source_property,
                 destination => $refinement,
                 destination_property => $destination_property,
             );
         }
 
-        $class->_add_link_to_workflow($master_workflow,
-            source_property => 'm_result_users',
+        $master_workflow->connect_input(
+            input_property => 'm_result_users',
             destination => $refinement,
             destination_property => 'result_users',
         );
@@ -110,10 +110,10 @@ sub _wire_refinement_operation_to_master_workflow {
 
     my $last_refinement = $refinement_operation->[-1];
     for my $property ($last_refinement->output_properties) {
-        $class->_add_link_to_workflow($master_workflow,
+        $master_workflow->connect_output(
             source => $last_refinement,
             source_property => $property,
-            destination_property => 'm_' . join('_', $property, $last_refinement->name),
+            output_property => 'm_' . join('_', $property, $last_refinement->name),
         );
     }
 
@@ -127,7 +127,7 @@ sub _wire_refinement_to_refinement_operations {
 
     if (scalar @$refinement_operations > 1) {
         for my $i (1..$#$refinement_operations) {
-            $class->_add_link_to_workflow($master_workflow,
+            $master_workflow->create_link(
                 source => $refinement_operations->[$i-1],
                 source_property => 'result_id',
                 destination => $refinement_operations->[$i],

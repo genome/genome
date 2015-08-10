@@ -204,7 +204,7 @@ sub _wire_merge_to_refinement_operation {
     my $merge_operation = shift;
     my $refinement_operation = shift;
 
-    $class->_add_link_to_workflow($master_workflow,
+    $master_workflow->create_link(
         source => $merge_operation,
         source_property => 'result_id',
         destination => $refinement_operation,
@@ -235,7 +235,7 @@ sub _wire_object_workflows_to_merge_operations {
         output_properties => ['alignment_result_ids'],
     );
     $master_workflow->add_operation($converge_operation);
-    $class->_add_link_to_workflow($master_workflow,
+    $master_workflow->create_link(
         source => $converge_operation,
         source_property => 'alignment_result_ids',
         destination => $merge_operation,
@@ -246,7 +246,7 @@ sub _wire_object_workflows_to_merge_operations {
         my $align_wf = $object_workflows->{$o};
 
         for my $property (@{ $align_wf->output_properties }) {
-            $class->_add_link_to_workflow($master_workflow,
+            $master_workflow->create_link(
                 source => $align_wf,
                 source_property => $property,
                 destination => $converge_operation,

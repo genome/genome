@@ -102,10 +102,10 @@ sub _generate_alignment_workflow_links {
 
         #create link for final result of that subtree
         my $op = $subtree->{$class->_operation_key($instrument_data, %options)};
-        $class->_add_link_to_workflow($workflow,
+        $workflow->connect_output(
             source => $op,
             source_property => 'result_id',
-            destination_property => join('_', 'result_id', $op->name),
+            output_property => join('_', 'result_id', $op->name),
         );
     }
 
@@ -136,8 +136,8 @@ sub _create_links_for_subtree {
     my $inputs = [];
     for my $property (@properties) {
         my $source_property = join('_', $property, $operation->name);
-        $class->_add_link_to_workflow($workflow,
-            source_property => $source_property,
+        $workflow->connect_input(
+            input_property => $source_property,
             destination => $operation,
             destination_property => $property,
         );
@@ -166,16 +166,17 @@ sub _create_links_for_subtree {
     }
 
     for my $property ($class->_general_workflow_input_properties) {
-        $class->_add_link_to_workflow($workflow,
-            source_property => $property,
+        $workflow->connect_input(
+            input_property => $property,
             destination => $operation,
             destination_property => $property,
+            is_optional => 1,
         );
     }
 
     if(exists $tree->{parent}) {
         my $parent_operation = $tree->{parent}{$class->_operation_key($instrument_data, %options)};
-        $class->_add_link_to_workflow($workflow,
+        $workflow->create_link(
             source => $parent_operation,
             source_property => 'output_result_id',
             destination => $operation,
@@ -187,10 +188,11 @@ sub _create_links_for_subtree {
         #we're at the root--so create links for passing the segment info, etc.
         for my $property ($class->_instrument_data_workflow_input_properties($instrument_data, %options)) {
             my ($simple_property_name) = $property =~ m/^(.+?)__/;
-            $class->_add_link_to_workflow($workflow,
-                source_property => $property,
+            $workflow->connect_input(
+                input_property => $property,
                 destination => $operation,
                 destination_property => $simple_property_name,
+                is_optional => 1,
             );
 
             push @$inputs, (
@@ -324,26 +326,27 @@ sub _wire_object_workflow_to_master_workflow {
     #wire up the master to the inner workflows (just pass along the inputs and outputs)
     for my $property ($workflow->input_properties) {
         if($property eq 'force_fragment'){
-            $class->_add_link_to_workflow($master_workflow,
+            $master_workflow->create_link(
                 source => $block_operation,
                 source_property => $property,
                 destination => $workflow,
                 destination_property => $property,
             );
         } else {
-            $class->_add_link_to_workflow($master_workflow,
-                source_property => 'm_' . $property,
+            $master_workflow->connect_input(
+                input_property => 'm_' . $property,
                 destination => $workflow,
                 destination_property => $property,
+                is_optional => 1,
             );
         }
     }
 
     for my $property ($workflow->output_properties) {
-        $class->_add_link_to_workflow($master_workflow,
+        $master_workflow->connect_output(
             source => $workflow,
             source_property => $property,
-            destination_property => 'm_' . $property,
+            output_property => 'm_' . $property,
         );
     }
 
