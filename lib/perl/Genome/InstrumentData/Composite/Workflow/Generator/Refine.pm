@@ -95,7 +95,6 @@ sub _wire_refinement_operation_to_master_workflow {
             my $source_property = "m_" . $class->_construct_refiner_input_property($property, $refiner);
             my $destination_property = $property;
             $class->_add_link_to_workflow($master_workflow,
-                source => $master_workflow,
                 source_property => $source_property,
                 destination => $refinement,
                 destination_property => $destination_property,
@@ -103,7 +102,6 @@ sub _wire_refinement_operation_to_master_workflow {
         }
 
         $class->_add_link_to_workflow($master_workflow,
-            source => $master_workflow,
             source_property => 'm_result_users',
             destination => $refinement,
             destination_property => 'result_users',
@@ -115,7 +113,6 @@ sub _wire_refinement_operation_to_master_workflow {
         $class->_add_link_to_workflow($master_workflow,
             source => $last_refinement,
             source_property => $property,
-            destination => $master_workflow,
             destination_property => 'm_' . join('_', $property, $last_refinement->name),
         );
     }

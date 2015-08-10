@@ -98,7 +98,6 @@ sub _wire_operations_to_master_workflow {
     );
     $master_workflow->add_operation($block_operation);
     $class->_add_link_to_workflow($master_workflow,
-        source => $master_workflow,
         source_property => "m_force_fragment",
         destination => $block_operation,
         destination_property => "force_fragment",
@@ -121,7 +120,6 @@ sub _wire_index_operation_to_master_workflow {
 
     #result users are the same for all steps in workflow
     $class->_add_link_to_workflow($master_workflow,
-        source => $master_workflow,
         source_property => 'm_result_users',
         destination => $operation->{operation},
         destination_property => 'result_users',

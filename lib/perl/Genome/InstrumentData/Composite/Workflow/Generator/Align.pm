@@ -105,7 +105,6 @@ sub _generate_alignment_workflow_links {
         $class->_add_link_to_workflow($workflow,
             source => $op,
             source_property => 'result_id',
-            destination => $workflow,
             destination_property => join('_', 'result_id', $op->name),
         );
     }
@@ -138,7 +137,6 @@ sub _create_links_for_subtree {
     for my $property (@properties) {
         my $source_property = join('_', $property, $operation->name);
         $class->_add_link_to_workflow($workflow,
-            source => $workflow,
             source_property => $source_property,
             destination => $operation,
             destination_property => $property,
@@ -169,7 +167,6 @@ sub _create_links_for_subtree {
 
     for my $property ($class->_general_workflow_input_properties) {
         $class->_add_link_to_workflow($workflow,
-            source => $workflow,
             source_property => $property,
             destination => $operation,
             destination_property => $property,
@@ -191,7 +188,6 @@ sub _create_links_for_subtree {
         for my $property ($class->_instrument_data_workflow_input_properties($instrument_data, %options)) {
             my ($simple_property_name) = $property =~ m/^(.+?)__/;
             $class->_add_link_to_workflow($workflow,
-                source => $workflow,
                 source_property => $property,
                 destination => $operation,
                 destination_property => $simple_property_name,
@@ -336,7 +332,6 @@ sub _wire_object_workflow_to_master_workflow {
             );
         } else {
             $class->_add_link_to_workflow($master_workflow,
-                source => $master_workflow,
                 source_property => 'm_' . $property,
                 destination => $workflow,
                 destination_property => $property,
@@ -348,7 +343,6 @@ sub _wire_object_workflow_to_master_workflow {
         $class->_add_link_to_workflow($master_workflow,
             source => $workflow,
             source_property => $property,
-            destination => $master_workflow,
             destination_property => 'm_' . $property,
         );
     }

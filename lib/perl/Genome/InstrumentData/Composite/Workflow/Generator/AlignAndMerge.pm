@@ -104,7 +104,6 @@ sub _wire_object_workflow_to_master_workflow {
             );
         }else {
             $class->_add_link_to_workflow($master_workflow,
-                source => $master_workflow,
                 source_property => 'm_' . $property,
                 destination => $workflow,
                 destination_property => $property,
@@ -116,7 +115,6 @@ sub _wire_object_workflow_to_master_workflow {
         $class->_add_link_to_workflow($master_workflow,
             source => $workflow,
             source_property => $property,
-            destination => $master_workflow,
             destination_property => 'm_' . $property,
         );
     }
