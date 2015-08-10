@@ -64,7 +64,7 @@ sub generate {
         @$object_workflows{keys %$next_object_workflows} = values %$next_object_workflows;
         push @inputs, @$next_object_inputs;
 
-        my ($next_merge_operation, $next_merge_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Merge->generate($tree, $group, $alignment_objects);
+        my ($next_merge_operation, $next_merge_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Merge->generate($master_workflow, $tree, $group, $alignment_objects);
         if($next_merge_operation) {
             $merge_operations->{$group} = $next_merge_operation;
             push @inputs, @$next_merge_inputs;
@@ -180,10 +180,6 @@ sub _generate_master_workflow {
     my ($input_properties_list, $output_properties_list) = $class->_inputs_and_outputs_for_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations, $refiners);
 
     if(%$merge_operations) {
-        for my $merge_operation (values %$merge_operations) {
-            $class->_wire_merge_operation_to_master_workflow($master_workflow, $block_operation, $merge_operation, $refinement_operations);
-        }
-
         $class->_wire_object_workflows_to_merge_operations($master_workflow, $object_workflows, $merge_operations, $objects_by_group, $merge_group);
     }
 
@@ -282,37 +278,6 @@ sub _inputs_and_outputs_for_master_workflow {
     }
 
     return (\@input_properties_list, \@output_properties_list);
-}
-
-sub _wire_merge_operation_to_master_workflow {
-    my $class = shift;
-    my $master_workflow = shift;
-    my $block_operation = shift; #unused by merge operations
-    my $merge = shift;
-    my $refinements = shift;
-
-    $master_workflow->add_operation($merge);
-    for my $property ($class->_merge_workflow_input_properties) {
-        $class->_add_link_to_workflow($master_workflow,
-            source => $master_workflow,
-            source_property => 'm_' . $property,
-            destination => $merge,
-            destination_property => $property,
-        );
-    }
-
-    unless (%$refinements) {
-        for my $property (@{ $merge->operation_type->output_properties }) {
-            $class->_add_link_to_workflow($master_workflow,
-                source => $merge,
-                source_property => $property,
-                destination => $master_workflow,
-                destination_property => 'm_' . join('_', $property, $merge->name),
-            );
-        }
-    }
-
-    return 1;
 }
 
 sub _wire_refinement_operation_to_master_workflow {
@@ -453,23 +418,6 @@ sub _wire_object_workflows_to_merge_operations {
 
     return 1;
 }
-
-sub _merge_workflow_input_properties {
-    my $class = shift;
-
-    return qw(
-        merger_name
-        merger_version
-        merger_params
-        duplication_handler_name
-        duplication_handler_version
-        duplication_handler_params
-        bedtools_version
-        samtools_version
-        result_users
-        );
-}
-
 
 sub _base_refinement_workflow_input_properties {
     my $class = shift;

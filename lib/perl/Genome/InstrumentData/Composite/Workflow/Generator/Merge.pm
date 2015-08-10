@@ -11,6 +11,7 @@ class Genome::InstrumentData::Composite::Workflow::Generator::Merge {
 
 sub generate {
     my $class = shift;
+    my $master_workflow = shift;
     my $tree = shift;
     my $group = shift;
     my $alignment_objects = shift;
@@ -40,6 +41,7 @@ sub generate {
         }
 
         $merge_operation = $class->_generate_merge_operation($merge_tree, $group);
+        $class->_wire_merge_operation_to_master_workflow($master_workflow, $merge_operation);
     }
 
     return ($merge_operation, \@inputs);
@@ -64,6 +66,49 @@ sub _generate_merge_operation {
     );
 
     return $operation;
+}
+
+sub _wire_merge_operation_to_master_workflow {
+    my $class = shift;
+    my $master_workflow = shift;
+    my $merge = shift;
+
+    $master_workflow->add_operation($merge);
+    for my $property ($class->_merge_workflow_input_properties) {
+        $class->_add_link_to_workflow($master_workflow,
+            source => $master_workflow,
+            source_property => 'm_' . $property,
+            destination => $merge,
+            destination_property => $property,
+        );
+    }
+
+    for my $property ($merge->output_properties) {
+        $class->_add_link_to_workflow($master_workflow,
+            source => $merge,
+            source_property => $property,
+            destination => $master_workflow,
+            destination_property => 'm_' . join('_', $property, $merge->name),
+        );
+    }
+
+    return 1;
+}
+
+sub _merge_workflow_input_properties {
+    my $class = shift;
+
+    return qw(
+        merger_name
+        merger_version
+        merger_params
+        duplication_handler_name
+        duplication_handler_version
+        duplication_handler_params
+        bedtools_version
+        samtools_version
+        result_users
+        );
 }
 
 1;
