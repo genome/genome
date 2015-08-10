@@ -177,8 +177,6 @@ sub _generate_master_workflow {
     my $input_data = shift;
     my $merge_group = shift;
 
-    my ($input_properties_list, $output_properties_list) = $class->_inputs_and_outputs_for_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations, $refiners);
-
     if(%$merge_operations) {
         $class->_wire_object_workflows_to_merge_operations($master_workflow, $object_workflows, $merge_operations, $objects_by_group, $merge_group);
     }
@@ -220,64 +218,6 @@ sub inputs_for_api_version {
 
 sub available_api_versions {
     return nsort keys %VERSIONS;
-}
-
-sub _inputs_and_outputs_for_master_workflow {
-    my $class = shift;
-    my $index_operations = shift;
-    my $object_workflows = shift;
-    my $merge_operations = shift;
-    my $refinement_operations = shift;
-    my $refiners = shift;
-
-    my %input_properties;
-    my %output_properties;
-
-    for my $workflow (values %$object_workflows) {
-        for my $prop (@{ $workflow->operation_type->input_properties }) {
-            $input_properties{$prop}++;
-        }
-        for my $prop (@{ $workflow->operation_type->output_properties }) {
-            $output_properties{$prop}++;
-        }
-    }
-
-    if(%$merge_operations) {
-        for my $prop ($class->_merge_workflow_input_properties) {
-            $input_properties{$prop}++;
-        }
-
-        unless (%$refinement_operations) {
-            for my $op (values %$merge_operations) {
-                for my $prop (@{ $op->operation_type->output_properties }) {
-                   $output_properties{join('_', $prop, $op->name)}++;
-                }
-            }
-        }
-    }
-
-    if(%$refinement_operations) {
-        for my $prop ($class->_refinement_workflow_input_properties($refiners)) {
-            $input_properties{$prop}++;
-        }
-
-        my @last_refinement_operations = map { $_->[-1] } values %$refinement_operations;
-        for my $op (@last_refinement_operations) {
-            for my $prop (@{ $op->operation_type->output_properties }) {
-               $output_properties{join('_', $prop, $op->name)}++;
-            }
-        }
-    }
-
-    #just need one copy if same parameter used in multiple subworkflows
-    my @input_properties_list = map { 'm_' . $_ } keys %input_properties;
-    my @output_properties_list = map { 'm_' . $_ } keys %output_properties;
-
-    for my $index_operation (values %$index_operations) {
-        push @input_properties_list, map { join('_', 'index', $index_operation->{index}, $_) } @{ $index_operation->{operation}->operation_type->input_properties };
-    }
-
-    return (\@input_properties_list, \@output_properties_list);
 }
 
 sub _wire_refinement_operation_to_master_workflow {
