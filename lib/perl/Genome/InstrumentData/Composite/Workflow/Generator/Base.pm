@@ -60,13 +60,4 @@ sub _general_workflow_input_properties {
     );
 }
 
-my $REFINEMENT_INPUT_PROPERTY_SEPARATOR = ':';
-sub _construct_refiner_input_property {
-    my $class = shift;
-    my $property = shift;
-    my $refiner = shift;
-
-    return join($REFINEMENT_INPUT_PROPERTY_SEPARATOR, $property, $refiner);
-}
-
 1;
