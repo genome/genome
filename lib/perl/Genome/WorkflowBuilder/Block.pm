@@ -41,10 +41,6 @@ sub _get_ptero_block_method {
     my ($output_name) = $self->output_properties;
     return Ptero::Builder::Detail::Workflow::Block->new(
         name => 'block',
-        parameters => {
-            input_names => [$self->input_properties],
-            output_name => $output_name,
-        },
     );
 }
 

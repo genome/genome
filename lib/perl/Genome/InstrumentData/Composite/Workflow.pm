@@ -110,20 +110,14 @@ sub _run_workflow {
     Genome::Sys->disconnect_default_handles;
 
     $self->debug_message('Running workflow...');
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, @$inputs);
-
-    unless($result){
-        $self->error_message(join("\n", map {
-            ($_->can('name') ? $_->name .': ' : ''). $_->error
-        } @Workflow::Simple::ERROR));
-
-        die $self->error_message("Workflow did not return correctly.");
-    }
+    my $dag = Genome::WorkflowBuilder::DAG->from_xml($workflow->save_to_xml());
+    my %inputs_hash = (@$inputs); # For some reason $inputs is an array-ref
+    my $outputs = $dag->execute(inputs => \%inputs_hash);
 
     my @result_ids;
-    for my $key (keys %$result) {
+    for my $key (keys %$outputs) {
         if($key =~ /result_id/) {
-            push @result_ids, $result->{$key};
+            push @result_ids, $outputs->{$key};
         }
     }
 

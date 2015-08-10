@@ -1012,6 +1012,12 @@ sub write_file {
     return $fname;
 }
 
+sub write_temp_file {
+    my ($self, @content) = @_;
+    my $filename = $self->create_temp_file_path();
+    return $self->write_file($filename, @content);
+}
+
 sub _open_file {
     my ($self, $file, $rw) = @_;
     if ($file eq '-') {

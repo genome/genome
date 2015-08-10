@@ -41,18 +41,18 @@
                   "links" : [
                      {
                         "dataFlow" : {
+                           "outputs" : "outputs"
+                        },
+                        "destination" : "output connector",
+                        "source" : "Outer"
+                     },
+                     {
+                        "dataFlow" : {
                            "prefix_lists" : "prefix_list",
                            "suffixes" : "suffixes"
                         },
                         "destination" : "Outer",
                         "source" : "input connector"
-                     },
-                     {
-                        "dataFlow" : {
-                           "outputs" : "outputs"
-                        },
-                        "destination" : "output connector",
-                        "source" : "Outer"
                      }
                   ],
                   "tasks" : {

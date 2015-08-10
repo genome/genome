@@ -175,6 +175,40 @@ sub _write_ptero_workflow {
     return;
 }
 
+sub _write_ptero_spawned_workflow {
+    my ($self, $handle, $workflow, $indent, $color) = @_;
+
+    my $execution = $workflow->{executions}->{$color};
+    if ($execution) {
+        $handle->print($self->_format_line(
+            'spawn',
+            $execution->{status},
+            $execution->datetime_started,
+            $execution->duration,
+            join(', ', $execution->parallel_indexes),
+            $indent,
+            $workflow->{name}));
+    } elsif (scalar(keys %{$workflow->{executions}}) == 0) {
+        $handle->print($self->_format_line(
+            'spawn',
+            $workflow->{status},
+            '',
+            '',
+            '',
+            $indent,
+            $workflow->{name}));
+    }
+
+    my @sorted_tasks = sort {
+        $a->{topological_index} <=> $b->{topological_index}}
+        (values %{$workflow->{tasks}});
+    for my $task (@sorted_tasks) {
+        $self->_write_ptero_task($handle, $task->{name}, $task, $indent+1, $color);
+    }
+
+    return;
+}
+
 sub _top_level_dag {
     my ($self, $workflow) = @_;
 
@@ -271,6 +305,14 @@ sub _write_ptero_command_details {
         $self->_write_ptero_command_details_execute(@_);
     } else {
         $self->_write_ptero_command_details_unstarted(@_);
+    }
+
+    my $execution = $execute->{executions}->{$color};
+    if ($execution) {
+        for my $wf_proxy (@{$execution->child_workflow_proxies}) {
+            my $concrete_workflow = $wf_proxy->concrete_workflow;
+            $self->_write_ptero_spawned_workflow($handle, $concrete_workflow, $indent+1, 0);
+        }
     }
 }
 

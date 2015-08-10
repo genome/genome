@@ -15,6 +15,10 @@ class Genome::WorkflowBuilder::DAG {
     is => 'Genome::WorkflowBuilder::Detail::Operation',
 
     has => [
+        _optional_input_properties => {
+            is => 'ARRAY',
+            default => [],
+        },
         operations => {
             is => 'ARRAY',
             default => [],
@@ -25,6 +29,11 @@ class Genome::WorkflowBuilder::DAG {
             is => 'ARRAY',
             default => [],
             doc => 'Genome::WorkflowBuilder::Link objects',
+        },
+
+        _links => {
+            is => 'HASH',
+            default => {},
         },
 
         log_dir => {
@@ -67,7 +76,8 @@ sub add_operation {
 
 sub add_link {
     my ($self, $link) = Params::Validate::validate_pos(@_, 1, 1);
-    push @{$self->links}, $link;
+    $self->_links->{$link->to_string} = $link;
+    $self->links([values %{$self->_links}]);
     return $link;
 }
 
@@ -93,7 +103,7 @@ sub execute {
         return $self->_execute_with_workflow($inputs);
 
     } else {
-        die $self->error_message("Unknown backend specified: %s", $backend);
+        die sprintf("Unknown backend specified: %s", $backend);
     }
 }
 
@@ -117,7 +127,8 @@ sub submit {
             $wf_proxy->url);
         return $wf_proxy;
     } else {
-        die $self->error_message("Only the ptero backend is supported for 'submit' not: %s", $backend);
+        die sprintf("Only the ptero backend is supported " .
+            "for 'submit' not: %s", $backend);
     }
 }
 
@@ -132,8 +143,7 @@ sub _execute_with_workflow {
 
     my $result = Workflow::Simple::run_workflow_lsf($xml, %$inputs);
     unless (defined($result)) {
-        die $self->error_message(
-            "Workflow failed with these errors: %s",
+        die sprintf("Workflow failed with these errors: %s",
             Data::Dumper::Dumper(map {$_->error} @Workflow::Simple::ERROR)
         );
     }
@@ -153,14 +163,14 @@ sub _execute_with_ptero {
 
     if ($wf_proxy->has_succeeded) {
         if (!defined($wf_proxy->outputs)) {
-            die $self->error_message('PTero workflow (%s) returned no results', $wf_proxy->url);
+            die sprintf('PTero workflow (%s) returned no results',
+                $wf_proxy->url);
         } else {
             return decode($wf_proxy->outputs);
         }
     }
     else {
-        die $self->error_message('PTero workflow (%s) did not succeed',
-            $wf_proxy->url);
+        die sprintf('PTero workflow (%s) did not succeed', $wf_proxy->url);
     }
 }
 
@@ -357,6 +367,12 @@ sub is_input_property {
     return List::MoreUtils::any {$property_name eq $_} $self->input_properties;
 }
 
+sub is_optional_input_property {
+    my ($self, $property_name) = @_;
+
+    return List::MoreUtils::any {$property_name eq $_} $self->optional_input_properties;
+}
+
 sub is_output_property {
     my ($self, $property_name) = @_;
 
@@ -385,8 +401,24 @@ sub from_xml_element {
 
     $self->_add_operations_from_xml_element($element);
     $self->_add_links_from_xml_element($element);
+    $self->_add_optional_inputs_from_xml_element($element);
 
     return $self;
+}
+
+sub _add_optional_inputs_from_xml_element {
+    my ($self, $element) = @_;
+
+    my $ot_nodelist = $element->find('operationtype');
+    for my $ot_node ($ot_nodelist->get_nodelist) {
+        my $input_nodelist = $ot_node->find('inputproperty');
+        for my $input_node ($input_nodelist->get_nodelist) {
+            if ($input_node->getAttribute('isOptional')) {
+                my $input_name = $input_node->textContent();
+                push @{$self->_optional_input_properties}, $input_name;
+            }
+        }
+    }
 }
 
 
@@ -411,6 +443,11 @@ sub input_properties {
     my $self = shift;
     return sort $self->_property_names_from_links('external_input',
         'source_property');
+}
+
+sub optional_input_properties {
+    my $self = shift;
+    return sort @{$self->_optional_input_properties};
 }
 
 sub output_properties {
@@ -502,9 +539,8 @@ sub _validate_operation_names_are_unique {
     my $operation_names = new Set::Scalar;
     for my $op (@{$self->operations}) {
         if ($operation_names->contains($op->name)) {
-            die $self->error_message(sprintf(
-                    "Workflow DAG '%s' contains multiple operations named '%s'",
-                    $self->name, $op->name));
+            die sprintf("DAG '%s' contains multiple operations named '%s'",
+                    $self->name, $op->name);
         }
         $operation_names->insert($op->name);
     }
@@ -531,10 +567,9 @@ sub _validate_operation_ownership {
 
     if (defined($op)) {
         unless ($operations_hash->{$op}) {
-            die $self->error_message(sprintf(
-                    "Unowned operation (%s) linked in DAG (%s)",
+            die sprintf("Unowned operation (%s) linked in DAG (%s)",
                     $op->name, $self->name,
-            ));
+            );
         }
     }
 }
@@ -552,10 +587,9 @@ sub _validate_mandatory_inputs {
     }
 
     unless ($mandatory_inputs->is_empty) {
-        die $self->error_message(sprintf(
-            "%d mandatory input(s) missing in DAG: %s",
+        die sprintf("%d mandatory input(s) missing in DAG: %s",
             $mandatory_inputs->size, $mandatory_inputs
-        ));
+        );
     }
 }
 
@@ -591,11 +625,11 @@ sub _validate_non_conflicting_inputs {
         my $ei = $self->_encode_input($link->destination_operation_name,
             $link->destination_property);
         if ($encoded_inputs->contains($ei)) {
-            die $self->error_message(sprintf(
-"Conflicting input to '%s' on (%s) found.  One link is from '%s' on (%s)",
+            die sprintf("Conflicting input to '%s' on (%s) found.  " .
+                "One link is from '%s' on (%s)",
                 $link->destination_property, $link->destination_operation_name,
                 $link->source_property, $link->source_operation_name
-            ));
+            );
         }
         $encoded_inputs->insert($ei);
     }
