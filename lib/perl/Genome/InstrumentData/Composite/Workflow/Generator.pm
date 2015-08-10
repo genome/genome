@@ -60,7 +60,7 @@ sub generate {
 
         my ($next_object_workflows, $next_object_inputs);
         my $alignment_generator = 'Genome::InstrumentData::Composite::Workflow::Generator::' . string_to_camel_case($tree->{action}->[0]->{type});
-        ($next_object_workflows, $next_object_inputs) = $alignment_generator->generate( $tree, $input_data, $alignment_objects);
+        ($next_object_workflows, $next_object_inputs) = $alignment_generator->generate($master_workflow, $block_operation, $tree, $input_data, $alignment_objects);
         @$object_workflows{keys %$next_object_workflows} = values %$next_object_workflows;
         push @inputs, @$next_object_inputs;
 
@@ -179,11 +179,6 @@ sub _generate_master_workflow {
 
     my ($input_properties_list, $output_properties_list) = $class->_inputs_and_outputs_for_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations, $refiners);
 
-
-    for my $workflow (values %$object_workflows) {
-        $class->_wire_object_workflow_to_master_workflow($master_workflow, $block_operation, $workflow);
-    }
-
     if(%$merge_operations) {
         for my $merge_operation (values %$merge_operations) {
             $class->_wire_merge_operation_to_master_workflow($master_workflow, $block_operation, $merge_operation, $refinement_operations);
@@ -287,47 +282,6 @@ sub _inputs_and_outputs_for_master_workflow {
     }
 
     return (\@input_properties_list, \@output_properties_list);
-}
-
-
-
-sub _wire_object_workflow_to_master_workflow {
-    my $class = shift;
-    my $master_workflow = shift;
-    my $block_operation = shift;
-    my $workflow = shift;
-
-    $master_workflow->add_operation($workflow);
-
-    #wire up the master to the inner workflows (just pass along the inputs and outputs)
-    for my $property (@{ $workflow->operation_type->input_properties }) {
-        if($property eq 'force_fragment'){
-            $class->_add_link_to_workflow($master_workflow,
-                source => $block_operation,
-                source_property => $property,
-                destination => $workflow,
-                destination_property => $property,
-            );
-        }else {
-            $class->_add_link_to_workflow($master_workflow,
-                source => $master_workflow,
-                source_property => 'm_' . $property,
-                destination => $workflow,
-                destination_property => $property,
-            );
-        }
-    }
-
-    for my $property (@{ $workflow->operation_type->output_properties }) {
-        $class->_add_link_to_workflow($master_workflow,
-            source => $workflow,
-            source_property => $property,
-            destination => $master_workflow,
-            destination_property => 'm_' . $property,
-        );
-    }
-
-    return 1;
 }
 
 sub _wire_merge_operation_to_master_workflow {

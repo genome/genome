@@ -11,6 +11,8 @@ class Genome::InstrumentData::Composite::Workflow::Generator::Align {
 
 sub generate {
     my $class = shift;
+    my $master_workflow = shift;
+    my $block_operation = shift;
     my $tree = shift;
     my $input_data = shift;
     my $alignment_objects = shift;
@@ -24,7 +26,10 @@ sub generate {
         );
         $workflows->{$obj} = $workflow;
         push @$inputs, @$input;
+
+        $class->_wire_object_workflow_to_master_workflow($master_workflow, $block_operation, $workflow, $input);
     }
+
 
     return $workflows, $inputs;
 }
@@ -340,6 +345,45 @@ sub _process_decorations {
     }
 
     return @additional_inputs;
+}
+
+sub _wire_object_workflow_to_master_workflow {
+    my $class = shift;
+    my $master_workflow = shift;
+    my $block_operation = shift;
+    my $workflow = shift;
+
+    $master_workflow->add_operation($workflow);
+
+    #wire up the master to the inner workflows (just pass along the inputs and outputs)
+    for my $property ($workflow->input_properties) {
+        if($property eq 'force_fragment'){
+            $class->_add_link_to_workflow($master_workflow,
+                source => $block_operation,
+                source_property => $property,
+                destination => $workflow,
+                destination_property => $property,
+            );
+        } else {
+            $class->_add_link_to_workflow($master_workflow,
+                source => $master_workflow,
+                source_property => 'm_' . $property,
+                destination => $workflow,
+                destination_property => $property,
+            );
+        }
+    }
+
+    for my $property ($workflow->output_properties) {
+        $class->_add_link_to_workflow($master_workflow,
+            source => $workflow,
+            source_property => $property,
+            destination => $master_workflow,
+            destination_property => 'm_' . $property,
+        );
+    }
+
+    return 1;
 }
 
 1;
