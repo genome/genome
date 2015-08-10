@@ -14,46 +14,39 @@ use Workflow;
 my $pkg = 'Genome::InstrumentData::Composite::Decorator::Qc';
 use_ok($pkg);
 
-my $operation = Workflow::Operation->create(
+my $operation = Genome::WorkflowBuilder::Converge->create(
     name => 'existing operation for test',
-    operation_type => Workflow::OperationType::Converge->create(
-        input_properties => ['x'],
-        output_properties => [qw(alignment_result y)],
-    ),
+    input_properties => ['x'],
+    output_properties => [qw(alignment_result y)],
 );
 
-my $model = Workflow::Model->create(
+my $model = Genome::WorkflowBuilder::DAG->create(
     name => 'model for test',
-    input_properties => [qw(result_users x)],
-    optional_input_properties => [],
-    output_properties => ['y']
 );
 
-$operation->workflow_model($model);
+$model->add_operation($operation);
 
-$model->add_link(
-    left_property => 'x',
-    left_operation => $model->get_input_connector,
-    right_property => 'x',
-    right_operation => $operation,
+$model->connect_input(
+    input_property => 'x',
+    destination_property => 'x',
+    destination => $operation,
 );
 
-$model->add_link(
-    left_property => 'y',
-    left_operation => $operation,
-    right_property => 'y',
-    right_operation => $model->get_output_connector,
+$model->connect_output(
+    source_property => 'y',
+    source => $operation,
+    output_property => 'y',
 );
 
 my $qc_config = 'test QC config';
-my @new_inputs = $pkg->decorate($operation, $qc_config);
+my @new_inputs = $pkg->decorate($operation, $model, $qc_config);
 is(scalar(@new_inputs), 2, 'got inputs');
 is($new_inputs[-1], $qc_config, 'input has correct value');
 
-my @ops = $model->operations;
-is(scalar(@ops), 4, 'an operation was added to the model');
-my ($new_op) = grep { $_->operation_type->isa('Workflow::OperationType::Command') } @ops;
-is($new_op->operation_type->command_class_name, 'Genome::Qc::Run', 'new operation calls the QC runner');
+my $ops = $model->operations;
+is(scalar(@$ops), 2, 'an operation was added to the model');
+my ($new_op) = grep { $_->isa('Genome::WorkflowBuilder::Command') } @$ops;
+is($new_op->command, 'Genome::Qc::Run', 'new operation calls the QC runner');
 
 my @errors = $model->validate;
 is(scalar(@errors), 0, 'workflow validates after modifications')

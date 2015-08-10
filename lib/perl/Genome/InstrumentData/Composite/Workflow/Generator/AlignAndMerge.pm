@@ -73,7 +73,7 @@ sub generate {
     );
 
     if (exists $tree->{'action'}->[0]->{decoration}) {
-        push @$inputs, Genome::InstrumentData::Composite::Decorator->decorate($operation, $tree->{'action'}->[0]->{decoration});
+        push @$inputs, Genome::InstrumentData::Composite::Decorator->decorate($operation, $workflow, $tree->{'action'}->[0]->{decoration});
     }
 
     $class->_wire_object_workflow_to_master_workflow($master_workflow, $block_operation, $workflow);
