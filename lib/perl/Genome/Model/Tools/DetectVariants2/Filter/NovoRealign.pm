@@ -117,22 +117,10 @@ sub _filter_variants {
     for my $fastq (grep{/\.fastq/} readdir(DIR)){
         for my $lib (keys %mean_insertsize) {
             my $conv_lib = $lib;
-
-            if ($lib =~ /[\(\)]/) {  #sometimes the library name is like H_KU-15901-D108132(2)-lib2
-                $self->warning_message("$conv_lib contains parentesis");
-                $conv_lib =~ s{\(}{\\(}g;
-                $conv_lib =~ s{\)}{\\)}g;
-            }
-
             $conv_libs{$lib} = $conv_lib;
-
-            if ($fastq =~/^(\S+)\.${conv_lib}\.\S*([12])\.fastq/) {
+            if ($fastq =~/^(\S+)\.\Q$conv_lib\E\.\S*([12])\.fastq/) {
                 $prefix = $1;
                 my $id  = $2;
-                if ($lib =~ /[\(\)]/) {
-                    $fastq =~ s{\(}{\\(}g;
-                    $fastq =~ s{\)}{\\)}g;
-                }
                 push @{$fastqs{$lib}{$id}}, $dir.'/'.$fastq if defined $id;
                 last;
             }
@@ -213,41 +201,47 @@ sub _filter_variants {
                 next;
             }
 
-            my $fout_novo = "$prefix.$conv_lib.$i.novo";
-            $cmd = $novo_path . ' -d '. $novo_idx . " -f $read1s[$i] $read2s[$i] -i $mean_insertsize{$lib} $std_insertsize{$lib} > $fout_novo";
+            my $fout_novo = join('.', $prefix, $conv_lib, $i, 'novo');
+            Genome::Sys->shellcmd(
+                cmd => [ $novo_path, '-d', $novo_idx, '-f', $read1s[$i], $read2s[$i], '-i', $mean_insertsize{$lib}, $std_insertsize{$lib}, ],
+                redirect_stdout => $fout_novo,
+            );
+            push @novoaligns, $fout_novo;
 
-            $self->_run_cmd($cmd);
-            push @novoaligns,$fout_novo;
-            
-            my $sort_prefix = "$prefix.$conv_lib.$i";
-            $cmd = $novosam_path . " -g $conv_lib -f ".$self->platform." -l $conv_lib $fout_novo | ". $samtools_path. " view -b -S - -t ". $ref_seq_idx .' | ' . $samtools_path." sort - $sort_prefix";
-            $self->_run_cmd($cmd);
+            my $sort_prefix = join('.', $prefix, $conv_lib, $i);
+            Genome::Sys->shellcmd(
+                cmd => join(
+                    ' ', $novosam_path, '-g', Genome::Sys->quote_for_shell($conv_lib), '-f', $self->platform,
+                    '-l', Genome::Sys->quote_for_shell($conv_lib), Genome::Sys->quote_for_shell($fout_novo), '|',
+                    $samtools_path, 'view', '-b', '-S', '-', '-t', $ref_seq_idx, '|',
+                    $samtools_path, 'sort', '-', Genome::Sys->quote_for_shell($sort_prefix),
+                ),
+            );
             push @bams, $sort_prefix.'.bam';
             push @bams2remove, $sort_prefix.'.bam';
         }
-    
+
+        my $conv_lib_bam = join('.', $prefix, Genome::Sys->quote_for_shell($conv_lib), 'bam');
         if ($#bams>0) {
-            #TODO using gmt command modules
-            $cmd = $samtools_path ." merge $prefix.$conv_lib.bam ". join(' ', @bams);
-            $self->_run_cmd($cmd);
-            push @bams2remove, "$prefix.$conv_lib.bam";
+            Genome::Sys->shellcmd(cmd => [ $samtools_path, 'merge', $conv_lib_bam, @bams ]);
+            push @bams2remove, $conv_lib_bam;
         }
         else {
-            Genome::Sys->rename($bams[0], "$prefix.$conv_lib.bam");
+            Genome::Sys->rename($bams[0], $conv_lib_bam);
         }
 
-        $cmd = $samtools_path." rmdup $prefix.$conv_lib.bam $prefix.$conv_lib.rmdup.bam"; #using $conv_lib here will properly parse ()
-        $self->_run_cmd($cmd);
-        push @librmdupbams, "$prefix.$conv_lib.rmdup.bam";
+        my $conv_lib_rmdup_bam =  join('.', $prefix, $conv_lib, 'rmdup', 'bam');
+        Genome::Sys->shellcmd(cmd => [ $samtools_path, 'rmdup', $conv_lib_bam, $conv_lib_rmdup_bam ]);
+        push @librmdupbams, $conv_lib_rmdup_bam;
     }
 
-    my $merge_bam = "$prefix.novo.rmdup.bam";
+    my $merge_bam = join('.', $prefix, 'novo', 'rmdup', 'bam');
 
     if (@librmdupbams) {
         my $cmd;
         if (@librmdupbams == 1) {
             $self->warning_message('There is only 1 per library rmdup bam. Probably for germline purpose');
-            `mv $librmdupbams[0] $merge_bam`;  #rg header already made during novo2sam step
+            File::Copy::move($librmdupbams[0], $merge_bam); #rg header already made during novo2sam step
         }
         else {
             $self->debug_message('Now merge per library rmdup bam files');
@@ -259,8 +253,7 @@ sub _filter_variants {
             }
             $header->close;
 
-            $cmd = $samtools_path . " merge -h $header_file $merge_bam ". join(' ', @librmdupbams);
-            $self->_run_cmd($cmd);
+            Genome::Sys->shellcmd(cmd => [ $samtools_path, 'merge', '-h', $header_file, $merge_bam, @librmdupbams ]);
             unlink $header_file;
         }
     }
@@ -316,7 +309,7 @@ sub _filter_variants {
     my $bd_path            = $self->breakdancer_path;
 
     my $cmd = $bd_path . ' -t -a '. $novo_cfg .' > '. $bd_out_hq_filtered; #-a to print out copy number per lib so tigra can skip normal lib
-    $self->_run_cmd($cmd);
+    Genome::Sys->shellcmd(cmd => $cmd);
 
     my $bd_in_hq_fh  = Genome::Sys->open_file_for_reading($bd_in_hq) or die "Failed to open $bd_in_hq for reading\n";
     my $bd_out_hq_fh = Genome::Sys->open_file_for_reading($bd_out_hq_filtered) or die "Failed to open $bd_out_hq_filtered for reading\n";
@@ -368,19 +361,8 @@ sub _get_match_key {
 }
 
 
-sub _run_cmd {
-    my ($self, $cmd) = @_;
-    
-    unless (Genome::Sys->shellcmd(cmd => $cmd)) {
-        $self->error_message("Failed to run $cmd");
-        die $self->error_message;
-    }
-    return 1;
-}
-
 sub _create_bed_file {
     return 1;
 }
-
 
 1;
