@@ -47,17 +47,6 @@ sub _generate_workflow_for_instrument_data {
         push @operations, $class->_create_operations_for_alignment_tree($subtree, $instrument_data, %options);
     }
 
-    my @input_properties = (
-        $class->_general_workflow_input_properties(),
-        $class->_instrument_data_workflow_input_properties($instrument_data, %options),
-        (map { $class->_input_properties_for_operation($_) } @operations)
-    );
-
-    my @output_properties;
-    for my $leaf (@{ $tree->{action} }) {
-        push @output_properties, join('_', 'result_id', $leaf->{$class->_operation_key($instrument_data, %options)}->name);
-    }
-
     #Next create the model, and add all the operations to it
     my $workflow_name = 'Alignment Dispatcher for ' . $instrument_data->id;
     if(exists $options{instrument_data_segment_id}) {
@@ -96,25 +85,6 @@ sub _create_operations_for_alignment_tree {
     }
 
     return @operations;
-}
-
-sub _input_properties_for_operation {
-    my $class = shift;
-    my $operation = shift;
-
-    my @input_properties = ();
-    my $op_name = $operation->name;
-    my $op_type = $operation->operation_type;
-
-    for my $prop ('reference_build_id', 'annotation_build_id') {
-        if(grep $_ eq $prop, @{ $op_type->input_properties }) {
-            push @input_properties, join('_', $prop, $op_name);
-        }
-    }
-
-    push @input_properties, join('_', 'name', $op_name), join('_', 'params', $op_name), join('_', 'version', $op_name);
-
-    return @input_properties;
 }
 
 sub _generate_alignment_workflow_links {
