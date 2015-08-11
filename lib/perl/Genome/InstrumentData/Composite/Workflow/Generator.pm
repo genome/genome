@@ -70,15 +70,17 @@ sub generate {
             push @inputs, @$next_merge_inputs;
 
             $class->_wire_object_workflows_to_merge_operations($master_workflow, $next_object_workflows, $next_merge_operation, $alignment_objects, $group);
-        }
 
-        my ($next_refinement_operations, $next_refinement_inputs, $next_refiners) = Genome::InstrumentData::Composite::Workflow::Generator::Refine->generate($master_workflow, $tree, $input_data, $group, $alignment_objects);
-        if(@$next_refinement_operations) {
-            $refinement_operations->{$group} = $next_refinement_operations;
-            push @inputs, @$next_refinement_inputs;
-            $refiners = $next_refiners;
+            my ($next_refinement_operations, $next_refinement_inputs, $next_refiners) = Genome::InstrumentData::Composite::Workflow::Generator::Refine->generate($master_workflow, $tree, $input_data, $group, $alignment_objects);
+            if(@$next_refinement_operations) {
+                $refinement_operations->{$group} = $next_refinement_operations;
+                push @inputs, @$next_refinement_inputs;
+                $refiners = $next_refiners;
 
-            $class->_wire_merge_to_refinement_operation($master_workflow, $next_merge_operation, $next_refinement_operations->[0]);
+                $class->_wire_merge_to_refinement_operation($master_workflow, $next_merge_operation, $next_refinement_operations->[0]);
+            } else {
+                $class->_wire_merge_to_output($master_workflow, $next_merge_operation);
+            }
         }
     }
 
@@ -212,6 +214,20 @@ sub _wire_merge_to_refinement_operation {
     );
 
     return 1;
+}
+
+sub _wire_merge_to_output {
+    my $class = shift;
+    my $master_workflow = shift;
+    my $merge_operation = shift;
+
+    for my $property ($merge_operation->output_properties) {
+        $master_workflow->connect_output(
+            source => $merge_operation,
+            source_property => $property,
+            output_property => 'm_' . join('_', $property, $merge_operation->name),
+        );
+    }
 }
 
 sub _wire_object_workflows_to_merge_operations {

@@ -82,14 +82,6 @@ sub _wire_merge_operation_to_master_workflow {
         );
     }
 
-    for my $property ($merge->output_properties) {
-        $master_workflow->connect_output(
-            source => $merge,
-            source_property => $property,
-            output_property => 'm_' . join('_', $property, $merge->name),
-        );
-    }
-
     return 1;
 }
 
