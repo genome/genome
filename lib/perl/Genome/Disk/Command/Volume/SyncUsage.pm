@@ -44,18 +44,17 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    my %args = (verbose => 1);
     for my $volume ( $self->volumes ) {
         my $transaction = UR::Context::Transaction->begin;
         try {
             $self->info('Syncing volume: '.$volume->mount_path);
             if ($self->total_kb)      {
                 $self->debug('Sync total kB...');
-                $volume->sync_total_kb(%args);
+                $volume->sync_total_kb;
             }
             if ($self->unallocated_kb) {
                 $self->debug('Sync unallocated kB...');
-                $volume->sync_unallocated_kb(%args);
+                $volume->sync_unallocated_kb;
             }
             $transaction->commit or die 'Failed to commit volume! '.$volume->mount_path;
         }
