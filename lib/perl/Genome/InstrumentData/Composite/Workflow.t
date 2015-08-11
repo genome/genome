@@ -123,28 +123,7 @@ subtest 'simple alignments' => sub {
 };
 
 subtest 'simple alignments with qc decoration' => sub {
-    {
-        package TestTool1;
-
-        use Genome;
-
-        class TestTool1 {
-            is => ['Genome::Qc::Tool'],
-            has => {param1 => {}},
-        };
-
-        sub cmd_line {
-            my $self = shift;
-            return ("echo", $self->param1);
-        }
-
-        sub supports_streaming { return 0; }
-
-        sub get_metrics {
-            return ( metric1 => 1 );
-        }
-    }
-
+    initialize_test_tool();
     use Genome::Qc::Config;
     my $override = Sub::Override->new(
         'Genome::Qc::Config::get_commands_for_alignment_result',
@@ -219,28 +198,7 @@ subtest 'simple align_and_merge strategy' => sub {
 };
 
 subtest 'simple align_and_merge strategy with qc decoration' => sub {
-    {
-        package TestTool1;
-
-        use Genome;
-
-        class TestTool1 {
-            is => ['Genome::Qc::Tool'],
-            has => {param1 => {}},
-        };
-
-        sub cmd_line {
-            my $self = shift;
-            return ("echo", $self->param1);
-        }
-
-        sub supports_streaming { return 0; }
-
-        sub get_metrics {
-            return ( metric1 => 1 );
-        }
-    }
-
+    initialize_test_tool();
     use Genome::Qc::Config;
     my $override = Sub::Override->new(
         'Genome::Qc::Config::get_commands_for_alignment_result',
@@ -287,28 +245,7 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
 };
 
 subtest 'simple align_and_merge strategy with qc decoration for merged result' => sub {
-    {
-        package TestTool1;
-
-        use Genome;
-
-        class TestTool1 {
-            is => ['Genome::Qc::Tool'],
-            has => {param1 => {}},
-        };
-
-        sub cmd_line {
-            my $self = shift;
-            return ("echo", $self->param1);
-        }
-
-        sub supports_streaming { return 0; }
-
-        sub get_metrics {
-            return ( metric1 => 1 );
-        }
-    }
-
+    initialize_test_tool();
     use Genome::Qc::Config;
     my $override = Sub::Override->new(
         'Genome::Qc::Config::get_commands_for_alignment_result',
@@ -810,3 +747,25 @@ sub check_result_bam {
 }
 
 done_testing();
+
+sub initialize_test_tool {
+    package TestTool1;
+
+    use Genome;
+
+    class TestTool1 {
+        is => ['Genome::Qc::Tool'],
+        has => {param1 => {}},
+    };
+
+    sub cmd_line {
+        my $self = shift;
+        return ("echo", $self->param1);
+    }
+
+    sub supports_streaming { return 0; }
+
+    sub get_metrics {
+        return ( metric1 => 1 );
+    }
+}
