@@ -49,33 +49,27 @@ sub generate {
         name => 'Master Alignment Dispatcher',
     );
 
-    my ($index_operations, $block_operation) = Genome::InstrumentData::Composite::Workflow::Generator::AlignerIndex->generate($master_workflow, $tree, $input_data);
+    my $block_operation = Genome::InstrumentData::Composite::Workflow::Generator::AlignerIndex->generate($master_workflow, $tree, $input_data);
 
     my @inputs;
-    my ($object_workflows, $merge_operations, $refinement_operations, $refiners) = ({}, {}, {});
 
     my $objects_by_group = $class->_alignment_objects($tree, $input_data, $merge_group);
     for my $group (keys %$objects_by_group) {
         my $alignment_objects = $objects_by_group->{$group};
 
-        my ($next_object_workflows, $next_object_inputs);
         my $alignment_generator = 'Genome::InstrumentData::Composite::Workflow::Generator::' . string_to_camel_case($tree->{action}->[0]->{type});
-        ($next_object_workflows, $next_object_inputs) = $alignment_generator->generate($master_workflow, $block_operation, $tree, $input_data, $alignment_objects);
-        @$object_workflows{keys %$next_object_workflows} = values %$next_object_workflows;
+        my ($next_object_workflows, $next_object_inputs) = $alignment_generator->generate($master_workflow, $block_operation, $tree, $input_data, $alignment_objects);
         push @inputs, @$next_object_inputs;
 
         my ($next_merge_operation, $next_merge_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Merge->generate($master_workflow, $tree, $group, $alignment_objects);
         if($next_merge_operation) {
-            $merge_operations->{$group} = $next_merge_operation;
             push @inputs, @$next_merge_inputs;
 
             $class->_wire_object_workflows_to_merge_operations($master_workflow, $next_object_workflows, $next_merge_operation, $alignment_objects, $group);
 
             my ($next_refinement_operations, $next_refinement_inputs, $next_refiners) = Genome::InstrumentData::Composite::Workflow::Generator::Refine->generate($master_workflow, $tree, $input_data, $group, $alignment_objects);
             if(@$next_refinement_operations) {
-                $refinement_operations->{$group} = $next_refinement_operations;
                 push @inputs, @$next_refinement_inputs;
-                $refiners = $next_refiners;
 
                 $class->_wire_merge_to_refinement_operation($master_workflow, $next_merge_operation, $next_refinement_operations->[0]);
             } else {

@@ -54,7 +54,7 @@ sub generate {
 
     my $block_operation = $class->_wire_operations_to_master_workflow($master_workflow, $workflow_operations);
 
-    return ($workflow_operations, $block_operation);
+    return $block_operation;
 }
 
 sub _generate_step {
