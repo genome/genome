@@ -20,7 +20,6 @@ $volume->set_true('sync_unallocated_kb');
 
 my $cmd = $class->execute(
     volumes => [$volume],
-    tie_stderr => 0,
 );
 ok($cmd->result, 'execute');
 $volume->called_ok('sync_total_kb');

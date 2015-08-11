@@ -8,7 +8,7 @@ use Genome;
 use Try::Tiny;
 
 class Genome::Disk::Command::Volume::SyncUsage {
-    is => ['Genome::Role::Logger', 'Command::V2'],
+    is => 'Command::V2',
     has => {
         volumes => {
             is => 'Genome::Disk::Volume',
@@ -27,13 +27,6 @@ class Genome::Disk::Command::Volume::SyncUsage {
             doc => 'Sync unallocated_kb?',
         },
     },
-    has_transient => {
-        tie_stderr => {
-            is => 'Boolean',
-            default => 1,
-            doc => '(warning) globally tie STDERR to this logger',
-        },
-    },
     doc => 'Sync total and unallocated KB usage for volumes',
 };
 
@@ -47,11 +40,11 @@ sub execute {
     for my $volume ( $self->volumes ) {
         my $transaction = UR::Context::Transaction->begin;
         try {
-            $self->info('Syncing volume: '.$volume->mount_path);
+            $self->status_message('Syncing volume: ', $volume->mount_path);
             for my $type (qw/ total unallocated /) {
                 my $method = $type.'_kb';
                 next unless $self->$method;
-                $self->debugf('Sync %s kB...', $type);
+                $self->status_message('Sync %s kB...', $type);
                 my $sync_method = 'sync_'.$method;
                 $volume->$sync_method;
             }
