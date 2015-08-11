@@ -306,7 +306,6 @@ sub sync_total_kb {
 
     my $total_kb = $self->df->{blocks};
     if ($self->total_kb != $total_kb) {
-        $self->status_message(sprintf('Changing total_kb from %d to %d.', $self->total_kb, $total_kb));
         $self->total_kb($total_kb);
     }
 
@@ -318,7 +317,6 @@ sub sync_unallocated_kb {
 
     my $unallocated_kb = $self->unallocated_kb;
     if ($self->cached_unallocated_kb != $unallocated_kb) {
-        $self->status_message(sprintf('Changing cached_unallocated_kb from %d to %d.', $self->cached_unallocated_kb, $unallocated_kb));
         $self->cached_unallocated_kb($unallocated_kb);
     }
 

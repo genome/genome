@@ -34,18 +34,21 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
+    $self->status_message('Disk volume sync usage...');
 
     for my $volume ( $self->volumes ) {
-        $self->status_message('Syncing volume: ', $volume->mount_path);
+        $self->status_message('Syncing volume: %s', $volume->mount_path);
         for my $type (qw/ total unallocated /) {
             my $method = $type.'_kb';
             next unless $self->$method;
-            $self->status_message('Sync %s kB...', $type);
+            my $kb = $volume->$method;
             my $sync_method = 'sync_'.$method;
-            $volume->$sync_method;
+            my $new_kb = $volume->$sync_method;
+            $self->status_message('Synced %s kB from %d to %d', $type, $kb, $new_kb);
         }
     }
 
+    $self->status_message('Disk volume sync usage...OK');
     return 1;
 }
 
