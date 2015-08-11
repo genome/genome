@@ -18,8 +18,8 @@ my $expected_output_dir = __FILE__.".out";
 
 my $reference_fasta = get_test_file('NA12878', 'human_g1k_v37_20_42220611-42542245.fasta');
 my $bam = get_test_file('NA12878', 'NA12878.20slice.30X.aligned.bam');
-my $split_bam = get_test_file('NA12878','NA12878.20slice.30X.splitters.bam');
-my $discordant_bam = get_test_file('NA12878','NA12878.20slice.30X.discordants.bam');
+my $split_bam = get_test_file('NA12878','NA12878.20slice.30X.aligned.splitters.bam');
+my $discordant_bam = get_test_file('NA12878','NA12878.20slice.30X.aligned.discordants.bam');
 
 my $temp_directory = Genome::Sys->create_temp_directory();
 my $output_prefix = Genome::Sys->create_temp_directory() .'/example';

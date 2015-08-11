@@ -29,9 +29,6 @@ use Genome::Test::Data qw(get_test_file);
 	my $reference_fasta = get_test_file('NA12878', 'human_g1k_v37_20_42220611-42542245.fasta');
 	my $bam = get_test_file('NA12878', 'NA12878.20slice.30X.aligned.bam');
 	my $bam2 = get_test_file('NA12878', 'NA12878.20slice.30X.aligned.bam');
-	my $split_bam = get_test_file('NA12878','NA12878.20slice.30X.splitters.bam');
-	my $discordant_bam = get_test_file('NA12878','NA12878.20slice.30X.discordants.bam');
-
  
 	my $pkg2 = 'Genome::Model::Tools::DetectVariants2::SpeedseqSv';
 	
