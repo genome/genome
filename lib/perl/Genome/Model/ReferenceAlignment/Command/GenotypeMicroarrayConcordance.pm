@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Params::Validate ':types';
+
 class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance {
     is => 'Command::V2',
     doc => 'Determine concordance between a genotype microarray VCF and a Reference Alignment build',
@@ -66,7 +68,7 @@ sub execute {
         }
         
         my $lane_qc_vcf = $self->resolve_lane_qc_vcf($qc_build);
-        my ($microarray_vcf,$genotype_sample) = $self->resolve_genotype_microarray_vcf_and_sample($qc_build);
+        my ($microarray_vcf, $genotype_sample) = $self->resolve_genotype_microarray_vcf_and_sample($qc_build);
         
         my $intersect_vcf = Genome::Sys->create_temp_file_path(
             Genome::Utility::Text::sanitize_string_for_filesystem($genotype_sample->name) .'_x_'. $instrument_data->id .'.vcf'
@@ -217,9 +219,11 @@ sub resolve_genotype_microarray_vcf_and_sample {
         }
     }
 
-    # Check if we've seen this genotype sample and have sorted it's VCF
-    my $sorted_microarray_vcf = $self->_genotype_samples_and_sorted_vcfs->{$genotype_sample->id};
-    return ($sorted_microarray_vcf, $genotype_sample) if $sorted_microarray_vcf;
+    # GEt the sorted VCF file anme
+    my $sorted_microarray_vcf = $self->sorted_microarray_vcf_for_genotype_sample($genotype_sample);
+    
+    # Return if this genotype sample has an existing sorted VCF
+    return ($sorted_microarray_vcf, $genotype_sample) if -s $sorted_microarray_vcf;
 
     # there is no existing microarray build or the VCF does not exist (ie. old genotype build)
     unless (-e $microarray_vcf) {
@@ -237,11 +241,6 @@ sub resolve_genotype_microarray_vcf_and_sample {
         }
     }
 
-    $sorted_microarray_vcf = Genome::Sys->create_temp_file_path(
-        Genome::Utility::Text::sanitize_string_for_filesystem($genotype_sample->name).'_microarray_sorted.vcf'
-    );
-    $self->_genotype_samples_and_sorted_vcfs->{$genotype_sample->id} = $sorted_microarray_vcf;
-
     my $sort_cmd = Genome::Model::Tools::Picard::SortVcf->create(
         input_vcf => $microarray_vcf,
         output_vcf => $sorted_microarray_vcf,
@@ -257,6 +256,24 @@ sub resolve_genotype_microarray_vcf_and_sample {
         die($self->error_message);
     }
     return ($sorted_microarray_vcf, $genotype_sample);
+}
+
+sub sorted_microarray_vcf_for_genotype_sample { 
+    my ($self, $genotype_sample) = Params::Validate::validate_pos(
+        @_, {type => OBJECT, isa => __PACKAGE__}, {type => OBJECT, isa => 'Genome::Sample'},
+    );
+
+    # Check if we have seen this sample, and return the sorted vcf file name
+    my $sorted_microarray_vcf = $self->_genotype_samples_and_sorted_vcfs->{$genotype_sample->id};
+    return $sorted_microarray_vcf if $sorted_microarray_vcf;
+
+    # Create and store the sorted VCF file name for this sample
+    $sorted_microarray_vcf = Genome::Sys->create_temp_file_path(
+        Genome::Utility::Text::sanitize_string_for_filesystem($genotype_sample->name).'_microarray_sorted.vcf'
+    );
+    $self->_genotype_samples_and_sorted_vcfs->{$genotype_sample->id} = $sorted_microarray_vcf;
+
+    return $sorted_microarray_vcf;
 }
 
 1;
