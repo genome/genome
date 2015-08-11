@@ -226,7 +226,7 @@ sub _wire_object_workflows_to_merge_operations {
     for my $o (@$alignment_objects) {
         my $align_wf = $object_workflows->{$o};
 
-        push @converge_inputs, @{ $align_wf->output_properties };
+        push @converge_inputs, $align_wf->output_properties;
     }
 
     my $converge_operation = Genome::WorkflowBuilder::Converge->create(
@@ -245,7 +245,7 @@ sub _wire_object_workflows_to_merge_operations {
     for my $o (@$alignment_objects) {
         my $align_wf = $object_workflows->{$o};
 
-        for my $property (@{ $align_wf->output_properties }) {
+        for my $property ($align_wf->output_properties) {
             $master_workflow->create_link(
                 source => $align_wf,
                 source_property => $property,
