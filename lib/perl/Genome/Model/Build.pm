@@ -2509,6 +2509,14 @@ sub _preprocess_subclass_description {
             $prop_desc->{'is_delegated'} = 1;
         }
 
+        if (exists $prop_desc->{'is_output'} and $prop_desc->{'is_output'}) {
+            $prop_desc->{'via'} = 'result_users';
+            $prop_desc->{'to'} = 'software_result';
+            $prop_desc->{'where'} = [label => $prop_name];
+            $prop_desc->{'is_mutable'} = 0;
+            $prop_desc->{'is_delegated'} = 1;
+        }
+
         if (exists $prop_desc->{'is_input'} and $prop_desc->{'is_input'}) {
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
