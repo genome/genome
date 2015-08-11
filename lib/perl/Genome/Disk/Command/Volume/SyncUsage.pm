@@ -5,8 +5,6 @@ use warnings;
 
 use Genome;
 
-use Try::Tiny;
-
 class Genome::Disk::Command::Volume::SyncUsage {
     is => 'Command::V2',
     has => {
@@ -38,19 +36,14 @@ sub execute {
     my $self = shift;
 
     for my $volume ( $self->volumes ) {
-        try {
-            $self->status_message('Syncing volume: ', $volume->mount_path);
-            for my $type (qw/ total unallocated /) {
-                my $method = $type.'_kb';
-                next unless $self->$method;
-                $self->status_message('Sync %s kB...', $type);
-                my $sync_method = 'sync_'.$method;
-                $volume->$sync_method;
-            }
+        $self->status_message('Syncing volume: ', $volume->mount_path);
+        for my $type (qw/ total unallocated /) {
+            my $method = $type.'_kb';
+            next unless $self->$method;
+            $self->status_message('Sync %s kB...', $type);
+            my $sync_method = 'sync_'.$method;
+            $volume->$sync_method;
         }
-        catch {
-            $self->error($_);
-        };
     }
 
     return 1;
