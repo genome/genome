@@ -38,7 +38,6 @@ sub execute {
     my $self = shift;
 
     for my $volume ( $self->volumes ) {
-        my $transaction = UR::Context::Transaction->begin;
         try {
             $self->status_message('Syncing volume: ', $volume->mount_path);
             for my $type (qw/ total unallocated /) {
@@ -48,11 +47,9 @@ sub execute {
                 my $sync_method = 'sync_'.$method;
                 $volume->$sync_method;
             }
-            $transaction->commit or die 'Failed to commit volume! '.$volume->mount_path;
         }
         catch {
             $self->error($_);
-            $transaction->rollback;
         };
     }
 
