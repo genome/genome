@@ -34,11 +34,11 @@ class Genome::Disk::Command::Volume::SyncUsage {
             doc => '(warning) globally tie STDERR to this logger',
         },
     },
-    doc => 'Sync usage info for volume (e.g. total KB and unallocated KB)',
+    doc => 'Sync total and unallocated KB usage for volumes',
 };
 
 sub help_detail {
-    'Sync usage info for volume (e.g. total KB and unallocated KB).'
+    return __PACKAGE__->__meta__->doc;
 }
 
 sub execute {
