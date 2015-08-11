@@ -235,8 +235,8 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
     check_result_bam(@ad_results);
 
     for my $instrument_data (@two_instrument_data) {
-        my $per_lane_result = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data_id => $instrument_data->id);
-        my $qc_result = Genome::Qc::Result->get(alignment_result => $per_lane_result, config_name => $config_name);
+        my ($per_lane_result) = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data_id => $instrument_data->id);
+        my ($qc_result) = Genome::Qc::Result->get(alignment_result => $per_lane_result, config_name => $config_name);
         ok($qc_result, sprintf('Qc result for instrument_data (%s) was created successfully', $instrument_data->id));
         is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
     }
@@ -281,7 +281,7 @@ subtest 'simple align_and_merge strategy with qc decoration for merged result' =
     is_deeply([$speedseq_result], [sort @ad_results], 'found speedseq result');
     check_result_bam(@ad_results);
 
-    my $qc_result = Genome::Qc::Result->get(alignment_result => $speedseq_result, config_name => $config_name);
+    my ($qc_result) = Genome::Qc::Result->get(alignment_result => $speedseq_result, config_name => $config_name);
     ok($qc_result, sprintf('Qc result was created successfully'));
     is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
 
