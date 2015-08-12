@@ -12,6 +12,12 @@ my $GATK_COMMAND = "$GATK_BASE.jar";
 
 class Genome::Model::Tools::Gatk::Base {
     is => ['Command::V2'],
+    attributes_have => [
+        gatk_param_name => {
+            is => 'String',
+            is_optional => 1,
+        },
+    ],
     has_input => [
         version => {
             is    => 'string',
@@ -72,22 +78,80 @@ sub is_legacy_version {
     return grep {$_ eq $version} @legacy_versions;
 }
 
-sub create {
-    my $class = shift;
-
-    my $self = $class->SUPER::create(@_);
+sub execute {
+    my $self = shift;
 
     unless (Genome::Sys->arch_os =~ /64/) {
         $self->error_message('We recommend running GATK from 64-bit architecture');
         return;
     }
 
-    if ( not $self->tmp_dir ) { 
+    if ( not $self->tmp_dir ) {
         my $tempdir = Genome::Sys->create_temp_directory;
         $self->tmp_dir($tempdir);
     }
 
-    return $self;
+    my @cmd = $self->gatk_command;
+
+    return Genome::Sys->shellcmd($self->_shellcmd_extra_params, cmd => \@cmd);
+}
+
+sub gatk_command {
+    my $self = shift;
+
+    my @cmd = $self->base_java_command;
+    push @cmd, $self->_cmdline_args;
+
+    return @cmd;
+}
+
+sub analysis_type {
+    Carp::confess 'Subclass must implement "analysis_type"';
+}
+
+sub _cmdline_args {
+    my $self = shift;
+
+    my @args = ('-T' => $self->analysis_type);
+
+    my @metas =  $self->_gatk_param_metas;
+    push @args, map { $self->_args_from_meta($_) } @metas;
+
+    return @args;
+}
+
+sub _gatk_param_metas {
+    my $class = shift;
+    my @input_metas = $class->__meta__->properties(is_input => 1);
+    return grep { $_->can('gatk_param_name') && $_->gatk_param_name } @input_metas;
+}
+
+sub _args_from_meta {
+    my $self = shift;
+    my $property_meta = shift;
+
+    my $gatk_param_name = $property_meta->gatk_param_name;
+    my $property = $property_meta->property_name;
+    my @value = $self->$property;
+
+    return unless defined $value[0];
+
+    my $type = $property_meta->data_type // 'String';
+
+    if($type eq 'Boolean') {
+        if($value[0]) {
+            return $gatk_param_name;
+        } else {
+            return;
+        }
+    }
+
+    return map { $gatk_param_name, $_ } @value;
+}
+
+#for subclasses to offer extra options to shellcmd
+sub _shellcmd_extra_params {
+    return;
 }
 
 sub gatk_path {
@@ -154,16 +218,18 @@ sub max_memory {
 sub base_java_command {
     my $self = shift;
 
+    my @java_cmd = ('java');
+
     my $gatk_path = $self->gatk_path;
-    my $java_cmd = "java";
     if (defined $self->max_memory) {
-        $java_cmd .= sprintf(" -Xmx%dg", $self->max_memory);
+        push @java_cmd, sprintf("-Xmx%dg", $self->max_memory);
     }
-    $java_cmd .= " -Djava.io.tmpdir=" . $self->tmp_dir;
+    push @java_cmd,
+        "-Djava.io.tmpdir=" . $self->tmp_dir,
+        '-jar' => $gatk_path,
+        '-et'  => 'NO_ET';
 
-    $java_cmd .= " -jar $gatk_path -et NO_ET";
-
-    return $java_cmd;
+    return @java_cmd;
 }
 
 1;
