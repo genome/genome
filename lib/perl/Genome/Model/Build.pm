@@ -2502,14 +2502,14 @@ sub _preprocess_subclass_description {
             die "class $class has is_param and is_input on the same property! $prop_name";
         }
 
-        if (exists $prop_desc->{'is_param'} and $prop_desc->{'is_param'}) {
+        if ($prop_desc->{'is_param'}) {
             $prop_desc->{'via'} = 'processing_profile',
             $prop_desc->{'to'} = $prop_name;
             $prop_desc->{'is_mutable'} = 0;
             $prop_desc->{'is_delegated'} = 1;
         }
 
-        if (exists $prop_desc->{'is_output'} and $prop_desc->{'is_output'}) {
+        if ($prop_desc->{'is_output'}) {
             $prop_desc->{'via'} = 'result_users';
             $prop_desc->{'to'} = 'software_result';
             $prop_desc->{'where'} = [label => $prop_name];
@@ -2517,12 +2517,12 @@ sub _preprocess_subclass_description {
             $prop_desc->{'is_delegated'} = 1;
         }
 
-        if (exists $prop_desc->{'is_input'} and $prop_desc->{'is_input'}) {
+        if ($prop_desc->{'is_input'}) {
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
 
             my @where_class;
-            if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
+            if ($prop_desc->{'data_type'}) {
                 my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
                     $prop_desc->{'data_type'},
                     $class
@@ -2558,7 +2558,7 @@ sub _preprocess_subclass_description {
         }
 
         # Metrics
-        if ( exists $prop_desc->{is_metric} and $prop_desc->{is_metric} ) {
+        if ($prop_desc->{is_metric} ) {
             $prop_desc->{via} = 'metrics';
             $prop_desc->{where} = [ name => join(' ', split('_', $prop_name)) ];
             $prop_desc->{to} = 'value';
