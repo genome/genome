@@ -294,13 +294,6 @@ sub df {
     return Filesys::Df::df($self->mount_path);
 }
 
-sub sync_usage {
-    my $self = shift;
-    $self->sync_total_kb;
-    $self->sync_unallocated_kb;
-    return 1;
-}
-
 sub sync_total_kb {
     my $self = shift;
 
