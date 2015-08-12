@@ -11,7 +11,7 @@ my $GATK_BASE = 'GenomeAnalysisTK';
 my $GATK_COMMAND = "$GATK_BASE.jar";
 
 class Genome::Model::Tools::Gatk::Base {
-    is => ['Command'],
+    is => ['Command::V2'],
     has_input => [
         version => {
             is    => 'string',
