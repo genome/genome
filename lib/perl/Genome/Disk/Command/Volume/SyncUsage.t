@@ -8,6 +8,8 @@ use above 'Genome';
 use Test::More;
 use Test::MockObject;
 
+plan tests => 2;
+
 my $class = 'Genome::Disk::Command::Volume::SyncUsage';
 use_ok($class) or die;
 
@@ -20,11 +22,16 @@ $volume->set_always('sync_total_kb', 100);
 $volume->set_always('unallocated_kb', 200);
 $volume->set_always('sync_unallocated_kb', 200);
 
-my $cmd = $class->execute(
-    volumes => [$volume],
-);
-ok($cmd->result, 'execute');
-$volume->called_ok('sync_total_kb');
-$volume->called_ok('sync_unallocated_kb');
+subtest 'succesful sync' => sub{
+    plan tests => 3;
+
+    my $cmd = $class->execute(
+        volumes => [$volume],
+    );
+    ok($cmd->result, 'execute');
+    $volume->called_ok('sync_total_kb');
+    $volume->called_ok('sync_unallocated_kb');
+
+};
 
 done_testing();
