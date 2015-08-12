@@ -93,7 +93,14 @@ sub execute {
 
     my @cmd = $self->gatk_command;
 
-    return Genome::Sys->shellcmd($self->_shellcmd_extra_params, cmd => \@cmd);
+    Genome::Sys->shellcmd($self->_shellcmd_extra_params, cmd => \@cmd);
+
+    return $self->_postprocess();
+}
+
+sub _postprocess {
+    #don't do anything by default--subclasses can override
+    return 1;
 }
 
 sub gatk_command {
