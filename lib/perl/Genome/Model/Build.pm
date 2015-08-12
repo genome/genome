@@ -299,7 +299,7 @@ sub model_class {
 sub data_set_path {
     my ($self, $dataset, $version, $file_format) = @_;
     my $path;
-    
+
     if ($version and $file_format) {
         $version =~ s/^v//;
         $path = $self->data_directory."/$dataset.v$version.$file_format";
@@ -361,7 +361,7 @@ sub __extend_namespace__ {
     if ($model_subclass_meta and $model_subclass_name->isa('Genome::Model')) {
         my $build_subclass_name = 'Genome::Model::Build::' . $ext;
         # The actual inputs and metrics are added during subclass definition preprocessing.
-        # Then the whole set is expanded, allowing the developer to write less of 
+        # Then the whole set is expanded, allowing the developer to write less of
         # # the build class.
         # See Genome/Model/Build.pm _preprocess_subclass_description.
         my $build_subclass_meta = UR::Object::Type->define(
@@ -2444,7 +2444,7 @@ sub _preprocess_subclass_description {
                 #warn "in parent: $name on $build_subclass_name\n";
                 next;
             }
-            
+
             my %data = %{$p};
             my $type = $data{data_type};
             if (!$type) {
@@ -2461,14 +2461,14 @@ sub _preprocess_subclass_description {
             }
             $data{data_type} = $type;
             $data{property_name} = $name;
-            
+
             if (($p->can("is_input") and $p->is_input) or ($p->can("is_metric") and $p->is_metric)) {
                 # code below will augment these with via/to/where
                 #warn "build gets input/metric $name ($build_subclass_name)\n";
             }
             elsif ($data{via} and $data{via} eq 'last_complete_build') {
                 # model properites which go through the last complete build exist directly on the build
-                #%data = $data{meta_for_build_attribute}; 
+                #%data = $data{meta_for_build_attribute};
                 #warn "build gets direct $name ($build_subclass_name)\n";
             }
             #elsif (not $data{via} or ($data{via} ne 'inputs' and $data{via} ne 'metrics') ) {
@@ -2487,11 +2487,11 @@ sub _preprocess_subclass_description {
             $has->{$name} = \%data;
         }
     }
-    
+
     my @names = keys %{ $desc->{has} };
     for my $prop_name (@names) {
         my $prop_desc = $desc->{has}{$prop_name};
-       
+
         # skip old things for which the developer has explicitly set-up indirection
         next if $prop_desc->{id_by};
         next if $prop_desc->{via};
