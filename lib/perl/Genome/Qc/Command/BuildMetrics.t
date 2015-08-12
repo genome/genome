@@ -12,7 +12,56 @@ use warnings;
 use above "Genome";
 use Test::More;
 
+use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::InstrumentData::AlignmentResult;
+use Genome::Test::Factory::Model::SomaticValidation;
+use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Qc::Result;
+use Sub::Install qw (reinstall_sub);
+
+use Genome::Qc::Result;
+reinstall_sub(
+{
+    into => 'Genome::Qc::Result',
+    as => 'get_metrics',
+    code => sub {
+        return (
+           metric_A => 1,
+           metric_B => 2,
+           metric_C => 3,
+           metric_D => 4,
+           );
+    },   
+},
+);
+
+my $test_model = Genome::Test::Factory::Model::SomaticValidation->setup_object();
+my $test_build = Genome::Test::Factory::Build->setup_object(
+   model_id => $test_model->id,
+);
+
+my $test_inst_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
+
+my $test_alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
+   instrument_data => $test_inst_data_1,
+);
+
+my $test_qc_result = Genome::Test::Factory::Qc::Result->setup_object(
+   alignment_result => $test_alignment_result,
+   config_name => 'test_per_read_group_qc_config'
+);
+$test_qc_result->add_user(
+        label => 'qc test result',
+        user => $test_build
+); 
+
 my $pkg = 'Genome::Qc::Command::BuildMetrics';
 use_ok($pkg);
+
+my $cmd = Genome::Qc::Command::BuildMetrics->create(
+   builds => $test_build,
+);
+isa_ok($cmd,'Genome::Qc::Command::BuildMetrics');       
+ok($cmd->execute,'execute build-metrics command');
 
 done_testing;
