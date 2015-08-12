@@ -4,8 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Data::Dumper;
-use File::Temp;
 use POSIX qw(floor);
 
 my $DEFAULT_VERSION = '5336';
