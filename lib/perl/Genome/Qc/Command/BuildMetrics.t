@@ -44,6 +44,7 @@ my $test_inst_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_obje
 
 my $test_alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
    instrument_data => $test_inst_data_1,
+   build => $test_build,
 );
 
 my $test_qc_result = Genome::Test::Factory::Qc::Result->setup_object(
