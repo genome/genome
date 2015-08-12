@@ -8,23 +8,30 @@ use Genome;
 class Genome::Model::Tools::Gatk::WithNumberOfCpuThreads {
     is => 'UR::Object',
     is_abstract => 1,
-    attributes_have => {
-        is_input => { is => 'Boolean', is_optional => 1 },        
-    },
-    has_optional_input => {
-        number_of_cpu_threads => {
-            is => 'Number',
-            doc => 'Controls the number of CPU threads allocated to each data thread',
-        },
-    },
+    subclass_description_preprocessor => 'Genome::Model::Tools::Gatk::WithNumberOfCpuThreads::_preprocess_subclass_description',
 };
 
-sub number_of_cpu_threads_param_for_java_command {
-    my $self = shift;
+sub _preprocess_subclass_description {
+    my ($class, $desc) = @_;
 
-    return '' if not $self->number_of_cpu_threads;
+    my $is = $desc->{is};
+    my $base_class = 'Genome::Model::Tools::Gatk::Base';
+    unless (grep { $_->isa($base_class) } @$is) {
+        Carp::confess(__PACKAGE__ . ' can only be used with subclasses of ' . $base_class);
+    }
 
-    return ' -nct '.$self->number_of_cpu_threads;
+    my $prop = 'number_of_cpu_threads';
+    return $desc if exists $desc->{has}{$prop};
+
+    $desc->{has}{$prop} = {
+        is => 'Number',
+        gatk_param_name => '-nct',
+        doc => 'Controls the number of CPU threads allocated to each data thread',
+        is_optional => 1,
+        is_input => 1,
+    };
+
+    return $desc;
 }
 
 1;
