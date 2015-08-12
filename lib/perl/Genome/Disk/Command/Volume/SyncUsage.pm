@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Try::Tiny;
+
 class Genome::Disk::Command::Volume::SyncUsage {
     is => 'Command::V2',
     has => {
@@ -43,8 +45,13 @@ sub execute {
             next unless $self->$method;
             my $kb = $volume->$method;
             my $sync_method = 'sync_'.$method;
-            my $new_kb = $volume->$sync_method;
-            $self->status_message('Synced %s kB from %d to %d', $type, $kb, $new_kb);
+            my $new_kb;
+            try {
+                $new_kb = $volume->$sync_method;
+            } catch {
+                $self->error_message("%sFailed to update %s kB!", $_, $type);
+            };
+            $self->status_message('Successfully updated %s kB from %d to %d', $type, $kb, $new_kb) if defined $new_kb;
         }
     }
 
