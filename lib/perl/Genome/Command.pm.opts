@@ -1252,6 +1252,13 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>analysis-project',
   [
+    '>inactivate-config-file',
+    [
+      'profile-item=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>deprecate',
     [
       'analysis-project=s',
@@ -1462,18 +1469,18 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>release',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>untag-config-file',
     [
       'tag=s',
       undef,
       'profile-items=s@',
-      undef,
-      'help!',
-      undef
-    ],
-    '>release',
-    [
-      'analysis-projects=s@',
       undef,
       'help!',
       undef
@@ -38469,6 +38476,13 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>analysis-project',
     [
+      '>inactivate-config-file',
+      [
+        'profile-item=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>deprecate',
       [
         'analysis-project=s',
@@ -38679,18 +38693,18 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>release',
+      [
+        'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>untag-config-file',
       [
         'tag=s',
         undef,
         'profile-items=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>release',
-      [
-        'analysis-projects=s@',
         undef,
         'help!',
         undef
