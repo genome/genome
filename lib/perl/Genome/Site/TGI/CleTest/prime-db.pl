@@ -227,6 +227,8 @@ sub main {
 
     load_processes('2b2b3d8481284fcf8a1632d65ba58083'); #our report process to diff
 
+    my @vep_results = Genome::SoftwareResult->get(id => ['265673ea574246b49d211151107dfee9', '44d72413f6af43e99386f7f6c92ed59a']);
+    load_software_results(@vep_results); #vep cache and api
     return UR::Context->commit();
 }
 
