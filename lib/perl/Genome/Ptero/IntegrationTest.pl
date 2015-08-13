@@ -12,6 +12,7 @@ use File::Path qw(remove_tree);
 use Test::Deep qw(cmp_deeply);
 use Cwd qw(getcwd abs_path);
 use JSON qw(from_json);
+use Data::Dump qw(pp);
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -20,9 +21,12 @@ BEGIN {
 
 Genome::Config::set_env('workflow_builder_backend', 'ptero');
 
-my $test_pattern = shift @ARGV || '*';
+my $test_pattern = $ENV{TEST_PATTERN} || '*';
+my @test_directories = (glob test_data_directory($test_pattern));
+note sprintf("Found test_pattern: %s which means the following tests will run %s",
+    $test_pattern, pp(@test_directories));
 
-for my $test_directory (glob test_data_directory($test_pattern)) {
+for my $test_directory (@test_directories) {
     my $test_name = basename($test_directory);
     note "Reading in workflow from directory: " . test_data_directory($test_name) . "\n";
     my $workflow = Genome::WorkflowBuilder::DAG->from_xml_filename(workflow_xml_file($test_name));
