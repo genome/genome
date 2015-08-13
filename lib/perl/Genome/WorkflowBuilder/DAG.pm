@@ -9,6 +9,7 @@ use Set::Scalar qw();
 use JSON;
 use List::MoreUtils qw();
 use Genome::Utility::Inputs qw(encode decode);
+use Data::Dump qw(pp);
 
 
 class Genome::WorkflowBuilder::DAG {
@@ -153,9 +154,12 @@ sub _execute_with_workflow {
 sub _execute_with_ptero {
     my ($self, $inputs, $polling_interval) = @_;
 
+    $self->remove_all_links_from_unspecified_inputs($inputs);
+    my $used_inputs = $self->get_used_inputs($inputs);
+
     my $wf_builder = $self->get_ptero_builder($self->name);
 
-    my $wf_proxy = $wf_builder->submit( inputs => encode($inputs) );
+    my $wf_proxy = $wf_builder->submit( inputs => encode($used_inputs) );
     $self->status_message("Waiting on PTero workflow (%s) to complete",
         $wf_proxy->url);
     Genome::Sys->disconnect_default_handles;
@@ -180,6 +184,7 @@ sub get_ptero_builder {
     my $self = shift;
 
     $self->validate;
+    $self->remove_all_links_to_unused_input_properties();
 
     my $dag_method = Ptero::Builder::Workflow->new(name => $self->name);
 
@@ -421,6 +426,114 @@ sub _add_optional_inputs_from_xml_element {
     }
 }
 
+sub remove_all_links_from_unspecified_inputs {
+    my ($self, $inputs) = @_;
+
+    my @unspecified_inputs = $self->get_unspecified_optional_inputs($inputs);
+    for my $input_property (@unspecified_inputs) {
+        $self->remove_links_from_unspecified_input($input_property);
+    }
+    return;
+}
+
+sub remove_links_from_unspecified_input {
+    my ($self, $input_property) = @_;
+
+    if ($self->is_optional_input_property($input_property)) {
+        my @kept_links;
+        for my $link (@{$self->links}) {
+            if ($link->external_input and
+                $link->source_property eq $input_property) {
+                my $destination = $link->destination;
+                if ($destination) {
+                    my $destination_property = $link->destination_property;
+                    $destination->remove_links_from_unspecified_input(
+                        $destination_property);
+                } else {
+                    push @kept_links, $link;
+                }
+            } else {
+                push @kept_links, $link;
+            }
+        }
+        $self->links([@kept_links]);
+    } else {
+        die sprintf("Cannot remove links from unspecified input (%s) " .
+            "since it is not an optional input for DAG named (%s)",
+            $input_property, $self->name);
+    }
+    return;
+}
+
+sub get_unspecified_optional_inputs {
+    my ($self, $inputs) = @_;
+
+    my @unspecified_inputs;
+    for my $input_property ($self->optional_input_properties) {
+        unless (exists $inputs->{$input_property}) {
+            push @unspecified_inputs, $input_property;
+        }
+    }
+    return @unspecified_inputs;
+}
+
+sub get_used_inputs {
+    my ($self, $inputs) = @_;
+    my %used_inputs;
+    my @extra_inputs;
+    for my $input_property (keys %$inputs) {
+        if ($self->is_input_property($input_property)) {
+            $used_inputs{$input_property} = $inputs->{$input_property};
+        } else {
+            if ($self->is_optional_input_property($input_property)) {
+                $self->debug_message("Ignoring unused optional input named (%s)",
+                    $input_property);
+            } else {
+                push @extra_inputs, $input_property;
+            }
+        }
+    }
+
+    if (@extra_inputs) {
+        die sprintf("Extra inputs were specified to DAG->execute: %s",
+            pp(\@extra_inputs));
+    }
+
+    return \%used_inputs;
+}
+
+sub remove_all_links_to_unused_input_properties {
+    my $self = shift;
+    $self->recurse_do('remove_links_to_unused_input_properties');
+}
+
+sub recurse_do {
+    my ($self, $method_name) = @_;
+
+    for my $operation (@{$self->operations}) {
+        $operation->recurse_do($method_name);
+    }
+    $self->$method_name;
+    return;
+}
+
+sub remove_links_to_unused_input_properties {
+    my $self = shift;
+
+    my $optionals = Set::Scalar->new($self->optional_input_properties);
+    my @kept_links;
+    for my $link (@{$self->links}) {
+        if ($link->destination_is_unused_and_optional) {
+            $self->debug_message("Removing link to DAG named (%s) that " .
+                "targets unused optional input property named (%s)",
+                $link->destination->name, $link->destination_property);
+        } else {
+            push @kept_links, $link;
+        }
+    }
+    $self->links([@kept_links]);
+    return;
+}
 
 sub get_xml_element {
     my $self = shift;
