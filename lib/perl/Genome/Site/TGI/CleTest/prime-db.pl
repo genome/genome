@@ -204,9 +204,8 @@ sub main {
         'a2733b8111c24110805025137c878e13', #Full ROI
         '0e4973c600244c3f804d54bee6f81145', #RMG ROI
         'ef6583623a614c8ebaea471a4c9748fc', #AML Complex Mutation Region ROI
-        '696318bab30d47d49fab9afa845691b', #homopolymer regions from G::VR::C::Wrapper::ModelPair
+        '696318bab30d47d49fab9afa845691b7', #homopolymer regions from G::VR::C::Wrapper::ModelPair
         '4e77d10f29f44a0792ebc8d6ea0c4a2b', #segdups my $b = Genome::Model::Build->get('26e65adaa8034dd99ef92b27f61ad862'); $b->get_feature_list("segmental_duplications")->id
-
     );
     load_feature_lists(@featurelist_ids);
 
