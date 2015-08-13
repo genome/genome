@@ -151,7 +151,8 @@ my $move_rv = Genome::Disk::Allocation->reallocate(
     kilobytes_requested => $allocation->kilobytes_requested + 100,
     allow_reallocate_with_move => 1);
 # resets total_kb to actual usage; unshrink volume; needed for creating new allocations later in forked children
-$current_volume->sync_usage();
+$current_volume->sync_total_kb();
+$current_volume->sync_unallocated_kb();
 
 ok($allocation->volume->mount_path ne $current_volume->mount_path, "allocation moved to new volume");
 ok(-e $allocation->absolute_path . "/test_file", "touched file correctly moved to new allocation directory");
