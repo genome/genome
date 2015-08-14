@@ -247,8 +247,7 @@ sub dirs_ignored_by_diff {
         variants/sv/union
         validation/small_indel/realigned_bams
         /validation/small_indel
-        variants/snv/strelka
-        variants/indel/strelka
+        output
     );
 }
 
