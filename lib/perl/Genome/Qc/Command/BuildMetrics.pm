@@ -15,7 +15,13 @@ class Genome::Qc::Command::BuildMetrics {
             shell_args_position => 1,
             doc => 'The builds to report QC metrics for.',
         },
-    ]
+    ],
+    has_optional => [
+        output_file => {
+            is => 'Text',
+            doc => 'The file path to output build QC metrics.',
+        },
+    ],
 };
 sub help_brief {
     'A command to print the QC result metrics for input builds.'
@@ -35,6 +41,7 @@ sub execute {
     my $self = shift;
 
     my @metrics;
+
     for my $build ($self->builds) {
         my @qc_results = grep {$_->isa('Genome::Qc::Result')} $build->results;
         for my $qc_result (@qc_results) {
@@ -50,20 +57,31 @@ sub execute {
             push @metrics, \%metrics;
         }
     }
+
     unless (@metrics) {
         $self->error_message('Failed to find QC results for builds!');
         die($self->error_message);
     }
+
     my @headers = List::MoreUtils::uniq(sort map { keys %$_ } @metrics);
-    my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+
+    my %writer_params = (
         separator => "\t",
         headers => \@headers,
     );
+
+    if ($self->output_file) {
+        $writer_params{output} = $self->output_file;
+    }
+
+    my $writer = Genome::Utility::IO::SeparatedValueWriter->create(%writer_params);
+
     for (@metrics) {
         $writer->write_one($_);
     }
+
     $writer->output->close;
-    
+
     return 1;
 }
 

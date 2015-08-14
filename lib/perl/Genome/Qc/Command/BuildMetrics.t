@@ -10,16 +10,20 @@ use strict;
 use warnings;
 
 use above "Genome";
+
 use Test::More;
+use Genome::Utility::Test qw(compare_ok);
 
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Genome::Test::Factory::Model::SomaticValidation;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Qc::Result;
+
 use Sub::Install qw (reinstall_sub);
 
 use Genome::Qc::Result;
+
 reinstall_sub(
 {
     into => 'Genome::Qc::Result',
@@ -35,12 +39,26 @@ reinstall_sub(
 },
 );
 
+my $pkg = 'Genome::Qc::Command::BuildMetrics';
+use_ok($pkg);
+
+my $test_dir = __FILE__.'.d';
+my $expected_output_file = $test_dir .'/expected_build_metrics.tsv';
+my $test_output_file = Genome::Sys->create_temp_file_path();
+
+my $expected_instrument_data_id = '5dacb1b2284a4b71afdf9680d4ef3691';
+my $expected_build_id = 'c10605dbabfc49229838cc02fbd87e98';
+
 my $test_model = Genome::Test::Factory::Model::SomaticValidation->setup_object();
 my $test_build = Genome::Test::Factory::Build->setup_object(
    model_id => $test_model->id,
 );
 
 my $test_inst_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
+my $replace = [
+                              [$expected_instrument_data_id,$test_inst_data_1->id],
+                              [$expected_build_id,$test_build->id],
+];
 
 my $test_alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
    instrument_data => $test_inst_data_1,
@@ -56,13 +74,20 @@ $test_qc_result->add_user(
         user => $test_build
 ); 
 
-my $pkg = 'Genome::Qc::Command::BuildMetrics';
-use_ok($pkg);
-
 my $cmd = Genome::Qc::Command::BuildMetrics->create(
    builds => $test_build,
 );
 isa_ok($cmd,'Genome::Qc::Command::BuildMetrics');       
 ok($cmd->execute,'execute build-metrics command');
+
+my $cmd_with_out = Genome::Qc::Command::BuildMetrics->create(
+   builds => $test_build,
+   output_file => $test_output_file,
+);
+isa_ok($cmd_with_out,'Genome::Qc::Command::BuildMetrics');       
+ok($cmd_with_out->execute,'execute build-metrics command with output file');
+
+compare_ok($test_output_file, $expected_output_file, replace => $replace, 
+    name => "Build metrics printed correctly to output file");
 
 done_testing;
