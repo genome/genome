@@ -10,6 +10,7 @@
 # 5. use `test-db template create` to create a new template
 # 6. Use the new template in the jenkins configuration
 use Genome;
+use List::MoreUtils qw(uniq);
 
 #things we need to load
 # Instrument data and its attributes
@@ -143,38 +144,14 @@ sub load_users_by_username {
 }
 
 sub main {
-    my @instrument_data_ids = qw(
-        2893814999
-        2893815000
-        2893815001
-        2893815002
-        2893815003
-        2893815016
-        2893815018
-        2893815020
-        2893815023
-        2893815024
-        2893815447
-        2893815448
-        2893815449
-        2893815451
-        2893815484
-        2893815485
-        2893815489
-        2893815492
-    );
+
+    use Genome::Site::TGI::CleTest;
+    my $config = Genome::Site::TGI::CleTest::get_config();
+    my @instrument_data_ids = @{$config->{instrument_data}};
     load_instrument_data(@instrument_data_ids);
 
     #$ genome model list analysis_projects.id=b0db77fc61334bc69527a7000b643ee6,subject.name~H_KA-174556% -sh last_succeeded_build.id --noheader
-    my @blessed_builds = qw(
-    185d8bac3d7c4437b7ce9207dfadac7e
-    5f57f08a8fd84886b275f0b5571e9fd7
-    e02e8a5ccaad458d839de51eb47d8d2c
-    26e65adaa8034dd99ef92b27f61ad862
-    3243f261a8b64c089a5254291f7c2de3
-    f87701c292e843958d088e171a65a67a
-    301d5d51c96e41308d015008720f3962
-    );
+    my @blessed_builds = @{$config->{blessed_builds}};
     load_builds(@blessed_builds);
 
     my @build_ids = (
@@ -190,7 +167,7 @@ sub main {
     );
     load_builds(@build_ids);
     load_imported_annotation_builds(@imported_variation_list_ids);
-    
+
     my @reference_sequences = (
         '106942997', #build37, other references may crop up in feature lists
         '108563338', #nimblegen refseq for feature list
@@ -209,12 +186,10 @@ sub main {
     );
     load_feature_lists(@featurelist_ids);
 
-    my @tag_names = qw( discovery followup germline );
+    my %tag_to_menu_item = %{$config->{tag_to_menu_item}};
+    my @tag_names = keys(%tag_to_menu_item);
     load_config_tags_by_name(@tag_names);
-    my @menu_items = (
-        '3770b8510d5a459f9c0bb01fabf56337',#germline
-        '9ab6e28f832a428393b87b171d444401',#somatic
-    );
+    my @menu_items = uniq(values %tag_to_menu_item);
     load_menu_items(@menu_items);
 
     my @processing_profiles = (
@@ -225,7 +200,8 @@ sub main {
 
     load_users_by_username('apipe-tester');
 
-    load_processes('2b2b3d8481284fcf8a1632d65ba58083'); #our report process to diff
+    my $process = $config->{blessed_process};
+    load_processes($process); #our report process to diff
 
     my @vep_results = Genome::SoftwareResult->get(id => ['265673ea574246b49d211151107dfee9', '44d72413f6af43e99386f7f6c92ed59a']);
     load_software_results(@vep_results); #vep cache and api
