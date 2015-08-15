@@ -10,7 +10,6 @@ use Test::More;
 
 use_ok('Genome::Command::Crud') or die;
 use_ok('Genome::Command::Create') or die;
-use_ok('Genome::Command::Update') or die;
 use_ok('Genome::Command::Delete') or die;
 
 # class
