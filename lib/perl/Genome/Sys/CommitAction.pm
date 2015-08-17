@@ -37,6 +37,12 @@ sub _run {
     }
 }
 
+# These are never loaded, only created
+sub __load__ {
+    my($class, $bx, $headers) = @_;
+    return($headers, []);
+}
+
 1;
 
 __END__
