@@ -137,15 +137,21 @@ sub execute {
     my $R_cmd;
     $self->status_message("step3: Performing proportion test on Mutation vs Background - 4type\n");
     prepare_file4_proportion_test_4type($mutation_context4type,$random_context4type,"$proportiontestFile.4type");
-    $R_cmd = qq{ compare_prop2populations(input_file="${proportiontestFile}.4type",output_file="${proportiontestFile}.4type") };
+    my $temp_4type_output = Genome::Sys->create_temp_file_path("proptest_op.4type");
+    $R_cmd = qq{ compare_prop2populations(input_file="${proportiontestFile}.4type",output_file="$temp_4type_output") };
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R", r_session_info => 1);
     $call->execute;
+    unlink("${proportiontestFile}.4type");
+    Genome::Sys->move_file($temp_4type_output, "${proportiontestFile}.4type");
 
     $self->status_message("step3: Performing proportion test on Mutation vs Background - 2type\n");
     prepare_file4_proportion_test_2type($mutation_context2type,$random_context2type,"$proportiontestFile.2type");
-    $R_cmd = qq{ compare_prop2populations(input_file="${proportiontestFile}.2type",output_file="${proportiontestFile}.2type") };
+    my $temp_2type_output = Genome::Sys->create_temp_file_path("proptest_op.2type");
+    $R_cmd = qq{ compare_prop2populations(input_file="${proportiontestFile}.2type",output_file="$temp_2type_output") };
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R", r_session_info => 1);
     $call->execute;
+    unlink("${proportiontestFile}.2type");
+    Genome::Sys->move_file($temp_2type_output, "${proportiontestFile}.2type");
 
     $self->status_message("step4: Plotting Mutation Context\n");
     $R_cmd = qq{ plot_mutation_spectrum_seq_contextV2(input4type="${plot_input_file}.4type",input2type="${plot_input_file}.2type",output_file="$plot_output_file",plot_title="$plot_title") };
