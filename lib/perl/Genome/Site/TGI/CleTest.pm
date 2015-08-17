@@ -3,11 +3,10 @@ package Genome::Site::TGI::CleTest;
 use strict;
 use warnings;
 use Genome;
-use YAML::Syck qw(LoadFile);
 
 sub get_config {
     my $file = __FILE__.".yaml";
-    my ($config, undef, undef) = LoadFile($file);
+    my ($config, undef, undef) = Genome::Config::Parser->parse($file);
     return $config;
 }
 
