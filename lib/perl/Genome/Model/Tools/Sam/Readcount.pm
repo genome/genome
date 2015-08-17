@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use File::Touch qw(touch);
+use version;
 
 my $DEFAULT_VER = '0.7';
 
@@ -82,8 +83,7 @@ sub default_version {
 
 # The -w option was introduced in 0.5
 sub version_has_warning_suppression {
-    my ($self, $version) = @_;
-    return ($version >= "0.5");
+    return version->parse($_[1]) >= version->parse('0.5');
 }
 
 sub readcount_path {
