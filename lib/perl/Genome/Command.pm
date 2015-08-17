@@ -30,6 +30,7 @@ my %command_map = (
     'project' => 'Genome::Project::Command',
     'project-part' => 'Genome::ProjectPart::Command',
     'ptero' => 'Genome::Ptero',
+    'qc' => 'Genome::Qc::Command',
     'report' => 'Genome::Report::Command',
     'sample' => 'Genome::Sample::Command',
     'search' => 'Genome::Command::Search',
