@@ -10,6 +10,7 @@
 # 5. use `test-db template create` to create a new template
 # 6. Use the new template in the jenkins configuration
 use Genome;
+use Genome::Site::TGI::CleTest;
 use List::MoreUtils qw(uniq);
 
 #things we need to load
@@ -145,7 +146,6 @@ sub load_users_by_username {
 
 sub main {
 
-    use Genome::Site::TGI::CleTest;
     my $config = Genome::Site::TGI::CleTest::get_config();
     my @instrument_data_ids = @{$config->{instrument_data}};
     load_instrument_data(@instrument_data_ids);
