@@ -14,10 +14,10 @@ sub generate_obj {
     my $build = delete($params{'build'});
     
     my $result_users;
-    unless ($build) {
-        $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash();
-    } else {
+    if ($build) {
         $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash_with_build($build);
+    } else {
+        $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash();
     }
     return Genome::InstrumentData::AlignmentResult::Bwa->__define__(%params, _user_data_for_nested_results => $result_users);
 }
