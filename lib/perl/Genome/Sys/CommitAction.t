@@ -8,13 +8,15 @@ use Test::More tests => 2;
 use Test::Exception;
 
 subtest basic => sub {
-    plan tests => 9;
+    plan tests => 11;
 
-    my($sync_called, $commit_called) = (0, 0);
+    my($sync_called, $commit_called, $sync_received_data, $commit_received_data) = (0, 0, undef);
+    my $passed_data = 'hi there';
 
     my $action = Genome::Sys::CommitAction->create(
-                    on_sync => sub { $sync_called++ },
-                    on_commit => sub { $commit_called++ },
+                    on_sync => sub { $sync_called++; $sync_received_data = shift; },
+                    on_commit => sub { $commit_called++; $commit_received_data = shift; },
+                    data => $passed_data,
                 );
     ok($action, 'Created Genome::Sys::CommitAction');
 
@@ -22,6 +24,8 @@ subtest basic => sub {
 
     is($sync_called, 1, 'on_sync callback run');
     is($commit_called, 1, 'on_commit_callback run');
+    is($sync_received_data, $passed_data, 'callback got data');
+    is($commit_received_data, $passed_data, 'callback got data');
 
     ok(UR::Context->commit(), 'commit again');
 

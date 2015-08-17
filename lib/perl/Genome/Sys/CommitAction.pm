@@ -8,6 +8,7 @@ class Genome::Sys::CommitAction {
         on_sync     => { is => 'CODE', doc => 'Callback to run when data is saved to the data sources' },
         on_commit   => { is => 'CODE', doc => 'Callback to run when data sources are committed' },
         on_sync_fail => { is => 'CODE', doc => 'Callback to run when other on_sync callbacks have failed' },
+        data => { doc => 'A piece of data passed to the callbacks' },
     ],
     data_source => 'UR::DataSource::Default',
     id_generator => sub { ++$sequence },
@@ -32,7 +33,7 @@ sub __rollback__ {
 sub _run {
     my($self, $which) = @_;
     if (my $cb = $self->$which) {
-        $cb->();
+        $cb->($self->data);
     }
 }
 
@@ -79,7 +80,10 @@ throws an exception.  CommitActions are then considered live again, and
 all their C<con_sync> callbacks may run again, if the original Context commit
 exception is caught and it tries to commit again.  Note that C<on_sync_fail>
 callbacks are _not_ run when the context is rolled back with
-UR::Context->rollback
+UR::Context->rollback.
+
+The callbacks are passed a single argument, whatever is stored in the
+CommitAction's 'data' attribute.
 
 Also note that if the C<con_sync> or C<on_commit> callbacks change the program
 state by creating, deleting or changing objects, those changes will not be
