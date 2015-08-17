@@ -30,6 +30,11 @@ class Genome::Model::Tools::Gatk::Base {
             doc => 'The maximum memory (GB) to use when running Java VM. Limited to environmental constraints.',
             default => '4',
         },
+        java_interpreter => {
+            is => 'Text',
+            doc => 'The java interpreter to use',
+            default_value => 'java',
+        },
     ],
     has_optional => [
         tmp_dir => {
@@ -225,7 +230,7 @@ sub max_memory {
 sub base_java_command {
     my $self = shift;
 
-    my @java_cmd = ('java');
+    my @java_cmd = ($self->java_interpreter);
 
     my $gatk_path = $self->gatk_path;
     if (defined $self->max_memory) {
