@@ -9,6 +9,7 @@ BEGIN {
 };
 
 use above "Genome";
+use Test::Exception;
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
@@ -34,14 +35,24 @@ subtest 'testing command execution' => sub {
 };
 
 subtest 'version specific options' => sub {
-    plan tests => 2;
+    plan tests => 6;
 
     ok(!$pkg->version_has_warning_suppression('0.4'), 'version 0.4 does not have warning_suppression');
     ok($pkg->version_has_warning_suppression('0.5'), 'version 0.5 does have warning_suppression');
 
+    ok(!$pkg->version_has_insertion_centric('0.4'), 'version 0.4 does not have insertion_centric');
+    ok($pkg->version_has_insertion_centric('0.5'), 'version 0.5 does have insertion_centric');
+
+    throws_ok(
+        sub{ $pkg->assert_version_has_insertion_centric('0.4'); },
+        qr/Option insertion_centric is unsupported in version 0\.4/,
+        'version 0.4 asserts it does not have insertion_centric',
+    );
+    ok($pkg->assert_version_has_insertion_centric('0.5'), 'version 0.5 asserts it does have insertion_centric');
 };
 
 subtest 'testing command strings' => sub {
+    plan tests => 5;
 
     my %expected_command = (
         0.3 => "/usr/bin/bam-readcount0.3 $test_data_dir/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l $test_data_dir/regions 2> /dev/null",
@@ -54,6 +65,11 @@ subtest 'testing command strings' => sub {
         $cmd->use_version($version);
         is($cmd->command, $expected_command{$version}, "The command string looks as expected for version $version");
     }
+
+    $cmd->use_version('0.4');
+    $cmd->insertion_centric(1);
+    dies_ok(sub{ $cmd->command; }, "The command string builder dies for version 0.4 and insertion_centric");
+
 };
 
 done_testing();
