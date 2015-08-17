@@ -20,7 +20,7 @@ use Genome::Test::Factory::Model::SomaticValidation;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Qc::Result;
 
-use Sub::Install qw (reinstall_sub);
+use Sub::Install qw(reinstall_sub);
 
 use Genome::Qc::Result;
 
