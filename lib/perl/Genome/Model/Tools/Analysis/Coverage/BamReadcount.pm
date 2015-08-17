@@ -12,7 +12,7 @@ class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
     bam_readcount_version => {
         is => 'String',
         is_optional => 1,
-        default_version => Genome::Model::Tools::Sam::Readcount->default_version,
+        default_value => Genome::Model::Tools::Sam::Readcount->default_version,
         doc => 'version of bam-readcount to use',
     },
 
