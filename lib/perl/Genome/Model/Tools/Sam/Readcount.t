@@ -33,6 +33,14 @@ subtest 'testing command execution' => sub {
     compare_ok($expected, $output, 'readcount file looks as expected');
 };
 
+subtest 'version specific options' => sub {
+    plan tests => 2;
+
+    ok(!$pkg->version_has_warning_suppression('0.4'), 'version 0.4 does not have warning_suppression');
+    ok($pkg->version_has_warning_suppression('0.5'), 'version 0.5 does have warning_suppression');
+
+};
+
 subtest 'testing command strings' => sub {
 
     my %expected_command = (
