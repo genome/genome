@@ -33,11 +33,6 @@ my $cmd = $class->create(
     output_intervals => $out,
 );
 ok($cmd, "Command was created correctly");
-is(
-    $cmd->realigner_creator_command,
-    $cmd->base_java_command . " -T RealignerTargetCreator -I $data_dir/in.bam -R $data_dir/reference.fasta -o $out",
-    'base recalibrator command',
-);
 ok($cmd->execute, "Command was executed successfuly");
 ok(-s $out, "Output file exists");
 compare_ok($out, $expected_out, "Output file was as expected");
@@ -51,11 +46,6 @@ $cmd = $class->create(
     number_of_threads => 1,
 );
 ok($cmd, "Command was created correctly");
-is(
-    $cmd->realigner_creator_command,
-    $cmd->base_java_command . " -T RealignerTargetCreator --known $data_dir/temp.vcf -I $data_dir/in.bam -R $data_dir/reference.fasta -o $out2 -nt 1",
-    'base recalibrator command',
-);
 ok($cmd->execute, "Command was executed successfuly");
 ok(-s $out2, "Output file exists");
 

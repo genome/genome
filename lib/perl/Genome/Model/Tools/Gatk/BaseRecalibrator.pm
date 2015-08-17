@@ -11,23 +11,27 @@ class Genome::Model::Tools::Gatk::BaseRecalibrator {
         input_bam => {
             is_input => 1,
             is => 'Text',
+            gatk_param_name => '-I',
             doc => 'The path to the original bam you would like to assess',
         },
         reference_fasta => {
             is_input => 1,
             is => 'Text',
+            gatk_param_name => '-R',
             doc => "The path to the reference fasta you would like to run against" ,
         },
         known_sites => {
             is_input => 1,
             is_many => 1,
             is => 'Text',
+            gatk_param_name => '-knownSites',
             doc => 'A database of known polymorphic sites to skip over in the recalibration algorithm',
         },
         output_recalibration_table => {
             is_input => 1,
             is_output => 1,
             is => 'Text',
+            gatk_param_name => '-o',
             doc => 'The path to where you would like to create the output recalibration table file',
         },
     ],
@@ -43,44 +47,17 @@ sub help_synopsis {
 EOS
 }
 
-sub execute {
-    my $self = shift;
-
-    unless ($self->_check_inputs) {
-        return;
-    }
-    my $command = $self->base_recalibrator_command;
-
-    unless (Genome::Sys->shellcmd(cmd => $command)) {
-        die $self->error_message("Failed to execute $command");
-    }
-
-    return 1;
+sub analysis_type {
+    return 'BaseRecalibrator';
 }
 
-sub base_recalibrator_command {
+sub _shellcmd_extra_params {
     my $self = shift;
 
-    my $gatk_command = $self->base_java_command;
-    $gatk_command .= " -T BaseRecalibrator";
-    $gatk_command .= " -I " . $self->input_bam;
-    $gatk_command .= " -R " . $self->reference_fasta;
-    $gatk_command .= " -knownSites $_" for $self->known_sites;
-    $gatk_command .= " -o " . $self->output_recalibration_table;
-    $gatk_command .= $self->number_of_cpu_threads_param_for_java_command;
-
-    return $gatk_command;
-}
-
-sub _check_inputs {
-    my $self = shift;
-
-    Genome::Sys->validate_file_for_reading($self->input_bam);
-    Genome::Sys->validate_file_for_reading($self->reference_fasta);
-    Genome::Sys->validate_file_for_reading($_) for $self->known_sites;
-    Genome::Sys->validate_file_for_writing($self->output_recalibration_table);
-
-    return 1;
+    return (
+        input_files => [$self->input_bam, $self->reference_fasta, $self->known_sites],
+        output_files => [$self->output_recalibration_table],
+    );
 }
 
 1;

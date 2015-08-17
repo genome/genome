@@ -13,7 +13,7 @@ if (Genome::Sys->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 5;
+    plan tests => 4;
 }
 
 use_ok('Genome::Model::Tools::Gatk::BaseRecalibrator');
@@ -41,7 +41,6 @@ my $gatk_cmd = Genome::Model::Tools::Gatk::BaseRecalibrator->create(
 );
 
 isa_ok($gatk_cmd, 'Genome::Model::Tools::Gatk::BaseRecalibrator', "Made the command");
-is($gatk_cmd->base_recalibrator_command, $gatk_cmd->base_java_command . " -T BaseRecalibrator -I $test_data_dir/test.bam -R $test_data_dir/all_sequences.MT.fa -knownSites $test_data_dir/snvs.MT.hq.vcf -o $output_grp -nct 1", 'base recalibrator command');
 ok($gatk_cmd->execute, "Executed the command");
 ok(system("diff $output_grp $expected_grp") == 0, "Output and expected are not different.");
 done_testing();
