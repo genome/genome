@@ -35,3 +35,26 @@ blessed_builds:
     - f87701c292e843958d088e171a65a67a
     - 301d5d51c96e41308d015008720f3962
 blessed_process: 2b2b3d8481284fcf8a1632d65ba58083
+annotation_builds:
+    - d00a39c84382427fa0efdec3229e8f5f
+imported_variation_builds:
+    - 7fd9ca9a6bf74a098c23b32c1b00fbc0 #dbsnp
+    - 126747180 #NHLBI version 2012.07.23
+    - 847b3cacad1249b8b7e46f89e02d96da #DOCM SNV
+    - 1040bf09070c4176a5256fa8a075378f #DOCM INDEL
+reference_sequence_builds:
+    - '106942997' #build37, other references may crop up in feature lists
+    - 108563338 #nimblegen refseq for feature list
+    - 102671028 #g1k-human-build37 for segdups
+feature_lists:
+    - a2733b8111c24110805025137c878e13 #Full ROI
+    - 0e4973c600244c3f804d54bee6f81145 #RMG ROI
+    - ef6583623a614c8ebaea471a4c9748fc #AML Complex Mutation Region ROI
+    - 696318bab30d47d49fab9afa845691b7 #homopolymer regions from G::VR::C::Wrapper::ModelPair
+    - 4e77d10f29f44a0792ebc8d6ea0c4a2b #segdups my $b = Genome::Model::Build->get('26e65adaa8034dd99ef92b27f61ad862'); $b->get_feature_list("segmental_duplications")->id
+processing_profiles:
+    - a813f8067a8c4c9791fec53dd29d85ca #somatic CLE PP
+    - 6cab54acdf704c7c9e8adc7aa8facff4 #germline CLE PP
+misc_software_results:
+    - 265673ea574246b49d211151107dfee9 #vep cache
+    - 44d72413f6af43e99386f7f6c92ed59a #ensembl api
