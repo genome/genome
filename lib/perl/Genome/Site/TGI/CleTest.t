@@ -52,7 +52,33 @@ my $expected_config = {
     '2893815492'
     ],
     'region_of_interest_set_name' => 'SeqCap EZ Human Exome v3.0 + AML RMG pooled probes + WO2830729 pooled probes + WO2840081 pooled probes',
-    'subject_mapping_string' => "H_KA-174556-1309237\tH_KA-174556-1309246\t\t\t\tfollowup\nH_KA-174556-1309245\tH_KA-174556-1309246\t\t\t\tdiscovery\nH_KA-174556-1309246\t\t\t\t\tgermline\n"
+    'subject_mapping_string' => "H_KA-174556-1309237\tH_KA-174556-1309246\t\t\t\tfollowup\nH_KA-174556-1309245\tH_KA-174556-1309246\t\t\t\tdiscovery\nH_KA-174556-1309246\t\t\t\t\tgermline\n",
+    annotation_builds => ['d00a39c84382427fa0efdec3229e8f5f'],
+    imported_variation_builds => ['7fd9ca9a6bf74a098c23b32c1b00fbc0',
+        '126747180',
+        '847b3cacad1249b8b7e46f89e02d96da',
+        '1040bf09070c4176a5256fa8a075378f',
+    ],
+    reference_sequence_builds => [
+        '106942997',
+        '108563338',
+        '102671028'
+    ],
+    feature_lists => [
+        'a2733b8111c24110805025137c878e13',
+        '0e4973c600244c3f804d54bee6f81145',
+        'ef6583623a614c8ebaea471a4c9748fc',
+        '696318bab30d47d49fab9afa845691b7',
+        '4e77d10f29f44a0792ebc8d6ea0c4a2b'
+    ],
+    processing_profiles => [
+        'a813f8067a8c4c9791fec53dd29d85ca',
+        '6cab54acdf704c7c9e8adc7aa8facff4',
+    ],
+    misc_software_results => [
+        '265673ea574246b49d211151107dfee9',
+        '44d72413f6af43e99386f7f6c92ed59a'
+    ],
 };
 is_deeply($config, $expected_config, "Config read in correctly");
 
