@@ -6,14 +6,13 @@ use warnings;
 use Genome::Model::Tools::Vcf::Helpers qw/convertIub/;
 use Genome::File::BamReadcount::Reader;
 
-
-
 class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
     is => 'Command',
     has => [
     bam_readcount_version => {
         is => 'String',
         is_optional => 1,
+        default_version => Genome::Model::Tools::Sam::Readcount->default_version,
         doc => 'version of bam-readcount to use',
     },
 
@@ -357,11 +356,8 @@ sub execute {
         reference_fasta         => $fasta,
         minimum_base_quality    => $min_base_quality,
         minimum_mapping_quality => $min_mapping_quality,
+        use_version             => $self->bam_readcount_version,
     );
-
-    if ($self->bam_readcount_version){
-        $params{use_version} = $self->bam_readcount_version;
-    }
 
     if (-s "$tempdir/snvpos") {
         my $readcount_cmd = Genome::Model::Tools::Sam::Readcount->create(
