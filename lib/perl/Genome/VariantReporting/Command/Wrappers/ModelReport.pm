@@ -38,14 +38,14 @@ sub execute {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
             common_translations => $self->get_germline_translations,
-            discovery => $model->last_succeeded_build,
+            discovery => $self->build,
             label => 'germline',
         );
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             common_translations => $self->get_somatic_translations,
-            discovery => $model->last_succeeded_build,
+            discovery => $self->build,
             plan_file_basename => 'somatic_TYPE_report.yaml',
             label => 'somatic',
         );
@@ -127,6 +127,11 @@ sub is_single_bam {
     my $self = shift;
     my $model = shift;
     return (!defined($model->normal_sample));
+}
+
+sub build {
+    my $self = shift;
+    return $self->model->last_succeeded_build;
 }
 
 1;
