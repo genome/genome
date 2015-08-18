@@ -132,8 +132,8 @@ sub get_somatic_translations {
                 sprintf('Gold(%s)', $self->gold_sample_name),
         },
         library_name_labels => {
-            $self->get_library_name_labels('discovery'),
-            $self->get_library_name_labels('normal'),
+            $self->get_library_name_labels('discovery', $self->discovery_sample, [$self->build]),
+            $self->get_library_name_labels('normal', $self->normal_sample, [$self->build]),
         },
     };
 }

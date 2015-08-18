@@ -77,7 +77,7 @@ sub get_germline_translations {
             $self->get_sample_name_labels('tumor'),
         },
         library_name_labels => {
-            $self->get_library_name_labels('tumor'),
+            $self->get_library_name_labels('tumor', $self->tumor_sample, [$self->build]),
         },
     };
 }
@@ -91,8 +91,8 @@ sub get_somatic_translations {
             $self->get_sample_name_labels('normal'),
         },
         library_name_labels => {
-            $self->get_library_name_labels('tumor'),
-            $self->get_library_name_labels('normal'),
+            $self->get_library_name_labels('tumor', $self->tumor_sample, [$self->build]),
+            $self->get_library_name_labels('normal', $self->normal_sample, [$self->build]),
         },
     };
 }

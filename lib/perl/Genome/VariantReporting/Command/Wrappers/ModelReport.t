@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::Test::Factory::Sample;
 use Genome::Test::Factory::Library;
-use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build);
+use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build succeed_build);
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::ModelReport";
 
@@ -31,11 +31,11 @@ my $tumor_library = Genome::Test::Factory::Library->setup_object(sample => $tumo
 
 # create the build
 my $build1 = get_build($roi_name, $tumor_sample, $normal_sample);
+succeed_build($build1);
 
 subtest "sample and library labels" => sub {
 
-    my $cmd = $pkg->create( model => $build1->model );
-
+    my $cmd = $pkg->create( model => $build1->model, tumor_sample => $tumor_sample );
     is_deeply(
         $cmd->get_somatic_translations(),
         get_expected_labels(),
@@ -47,8 +47,8 @@ subtest "sample and library labels" => sub {
 sub get_expected_labels {
     return {
         'library_name_labels' => {
-            'library_name_1' => 'Normal-Library1(library_name_1)',
-            'library_name_2' => 'Tumor-Library1(library_name_2)'
+            'library2' => 'Normal-Library1(library2)',
+            'library1' => 'Tumor-Library1(library1)'
         },
         'sample_name_labels' => {
             'sample_name_1' => 'Normal(sample_name_1)',
