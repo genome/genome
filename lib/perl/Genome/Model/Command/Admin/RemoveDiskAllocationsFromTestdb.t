@@ -117,17 +117,6 @@ subtest 'delete_allocations' => sub {
 
 };
 
-#
-#    no warnings 'redefine';
-#
-#    local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_template_allocations = sub {
-#        make_allocation_iterator_from_list_with_kb_requested(b => 1, c => 2);
-#    };
-#    local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_database_allocations = sub {
-#        make_allocation_iterator_from_list_with_kb_requested(a => $three_gb_in_kb, b => 1, c => 2, d => $one_gb_in_kb);
-#    };
-#};
-
 sub make_allocation_iterator_from_list {
     my @list = @_;
     return sub {
