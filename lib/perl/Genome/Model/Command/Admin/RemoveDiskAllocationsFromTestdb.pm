@@ -66,7 +66,8 @@ sub _parse_database_connection_info_from_env_var {
     my %connection;
     foreach my $key ( qw( dbname host port ) ) {
         no warnings 'uninitialized';
-        ($connection{$key}) = $ENV{XGENOME_DS_GMSCHEMA_SERVER} =~ m/$key=(.*?)(?:;|$)/;
+        my $server = Genome::Config::get('ds_gmschema_server');
+        ($connection{$key}) = $server =~ m/$key=(.*?)(?:;|$)/;
     }
     return \%connection;
 }
@@ -87,7 +88,7 @@ sub execute {
 sub is_running_in_test_env {
     my $self = shift;
 
-    return $ENV{XGENOME_TESTING};
+    return Genome::Config::get('testing');
 }
 
 sub collect_newly_created_allocations {
