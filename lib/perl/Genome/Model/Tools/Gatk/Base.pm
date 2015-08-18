@@ -71,6 +71,7 @@ sub gatk_versions {
         '5336' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND,
         '5777' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.5777/' . $GATK_COMMAND,
         '2.4' => Genome::Sys->jar_path($GATK_BASE, "2.4"),
+        '3.4' => Genome::Sys->jar_path($GATK_BASE, "3.4"),
     );
     return %GATK_VERSIONS;
 }
