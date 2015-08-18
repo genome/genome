@@ -1901,19 +1901,32 @@ sub _get_uuid_string {
 
 sub get_merged_bam_to_revivify_per_lane_bam {
     my $self = shift;
-    my $merged_result = $self->get_smallest_merged_alignment_result($self->get_unarchived_merged_alignment_results);
+    my $merged_bam;
 
-    unless ($merged_result) {
-        $merged_result = $self->get_smallest_merged_alignment_result($self->get_merged_alignment_results);
-        unless ($merged_result) {
-            die $self->error_message('Failed to get archived merged result for per lane alignment '.$self->id);
+    for my $mr ($self->get_unarchived_merged_alignment_results) {
+        my $unarchived_merged_bam = $mr->merged_alignment_bam_path;
+        if (-s $unarchived_merged_bam) {
+            $merged_bam = $unarchived_merged_bam;
+            last;
         }
-        $merged_result->_auto_unarchive;
     }
 
-    my $merged_bam = $merged_result->merged_alignment_bam_path;
+    if ($merged_bam) {
+        return $merged_bam;
+    }
+    else {
+        $self->debug_message('Failed to get merged bam from unarchived results for per lane alignment '.$self->id.'. Now try to get one from archived results');
+    }
+
+    my $merged_result = $self->get_smallest_merged_alignment_result($self->get_archived_merged_alignment_results);
+    unless ($merged_result) {
+        die $self->error_message('Failed to get archived merged result for per lane alignment '.$self->id);
+    }
+    $merged_result->_auto_unarchive;
+
+    $merged_bam = $merged_result->merged_alignment_bam_path;
     unless (-s $merged_bam) {
-        die $self->error_message("Merged bam (%s) does not exist for merged result id (%s)", $merged_bam, $merged_result->id);
+        die $self->error_message("Merged bam (%s) does not exist for archived merged result id (%s)", $merged_bam, $merged_result->id);
     }
     return $merged_bam;
 }
@@ -1977,6 +1990,18 @@ sub get_unarchived_merged_alignment_results {
         }
     }
     return @unarchived;
+}
+
+sub get_archived_merged_alignment_results {
+    my $self = shift;
+    my @merged = $self->get_merged_alignment_results;
+    my @archived;
+    for my $merged (@merged) {
+        if ( grep { $_->is_archived } $merged->disk_allocations ) {
+            push @archived, $merged;
+        }
+    }
+    return @archived;
 }
 
 sub get_smallest_merged_alignment_result {
