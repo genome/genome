@@ -49,7 +49,7 @@ class Genome::Model::Tools::Sv::Pairoscope {
         },
         pairoscope_program => {
             type => "String",
-            default => "pairoscope0.3",
+            default => "pairoscope0.4",
             doc => "executable of pairoscope to use", 
             is_optional => 1,
         },
