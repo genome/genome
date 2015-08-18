@@ -1821,10 +1821,6 @@ sub revivified_alignment_bam_file_path {
     my $revivified_bam = File::Spec->join($temp_allocation->absolute_path, 'all_sequences.bam');
     my $merged_bam = $self->get_merged_bam_to_revivify_per_lane_bam;
 
-    unless ($merged_bam and -s $merged_bam) {
-        die $self->error_message('Failed to get valid merged bam to recreate per lane bam '.$self->id);
-    }
-
     my $bam_header_path = $self->create_bam_header;
     $self->create_bam_flagstat_and_revivify($merged_bam, $revivified_bam, $bam_header_path);
 
