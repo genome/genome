@@ -84,7 +84,7 @@ my %gatk_version_map_expected = (
 
 # remove any newer versions to keep the test running after new installs
 my @expected_keys = keys %gatk_version_map_expected;
-my %extra = %gatk_version_map_expected;
+my %extra = %gatk_version_map;
 delete @extra{@expected_keys};
 for my $key (keys %extra) {
     if ($key gt '2.4') {
