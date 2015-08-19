@@ -1899,7 +1899,7 @@ sub get_merged_bam_to_revivify_per_lane_bam {
     my $self = shift;
     my $merged_bam;
 
-    for my $mr ($self->get_unarchived_merged_alignment_results) {
+    for my $mr ($self->get_active_merged_alignment_results) {
         my $unarchived_merged_bam = $mr->merged_alignment_bam_path;
         if (-s $unarchived_merged_bam) {
             $merged_bam = $unarchived_merged_bam;
@@ -1998,6 +1998,16 @@ sub get_archived_merged_alignment_results {
         }
     }
     return @archived;
+}
+
+sub get_active_merged_alignment_results {
+    my @mrs;
+    for my $mr (shift->get_merged_alignment_results) {
+        if ( grep { $_->status eq 'active' } $mr->disk_allocations ) {
+            push @mrs, $mr;
+        }
+    }
+    return @mrs;
 }
 
 sub get_smallest_merged_alignment_result {
