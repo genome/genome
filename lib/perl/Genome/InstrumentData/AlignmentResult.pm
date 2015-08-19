@@ -1907,12 +1907,9 @@ sub get_merged_bam_to_revivify_per_lane_bam {
         }
     }
 
-    if ($merged_bam) {
-        return $merged_bam;
-    }
-    else {
-        $self->debug_message('Failed to get merged bam from unarchived results for per lane alignment '.$self->id.'. Now try to get one from archived results');
-    }
+    return $merged_bam if $merged_bam;
+    
+    $self->debug_message('Failed to get merged bam from unarchived results for per lane alignment '.$self->id.'. Now try to get one from archived results');
 
     my $merged_result = $self->get_smallest_merged_alignment_result($self->get_archived_merged_alignment_results);
     unless ($merged_result) {
