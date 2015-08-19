@@ -14,6 +14,7 @@ use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::SoftwareResult::User;
+use Genome::Test::Factory::DiskAllocation;
 use Genome::Test::Data qw(get_test_file);
 use Sub::Override;
 use Cwd qw(abs_path);
@@ -71,6 +72,9 @@ my $override4 = Sub::Override->new(
     'Genome::InstrumentData::AlignmentResult::Merged::Speedseq::merged_alignment_bam_path',
     sub { return File::Spec->join($test_data_dir, 'merged_alignment_result.bam'); }
 );
+
+my $merged_allocation = Genome::Test::Factory::DiskAllocation->generate_obj(owner => $merged_alignment_result);
+ok($merged_allocation, 'Disk allocation generated ok for merged result');
 
 my $alignment_result = $pkg->create(
     instrument_data => $instrument_data,
