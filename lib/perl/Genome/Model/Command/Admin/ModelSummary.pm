@@ -164,7 +164,11 @@ sub generate_model_summary {
         $action = 'none';
     }
     elsif (!$latest_build) {
-        $action = 'build-needed';
+        if($model->status eq 'Buildless') {
+            $action = 'none';
+        } else {
+            $action = 'build-needed';
+        }
     }
     elsif ($latest_build_status eq 'Scheduled' || $latest_build_status eq 'Running' || $latest_build_status eq 'Requested') {
         $action = 'none';
