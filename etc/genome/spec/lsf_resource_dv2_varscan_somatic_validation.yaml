@@ -1,2 +1,2 @@
 --
-default_value: "-M 10000000 -R 'select[mem>10000 && gtmp>100] rusage[mem=10000,gtmp=100]'"
+default_value: "-R 'select[gtmp>100 && mem>10000] rusage[gtmp=100,mem=10000]' -M 10000000"

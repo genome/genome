@@ -1,2 +1,2 @@
 --
-default_value: "'rusage[mem=4000] select[maxtmp>10000] span[hosts=1]'"
+default_value: "-R 'span[hosts=1] select[maxtmp>10000 && mem>4000] rusage[mem=4000]'"
