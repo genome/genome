@@ -6459,6 +6459,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>create-mutation-spectrum',
       [
+        'lsf-resource=s',
+        'files',
         'clinseq-build=s',
         undef,
         'outdir=s',
