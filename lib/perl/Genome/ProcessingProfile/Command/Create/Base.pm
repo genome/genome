@@ -52,7 +52,7 @@ sub _get_help {
         return $help;
     }
     elsif ($self->_target_class_name->can($help_fn_name)) {
-        my $help = $self->target_class_name->$help_fn_name();
+        my $help = $self->_target_class_name->$help_fn_name();
         return $help;
     }
     return;
