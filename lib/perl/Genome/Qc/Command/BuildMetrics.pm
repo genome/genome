@@ -43,19 +43,7 @@ sub execute {
     my @metrics;
 
     for my $build ($self->builds) {
-        my @qc_results = grep {$_->isa('Genome::Qc::Result')} $build->results;
-        for my $qc_result (@qc_results) {
-            my $as = $qc_result->alignment_result;
-            my @instrument_data = $as->instrument_data;
-            if (@instrument_data > 1) {
-                $self->error_message('Please add support for merged alignment results and multiple instrument data QC results!');
-                die($self->error_message);
-            }
-            my %metrics = $qc_result->get_metrics;
-            $metrics{build_id} = $build->id;
-            $metrics{instrument_data_id} = $instrument_data[0]->id;
-            push @metrics, \%metrics;
-        }
+        push @metrics, $self->metrics_for_build($build);
     }
 
     unless (@metrics) {
@@ -84,5 +72,28 @@ sub execute {
 
     return 1;
 }
+
+sub metrics_for_build {
+    my $self = shift;
+    my $build = shift;
+
+    my @metrics;
+    my @qc_results = grep {$_->isa('Genome::Qc::Result')} $build->results;
+    for my $qc_result (@qc_results) {
+        my $as = $qc_result->alignment_result;
+        my @instrument_data = $as->instrument_data;
+        if (@instrument_data > 1) {
+            $self->error_message('Please add support for merged alignment results and multiple instrument data QC results!');
+            die($self->error_message);
+        }
+        my %metrics = $qc_result->get_metrics;
+        $metrics{build_id} = $build->id;
+        $metrics{instrument_data_id} = $instrument_data[0]->id;
+        push @metrics, \%metrics;
+    }
+
+    return @metrics;
+}
+
 
 1;
