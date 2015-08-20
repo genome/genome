@@ -1,0 +1,2 @@
+--
+default_value: "-R 'rusage[mem=6000] select[mem>6000 && maxtmp>100000] span[hosts=1]' -M 6000000"

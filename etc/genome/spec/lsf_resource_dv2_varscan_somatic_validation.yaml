@@ -1,0 +1,2 @@
+--
+default_value: "-M 10000000 -R 'select[mem>10000 && gtmp>100] rusage[mem=10000,gtmp=100]'"

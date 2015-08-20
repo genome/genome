@@ -1,0 +1,2 @@
+--
+default_value: "-R 'span[hosts=1] rusage[mem=16000]' -M 1600000000"

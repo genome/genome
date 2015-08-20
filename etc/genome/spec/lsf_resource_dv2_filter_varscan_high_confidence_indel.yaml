@@ -1,0 +1,2 @@
+--
+default_value: "-M 6000000 -R 'select[mem>6000] rusage[mem=6000]'"

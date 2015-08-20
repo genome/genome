@@ -1,0 +1,2 @@
+--
+default_value: "-R 'select[ncpus>=2] span[hosts=1] rusage[mem=16000]' -M 16000000 -n 2"
