@@ -253,7 +253,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::TigraValidation {
     ],
     has_param => [
         lsf_resource => {
-            default_value => "-R 'select[mem>8000] rusage[mem=8000]' -M 8000000", 
+            default_value => Genome::Config::get('lsf_resource_dv2_filter_tigra_validation'), 
         },
     ],
 };

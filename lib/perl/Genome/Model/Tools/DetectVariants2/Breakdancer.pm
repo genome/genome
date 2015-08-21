@@ -73,7 +73,7 @@ class Genome::Model::Tools::DetectVariants2::Breakdancer{
     ],
     has_param => [
         lsf_resource => {
-            default_value => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
+            default_value => Genome::Config::get('lsf_resource_dv2_breakdancer'),
         },
     ],
 };
