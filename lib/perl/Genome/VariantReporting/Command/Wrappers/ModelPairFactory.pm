@@ -139,9 +139,9 @@ sub get_common_translations {
                 sprintf('Normal(%s)', $self->normal_sample->name),
         },
         library_name_labels => {
-            $self->get_library_name_labels('discovery'),
-            $self->get_library_name_labels('followup'),
-            $self->get_library_name_labels('normal'),
+            $self->get_library_name_labels('discovery', $self->discovery_sample, [$self->models]),
+            $self->get_library_name_labels('followup', $self->followup_sample, [$self->models]),
+            $self->get_library_name_labels('normal', $self->normal_sample, [$self->models]),
         },
     };
 }

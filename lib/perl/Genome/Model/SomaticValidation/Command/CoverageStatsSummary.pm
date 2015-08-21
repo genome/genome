@@ -39,7 +39,8 @@ sub _run {
     $self->_load_writer;
 
     my %sample_roi_to_pp;
-    for my $build ($self->builds) {
+    for my $build (sort {$a->tumor_sample->name cmp $b->tumor_sample->name ||
+        $a->region_of_interest_set->name cmp $b->region_of_interest_set->name} $self->builds) {
         my $roi_name = $build->region_of_interest_set->name;
 
         my %sample_name_to_coverage_stats_method = (

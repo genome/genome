@@ -63,7 +63,7 @@ sub execute {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
             common_translations => $self->get_germline_translations(),
-            discovery => $model->last_succeeded_build,
+            discovery => $self->build,
             plan_file_basename => 'gold_germline_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
             label => 'gold_germline',
@@ -72,7 +72,7 @@ sub execute {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             common_translations => $self->get_somatic_translations(),
-            discovery => $model->last_succeeded_build,
+            discovery => $self->build,
             plan_file_basename => 'gold_somatic_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
             label => 'gold_somatic',
@@ -90,6 +90,11 @@ sub execute {
     }
     return 1;
 };
+
+sub build {
+    my $self = shift;
+    return $self->model->last_succeeded_build;
+}
 
 sub is_valid {
     my $self = shift;
@@ -127,8 +132,8 @@ sub get_somatic_translations {
                 sprintf('Gold(%s)', $self->gold_sample_name),
         },
         library_name_labels => {
-            $self->get_library_name_labels('discovery'),
-            $self->get_library_name_labels('normal'),
+            $self->get_library_name_labels('discovery', $self->discovery_sample, [$self->build]),
+            $self->get_library_name_labels('normal', $self->normal_sample, [$self->build]),
         },
     };
 }

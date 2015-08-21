@@ -4,17 +4,18 @@ use warnings;
 use strict;
 
 use Genome;
+use List::MoreUtils qw(uniq);
 
 class Genome::VariantReporting::Command::Wrappers::Utils { };
 
 sub get_library_name_labels {
-    my ($self, $category) = @_;
-
+    my ($self, $category, $sample, $builds) = @_;
     my %labels;
     my $counter = 1;
-
-    my $accessor = sprintf('%s_sample', $category);
-    for my $library ($self->$accessor->libraries) {
+    my @libraries = uniq(map {$_->library}
+                            grep {$_->library->sample eq $sample}
+                                map {$_->instrument_data} @$builds);
+    for my $library (sort {$a->name cmp $b->name} @libraries) {
         $labels{$library->name} = sprintf('%s-Library%d(%s)',
             ucfirst($category),
             $counter++,

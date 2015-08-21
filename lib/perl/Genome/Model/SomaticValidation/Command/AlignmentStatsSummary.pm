@@ -50,7 +50,8 @@ sub _run {
 
     # TODO: This should probably use the merged_alignment_result to make unique entries per sample and avoid duplicates.
     my %sample_to_pp;
-    for my $build ($self->builds) {
+    for my $build (sort {$a->tumor_sample->name cmp $b->tumor_sample->name ||
+        $a->region_of_interest_set->name cmp $b->region_of_interest_set->name} $self->builds) {
         my $tumor_sample = $build->tumor_sample;
         if ($sample_to_pp{$tumor_sample->name}) {
             if ($sample_to_pp{$tumor_sample->name} eq $build->processing_profile->id) {
