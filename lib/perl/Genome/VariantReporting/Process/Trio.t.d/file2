@@ -1,0 +1,4 @@
+subject_name	# of lanes (or "sequence events")	Total Bases	Total Mapped Bases	Total Unique Mapped Bases	Aligned %	Unique %	Error Rate	Total # Reads	%pairs mapping across chromosomes
+s1	6	568415200	553777241	550385341	98.66	98.06	0.00	5684152	0.41
+s2	6	494153800	480858387	478176687	98.67	98.13	0.00	4941538	0.39
+s3	6	550640000	534052674	530868074	98.49	97.91	0.00	5506400	0.38
