@@ -77,6 +77,11 @@ EOS
 sub execute
 {
     my $self = shift;
+    my $build = $self->build;
+    my $users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $users->{annotation_structures} = $build;
+
+
     my $result = Genome::Db::Ensembl::AnnotationStructures->get_or_create(
         reference_build_id => $self->reference_build_id,
         version => $self->version,
@@ -86,9 +91,8 @@ sub execute
         log_file => $self->log_file,
         software_version => $self->software_version,
         test_name => (Genome::Config::get('software_result_test_name') || undef),
+        users => $users,
     );
-
-    $result->add_user(label => 'annotation_structures', user => $self->build);
 
     $self->status_message("Using AnnotationStructures result ".$result->id);
 
