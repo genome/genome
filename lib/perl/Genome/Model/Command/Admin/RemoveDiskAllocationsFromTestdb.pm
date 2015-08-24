@@ -43,17 +43,17 @@ class Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb {
 };
 
 sub _get_default_database_name {
-    my $conn = _parse_database_connection_info_from_env_var();
+    my $conn = _parse_database_connection_info_from_config();
     return $conn->{dbname};
 }
 
 sub _get_default_database_server {
-    my $conn = _parse_database_connection_info_from_env_var();
+    my $conn = _parse_database_connection_info_from_config();
     return $conn->{host};
 }
 
 sub _get_default_database_port {
-    my $conn = _parse_database_connection_info_from_env_var();
+    my $conn = _parse_database_connection_info_from_config();
     return( $conn->{port} // 5432 );
 }
 
@@ -62,7 +62,7 @@ sub _get_default_template_name {
     return __PACKAGE__->get_template_name_for_database_name($test_db_name);
 }
 
-sub _parse_database_connection_info_from_env_var {
+sub _parse_database_connection_info_from_config {
     my %connection;
     foreach my $key ( qw( dbname host port ) ) {
         no warnings 'uninitialized';
