@@ -130,15 +130,6 @@ sub make_allocation_iterator_from_list {
     };
 }
 
-sub make_allocation_iterator_from_list_with_kb_requested {
-    my @list = @_;
-    return sub {
-        my $alloc_id = shift @list;
-        return unless defiled $alloc_id;
-        my $kb_requested = shift @list;
-        return Genome::Disk::StrippedDownAllocation->new(id => $alloc_id, kilobytes_requested => $kb_requested);
-    };
-}
 
 
 package Genome::Disk::FakeAllocationManager;
