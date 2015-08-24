@@ -75,8 +75,8 @@ sub _parse_database_connection_info_from_env_var {
 sub execute {
     my $self = shift;
 
-    unless ($self->is_running_in_test_env) {
-        die $self->error_message('Must be run within a test environment created with genome-test-env');
+    unless ($self->is_running_with_test_db) {
+        die $self->error_message('Must be run within an environment using a test DB (genome-env or similar)');
     }
 
     my @allocations = $self->collect_newly_created_allocations();
@@ -85,10 +85,10 @@ sub execute {
     return 1;
 }
 
-sub is_running_in_test_env {
+sub is_running_with_test_db {
     my $self = shift;
 
-    return Genome::Config::get('testing');
+    return (! ! $self->get_template_name_for_database_name($self->database_name));
 }
 
 sub collect_newly_created_allocations {
