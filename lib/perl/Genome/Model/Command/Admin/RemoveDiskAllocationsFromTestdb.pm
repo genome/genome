@@ -96,6 +96,7 @@ sub collect_newly_created_allocations {
 
     my $tmpl_allocations = $self->_make_iterator_for_template_allocations();
     my $db_allocations = $self->_make_iterator_for_database_allocations();
+    my $production_allocation_check = $self->_make_check_for_production_allocation();
 
     my @new_allocations_in_database;
     my($next_tmpl_allocation, $next_db_allocation);
@@ -114,8 +115,13 @@ sub collect_newly_created_allocations {
             $next_tmpl_allocation->id gt $next_db_allocation->id
         ) {
             # This allocation was created in the test database
-            push @new_allocations_in_database, $next_db_allocation;
-            $self->debug_message("Found allocation %s with %d kB", $next_db_allocation->id, $next_db_allocation->kilobytes_requested);
+            if ($production_allocation_check->($next_db_allocation->id)) {
+                $self->debug_message("Allocation %s was new in the test DB, but exists in production. Ignoring", $next_db_allocation->id);
+
+            } else {
+                push @new_allocations_in_database, $next_db_allocation;
+                $self->debug_message("Found allocation %s with %d kB", $next_db_allocation->id, $next_db_allocation->kilobytes_requested);
+            }
             undef($next_db_allocation);
 
         } elsif ($next_tmpl_allocation->id eq $next_db_allocation->id) {
@@ -144,6 +150,24 @@ sub _make_iterator_for_database_allocations {
     my $self = shift;
     my $dbh = $self->_dbh_for_database();
     return $self->_make_iterator_for_fetching_allocations($dbh);
+}
+
+sub _make_check_for_production_allocation {
+    my $self = shift;
+
+    my $dbh = $self->_dbh_for_production_db();
+    Carp::croak("Can't connect to production DB: $DBI::errstr") unless $dbh;
+
+    my $sth = $dbh->prepare('SELECT id from disk.allocation where id = ?');
+    Carp::croak("Can't prepare select for allocations in production DB: $DBI::errstr") unless $sth;
+
+    return sub {
+        my $alloc_id = shift;
+        $sth->execute($alloc_id);
+        my $rv = $sth->fetchrow_arrayref() ? 1 : '';
+        $sth->finish;
+        return $rv;
+    };
 }
 
 my $sql_for_allocations = q(SELECT id, kilobytes_requested FROM disk.allocation ORDER BY id);
@@ -192,6 +216,22 @@ sub _dbh_for {
                                            { AutoCommit => 0, RaiseError => 1, PrintError => 0 });
     }
     return $self->{$cache_key};
+}
+
+my @ENV_VARS_FOR_TEST_DB = qw( XGENOME_DS_GMSCHEMA_LOGIN XGENOME_DS_GMSCHEMA_AUTH XGENOME_DS_GMSCHEMA_SERVER );
+sub _dbh_for_production_db {
+    my $self = shift;
+
+    delete local @ENV{ @ENV_VARS_FOR_TEST_DB };
+    my $db_settings = $self->_parse_database_connection_info_from_config();
+    my $conn = sprintf('dbi:Pg:dbname=%s;host=%s', $db_settings->{dbname}, $db_settings->{host});
+    if ($db_settings->{port}) {
+        $conn .= ';port=' . $db_settings->{port};
+    }
+    DBI->connect($conn,
+                 Genome::Config::get('ds_gmschema_login'),
+                 Genome::Config::get('ds_gmschema_auth'),
+                 { AutoCommit => 0, RaiseError => 1, PrintError => 0 });
 }
 
 

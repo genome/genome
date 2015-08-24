@@ -46,11 +46,15 @@ subtest 'collect_newly_created_allocations' => sub {
     local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::disconnect_database_handles = sub {};
 
     local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_template_allocations = sub {
-        make_allocation_iterator_from_list(qw(b c e f i j));
+        make_allocation_iterator_from_list(qw(b c e f i j o));
     };
 
     local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_iterator_for_database_allocations = sub {
-        make_allocation_iterator_from_list(qw(a b c e f h i j k));
+        make_allocation_iterator_from_list(qw(a b c e f h i j k m o));
+    };
+
+    local *Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb::_make_check_for_production_allocation = sub {
+        return sub { return($_[0] eq 'm') }  # allocation 'm' was "created", but exists in production too
     };
 
     my @expected = map { Genome::Disk::StrippedDownAllocation->new(id => $_, kilobytes_requested => 1) } qw(a h k);
