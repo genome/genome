@@ -43,6 +43,14 @@ class Genome::Model::Tools::Gatk::HaplotypeCaller {
             gatk_param_name => '-ERC',
             doc => 'Whether the trimming intervals will be used to emit reference confidence',
         },
+        gvcf_gq_bands => {
+            is_input => 1,
+            is => 'Number',
+            is_many => 1,
+            gatk_param_name => '-GQB',
+            doc => 'GQ thresholds for reference confidence bands',
+            is_optional => 1,
+        },
     ],
 };
 
