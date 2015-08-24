@@ -48,26 +48,24 @@ sub _interpret_entry {
             if (grep {$_ eq 'missense_variant'} @consequences) {
                 my $position = $transcript->{protein_position} - 1;
                 my ($wildtype_amino_acid, $mutant_amino_acid) = split('/', $transcript->{amino_acids});
-                my @full_wildtype_sequence = split('', $transcript->{wildtypeprotein});
-                if ($wildtype_amino_acid ne $full_wildtype_sequence[$position]) {
+                my $full_wildtype_sequence = $transcript->{wildtypeprotein};
+                if ($wildtype_amino_acid ne substr($full_wildtype_sequence, $position, 1)) {
                     next TRANSCRIPT;
                 }
                 else {
-                    my ($mutation_position, @wildtype_subsequence) = $self->get_wildtype_subsequence($position, \@full_wildtype_sequence, $entry);
-                    my @mutant_subsequence = @wildtype_subsequence;
-                    $mutant_subsequence[$mutation_position] = $mutant_amino_acid;
+                    my ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry);
+                    my $mutant_subsequence = $wildtype_subsequence;
+                    substr($mutant_subsequence, $mutation_position, 1) = $mutant_amino_acid;
                     my @designations = qw(WT MT);
-                    my @subsequences = (\@wildtype_subsequence, \@mutant_subsequence);
+                    my @subsequences = ($wildtype_subsequence, $mutant_subsequence);
                     my $iterator = each_array( @designations, @subsequences );
                     while ( my ($designation, $subsequence) = $iterator->() ) {
                         my $header = ">$designation." . $transcript->{symbol} . '.p.' . $wildtype_amino_acid . $transcript->{protein_position} . $mutant_amino_acid;
-                        my $sequence = join('', @$subsequence);
-                        $return_values{$variant_allele}->{variant_sequences}->{$header} = $sequence;
+                        $return_values{$variant_allele}->{variant_sequences}->{$header} = $subsequence;
                     }
                 }
             }
             else {
-                #Die?
             }
         }
     }
@@ -75,15 +73,14 @@ sub _interpret_entry {
     return %return_values;
 }
 sub get_wildtype_subsequence {
-    my ($self, $position, $full_wildtype_sequence_ref, $entry) = @_;
-    my @full_wildtype_sequence = @$full_wildtype_sequence_ref;
+    my ($self, $position, $full_wildtype_sequence, $entry) = @_;
 
     my $peptide_sequence_length = $self->peptide_sequence_length;
     #If the wildtype sequence is shorter than the desired peptide sequence
     #length we use the wildtype sequence length instead so that the extraction
     #algorithm below works correctly
-    if (scalar(@full_wildtype_sequence) < $peptide_sequence_length) {
-        $peptide_sequence_length = scalar(@full_wildtype_sequence);
+    if (length($full_wildtype_sequence) < $peptide_sequence_length) {
+        $peptide_sequence_length = length($full_wildtype_sequence);
         $self->status_message(
             'Wildtype sequence length is shorter than desired peptide sequence length at position (%s, %s). Using wildtype sequence length (%s) instead.',
             $entry->{chrom},
@@ -92,27 +89,27 @@ sub get_wildtype_subsequence {
         );
     }
 
-    # We want to extract a subset from @full_wildtype_sequence that is
+    # We want to extract a subset from $full_wildtype_sequence that is
     # $peptide_sequence_length long so that the $position ends
     # up in the middle of the extracted sequence.
     # If the $position is too far toward the beginning or end of
-    # @full_wildtype_sequence there aren't enough amino acids on one side
+    # $full_wildtype_sequence there aren't enough amino acids on one side
     # to achieve this.
-    my (@wildtype_subsequence, $mutation_position);
+    my ($wildtype_subsequence, $mutation_position);
     my $one_flanking_sequence_length = ($peptide_sequence_length - 1) / 2;
-    if (distance_from_start($position, @full_wildtype_sequence) < $one_flanking_sequence_length) {
-        @wildtype_subsequence = @full_wildtype_sequence[ 0 ... ($peptide_sequence_length - 1) ];
+    if (distance_from_start($position, $full_wildtype_sequence) < $one_flanking_sequence_length) {
+        $wildtype_subsequence = substr($full_wildtype_sequence, 0, $peptide_sequence_length);
         $mutation_position = $position;
     }
-    elsif (distance_from_end($position, @full_wildtype_sequence) < $one_flanking_sequence_length) {
-        @wildtype_subsequence = @full_wildtype_sequence[ ($#full_wildtype_sequence - $peptide_sequence_length + 1) ... $#full_wildtype_sequence];
-        $mutation_position = $peptide_sequence_length - distance_from_end($position, @full_wildtype_sequence) - 1;
+    elsif (distance_from_end($position, $full_wildtype_sequence) < $one_flanking_sequence_length) {
+        $wildtype_subsequence = substr($full_wildtype_sequence, (length($full_wildtype_sequence) - $peptide_sequence_length), $peptide_sequence_length);
+        $mutation_position = $peptide_sequence_length - distance_from_end($position, $full_wildtype_sequence) - 1;
     }
     elsif (
-        (distance_from_start($position, @full_wildtype_sequence) >= $one_flanking_sequence_length) &&
-        (distance_from_end($position, @full_wildtype_sequence) >= $one_flanking_sequence_length)
+        (distance_from_start($position, $full_wildtype_sequence) >= $one_flanking_sequence_length) &&
+        (distance_from_end($position, $full_wildtype_sequence) >= $one_flanking_sequence_length)
     ) {
-        @wildtype_subsequence = @full_wildtype_sequence[ ($position - $one_flanking_sequence_length) ... ($position + $one_flanking_sequence_length) ];
+        $wildtype_subsequence = substr($full_wildtype_sequence, ($position - $one_flanking_sequence_length), $peptide_sequence_length);
         $mutation_position = ($peptide_sequence_length - 1) / 2;
     }
     else {
@@ -120,27 +117,27 @@ sub get_wildtype_subsequence {
             'Something went wrong during the retrieval of the wildtype sequence at position (%s, %s, %s)',
             $entry->{chrom},
             $entry->{position},
-            join('', @full_wildtype_sequence)
+            $full_wildtype_sequence
         );
     }
 
-    return $mutation_position, @wildtype_subsequence;
+    return $mutation_position, $wildtype_subsequence;
 }
 
 #This subroutine is a bit funky but it was designed that way to mirror
 #distance_from_end to increase code readability from the caller's perspective
 sub distance_from_start {
     my $position = shift;
-    my @array = @_;
+    my $sequence = shift;
 
     return $position;
 }
 
 sub distance_from_end {
     my $position = shift;
-    my @array = @_;
+    my $sequence = shift;
 
-    return $#array - $position;
+    return length($sequence) - $position - 1;
 }
 
 

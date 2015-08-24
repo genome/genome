@@ -144,22 +144,22 @@ subtest 'input file with wildtype sequence shorter than desired peptite sequence
 };
 
 subtest 'distance_for_start' => sub {
-    my @sequence = split('', 'KKLKILGMPFRNIRSILKMVN');
+    my $sequence = 'KKLKILGMPFRNIRSILKMVN';
     my $position = 5;
 
     is(
-        Genome::VariantReporting::Suite::Vep::EpitopeVariantSequenceInterpreter::distance_from_start($position, @sequence),
+        Genome::VariantReporting::Suite::Vep::EpitopeVariantSequenceInterpreter::distance_from_start($position, $sequence),
         5,
         'Distance from start gets calculated correctly'
     );
 };
 
 subtest 'distance_from_end' => sub {
-    my @sequence = split('', 'KKLKILGMPFRNIRSILKMVN');
+    my $sequence = 'KKLKILGMPFRNIRSILKMVN';
     my $position = 5;
 
     is(
-        Genome::VariantReporting::Suite::Vep::EpitopeVariantSequenceInterpreter::distance_from_end($position, @sequence),
+        Genome::VariantReporting::Suite::Vep::EpitopeVariantSequenceInterpreter::distance_from_end($position, $sequence),
         15,
         'Distance from end gets calculated correctly'
     );
