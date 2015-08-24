@@ -299,7 +299,7 @@ sub model_class {
 sub data_set_path {
     my ($self, $dataset, $version, $file_format) = @_;
     my $path;
-    
+
     if ($version and $file_format) {
         $version =~ s/^v//;
         $path = $self->data_directory."/$dataset.v$version.$file_format";
@@ -361,7 +361,7 @@ sub __extend_namespace__ {
     if ($model_subclass_meta and $model_subclass_name->isa('Genome::Model')) {
         my $build_subclass_name = 'Genome::Model::Build::' . $ext;
         # The actual inputs and metrics are added during subclass definition preprocessing.
-        # Then the whole set is expanded, allowing the developer to write less of 
+        # Then the whole set is expanded, allowing the developer to write less of
         # # the build class.
         # See Genome/Model/Build.pm _preprocess_subclass_description.
         my $build_subclass_meta = UR::Object::Type->define(
@@ -2444,7 +2444,7 @@ sub _preprocess_subclass_description {
                 #warn "in parent: $name on $build_subclass_name\n";
                 next;
             }
-            
+
             my %data = %{$p};
             my $type = $data{data_type};
             if (!$type) {
@@ -2461,14 +2461,14 @@ sub _preprocess_subclass_description {
             }
             $data{data_type} = $type;
             $data{property_name} = $name;
-            
+
             if (($p->can("is_input") and $p->is_input) or ($p->can("is_metric") and $p->is_metric)) {
                 # code below will augment these with via/to/where
                 #warn "build gets input/metric $name ($build_subclass_name)\n";
             }
             elsif ($data{via} and $data{via} eq 'last_complete_build') {
                 # model properites which go through the last complete build exist directly on the build
-                #%data = $data{meta_for_build_attribute}; 
+                #%data = $data{meta_for_build_attribute};
                 #warn "build gets direct $name ($build_subclass_name)\n";
             }
             #elsif (not $data{via} or ($data{via} ne 'inputs' and $data{via} ne 'metrics') ) {
@@ -2487,11 +2487,11 @@ sub _preprocess_subclass_description {
             $has->{$name} = \%data;
         }
     }
-    
+
     my @names = keys %{ $desc->{has} };
     for my $prop_name (@names) {
         my $prop_desc = $desc->{has}{$prop_name};
-       
+
         # skip old things for which the developer has explicitly set-up indirection
         next if $prop_desc->{id_by};
         next if $prop_desc->{via};
@@ -2502,19 +2502,27 @@ sub _preprocess_subclass_description {
             die "class $class has is_param and is_input on the same property! $prop_name";
         }
 
-        if (exists $prop_desc->{'is_param'} and $prop_desc->{'is_param'}) {
+        if ($prop_desc->{'is_param'}) {
             $prop_desc->{'via'} = 'processing_profile',
             $prop_desc->{'to'} = $prop_name;
             $prop_desc->{'is_mutable'} = 0;
             $prop_desc->{'is_delegated'} = 1;
         }
 
-        if (exists $prop_desc->{'is_input'} and $prop_desc->{'is_input'}) {
+        if ($prop_desc->{'is_output'}) {
+            $prop_desc->{'via'} = 'result_users';
+            $prop_desc->{'to'} = 'software_result';
+            $prop_desc->{'where'} = [label => $prop_name];
+            $prop_desc->{'is_mutable'} = 0;
+            $prop_desc->{'is_delegated'} = 1;
+        }
+
+        if ($prop_desc->{'is_input'}) {
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
 
             my @where_class;
-            if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
+            if ($prop_desc->{'data_type'}) {
                 my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
                     $prop_desc->{'data_type'},
                     $class
@@ -2550,7 +2558,7 @@ sub _preprocess_subclass_description {
         }
 
         # Metrics
-        if ( exists $prop_desc->{is_metric} and $prop_desc->{is_metric} ) {
+        if ($prop_desc->{is_metric} ) {
             $prop_desc->{via} = 'metrics';
             $prop_desc->{where} = [ name => join(' ', split('_', $prop_name)) ];
             $prop_desc->{to} = 'value';
