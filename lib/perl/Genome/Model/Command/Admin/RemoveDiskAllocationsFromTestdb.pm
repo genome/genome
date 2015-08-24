@@ -64,9 +64,9 @@ sub _get_default_template_name {
 
 sub _parse_database_connection_info_from_config {
     my %connection;
+    my $server = Genome::Config::get('ds_gmschema_server');
     foreach my $key ( qw( dbname host port ) ) {
         no warnings 'uninitialized';
-        my $server = Genome::Config::get('ds_gmschema_server');
         ($connection{$key}) = $server =~ m/$key=(.*?)(?:;|$)/;
     }
     return \%connection;
