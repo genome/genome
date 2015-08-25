@@ -1,22 +1,19 @@
 {
    "links" : [
       {
+         "dataFlow" : {
+            "a" : "a",
+            "b" : "b"
+         },
          "destination" : "Convergence",
-         "destinationProperty" : "a",
-         "source" : "input connector",
-         "sourceProperty" : "a"
+         "source" : "input connector"
       },
       {
-         "destination" : "Convergence",
-         "destinationProperty" : "b",
-         "source" : "input connector",
-         "sourceProperty" : "b"
-      },
-      {
+         "dataFlow" : {
+            "out" : "out"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out",
-         "source" : "Convergence",
-         "sourceProperty" : "out"
+         "source" : "Convergence"
       }
    ],
    "tasks" : {

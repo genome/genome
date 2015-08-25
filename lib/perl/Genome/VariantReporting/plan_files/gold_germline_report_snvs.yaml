@@ -9,6 +9,7 @@ experts:
         insertion_centric: 0
     vep:
         ensembl_version: 75
+        reference_version: GRCh37
         custom_annotation_tags:
             - ON_TARGET
             - SEG_DUP
@@ -51,6 +52,7 @@ reports:
                 min_coverage: 10
                 sample_name: normal
             'min-coverage-observed':
+                sample_name_labels: sample_name_labels
                 sample_names:
                     - normal
             'max-vaf-observed':
@@ -63,9 +65,11 @@ reports:
                     - Samtools
                 sample_name: normal
             vaf:
+                sample_name_labels: sample_name_labels
                 sample_names:
                     - normal
             'per-library-vaf':
+                sample_name_labels: sample_name_labels
                 sample_names:
                     - normal
                 library_name_labels: library_name_labels

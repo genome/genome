@@ -294,44 +294,26 @@ sub df {
     return Filesys::Df::df($self->mount_path);
 }
 
-sub sync_args {
-    my $self = shift;
-    my %args = @_;
-    my $verbose = delete $args{verbose};
-    if (keys %args) {
-        die $self->error_message('Unexpected args to sync_meta: ' . join(', ', keys %args));
-    }
-    return (verbose => $verbose);
-}
-
-sub sync_usage {
-    my $self = shift;
-    my %args = $self->sync_args(@_);
-    $self->sync_total_kb(%args);
-    $self->sync_unallocated_kb(%args);
-    return 1;
-}
-
 sub sync_total_kb {
     my $self = shift;
-    my %args = $self->sync_args(@_);
 
     my $total_kb = $self->df->{blocks};
     if ($self->total_kb != $total_kb) {
-        if ($args{verbose}) { $self->status_message(sprintf('Changing total_kb from %d to %d.', $self->total_kb, $total_kb)) }
         $self->total_kb($total_kb);
     }
+
+    return $total_kb;
 }
 
 sub sync_unallocated_kb {
     my $self = shift;
-    my %args = $self->sync_args(@_);
 
     my $unallocated_kb = $self->unallocated_kb;
     if ($self->cached_unallocated_kb != $unallocated_kb) {
-        if ($args{verbose}) { $self->status_message(sprintf('Changing cached_unallocated_kb from %d to %d.', $self->cached_unallocated_kb, $unallocated_kb)) }
         $self->cached_unallocated_kb($unallocated_kb);
     }
+
+    return $unallocated_kb;
 }
 
 sub is_allocated_over_soft_limit {
@@ -412,7 +394,7 @@ sub get_trash_folder {
 }
 
 sub _extract_aggr {
-    return (shift =~ m!/(aggr\d{2})/!)[0];
+    return (shift =~ m!/(aggr\d+)/!)[0];
 }
 
 

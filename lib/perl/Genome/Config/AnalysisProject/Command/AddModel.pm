@@ -59,8 +59,8 @@ sub _verify_config_status {
     my $self = shift;
 
     my $profile_item = $self->profile_item;
-    if($profile_item->status eq 'active') {
-        $self->error_message('Cannot manually assign a model to an active configuration.');
+    if($profile_item->status ne 'inactive') {
+        $self->error_message('Can only assign a model to an inactive configuration.');
         return;
     }
 

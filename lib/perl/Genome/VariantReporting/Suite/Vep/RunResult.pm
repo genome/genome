@@ -18,6 +18,9 @@ class Genome::VariantReporting::Suite::Vep::RunResult {
         ensembl_version => {
             is => 'String',
         },
+        reference_version => {
+            is => 'String',
+        },
         custom_annotation_tags => {
             is => 'String',
             is_many => 1,
@@ -235,6 +238,7 @@ sub vep_params {
         %param_hash,
         fasta => $self->reference_fasta,
         ensembl_version => $self->ensembl_version,
+        reference_version => $self->reference_version,
         custom => $self->custom_annotation_inputs,
         format => "vcf",
         vcf => 1,

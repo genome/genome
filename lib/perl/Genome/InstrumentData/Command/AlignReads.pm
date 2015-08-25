@@ -243,7 +243,6 @@ sub _process_alignments {
         return 0;
     }
 
-    $self->_link_alignment_to_inputs($alignment);
     $self->result_id($alignment->id);
     $self->debug_message("Using alignment %s", $alignment->id);
 
@@ -285,18 +284,6 @@ sub verify_successful_completion {
     unless ($alignment->verify_alignment_data) {
         $self->error_message('Failed to verify alignment data: '.  join("\n",$alignment->error_message));
         return 0;
-    }
-
-    return 1;
-}
-
-sub _link_alignment_to_inputs { #FIXME move inside alignment result generation
-    my $self = shift;
-    my $alignment = shift;
-
-    my @results = Genome::SoftwareResult->get([$self->instrument_data_id]);
-    for my $result (@results) {
-        $result->add_user(user => $alignment, label => 'uses');
     }
 
     return 1;

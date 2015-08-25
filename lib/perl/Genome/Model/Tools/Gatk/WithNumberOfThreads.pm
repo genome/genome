@@ -8,23 +8,30 @@ use Genome;
 class Genome::Model::Tools::Gatk::WithNumberOfThreads {
     is => 'UR::Object',
     is_abstract => 1,
-    attributes_have => {
-        is_input => { is => 'Boolean', is_optional => 1 },        
-    },
-    has_optional_input => {
-        number_of_threads => {
-            is => 'Number',
-            doc => 'Controls the number of data threads sent to the processor',
-        },
-    },
+    subclass_description_preprocessor => 'Genome::Model::Tools::Gatk::WithNumberOfThreads::_preprocess_subclass_description',
 };
 
-sub number_of_threads_param_for_java_command {
-    my $self = shift;
+sub _preprocess_subclass_description {
+    my ($class, $desc) = @_;
 
-    return '' if not $self->number_of_threads;
+    my $is = $desc->{is};
+    my $base_class = 'Genome::Model::Tools::Gatk::Base';
+    unless (grep { $_->isa($base_class) } @$is) {
+        Carp::confess(__PACKAGE__ . ' can only be used with subclasses of ' . $base_class);
+    }
 
-    return ' -nt '.$self->number_of_threads;
+    my $prop = 'number_of_threads';
+    return $desc if exists $desc->{has}{$prop};
+
+    $desc->{has}{$prop} = {
+        is => 'Number',
+        gatk_param_name => '-nt',
+        doc => 'Controls the number of data threads sent to the processor',
+        is_optional => 1,
+        is_input => 1,
+    };
+
+    return $desc;
 }
 
 1;

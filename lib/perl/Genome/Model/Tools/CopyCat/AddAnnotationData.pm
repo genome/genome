@@ -68,6 +68,9 @@ sub create_software_result {
         allocation_path => 'model_data/copy-cat' . $software_result->id,
         kilobytes_requested => 5*1024*1024,
     );
+    unless ($self->reference_sequence->is_rederivable) {
+        $software_result->disk_allocation->archivable(0);
+    }
     $software_result->output_dir($allocation->absolute_path);
 
     return $software_result;

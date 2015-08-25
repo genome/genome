@@ -5,21 +5,12 @@ use warnings;
 
 use Genome;
 
-use Data::Dumper 'Dumper';
-use Error qw(:try);
-use File::Find 'find';
-use File::Grep 'fgrep';
-require IO::Prompt;
-require RT::Client::REST;
-require RT::Client::REST::Ticket;
-require WWW::Mechanize;
-
 BEGIN {
         $ENV{UR_DBI_NO_COMMIT} = 1;
 }
 
 class Genome::Model::Command::Admin::FailedModelTickets {
-    is => 'Genome::Command::WithColor',
+    is => 'Genome::Model::Command::Admin::FailedModelTicketBase',
     doc => 'find failed cron models, check that they are in a ticket',
     has_input => [
         include_failed => {
@@ -42,15 +33,14 @@ class Genome::Model::Command::Admin::FailedModelTickets {
 
 sub help_detail {
     return <<HELP;
-This command collects cron models by failed or unstartable build events and scours tickets for them. If they are not found, the models are summaraized first by the error entry log and then by grepping the error log files. The summary is the printed to STDOUT.
+This command collects cron models with failed or unstartable builds and scours tickets for their IDs. If they are not found in the existing tickets, the models are summarized and grouped by the `genome model build determine-error` output.
 HELP
 }
 
 sub execute {
     my $self = shift;
 
-    my @events = $self->get_events();
-    my %builds = $self->get_builds(@events);
+    my %builds = $self->get_builds();
 
     $self->remove_builds_in_tickets(\%builds);
 
@@ -63,55 +53,37 @@ sub execute {
     return 1;
 }
 
-sub get_events {
+sub get_builds {
     my $self = shift;
 
     # Find cron models by failed build events
-    my @events;
+    my @builds;
     if ($self->include_failed) {
-        $self->status_message('Looking for failed model events...');
-        @events = Genome::Model::Event->get(
-            event_status => 'Failed',
-            event_type => 'genome model build',
-            user_name => 'apipe-builder',
-            -hint => [qw/ build /],
+        $self->status_message('Looking for failed builds...');
+        @builds = Genome::Model::Build->get(
+            status => 'Failed',
+            run_by => 'apipe-builder',
         );
     }
 
     # Find cron models by unstartable build events
     if ($self->include_unstartable) {
-        $self->status_message('Looking for unstartable model events...');
-        my @unstartable_events = Genome::Model::Event->get(
-            event_status => 'Unstartable',
-            event_type => 'genome model build',
-            user_name => 'apipe-builder',
-            -hint => [qw/ build /],
+        $self->status_message('Looking for unstartable builds...');
+        my @unstartable_builds = Genome::Model::Build->get(
+            status => 'Unstartable',
+            run_by => 'apipe-builder',
         );
-        @events = (@events, @unstartable_events);
+        @builds = (@builds, @unstartable_builds);
     }
 
-    if (scalar(@events)) {
-        return @events;
-    } else {
-        $self->error_message('No failed or unstartable events found!');
+    unless (scalar(@builds)) {
+        $self->error_message('No failed or unstartable builds found!');
         die $self->error_message();
     }
-}
 
-sub get_builds {
-    my ($self, @events) = @_;
-
-    $self->status_message("Looking up Models and Builds from events...");
-
-    my @build_ids;
-    for my $event (@events) {
-        next if not $event->build_id;
-        push @build_ids, $event->build_id;
-    }
-    my @builds = Genome::Model::Build->get('id in' => \@build_ids, -hint => [qw(model_id events date_scheduled)]);
     my @models = Genome::Model->get('id in' => [map {$_->model_id} @builds]);
-    $self->status_message(sprintf("Found %d builds from %d events in %d models",
-            scalar(@builds), scalar(@events), scalar(@models)));
+    $self->status_message(sprintf("Found %d builds in %d models",
+            scalar(@builds), scalar(@models)));
 
     # cache the model_status calculations (they're calculated and slowly)...
     my %model_status;
@@ -138,7 +110,7 @@ sub get_builds {
         }
 
         # only keep the most recently scheduled build
-        next if $builds{ $model->id } and $builds{ $model->id }->date_scheduled gt $build->date_scheduled;
+        next if $builds{ $model->id } and $builds{ $model->id }->created_at gt $build->created_at;
         $builds{ $model->id } = $build;
     }
     $self->status_message('Found '.keys(%builds).' models');
@@ -163,9 +135,9 @@ sub get_build_errors {
         my $header = join("\t", qw(Model Build Build-Class Date));
         my $line = join("\t", $build->model_id, $build->id, $build->class, $cmd->error_date);
         if ($cmd->error_type eq 'Unstartable') {
-            $key = $self->get_unstartable_key($cmd);
+            $key = $cmd->get_unstartable_key;
         } elsif ($cmd->error_type eq 'Failed') {
-            $key = $self->get_failed_key($cmd);
+            $key = $cmd->get_failed_key;
 
             # unstartable and unknown errors don't generally have a host.
             $header = join("\t", qw(Model Build Build-Class Host Date));
@@ -185,110 +157,20 @@ sub get_build_errors {
     return \%build_errors;
 }
 
-sub get_failed_key {
-    my ($self, $cmd) = @_;
-
-    if ($cmd->error_text =~ m/gscarchive/) {
-        return "Failed: Archived Data";
-    }
-    if ($cmd->error_source_line ne 'Unknown') {
-        (my $delocalized_file = $cmd->error_source_file) =~ s/^.*\/lib\/perl\///;
-        return sprintf("Failed: %s %s", $delocalized_file, $cmd->error_source_line);
-    } else {
-        return sprintf("Failed: %s", remove_ids_and_paths($cmd->error_text));
-    }
-}
-
-sub remove_ids_and_paths {
-    my $str = shift;
-    my $formatted_str = $str;
-
-    # replace things that look like paths
-    $formatted_str =~ s/[a-zA-Z0-9.\-_]*[\/][a-zA-Z0-9.\-_\/]*/<path>/g;
-
-    # replace things that look like ids
-    $formatted_str =~ s/[0-9a-f]{5,32}/<id>/g;
-
-    return $formatted_str;
-}
-
-
-sub get_unstartable_key {
-    my ($self, $cmd) = @_;
-
-    my $text = remove_ids_and_paths($cmd->error_text);
-    my $information;
-    if ($text =~ m/Transaction error:/) {
-        ($information = $text) =~ s/.*problems on//;
-        if ($information =~ m/(.*?)\:(.*?)\:/) {
-            $information = "$1: $2";
-        }
-    }
-    if ($text =~ m/reason:/) {
-        ($information = $text) =~ s/.*reason://;
-        if ($information =~ m/(.*?)\sat\s/) {
-            $information = $1;
-        }
-    }
-    if ($text =~ m/validated for start!/) {
-        ($information = $text) =~ s/.*validated for start!//;
-        if ($information =~ m/(.*?)\:(.*?)\:/) {
-            $information = "$1: $2";
-        }
-    }
-    return sprintf("Unstartable: %s", $information);
-}
-
 sub remove_builds_in_tickets {
     my ($self, $builds) = @_;
 
     # Connect
-    my $rt = _login_sso();
-
-    # The call to $rt->search() below messed up the login credentials stored in the
-    # $rt session, making the loop at the bottom that retrieves tickets fail.
-    # Save a copy of the login credentials here so we can re-set them when it's
-    # time to get the ticket details
-    my $login_cookies = $rt->_cookie();
-
-    # Retrieve tickets -
-    $self->status_message('Looking for tickets...');
-    my @ticket_ids;
-    try {
-        @ticket_ids = $rt->search(
-            type => 'ticket',
-            query => "Queue = 'apipe-support' AND ( Status = 'new' OR Status = 'open' )",
-
-        );
-    }
-    catch Exception::Class::Base with {
-        my $msg = shift;
-        if ( $msg eq 'Internal Server Error' ) {
-            die 'Incorrect username or password';
-        }
-        else {
-            die $msg->message;
-        }
-    };
-    $self->status_message($self->_color('Tickets (new or open): ', 'bold').scalar(@ticket_ids));
+    my $rt = $self->_login_sso();
 
     # Go through tickets
+    my @ticket_ids = $self->_find_open_tickets($rt);
     my %tickets;
 
-    # re-set the login cookies that we saved away eariler
-    $rt->_ua->cookie_jar($login_cookies);
     $self->status_message('Matching models and builds to tickets...');
     for my $ticket_id ( @ticket_ids ) {
-        my $ticket = eval {
-            RT::Client::REST::Ticket->new(
-                rt => $rt,
-                id => $ticket_id,
-            )->retrieve;
-        };
-        unless ($ticket) {
-            $self->error_message("Problem retrieving data for ticket $ticket_id: $@");
-            next;
-        }
+        my $ticket = $self->_ticket_for_id($rt, $ticket_id);
+        next unless $ticket;
 
         my $transactions = $ticket->transactions;
         my $transaction_iterator = $transactions->get_iterator;
@@ -319,36 +201,5 @@ sub remove_builds_in_tickets {
     return %tickets;
 }
 
-sub _server {
-    return 'https://rt.gsc.wustl.edu/';
-}
-
-sub _login_sso {
-    my $self = shift;
-
-    my $mech = WWW::Mechanize->new(
-        after =>  1,
-        timeout => 10,
-        agent =>  'WWW-Mechanize',
-    );
-    $mech->get( _server() );
-
-    my $uri = $mech->uri;
-    my $host = $uri->host;
-    if ($host ne 'sso.gsc.wustl.edu') {
-        return;
-    }
-
-    $mech->submit_form (
-        form_number =>  1,
-        fields =>  {
-            j_username => 'limsrt',
-            j_password => 'Koh3gaed',
-        },
-    );
-    $mech->submit();
-
-    return RT::Client::REST->new(server => _server(), _cookie =>  $mech->{cookie_jar});
-}
 
 1;

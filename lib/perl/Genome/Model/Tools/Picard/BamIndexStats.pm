@@ -32,6 +32,8 @@ sub help_detail {
 EOS
 }
 
+sub minimum_version_required { '1.29'; }
+
 sub _jar_name {
     return 'BamIndexStats.jar';
 }
@@ -52,11 +54,6 @@ sub _shellcmd_extra_params {
         output_files => [$self->output_file],
         skip_if_output_is_present => 0,
         );
-}
-
-sub _validate_params {
-    my $self = shift;
-    $self->enforce_minimum_version("1.29");
 }
 
 1;

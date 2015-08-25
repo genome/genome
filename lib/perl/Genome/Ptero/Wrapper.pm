@@ -12,7 +12,8 @@ use Genome::Utility::Text qw(
 use Genome::Utility::Inputs qw(encode decode);
 use Data::Dump qw(pp);
 use Ptero::Proxy::Workflow::Execution;
-use Try::Tiny qw(try catch);
+use Try::Tiny qw(try catch finally);
+use Carp qw();
 
 class Genome::Ptero::Wrapper {
     is => 'Command::V2',
@@ -60,9 +61,16 @@ sub execute {
     # this will get logged to the log files
     $self->_log_execution_information;
 
-    my $command = $self->_instantiate_command(decode($self->execution->inputs));
-
-    $self->_run_command($command);
+    my $command = try {
+        my $cmd = $self->_instantiate_command(decode($self->execution->inputs));
+        $self->_run_command($cmd);
+        return $cmd;
+    } catch {
+        my $error = $_;
+        Carp::cluck($error);
+        $self->_teardown_logging;
+        die $error;
+    };
 
     $self->_teardown_logging;
 
@@ -147,9 +155,8 @@ sub _instantiate_command {
     printf SAVED_STDERR "Instantiating command %s\n", $self->command_class;
 
     my $pkg = $self->command_class;
-    eval "use $pkg";
-
     my $cmd = try {
+        eval "use $pkg";
         $pkg->create(%$inputs)
     } catch {
         Carp::confess sprintf(
@@ -180,13 +187,14 @@ sub _run_command {
         );
     }
 
-    _commit();
+    $self->_commit();
 
     $self->status_message("Succeeded to %s command %s",
         $method, $self->command_class);
 }
 
 sub _commit {
+    my $self = shift;
     my $rv = try {
         UR::Context->commit()
     } catch {

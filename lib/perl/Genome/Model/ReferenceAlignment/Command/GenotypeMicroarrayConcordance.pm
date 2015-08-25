@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Params::Validate ':types';
+
 class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance {
     is => 'Command::V2',
     doc => 'Determine concordance between a genotype microarray VCF and a Reference Alignment build',
@@ -19,10 +21,15 @@ class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance 
             doc => 'The minimum depth required to consider concordant.',
             example_values => ['4'],
         },
+        bedtools_version => {
+            is => 'Text',
+            doc => 'Version of bed tools intersect to use. Recommended version: '.Genome::Model::Tools::BedTools->latest_bedtools_version,
+            valid_values => [ Genome::Model::Tools::BedTools->available_bedtools_versions ],
+        },
         picard_version => {
             is => 'Text',
             doc => 'The version of picard to use.',
-            example_values => ['1.123'],
+            valid_values => [ Genome::Model::Tools::Picard::GenotypeConcordance->available_picard_versions ],
         },
         dbsnp_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
@@ -32,6 +39,7 @@ class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance 
     ],
     has_optional =>[
         _seqdict => {},
+        _genotype_samples_and_sorted_vcfs => { is => 'HASH', default_value => {}, },
     ],
 };
 
@@ -60,15 +68,18 @@ sub execute {
         }
         
         my $lane_qc_vcf = $self->resolve_lane_qc_vcf($qc_build);
-        my ($microarray_vcf,$genotype_sample) = $self->resolve_genotype_microarray_vcf_and_sample($qc_build);
+        my ($microarray_vcf, $genotype_sample) = $self->resolve_genotype_microarray_vcf_and_sample($qc_build);
         
-        my $intersect_vcf = Genome::Sys->create_temp_file_path($genotype_sample->name .'_x_'. $instrument_data->id .'.vcf');
+        my $intersect_vcf = Genome::Sys->create_temp_file_path(
+            Genome::Utility::Text::sanitize_string_for_filesystem($genotype_sample->name) .'_x_'. $instrument_data->id .'.vcf'
+        );
         my $intersect_cmd = Genome::Model::Tools::BedTools::Intersect->create(
             input_file_a => $lane_qc_vcf,
             input_file_a_format => 'bed',
             input_file_b => $microarray_vcf,
             output_file => $intersect_vcf,
             header => 1,
+            use_version => $self->bedtools_version,
         );
         unless ($intersect_cmd) {
             $self->error_message('Failed to create bedtools intersect!');
@@ -208,6 +219,12 @@ sub resolve_genotype_microarray_vcf_and_sample {
         }
     }
 
+    # GEt the sorted VCF file anme
+    my $sorted_microarray_vcf = $self->sorted_microarray_vcf_for_genotype_sample($genotype_sample);
+    
+    # Return if this genotype sample has an existing sorted VCF
+    return ($sorted_microarray_vcf, $genotype_sample) if -s $sorted_microarray_vcf;
+
     # there is no existing microarray build or the VCF does not exist (ie. old genotype build)
     unless (-e $microarray_vcf) {
         $self->debug_message('Get or create genotype VCF result for sample: '. $genotype_sample->__display_name__);
@@ -223,8 +240,7 @@ sub resolve_genotype_microarray_vcf_and_sample {
             die($self->error_message);
         }
     }
-    
-    my $sorted_microarray_vcf = Genome::Sys->create_temp_file_path($genotype_sample->name .'_microarray_sorted.vcf');
+
     my $sort_cmd = Genome::Model::Tools::Picard::SortVcf->create(
         input_vcf => $microarray_vcf,
         output_vcf => $sorted_microarray_vcf,
@@ -240,6 +256,24 @@ sub resolve_genotype_microarray_vcf_and_sample {
         die($self->error_message);
     }
     return ($sorted_microarray_vcf, $genotype_sample);
+}
+
+sub sorted_microarray_vcf_for_genotype_sample { 
+    my ($self, $genotype_sample) = Params::Validate::validate_pos(
+        @_, {type => OBJECT, isa => __PACKAGE__}, {type => OBJECT, isa => 'Genome::Sample'},
+    );
+
+    # Check if we have seen this sample, and return the sorted vcf file name
+    my $sorted_microarray_vcf = $self->_genotype_samples_and_sorted_vcfs->{$genotype_sample->id};
+    return $sorted_microarray_vcf if $sorted_microarray_vcf;
+
+    # Create and store the sorted VCF file name for this sample
+    $sorted_microarray_vcf = Genome::Sys->create_temp_file_path(
+        Genome::Utility::Text::sanitize_string_for_filesystem($genotype_sample->name).'_microarray_sorted.vcf'
+    );
+    $self->_genotype_samples_and_sorted_vcfs->{$genotype_sample->id} = $sorted_microarray_vcf;
+
+    return $sorted_microarray_vcf;
 }
 
 1;

@@ -8,18 +8,21 @@ use Genome;
 my $DEFAULT_PICARD_VERSION = '1.123';
 
 class Genome::Model::Tools::Picard::SortVcf {
-    is  => 'Genome::Model::Tools::Picard',
+    is  => 'Genome::Model::Tools::Picard::Base',
     has_input => [
         input_vcf => {
+            picard_param_name => 'INPUT',
             is  => 'String',
             is_many => 1,
             doc => 'Input VCF(s) to be sorted. Multiple inputs must have the same sample names (in order) This option may be specified 0 or more times.',
         },
         output_vcf => {
+            picard_param_name => 'OUTPUT',
             is  => 'String',
             doc => 'Output VCF to be written.',
         },
         sequence_dictionary => {
+            picard_param_name => 'SEQUENCE_DICTIONARY',
             is => 'String',
             doc => 'The path to the Picard sequence dictionary for the reference genome.',
             is_optional => 1,
@@ -46,28 +49,18 @@ Sorts one or more VCF files according to the order of the contigs in the header/
 EOS
 }
 
-sub execute {
+sub minimum_version_required { '1.122'; }
+sub _jar_name { 'SortVcf.jar'; }
+sub _java_class { 'picard.vcf.SortVcf'; }
+
+sub _shellcmd_extra_params {
     my $self = shift;
-
-
-    my $sort_cmd = $self->picard_path .'/SortVcf.jar picard.vcf.SortVcf OUTPUT='.$self->output_vcf;
-    my @input_files;
-    for my $input_vcf ($self->input_vcf) {
-        $sort_cmd .= ' INPUT='. $input_vcf;
-        push @input_files, $input_vcf;
-    }
-    if ($self->sequence_dictionary) {
-        $sort_cmd .= ' SEQUENCE_DICTIONARY='. $self->sequence_dictionary;
-        push @input_files, $self->sequence_dictionary;
-    }
-    $self->run_java_vm(
-        cmd => $sort_cmd,
-        input_files => \@input_files,
-        output_files => [$self->output_vcf],
+    return (
+        input_files => [ $self->input_vcf ],
+        output_files => [ $self->output_vcf ],
         skip_if_output_is_present => 0,
     );
-    return 1;
 }
 
-
 1;
+

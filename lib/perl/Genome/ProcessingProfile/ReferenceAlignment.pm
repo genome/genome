@@ -512,7 +512,13 @@ sub transcript_annotation_job_classes{
         'Genome::Model::Event::Build::ReferenceAlignment::AnnotateTranscriptVariants',
         #'Genome::Model::Event::Build::ReferenceAlignment::AnnotateTranscriptVariantsParallel',
     );
-    return @steps;
+
+    if($self->snv_detection_strategy || $self->indel_detection_strategy) {
+        return @steps;
+    }
+    else {
+        return;
+    }
 }
 
 sub generate_reports_job_classes {

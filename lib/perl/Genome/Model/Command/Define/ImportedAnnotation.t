@@ -12,8 +12,16 @@ BEGIN {
 use Test::More tests => 12;
 
 use above 'Genome';
+use Sub::Install;
 
 use_ok('Genome::Model::Command::Define::ImportedAnnotation');
+
+use Genome::Model::Build;
+Sub::Install::reinstall_sub({
+    into => 'Genome::Model::Build',
+    as => 'start',
+    code => sub {return 1},
+});
 
 my $reference_sequence_build;
 my $version;

@@ -23,7 +23,7 @@ sub generate {
         if(exists $current_node->{parent}){
             push @nodes_to_visit, $current_node->{parent};
         }
-        if($current_node->{type} eq 'align'){
+        if($current_node->{type} eq 'align' || $current_node->{type} eq 'align_and_merge'){
             $aligners{$current_node->{name}}{$current_node->{version}}{$current_node->{reference}}{($current_node->{annotation} || '')}{$current_node->{params}}++;
         }
     }

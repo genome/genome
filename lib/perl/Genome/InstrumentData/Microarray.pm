@@ -79,13 +79,10 @@ sub get_snpid_hash_for_variant_list {
 
 #< Genotype File >#
 sub genotype_file {
-    my ($self, $genotype_file) = @_;
+    my $self = shift;
 
-    # Error if given a file to update
-    if ( $genotype_file ) {
-        $self->error_message("To update the genotype file, please use the 'update_genotype_file' method.");
-        return;
-    }
+    # Update if given a genotype file
+    return $self->update_genotype_file(@_) if @_;
 
     # Check allocation exists and is not archived
     my $disk_allocation = $self->disk_allocation;

@@ -77,11 +77,17 @@ subtest "Version compare" => sub {
     }
 };
 
+class PicardTest {
+    is => $pkg,
+    has => { minimum_version_required => { is => 'Text', }, },
+};
+my $obj = PicardTest->create;
+
 subtest "Enforce minimum version" => sub {
+
+
     # These are ordered from greatest to least
     my @versions = $pkg->_versions_serial;
-    my $obj = $pkg->create;
-
     for my $i (0..$#versions) {
         my @failures;
 
@@ -92,7 +98,8 @@ subtest "Enforce minimum version" => sub {
         for my $j (0..($i-1)) {
             my $min_ver = $versions[$j];
             # omg hush!
-            eval { $obj->enforce_minimum_version($min_ver); };
+            $obj->minimum_version_required($min_ver);
+            eval { $obj->enforce_minimum_version_required; };
             if (!$@) {
                 push @failures, "$min_ver > $ver";
             }
@@ -101,7 +108,8 @@ subtest "Enforce minimum version" => sub {
         # For each version less than the given version
         for my $j ($i..$#versions) {
             my $min_ver = $versions[$j];
-            if (!$obj->enforce_minimum_version($min_ver)) {
+            $obj->minimum_version_required($min_ver);
+            if (!$obj->enforce_minimum_version_required) {
                 push @failures, "$min_ver <= $ver";
             }
         }
@@ -109,15 +117,24 @@ subtest "Enforce minimum version" => sub {
         ok(!@failures, "version $ver behaves as expected")
             or diag("Failures: " . Data::Dumper::Dumper(\@failures));
     }
+
 };
 
-subtest "Enforce minimum version (invalid version given)" => sub {
-    my $obj = $pkg->create(use_version => '1.82');
-    ok($obj->enforce_minimum_version('1.82'));
-    my @bads = qw(foo v1.82 1.82a);
-    for my $bad (@bads) {
-        dies_ok(sub {$obj->enforce_minimum_version($bad)}, "version '$bad' is invalid");
-    }
+subtest 'Available picard versions' => sub{
+    plan tests => 3;
+
+    $obj->minimum_version_required(undef);
+    my @versions = $obj->available_picard_versions;
+    ok(@versions, 'all available picard versions');
+
+    $obj->minimum_version_required($versions[2]);
+    my @versions_with_miniumum_required = $obj->available_picard_versions;
+    is(@versions_with_miniumum_required, 3, '3 available versions with minimum required version set');
+    cmp_ok(
+        @versions, '>', @versions_with_miniumum_required, 
+        'less versions available with minimum set',
+    );
+
 };
 
 done_testing();

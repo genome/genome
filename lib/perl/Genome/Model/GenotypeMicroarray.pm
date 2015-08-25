@@ -19,17 +19,6 @@ class Genome::Model::GenotypeMicroarray{
             doc => 'dbsnp build that this model is built against'
         },
     },
-    has_param => {
-        input_format => {
-            doc => 'file format, defaults to "wugc", which is currently the only format supported',
-            valid_values => ['wugc'],
-            default_value => 'wugc',
-        },
-        instrument_type => {
-            doc => 'the type of microarray instrument',
-            valid_values => [qw/ affymetrix illumina infinium plink unknown /],
-        },
-    },
     has => {
         dbsnp_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
@@ -169,7 +158,6 @@ sub dependent_cron_ref_align {
 
     my @ref_align_models = Genome::Model::ReferenceAlignment->get(
         subject_id => [map { $_->id } @subjects],
-        reference_sequence_build => $self->reference_sequence_build,
     );
 
     # limit to models with a compatible reference sequence build
@@ -182,10 +170,17 @@ sub dependent_cron_ref_align {
     # limit to models that either don't have a genotype_microarray_model yet or have the same genotype_microarray_model
     my @dependent_models = grep {
         my $gmm = $_->genotype_microarray_model;
-        (not $gmm || ($gmm && $gmm->id == $self->id));
+        (!$gmm or ($gmm && $gmm->id eq $self->id));
     } @compatible_ref_align_models;
 
-    return @dependent_models;
+    # limit to models for which new results might still be useful
+    my @current_models = grep {
+        $_->analysis_project_bridges and
+        $_->analysis_project_bridges->config_profile_item and
+        $_->analysis_project_bridges->config_profile_item->is_current
+    } @dependent_models;
+
+    return @current_models;
 }
 
 sub request_builds_for_dependent_cron_ref_align {

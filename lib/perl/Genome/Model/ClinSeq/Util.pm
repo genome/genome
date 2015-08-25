@@ -1237,7 +1237,7 @@ sub get_ref_align_builds{
         join("_", ($subject_common_name, $build_type, $time_point));
       $ref_builds{$refalign_name}{time_point_tissue} =
         join("_", ($subject_common_name, $build_type, $tissue_desc, $time_point));
-      $ref_builds{$refalign_name}{day} = $time_point;
+      $ref_builds{$refalign_name}{time_point_string} = $time_point;
       $ref_builds{$refalign_name}{tissue_desc} = $tissue_desc;
       $ref_builds{$refalign_name}{tissue_label} = $build->subject->tissue_label || '';
       $ref_builds{$refalign_name}{extraction_type} = $build->subject->extraction_type;
@@ -1264,27 +1264,30 @@ sub get_ref_align_builds{
   }
 
   #Determine the time point position
-  my %timepoint_positions;
+  my %time_point_positions;
   foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
-    my $day = $ref_builds{$name}{day};
-    if ($day =~ /day(\d+)/){
-      my $day_number = $1;
-      $timepoint_positions{$day_number}{position} = 0;
-      $ref_builds{$name}{day_number} = $day_number;
-    }else{
-      die $self->error_message("could not parse day value from sample attribute (caTissue timepoint): $day");
+    my $time_point_string = $ref_builds{$name}{time_point_string};
+    if ($time_point_string =~ /(day|Surgery)(\d+)/){
+        my $time_point_unit = $1;
+        my $time_point_value = $2;
+        $time_point_positions{$time_point_value}{position} = 0;
+        $ref_builds{$name}{time_point_unit} = $time_point_unit;
+        $ref_builds{$name}{time_point_value} = $time_point_value;
+    } else {
+        die $self->error_message("could not parse timepoint value from sample attribute (caTissue timepoint): $time_point_string");
     }
   }
   my $time_point_counter = 0;
-  foreach my $day_number (sort {$a <=> $b} keys %timepoint_positions){
+  foreach my $time_point_value (sort {$a <=> $b} keys %time_point_positions){
     $time_point_counter++;
-    $timepoint_positions{$day_number}{position} = $time_point_counter;
+    $time_point_positions{$time_point_value}{position} = $time_point_counter;
   }
 
   foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
-    my $day_number = $ref_builds{$name}{day_number};
-    my $position = $timepoint_positions{$day_number}{position};
-    $ref_builds{$name}{timepoint_position} = $position;
+      my $time_point_unit = $ref_builds{$name}{time_point_unit};
+      my $time_point_value = $ref_builds{$name}{time_point_value};
+      my $position = $time_point_positions{$time_point_value}{position};
+      $ref_builds{$name}{time_point_position} = $position;
   }
 
   my @time_points;
@@ -1362,7 +1365,7 @@ sub add_rnaseq_ref_builds {
       join("_", ($subject_common_name, $build_type, $time_point));
     $ref_builds->{$rnaseq_name}{time_point_tissue} =
       join("_", ($subject_common_name, $build_type, $tissue_desc, $time_point));
-    $ref_builds->{$rnaseq_name}{day} = $time_point;
+    $ref_builds->{$rnaseq_name}{time_point_string} = $time_point;
   }
 }
 

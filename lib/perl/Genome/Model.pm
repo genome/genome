@@ -233,17 +233,6 @@ class Genome::Model {
             where => [ -order_by => '-created_at' ],
             doc => 'Versions of a model over time, with varying quantities of evidence',
         },
-        downstream_model_associations => {
-            is => 'Genome::Model::Input',
-            reverse_as => '_model_value',
-            doc => 'links to models which use this model as an input',
-        },
-        downstream_models => {
-            is => 'Genome::Model',
-            via => 'downstream_model_associations',
-            to => 'model',
-            doc => 'models which use this model as an input',
-        },
         inputs => {
             is => 'Genome::Model::Input',
             reverse_as => 'model',
@@ -886,39 +875,6 @@ sub real_input_properties {
 
     return @properties;
 }
-
-# Called when a build of this model succeeds, requests builds for "downstream" models
-# (eg, models that have this model as an input)
-sub _trigger_downstream_builds {
-    my ($self, $build) = @_;
-    
-    my @downstream_models = $self->downstream_models;
-    for my $next_model (@downstream_models) {
-        my $latest_build = $next_model->latest_build;
-        if (my @found = $latest_build->input_associations(value_id => $build->id)) {
-            $self->status_message("Downstream model has build " . $latest_build->__display_name__ . ", which already uses this build.");
-            next;  
-        }
-        
-        unless ($next_model->can("auto_build")) {
-            $self->status_message("Downstream model " . $next_model->__display_name__ . " is has no auto-build method!  New builds should be started manually as needed.");
-            next;
-        }
-
-
-        unless ($next_model->auto_build) {
-            $self->status_message("Downstream model " . $next_model->__display_name__ . " is not set to auto-build.  New builds should be started manually as needed.");
-            next;
-        }
-
-        $self->status_message("Requesting rebuild of subsequent model " . $next_model->__display_name__ . ".");
-        $next_model->build_requested(1, 'auto build after completion of ' . $build->__display_name__); 
-    }
-
-    return 1;
-}
-
-
 
 # TODO This method should return a generic default model name and be overridden in subclasses.
 sub default_model_name {

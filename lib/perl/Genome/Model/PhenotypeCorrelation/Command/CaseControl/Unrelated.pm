@@ -19,6 +19,9 @@ class Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated {
             is => 'Genome::Model::Build::ImportedAnnotation',
             doc => 'ID of ImportedAnnotation build with the desired ensembl version.',
         },
+        reference_version => {
+            is => 'String',
+        },
         sample_list_file => {
             is => "String",
             doc => 'File containing samples names, 1 per line, for input into MuSiC',
@@ -296,6 +299,7 @@ sub _create_workflow {
                 output_file => $vep_annotation_file_path,
                 work_dir => $vep_work_directory,
                 ensembl_annotation_build => $ensembl_annotation_build,
+                reference_version => $self->reference_version,
                 log_dir => $log_dir,
                 analysis_build => $self->build,
                 analysis_project => $self->build->model->analysis_projects,

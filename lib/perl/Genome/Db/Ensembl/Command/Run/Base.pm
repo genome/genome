@@ -24,6 +24,11 @@ class Genome::Db::Ensembl::Command::Run::Base {
             is_optional => 1,
             default_value => "2_2",
         },
+        reference_version => {
+            is => 'Text',
+            is_optional => 1,
+            valid_values => [qw(GRCh37 GRCh38 GRCm38)],
+        },
         input_file => {
             is => 'String',
             doc => 'File of variants to be annotated',
@@ -756,6 +761,10 @@ sub cache {
         else {
             $cache_result_params{sift} = 0;
         }
+        unless ($self->reference_version) {
+            die "Must specify reference version if using vep cache";
+        }
+        $cache_result_params{reference_version} = $self->reference_version;
         $cache_result_params{users} = $self->_result_users;
         $cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
     }

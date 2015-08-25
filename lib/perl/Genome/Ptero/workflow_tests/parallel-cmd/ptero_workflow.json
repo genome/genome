@@ -1,22 +1,19 @@
 {
    "links" : [
       {
+         "dataFlow" : {
+            "prefixes" : "prefix",
+            "suffix" : "suffix"
+         },
          "destination" : "Appender",
-         "destinationProperty" : "prefix",
-         "source" : "input connector",
-         "sourceProperty" : "prefixes"
+         "source" : "input connector"
       },
       {
-         "destination" : "Appender",
-         "destinationProperty" : "suffix",
-         "source" : "input connector",
-         "sourceProperty" : "suffix"
-      },
-      {
+         "dataFlow" : {
+            "output" : "outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "outputs",
-         "source" : "Appender",
-         "sourceProperty" : "output"
+         "source" : "Appender"
       }
    ],
    "tasks" : {
@@ -37,8 +34,8 @@
                      "test_logs/parallel-cmd"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "shell-command"
             },
@@ -57,8 +54,8 @@
                      "test_logs/parallel-cmd"
                   ],
                   "environment" : {},
-                  "user" : null,
-                  "workingDirectory" : ""
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "shell-command"
             }

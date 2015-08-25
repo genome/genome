@@ -841,6 +841,8 @@ sub create_directory {
 sub make_path {
     my ($path) = validate_pos(@_, {type => SCALAR});
 
+    return 1 if -d $path; #This also triggers the automounter so mkdir() gets EEXIST instead of EACCES.
+
     my $gid = gidgrnam(Genome::Config::get('sys_group'));
 
     my @dirs = File::Spec->splitdir($path);
@@ -856,11 +858,9 @@ sub make_path {
                 set_gid($gid, $subpath);
             }
         } else {
-            if ($mkdir_errno == EEXIST) {
-                next;
-            } else {
+            if ($mkdir_errno != EEXIST) {
                 Carp::confess("While creating path ($path), failed to create " .
-                    "directory ($subpath) because ($!)");
+                    "directory ($subpath) because ($mkdir_errno)");
             }
         }
     }
@@ -1010,6 +1010,12 @@ sub write_file {
         $fh->close or Carp::croak "Failed to close file $fname! $!";
     }
     return $fname;
+}
+
+sub write_temp_file {
+    my ($self, @content) = @_;
+    my $filename = $self->create_temp_file_path();
+    return $self->write_file($filename, @content);
 }
 
 sub _open_file {
@@ -1409,6 +1415,16 @@ sub shellcmd {
     my $print_status_to_stderr       = delete $params{print_status_to_stderr};
     my $keep_dbh_connection_open     = delete $params{keep_dbh_connection_open};
 
+    my @cmdline;
+    if (ref($cmd) and ref($cmd) eq 'ARRAY') {
+        if (defined $set_pipefail) {
+            Carp::confess "Cannot use set_pipefail with ARRAY form of cmd!";
+        }
+
+        @cmdline = @$cmd;
+        $cmd = join(' ', map $self->quote_for_shell($_), @cmdline);
+    }
+
     $set_pipefail = 1 if not defined $set_pipefail;
     $print_status_to_stderr = 1 if not defined $print_status_to_stderr;
     $skip_if_output_is_present = 1 if not defined $skip_if_output_is_present;
@@ -1500,15 +1516,7 @@ sub shellcmd {
                 # parent
                 waitpid($pid, 0);
                 $system_retval = $?;
-                # add a new line so that bad programs don't break TAP, etc
-                # Adding a newline to the redirected stdout file isn't strictly
-                # necessary, but is included for compatibility with previous versions
-                # of this code that always printed an extra newline to STDOUT, whether
-                # it was redirected or not.
-                my $extra_newline = $redirect_stdout
-                                    ? IO::File->new($redirect_stdout, O_WRONLY|O_APPEND)
-                                    : *STDOUT;
-                print $extra_newline "\n";
+                print STDOUT "\n" unless $redirect_stdout; # add a new line so that bad programs don't break TAP, etc.
 
             } else {
                 # child
@@ -1532,8 +1540,12 @@ sub shellcmd {
                 {   # POE sets a handler to ignore SIG{PIPE}, that makes the
                     # pipefail option useless.
                     local $SIG{PIPE} = 'DEFAULT';
-                    my @cmdline = ('bash', '-c', "$shellopts_part $cmd");
-                    exec(@cmdline)
+
+                    unless (@cmdline) {
+                        @cmdline = ('bash', '-c', "$shellopts_part $cmd");
+                    }
+
+                    exec { $cmdline[0] } (@cmdline)
                         or do {
                             print STDERR "Can't exec: $!\nCommand line was: ",join(' ', @cmdline),"\n";
                             exit(127);

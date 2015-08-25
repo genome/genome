@@ -14,6 +14,8 @@ use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Model::ReferenceSequence;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Sample;
+use Genome::Test::Factory::Library;
+use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Utility::Test;
 use Test::More;
 use File::DirCompare;
@@ -65,6 +67,20 @@ sub get_build {
     $discovery_model->add_region_of_interest_set(id => $roi->id);
 
     my $discovery_build = Genome::Test::Factory::Build->setup_object(model_id => $discovery_model->id);
+    my $tumor_library = Genome::Test::Factory::Library->setup_object(name => 'library1', sample => $tumor_sample);
+    my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(library_id => $tumor_library->id);
+    Genome::Model::Build::Input->create(build_id => $discovery_build->id,
+        value_class_name => $instrument_data->class,
+        value_id => $instrument_data->id,
+        name => 'instrument_data');
+    if (defined $normal_sample) {
+        my $normal_library = Genome::Test::Factory::Library->setup_object(name => 'library2', sample => $normal_sample);
+        my $normal_inst_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(library_id => $normal_library->id);
+        Genome::Model::Build::Input->create(build_id => $discovery_build->id,
+            value_class_name => $normal_inst_data->class,
+            value_id => $normal_inst_data->id,
+            name => 'instrument_data');
+    }
     my $dbsnp_model = Genome::Test::Factory::Model::ImportedVariationList->setup_object();
     my $dbsnp_build = Genome::Test::Factory::Build->setup_object(model_id => $dbsnp_model->id);
     $discovery_build->previously_discovered_variations_build($dbsnp_build);

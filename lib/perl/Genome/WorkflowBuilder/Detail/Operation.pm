@@ -59,10 +59,12 @@ sub from_xml_element {
 }
 
 sub input_properties {}
+sub optional_input_properties {}
 sub output_properties {}
 sub operation_type_attributes {}
 
 sub is_input_property {}
+sub is_optional_input_property {}
 sub is_output_property {}
 sub is_many_property {}
 
@@ -149,8 +151,7 @@ sub validate {
     my $self = shift;
 
     if ($_INVALID_NAMES->contains($self->name)) {
-        die $self->error_message(sprintf("Operation name '%s' is not allowed",
-            $self->name));
+        die sprintf("Operation name '%s' is not allowed", $self->name);
     }
 
     return;
@@ -168,10 +169,7 @@ sub _get_operation_type_xml_element {
 
     $element->setAttribute('typeClass', $self->operation_type);
 
-    map {$self->_add_property_xml_element($element, 'inputproperty', $_)}
-        $self->input_properties;
-    map {$self->_add_property_xml_element($element, 'outputproperty', $_)}
-        $self->output_properties;
+    $self->_add_property_xml_elements($element);
 
     my %attributes = $self->operation_type_attributes;
     for my $attr_name (keys(%attributes)) {
@@ -181,11 +179,27 @@ sub _get_operation_type_xml_element {
     return $element;
 }
 
+sub _add_property_xml_elements {
+    my ($self, $element) = @_;
+
+    my @input_properties = sort Set::Scalar->new($self->input_properties,
+        $self->optional_input_properties)->members;
+    map {$self->_add_property_xml_element($element, 'inputproperty', $_)}
+        @input_properties;
+    map {$self->_add_property_xml_element($element, 'outputproperty', $_)}
+        $self->output_properties;
+
+    return;
+}
+
 sub _add_property_xml_element {
     my ($self, $element, $xml_tag, $text) = @_;
 
     my $inner_element = XML::LibXML::Element->new($xml_tag);
     $inner_element->appendText($text);
+    if ($self->is_optional_input_property($text)) {
+        $inner_element->setAttribute('isOptional', 'Y');
+    }
     $element->addChild($inner_element);
 
     return;
@@ -211,6 +225,27 @@ sub _get_sanitized_env {
         }
     }
     return $env;
+}
+
+sub operationtype_attributes_from_xml_element {
+    my ($class, $element) = @_;
+
+    my %properties;
+    my %expected_attributes = $class->expected_attributes;
+    for my $property_name (keys(%expected_attributes)) {
+        my $attribute_name = $expected_attributes{$property_name};
+        $properties{$property_name} = $class->_get_value_from_xml_element(
+            $element, $attribute_name);
+    }
+    return %properties;
+}
+
+sub _get_value_from_xml_element {
+    my ($class, $element, $name) = @_;
+
+    my $nodes = $element->find('operationtype');
+    my $operation_type_element = $nodes->pop;
+    return $operation_type_element->getAttribute($name);
 }
 
 

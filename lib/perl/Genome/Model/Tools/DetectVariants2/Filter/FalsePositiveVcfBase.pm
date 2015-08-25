@@ -690,6 +690,8 @@ sub generate_and_run_readcounts_in_parallel {
         $self->error_message(@errors);
         die "Errors validating workflow\n";
     }
+
+    Genome::Sys->disconnect_default_handles;
     $self->debug_message("Now launching readcount generation jobs");
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
     unless($result) {

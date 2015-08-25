@@ -35,7 +35,7 @@ class Genome::Model::SomaticValidation::Command::DetectVariants{
             default => Genome::Config::get('lsf_queue_build_worker'),
         },
         lsf_resource => {
-            default => "-R 'select[tmp>4000 && mem>600] rusage[tmp=4000,mem=600]' -M 600000",
+            default => Genome::Config::get('lsf_resource_dv2_dispatcher'),
         },
     ],
     #specific things used by the final process-validation script

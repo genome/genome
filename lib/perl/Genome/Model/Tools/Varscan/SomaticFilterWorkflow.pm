@@ -20,7 +20,7 @@ class Genome::Model::Tools::Varscan::SomaticFilterWorkflow {
     },
     prefix => {
         is => 'Text',
-        doc => "Input VarScan SNV prefix. The SNV files are found by looking for \$prefix.\$chr.snp",
+        doc => "Input VarScan SNV prefix. The SNV files are found by looking for \$prefix.\$chr.unfiltered",
     },
     reference => {
         is => 'Text',
@@ -45,7 +45,8 @@ sub help_brief {
 sub help_synopsis {
     return <<EOS
 Filter Varscan somatic SNVs
-gmt varscan somatic-parallel-filter --normal-bam nbam --tumor-bam  tbam --output varscan.snps
+gmt varscan somatic-parallel-filter --normal-bam nbam --tumor-bam  tbam --output test.filtered \
+ --prefix test.snps --reference ~/test.fa --bamrc_version 0.7
 EOS
 }
 
@@ -64,7 +65,7 @@ sub get_variant_files {
         my $line = $_;
         my ($chrom) = split(/\t/, $line);
         next if($chrom =~ 'NT_' || $chrom =~ /GL/ || $chrom =~ /MT/);
-        my $variant_f = join "", $prefix, ".$chrom.snp";
+        my $variant_f = join "", $prefix, ".$chrom.unfiltered";
         if(-e $variant_f) {
             push @$variant_files, $variant_f;
         }
@@ -154,7 +155,7 @@ sub run_format_workflow {
     $self->validate_workflow($w);
 
     # Launch workflow
-    $self->status_message("Launching workflow now.");
+    $self->status_message("Launching format workflow now.");
     my $result = Workflow::Simple::run_workflow_lsf(
         $w,
         'variants_file' => $input->{variants_file},
@@ -180,7 +181,7 @@ sub run_process_workflow {
     $self->validate_workflow($w);
 
     # Launch workflow
-    $self->status_message("Launching workflow now.");
+    $self->status_message("Launching process workflow now.");
     my $result = Workflow::Simple::run_workflow_lsf(
         $w,
         'status_file' => $input->{format_output},

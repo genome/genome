@@ -5,7 +5,7 @@ use warnings;
 
 use Genome::Test::Config qw(setup_config);
 
-use Test::More tests => 6;
+use Test::More tests => 7;
 use Test::Fatal qw(exception);
 
 
@@ -134,4 +134,38 @@ subtest 'env' => sub {
     ok($exception, 'got exception');
     local $ENV{SOME_KEY} = 'abc';
     is(Genome::Config::get('some_key'), 'abc', 'got value');
+};
+
+subtest 'default_from' => sub {
+    plan tests => 4;
+
+    my ($temp_dirs, $new_temp_dir) = Genome::Test::Config::temp_dir_helper();
+    local $ENV{XGENOME_CONFIG_SNAP} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_HOME} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
+
+    setup_config(
+        spec => {
+            foo => {
+                default_value => 'default_foo',
+            },
+            bar => {
+                default_from => 'foo',
+            },
+            baz => {
+                default_from => 'bar',
+            },
+            qux => {
+                default_value => 'default_baz',
+                default_from => 'foo',
+            },
+        },
+    );
+
+    is(Genome::Config::get('foo'), 'default_foo', '`foo` has default value');
+    is(Genome::Config::get('bar'), 'default_foo', 'single (depth) default_from worked');
+    is(Genome::Config::get('baz'), 'default_foo', 'nested (depth) default_from worked');
+
+    my $exception = exception { Genome::Config::spec('qux') };
+    ok($exception, 'loading `qux` spec caused exception (due to specifying both `default_value` and `default_from`)');
 };

@@ -40,6 +40,8 @@ Converts a BED file to an Picard Interval List.
 EOS
 }
 
+sub minimum_version_required { '1.120'; }
+
 sub _jar_name {
     return 'BedToIntervalList.jar';
 }
@@ -54,11 +56,6 @@ sub _shellcmd_extra_params {
         input_files => [$self->input, $self->sequence_dictionary],
         skip_if_output_is_present => 0,
         );
-}
-
-sub _validate_params {
-    my $self = shift;
-    $self->enforce_minimum_version('1.120');
 }
 
 1;

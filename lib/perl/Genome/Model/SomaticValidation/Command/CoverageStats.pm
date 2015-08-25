@@ -128,18 +128,6 @@ sub params_for_result {
 
     my $fl = $build->region_of_interest_set;
 
-    my $use_short_roi = 1;
-    my $short_roi_input = Genome::Model::Build::Input->get(name => 'short_roi_names', build => $build);
-    if($short_roi_input) {
-        $use_short_roi = $short_roi_input->value_id;
-    }
-
-    my $merge_regions = 1;
-    my $merge_regions_input = Genome::Model::Build::Input->get(name => 'merge_roi_set', build => $build);
-    if($merge_regions_input) {
-        $merge_regions = $merge_regions_input->value_id;
-    }
-
     my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
 
     return (

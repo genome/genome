@@ -49,8 +49,7 @@ sub _picard_param_metas {
 sub _format_picard_arg {
     my ($type, $name, $value) = @_;
     $value = $value ? 'true' : 'false' if $type eq 'Boolean';
-    $value = qq{"$value"} if $type eq 'Text';
-    return sprintf '%s=%s', $name, $value;
+    return sprintf('%s=%s', $name, Genome::Sys->quote_for_shell($value));
 }
 
 # given a property meta object (defining property name, and ostensibly
@@ -109,7 +108,6 @@ sub _cmdline_args {
 sub _validate_params {
     # example:
     # my $self = shift;
-    # $self->enforce_minimum_version('1.85');
     # die unless -s $self->input_file;
     # $self->be_noisy(0) unless $self->log_file;
 }
@@ -170,6 +168,7 @@ sub build_cmdline_string {
 sub execute {
     my $self = shift;
 
+    $self->enforce_minimum_version_required;
     $self->_validate_params;
 
     my %params = (

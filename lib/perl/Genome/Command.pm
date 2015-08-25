@@ -30,6 +30,7 @@ my %command_map = (
     'project' => 'Genome::Project::Command',
     'project-part' => 'Genome::ProjectPart::Command',
     'ptero' => 'Genome::Ptero',
+    'qc' => 'Genome::Qc::Command',
     'report' => 'Genome::Report::Command',
     'sample' => 'Genome::Sample::Command',
     'search' => 'Genome::Command::Search',
@@ -39,6 +40,7 @@ my %command_map = (
     'task' => 'Genome::Task::Command',
     'taxon' => 'Genome::Taxon::Command',
     'tools' => 'Genome::Model::Tools',
+    'test' => 'Genome::Test::Command',
 );
 
 $Genome::Command::SUB_COMMAND_MAPPING = \%command_map;

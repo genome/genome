@@ -10,15 +10,18 @@ class Genome::Model::Tools::Gatk::IndelRealigner {
     has_input => [
         target_intervals => {
             is => 'Text',
+            gatk_param_name => '-targetIntervals',
             doc => 'The file of indels around which you wish to do realignment',
         },
         output_realigned_bam => {
             is_output => 1,
             is => 'Text',
+            gatk_param_name => '-o',
             doc => 'The path to where you would like the realigned output bam',
         },
         input_bam => {
             is => 'Text',
+            gatk_param_name => '-I',
             doc => 'The path to the original bam you would like to be realigned',
         },
         target_intervals_are_sorted => {
@@ -28,6 +31,7 @@ class Genome::Model::Tools::Gatk::IndelRealigner {
         },
         reference_fasta => {
             is => 'Text',
+            gatk_param_name => '-R',
             doc => "Reference Fasta" ,
         },
         index_bam => {
@@ -37,9 +41,18 @@ class Genome::Model::Tools::Gatk::IndelRealigner {
         },
         known => {
             is => 'Text',
+            gatk_param_name => '--knownAlleles',
             doc => "Input VCF file(s) with known indels",
             is_optional => 1,
             is_many => 1,
+        },
+    ],
+    has_optional_input => [
+        _target_intervals_are_not_sorted => {
+            is => 'Boolean',
+            calculate_from => ['target_intervals_are_sorted'],
+            calculate => q{ return !$target_intervals_are_sorted },
+            gatk_param_name => '--targetIntervalsAreNotSorted',
         },
     ],
 };
@@ -54,17 +67,27 @@ sub help_synopsis {
 EOS
 }
 
-sub execute {
+sub analysis_type {
+    return 'IndelRealigner';
+}
+
+sub _shellcmd_extra_params {
     my $self = shift;
 
-    unless ($self->_check_inputs) {
-        return;
+    unless ($self->target_intervals_are_sorted) {
+        unless ($self->is_legacy_version($self->version)) {
+            die $self->error_message("Version ".$self->version." does not support non-sorted target intervals.");
+        }
     }
-    my $command = $self->indel_realigner_command;
 
-    unless (Genome::Sys->shellcmd(cmd => $command)) {
-        die $self->error_message("Failed to execute $command");
-    }
+    return (
+        input_files => [$self->known, $self->target_intervals, $self->input_bam, $self->reference_fasta],
+        output_files => [$self->output_realigned_bam],
+    );
+}
+
+sub _postprocess {
+    my $self = shift;
 
     if ($self->index_bam) {
         my $aligned_bam = $self->output_realigned_bam;
@@ -75,24 +98,6 @@ sub execute {
     }
 
     return 1;
-}
-
-sub indel_realigner_command {
-    my $self = shift;
-    my $gatk_command = $self->base_java_command;
-    $gatk_command .= " -T IndelRealigner";
-    $gatk_command .= " -targetIntervals " . $self->target_intervals;
-    $gatk_command .= " -o " . $self->output_realigned_bam;
-    $gatk_command .= " -I " . $self->input_bam;
-    $gatk_command .= " -R " . $self->reference_fasta;
-    unless ($self->target_intervals_are_sorted) {
-        $gatk_command .= " --targetIntervalsAreNotSorted";
-    }
-    my @known = $self->known;
-    if (@known) {
-        $gatk_command .= " --knownAlleles ".join(" --knownAlleles ", @known);
-    }
-    return $gatk_command;
 }
 
 sub _check_inputs {

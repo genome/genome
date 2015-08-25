@@ -1,80 +1,58 @@
 {
    "links" : [
       {
-         "destination" : "Parallel Model Test",
-         "destinationProperty" : "prefixes",
-         "source" : "input connector",
-         "sourceProperty" : "prefixes"
+         "destination" : "set status Running",
+         "source" : "input connector"
       },
       {
          "destination" : "Parallel Model Test",
-         "destinationProperty" : "suffix",
-         "source" : "input connector",
-         "sourceProperty" : "suffix"
+         "source" : "set status Running"
       },
       {
+         "dataFlow" : {
+            "prefixes" : "prefixes",
+            "suffix" : "suffix"
+         },
+         "destination" : "Parallel Model Test",
+         "source" : "input connector"
+      },
+      {
+         "dataFlow" : {
+            "outputs" : "outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "outputs"
+         "source" : "Parallel Model Test"
       },
       {
          "destination" : "set status Succeeded",
-         "destinationProperty" : "outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "outputs"
+         "source" : "Parallel Model Test"
       },
       {
          "destination" : "output connector",
-         "destinationProperty" : "dummy_output for Genome::Process(123)",
-         "source" : "set status Succeeded",
-         "sourceProperty" : "dummy_output"
+         "source" : "set status Succeeded"
       }
    ],
    "tasks" : {
       "Parallel Model Test" : {
          "methods" : [
             {
-               "name" : "set status Running",
-               "parameters" : {
-                  "commandLine" : [
-                     "genome",
-                     "process",
-                     "set-status",
-                     "123",
-                     "Running",
-                     "--exit-code",
-                     1
-                  ],
-                  "environment" : {
-                     "FOO" : "bar"
-                  },
-                  "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
-               },
-               "service" : "shell-command"
-            },
-            {
                "name" : "Parallel Model Test",
                "parameters" : {
                   "links" : [
                      {
+                        "dataFlow" : {
+                           "prefixes" : "prefix",
+                           "suffix" : "suffix"
+                        },
                         "destination" : "Appender",
-                        "destinationProperty" : "prefix",
-                        "source" : "input connector",
-                        "sourceProperty" : "prefixes"
+                        "source" : "input connector"
                      },
                      {
-                        "destination" : "Appender",
-                        "destinationProperty" : "suffix",
-                        "source" : "input connector",
-                        "sourceProperty" : "suffix"
-                     },
-                     {
+                        "dataFlow" : {
+                           "output" : "outputs"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "outputs",
-                        "source" : "Appender",
-                        "sourceProperty" : "output"
+                        "source" : "Appender"
                      }
                   ],
                   "tasks" : {
@@ -142,6 +120,30 @@
                      "Crashed",
                      "--exit-code",
                      1
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "set status Running" : {
+         "methods" : [
+            {
+               "name" : "set status Running",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Running",
+                     "--exit-code",
+                     0
                   ],
                   "environment" : {
                      "FOO" : "bar"

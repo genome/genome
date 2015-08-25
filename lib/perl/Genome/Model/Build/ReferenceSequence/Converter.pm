@@ -5,7 +5,6 @@ use warnings;
 use strict;
 use Sys::Hostname;
 
-
 class Genome::Model::Build::ReferenceSequence::Converter {
     is => ['Genome::SoftwareResult'],
     has => [
@@ -29,8 +28,9 @@ class Genome::Model::Build::ReferenceSequence::Converter {
         },
     ],
     has_metric => [
-        algorithm => {
+        algorithm => { # README - If adding an algorithm, please add to the list of valid algorithms
             is => 'Text',
+            valid_values => [qw/ convert_position convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op /],
             doc => 'method to use to convert from the source to the destination',
         },
         resource => {
@@ -40,22 +40,6 @@ class Genome::Model::Build::ReferenceSequence::Converter {
         },
     ],
 };
-
-sub __errors__ {
-    my $self = shift;
-
-    my @errors = $self->SUPER::__errors__;
-
-    unless($self->can($self->algorithm)) {
-        push @errors,UR::Object::Tag->create(
-            type => 'error',
-            properties => ['algorithm'],
-            desc => 'specified algorithm ' . $self->algorithm . ' not found in ' . __FILE__,
-        );
-    }
-
-    return @errors;
-}
 
 sub exists_for_references {
     my $class = shift;

@@ -17,6 +17,7 @@ use File::Find::Rule qw();
 use File::Spec qw();
 use IPC::System::Simple qw(capture);
 use List::MoreUtils qw(uniq);
+use Params::Validate ':types';
 use Set::Scalar;
 use Sub::Install;
 
@@ -312,7 +313,9 @@ sub data_dir_ok {
 }
 
 sub data_dir {
-    my ($class, $package, $test_version) = @_;
+    my ($class, $package, $test_version) = Params::Validate::validate_pos(
+        @_, {isa => __PACKAGE__}, {can => 'class'}, {type => SCALAR, optional => 1},
+    );
 
     # "validate" package
     $package->class;
@@ -529,6 +532,34 @@ terminal during the execution, but the message contents will not be checked.
 =item command_execute_fail_ok
 
 Like command_execute_ok(), but this test fails if the command's execution returns true.
+
+=back
+
+=item data_dir
+
+  my $dir = Genome::Utility::Test->data_dir($package, $version);
+
+  Synopsis
+  Given a package name and optional version, locate the directory for test data.
+
+  Params
+  $package => package name
+  $version => optionally, the version of the test data
+
+  Returns
+  $dir     => test data directory for package/version
+
+=back
+
+=item data_dir_ok
+
+  my $dir = Genome::Utility::Test->data_dir_ok($package, $version);
+
+  Synopsis
+  Params and return are the same as data_dir(), but tests (via ok) if the directory exists.
+
+  Returns
+  $dir     => test data directory for package/version regardless if the test for existence passes
 
 =back
 

@@ -8,7 +8,7 @@ use Genome;
 use Try::Tiny;
 
 class Genome::Disk::Command::Volume::SyncUsage {
-    is => ['Genome::Role::Logger', 'Command::V2'],
+    is => 'Command::V2',
     has => {
         volumes => {
             is => 'Genome::Disk::Volume',
@@ -27,44 +27,35 @@ class Genome::Disk::Command::Volume::SyncUsage {
             doc => 'Sync unallocated_kb?',
         },
     },
-    has_transient => {
-        tie_stderr => {
-            is => 'Boolean',
-            default => 1,
-            doc => '(warning) globally tie STDERR to this logger',
-        },
-    },
-    doc => 'Sync usage info for volume (e.g. total KB and unallocated KB)',
+    doc => 'Sync total and unallocated KB usage for volumes',
 };
 
 sub help_detail {
-    'Sync usage info for volume (e.g. total KB and unallocated KB).'
+    return __PACKAGE__->__meta__->doc;
 }
 
 sub execute {
     my $self = shift;
+    $self->status_message('Disk volume sync usage...');
 
-    my %args = (verbose => 1);
     for my $volume ( $self->volumes ) {
-        my $transaction = UR::Context::Transaction->begin;
-        try {
-            $self->info('Syncing volume: '.$volume->mount_path);
-            if ($self->total_kb)      {
-                $self->debug('Sync total kB...');
-                $volume->sync_total_kb(%args);
-            }
-            if ($self->unallocated_kb) {
-                $self->debug('Sync unallocated kB...');
-                $volume->sync_unallocated_kb(%args);
-            }
-            $transaction->commit or die 'Failed to commit volume! '.$volume->mount_path;
+        $self->status_message('Syncing volume: %s', $volume->mount_path);
+        for my $type (qw/ total unallocated /) {
+            my $method = $type.'_kb';
+            next unless $self->$method;
+            my $kb = $volume->$method;
+            my $sync_method = 'sync_'.$method;
+            my $new_kb;
+            try {
+                $new_kb = $volume->$sync_method;
+            } catch {
+                $self->error_message("%sFailed to update %s kB!", $_, $type);
+            };
+            $self->status_message('Successfully updated %s kB from %d to %d', $type, $kb, $new_kb) if defined $new_kb;
         }
-        catch {
-            $self->error($_);
-            $transaction->rollback;
-        };
     }
 
+    $self->status_message('Disk volume sync usage...OK');
     return 1;
 }
 

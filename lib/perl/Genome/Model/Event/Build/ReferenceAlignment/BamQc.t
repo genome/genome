@@ -68,7 +68,7 @@ for my $aligner (qw(bwamem bwamem-stream)) {
     );
 
     is($bamqc_class->_select_error_rate_version_for_pp($test_pp),
-        '1.0a2',
+        '1.0a3',
         'New ErrorRate version chosen correctly'
     );
 }

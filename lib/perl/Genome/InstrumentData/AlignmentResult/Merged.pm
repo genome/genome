@@ -3,7 +3,6 @@ package Genome::InstrumentData::AlignmentResult::Merged;
 use strict;
 use warnings;
 
-use Sys::Hostname;
 use File::Find::Rule qw();
 use File::stat;
 use File::Path 'rmtree';
@@ -13,6 +12,12 @@ use Try::Tiny qw(try catch finally);
 
 use Genome;
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
+use Genome::InstrumentData::AlignmentResult::Merged::Helpers qw(
+    create_bam_md5
+    resolve_allocation_subdirectory
+    resolve_alignment_subdirectory
+    resolve_allocation_disk_group_name
+);
 
 class Genome::InstrumentData::AlignmentResult::Merged {
     is => ['Genome::InstrumentData::AlignedBamResult::Merged', 'Genome::SoftwareResult::WithNestedResults'],
@@ -224,8 +229,9 @@ sub create {
         $self->debug_message('Merge done');
     }
     catch {
+        my $err = $_;
         $tx->rollback();
-        die $class->error_message('Merge failed due to error: ' . $_);
+        die $class->error_message('Merge failed due to error: ' . $err);
     };
 
     $self->_reallocate_disk_allocation;
@@ -395,18 +401,10 @@ sub required_rusage {
     return ''; #FIXME This needs to be filled in
 }
 
-sub resolve_allocation_disk_group_name {
-    Genome::Config::get('disk_group_models');
-}
-
 sub resolve_allocation_kilobytes_requested {
     my $self = shift;
     my @alignments = $self->collect_individual_alignments;
     return $self->estimated_kb_usage(\@alignments);
-}
-
-sub resolve_allocation_subdirectory {
-    return $_[0]->resolve_alignment_subdirectory;
 }
 
 sub estimated_kb_usage {
@@ -437,17 +435,6 @@ sub estimated_kb_usage {
     $total_size = ($total_size * 2);
 
     return $total_size;
-}
-
-sub resolve_alignment_subdirectory {
-    my $self = shift;
-
-    my $hostname = hostname;
-    my $user = $ENV{'USER'};
-    my $base_dir = sprintf("merged-alignment-%s-%s-%s-%s", $hostname, $user, $$, $self->id);
-    # TODO: the first subdir is actually specified by the disk management system.
-    my $directory = join('/', 'build_merged_alignments', $base_dir);
-    return $directory;
 }
 
 sub _prepare_working_directories {
@@ -716,25 +703,6 @@ sub _resolve_duplication_metrics_name {
     return $bam_path . '.metrics';
 }
 
-sub create_bam_md5 {
-    my $self = shift;
-
-    my $bam_file = shift;
-    my $md5_file = $bam_file.'.md5';
-    my $cmd = "md5sum $bam_file > $md5_file";
-
-    $self->debug_message("Creating md5 file for the BAM file...");
-
-    Genome::Sys->shellcmd(
-        cmd                        => $cmd,
-        input_files                => [$bam_file],
-        output_files               => [$md5_file],
-        skip_if_output_is_present  => 0,
-    );
-
-    return 1;
-}
-
 sub bowtie_version { return shift->scalar_property_from_underlying_alignment_results('bowtie_version'); }
 
 sub scalar_property_from_underlying_alignment_results {
@@ -763,5 +731,12 @@ sub scalar_property_from_underlying_alignment_results {
     }
 }
 
+sub estimated_gtmp_for_instrument_data  {
+    my $class = shift;
+    die $class->error_message(
+        "Attempted to call estimated_gtmp_for_instrument_data() on %s which does not implement it!",
+        $class
+    );
+}
 
 1;

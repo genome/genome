@@ -41,7 +41,7 @@ sub execute {
         '--refFile', $self->ref_fasta,
     );
 
-    return $self->shellcmd_arrayref(
+    return $self->run_python_shellcmd(
         cmd => \@cmd,
         input_files => [
             $self->input_vcf,

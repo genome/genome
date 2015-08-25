@@ -12,6 +12,7 @@ use Carp qw();
 use Genome::Utility::Text;
 
 class Genome::SoftwareResult::User {
+    is => ['Genome::Utility::ObjectWithLockedConstruction'],
     table_name => 'result.user',
     id_by => [
         id => { is => 'Text', len => 32 },
@@ -66,13 +67,13 @@ sub with_registered_users {
         allow_extra => 1,
     );
 
-    my $user_hash = delete $params{users};
+    my %user_hash = %{delete $params{users}}; #dereference to save a copy
     my $sr_callback = delete $params{callback};
 
     my ($software_result, $newly_created) = $sr_callback->(%params);
     return unless $software_result;
 
-    $class->_register_users($software_result, $user_hash, $newly_created);
+    $class->_register_users($software_result, \%user_hash, $newly_created);
 
     return $software_result;
 }
@@ -115,71 +116,15 @@ sub _register_users {
         aspect => 'precommit',
         once => 1,
         callback => sub {
-            my @locks;
             for my $params (@param_sets) {
                 next if grep { $params->{$_}->isa('UR::DeletedRef') } qw(user software_result);
-                push @locks, $class->_lock_and_create_if_needed($params);
+                $class->create($params);
             }
-
-            return unless @locks;
-
-            UR::Context->process->add_observer(
-                aspect => 'commit',
-                once => 1,
-                callback => sub {
-                    for my $lock (@locks) {
-                        $lock->unlock();
-                    }
-                }
-            );
         }
     );
     unless($observer) {
         die 'Failed to create observer';
     }
-}
-
-sub _lock_and_create_if_needed {
-    my $class = shift;
-    my $params = shift;
-
-    my $existing = $class->get(%$params);
-    return if $existing;
-
-    my $resource = $class->_resolve_lock_name($params);
-    my $lock = Genome::Sys::LockProxy->new(
-        resource => $resource,
-        scope => 'site',
-    )->lock();
-    $class->_load_or_create($params);
-
-    return $lock;
-}
-
-sub _load_or_create {
-    my $class = shift;
-    my $params = shift;
-
-    my $self = $class->load(%$params);
-    unless($self) {
-        $self = $class->create(%$params);
-    }
-
-    return 1;
-}
-
-sub _resolve_lock_name {
-    my $class = shift;
-    my $params = shift;
-
-    my $label = $params->{label};
-    if(length($label) >= 32) {
-        $label = Genome::Sys->md5sum_data($label);
-    }
-
-    return 'genome/software-result-user/' . Genome::Utility::Text::sanitize_string_for_filesystem(
-        join('_', $label, $params->{user}->id, $params->{software_result}->id)
-    );
 }
 
 sub _role_for_type {
@@ -205,6 +150,21 @@ sub user_hash_for_build {
         requestor => $build,
         sponsor   => $sponsor,
     };
+}
+
+sub lock_id {
+    my $class = shift;
+
+    my $bx = $class->define_boolexpr(@_);
+
+    my $label = $bx->value_for('label');
+    if(length($label) >= 32) {
+        $label = Genome::Sys->md5sum_data($label);
+    }
+
+    return Genome::Utility::Text::sanitize_string_for_filesystem(
+        join('_', $label, $bx->value_for('user_id'), $bx->value_for('software_result_id'))
+    );
 }
 
 1;

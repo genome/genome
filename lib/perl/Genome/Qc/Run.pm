@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::Qc::Run {
     is => 'Genome::Command::DelegatesToResult',
-    has => [
+    has_input => [
         config_name => {
             is => 'Text',
         },

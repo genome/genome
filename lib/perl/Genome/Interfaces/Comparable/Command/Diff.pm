@@ -58,11 +58,17 @@ sub diffs_message {
     my $self = shift;
     my $diffs = $self->_diffs;
     my $diff_string = "DIFFERENCES FOUND:\n";
+    $diff_string .= sprintf(" Comparing new object %s to blessed object %s\n", $self->new_object->id, $self->blessed_object->id);
     for my $file (sort keys %$diffs) {
         my $reason = $diffs->{$file};
         $diff_string .= "  File: $file\n  Reason: $reason\n";
     }
     return $diff_string;
+}
+
+sub has_diffs {
+    my $self = shift;
+    return scalar(keys %{$self->_diffs});
 }
 1;
 

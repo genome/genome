@@ -14,12 +14,18 @@ sub setup_user_hash {
     my $model = Genome::Test::Factory::Model::SomaticValidation->setup_object(@model_params);
     my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 
-    my $user = Genome::Sys->current_user;
+    return $self->setup_user_hash_with_build($build);
+}
 
+sub setup_user_hash_with_build {
+    my $self = shift;
+    my $build = shift;
+
+    my $user = Genome::Sys->current_user;
     return {
         requestor => $build,
         sponsor   => $user,
-    };
+    }
 }
 
 1;

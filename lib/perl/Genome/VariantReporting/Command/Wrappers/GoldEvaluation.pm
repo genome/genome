@@ -9,7 +9,7 @@ use File::Basename qw(dirname);
 use File::Spec;
 
 class Genome::VariantReporting::Command::Wrappers::GoldEvaluation {
-    is => 'Command::V2',
+    is => ['Command::V2', 'Genome::VariantReporting::Command::Wrappers::Utils'],
     has_input => {
         model => {
             is => 'Genome::Model::SomaticValidation',
@@ -25,6 +25,32 @@ class Genome::VariantReporting::Command::Wrappers::GoldEvaluation {
             is => 'Path',
         },
     },
+
+    has => [
+        normal_sample => {
+          is => 'Genome::Sample',
+          via => 'model',
+          to => 'normal_sample',
+        },
+
+        normal_sample_name => {
+          is => 'Text',
+          via => 'normal_sample',
+          to => 'name',
+        },
+
+        discovery_sample => {
+          is => 'Genome::Sample',
+          via => 'model',
+          to => 'tumor_sample',
+        },
+
+        discovery_sample_name => {
+          is => 'Text',
+          via => 'discovery_sample',
+          to => 'name',
+        },
+    ],
 };
 
 sub execute {
@@ -36,7 +62,8 @@ sub execute {
     if ($self->is_single_bam($model)) {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
-            discovery => $model->last_succeeded_build,
+            common_translations => $self->get_germline_translations(),
+            discovery => $self->build,
             plan_file_basename => 'gold_germline_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
             label => 'gold_germline',
@@ -44,7 +71,8 @@ sub execute {
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
-            discovery => $model->last_succeeded_build,
+            common_translations => $self->get_somatic_translations(),
+            discovery => $self->build,
             plan_file_basename => 'gold_somatic_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
             label => 'gold_somatic',
@@ -62,6 +90,11 @@ sub execute {
     }
     return 1;
 };
+
+sub build {
+    my $self = shift;
+    return $self->model->last_succeeded_build;
+}
 
 sub is_valid {
     my $self = shift;
@@ -86,5 +119,39 @@ sub is_single_bam {
     return (!defined($model->normal_sample));
 }
 
-1;
+sub get_somatic_translations {
+    my $self = shift;
 
+    return {
+        sample_name_labels => {
+            $self->discovery_sample_name =>
+                sprintf('Discovery(%s)', $self->discovery_sample_name),
+            $self->normal_sample_name =>
+                sprintf('Normal(%s)', $self->normal_sample_name),
+            $self->gold_sample_name =>
+                sprintf('Gold(%s)', $self->gold_sample_name),
+        },
+        library_name_labels => {
+            $self->get_library_name_labels('discovery', $self->discovery_sample, [$self->build]),
+            $self->get_library_name_labels('normal', $self->normal_sample, [$self->build]),
+        },
+    };
+}
+
+sub get_germline_translations {
+    my $self = shift;
+
+    return {
+        sample_name_labels => {
+            $self->discovery_sample_name =>
+                sprintf('Discovery(%s)', $self->discovery_sample_name),
+            $self->gold_sample_name =>
+                sprintf('Gold(%s)', $self->gold_sample_name),
+        },
+        library_name_labels => {
+            $self->get_library_name_labels('discovery'),
+        },
+    };
+}
+
+1;

@@ -23,6 +23,9 @@ class Genome::Model::PhenotypeCorrelation::Command::ParallelVep {
             is => 'Genome::Model::Build::ImportedAnnotation',
             doc => 'ID of ImportedAnnotation build with the desired ensembl version.',
         },
+        reference_version => {
+            is => 'String',
+        },
         log_dir => {
             is => "File",
             doc => "Workflow log directory",
@@ -73,6 +76,7 @@ sub execute {
     my %inputs = (
         input_vcf => $vcf,
         ensembl_annotation_build_id => $self->ensembl_annotation_build->id,
+        reference_version => $self->reference_version,
         map { ($_, $self->$_) } keys %{ Genome::Db::Ensembl::Command::Run::Base->result_user_inputs() },
     );
     my @fixed_input_keys = keys %inputs;

@@ -151,19 +151,14 @@ my $move_rv = Genome::Disk::Allocation->reallocate(
     kilobytes_requested => $allocation->kilobytes_requested + 100,
     allow_reallocate_with_move => 1);
 # resets total_kb to actual usage; unshrink volume; needed for creating new allocations later in forked children
-$current_volume->sync_usage();
+$current_volume->sync_total_kb();
+$current_volume->sync_unallocated_kb();
 
 ok($allocation->volume->mount_path ne $current_volume->mount_path, "allocation moved to new volume");
 ok(-e $allocation->absolute_path . "/test_file", "touched file correctly moved to new allocation directory");
 ok(!Genome::Disk::Allocation->get(mount_path => $current_volume->mount_path, allocation_path => $allocation->allocation_path), 'no redundant allocation on old volume');
 
-# try generating summaries
-is(1, $allocation->_create_file_summaries(), 'successfully called _create_file_summaries');
-is(scalar(@{[$allocation->file_summaries]}), 1, 'summary generated for file in allocation');
-
 Genome::Sys->remove_directory_tree($allocation->absolute_path);
-isnt(1, $allocation->_create_file_summaries(), '_create_file_summaries fails when dir not found');
-like($allocation->warning_message, qr(Skipping file summaries), 'expected warning thrown');
 
 # Now delete the allocation
 Genome::Disk::Allocation->delete(id => $allocation->id);

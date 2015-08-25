@@ -107,6 +107,10 @@ class Genome::Model::Build {
             calculate => q( return $self->newest_workflow_instance(); ),
         },
         software_revision => { is => 'Text', len => 1000 },
+        process => {
+            is => 'Genome::Model::Build::Process',
+            reverse_as => 'build',
+        }
     ],
     has_many_optional_deprecated => [
         # the_* ?
@@ -295,7 +299,7 @@ sub model_class {
 sub data_set_path {
     my ($self, $dataset, $version, $file_format) = @_;
     my $path;
-    
+
     if ($version and $file_format) {
         $version =~ s/^v//;
         $path = $self->data_directory."/$dataset.v$version.$file_format";
@@ -357,7 +361,7 @@ sub __extend_namespace__ {
     if ($model_subclass_meta and $model_subclass_name->isa('Genome::Model')) {
         my $build_subclass_name = 'Genome::Model::Build::' . $ext;
         # The actual inputs and metrics are added during subclass definition preprocessing.
-        # Then the whole set is expanded, allowing the developer to write less of 
+        # Then the whole set is expanded, allowing the developer to write less of
         # # the build class.
         # See Genome/Model/Build.pm _preprocess_subclass_description.
         my $build_subclass_meta = UR::Object::Type->define(
@@ -1025,12 +1029,14 @@ sub start {
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
-        unless ($self->_initialize_workflow($params{job_dispatch} || Genome::Config::get('lsf_queue_build_worker_alt'))) {
+        my $workflow = $self->_initialize_workflow($params{job_dispatch} || Genome::Config::get('lsf_queue_build_worker_alt'));
+        unless ($workflow) {
             Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
 
         # Launches the workflow (in a pend state, it's resumed by a commit hook)
-        unless ($self->_launch(%params)) {
+        my $workflow_xml = $workflow->save_to_xml();
+        unless ($self->_launch(\%params, $workflow_xml)) {
             Carp::croak "Build " . $self->__display_name__ . " could not be launched!";
         }
 
@@ -1311,6 +1317,12 @@ sub _get_running_master_lsf_job {
     my $self = shift;
 
     my $job_id = $self->the_master_event->lsf_job_id;
+    if (not defined($job_id)) {
+        my $process = $self->process;
+        if ($process) {
+            $job_id = $process->lsf_job_id;
+        }
+    }
     return if not defined $job_id;
 
     my $job = $self->_get_job($job_id);
@@ -1353,8 +1365,8 @@ sub set_build_id {
 }
 
 sub _launch {
-    my $self = shift;
-    my %params = @_;
+    my ($self, $params, $workflow_xml) = @_;
+    my %params = %$params;
 
     local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
@@ -1392,46 +1404,17 @@ sub _launch {
         return $rv;
     }
     else {
-        my $lsf_project = "build" . $self->id;
-        $ENV{'WF_LSF_PROJECT'} = $lsf_project;
-
-        my $genome_bin = $Command::entry_point_bin || 'genome';
-
-        my @bsub_args = (
-            email    => Genome::Utility::Email::construct_address(),
-            err_file => $build_event->error_log_file,
-            hold_job => 1,
-            log_file => $build_event->output_log_file,
-            project  => $lsf_project,
-            queue    => $server_dispatch,
-            send_job_report => 1,
-            never_rerunnable => 1,
-        );
-        unless ($ENV{WF_EXCLUDE_JOB_GROUP}) {
-            push @bsub_args, job_group => $job_group;
+        if ($ENV{UR_DBI_NO_COMMIT}) {
+            $self->warning_message("Skipping launching process when NO_COMMIT is turned on (job will fail)\n");
+            return;
         }
 
-        my @genome_cmd = (
-            'annotate-log', $genome_bin, qw(model services build run),
+        my %inputs = $self->model->map_workflow_inputs($self);
+        my $process = Genome::Model::Build::Process->create(build => $self);
+        $process->run(
+            workflow_xml => $workflow_xml,
+            workflow_inputs => \%inputs,
         );
-
-        my @genome_args;
-        # args have to be --key=value for Genome::Model->sudo_wrapper()
-        push @genome_args, '--model-id=' . $model->id;
-        push @genome_args, '--build-id=' . $self->id;
-        if ($job_dispatch eq 'inline') {
-            push @genome_args, '--inline';
-        }
-
-        my $job_id = $self->_execute_bsub_command(
-            'bsub',
-            @bsub_args,
-            cmd => [ @genome_cmd, @genome_args ],
-        );
-        return unless $job_id;
-
-        $build_event->lsf_job_id($job_id);
-
         return 1;
     }
 }
@@ -1516,51 +1499,6 @@ sub _initialize_workflow {
     $workflow->save_to_xml(OutputFile => $self->data_directory . '/build.xml');
 
     return $workflow;
-}
-
-sub _execute_bsub_command { # here to overload in testing
-    my ($self, @cmd) = @_;
-
-    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
-    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
-    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
-    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-
-    if ($ENV{UR_DBI_NO_COMMIT}) {
-        $self->warning_message("Skipping bsub when NO_COMMIT is turned on (job will fail)\n");
-        return 1;
-    }
-
-    my $job_id = eval { Genome::Sys::LSF::bsub::run(@cmd) };
-    if ($@) {
-        $self->error_message("Failed to launch bsub:\n$@\n");
-        return;
-    }
-
-    # create a change record so that if it is "undone" it will kill the job
-    my $bsub_undo = sub {
-        $self->status_message("Killing LSF job ($job_id) for build " . $self->__display_name__ . ".");
-        system("bkill $job_id");
-    };
-    my $lsf_change = UR::Context::Transaction->log_change($self, 'UR::Value', $job_id, 'external_change', $bsub_undo);
-    unless ($lsf_change) {
-        die $self->error_message("Failed to record LSF job submission ($job_id).");
-    }
-
-    # create a commit observer to resume the job when build is committed to database
-    my $process = UR::Context->process;
-    my $commit_observer = $process->add_observer(
-        aspect => 'commit',
-        callback => sub {
-            my $bresume_output = `bresume $job_id`; chomp $bresume_output;
-            $self->status_message($bresume_output) unless ( $bresume_output =~ /^Job <$job_id> is being resumed$/ );
-        },
-    );
-    unless ($commit_observer) {
-        $self->error_message("Failed to add commit observer to resume LSF job ($job_id).");
-    }
-
-    return "$job_id";
 }
 
 sub initialize {
@@ -1659,7 +1597,6 @@ sub success {
         $self->debug_message('Firing build success commit callback.');
         my $result = eval {
             Genome::Search->queue_for_update($self->model);
-            $self->model->_trigger_downstream_builds($self);
         };
         if($@) {
             $self->error_message('Error executing success callback: ' . $@);
@@ -2198,9 +2135,6 @@ sub compare_output {
     my $other_build = Genome::Model::Build->get($other_build_id);
     confess "Could not get build $other_build_id!" unless $other_build;
 
-    unless ($self->model_id eq $other_build->model_id) {
-        confess "Builds $build_id and $other_build_id are not from the same model!";
-    }
     unless ($self->class eq $other_build->class) {
         confess "Builds $build_id and $other_build_id are not the same type!";
     }
@@ -2510,7 +2444,7 @@ sub _preprocess_subclass_description {
                 #warn "in parent: $name on $build_subclass_name\n";
                 next;
             }
-            
+
             my %data = %{$p};
             my $type = $data{data_type};
             if (!$type) {
@@ -2527,14 +2461,14 @@ sub _preprocess_subclass_description {
             }
             $data{data_type} = $type;
             $data{property_name} = $name;
-            
+
             if (($p->can("is_input") and $p->is_input) or ($p->can("is_metric") and $p->is_metric)) {
                 # code below will augment these with via/to/where
                 #warn "build gets input/metric $name ($build_subclass_name)\n";
             }
             elsif ($data{via} and $data{via} eq 'last_complete_build') {
                 # model properites which go through the last complete build exist directly on the build
-                #%data = $data{meta_for_build_attribute}; 
+                #%data = $data{meta_for_build_attribute};
                 #warn "build gets direct $name ($build_subclass_name)\n";
             }
             #elsif (not $data{via} or ($data{via} ne 'inputs' and $data{via} ne 'metrics') ) {
@@ -2553,11 +2487,11 @@ sub _preprocess_subclass_description {
             $has->{$name} = \%data;
         }
     }
-    
+
     my @names = keys %{ $desc->{has} };
     for my $prop_name (@names) {
         my $prop_desc = $desc->{has}{$prop_name};
-       
+
         # skip old things for which the developer has explicitly set-up indirection
         next if $prop_desc->{id_by};
         next if $prop_desc->{via};
@@ -2568,19 +2502,27 @@ sub _preprocess_subclass_description {
             die "class $class has is_param and is_input on the same property! $prop_name";
         }
 
-        if (exists $prop_desc->{'is_param'} and $prop_desc->{'is_param'}) {
+        if ($prop_desc->{'is_param'}) {
             $prop_desc->{'via'} = 'processing_profile',
             $prop_desc->{'to'} = $prop_name;
             $prop_desc->{'is_mutable'} = 0;
             $prop_desc->{'is_delegated'} = 1;
         }
 
-        if (exists $prop_desc->{'is_input'} and $prop_desc->{'is_input'}) {
+        if ($prop_desc->{'is_output'}) {
+            $prop_desc->{'via'} = 'result_users';
+            $prop_desc->{'to'} = 'software_result';
+            $prop_desc->{'where'} = [label => $prop_name];
+            $prop_desc->{'is_mutable'} = 0;
+            $prop_desc->{'is_delegated'} = 1;
+        }
+
+        if ($prop_desc->{'is_input'}) {
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
 
             my @where_class;
-            if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
+            if ($prop_desc->{'data_type'}) {
                 my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
                     $prop_desc->{'data_type'},
                     $class
@@ -2616,7 +2558,7 @@ sub _preprocess_subclass_description {
         }
 
         # Metrics
-        if ( exists $prop_desc->{is_metric} and $prop_desc->{is_metric} ) {
+        if ($prop_desc->{is_metric} ) {
             $prop_desc->{via} = 'metrics';
             $prop_desc->{where} = [ name => join(' ', split('_', $prop_name)) ];
             $prop_desc->{to} = 'value';

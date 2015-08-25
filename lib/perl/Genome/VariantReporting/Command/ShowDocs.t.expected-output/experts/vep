@@ -23,6 +23,8 @@ Annotate vcf with results from Ensembl VEP (Variant Effect Predictor)
   [1mreference_fasta[0m   Path
     Reference fasta file
     This is a translated property.
+  [1mreference_version[0m   String
+    Version of reference sequence
   [1mshort_name[0m   Bool
     Turn on the short_name option in Genome::FeatureList::processed_bed_file_content. This replaces
     the content of the bed file name column with region numbers. Useful if the name column contains

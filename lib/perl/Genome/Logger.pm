@@ -111,8 +111,11 @@ for my $level (@levels) {
     no strict 'refs';
     *{$name} = sub {
         my $self = normalize_self(shift);
-        $self->delegate_logger->$level(@_);
-        return join(' ', @_);
+        my $message = join(' ', @_);
+        chomp $message;
+        $message .= "\n";
+        $self->delegate_logger->$level($message);
+        return $message;
     };
     *{$namef} = sub {
         my $self = normalize_self(shift);

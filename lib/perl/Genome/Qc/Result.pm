@@ -3,6 +3,7 @@ package Genome::Qc::Result;
 use strict;
 use warnings;
 use Genome;
+use List::MoreUtils qw(uniq);
 
 class Genome::Qc::Result {
     is => 'Genome::SoftwareResult::StageableSimple',
@@ -42,7 +43,7 @@ sub _run {
             name => $name,
             args => [$tool->cmd_line],
             in_file_link => $self->_input_file_for_tool($tool, $name),
-            out_file_link => $self->_output_file_for_tool($name),
+            out_file_link => $self->_qc_metrics_file_for_tool($name),
             err_file_link => $self->_error_file_for_tool($name),
         );
         $process_graph->add_process($process_ref{$name});
@@ -83,16 +84,16 @@ sub _input_file_for_tool {
 
 sub _error_file_for_tool {
     my ($self, $name) = @_;
-    my $file_name = $self->qc_config->get_commands_for_alignment_result->{$name}->{error_file};
+    my $file_name = $self->qc_config->get_commands_for_alignment_result($self->is_capture)->{$name}->{error_file};
     if (defined $file_name) {
         return File::Spec->join($self->temp_staging_directory, $file_name);
     }
     return undef;
 }
 
-sub _output_file_for_tool {
+sub _qc_metrics_file_for_tool {
     my ($self, $name) = @_;
-    my $file_name = $self->qc_config->get_commands_for_alignment_result->{$name}->{out_file};
+    my $file_name = $self->qc_config->get_commands_for_alignment_result($self->is_capture)->{$name}->{out_file};
     if (defined $file_name) {
         return File::Spec->join($self->temp_staging_directory, $file_name);
     }
@@ -101,11 +102,14 @@ sub _output_file_for_tool {
 
 sub _tools {
     my $self = shift;
-    my $commands = $self->qc_config->get_commands_for_alignment_result($self->alignment_result);
+    my $commands = $self->qc_config->get_commands_for_alignment_result($self->is_capture);
     my %tools;
     for my $name (keys %$commands) {
-        my $tool = $self->_tool_from_name_and_params($commands->{$name}->{class},
-                    $commands->{$name}->{params});
+        my $tool = $self->_tool_from_name_and_params(
+            $commands->{$name}->{class},
+            $commands->{$name}->{params},
+            $commands->{$name}->{additional_params},
+        );
         $tools{$name} = $tool;
     }
     return %tools;
@@ -124,12 +128,16 @@ sub _non_streaming_tools {
 }
 
 sub _tool_from_name_and_params {
-    my ($self, $name, $gmt_params) = @_;
-    if (defined $name->output_file_accessor) {
-        my $output_param_name = $name->output_file_accessor;
+    my ($self, $name, $gmt_params, $additional_params) = @_;
+    if (defined $name->qc_metrics_file_accessor) {
+        my $output_param_name = $name->qc_metrics_file_accessor;
         $gmt_params->{$output_param_name} = Genome::Sys->create_temp_file_path;
     }
-    my $tool = $name->create(gmt_params => $gmt_params, alignment_result => $self->alignment_result);
+    my $tool = $name->create(
+        gmt_params => $gmt_params,
+        alignment_result => $self->alignment_result,
+        %{$additional_params},
+    );
     while (my ($param_name, $param_value) = each %$gmt_params) {
         if ($tool->can($param_value)) {
             $tool->gmt_params->{$param_name} = $tool->$param_value;
@@ -146,6 +154,19 @@ sub _add_metrics {
             metric_name => $name,
             metric_value => $value,
         );
+    }
+}
+
+sub is_capture {
+    my $self = shift;
+
+    my @instrument_data = $self->alignment_result->instrument_data;
+    my @is_capture = uniq map {$_->is_capture} @instrument_data;
+    if (scalar(@is_capture) > 1) {
+        die $self->error_message("Some instrument data in alignment result (%s) are capture and others aren't.", $self->alignment_result->id);
+    }
+    else {
+        return $is_capture[0];
     }
 }
 

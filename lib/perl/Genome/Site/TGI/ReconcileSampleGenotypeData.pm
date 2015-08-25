@@ -16,17 +16,18 @@ sub execute {
     print "Found " . @organism_samples . " samples.\n";
 
     my @organism_sample_ids = map { $_->id } @organism_samples;
-    my @attributes = Genome::SubjectAttribute->get(
+    my %attributes = map {; $_->subject_id => $_ } Genome::SubjectAttribute->get(
         subject_id => \@organism_sample_ids,
         attribute_label => 'default_genotype_data',
         -order_by => 'subject_id',
     );
-    print "Found " . @attributes . " attributes.\n";
+    print "Found " . scalar(keys %attributes) . " attributes.\n";
+
 
     # Limit to sample that have differing default_genotype...
     my @changed_organism_samples;
     for my $organism_sample (@organism_samples) {
-        my ($attribute) = grep { $_->subject_id eq $organism_sample->id } @attributes;
+        my $attribute = $attributes{$organism_sample->id};
 
         if (!$attribute || $organism_sample->default_genotype_data_id ne $attribute->attribute_value) {
             push @changed_organism_samples, $organism_sample;

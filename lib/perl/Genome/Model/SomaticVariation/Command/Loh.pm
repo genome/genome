@@ -130,6 +130,12 @@ sub should_skip_run {
         return 1;
     }
 
+    my $normal_model = $build->normal_model;
+    unless($normal_model->can('snv_detection_strategy') and $normal_model->snv_detection_strategy) {
+        $self->debug_message("No SNV Detection Strategy on normal model, skipping LOH.");
+        return 1;
+    }
+
     return;
 }
 

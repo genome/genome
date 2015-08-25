@@ -229,9 +229,12 @@ sub version_at_least {
     return $self->version_compare($self->use_version, $version) >= 0;
 }
 
-# die if $self->use_version is less than the $min_version argument passed here
-sub enforce_minimum_version {
-    my ($self, $min_version) = @_;
+sub minimum_version_required { return; }
+sub enforce_minimum_version_required {
+    my $self = shift;
+
+    my $min_version = $self->minimum_version_required;
+    return 1 if not defined $min_version;
 
     if ($self->version_older_than($min_version)) {
         confess sprintf "This module requires picard version >= %s (%s requested)",
@@ -243,8 +246,15 @@ sub enforce_minimum_version {
 
 # in decreasing order of recency
 sub available_picard_versions {
+    my $self = shift;
     my @all_versions = uniq(installed_picard_versions(), keys %PICARD_VERSIONS);
-    return sort { __PACKAGE__->version_compare($b, $a) } @all_versions;
+    my $minimum_version_required = $self->minimum_version_required || 0;
+    return sort { 
+        $self->version_compare($b, $a)
+    }
+    grep {
+        $self->version_compare($_, $minimum_version_required) >= 0 
+    } @all_versions;
 }
 
 sub path_for_picard_version {

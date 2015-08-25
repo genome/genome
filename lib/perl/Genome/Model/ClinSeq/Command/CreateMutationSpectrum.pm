@@ -59,6 +59,11 @@ class Genome::Model::ClinSeq::Command::CreateMutationSpectrum {
             default => 0,
         },
     ],
+    has_param => [
+        lsf_resource => {
+            default => "-R 'select[gtmp>1] span[hosts=1] rusage[gtmp=1]'",
+        }
+    ],
     doc => 'analyze the mutation spectrum of wgs or exome variants',
 };
 

@@ -31,6 +31,10 @@ sub metrics {
                 metric_key    => 'CATEGORY-SECOND_OF_PAIR',
                 picard_metric => 'PF_MISMATCH_RATE',
             },
+            reads_properly_paired => {
+                metric_key    => 'CATEGORY-PAIR',
+                picard_metric => 'READS_ALIGNED_IN_PAIRS',
+            },
             pct_properly_paired => {
                 metric_key    => 'CATEGORY-PAIR',
                 picard_metric => 'PCT_READS_ALIGNED_IN_PAIRS',
@@ -44,8 +48,14 @@ sub metrics {
             mean_insert_size => {
                 picard_metric => 'MEAN_INSERT_SIZE',
             },
+            insert_size_standard_deviation => {
+                picard_metric => 'STANDARD_DEVIATION',
+            },
             median_insert_size => {
                 picard_metric => 'MEDIAN_INSERT_SIZE',
+            },
+            insert_size_median_absolute_deviation => {
+                picard_metric => 'MEDIAN_ABSOLUTE_DEVIATION',
             },
         },
     );
@@ -66,7 +76,7 @@ sub gmt_class_for_file_extension {
     return $file_extension_to_gmt_class{$file_extension};
 }
 
-sub output_file_accessor {
+sub qc_metrics_file_accessor {
     return 'output_basename';
 }
 
@@ -76,7 +86,7 @@ sub get_metrics {
     my %desired_metric_results;
     my %metrics = $self->metrics;
     while (my ($tool, $tool_metrics) = each %metrics) {
-        my $base = $self->output_file;
+        my $base = $self->qc_metrics_file;
         my $file = join('.', $base, $tool);
         my $gmt_class = $self->gmt_class_for_file_extension($tool);
         my %metric_results = %{$gmt_class->parse_file_into_metrics_hashref($file)};

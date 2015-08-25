@@ -9,15 +9,9 @@ use Carp;
 class Genome::Model::Command::Define::GenotypeMicroarray {
     is => 'Genome::Model::Command::Define::HelperDeprecated',
     has => [
-        variation_list_build => {
+        dbsnp_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
-            id_by => 'variation_list_build_id',
             doc => 'Variation list [DBSNP] build for this model.',
-        },
-        variation_list_build_id => {
-            is => 'Text',
-            is_input => 1,
-            doc => 'Variation list [DBSNP] build ID for this model.',
         },
     ],
 };
@@ -27,7 +21,7 @@ sub help_synopsis {
 genome model define genotype-microarray 
   --subject-name SAMPLE_NAME 
   --processing-profile-name PROCESSING_PROFILE_NAME 
-  --variation-list-build GRCh37-lite-build37
+  --dbsnp-build GRCh37-lite-build37
 EOS
 }
 
@@ -37,7 +31,7 @@ sub help_detail {
 
 sub type_specific_parameters_for_create {
     my $self = shift;
-    return ($self->SUPER::type_specific_parameters_for_create, dbsnp_build => $self->variation_list_build);
+    return ($self->SUPER::type_specific_parameters_for_create, dbsnp_build => $self->dbsnp_build);
 }
 
 sub execute {
@@ -46,10 +40,6 @@ sub execute {
     my $processing_profile = $self->processing_profile;
     unless ($processing_profile) {
         Carp::confess "Could not resolve processing profile!";
-    }
-
-    unless ($self->processing_profile->input_format eq 'wugc') {
-        Carp:confess "GenotypeMicroarray Models must use a 'wugc' input_format processing profile.";
     }
 
     return $self->SUPER::_execute_body(@_);

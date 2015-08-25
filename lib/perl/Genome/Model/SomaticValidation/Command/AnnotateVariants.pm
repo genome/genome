@@ -95,7 +95,7 @@ sub annotate_snvs {
             }
             unless (-e $input_path) {
                 $self->error_message(sprintf(
-                        'Skipping annotation for non-existant input file %s',
+                        'Skipping annotation for non-existent input file %s',
                         $input_path));
                 next TYPE;
             }

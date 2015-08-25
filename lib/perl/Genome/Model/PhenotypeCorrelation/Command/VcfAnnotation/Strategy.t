@@ -69,7 +69,7 @@ my @tests = (
     ## Compound case
     {
         input => join(' | ',
-            'vep {ensembl_annotation_build: 12}',
+            'vep {ensembl_annotation_build: 12, reference_version: GRCh37}',
             'joinx [{source_name: dbsnp, source_version: 137, info_fields: "a=b,per-alt:c:d"}, {source_build: 1234}, {source_name: 1kg-wgs, source_version: 20, info_fields: x}]',
             ),
         expected => [
@@ -77,6 +77,7 @@ my @tests = (
                 type => "vep",
                 params => {
                     ensembl_annotation_build => 12,
+                    reference_version => 'GRCh37',
                 }
             },
             {

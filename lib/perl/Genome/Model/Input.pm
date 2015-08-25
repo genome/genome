@@ -34,9 +34,6 @@ class Genome::Model::Input {
             doc => 'Filter to apply on the input value.',
         },
     ],
-    has_optional => [
-        _model_value => { is => 'Genome::Model', id_by => 'value_id' },
-    ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
 };

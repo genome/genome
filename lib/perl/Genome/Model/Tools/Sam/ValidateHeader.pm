@@ -19,7 +19,7 @@ class Genome::Model::Tools::Sam::ValidateHeader {
 };
 
 sub help_brief {
-    'Tool to make sure a TCGA header exists.  Only verifies the existance of @PG record and @RG record';
+    'Tool to make sure a TCGA header exists.  Only verifies the existence of @PG record and @RG record';
 }
 
 sub help_detail {

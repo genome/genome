@@ -85,7 +85,7 @@ ok($@, "Attempting to coerce to binary with undef attribute value causes an erro
 eval {
     $cd->convert_attr_to_factor("T1", levels => ["low", "oops"]);
 };
-ok($@, "Attempting to coerce to binary with nonexistant attribute value causes an error");
+ok($@, "Attempting to coerce to binary with nonexistent attribute value causes an error");
 
 my %updates = $cd->convert_attr_to_factor("T1", levels => ["Low", "High"]);
 ok(%updates, "Updated clinical data");

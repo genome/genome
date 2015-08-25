@@ -1,158 +1,125 @@
 {
    "links" : [
       {
-         "destination" : "Mark likes the letter N",
-         "destinationProperty" : "a",
-         "source" : "input connector",
-         "sourceProperty" : "a"
+         "destination" : "set status Running",
+         "source" : "input connector"
       },
       {
          "destination" : "Mark likes the letter N",
-         "destinationProperty" : "b",
-         "source" : "input connector",
-         "sourceProperty" : "b"
+         "source" : "set status Running"
       },
       {
+         "dataFlow" : {
+            "a" : "a",
+            "b" : "b",
+            "c" : "c",
+            "d" : "d"
+         },
          "destination" : "Mark likes the letter N",
-         "destinationProperty" : "c",
-         "source" : "input connector",
-         "sourceProperty" : "c"
+         "source" : "input connector"
       },
       {
-         "destination" : "Mark likes the letter N",
-         "destinationProperty" : "d",
-         "source" : "input connector",
-         "sourceProperty" : "d"
-      },
-      {
+         "dataFlow" : {
+            "out_a" : "out_a",
+            "out_b" : "out_b",
+            "out_c" : "out_c",
+            "out_d" : "out_d"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out_a",
-         "source" : "Mark likes the letter N",
-         "sourceProperty" : "out_a"
-      },
-      {
-         "destination" : "output connector",
-         "destinationProperty" : "out_b",
-         "source" : "Mark likes the letter N",
-         "sourceProperty" : "out_b"
-      },
-      {
-         "destination" : "output connector",
-         "destinationProperty" : "out_c",
-         "source" : "Mark likes the letter N",
-         "sourceProperty" : "out_c"
-      },
-      {
-         "destination" : "output connector",
-         "destinationProperty" : "out_d",
-         "source" : "Mark likes the letter N",
-         "sourceProperty" : "out_d"
+         "source" : "Mark likes the letter N"
       },
       {
          "destination" : "set status Succeeded",
-         "destinationProperty" : "out_d",
-         "source" : "Mark likes the letter N",
-         "sourceProperty" : "out_d"
+         "source" : "Mark likes the letter N"
       },
       {
          "destination" : "output connector",
-         "destinationProperty" : "dummy_output for Genome::Process(123)",
-         "source" : "set status Succeeded",
-         "sourceProperty" : "dummy_output"
+         "source" : "set status Succeeded"
       }
    ],
    "tasks" : {
       "Mark likes the letter N" : {
          "methods" : [
             {
-               "name" : "set status Running",
-               "parameters" : {
-                  "commandLine" : [
-                     "genome",
-                     "process",
-                     "set-status",
-                     "123",
-                     "Running",
-                     "--exit-code",
-                     1
-                  ],
-                  "environment" : {
-                     "FOO" : "bar"
-                  },
-                  "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
-               },
-               "service" : "shell-command"
-            },
-            {
                "name" : "Mark likes the letter N",
                "parameters" : {
                   "links" : [
                      {
+                        "dataFlow" : {
+                           "result" : "out_b"
+                        },
+                        "destination" : "output connector",
+                        "source" : "B"
+                     },
+                     {
+                        "dataFlow" : {
+                           "result" : "out_d"
+                        },
+                        "destination" : "output connector",
+                        "source" : "D"
+                     },
+                     {
+                        "dataFlow" : {
+                           "result" : "out_a"
+                        },
+                        "destination" : "output connector",
+                        "source" : "A"
+                     },
+                     {
+                        "dataFlow" : {
+                           "result" : "out_c"
+                        },
+                        "destination" : "output connector",
+                        "source" : "C"
+                     },
+                     {
+                        "dataFlow" : {
+                           "result" : "res1"
+                        },
+                        "destination" : "D",
+                        "source" : "A"
+                     },
+                     {
+                        "dataFlow" : {
+                           "a" : "param"
+                        },
                         "destination" : "A",
-                        "destinationProperty" : "param",
-                        "source" : "input connector",
-                        "sourceProperty" : "a"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "result" : "res2"
+                        },
+                        "destination" : "D",
+                        "source" : "B"
+                     },
+                     {
+                        "dataFlow" : {
+                           "d" : "param"
+                        },
+                        "destination" : "D",
+                        "source" : "input connector"
+                     },
+                     {
+                        "dataFlow" : {
+                           "b" : "param"
+                        },
                         "destination" : "B",
-                        "destinationProperty" : "param",
-                        "source" : "input connector",
-                        "sourceProperty" : "b"
+                        "source" : "input connector"
                      },
                      {
+                        "dataFlow" : {
+                           "c" : "param"
+                        },
                         "destination" : "C",
-                        "destinationProperty" : "param",
-                        "source" : "input connector",
-                        "sourceProperty" : "c"
+                        "source" : "input connector"
                      },
                      {
-                        "destination" : "D",
-                        "destinationProperty" : "param",
-                        "source" : "input connector",
-                        "sourceProperty" : "d"
-                     },
-                     {
-                        "destination" : "output connector",
-                        "destinationProperty" : "out_a",
-                        "source" : "A",
-                        "sourceProperty" : "result"
-                     },
-                     {
-                        "destination" : "output connector",
-                        "destinationProperty" : "out_b",
-                        "source" : "B",
-                        "sourceProperty" : "result"
-                     },
-                     {
-                        "destination" : "output connector",
-                        "destinationProperty" : "out_c",
-                        "source" : "C",
-                        "sourceProperty" : "result"
-                     },
-                     {
-                        "destination" : "output connector",
-                        "destinationProperty" : "out_d",
-                        "source" : "D",
-                        "sourceProperty" : "result"
-                     },
-                     {
+                        "dataFlow" : {
+                           "result" : "res1"
+                        },
                         "destination" : "C",
-                        "destinationProperty" : "res1",
-                        "source" : "A",
-                        "sourceProperty" : "result"
-                     },
-                     {
-                        "destination" : "D",
-                        "destinationProperty" : "res1",
-                        "source" : "A",
-                        "sourceProperty" : "result"
-                     },
-                     {
-                        "destination" : "D",
-                        "destinationProperty" : "res2",
-                        "source" : "B",
-                        "sourceProperty" : "result"
+                        "source" : "A"
                      }
                   ],
                   "tasks" : {
@@ -363,6 +330,30 @@
                      "Crashed",
                      "--exit-code",
                      1
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "set status Running" : {
+         "methods" : [
+            {
+               "name" : "set status Running",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Running",
+                     "--exit-code",
+                     0
                   ],
                   "environment" : {
                      "FOO" : "bar"

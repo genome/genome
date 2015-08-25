@@ -27,6 +27,11 @@ class Genome::Model::Tools::VerifyBamId {
             is => "Boolean",
             doc => "Recommended for max-depth > 20",
         },
+        ignore_read_group => {
+            is => 'Boolean',
+            doc => 'Check the entire input file instead of examining each read group separately.',
+            default_value => 1,
+        },
         version => {
             is => "Text",
             doc => "Version of VerifyBamId to run",
@@ -43,14 +48,22 @@ sub execute {
 
 sub _get_cmd {
     my $self = shift;
+
+    return join(' ', $self->_get_cmd_list);
+}
+
+sub _get_cmd_list {
+    my $self = shift;
     my $executable = _get_exe_path($self->version);
-    my $precise = "";
-    if ($self->precise) {
-        $precise = "--precise";
+    my @cmd_list = ($executable, "--vcf", $self->vcf, "--bam", $self->bam,
+                    "--out", $self->out_prefix, "--maxDepth", $self->max_depth);
+    if ($self->ignore_read_group) {
+        push (@cmd_list, "--ignoreRG");
     }
-    return join(" ", $executable, "--vcf", $self->vcf, "--bam", $self->bam, 
-                    "--out", $self->out_prefix, "--maxDepth", $self->max_depth,
-                    $precise, "--ignoreRG");
+    if ($self->precise) {
+        push (@cmd_list, "--precise");
+    }
+    return @cmd_list;
 }
 
 sub _get_exe_path {

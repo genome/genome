@@ -421,7 +421,7 @@ sub read_in_breakpoints {
                     if($current_contig->{'assem_type'} !~ /INS|DEL|ITX/i) {
 use Data::Dumper;
 print Dumper($current_contig);
-                        $self->statusmessage("Skipping contig that assembled as a type other than insertion, tandem duplication (ITX) or deletion with variant starting at " . $current_contig->{'pred_pos1'});
+                        $self->status_message("Skipping contig that assembled as a type other than insertion, tandem duplication (ITX) or deletion with variant starting at " . $current_contig->{'pred_pos1'});
                     }
                     else {
                         #check that Ins field makes sense

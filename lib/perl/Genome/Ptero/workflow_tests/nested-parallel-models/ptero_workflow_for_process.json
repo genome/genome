@@ -1,80 +1,58 @@
 {
    "links" : [
       {
-         "destination" : "Parallel Model Test",
-         "destinationProperty" : "prefix_lists",
-         "source" : "input connector",
-         "sourceProperty" : "prefix_lists"
+         "destination" : "set status Running",
+         "source" : "input connector"
       },
       {
          "destination" : "Parallel Model Test",
-         "destinationProperty" : "suffixes",
-         "source" : "input connector",
-         "sourceProperty" : "suffixes"
+         "source" : "set status Running"
       },
       {
+         "dataFlow" : {
+            "prefix_lists" : "prefix_lists",
+            "suffixes" : "suffixes"
+         },
+         "destination" : "Parallel Model Test",
+         "source" : "input connector"
+      },
+      {
+         "dataFlow" : {
+            "outputs" : "outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "outputs"
+         "source" : "Parallel Model Test"
       },
       {
          "destination" : "set status Succeeded",
-         "destinationProperty" : "outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "outputs"
+         "source" : "Parallel Model Test"
       },
       {
          "destination" : "output connector",
-         "destinationProperty" : "dummy_output for Genome::Process(123)",
-         "source" : "set status Succeeded",
-         "sourceProperty" : "dummy_output"
+         "source" : "set status Succeeded"
       }
    ],
    "tasks" : {
       "Parallel Model Test" : {
          "methods" : [
             {
-               "name" : "set status Running",
-               "parameters" : {
-                  "commandLine" : [
-                     "genome",
-                     "process",
-                     "set-status",
-                     "123",
-                     "Running",
-                     "--exit-code",
-                     1
-                  ],
-                  "environment" : {
-                     "FOO" : "bar"
-                  },
-                  "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
-               },
-               "service" : "shell-command"
-            },
-            {
                "name" : "Parallel Model Test",
                "parameters" : {
                   "links" : [
                      {
-                        "destination" : "Outer",
-                        "destinationProperty" : "prefix_list",
-                        "source" : "input connector",
-                        "sourceProperty" : "prefix_lists"
-                     },
-                     {
-                        "destination" : "Outer",
-                        "destinationProperty" : "suffixes",
-                        "source" : "input connector",
-                        "sourceProperty" : "suffixes"
-                     },
-                     {
+                        "dataFlow" : {
+                           "outputs" : "outputs"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "outputs",
-                        "source" : "Outer",
-                        "sourceProperty" : "outputs"
+                        "source" : "Outer"
+                     },
+                     {
+                        "dataFlow" : {
+                           "prefix_lists" : "prefix_list",
+                           "suffixes" : "suffixes"
+                        },
+                        "destination" : "Outer",
+                        "source" : "input connector"
                      }
                   ],
                   "tasks" : {
@@ -85,22 +63,19 @@
                               "parameters" : {
                                  "links" : [
                                     {
+                                       "dataFlow" : {
+                                          "prefix_list" : "prefixes",
+                                          "suffixes" : "suffixes"
+                                       },
                                        "destination" : "Inner",
-                                       "destinationProperty" : "prefixes",
-                                       "source" : "input connector",
-                                       "sourceProperty" : "prefix_list"
+                                       "source" : "input connector"
                                     },
                                     {
-                                       "destination" : "Inner",
-                                       "destinationProperty" : "suffixes",
-                                       "source" : "input connector",
-                                       "sourceProperty" : "suffixes"
-                                    },
-                                    {
+                                       "dataFlow" : {
+                                          "outputs" : "outputs"
+                                       },
                                        "destination" : "output connector",
-                                       "destinationProperty" : "outputs",
-                                       "source" : "Inner",
-                                       "sourceProperty" : "outputs"
+                                       "source" : "Inner"
                                     }
                                  ],
                                  "tasks" : {
@@ -111,22 +86,19 @@
                                              "parameters" : {
                                                 "links" : [
                                                    {
+                                                      "dataFlow" : {
+                                                         "prefixes" : "prefix",
+                                                         "suffixes" : "suffix"
+                                                      },
                                                       "destination" : "Appender",
-                                                      "destinationProperty" : "prefix",
-                                                      "source" : "input connector",
-                                                      "sourceProperty" : "prefixes"
+                                                      "source" : "input connector"
                                                    },
                                                    {
-                                                      "destination" : "Appender",
-                                                      "destinationProperty" : "suffix",
-                                                      "source" : "input connector",
-                                                      "sourceProperty" : "suffixes"
-                                                   },
-                                                   {
+                                                      "dataFlow" : {
+                                                         "output" : "outputs"
+                                                      },
                                                       "destination" : "output connector",
-                                                      "destinationProperty" : "outputs",
-                                                      "source" : "Appender",
-                                                      "sourceProperty" : "output"
+                                                      "source" : "Appender"
                                                    }
                                                 ],
                                                 "tasks" : {
@@ -208,6 +180,30 @@
                      "Crashed",
                      "--exit-code",
                      1
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "set status Running" : {
+         "methods" : [
+            {
+               "name" : "set status Running",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Running",
+                     "--exit-code",
+                     0
                   ],
                   "environment" : {
                      "FOO" : "bar"

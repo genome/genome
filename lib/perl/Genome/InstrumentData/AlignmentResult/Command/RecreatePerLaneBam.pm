@@ -40,6 +40,7 @@ class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
         comparison_flagstat => {
             is  => 'FilePath',
             doc => 'The path of flagstat file that is used to compare with that of recreated bam',
+            is_optional => 1,
         },
         include_qc_failed => {
             is          => 'Boolean',
@@ -80,7 +81,7 @@ sub execute {
     my $flagstat     = $self->comparison_flagstat;
     
 
-    unless (-s $flagstat) {
+    if (defined($flagstat) && !(-s $flagstat)) {
         die $self->error_message("comparison_flagstat $flagstat is not valid");
     }
 
@@ -104,14 +105,18 @@ sub execute {
     $self->debug_message('Extract read group bam');
     $self->_extract_readgroup_bam($temp_bam);
 
-    $self->debug_message('Compare flagstat first time expect one diff');
-    $self->_compare_flagstat($temp_bam, $flagstat, 'ignore_duplicates');
+    if (defined($flagstat)) {
+        $self->debug_message('Compare flagstat first time expect one diff');
+        $self->_compare_flagstat($temp_bam, $flagstat, 'ignore_duplicates');
+    }
 
     $self->debug_message('Revert bam Markdup tag');
     $self->_revert_markdup($temp_bam, $no_markdup_bam);
-    
-    $self->debug_message('Compare flagstat second time expect no diff');
-    $self->_compare_flagstat($no_markdup_bam, $flagstat);
+
+    if (defined($flagstat)) {
+        $self->debug_message('Compare flagstat second time expect no diff');
+        $self->_compare_flagstat($no_markdup_bam, $flagstat);
+    }
 
     $self->debug_message('Reheader bam');
     $self->_reheader_bam($no_markdup_bam, $bam_header);
@@ -163,16 +168,24 @@ sub _compare_flagstat {
     
     if ($ignore_duplicates) { #expect only one line diff on duplicates
         unless (_parse_flagstat_ignore_duplicates($temp_flagstat, $flagstat)) {
+            $self->_debug_flagstats($temp_flagstat, $flagstat);
             die $self->error_message("The diff between extracting bam flagstat and the comparison flagstat $flagstat is not expected");
         }
     }
     else {
         unless (compare($temp_flagstat, $flagstat) == 0) {
+            $self->_debug_flagstats($temp_flagstat, $flagstat);
             die $self->error_message("The bam flagstat after reverting markdup is unexpectedly different from the comparison flagstat $flagstat");
         }
     }
 }
 
+sub _debug_flagstats {
+    my ($self, $temp_flagstat, $flagstat) = @_;
+
+    $self->debug_message('Generated flagstat: %s', Data::Dumper::Dumper(Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($temp_flagstat)));
+    $self->debug_message('Expected flagstat: %s', Data::Dumper::Dumper(Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat)));
+}
 
 sub _parse_flagstat_ignore_duplicates {
     my ($temp_flagstat, $flagstat) = @_;

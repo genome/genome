@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use version;
+
 my $BEDTOOLS_DEFAULT = '2.9.0';
 
 class Genome::Model::Tools::BedTools {
@@ -48,6 +50,14 @@ my %BEDTOOLS_VERSIONS = (
     '2.5.4' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.5.4',
     '2.3.2' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.3.2',
 );
+
+sub available_bedtools_versions {
+    return sort { $b <=> $a } map { version->parse($_) } keys %BEDTOOLS_VERSIONS;
+}
+
+sub latest_bedtools_version {
+    return (available_bedtools_versions())[0];
+}
 
 sub path_for_bedtools_version {
     my ($class, $version) = @_;

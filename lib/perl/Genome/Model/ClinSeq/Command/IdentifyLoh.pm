@@ -118,9 +118,9 @@ sub split_snvs {
     my $awk_cmd;
     #use subsample of chr1 variants for test
     if($self->test) {
-        $awk_cmd = "awk '\$1==1 { if(NR\%1000 == 0) { print > \"$snv_prefix.\"\$1\".snp\" }}' $varscan_op";
+        $awk_cmd = "awk '\$1==1 { if(NR\%1000 == 0) { print > \"$snv_prefix.\"\$1\".unfiltered\" }}' $varscan_op";
     } else {
-        $awk_cmd = "awk '{ print > \"$snv_prefix.\"\$1\".snp\" }' $varscan_op";
+        $awk_cmd = "awk '{ print > \"$snv_prefix.\"\$1\".unfiltered\" }' $varscan_op";
     }
     Genome::Sys->shellcmd(cmd => $awk_cmd);
     return;
@@ -200,8 +200,8 @@ sub filter_snvs {
 sub combine_sort_snvs {
     my $self = shift;
     my $snv_prefix = shift;
-    my $snv_combined = $snv_prefix . ".combined";
-    my $snv_combined_sorted = $snv_prefix . ".combined.sorted";
+    my $snv_combined = $snv_prefix . ".filtered";
+    my $snv_combined_sorted = $snv_prefix . ".filtered.sorted";
     my @germline = glob $snv_prefix . "*.formatted.LOH.hc.filtered";
     my @loh = glob $snv_prefix . "*.formatted.Germline.hc.filtered";
     unless(scalar @germline and scalar @loh) {
@@ -241,7 +241,7 @@ sub filter_loh {
     my $min_segmean = $self->min_segmean;
     my $minprobes = $self->minprobes;
     my $loh_segments =
-    $loh_basename . ".segments.cbs";
+        $loh_basename . ".segments.cbs";
     my $loh_segments_filtered = $loh_segments . ".filtered";
     unless(-e $loh_segments) {
         die $self->error_message("Unable to find loh file $loh_segments");
@@ -257,7 +257,7 @@ sub cleanup {
     my $self = shift;
     my @patterns = qw(*.Somatic* *.readcounts *.hc *.LOH
         *.lc *.Germline *.removed *.formatted
-        *.hc.err *.other);
+        *.hc.err *.other *.err *.out *.snp snvs.filtered snvs.*.unfiltered *hc.filtered);
     for my $pattern (@patterns) {
         for my $file (glob File::Spec->join($self->outdir, $pattern)) {
             $self->status_message("unlinking $file");
@@ -272,13 +272,13 @@ sub execute {
     my $somvar_build = $self->resolve_somvar;
     my $snv_prefix = File::Spec->join(
         $self->outdir,
-        "varscan.snps");
+        "snvs");
     $self->get_varscan_snvs($somvar_build, $snv_prefix);
     $self->filter_snvs($somvar_build, $snv_prefix);
     my $combined_sorted = $self->combine_sort_snvs($snv_prefix);
     my $loh_basename = File::Spec->join(
         $self->outdir,
-        "varscan.output.loh");
+        "loh");
     my $loh_segments = $self->segment_loh($combined_sorted, $loh_basename);
     $self->filter_loh($loh_basename);
     $self->cleanup;

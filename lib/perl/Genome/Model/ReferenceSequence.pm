@@ -206,6 +206,9 @@ sub _execute_build {
             $self->error_message("Reallocation failed.");
             return;
         }
+        unless($build->is_rederivable) {
+            $build->disk_allocation->archivable(0);
+        }
     }
 
     $self->debug_message("Done.");

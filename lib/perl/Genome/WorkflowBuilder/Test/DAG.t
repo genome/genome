@@ -228,8 +228,8 @@ subtest 'Converge DAG' => sub {
   </operationtype>
   <operation name="some op">
     <operationtype typeClass="Workflow::OperationType::Converge">
-      <inputproperty>input_1</inputproperty>
       <inputproperty>input_0</inputproperty>
+      <inputproperty>input_1</inputproperty>
       <outputproperty>converge_output</outputproperty>
     </operationtype>
   </operation>

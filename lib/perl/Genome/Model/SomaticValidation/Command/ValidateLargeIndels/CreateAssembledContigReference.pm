@@ -138,7 +138,7 @@ sub execute {
     my $tier_file_location = $annotation_build->tiering_bed_files_by_version(3);
     $self->tier_files($tier_file_location);
 
-    my $new_ref_cmd = Genome::Model::Command::Define::ImportedReferenceSequence->create(
+    my %import_params = (
         species_name => 'human',
         use_default_sequence_uri => '1',
         derived_from => $ref_seq_build,
@@ -148,8 +148,12 @@ sub execute {
         prefix => $sample_id,
         server_dispatch => 'inline',
         is_rederivable => 1,
-        analysis_project => $self->build->model->analysis_project,
     );
+    if ($self->build->model->analysis_project) {
+        $import_params{analysis_project} = $self->build->model->analysis_project;
+    }
+
+    my $new_ref_cmd = Genome::Model::Command::Define::ImportedReferenceSequence->create(%import_params);
     unless ($new_ref_cmd->execute) {
         $self->error_message('Failed to execute the definition of the new reference sequence with added contigs.');
         return;

@@ -41,6 +41,13 @@ ok(grep($tag->name, $config_profile_item->tag_names), 'it has the first tag');
 ok(grep($tag2->name, $config_profile_item->tag_names), 'it has the second tag');
 is(Genome::Sys->read_file($config_profile_item->file_path), $contents, 'it should copy the file to the allocation of the profile item');
 
+$analysis_project->status('Deprecated');
+my $fail_cmd = $class->create(
+    analysis_project => $analysis_project,
+    config_file => $file,
+);
+ok(!$fail_cmd->execute,'fail command on project with invalid status');
+
 done_testing();
 
 1;
