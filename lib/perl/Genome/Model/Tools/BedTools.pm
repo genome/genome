@@ -41,6 +41,7 @@ EOS
 }
 
 my %BEDTOOLS_VERSIONS = (
+    '2.24.0' => Genome::Config::get('sw') . '/bedtools/bedtools-2.24.0',
     '2.17.0' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.17.0',
     '2.16.2' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.16.2',
     '2.14.3' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.14.3',
@@ -94,6 +95,17 @@ sub default_bedtools_version {
 sub bedtools_path {
     my $self = shift;
     return $self->path_for_bedtools_version($self->use_version);
+}
+
+# Duplicate code in Picard.pm
+sub version_compare {
+    my ($class, $a, $b) = @_;
+    return version->parse($a) <=> version->parse($b);
+}
+
+sub version_newer_than {
+    my ($self, $version) = @_;
+    return $self->version_compare($self->use_version, $version) > 0;
 }
 
 1;
