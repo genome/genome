@@ -8,7 +8,8 @@ use Genome;
 use List::MoreUtils qw(uniq);
 
 class Genome::InstrumentData {
-    is => [qw/ Genome::Utility::ObjectWithAllocations Genome::Notable /],
+    is => [qw/ Genome::Notable /],
+    roles => ['Genome::Role::ObjectWithAllocations'],
     table_name => 'instrument.data',
     is_abstract => 1,
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
@@ -275,7 +276,7 @@ sub create {
     return $self;
 }
 
-sub delete {
+sub delete : Overrides(Genome::Role::ObjectWithAllocations) {
     my $self = shift;
 
     my ($expunge_status) = $self->_expunge_assignments;
@@ -289,6 +290,7 @@ sub delete {
         $bridge->delete;
     }
 
+    $self->Genome::Role::ObjectWithAllocations::_delete();
     return $self->SUPER::delete;
 }
 

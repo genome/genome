@@ -1,15 +1,13 @@
-package Genome::Utility::ObjectWithAllocations;
+package Genome::Role::ObjectWithAllocations;
 
 use strict;
 use warnings;
 
-use Genome;
+use UR::Role;
 
 require List::MoreUtils;
 
-class Genome::Utility::ObjectWithAllocations {
-    is => 'UR::Object',
-    is_abstract => 1,
+role Genome::Role::ObjectWithAllocations {
     has => {
         disk_allocations => {
             is => 'Genome::Disk::Allocation',
@@ -19,21 +17,31 @@ class Genome::Utility::ObjectWithAllocations {
     },
 };
 
+my %observers_created_for_class;
+my %super_delete;
 sub delete {
     my $self = shift;
-    $self->_create_deallocate_disk_allocations_observer;
-    return $self->SUPER::delete;
+    _delete($self);
+
+    my $super_delete = $super_delete{$self->class} ||= $self->super_can('delete');
+    return $self->$super_delete;
+}
+
+sub _delete {
+    my $self = shift;
+    $self->_create_deallocate_disk_allocations_observer unless ($observers_created_for_class{$self->class}++);
 }
 
 sub _create_deallocate_disk_allocations_observer {
     my $self = shift;
+    my $class = $self->class;
 
     my @disk_allocations = $self->disk_allocations;
     return 1 if not @disk_allocations;
 
     my $deallocator;
     $deallocator = sub {
-        _deallocate_disk_allocations(@disk_allocations);
+        $class->_deallocate_disk_allocations(@disk_allocations);
         UR::Context->cancel_change_subscription(
             'commit', $deallocator
         );
@@ -60,17 +68,20 @@ sub reallocate_disk_allocations {
 }
 
 sub deallocate_disk_allocations {
-    return _deallocate_disk_allocations( $_[0]->disk_allocations );
+    my $self = shift;
+    my $class = $self->class;
+    return $class->_deallocate_disk_allocations( $self->disk_allocations );
 }
 
 sub _deallocate_disk_allocations {
+    my $class = shift;
 
     for my $disk_allocation ( @_ ) {
         next if $disk_allocation->isa('UR::DeletedRef'); # skip if deleted
         my $deallocate_ok = eval{ $disk_allocation->deallocate; };
         next if $deallocate_ok;
-        __PACKAGE__->warning_message($@) if $@;
-        __PACKAGE__->warning_message('Continuing, but failed to deallocate disk allocation: '.$disk_allocation->__display_name__);
+        $class->warning_message($@) if $@;
+        $class->warning_message('Continuing, but failed to deallocate disk allocation: '.$disk_allocation->__display_name__);
     }
 
     return 1;

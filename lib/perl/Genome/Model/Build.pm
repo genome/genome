@@ -27,12 +27,14 @@ class Genome::Model::Build {
     is => [
         "Genome::Notable",
         "Genome::Searchable",
-        "Genome::Utility::ObjectWithAllocations",
         "Genome::Utility::ObjectWithCreatedBy",
         "Genome::Utility::ObjectWithTimestamps",
         "Genome::SoftwareResult::Requestor",
         "Genome::Interfaces::Comparable",
     ],
+    roles => [qw(
+        Genome::Role::ObjectWithAllocations
+    )],
     table_name => 'model.build',
     is_abstract => 1,
     attributes_have => [
@@ -720,7 +722,7 @@ sub get_or_create_data_directory {
     return $self->data_directory;
 }
 
-sub _unarchive_disk_allocations {
+sub _unarchive_disk_allocations : Overrides(Genome::Role::ObjectWithAllocations) {
     my ($self, %params) = @_;
 
     my $unarchive_cmd = Genome::Model::Build::Command::Unarchive->create(
@@ -742,7 +744,7 @@ sub _unarchive_disk_allocations {
     return 1;
 }
 
-sub _additional_associated_disk_allocations {
+sub _additional_associated_disk_allocations : Overrides(Genome::Role::ObjectWithAllocations) {
     my $self = shift;
 
     my @allocations;
@@ -1968,7 +1970,7 @@ sub add_from_build { # rename "add an underlying build" or something...
     return $bridge;
 }
 
-sub delete {
+sub delete : Overrides(Genome::Role::ObjectWithAllocations) {
     my $self = shift;
 
     # Abandon events
@@ -1991,6 +1993,7 @@ sub delete {
     $self->status_message("Unregistering software results associated with build");
     $self->_unregister_software_results;
 
+    $self->Genome::Role::ObjectWithAllocations::_delete();
     return $self->SUPER::delete;
 }
 
