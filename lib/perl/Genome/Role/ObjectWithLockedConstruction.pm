@@ -1,16 +1,16 @@
-package Genome::Utility::ObjectWithLockedConstruction;
+package Genome::Role::ObjectWithLockedConstruction;
 
 use strict;
 use warnings;
 
-use Genome;
+use UR::Role;
 use Genome::Sys::LockProxy qw();
 
-class Genome::Utility::ObjectWithLockedConstruction {
-    is => 'UR::Object',
-    is_abstract => 1,
+role Genome::Role::ObjectWithLockedConstruction {
+    requires => 'lock_id',
 };
 
+my %super_create;
 sub create {
     my $class = shift;
 
@@ -18,7 +18,8 @@ sub create {
     return $obj if $obj;
 
     if ($ENV{UR_DBI_NO_COMMIT}) {
-        return $class->SUPER::create(@_);
+        my $super_create = $super_create{$class} ||= $class->super_can('create');
+        return $class->$super_create(@_);
     } else {
         my $lock_id = $class->lock_id(@_);
         my $lock_var = sprintf('%s/%s', $class, $lock_id);
@@ -41,18 +42,17 @@ sub create_with_lock {
     if($obj) {
         return $obj;
     } else {
-       $obj = $class->SUPER::create(@_);
-       UR::Context->current->add_observer(
-           aspect => 'commit',
-           callback => sub {
-               $lock->unlock();
-           }
-       );
+        my $super_create ||= $super_create{$class} = $class->super_can('create');
+        $obj = $class->$super_create(@_);
+        UR::Context->current->add_observer(
+            aspect => 'commit',
+            callback => sub {
+                $lock->unlock();
+            }
+        );
     }
 
     return $obj;
 }
 
-sub lock_id {
-    die("You must implement lock_id in subclasses!");
-}
+1;

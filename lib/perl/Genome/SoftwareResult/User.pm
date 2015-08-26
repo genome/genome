@@ -12,7 +12,7 @@ use Carp qw();
 use Genome::Utility::Text;
 
 class Genome::SoftwareResult::User {
-    is => ['Genome::Utility::ObjectWithLockedConstruction'],
+    roles => ['Genome::Role::ObjectWithLockedConstruction'],
     table_name => 'result.user',
     id_by => [
         id => { is => 'Text', len => 32 },
