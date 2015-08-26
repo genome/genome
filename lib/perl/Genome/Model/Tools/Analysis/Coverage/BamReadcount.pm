@@ -476,10 +476,8 @@ sub execute {
             %params,
             output_file       => "$tempdir/readcounts_indel",
             region_list       => "$tempdir/indelpos",
+            insertion_centric => 1,
         );
-        if ( $readcount_cmd->version_has_insertion_centric( $self->bam_readcount_version ) ) {
-            $readcount_cmd->insertion_centric(1);
-        }
         unless($readcount_cmd->execute) {
             $self->error_message("Failed to execute.");
             die $self->error_message;
