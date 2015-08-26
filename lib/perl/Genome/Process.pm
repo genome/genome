@@ -16,13 +16,11 @@ use Cwd qw(abs_path);
 use File::DirCompare;
 
 class Genome::Process {
-    is => [
-        "Genome::Interfaces::Comparable",
-    ],
     roles => [qw(
         Genome::Role::ObjectWithCreatedBy
         Genome::Role::Notable
         Genome::Role::SoftwareResultRequestor
+        Genome::Role::Comparable
     )],
     is_abstract => 1,
     table_name => 'process.process',

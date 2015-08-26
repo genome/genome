@@ -24,9 +24,6 @@ use Genome::Utility::Vcf;
 require Scope::Guard;
 
 class Genome::Model::Build {
-    is => [
-        "Genome::Interfaces::Comparable",
-    ],
     roles => [qw(
         Genome::Role::ObjectWithAllocations
         Genome::Role::ObjectWithTimestamps
@@ -34,6 +31,7 @@ class Genome::Model::Build {
         Genome::Role::Notable
         Genome::Role::SoftwareResultRequestor
         Genome::Role::Searchable
+        Genome::Role::Comparable
     )],
     table_name => 'model.build',
     is_abstract => 1,
@@ -2259,7 +2257,7 @@ sub _compare_output_directories {
     return %diffs;
 }
 
-sub special_compare_functions {
+sub special_compare_functions : Overrides(Genome::Role::Comparable) {
     my $self = shift;
 
     my @functions;
