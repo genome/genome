@@ -10,11 +10,11 @@ use List::MoreUtils qw(any);
 class Genome::Config::AnalysisProject {
     is => [
         "Genome::Searchable",
-        "Genome::SoftwareResult::Sponsor",
     ],
     roles => [qw(
         Genome::Role::ObjectWithTimestamps
         Genome::Role::ObjectWithCreatedBy
+        Genome::Role::SoftwareResultSponsor
     )],
     table_name => 'config.analysis_project',
     id_by => [
