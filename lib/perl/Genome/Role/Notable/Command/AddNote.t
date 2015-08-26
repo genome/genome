@@ -11,20 +11,13 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-use_ok('Genome::Notable::Command::AddNote') or die;
-use_ok('Genome::Notable') or die;
-
 class Genome::Notable::Test {
-    is => 'Genome::Notable',
+    roles => 'Genome::Role::Notable',
 };
 
 class Genome::Notable::Test::Command::AddNote {
-    is => 'Genome::Notable::Command::AddNote',
-    has => [
-        notable => {
-            is => 'Genome::Notable::Test',
-        }
-    ],
+    is => 'Command::V2',
+    roles => [Genome::Role::Notable::Command::AddNote->create(notable_type => 'Genome::Notable::Test')],
 };
 
 my $notable = Genome::Notable::Test->create();

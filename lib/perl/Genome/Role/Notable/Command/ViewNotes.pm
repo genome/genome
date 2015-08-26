@@ -1,16 +1,16 @@
-package Genome::Notable::Command::ViewNotes;
+package Genome::Role::Notable::Command::ViewNotes;
 
 use strict;
 use warnings;
 
 use Genome;
+use UR::Role;
 
-class Genome::Notable::Command::ViewNotes {
-    is => 'Command::V2',
-    is_abstract => 1,
+my $notable_type : RoleParam(notable_type);
+role Genome::Role::Notable::Command::ViewNotes {
     has => [
         notables => {
-            is => 'Genome::Notable', #this class won't work with the command-line object resolution, but this command is usable in code
+            is => $notable_type,
             is_many => 1,
             shell_args_position => 1,
             doc => 'notable objects on which to view the notes',
