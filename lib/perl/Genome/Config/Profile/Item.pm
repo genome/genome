@@ -9,8 +9,7 @@ use File::Basename;
 use Lingua::EN::Inflect;
 
 class Genome::Config::Profile::Item {
-    is => [ "Genome::Utility::ObjectWithCreatedBy" ],
-    roles => [ 'Genome::Role::ObjectWithTimestamps' ],
+    roles => [ 'Genome::Role::ObjectWithTimestamps', 'Genome::Role::ObjectWithCreatedBy' ],
     table_name => 'config.profile_item',
     id_by => [
         id => { is => 'Text', len => 64 },

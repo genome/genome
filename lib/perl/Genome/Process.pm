@@ -18,10 +18,12 @@ use File::DirCompare;
 class Genome::Process {
     is => [
         "Genome::Notable",
-        "Genome::Utility::ObjectWithCreatedBy",
         "Genome::SoftwareResult::Requestor",
         "Genome::Interfaces::Comparable",
     ],
+    roles => [qw(
+        Genome::Role::ObjectWithCreatedBy
+    )],
     is_abstract => 1,
     table_name => 'process.process',
     schema_name => 'GMSchema',
