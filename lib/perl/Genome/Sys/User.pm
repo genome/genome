@@ -7,8 +7,7 @@ use Genome;
 use Carp;
 
 class Genome::Sys::User {
-    is => [ 'Genome::Searchable' ],
-    roles => ['Genome::Role::SoftwareResultSponsor'],
+    roles => ['Genome::Role::SoftwareResultSponsor', 'Genome::Role::Searchable' ],
     table_name => 'subject.user',
     id_by => [
         email => {

@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::ModelGroup {
-    is => 'Genome::Searchable',
+    roles => 'Genome::Role::Searchable',
     table_name => 'model.model_group',
     id_generator => '-uuid',
     id_by => [

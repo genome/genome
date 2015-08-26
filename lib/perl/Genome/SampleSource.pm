@@ -6,7 +6,8 @@ use warnings;
 use Genome;
 
 class Genome::SampleSource {
-    is => ['Genome::Subject','Genome::Searchable'],
+    is => 'Genome::Subject',
+    roles => 'Genome::Role::Searchable',
     is_abstract => 1,
     has => [
         taxon_id => {

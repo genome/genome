@@ -9,7 +9,7 @@ use Data::Dumper 'Dumper';
 require Genome::Utility::Text;
 
 class Genome::ProcessingProfile {
-    is => 'Genome::Searchable',
+    roles => 'Genome::Role::Searchable',
     table_name => 'model.processing_profile',
     is_abstract => 1,
     attributes_have => [

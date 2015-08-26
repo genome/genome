@@ -8,13 +8,11 @@ use Genome;
 use List::MoreUtils qw(any);
 
 class Genome::Config::AnalysisProject {
-    is => [
-        "Genome::Searchable",
-    ],
     roles => [qw(
         Genome::Role::ObjectWithTimestamps
         Genome::Role::ObjectWithCreatedBy
         Genome::Role::SoftwareResultSponsor
+        Genome::Role::Searchable
     )],
     table_name => 'config.analysis_project',
     id_by => [

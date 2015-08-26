@@ -8,7 +8,8 @@ use File::Basename;
 use Text::ParseWords;
 
 class Genome::InstrumentData::Solexa {
-    is => ['Genome::InstrumentData', 'Genome::Searchable'],
+    is => 'Genome::InstrumentData',
+    roles => 'Genome::Role::Searchable',
     has_constant => [
         sequencing_platform => { value => 'solexa' },
     ],

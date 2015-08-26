@@ -9,7 +9,8 @@ use Carp;
 my $default_nomenclature = Genome::Config::get('nomenclature_default');
 
 class Genome::Individual {
-    is => ['Genome::SampleSource','Genome::Searchable'],
+    is => 'Genome::SampleSource',
+    roles => 'Genome::Role::Searchable',
     has => [
         individual_id => {
             calculate_from => 'id',

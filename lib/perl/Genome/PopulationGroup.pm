@@ -6,7 +6,8 @@ use warnings;
 use Genome;
 
 class Genome::PopulationGroup {
-    is => ['Genome::SampleSource','Genome::Searchable'],
+    is => 'Genome::SampleSource',
+    roles => 'Genome::Role::Searchable',
     has => [
         subject_type => { 
             is_constant => 1, 

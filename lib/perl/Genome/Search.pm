@@ -593,26 +593,35 @@ sub queue_for_update {
     }
 }
 
-my $callback_id;
+my %callback_ids;
 # register_callbacks and unregister_callbacks should be called from Genome.pm,
 # so typically it won't need to be called elsewhere.
 sub register_callbacks {
-    my $class = shift;
-    my $searchable_class = shift || 'Genome::Searchable';
+    my($class, $searchable_class) = @_;
+    unless ($searchable_class) {
+        Carp::croak('register_callbacks() requires a searchable_class argument');
+    }
 
-    $callback_id = UR::Observer->register_callback(
+    my $callback_id = UR::Observer->register_callback(
         subject_class_name => $searchable_class,
         callback => sub { $class->_index_queue_callback(@_); },
     );
+    $callback_ids{$searchable_class} = $callback_id;
+    return $callback_id;
 }
 
 sub unregister_callbacks {
-    my $class = shift;
-    my $searchable_class = shift || 'Genome::Searchable';
-    UR::Observer->unregister_callback(
-        id => $callback_id,
-        subject_class_name => $searchable_class,
-    );
+    my($class, $searchable_class) = @_;
+
+    my @classes_to_unregister = $searchable_class
+                                ? ( $searchable_class)
+                                : keys(%callback_ids);
+    foreach my $class_to_unregister ( @classes_to_unregister ) {
+        UR::Observer->unregister_callback(
+            id => $callback_ids{$class_to_unregister},
+            subject_class_name => $class_to_unregister,
+        );
+    }
 }
 
 sub get_indexed_document_count {

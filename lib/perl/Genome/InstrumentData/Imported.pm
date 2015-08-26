@@ -12,7 +12,8 @@ use Genome::InstrumentData::Microarray;
 use Set::Scalar;
 
 class Genome::InstrumentData::Imported {
-    is => ['Genome::InstrumentData','Genome::Searchable'],
+    is => 'Genome::InstrumentData',
+    roles => 'Genome::Role::Searchable',
     has_optional => [
         source => { is => 'Genome::Subject', via => 'sample', to => 'source', },
         source_id => { is=> 'Text', via => 'source', to => 'id', },
