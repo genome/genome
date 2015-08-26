@@ -69,7 +69,7 @@ sub execute {
     my ($metrics_method, $extract_metrics_method) = $self->_resolve_methods;
     my $fh = Genome::Sys->open_file_for_writing($self->output_path);
 
-    my %builds_params = (-order => 'date_scheduled');
+    my %builds_params = (-order => 'created_at');
     $builds_params{status} = 'Succeeded' if not $self->ignore_build_status;
 
     my (@headers, @data);
