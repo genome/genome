@@ -52,6 +52,13 @@ class Genome::Model::Tools::BioSamtools::StatsSummary {
             doc => 'The output file to write summary stats',
         },
     ],
+    has_param => [
+        lsf_queue => {
+            doc => 'When run in parallel, the LSF queue to submit jobs to.',
+            is_optional => 1,
+            default_value => Genome::Config::get('lsf_queue_build_worker_alt'),
+        },
+    ],
 };
 
 sub help_detail {
