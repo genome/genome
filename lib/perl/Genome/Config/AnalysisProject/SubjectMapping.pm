@@ -6,7 +6,8 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::SubjectMapping {
-    is => [ "Genome::Utility::ObjectWithTimestamps", "Genome::Utility::ObjectWithCreatedBy" ],
+    is => [ "Genome::Utility::ObjectWithCreatedBy" ],
+    roles => ['Genome::Role::ObjectWithTimestamps'],
     table_name => 'config.subject_mapping',
     id_by => [
         id => { is => 'Text', len => 64 },

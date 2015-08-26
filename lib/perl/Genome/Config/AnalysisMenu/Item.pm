@@ -6,7 +6,8 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisMenu::Item {
-    is => ['Genome::Utility::ObjectWithTimestamps','Genome::Utility::ObjectWithCreatedBy'],
+    is => ['Genome::Utility::ObjectWithCreatedBy'],
+    roles => ['Genome::Role::ObjectWithTimestamps'],
     data_source => 'Genome::DataSource::GMSchema',
     table_name => 'config.analysismenu_item',
     id_generator => '-uuid',

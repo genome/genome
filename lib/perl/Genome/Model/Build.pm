@@ -28,12 +28,12 @@ class Genome::Model::Build {
         "Genome::Notable",
         "Genome::Searchable",
         "Genome::Utility::ObjectWithCreatedBy",
-        "Genome::Utility::ObjectWithTimestamps",
         "Genome::SoftwareResult::Requestor",
         "Genome::Interfaces::Comparable",
     ],
     roles => [qw(
         Genome::Role::ObjectWithAllocations
+        Genome::Role::ObjectWithTimestamps
     )],
     table_name => 'model.build',
     is_abstract => 1,

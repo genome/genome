@@ -6,7 +6,8 @@ use warnings;
 use Genome;
 
 class Genome::Config::Tag::Profile::Item {
-    is => [ "Genome::Utility::ObjectWithTimestamps", "Genome::Utility::ObjectWithCreatedBy" ],
+    is => [ "Genome::Utility::ObjectWithCreatedBy" ],
+    roles => [ 'Genome::Role::ObjectWithTimestamps' ],
     table_name => 'config.tag_profile_item',
     id_by => [
         id => { is => 'Text', len => 64 },
