@@ -1,14 +1,13 @@
-package Genome::Interfaces::Comparable::Command::DiffBlessed;
+package Genome::Role::Comparable::Command::DiffBlessed;
 
 use strict;
 use warnings;
-use Genome;
+use UR::Role;
 
-use YAML;
+use YAML qw();
 
-class Genome::Interfaces::Comparable::Command::DiffBlessed {
-    is => 'Genome::Interfaces::Comparable::Command::Diff',
-    is_abstract => 1,
+role Genome::Role::Comparable::Command::DiffBlessed {
+    requires => ['new_object'],
 };
 
 sub bless_message {
@@ -16,14 +15,6 @@ sub bless_message {
     my $rel_db_file = $self->rel_db_file();
     my $new_object_id = $self->new_object->id;
     my $m = sprintf('If you want to bless this object (%s) update and commit the DB file (%s).', $new_object_id, $rel_db_file);
-}
-
-sub diffs_message {
-    my $self = shift;
-    my $diff_string = $self->SUPER::diffs_message(@_);
-    my $bless_msg = $self->bless_message();
-    $diff_string = join("\n", $diff_string, $bless_msg);
-    return $diff_string;
 }
 
 sub blessed_id {

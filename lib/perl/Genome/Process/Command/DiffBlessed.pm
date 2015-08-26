@@ -5,7 +5,8 @@ use warnings;
 use Genome;
 
 class Genome::Process::Command::DiffBlessed {
-    is => 'Genome::Interfaces::Comparable::Command::DiffBlessed',
+    is => 'Command::V2',
+    roles => 'Genome::Role::Comparable::Command::DiffBlessed',
     has => [
         new_process => {
             is => 'Genome::Process',
