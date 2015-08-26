@@ -41,6 +41,11 @@ class Genome::Model::ReferenceAlignment::Command::RefCovMetrics {
             default_value => [qw/ model_name /],
             doc => 'The values to use to as the row identifier(s).',
         },
+        ignore_build_status => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Ignore the status when determining which build to use to gather ref-cov results from. Builds are considered newest first (by date_scheduled) and must be a current (via is_current) representation on the model. Running, Abandoned or Failed builds *may* have incomplete ref-cov results, but it may be useful to view them.',
+        },
     },
     has_optional_output => {
         output_path => {
@@ -64,9 +69,12 @@ sub execute {
     my ($metrics_method, $extract_metrics_method) = $self->_resolve_methods;
     my $fh = Genome::Sys->open_file_for_writing($self->output_path);
 
+    my %builds_params = (-order => 'date_scheduled');
+    $builds_params{status} = 'Succeeded' if not $self->ignore_build_status;
+
     my (@headers, @data);
     MODEL: for my $model ( $self->models ) {
-        BUILD: for my $build ( $model->builds(status => 'Succeeded', -order => 'date_completed') ) {
+        BUILD: for my $build ( $model->builds(%builds_params) ) {
             if ( not $build->is_current ) {
                 next BUILD;
             }
