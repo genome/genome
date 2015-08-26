@@ -27,7 +27,7 @@ my $library = Genome::Library->create(
 );
 ok($library, 'create library');
 isa_ok($library, 'Genome::Library');
-isa_ok($library, 'Genome::Notable');
+ok($library->does('Genome::Role::Notable'), 'Library does Genome::Role::Notable');
 is($library->name, $sample->name . "-extlibs", "name is what is expected");
 
 ok($library->is_rna, 'is_rna true when transcript strand is set');

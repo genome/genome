@@ -8,8 +8,7 @@ use Genome;
 use List::MoreUtils qw(uniq);
 
 class Genome::InstrumentData {
-    is => [qw/ Genome::Notable /],
-    roles => ['Genome::Role::ObjectWithAllocations'],
+    roles => ['Genome::Role::ObjectWithAllocations', 'Genome::Role::Notable'],
     table_name => 'instrument.data',
     is_abstract => 1,
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',

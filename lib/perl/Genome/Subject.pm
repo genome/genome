@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Subject {
-    is => 'Genome::Notable',
+    roles => 'Genome::Role::Notable',
     table_name => 'subject.subject',
     is_abstract => 1,
     subclassify_by => 'subclass_name',

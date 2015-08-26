@@ -22,7 +22,7 @@ our $TESTING_DISK_ALLOCATION = 0;
 use constant SECONDS_IN_ONE_YEAR => 365*24*60*60;
 
 class Genome::Disk::Allocation {
-    is => 'Genome::Notable',
+    roles => 'Genome::Role::Notable',
     table_name => 'disk.allocation',
     id_by => [
         id => {

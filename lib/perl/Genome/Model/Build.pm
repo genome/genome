@@ -25,7 +25,6 @@ require Scope::Guard;
 
 class Genome::Model::Build {
     is => [
-        "Genome::Notable",
         "Genome::Searchable",
         "Genome::SoftwareResult::Requestor",
         "Genome::Interfaces::Comparable",
@@ -34,6 +33,7 @@ class Genome::Model::Build {
         Genome::Role::ObjectWithAllocations
         Genome::Role::ObjectWithTimestamps
         Genome::Role::ObjectWithCreatedBy
+        Genome::Role::Notable
     )],
     table_name => 'model.build',
     is_abstract => 1,

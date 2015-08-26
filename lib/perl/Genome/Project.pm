@@ -6,7 +6,8 @@ use Genome;
 use Class::ISA;
 
 class Genome::Project {
-    is => [ "Genome::Notable", "Genome::Searchable" ],
+    is => [ "Genome::Searchable" ],
+    roles => ['Genome::Role::Notable'],
     table_name => 'subject.project',
     id_by => [
         id => {

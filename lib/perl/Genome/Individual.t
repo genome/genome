@@ -34,7 +34,7 @@ $individual = Genome::Individual->create(
 );
 ok($individual, 'created individual');
 isa_ok($individual, 'Genome::Individual');
-isa_ok($individual, 'Genome::Notable');
+ok($individual->does('Genome::Role::Notable'), 'Individual does role Genome::Role::Notable');
 is($individual->id, $id, "id");
 is($individual->__display_name__, "George Bush (The Prez $id)", "display name");
 is($individual->subject_type, 'sample_group', 'subject type is sample_group');

@@ -8,7 +8,8 @@ use Genome::Sys::LockProxy qw();
 use Carp;
 
 class Genome::Model {
-    is => [ "Genome::Notable", "Genome::Searchable" ],
+    is => [ "Genome::Searchable" ],
+    roles => ['Genome::Role::Notable'],
     table_name => 'model.model',
     is_abstract => 1,
     attributes_have => [
