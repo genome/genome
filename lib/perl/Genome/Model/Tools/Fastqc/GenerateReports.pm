@@ -63,6 +63,13 @@ class Genome::Model::Tools::Fastqc::GenerateReports {
             doc => 'Supress all progress messages on stdout and only report errors. (version 0.10.0 or greater)',
         },
     ],
+    has_param => [
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_build_worker_alt'),
+            is_optional => 1,
+            doc => 'queue to use when running in a workflow',
+        },
+    ],
 };
 
 sub help_brief {

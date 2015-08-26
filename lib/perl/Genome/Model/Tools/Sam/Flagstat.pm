@@ -21,6 +21,13 @@ class Genome::Model::Tools::Sam::Flagstat {
             doc => 'Include any error output from flagstat in the output file.'
         },
     ],
+    has_param => [
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_build_worker_alt'),
+            is_optional => 1,
+            doc => 'queue to use when running in a workflow',
+        },
+    ],
 };
 
 sub execute {

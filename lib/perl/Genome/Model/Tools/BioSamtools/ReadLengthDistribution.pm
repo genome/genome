@@ -26,6 +26,13 @@ class Genome::Model::Tools::BioSamtools::ReadLengthDistribution {
             doc => 'The output alignment length distribution file.',
         }
     ],
+    has_param => [
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_build_worker_alt'),
+            is_optional => 1,
+            doc => 'queue to use when running in a workflow',
+        },
+    ],
 };
 
 sub execute {
