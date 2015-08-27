@@ -131,6 +131,18 @@ sub get_xml {
     return $doc->toString(1);
 }
 
+sub remove_links_from_unspecified_input {
+    return;
+}
+
+sub remove_links_to_unused_input_properties {
+    return;
+}
+
+sub recurse_do {
+    return;
+}
+
 sub get_xml_element {
     my $self = shift;
 

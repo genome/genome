@@ -1,0 +1,4 @@
+{
+    "foo" : "required_input value",
+    "bar" : "optional_input value"
+}
