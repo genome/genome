@@ -334,7 +334,7 @@ sub create {
     my $unlock_callback = sub {
         $self->_unlock;
     };
-    $self->add_observer(aspect => 'commit', callback => $unlock_callback);
+    $self->add_observer(aspect => 'commit', callback => $unlock_callback, once => 1);
     $self->add_observer(aspect => 'delete', callback => $unlock_callback);
 
     if (my $output_dir = $self->output_dir) {
