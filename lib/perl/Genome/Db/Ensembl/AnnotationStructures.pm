@@ -581,8 +581,19 @@ sub create
         $self->remove_test_name();
     }
     UR::Context->commit;
+    $self->_unlock;
 
     return $self;
+}
+
+sub _add_unlock_observers {
+    my $self = shift;
+
+    my $unlock_callback = sub {
+        $self->_unlock;
+    };
+
+    return $self->add_observer(aspect => 'delete', callback => $unlock_callback);
 }
 
 sub result_paths {
