@@ -7,7 +7,7 @@ set -o pipefail
 DS_GMSCHEMA_SERVER=`genome config get ds_gmschema_server`
 if ! echo "$DS_GMSCHEMA_SERVER" | grep -q apipe-test-db
 then
-    echo 'ERROR: make sure you ran `genome-env` before genome-fill-db'
+    echo "ERROR: make sure you ran genome-env before $0"
     exit 1
 fi
 
