@@ -4,9 +4,10 @@ use warnings;
 
 use Genome;
 class Genome::Model::Build::ClinSeq {
-  is => ['Genome::Model::Build',
-    'Genome::Model::Build::ClinSeq::FileAccessors',
-    'Genome::Model::Build::ClinSeq::InputBuilds'],
+    is => ['Genome::Model::Build',
+           'Genome::Model::Build::ClinSeq::FileAccessors',
+           'Genome::Model::Build::ClinSeq::InputBuilds'
+          ],
 };
 
 sub special_compare_functions {
@@ -16,11 +17,11 @@ sub special_compare_functions {
 }
 
 sub diff_circos_conf {
-  my ($first_file, $second_file) = @_;
-  Carp::confess('Missing files to diff!') if @_ != 2;
-  my $first_md5  = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $first_file | md5sum);
-  my $second_md5 = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $second_file | md5sum);
-  return ($first_md5 eq $second_md5 ? 1 : 0);
+    my ($first_file, $second_file) = @_;
+    Carp::confess('Missing files to diff!') if @_ != 2;
+    my $first_md5  = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $first_file | md5sum);
+    my $second_md5 = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $second_file | md5sum);
+    return ($first_md5 eq $second_md5 ? 1 : 0);
 }
 
 1;
