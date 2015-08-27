@@ -226,8 +226,8 @@ sub assert_succeeded {
     ok($bridge->status eq 'processed', 'it should mark the inst data as succeeded');
     is($bridge->fail_count, 0, 'it should remove the fail count');
     for my $model_instance ($inst_data->models) {
-        my @config_items = $model_instance->config_profile_items;
-        ok(scalar(@config_items), 'it sets a config profile item on the model');
+        my $config_item = $model_instance->config_profile_item;
+        ok($config_item, 'it sets a config profile item on the model');
         ok($model_instance->build_requested, 'it sets build requested on constructed models');
         is($model_instance->user_name, 'apipe-builder');
     }

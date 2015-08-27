@@ -175,9 +175,7 @@ sub dependent_cron_ref_align {
 
     # limit to models for which new results might still be useful
     my @current_models = grep {
-        $_->analysis_project_bridges and
-        $_->analysis_project_bridges->config_profile_item and
-        $_->analysis_project_bridges->config_profile_item->is_current
+        $_->config_profile_item and $_->config_profile_item->is_current
     } @dependent_models;
 
     return @current_models;

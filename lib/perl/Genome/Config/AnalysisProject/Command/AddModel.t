@@ -53,7 +53,7 @@ ok(!$cmd4->execute, 'command fails when models already assigned to a different p
 ok(!$other_model->analysis_project, 'unassigned model not assigned to');
 for my $m (@models) {
     is($m->analysis_project, $analysis_project, 'analysis project remains properly assigned');
-    is($m->config_profile_items, $profile_item, 'model linked to correct configuration');
+    is($m->config_profile_item, $profile_item, 'model linked to correct configuration');
 }
 
 $other_profile_item->status('active');
@@ -82,7 +82,7 @@ my $cmd7 = $class->create(
 isa_ok($cmd7, $class, 'created command');
 ok($cmd7->execute, 'command succeeds in "normal" case');
 is($other_model->analysis_project, $other_analysis_project, 'model assigned appropriately');
-is($other_model->config_profile_items, $other_profile_item, 'model linked to correct configuration');
+is($other_model->config_profile_item, $other_profile_item, 'model linked to correct configuration');
 
 
 sub add_config {
