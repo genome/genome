@@ -191,7 +191,6 @@ sub filter_snvs {
     $self->get_tumor_normal_bam($somvar_build);
     my $refbuild = $self->reference_build($somvar_build);
     my $ref_fa = $refbuild->full_consensus_path('fa');
-    my $temp_op_dir = Genome::Sys->create_temp_directory;
     my $filter = Genome::Model::Tools::Varscan::SomaticFilterWorkflow->
     create(
         outdir => $outdir,
