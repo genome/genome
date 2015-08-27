@@ -24,4 +24,9 @@ sub diff_circos_conf {
     return ($first_md5 eq $second_md5 ? 1 : 0);
 }
 
+sub should_run_exome_cnv {
+    my $self = shift;
+    return ($self->exome_build and $self->processing_profile->exome_cnv);
+}
+
 1;

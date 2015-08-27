@@ -399,7 +399,7 @@ sub map_workflow_inputs {
     }
 
     #ExomeCNV
-    if ($exome_build and $self->exome_cnv) {
+    if ($build->should_run_exome_cnv) {
       my $exome_cnv_dir = $patient_dir . "/cnv/exome_cnv/";
       push @dirs, $exome_cnv_dir;
       push @inputs, exome_cnv_dir => $exome_cnv_dir;
@@ -470,7 +470,7 @@ sub map_workflow_inputs {
                                                      "/snv_indel_report/" . "b" . $bq . "_" . "q" . $mq);
         push @dirs, $snv_indel_report_dir1;
         push @inputs, "snv_indel_report_dir" . $i => $snv_indel_report_dir1;
-        if($wgs_build or ($exome_build and $self->exome_cnv)) {
+        if($wgs_build or $build->should_run_exome_cnv) {
             my $sciclone_dir1 = File::Spec->join($patient_dir,
                                                  "/clonality/sciclone/" . "b" . $bq . "_" . "q" . $mq);
             push @dirs, $sciclone_dir1;
@@ -585,9 +585,9 @@ sub _resolve_workflow_for_build {
       }
       if($build->exome_build) {
         push @output_properties, 'exome_mutation_spectrum_result' . $i;
-        if($self->exome_cnv) {
-            push @output_properties, 'sciclone_result' . $i;
-        }
+      }
+      if($build->should_run_exome_cnv) {
+        push @output_properties, 'sciclone_result' . $i;
       }
       push @output_properties, 'converge_snv_indel_report_result' . $i;
     }
@@ -597,7 +597,7 @@ sub _resolve_workflow_for_build {
       push @output_properties, 'microarray_cnv_result';
   }
 
-  if ($build->exome_build and $self->exome_cnv) {
+  if ($build->should_run_exome_cnv) {
       push @output_properties, 'exome_cnv_result';
   }
 
@@ -971,7 +971,7 @@ sub _resolve_workflow_for_build {
 
   #RunExomeCNV - produce cnv plots using WEx results
   my $exome_cnv_op;
-  if ($build->exome_build and $self->exome_cnv) {
+  if ($build->should_run_exome_cnv) {
     my $msg = "Call somatic copy number changes using exome data";
     $exome_cnv_op = $add_step->($msg, "Genome::Model::Tools::CopyNumber::Cnmops");
     $add_link->($input_connector, 'exome_cnv_dir', $exome_cnv_op, 'outdir');
@@ -1286,7 +1286,7 @@ sub _resolve_workflow_for_build {
   }
 
   #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
-  if ($build->wgs_build or ($build->exome_build and $self->exome_cnv)){
+  if ($build->wgs_build or $build->should_run_exome_cnv){
     my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
     while(my ($i, $mq, $bq) = $iterator->()) {
       my $msg = "Run clonality analysis and produce clonality plots using SciClone " . $i;
@@ -1299,7 +1299,7 @@ sub _resolve_workflow_for_build {
       if ($build->wgs_build) {
         $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
       }
-      if ($build->exome_build and $self->exome_cnv) {
+      if ($build->should_run_exome_cnv) {
         $add_link->($exome_cnv_op, 'result', $sciclone_op, 'exome_cnv_result');
       }
       if ($self->has_microarray_build()) {
@@ -1598,4 +1598,3 @@ sub _get_docm_variants_file {
 }
 
 1;
-
