@@ -331,11 +331,7 @@ sub create {
 
     $self->_lock_proxy($lock);
 
-    my $unlock_callback = sub {
-        $self->_unlock;
-    };
-    $self->add_observer(aspect => 'commit', callback => $unlock_callback, once => 1);
-    $self->add_observer(aspect => 'delete', callback => $unlock_callback);
+    $self->_add_unlock_observers;
 
     if (my $output_dir = $self->output_dir) {
         if (-d $output_dir) {
@@ -365,6 +361,19 @@ sub create {
     $self->subclass_name($class);
     $self->lookup_hash($self->calculate_lookup_hash());
     return $self;
+}
+
+sub _add_unlock_observers {
+    my $self = shift;
+
+    my $unlock_callback = sub {
+        $self->_unlock;
+    };
+    my @observers =
+        $self->add_observer(aspect => 'commit', callback => $unlock_callback, once => 1),
+        $self->add_observer(aspect => 'delete', callback => $unlock_callback);
+
+    return @observers;
 }
 
 sub _gather_params_for_get_or_create {
