@@ -6,7 +6,7 @@ use warnings;
 use Test::More;
 use File::Temp;
 
-use_ok('Genome::Role::Logger');
+use above "Genome";
 
 test_stderr_tie();
 
@@ -14,7 +14,12 @@ done_testing();
 
 sub test_stderr_tie {
     my $tmp_file = File::Temp->new();
-    my $logger = Genome::Role::Logger->create(
+
+    UR::Object::Type->define(
+        class_name => 'TestLogger',
+        roles => 'Genome::Role::Logger',
+    );
+    my $logger = TestLogger->create(
         screen => 0,
         log_file => "$tmp_file",
         tie_stderr => 1,

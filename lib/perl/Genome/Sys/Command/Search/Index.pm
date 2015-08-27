@@ -4,7 +4,8 @@ use Genome;
 use Genome::Utility::Instrumentation qw(increment timer);
 
 class Genome::Sys::Command::Search::Index {
-    is => ['Genome::Role::Logger', 'Command'],
+    is => 'Command',
+    roles => 'Genome::Role::Logger',
     has => [
         action => {
             is => 'Text',
