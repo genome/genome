@@ -143,7 +143,47 @@ subtest 'input file with wildtype sequence shorter than desired peptite sequence
     is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
-subtest 'distance_for_start' => sub {
+subtest 'input file with inframe insertion - amino acide replacement' => sub {
+    my $interpreter = $pkg->create(peptide_sequence_length => 21);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        GTGC => {
+            variant_sequences => {
+                '>WT.CNDP1.p.V15VL' => 'LGRMAASLLAVLLLLLERGMF',
+                '>MT.CNDP1.p.V15VL' => 'LGRMAASLLAVLLLLLLERGMF',
+            }
+        }
+    );
+
+    my $input_file = File::Spec->join($test_dir, 'input_inframe_insertion.vcf');
+    my $reader = Genome::File::Vcf::Reader->new($input_file);
+    my $entry = $reader->next();
+
+    is_deeply({$interpreter->interpret_entry($entry, ['GTGC'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest 'input file with inframe insertion - amino acid insertion' => sub {
+    my $interpreter = $pkg->create(peptide_sequence_length => 21);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        TAGC => {
+            variant_sequences => {
+                '>WT.OXA1L.p.-478-479S' => 'PGKDNPPNIPSSSSKPKSKY',
+                '>MT.OXA1L.p.-478-479S' => 'PGKDNPPNIPSSSSSKPKSKY',
+            }
+        }
+    );
+
+    my $input_file = File::Spec->join($test_dir, 'input_inframe_insertion2.vcf');
+    my $reader = Genome::File::Vcf::Reader->new($input_file);
+    my $entry = $reader->next();
+
+    is_deeply({$interpreter->interpret_entry($entry, ['TAGC'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest 'distance_from_start' => sub {
     my $sequence = 'KKLKILGMPFRNIRSILKMVN';
     my $position = 5;
 

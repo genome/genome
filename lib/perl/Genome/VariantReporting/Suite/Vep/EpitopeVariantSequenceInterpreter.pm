@@ -45,37 +45,52 @@ sub _interpret_entry {
 
         TRANSCRIPT: for my $transcript (@transcripts) {
             my @consequences = uniq map {split /\&/, lc($_)} grep {defined($_)} $transcript->{consequence};
-            if (grep {$_ eq 'missense_variant'} @consequences) {
-                my $position = $transcript->{protein_position} - 1;
+            if (grep {$_ eq 'missense_variant' || $_ eq 'inframe_insertion'} @consequences) {
                 my ($wildtype_amino_acid, $mutant_amino_acid) = split('/', $transcript->{amino_acids});
                 my $full_wildtype_sequence = $transcript->{wildtypeprotein};
-                if ($wildtype_amino_acid ne substr($full_wildtype_sequence, $position, 1)) {
-                    next TRANSCRIPT;
+                my ($position, $replacement_length);
+                my $peptide_sequence_length = $self->determine_peptide_sequence_length($full_wildtype_sequence, $entry);
+                if ($wildtype_amino_acid eq '-') {
+                    ($position) = split('-', $transcript->{protein_position});
+                    $replacement_length = 0;
+                    $peptide_sequence_length--;
                 }
                 else {
-                    my ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry);
-                    my $mutant_subsequence = $wildtype_subsequence;
-                    substr($mutant_subsequence, $mutation_position, 1) = $mutant_amino_acid;
-                    my @designations = qw(WT MT);
-                    my @subsequences = ($wildtype_subsequence, $mutant_subsequence);
-                    my $iterator = each_array( @designations, @subsequences );
-                    while ( my ($designation, $subsequence) = $iterator->() ) {
-                        my $header = ">$designation." . $transcript->{symbol} . '.p.' . $wildtype_amino_acid . $transcript->{protein_position} . $mutant_amino_acid;
-                        $return_values{$variant_allele}->{variant_sequences}->{$header} = $subsequence;
+                    $position = $transcript->{protein_position} - 1;
+                    $replacement_length = 1;
+                    if ($wildtype_amino_acid ne substr($full_wildtype_sequence, $position, 1)) {
+                        next TRANSCRIPT;
                     }
+                }
+                my ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry, $peptide_sequence_length);
+                my $mutant_subsequence = $wildtype_subsequence;
+                substr($mutant_subsequence, $mutation_position, $replacement_length) = $mutant_amino_acid;
+                my @designations = qw(WT MT);
+                my @subsequences = ($wildtype_subsequence, $mutant_subsequence);
+                my $iterator = each_array( @designations, @subsequences );
+                while ( my ($designation, $subsequence) = $iterator->() ) {
+                    my $header = ">$designation." . $transcript->{symbol} . '.p.' . $wildtype_amino_acid . $transcript->{protein_position} . $mutant_amino_acid;
+                    $return_values{$variant_allele}->{variant_sequences}->{$header} = $subsequence;
                 }
             }
             else {
+                next TRANSCRIPT;
             }
+        }
+
+        if (!defined($return_values{$variant_allele})) {
+            $return_values{$variant_allele}->{variant_sequences} = '';
         }
     }
 
     return %return_values;
 }
-sub get_wildtype_subsequence {
-    my ($self, $position, $full_wildtype_sequence, $entry) = @_;
+
+sub determine_peptide_sequence_length {
+    my ($self, $full_wildtype_sequence, $entry) = @_;
 
     my $peptide_sequence_length = $self->peptide_sequence_length;
+
     #If the wildtype sequence is shorter than the desired peptide sequence
     #length we use the wildtype sequence length instead so that the extraction
     #algorithm below works correctly
@@ -89,6 +104,20 @@ sub get_wildtype_subsequence {
         );
     }
 
+    return $peptide_sequence_length;
+}
+
+sub get_wildtype_subsequence {
+    my ($self, $position, $full_wildtype_sequence, $entry, $peptide_sequence_length) = @_;
+
+    my $one_flanking_sequence_length;
+    if ($peptide_sequence_length % 2 == 0) {
+        $one_flanking_sequence_length = $peptide_sequence_length / 2;
+    }
+    else {
+        $one_flanking_sequence_length = ($peptide_sequence_length - 1) / 2;
+    }
+
     # We want to extract a subset from $full_wildtype_sequence that is
     # $peptide_sequence_length long so that the $position ends
     # up in the middle of the extracted sequence.
@@ -96,7 +125,6 @@ sub get_wildtype_subsequence {
     # $full_wildtype_sequence there aren't enough amino acids on one side
     # to achieve this.
     my ($wildtype_subsequence, $mutation_position);
-    my $one_flanking_sequence_length = ($peptide_sequence_length - 1) / 2;
     if (distance_from_start($position, $full_wildtype_sequence) < $one_flanking_sequence_length) {
         $wildtype_subsequence = substr($full_wildtype_sequence, 0, $peptide_sequence_length);
         $mutation_position = $position;
@@ -110,7 +138,7 @@ sub get_wildtype_subsequence {
         (distance_from_end($position, $full_wildtype_sequence) >= $one_flanking_sequence_length)
     ) {
         $wildtype_subsequence = substr($full_wildtype_sequence, ($position - $one_flanking_sequence_length), $peptide_sequence_length);
-        $mutation_position = ($peptide_sequence_length - 1) / 2;
+        $mutation_position = $one_flanking_sequence_length;
     }
     else {
         die $self->error_message(
