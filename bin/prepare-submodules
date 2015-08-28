@@ -1,0 +1,67 @@
+#!/bin/bash
+
+set -o errexit
+
+__quiet_git() {
+    (
+        set +o errexit
+        OUT="$(git "$@" 2>&1)"
+        GIT_EXIT=$?
+        if test $GIT_EXIT -ne 0
+        then
+            echo -e "$OUT" 1>&2
+            exit $GIT_EXIT
+        fi
+    )
+}
+
+__stderr() {
+    echo "$@" 1>&2
+}
+
+main() {
+    __stderr -e "\n=> Preparing Submodules..."
+
+    __quiet_git submodule sync "$@"
+
+    for submodule in "$@"; do
+        __stderr -n "   $submodule: "
+        if git submodule status $submodule | grep -q ^-
+        then
+            __quiet_git submodule update --init $submodule
+            __stderr "OK"
+        else
+            (
+                EXPECTED_HEAD=$(git ls-tree HEAD $submodule | awk '{print $3}')
+                cd $submodule
+                HEAD=$(git rev-parse HEAD)
+
+                if ! git cat-file -e $EXPECTED_HEAD
+                then
+                    __quiet_git fetch --all
+                fi
+
+                if ! git status --porcelain | grep -q . \
+                    && git merge-base --is-ancestor $HEAD $EXPECTED_HEAD
+                then
+                    cd - 1> /dev/null
+                    __quiet_git submodule update --init $submodule
+                    __stderr "OK"
+                else
+                    if test -n "$JENKINS_HOME"
+                    then
+                        __stderr "ERROR: Not updating '$submodule' submodule because it has local changes!"
+                        exit 1;
+                    else
+                        __stderr "WARNING: Not updating '$submodule' submodule because it has local changes!"
+                    fi
+                fi
+            )
+        fi
+    done
+}
+
+(
+    cd "$(git rev-parse --show-cdup)"
+    main "$@"
+)
