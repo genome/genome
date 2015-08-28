@@ -195,11 +195,11 @@ class Genome::Model {
             to => 'analysis_project',
             is_many => 0,
         },
-        config_profile_items => {
+        config_profile_item => {
             is => 'Genome::Config::Profile::Item',
             via => 'analysis_project_bridges',
             to => 'config_profile_item',
-            is_many => 1,
+            is_many => 0,
         },
     ],
     has_many_optional_deprecated => [
@@ -659,6 +659,11 @@ sub build_requested {
     my ($self, $value, $reason) = @_;
     # Writing the if like this allows someone to do build_requested(undef)
     if (@_ > 1) {
+        if($value and $self->status eq 'Disabled') {
+            $self->error_message('Cannot request a build for disabled model %s', $self->__display_name__);
+            return;
+        }
+
         $self->_lock();
         my $default_reason = Carp::shortmess('no reason given');
         $self->add_note(
@@ -736,7 +741,10 @@ sub build_needed {
 sub status_with_build {
     my $self = shift;
     my ($status, $build);
-    if ($self->build_requested) {
+
+    if ($self->is_disabled) {
+        $status = 'Disabled';
+    } elsif ($self->build_requested) {
         $status = 'Build Requested';
     } elsif ($self->build_needed) {
         $status = 'Build Needed';
@@ -752,6 +760,12 @@ sub status {
     my $self = shift;
     my ($status) = $self->status_with_build;
     return $status;
+}
+
+sub is_disabled {
+    my $self = shift;
+
+    return ($self->config_profile_item and $self->config_profile_item->status eq 'disabled');
 }
 
 # Copy model to a new model, overridding some properties

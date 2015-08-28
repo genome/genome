@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+DS_GMSCHEMA_SERVER=`genome config get ds_gmschema_server`
+if ! echo "$DS_GMSCHEMA_SERVER" | grep -q apipe-test-db
+then
+    echo "ERROR: make sure you ran genome-env before $0"
+    exit 1
+fi
+
+eval `genome config set-env test_filldb "dbi:Pg:$DS_GMSCHEMA_SERVER;user=genome;password=mypassword"`
+#Force the environment to look up the values for the production db
+for ENV in XGENOME_DS_GMSCHEMA_LOGIN XGENOME_DS_GMSCHEMA_AUTH XGENOME_DS_GMSCHEMA_SERVER;
+do
+    unset $ENV
+done
+
+"$@"

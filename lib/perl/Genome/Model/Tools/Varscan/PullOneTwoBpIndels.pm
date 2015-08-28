@@ -417,7 +417,11 @@ sub execute {
         push(@cmds,"$bsub -N -u $user\@$email_domain -J varscan_process_validation_reltum -w \'ended(JOB8)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
     }
     else{
-        # This was added so things are testable for now
+        if (-z $small_indel_list) {
+            $self->status_message('Skipping small indel validation because small indel list <%s> is empty.', $small_indel_list);
+            return 1;
+        }
+
         my $cmd = Genome::Model::SomaticValidation::Command::ValidateSmallIndels->create(
             varscan_version => $self->varscan_version,
             final_output_file => $self->final_output_file,
