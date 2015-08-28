@@ -1,2 +1,3 @@
 ---
 default_value: "-R 'select[mem>30000] rusage[mem=30000]' -M 30000000"
+env: XGENOME_LSF_RESOURCE_DV2_SQUAREDANCER

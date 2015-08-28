@@ -1,2 +1,3 @@
 ---
 default_value: "-R 'span[hosts=1] select[ncpus>=3 && mem>16000] rusage[mem=16000]' -M 16000000 -n 3"
+env: XGENOME_LSF_RESOURCE_DV2_VARSCAN_SOMATIC

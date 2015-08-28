@@ -1,2 +1,3 @@
 ---
 default_value: "-R 'span[hosts=1] select[maxtmp>100000 && mem>6000] rusage[mem=6000]' -M 6000000"
+env: XGENOME_LSF_RESOURCE_DV2_GATK_GERMLINE_INDEL_UNIFIED_GENOTYPER
