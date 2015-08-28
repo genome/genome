@@ -21,7 +21,7 @@ use Data::Dumper;
 use_ok('Genome::Model::ClinSeq::Command::GetBamReadCountsMatrix') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-GetBamReadCountsMatrix/2012-11-23/";
+my $expected_output_dir = Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-GetBamReadCountsMatrix/2015-08-28/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
@@ -29,12 +29,12 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Get a somatic variation build
-my $somvar_build_id1 = 126851693;
-my $somvar_build_id2 = 126847207;
+my $somvar_build_id1 = '5073b4ac211b4ad498e1ee365b0603d8';
+#my $somvar_build_id2 = 126847207;
 
 #Create get-bam-read-counts-matrix command and execute
 #genome model clin-seq get-bam-read-counts-matrix --output-dir=/tmp/bam_readcount_matrix/ --somatic-build-ids='126851693,126847207' --somatic-labels='DefaultSomatic_PNC4,StrelkaSomatic_PNC4' --skip-mt=1 --max-positions=250
-my $bam_readcounts_cmd = Genome::Model::ClinSeq::Command::GetBamReadCountsMatrix->create(output_dir=>$temp_dir, somatic_build_ids=>"$somvar_build_id1,$somvar_build_id2", somatic_labels=>"DefaultSomatic_PNC4,StrelkaSomatic_PNC4", skip_mt=>1, max_positions=>250);
+my $bam_readcounts_cmd = Genome::Model::ClinSeq::Command::GetBamReadCountsMatrix->create(output_dir=>$temp_dir, somatic_build_ids=>"$somvar_build_id1", somatic_labels=>"Somatic_SCLC1", skip_mt=>1, max_positions=>250);
 $bam_readcounts_cmd->queue_status_messages(1);
 my $r1 = $bam_readcounts_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
