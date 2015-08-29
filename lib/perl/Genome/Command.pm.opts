@@ -7009,6 +7009,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>identify-loh',
       [
+        'lsf-resource=s',
+        'files',
         'outdir=s',
         'files',
         'bamrc-version=s',
