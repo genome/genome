@@ -3,7 +3,6 @@ package Genome::Model::ClinSeq::Command::IdentifyLoh;
 use strict;
 use warnings;
 use File::Spec;
-use File::Copy;
 use Genome;
 
 class Genome::Model::ClinSeq::Command::IdentifyLoh {
@@ -49,11 +48,6 @@ class Genome::Model::ClinSeq::Command::IdentifyLoh {
         is_optional => 1,
         default => 0,
     },
-    ],
-    has_param => [
-        lsf_resource => {
-            default => "-R 'select[gtmp>10] span[hosts=1] rusage[gtmp=10]'",
-        }
     ],
     doc => 'Identify regions of LOH using clinseq tumor/normal pairs.',
 };
@@ -186,14 +180,13 @@ sub filter_snvs {
     my $self = shift;
     my $somvar_build = shift;
     my $snv_prefix = shift;
-    my $outdir = shift;
     my ($tumor_bam, $normal_bam) =
     $self->get_tumor_normal_bam($somvar_build);
     my $refbuild = $self->reference_build($somvar_build);
     my $ref_fa = $refbuild->full_consensus_path('fa');
     my $filter = Genome::Model::Tools::Varscan::SomaticFilterWorkflow->
     create(
-        outdir => $outdir,
+        outdir => $self->outdir,
         tumor_bam => $tumor_bam,
         normal_bam => $normal_bam,
         prefix => $snv_prefix,
@@ -262,12 +255,11 @@ sub filter_loh {
 #Get rid of intermediate files
 sub cleanup {
     my $self = shift;
-    my $outdir = shift;
     my @patterns = qw(*.Somatic* *.readcounts *.hc *.LOH
         *.lc *.Germline *.removed *.formatted
         *.hc.err *.other *.err *.out *.snp snvs.filtered snvs.*.unfiltered *hc.filtered);
     for my $pattern (@patterns) {
-        for my $file (glob File::Spec->join($outdir, $pattern)) {
+        for my $file (glob File::Spec->join($self->outdir, $pattern)) {
             $self->status_message("unlinking $file");
             unlink $file;
         }
@@ -278,23 +270,18 @@ sub cleanup {
 sub execute {
     my $self = shift;
     my $somvar_build = $self->resolve_somvar;
-    my $temp_outdir = Genome::Sys->create_temp_directory;
     my $snv_prefix = File::Spec->join(
-        $temp_outdir,
+        $self->outdir,
         "snvs");
     $self->get_varscan_snvs($somvar_build, $snv_prefix);
-    $self->filter_snvs($somvar_build, $snv_prefix, $temp_outdir);
+    $self->filter_snvs($somvar_build, $snv_prefix);
     my $combined_sorted = $self->combine_sort_snvs($snv_prefix);
     my $loh_basename = File::Spec->join(
-        $temp_outdir,
+        $self->outdir,
         "loh");
     my $loh_segments = $self->segment_loh($combined_sorted, $loh_basename);
     $self->filter_loh($loh_basename);
-    $self->cleanup($temp_outdir);
-    for my $file (glob File::Spec->join($temp_outdir, "*")) {
-        $self->status_message("Copying $file");
-        copy($file, $self->outdir);
-    }
+    $self->cleanup;
     return 1;
 }
 
