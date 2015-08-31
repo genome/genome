@@ -218,7 +218,8 @@ sub _dbh_for {
     return $self->{$cache_key};
 }
 
-my @ENV_VARS_FOR_TEST_DB = qw( XGENOME_DS_GMSCHEMA_LOGIN XGENOME_DS_GMSCHEMA_AUTH XGENOME_DS_GMSCHEMA_SERVER );
+my @ENV_VARS_FOR_TEST_DB = map { Genome::Config::spec($_)->env }
+                               qw( ds_gmschema_login ds_gmschema_auth ds_gmschema_server );
 sub _dbh_for_production_db {
     my $self = shift;
 
