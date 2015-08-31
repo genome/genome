@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Params::Validate ':types';
+use File::Spec;
 
 class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance {
     is => 'Command::V2',
@@ -80,7 +81,8 @@ sub execute {
     my @data;
     for my $build ($self->resolve_builds) {
         my $build_vcf = $self->resolve_snvs_vcf_for_build($build);
-        unless ($microarray_build) {
+        # If the input microarray build was not defined, get the microarray_build for each input build
+        unless ($self->microarray_build) {
             $microarray_build = $build->genotype_microarray_build;
             unless ($microarray_build) {
                 $self->error_message('Failed to find a Microarray build.  None exists as input to SNVs build.');
@@ -193,13 +195,7 @@ sub resolve_snvs_vcf_for_build {
         $self->error_message('Unable to find the snvs VCF for build : '. $build->__display_name__);
         die($self->error_message);
     }
-    #TEST
     return $build_vcf;
-    
-    my $sorted_build_vcf = $self->create_temp_file_path($build->id .'.vcf.gz');
-    $self->sort_vcf($build_vcf,$sorted_build_vcf);
-    
-    return $sorted_build_vcf;
 }
 
 sub resolve_genotype_microarray_vcf_and_sample {
@@ -282,7 +278,6 @@ sub sort_vcf {
         $self->error_message('Failed to sort VCF: '. $input_vcf);
         die($self->error_message);
     }
-    # TODO : Add something here that ensures the file is complete after Sort
     return 1;
 }
 
@@ -291,7 +286,7 @@ sub create_temp_file_path {
     my $basename = shift;
 
     if ($self->output_dir) {
-        return $self->output_dir .'/'. $basename;
+        return File::Spec->join($self->output_dir,$basename);
     } else {
         return Genome::Sys->create_temp_file_path($basename);
     }
@@ -357,7 +352,7 @@ sub resolve_roi_intervals_from_build {
     $build->region_of_interest_set_bed_file($roi_bed);
 
     my $roi_intervals = $self->create_temp_file_path($build->id .'.intervals');
-    # TODO: Cache this file or store it's location for later use.  Same ROI is likely used for all QC builds.
+    # TODO: Cache the ROI intervals for later use in this command.  The same ROI is likely used for all input builds.
     my $bed_to_intervals_cmd = Genome::Model::Tools::Picard::BedToIntervalList->create(
         input => $roi_bed,
         output => $roi_intervals,
