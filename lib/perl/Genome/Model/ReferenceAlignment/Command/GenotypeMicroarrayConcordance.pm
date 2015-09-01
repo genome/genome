@@ -43,7 +43,7 @@ class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance 
             is => 'Genome::Model::Build::GenotypeMicroarray',
             doc => 'Use this microarray build as the truth VCF regardless of default genotype data for the sample.',
         },
-        lane_qc_builds => {
+        lookup_lane_qc_builds => {
             is => 'Boolean',
             doc => 'Lookup the lane QC build for each instrument data assigned to the input reference alignment build.',
             default_value => 1,
@@ -296,7 +296,7 @@ sub resolve_builds {
     my $self = shift;
 
     my @builds;
-    if ($self->lane_qc_builds) {
+    if ($self->lookup_lane_qc_builds) {
         my @instrument_data = $self->build->instrument_data;
         unless (@instrument_data) {
             $self->error_message('Found no instrument data assigned to build: '. $self->build->__display_name__);
