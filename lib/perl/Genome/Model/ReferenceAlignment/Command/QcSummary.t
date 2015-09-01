@@ -7,6 +7,6 @@ use above 'Genome';
 use Test::More;
 use Genome::Utility::Test;
 
-use_ok('Genome::Model::ReferenceAlignment::Command::AdspQcSummary');
+use_ok('Genome::Model::ReferenceAlignment::Command::QcSummary');
 
 done_testing;
