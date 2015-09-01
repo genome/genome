@@ -52,7 +52,7 @@ sub execute {
 
 sub get_ldap_users {
     my $ldap_user = {};
-    my @c = `ldapsearch -z 1000 -x`; # gets max 1000 records
+    my @c = `ldapsearch -z 0 -x`;
     my @users;
     my $user;
 
