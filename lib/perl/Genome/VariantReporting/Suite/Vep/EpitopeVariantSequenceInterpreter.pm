@@ -48,23 +48,18 @@ sub _interpret_entry {
             if (grep {$_ eq 'missense_variant' || $_ eq 'inframe_insertion'} @consequences) {
                 my ($wildtype_amino_acid, $mutant_amino_acid) = split('/', $transcript->{amino_acids});
                 my $full_wildtype_sequence = $transcript->{wildtypeprotein};
-                my ($position, $replacement_length);
-                my $peptide_sequence_length = $self->determine_peptide_sequence_length($full_wildtype_sequence, $entry);
+                my ($position, $wildtype_amino_acid_length);
                 if ($wildtype_amino_acid eq '-') {
                     ($position) = split('-', $transcript->{protein_position});
-                    $replacement_length = 0;
-                    $peptide_sequence_length--;
+                    $wildtype_amino_acid_length = 0;
                 }
                 else {
                     $position = $transcript->{protein_position} - 1;
-                    $replacement_length = 1;
-                    if ($wildtype_amino_acid ne substr($full_wildtype_sequence, $position, 1)) {
-                        next TRANSCRIPT;
-                    }
+                    $wildtype_amino_acid_length = length($wildtype_amino_acid);
                 }
-                my ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry, $peptide_sequence_length);
+                my ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry, $wildtype_amino_acid_length);
                 my $mutant_subsequence = $wildtype_subsequence;
-                substr($mutant_subsequence, $mutation_position, $replacement_length) = $mutant_amino_acid;
+                substr($mutant_subsequence, $mutation_position, $wildtype_amino_acid_length) = $mutant_amino_acid;
                 my @designations = qw(WT MT);
                 my @subsequences = ($wildtype_subsequence, $mutant_subsequence);
                 my $iterator = each_array( @designations, @subsequences );
@@ -107,16 +102,16 @@ sub determine_peptide_sequence_length {
     return $peptide_sequence_length;
 }
 
-sub get_wildtype_subsequence {
-    my ($self, $position, $full_wildtype_sequence, $entry, $peptide_sequence_length) = @_;
+sub determine_flanking_sequence_length {
+    my ($self, $full_wildtype_sequence, $entry) = @_;
+    return ($self->determine_peptide_sequence_length($full_wildtype_sequence, $entry) - 1) / 2;
+}
 
-    my $one_flanking_sequence_length;
-    if ($peptide_sequence_length % 2 == 0) {
-        $one_flanking_sequence_length = $peptide_sequence_length / 2;
-    }
-    else {
-        $one_flanking_sequence_length = ($peptide_sequence_length - 1) / 2;
-    }
+sub get_wildtype_subsequence {
+    my ($self, $position, $full_wildtype_sequence, $entry, $wildtype_amino_acid_length) = @_;
+
+    my $one_flanking_sequence_length = $self->determine_flanking_sequence_length($full_wildtype_sequence, $entry);
+    my $peptide_sequence_length = 2 * $one_flanking_sequence_length + $wildtype_amino_acid_length;
 
     # We want to extract a subset from $full_wildtype_sequence that is
     # $peptide_sequence_length long so that the $position ends
