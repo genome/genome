@@ -1,0 +1,3 @@
+---
+default_value: "-R 'select[gtmp>100 && mem>10000] rusage[gtmp=100,mem=10000]' -M 10000000"
+env: XGENOME_LSF_RESOURCE_DV2_VARSCAN_SOMATIC_VALIDATION

@@ -16,7 +16,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::PindelSomaticCalls{
     ],
     has_param => [
         lsf_resource => {
-            default => "-R 'span[hosts=1] rusage[mem=16000]' -M 1600000000",
+            default => Genome::Config::get('lsf_resource_dv2_filter_pindel'),
         },
     ],
 };

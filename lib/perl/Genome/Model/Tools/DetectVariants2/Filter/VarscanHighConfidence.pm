@@ -18,7 +18,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::VarscanHighConfidence{
              default_value => Genome::Config::get('lsf_queue_dv2_workflow'),
          },
          lsf_resource => {
-             default_value => "-M 8000000 -R 'select[mem>8000] rusage[mem=8000]'",
+             default_value => Genome::Config::get('lsf_resource_dv2_filter_varscan_high_confidence'),
          },
      ],
 };
