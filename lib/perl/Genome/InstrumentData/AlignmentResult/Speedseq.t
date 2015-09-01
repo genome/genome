@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Test::Exception;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
@@ -21,6 +22,16 @@ use Cwd qw(abs_path);
 
 my $pkg = 'Genome::InstrumentData::AlignmentResult::Speedseq';
 use_ok($pkg);
+
+my @speedseq_versions = Genome::Model::Tools::Speedseq::Base->available_versions;
+for my $version (@speedseq_versions) {
+    my $sub = sub { return $version; };
+    my $fake_refindex = bless {}, "DummyIndex";
+    *DummyIndex::aligner_version = $sub;
+    lives_ok {
+        Genome::InstrumentData::AlignmentResult::Speedseq->bwa_version($fake_refindex);
+    } "BWA version found for Speedseq version $version";
+}
 
 my $test_data_dir = __FILE__.'.d';
 
