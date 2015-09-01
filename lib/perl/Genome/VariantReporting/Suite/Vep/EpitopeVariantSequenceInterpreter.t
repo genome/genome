@@ -143,7 +143,7 @@ subtest 'input file with wildtype sequence shorter than desired peptite sequence
     is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
-subtest 'input file with inframe insertion - amino acide replacement' => sub {
+subtest 'input file with inframe insertion - amino acid replacement' => sub {
     my $interpreter = $pkg->create(peptide_sequence_length => 21);
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
@@ -161,6 +161,26 @@ subtest 'input file with inframe insertion - amino acide replacement' => sub {
     my $entry = $reader->next();
 
     is_deeply({$interpreter->interpret_entry($entry, ['GTGC'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest 'input file with inframe deletion - amino acid replacement' => sub {
+    my $interpreter = $pkg->create(peptide_sequence_length => 21);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        A => {
+            variant_sequences => {
+                '>WT.OR14A16.p.SL163-164L' => 'IAVMHTAGTFSLSYCGSNMVHQ',
+                '>MT.OR14A16.p.SL163-164L' => 'IAVMHTAGTFLSYCGSNMVHQ',
+            }
+        }
+    );
+
+    my $input_file = File::Spec->join($test_dir, 'input_inframe_deletion.vcf');
+    my $reader = Genome::File::Vcf::Reader->new($input_file);
+    my $entry = $reader->next();
+
+    is_deeply({$interpreter->interpret_entry($entry, ['A'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
 subtest 'input file with inframe insertion - amino acid insertion' => sub {
@@ -181,6 +201,26 @@ subtest 'input file with inframe insertion - amino acid insertion' => sub {
     my $entry = $reader->next();
 
     is_deeply({$interpreter->interpret_entry($entry, ['TAGC'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest 'input file with inframe deletion - amino acid deletion' => sub {
+    my $interpreter = $pkg->create(peptide_sequence_length => 21);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        T => {
+            variant_sequences => {
+                '>WT.LRRC17.p.E214-' => 'RQIKSEQLCNEEEKEQLDPKP',
+                '>MT.LRRC17.p.E214-' => 'RQIKSEQLCNEEKEQLDPKP',
+            }
+        }
+    );
+
+    my $input_file = File::Spec->join($test_dir, 'input_inframe_deletion2.vcf');
+    my $reader = Genome::File::Vcf::Reader->new($input_file);
+    my $entry = $reader->next();
+
+    is_deeply({$interpreter->interpret_entry($entry, ['T'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
 subtest 'distance_from_start' => sub {

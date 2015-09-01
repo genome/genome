@@ -58,6 +58,17 @@ sub _interpret_entry {
                     $wildtype_amino_acid_length = length($wildtype_amino_acid);
                 }
             }
+            elsif (grep {$_ eq 'inframe_deletion'} @consequences) {
+                if ($mutant_amino_acid eq '-') {
+                    $position = $transcript->{protein_position} - 1;
+                    $wildtype_amino_acid_length = length($wildtype_amino_acid);
+                    $mutant_amino_acid = '';
+                }
+                else {
+                    $position = (split('-', $transcript->{protein_position}))[0] - 1;
+                    $wildtype_amino_acid_length = length($wildtype_amino_acid);
+                }
+            }
             else {
                 next TRANSCRIPT;
             }
@@ -68,7 +79,7 @@ sub _interpret_entry {
             my @subsequences = ($wildtype_subsequence, $mutant_subsequence);
             my $iterator = each_array( @designations, @subsequences );
             while ( my ($designation, $subsequence) = $iterator->() ) {
-                my $header = ">$designation." . $transcript->{symbol} . '.p.' . $wildtype_amino_acid . $transcript->{protein_position} . $mutant_amino_acid;
+                my $header = ">$designation." . $transcript->{symbol} . '.p.' . $wildtype_amino_acid . $transcript->{protein_position} . ($mutant_amino_acid || '-');
                 $return_values{$variant_allele}->{variant_sequences}->{$header} = $subsequence;
             }
         }
