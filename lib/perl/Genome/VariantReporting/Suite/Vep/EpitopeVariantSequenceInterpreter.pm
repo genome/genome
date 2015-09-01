@@ -45,10 +45,10 @@ sub _interpret_entry {
 
         TRANSCRIPT: for my $transcript (@transcripts) {
             my @consequences = uniq map {split /\&/, lc($_)} grep {defined($_)} $transcript->{consequence};
+            my ($wildtype_amino_acid, $mutant_amino_acid) = split('/', $transcript->{amino_acids});
+            my $full_wildtype_sequence = $transcript->{wildtypeprotein};
+            my ($position, $wildtype_amino_acid_length);
             if (grep {$_ eq 'missense_variant' || $_ eq 'inframe_insertion'} @consequences) {
-                my ($wildtype_amino_acid, $mutant_amino_acid) = split('/', $transcript->{amino_acids});
-                my $full_wildtype_sequence = $transcript->{wildtypeprotein};
-                my ($position, $wildtype_amino_acid_length);
                 if ($wildtype_amino_acid eq '-') {
                     ($position) = split('-', $transcript->{protein_position});
                     $wildtype_amino_acid_length = 0;
@@ -57,19 +57,19 @@ sub _interpret_entry {
                     $position = $transcript->{protein_position} - 1;
                     $wildtype_amino_acid_length = length($wildtype_amino_acid);
                 }
-                my ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry, $wildtype_amino_acid_length);
-                my $mutant_subsequence = $wildtype_subsequence;
-                substr($mutant_subsequence, $mutation_position, $wildtype_amino_acid_length) = $mutant_amino_acid;
-                my @designations = qw(WT MT);
-                my @subsequences = ($wildtype_subsequence, $mutant_subsequence);
-                my $iterator = each_array( @designations, @subsequences );
-                while ( my ($designation, $subsequence) = $iterator->() ) {
-                    my $header = ">$designation." . $transcript->{symbol} . '.p.' . $wildtype_amino_acid . $transcript->{protein_position} . $mutant_amino_acid;
-                    $return_values{$variant_allele}->{variant_sequences}->{$header} = $subsequence;
-                }
             }
             else {
                 next TRANSCRIPT;
+            }
+            my ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry, $wildtype_amino_acid_length);
+            my $mutant_subsequence = $wildtype_subsequence;
+            substr($mutant_subsequence, $mutation_position, $wildtype_amino_acid_length) = $mutant_amino_acid;
+            my @designations = qw(WT MT);
+            my @subsequences = ($wildtype_subsequence, $mutant_subsequence);
+            my $iterator = each_array( @designations, @subsequences );
+            while ( my ($designation, $subsequence) = $iterator->() ) {
+                my $header = ">$designation." . $transcript->{symbol} . '.p.' . $wildtype_amino_acid . $transcript->{protein_position} . $mutant_amino_acid;
+                $return_values{$variant_allele}->{variant_sequences}->{$header} = $subsequence;
             }
         }
 
