@@ -620,7 +620,8 @@ sub delete {
         $input->delete;
     }
 
-    my $observer = Genome::Sys::CommitAction->create(
+    my $observer;
+    $observer = Genome::Sys::CommitAction->create(
         on_commit => $self->_disk_allocation_cleanup_closure(\$observer)
     );
     if ($observer) {
