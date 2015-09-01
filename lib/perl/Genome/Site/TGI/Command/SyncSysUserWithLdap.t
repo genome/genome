@@ -4,10 +4,17 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 1;
+use Set::Scalar;
+use Test::More tests => 2;
 
-# This test was auto-generated because './Site/TGI/Command/SyncSysUserWithLdap.pm'
-# had no '.t' file beside it.  Please remove this test if you believe it was
-# created unnecessarily.  This is a bare minimum test that just compiles Perl
-# and the UR class.
-use_ok('Genome::Site::TGI::Command::SyncSysUserWithLdap');
+my $class = 'Genome::Site::TGI::Command::SyncSysUserWithLdap';
+use_ok($class);
+
+my $ldap_users = $class->get_ldap_users;
+my $users = Set::Scalar->new(keys %$ldap_users);
+my $apipe_users = Set::Scalar->new(map{$_.'@genome.wustl.edu'}qw(apipe apipe-builder apipe-tester));
+
+ok($users->is_proper_superset($apipe_users), 'Found apipe users in ldap users');
+
+
+
