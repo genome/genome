@@ -82,15 +82,15 @@ sub _interpret_entry {
 }
 
 sub determine_peptide_sequence_length {
-    my ($self, $full_wildtype_sequence, $entry) = @_;
+    my ($self, $full_wildtype_sequence_length, $entry) = @_;
 
     my $peptide_sequence_length = $self->peptide_sequence_length;
 
     #If the wildtype sequence is shorter than the desired peptide sequence
     #length we use the wildtype sequence length instead so that the extraction
     #algorithm below works correctly
-    if (length($full_wildtype_sequence) < $peptide_sequence_length) {
-        $peptide_sequence_length = length($full_wildtype_sequence);
+    if ($full_wildtype_sequence_length < $peptide_sequence_length) {
+        $peptide_sequence_length = $full_wildtype_sequence_length;
         $self->status_message(
             'Wildtype sequence length is shorter than desired peptide sequence length at position (%s, %s). Using wildtype sequence length (%s) instead.',
             $entry->{chrom},
@@ -103,14 +103,14 @@ sub determine_peptide_sequence_length {
 }
 
 sub determine_flanking_sequence_length {
-    my ($self, $full_wildtype_sequence, $entry) = @_;
-    return ($self->determine_peptide_sequence_length($full_wildtype_sequence, $entry) - 1) / 2;
+    my ($self, $full_wildtype_sequence_length, $entry) = @_;
+    return ($self->determine_peptide_sequence_length($full_wildtype_sequence_length, $entry) - 1) / 2;
 }
 
 sub get_wildtype_subsequence {
     my ($self, $position, $full_wildtype_sequence, $entry, $wildtype_amino_acid_length) = @_;
 
-    my $one_flanking_sequence_length = $self->determine_flanking_sequence_length($full_wildtype_sequence, $entry);
+    my $one_flanking_sequence_length = $self->determine_flanking_sequence_length(length($full_wildtype_sequence), $entry);
     my $peptide_sequence_length = 2 * $one_flanking_sequence_length + $wildtype_amino_acid_length;
 
     # We want to extract a subset from $full_wildtype_sequence that is
