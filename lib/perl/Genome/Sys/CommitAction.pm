@@ -8,11 +8,25 @@ class Genome::Sys::CommitAction {
         on_sync     => { is => 'CODE', doc => 'Callback to run when data is saved to the data sources' },
         on_commit   => { is => 'CODE', doc => 'Callback to run when data sources are committed' },
         on_sync_fail => { is => 'CODE', doc => 'Callback to run when other on_sync callbacks have failed' },
+        on_rollback => { is => 'CODE', doc => 'Callback to run when data sources are rolled-back' },
         data => { doc => 'A piece of data passed to the callbacks' },
     ],
     data_source => 'UR::DataSource::Default',
     id_generator => sub { ++$sequence },
 };
+
+my $rollback_mode = 'on_rollback';
+foreach my $callback_data ( [ precommit => 'on_sync_fail' ], [ prerollback => 'on_rollback' ] ) {
+    my($aspect, $mode) = @$callback_data;
+    UR::Observer->register_callback(
+        subject_class_name => 'UR::Context',
+        subject_id => UR::Context->process->id,
+        aspect => $aspect,
+        callback => sub {
+            $rollback_mode = $mode;
+        }
+    );
+}
 
 sub __save__ {
     my $self = shift;
@@ -27,7 +41,8 @@ sub __commit__ {
 
 sub __rollback__ {
     my $self = shift;
-    $self->_run('on_sync_fail');
+    $self->_run($rollback_mode);
+    $self->delete() if $rollback_mode eq 'on_rollback';
 }
 
 sub _run {
@@ -57,20 +72,21 @@ Genome::Sys::CommitAction - Schedule code to run at commit time
 
   Genome::Sys::CommitAction->create(
       on_sync => sub { write_temp_file($temp_file) },
-      on_commit => sub { rename $temp_file, $permanent_name }
-      on_sync_fail => sub { log_message("Commit failed, left temp file $temp_file") }
+      on_commit => sub { rename $temp_file, $permanent_name },
+      on_sync_fail => sub { log_message("Commit failed, left temp file $temp_file") },
+      on_rollback => sub { unlink($temp_file) },
   );
 
   # Later on...
-  UR::Context->commit(); # on_commit sub runs here, when data sources are committed
+  UR::Context->commit(); # on_sync then on_commit subs run here, when data sources are committed
 
 =head1 DESCRIPTION
 
 This class provides a mechanism to schedule some code to run later when
 changed data is being saved to the database.  The callbacks are run only when
-the base, Process context is being committed, not when a software transaction
-is committed.  Callbacks are only run once, even if the Process context is
-committed multiple times.
+the base, Process context is being committed or rolled-back, not when a
+software transaction is committed/rolled-back.  Callbacks are only run once,
+even if the Process context is committed or rolled-back multiple times.
 
 There are two phases to committing saved data.  First, all changed data is
 saved to the appropriate data source (colloquially called sync_database).
@@ -79,7 +95,8 @@ If any data fails to save during sync_database, all data sources are asked
 to rollback.
 
 For these CommitAction objects, their C<on_sync> callback is run during
-sync_database, C<on_commit> is run during commit.
+sync_database, C<on_commit> is run during commit.  C<on_rollback> is run when
+the Process Context is rolled back.
 
 The C<on_sync_fail> callback is only run when a subsequent C<on_sync> callback
 throws an exception.  CommitActions are then considered live again, and
