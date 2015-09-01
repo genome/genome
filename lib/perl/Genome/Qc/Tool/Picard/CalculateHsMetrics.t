@@ -95,7 +95,7 @@ my %expected_metrics = (
 is_deeply({$tool->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
 
 compare_ok($tool->bait_intervals, File::Spec->join($data_dir, 'bait.intervals'), 'bait_intervals file as expected');
-compare_ok($tool->target_intervals, File::Spec->join($data_dir, 'target.intervals'), 'target_intercals file as expected');
+compare_ok($tool->target_intervals, File::Spec->join($data_dir, 'target.intervals'), 'target_intervals file as expected');
 
 $override_file_path->restore;
 $override_seqdict->restore;
