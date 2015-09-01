@@ -16,7 +16,7 @@ use_ok($pkg);
 
 my $config = Genome::Site::TGI::CleTest::get_config();
 my $expected_config = {
-    'blessed_process' => '2b2b3d8481284fcf8a1632d65ba58083',
+    'blessed_process' => '94cae05ab93c457e8ec229024e5ebc15',
     'blessed_builds' => [
     '185d8bac3d7c4437b7ce9207dfadac7e',
     '5f57f08a8fd84886b275f0b5571e9fd7',
