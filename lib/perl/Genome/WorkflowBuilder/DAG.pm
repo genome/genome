@@ -281,13 +281,14 @@ sub get_ptero_builder_for_process {
 }
 
 sub _get_method_to_set_status {
-    require Ptero::Builder::ShellCommand;
+    require Ptero::Builder::Job;
 
     my ($self, $process_id, $status, $exit_code) = Params::Validate::validate_pos(
         @_, 1, 1, 1, 1);
 
-    return Ptero::Builder::ShellCommand->new(
+    return Ptero::Builder::Job->new(
         name => "set status $status",
+        service_url => Genome::Config::get('ptero_shell_command_service_url'),
         parameters => {
             commandLine => [
                 'genome', 'process', 'set-status',
