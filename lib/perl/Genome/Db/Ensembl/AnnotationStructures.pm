@@ -575,12 +575,25 @@ sub create
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
 
-    unless ($self->_user_test_name) {
+    if ($self->_user_test_name) {
+        $self->test_name($self->_user_test_name);
+    } else {
         $self->remove_test_name();
     }
     UR::Context->commit;
+    $self->_unlock;
 
     return $self;
+}
+
+sub _add_unlock_observers {
+    my $self = shift;
+
+    my $unlock_callback = sub {
+        $self->_unlock;
+    };
+
+    return $self->add_observer(aspect => 'delete', callback => $unlock_callback);
 }
 
 sub result_paths {
