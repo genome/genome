@@ -31,10 +31,16 @@ sub _create_deallocate_disk_allocations_observer {
     my @disk_allocations = $self->disk_allocations;
     return 1 if not @disk_allocations;
 
-    Genome::Sys::CommitAction->create(
-        on_commit => sub {
-            _deallocate_disk_allocations(@disk_allocations);
-        },
+    my $deallocator;
+    $deallocator = sub {
+        _deallocate_disk_allocations(@disk_allocations);
+        UR::Context->cancel_change_subscription(
+            'commit', $deallocator
+        );
+    };
+    UR::Context->add_observer(
+        aspect => 'commit',
+        callback => $deallocator
     );
 
     return 1;
