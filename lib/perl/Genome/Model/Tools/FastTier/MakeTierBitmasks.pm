@@ -37,7 +37,6 @@ class Genome::Model::Tools::FastTier::MakeTierBitmasks {
         },
         build => {
             is_input => 1,
-            is_optional => 1,
         },
         annotation_import_version => {
             is_input => 1,
@@ -60,6 +59,10 @@ EOS
 sub execute {
     my $self = shift;
 
+    my $build = $self->build;
+    my $users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $users->{'fast-tier tier-bitmasks'} = $build;
+
     my $result = Genome::Model::Tools::FastTier::TierBitmasks->get_or_create(
         reference_sequence_build => $self->reference_sequence_build,
         annotation_structures => Genome::Db::Ensembl::AnnotationStructures->get_or_create(version => $self->transcript_version,
@@ -72,15 +75,12 @@ sub execute {
         ucsc_directory => $self->ucsc_directory,
         test_name => (Genome::Config::get('software_result_test_name') || undef),
         species => $self->species,
+        user_data => $users,
     );
 
     unless ($result) {
         $self->error_message("Failed to generate TierBitmasks result");
         return;
-    }
-
-    if ($self->build) {
-        $result->add_user(label => 'fast-tier tier-bitmasks', user => $self->build);
     }
 
     $self->debug_message("Using TierBitmasks result: ".$result->id);
