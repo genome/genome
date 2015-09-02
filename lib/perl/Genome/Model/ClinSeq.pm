@@ -1451,6 +1451,8 @@ sub files_ignored_by_build_diff {
         .*/snv_indel_report/subjects_legend.txt$
         .*sciclone.*.clusters.txt$
         .*mutation_spectrum.input.tsv$
+        .*/kinase_only.tsv$
+        .*/all_interactions.tsv$
     );
 };
 
