@@ -4484,6 +4484,19 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>remove-disk-allocations-from-testdb',
+      [
+        'database-name=s',
+        'files',
+        'database-server=s',
+        'files',
+        'database-port=s',
+        'files',
+        'template-name=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>find-in-latest-build',
       [
         'search-string=s',
@@ -4571,15 +4584,6 @@ $Genome::Command::OPTS_SPEC = [
     '>reference-alignment',
     [
       '>adsp-exome-qc-summary',
-      [
-        'output-file=s',
-        'files',
-        'builds=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>adsp-qc-summary',
       [
         'output-file=s',
         'files',
@@ -4837,6 +4841,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>qc-summary',
+      [
+        'output-file=s',
+        'files',
+        'builds=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>ref-cov-metrics',
       [
         'type=s',
@@ -4844,6 +4857,8 @@ $Genome::Command::OPTS_SPEC = [
           'alignment',
           'coverage'
         ],
+        'ignore-build-status!',
+        undef,
         'output-path=s',
         'files',
         'row-ids=s@',
@@ -7009,8 +7024,6 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>identify-loh',
       [
-        'lsf-resource=s',
-        'files',
         'outdir=s',
         'files',
         'bamrc-version=s',
