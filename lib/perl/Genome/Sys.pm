@@ -361,6 +361,48 @@ sub sw_path {
     die $class->error_message("Failed to find app $app_name (package $pkg_name) at version $version!");
 }
 
+sub java_executable_path {
+    my ($class, $version, $bin) = @_;
+
+    my $java_path = $class->java_path($version);
+    $bin ||= 'java';
+
+    my $exe_path = File::Spec->join($java_path, 'bin', $bin);
+    unless(-x $exe_path) {
+        die $class->error_message('No java executable found in bin of <%s> for version: %s', $java_path, $version);
+    }
+
+    return $exe_path;
+}
+
+sub java_path {
+    my ($class, $version) = @_;
+    unless(version->parse($version)) {
+        die $class->error_message('Version does not appear to be valid: %s', $version);
+    }
+
+    my @available_versions = glob(File::Spec->join(Genome::Config::get('java_path'), "jre$version*"));
+
+    if (@available_versions == 0) {
+        die $class->error_message('No java path found for version: %s', $version);
+    } elsif (@available_versions == 1) {
+        return $available_versions[0];
+    } else {
+        my $most_recent_path;
+        my $most_recent_version = 0;
+
+        for my $next_path (@available_versions) {
+            my ($next_version) = $next_path =~ /jre(.+)$/;
+            if(version->parse($next_version) > version->parse($most_recent_version)) {
+                $most_recent_path = $next_path;
+                $most_recent_version = $next_version;
+            }
+        }
+
+        return $most_recent_path;
+    }
+}
+
 sub jar_path {
     my ($class, $jar_name, $version) = @_;
     # check the default path

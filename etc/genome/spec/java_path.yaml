@@ -1,0 +1,5 @@
+# The 'java_path' configuration points to a directory under which
+# different java versions can be found
+--- 
+env: XGENOME_JAVA_PATH
+default_value: /gapp/x64linux/opt/java/jre

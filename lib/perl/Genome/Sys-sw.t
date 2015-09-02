@@ -79,12 +79,11 @@ my %gatk_version_map = Genome::Sys->jar_version_path_map('GenomeAnalysisTK');
 
 my %gatk_version_map_expected = (
     '2.4' => '/usr/share/java/GenomeAnalysisTK-2.4.jar',
-    '3.4' => '/usr/share/java/GenomeAnalysisTK-3.4.jar',
 );
 
 # remove any newer versions to keep the test running after new installs
 my @expected_keys = keys %gatk_version_map_expected;
-my %extra = %gatk_version_map_expected;
+my %extra = %gatk_version_map;
 delete @extra{@expected_keys};
 for my $key (keys %extra) {
     if ($key gt '2.4') {
