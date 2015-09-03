@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use IO::File;
 
 class Genome::Site::TGI::Command::SyncSysUserWithLdap{
     is => 'Command::V2',
@@ -52,12 +53,13 @@ sub execute {
 
 sub get_ldap_users {
     my $ldap_user = {};
-    my @c = `ldapsearch -z 1000 -x`; # gets max 1000 records
+    my $cmd = 'ldapsearch -z 0 -x';
+    my $fh  = IO::File->new($cmd . "|");
     my @users;
     my $user;
 
     # go through each line of ldapsearch output
-    for my $c (@c) {
+    while (my $c = $fh->getline) {
         next if $c =~ /^\#/;
         chomp($c);
 
@@ -70,6 +72,7 @@ sub get_ldap_users {
             $user->{$key} = $value;
         }
     }
+    $fh->close;
 
     # filter out users that didnt have email address entry in ldap
     for my $u (@users) {
