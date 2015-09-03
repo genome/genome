@@ -30,6 +30,7 @@ class Genome::Model::Tools::FastTier::MakeTierBitmasks {
             type => 'Text',
             is_input => 1,
             doc => 'The location of phastcons17,28, regulatory regions, etc',
+            is_optional => 1,
         },
         species => {
             type => 'Text',
