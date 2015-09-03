@@ -176,6 +176,7 @@ sub _execute_build {
                 ucsc_directory => $build->reference_sequence->get_or_create_ucsc_tiering_directory,
                 species => $species_name,
                 annotation_import_version => $build->annotation_import_version,
+                build => $build,
             );
 
             $tiering_cmd->execute;
