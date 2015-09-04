@@ -49,7 +49,7 @@ sub create {
 
     my @chromosomes = $self->chromosome_name_list;
 
-    my ($genome, $masked_genome_size, %genome) = $self->create_genome_bit_vector(@chromosomes);
+    my ($genome_size, $masked_genome_size, %genome) = $self->create_genome_bit_vector(@chromosomes);
 
     #This script calculates the number of the bases in the genome covered by each current tier definition (as of 5/26/2009)
 
@@ -454,6 +454,7 @@ sub create_genome_bit_vector {
 
     my %genome;
     
+    my $ref = $self->reference_sequence_build->full_consensus_path('fa');
     my $genome_size = 0;
     my $masked_genome_size = 0;
     for my $ref_chr (@chromosomes) {
@@ -501,7 +502,7 @@ sub create_genome_bit_vector {
         }
     }
 
-    return ($genome_size, $masked_genome_size, %genome;
+    return ($genome_size, $masked_genome_size, %genome);
 }
 
 1;
