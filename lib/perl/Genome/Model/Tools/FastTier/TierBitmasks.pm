@@ -488,3 +488,5 @@ sub bases_covered {
     }
     return $total;
 }
+
+1;
