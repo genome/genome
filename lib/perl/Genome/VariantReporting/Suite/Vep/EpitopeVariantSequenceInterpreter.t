@@ -223,6 +223,62 @@ subtest 'input file with inframe deletion - amino acid deletion' => sub {
     is_deeply({$interpreter->interpret_entry($entry, ['T'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
+subtest 'input file with framshift variant feature truncation' => sub {
+    my $interpreter = $pkg->create(peptide_sequence_length => 21);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        T => {
+            variant_sequences => {
+                '>WT.NECAP2.p.FS.209' => 'LIPPPGEQLA',
+                '>MT.NECAP2.p.FS.209' => 'LIPPPGEQLAGGSLVQPAVAPSSDQLPARPSQAQAGSSSDLSTVFPHVTSGKALPHLGQRKEDEALLSWPVFGAWGDPSSSQQLLPVQINFQPDPARHRLGPVLT',
+            }
+        }
+    );
+
+    my $input_file = File::Spec->join($test_dir, 'input_frameshift_variant_feature_truncation.vcf');
+    my $reader = Genome::File::Vcf::Reader->new($input_file);
+    my $entry = $reader->next();
+
+    is_deeply({$interpreter->interpret_entry($entry, ['T'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest 'input file with framshift variant feature elongation' => sub {
+    my $interpreter = $pkg->create(peptide_sequence_length => 21);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        CG => {
+            variant_sequences => {
+                '>WT.HSPG2.p.FS.322' => 'DGSDELDCGP',
+                '>MT.HSPG2.p.FS.322' => 'DGSDELDCGPPATL',
+            }
+        }
+    );
+
+    my $input_file = File::Spec->join($test_dir, 'input_frameshift_variant_feature_elongation.vcf');
+    my $reader = Genome::File::Vcf::Reader->new($input_file);
+    my $entry = $reader->next();
+
+    is_deeply({$interpreter->interpret_entry($entry, ['CG'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest 'position out of bounds' => sub {
+    my $interpreter = $pkg->create(peptide_sequence_length => 21);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        T => { variant_sequences => '', }
+    );
+
+    my $input_file = File::Spec->join($test_dir, 'input_position_out_of_bounds.vcf');
+    my $reader = Genome::File::Vcf::Reader->new($input_file);
+    my $entry = $reader->next();
+
+    is_deeply({$interpreter->interpret_entry($entry, ['T'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+
 subtest 'distance_from_start' => sub {
     my $sequence = 'KKLKILGMPFRNIRSILKMVN';
     my $position = 5;

@@ -69,17 +69,31 @@ sub _interpret_entry {
                     $wildtype_amino_acid_length = length($wildtype_amino_acid);
                 }
             }
+            elsif (grep {$_ eq 'frameshift_variant'} @consequences) {
+                $position = $transcript->{protein_position} - 1;
+            }
             else {
                 next TRANSCRIPT;
             }
-            my ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry, $wildtype_amino_acid_length);
-            my $mutant_subsequence = $wildtype_subsequence;
-            substr($mutant_subsequence, $mutation_position, $wildtype_amino_acid_length) = $mutant_amino_acid;
+
+            my ($wildtype_subsequence, $mutant_subsequence, $variant_id);
+            if (grep {$_ eq 'frameshift_variant'} @consequences) {
+                $wildtype_subsequence = $self->get_frameshift_wildtype_subsequence($position, $full_wildtype_sequence, $entry);
+                $mutant_subsequence = $wildtype_subsequence . $transcript->{downstreamprotein};
+                $variant_id = $transcript->{symbol} . '.p.FS.' . $transcript->{protein_position};
+            }
+            else {
+                my $mutation_position;
+                ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry, $wildtype_amino_acid_length);
+                $mutant_subsequence = $wildtype_subsequence;
+                substr($mutant_subsequence, $mutation_position, $wildtype_amino_acid_length) = $mutant_amino_acid;
+                $variant_id = $transcript->{symbol} . '.p.' . $wildtype_amino_acid . $transcript->{protein_position} . ($mutant_amino_acid || '-');
+            }
             my @designations = qw(WT MT);
             my @subsequences = ($wildtype_subsequence, $mutant_subsequence);
             my $iterator = each_array( @designations, @subsequences );
             while ( my ($designation, $subsequence) = $iterator->() ) {
-                my $header = ">$designation." . $transcript->{symbol} . '.p.' . $wildtype_amino_acid . $transcript->{protein_position} . ($mutant_amino_acid || '-');
+                my $header = ">$designation." . $variant_id;
                 $return_values{$variant_allele}->{variant_sequences}->{$header} = $subsequence;
             }
         }
@@ -116,6 +130,20 @@ sub determine_peptide_sequence_length {
 sub determine_flanking_sequence_length {
     my ($self, $full_wildtype_sequence_length, $entry) = @_;
     return ($self->determine_peptide_sequence_length($full_wildtype_sequence_length, $entry) - 1) / 2;
+}
+
+sub get_frameshift_wildtype_subsequence {
+    my ($self, $position, $full_wildtype_sequence, $entry) = @_;
+
+    my $one_flanking_sequence_length = $self->determine_flanking_sequence_length(length($full_wildtype_sequence), $entry);
+    my $start_position = $position - $one_flanking_sequence_length;
+    my $length = $one_flanking_sequence_length;
+    if ($start_position < 0) {
+        $start_position = 0;
+        $length = $position;
+    }
+    my $wildtype_subsequence = substr($full_wildtype_sequence, $start_position, $length);
+    return $wildtype_subsequence;
 }
 
 sub get_wildtype_subsequence {
