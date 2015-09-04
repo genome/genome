@@ -47,65 +47,9 @@ sub create {
 
     $self->debug_message('Create TierBitmasks');
 
-    my $ref = $self->reference_sequence_build->full_consensus_path('fa');
-    my $ref_list_fh = Genome::Sys->open_file_for_reading($self->reference_sequence_build->full_consensus_sam_index_path);
-    my @chromosomes;
+    my @chromosomes = $self->chromosome_name_list;
 
-    while(my $line = $ref_list_fh->getline) {
-        chomp $line;
-        my ($chr) = split /\t/, $line;
-        push @chromosomes, $chr; 
-    }
-    $ref_list_fh->close;
-
-    my %genome;
-    my $genome_size = 0;
-    my $masked_genome_size = 0;
-    for my $ref_chr (@chromosomes) {
-        $self->debug_message("Running samtools faidx on $ref_chr");
-        unless(open(FAIDX,"samtools faidx $ref $ref_chr |")) {
-            die "Couldn't pipe samtools faidx\n";
-        }
-        my $header = <FAIDX>;
-        my $chr = $ref_chr;
-        my $chr_length = 0;
-        my $cur_nstart = 0;
-        my $cur_nstop = -1;
-        my @n_blocks;
-        while(my $line = <FAIDX>) {
-            chomp $line;
-            my @sequence = split //, $line;  
-            while(my $base = shift @sequence) {
-                $chr_length++;
-                if($base !~ /[ACTG]/i) {
-                    if($cur_nstart) {
-                        $cur_nstop = $chr_length;
-                    }
-                    else {
-                        $cur_nstart = $chr_length;
-                        $cur_nstop = $chr_length;
-                    }
-                }
-                else {
-                    if($cur_nstart) {
-                        push @n_blocks, [$cur_nstart, $cur_nstop];
-                        $cur_nstart = 0;
-                        $cur_nstop = -1;
-                    }
-                }
-            }
-        }
-        $genome{$chr} = Bit::Vector->new($chr_length);
-        while(my $interval = shift @n_blocks) {
-            $genome{$chr}->Interval_Fill($interval->[0]-1,$interval->[1]-1);
-        }
-        $genome_size += $chr_length;
-        $masked_genome_size += $chr_length - $genome{$chr}->Norm;
-        unless(close(FAIDX)) {
-            die "Error reading from samtools faidx pipe\n";
-        }
-    }
-
+    my ($genome, $masked_genome_size, %genome) = $self->create_genome_bit_vector(@chromosomes);
 
     #This script calculates the number of the bases in the genome covered by each current tier definition (as of 5/26/2009)
 
@@ -487,6 +431,77 @@ sub bases_covered {
         $total += $genome->{$chr}->Norm();
     }
     return $total;
+}
+
+sub chromosome_name_list {
+    my $self = shift;
+    
+    my $ref = $self->reference_sequence_build->full_consensus_path('fa');
+    my $ref_list_fh = Genome::Sys->open_file_for_reading($self->reference_sequence_build->full_consensus_sam_index_path);
+
+    my @chromosomes;
+    while(my $line = $ref_list_fh->getline) {
+        chomp $line;
+        my ($chr) = split /\t/, $line;
+        push @chromosomes, $chr; 
+    }
+    $ref_list_fh->close;
+    return @chromosomes;
+}
+
+sub create_genome_bit_vector {
+    my ($self, @chromosomes) = @_;
+
+    my %genome;
+    
+    my $genome_size = 0;
+    my $masked_genome_size = 0;
+    for my $ref_chr (@chromosomes) {
+        $self->debug_message("Running samtools faidx on $ref_chr");
+        unless(open(FAIDX,"samtools faidx $ref $ref_chr |")) {
+            die "Couldn't pipe samtools faidx\n";
+        }
+        my $header = <FAIDX>;
+        my $chr = $ref_chr;
+        my $chr_length = 0;
+        my $cur_nstart = 0;
+        my $cur_nstop = -1;
+        my @n_blocks;
+        while(my $line = <FAIDX>) {
+            chomp $line;
+            my @sequence = split //, $line;  
+            while(my $base = shift @sequence) {
+                $chr_length++;
+                if($base !~ /[ACTG]/i) {
+                    if($cur_nstart) {
+                        $cur_nstop = $chr_length;
+                    }
+                    else {
+                        $cur_nstart = $chr_length;
+                        $cur_nstop = $chr_length;
+                    }
+                }
+                else {
+                    if($cur_nstart) {
+                        push @n_blocks, [$cur_nstart, $cur_nstop];
+                        $cur_nstart = 0;
+                        $cur_nstop = -1;
+                    }
+                }
+            }
+        }
+        $genome{$chr} = Bit::Vector->new($chr_length);
+        while(my $interval = shift @n_blocks) {
+            $genome{$chr}->Interval_Fill($interval->[0]-1,$interval->[1]-1);
+        }
+        $genome_size += $chr_length;
+        $masked_genome_size += $chr_length - $genome{$chr}->Norm;
+        unless(close(FAIDX)) {
+            die "Error reading from samtools faidx pipe\n";
+        }
+    }
+
+    return ($genome_size, $masked_genome_size, %genome;
 }
 
 1;
