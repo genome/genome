@@ -323,6 +323,7 @@ sub add_substructure_to_set {
     my ($start, $end) = ($exon->structure_start, $exon->structure_stop);
     $self->add_range_to_set($set, $chromosome,$start,$end);
 }
+
 sub add_splice_sites_to_set {
     my $self = shift;
     my ($set, $exon, $chromosome) = @_;
@@ -334,8 +335,6 @@ sub add_splice_sites_to_set {
         $self->add_range_to_set($set, $chromosome, $end-1, $end );
     }
 }
-
-
 
 sub add_range_to_set {
     my $self = shift;
@@ -349,8 +348,6 @@ sub add_range_to_set {
     }
     $vector->Interval_Fill($start,$end); #assuming 0 based coordinates
 }
-
-
 
 sub write_genome_bitmask {
     my $self = shift;
@@ -448,6 +445,7 @@ sub difference_genomes {
     }
     return \%difference;
 }
+
 sub in_place_difference_genomes {
     my $self = shift;
     my ($genome1, $genome2) = @_;
@@ -458,6 +456,7 @@ sub in_place_difference_genomes {
         }
     }
 }
+
 sub complement_genome {
     my $self = shift;
     my ($genome) = @_;
@@ -469,6 +468,7 @@ sub complement_genome {
     }
     return \%result;
 }
+
 sub in_place_complement_genome {
     my $self = shift;
     my ($genome) = @_;
@@ -477,7 +477,6 @@ sub in_place_complement_genome {
         $genome->{$chr}->Complement($genome->{$chr});#in-place calc. Perhaps more mem efficient
     }
 }
-
 
 sub bases_covered {
     my $self = shift;
