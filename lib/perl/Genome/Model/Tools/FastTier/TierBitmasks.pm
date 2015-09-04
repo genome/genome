@@ -63,7 +63,7 @@ sub create {
 
     my $tier1 = $self->create_tier1_bitmask(\%genome, @chromosomes); 
     $self->write_genome_bitmask($self->temp_staging_directory."/tier1.bitmask", $tier1);
-    printf "Tier1 encompasses %u bases. %f%% of the genome\n", $self->bases_covered($tier1), $self->bases_covered($tier1)/$masked_genome_size * 100;
+    print $self->report_coverage("Tier1", $tier1, $masked_genome_size);
     undef($tier1);
 
     #Tier2
@@ -167,7 +167,7 @@ sub create {
     $self->in_place_difference_genomes($tier2, \%genome); #account for masking
     print STDERR "Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1 / masked genome\n";
     $self->debug_message("Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1 / masked genome\n");
-    printf "Tier2 encompasses %u bases. %f%% of the genome\n", $self->bases_covered($tier2), $self->bases_covered($tier2)/$masked_genome_size * 100;
+    printf $self->report_coverage("Tier2", $tier2, $masked_genome_size);
     $self->write_genome_bitmask($self->temp_staging_directory."/tier2.bitmask", $tier2);
     #free up some mem?
     undef($regulatory_regions);
@@ -180,14 +180,14 @@ sub create {
     $self->in_place_difference_genomes($tier3, \%genome);
     $self->write_genome_bitmask($self->temp_staging_directory."/tier3.bitmask", $tier3);
     #free up some mem?
-    printf "Tier3 encompasses %u bases. %f%% of the genome\n", $self->bases_covered($tier3), $self->bases_covered($tier3)/$masked_genome_size * 100;
+    printf $self->report_coverage("Tier3", $tier3, $masked_genome_size);
     my $tier4 = $self->union_genomes($tier2, $tier3);
 
     ($tier1,$tier2,$tier3) = (undef,undef,undef);
 
     $self->in_place_complement_genome($tier4);
     $self->in_place_difference_genomes($tier4, \%genome);
-    printf "Tier4 encompasses %u bases. %f%% of the genome\n", $self->bases_covered($tier4), $self->bases_covered($tier4)/$masked_genome_size * 100;
+    printf $self->report_coverage("Tier4", $tier4, $masked_genome_size);
     $self->write_genome_bitmask($self->temp_staging_directory."/tier4.bitmask", $tier4);
 
     $self->_prepare_output_directory;
@@ -510,6 +510,11 @@ sub create_tier1_bitmask {
     my $tmp = $self->union_genomes($tier1_coding, $tier1_rna); 
     return $self->difference_genomes($tmp, $genome);
 }
+
+sub report_coverage {
+    my ($self, $category, $bitmask, $genome_size) = @_;
+    return sprintf "$category encompasses %u bases. %f%% of the genome\n", $self->bases_covered($bitmask), $self->bases_covered($bitmask)/$genome_size * 100;
+} 
 
 
 1;
