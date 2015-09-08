@@ -66,6 +66,13 @@ class Genome::Model::Tools::Picard::CollectGcBiasMetrics {
             doc => 'Assume that the BAM file is sorted, regardless of what the header says',
             picard_param_name => 'ASSUME_SORTED',
         },
+        metric_accumulation_level => {
+            is => 'Text',
+            is_many => 1,
+            is_optional => 1,
+            default_value => ['ALL_READS'],
+            picard_param_name => 'METRIC_ACCUMULATION_LEVEL',
+        },
     ],
 };
 

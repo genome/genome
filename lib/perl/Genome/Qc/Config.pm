@@ -27,6 +27,7 @@ sub get_commands_for_alignment_result {
                 use_version => 1.123,
                 output_file=> 'output_file',
                 chart_output => 'chart_output',
+                metric_accumulation_level => ['SAMPLE'],
             },
         },
         picard_mark_duplicates => {
