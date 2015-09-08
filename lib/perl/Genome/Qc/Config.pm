@@ -51,6 +51,15 @@ sub get_commands_for_alignment_result {
                 use_version => 1.123,
                 metric_accumulation_level => ['SAMPLE', 'READ_GROUP']
             }
+        },
+        picard_collect_insert_size_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CollectInsertSizeMetrics',
+            parms => {
+                input_file => 'bam_file',
+                reference_sequence => 'reference_sequence',
+                use_version => 1.123,
+                metric_accumulation_level => ['SAMPLE']
+            }
         }
     );
 
