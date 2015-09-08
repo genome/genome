@@ -47,9 +47,10 @@ class Genome::Model::Tools::Picard::CalculateHsMetrics {
             picard_param_name => 'BAIT_SET_NAME',
         },
         metric_accumulation_level => {
-            is => 'String',
-            doc => 'The level(s) at which to accumulate metrics. Possible values: {ALL_READS, SAMPLE, LIBRARY, READ_GROUP} This option may be specified 0 or more times. This option can be set to \'null\' to clear the default list.',
+            is => 'Text',
+            is_many => 1,
             is_optional => 1,
+            default_value => ['ALL_READS'],
             picard_param_name => 'METRIC_ACCUMULATION_LEVEL',
         },
     ],
