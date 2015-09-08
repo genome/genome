@@ -37,9 +37,11 @@ class Genome::Model::Tools::FastTier::MakeTierBitmasks {
             is_input => 1,
         },
         build => {
+            type => 'Genome::Model::Build',
             is_input => 1,
         },
         annotation_import_version => {
+            type => 'Integer',
             is_input => 1,
         },
     ],
@@ -75,7 +77,7 @@ sub execute {
             test_name => (Genome::Config::get('software_result_test_name') || undef),
             users => Genome::SoftwareResult::User->user_hash_for_build($build),
         ),
-        ucsc_directory => $self->ucsc_directory,
+        ucsc_directory => $self->ucsc_directory || undef,
         test_name => (Genome::Config::get('software_result_test_name') || undef),
         species => $self->species,
         users => $users,

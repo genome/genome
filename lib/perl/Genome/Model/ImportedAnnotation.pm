@@ -173,7 +173,7 @@ sub _execute_build {
                 output_directory => $annotation_directory."/tiering_bitmasks",
                 reference_sequence_build => $build->reference_sequence,
                 transcript_version => $build->ensembl_version,
-                ucsc_directory => $build->reference_sequence->get_or_create_ucsc_tiering_directory,
+                ucsc_directory => $build->reference_sequence->get_or_create_ucsc_tiering_directory || undef,
                 species => $species_name,
                 annotation_import_version => $build->annotation_import_version,
                 build => $build,
