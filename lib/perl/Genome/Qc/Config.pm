@@ -37,14 +37,6 @@ sub get_commands_for_alignment_result {
                 use_version => 1.123,
             },
         },
-        picard_collect_multiple_metrics => {
-            class => 'Genome::Qc::Tool::Picard::CollectMultipleMetrics',
-            params => {
-                input_file => 'bam_file',
-                reference_sequence => 'reference_sequence',
-                use_version => 1.123,
-            },
-        },
         samtools_flagstat => {
             class => 'Genome::Qc::Tool::Samtools::Flagstat',
             params => {
