@@ -31,7 +31,7 @@ sub __default_keys__ {
 
 sub execute {
     my $self = shift;
-    for my $key ($self->keys) {
+    for my $key ( sort { $a cmp $b } $self->keys ) {
         my $value = Genome::Config::get($key);
         printf "%s = '%s'\n", $key, $value;
     }
