@@ -43,6 +43,15 @@ sub get_commands_for_alignment_result {
                 'bam-file' => 'bam_file',
             },
         },
+        picard_collect_alignment_summary_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CollectAlignmentSummaryMetrics',
+            parms => {
+                input_file => 'bam_file',
+                reference_sequence => 'reference_sequence',
+                use_version => 1.123,
+                metric_accumulation_level => ['SAMPLE', 'READ_GROUP']
+            }
+        }
     );
 
     if ($is_capture) {
