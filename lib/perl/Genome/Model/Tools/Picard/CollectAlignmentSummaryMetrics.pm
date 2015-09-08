@@ -51,6 +51,13 @@ class Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics {
             is_optional   => 1,
             picard_param_name => 'IS_BISULFITE_SEQUENCED',
         },
+        metric_accumulation_level => {
+            is => 'Text',
+            is_many => 1,
+            is_optional => 1,
+            default_value => ['ALL_READS'],
+            picard_param_name => 'METRIC_ACCUMULATION_LEVEL',
+        }
     ],
 };
 
