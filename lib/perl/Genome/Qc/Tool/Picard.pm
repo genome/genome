@@ -20,9 +20,9 @@ sub get_metrics {
 
     my $file = $self->qc_metrics_file;
     my $gmt_class = $self->gmt_class;
-    my %metrics = $self->metrics;
     my $metric_results = $gmt_class->parse_file_into_metrics_hashref($file);
-    return $self->_get_metrics(\%metrics, $metric_results);
+    my $metric_header_as_key = $gmt_class->can('_metric_header_as_key') ? $gmt_class->_metric_header_as_key : undef;
+    return $self->_flatten_metrics_hash($metric_results, metric_header_as_key => $metric_header_as_key);
 }
 
 sub metrics {
@@ -35,25 +35,25 @@ sub gmt_class {
     die $self->error_message("Abstract method gmt_class must be overridden by subclass");
 }
 
-sub _get_metrics {
-    my ($self, $metrics, $metric_results) = @_;
+sub _flatten_metrics_hash {
+    my ($self, $picard_metrics_hash, %params) = @_;
+    my %flattened_metrics_hash;
+    my $metric_header_as_key = $params{metric_header_as_key};
 
-    my %desired_metric_results;
-    while (my ($metric, $metric_details) = each %{$metrics}) {
-        my $metric_key = $metric_details->{metric_key};
-        unless (defined($metric_key)) {
-            my @metric_keys = keys %{$metric_results};
-            if (scalar(@metric_keys) > 1) {
-                die $self->error_message("More than one metric key found in the metric results: " . join(', ', @metric_keys));
+    while (my ($metric_category, $nested_metrics_hash) = each %{$picard_metrics_hash}) {
+        while (my ($metric_name, $metric_value) = each %{$nested_metrics_hash}) {
+            next if $metric_header_as_key eq $metric_name;
+            my $key;
+            if ($metric_header_as_key) {
+                $key = join('-', $metric_category, $metric_name);
+                $key =~ s/^$metric_header_as_key-//;
+            } else {
+                $key = $metric_name;
             }
-            else {
-                $metric_key = $metric_keys[0];
-            }
+            $flattened_metrics_hash{$key} = $metric_value;
         }
-        my $picard_metric = $metric_details->{picard_metric};
-        $desired_metric_results{$metric} = $metric_results->{$metric_key}{$picard_metric};
     }
-    return %desired_metric_results;
+    return %flattened_metrics_hash;
 }
 
 1;
