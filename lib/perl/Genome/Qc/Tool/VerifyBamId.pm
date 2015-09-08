@@ -3,7 +3,7 @@ package Genome::Qc::Tool::VerifyBamId;
 use strict;
 use warnings;
 use Genome;
-use List::MoreUtils qw(uniq);
+use List::MoreUtils qw(any);
 
 class Genome::Qc::Tool::VerifyBamId {
     is => 'Genome::Qc::Tool::WithVariationListVcf',
@@ -17,14 +17,6 @@ sub cmd_line {
     return $cmd->_get_cmd_list;
 }
 
-sub metrics {
-    return (
-        number_snps => '#SNPS',
-        freemix => 'FREEMIX',
-        chipmix => 'CHIPMIX',
-    );
-}
-
 sub get_metrics {
     my $self = shift;
 
@@ -35,17 +27,17 @@ sub get_metrics {
         is_regex => 1,
     );
 
-    my %metrics = $self->metrics;
+    my %metrics;
     while ( my $line = $reader->next ) {
         if ($line->{'#SEQ_ID'} eq $self->sample_name) {
-            my %desired_metric_results;
-            while (my ($metric_name, $metric_key) = each %metrics) {
-                $desired_metric_results{$metric_name} = $line->{$metric_key};
+            for my $column (@{$reader->headers}) {
+                next if any { $_ eq $column } $self->_non_metric_columns;
+                my $metric_name = join('-', $line->{RG}, $column);
+                $metrics{$metric_name} = $line->{$column};
             }
-            return %desired_metric_results;
         }
     }
-    return ();
+    return %metrics;
 }
 
 sub gmt_class {
@@ -54,6 +46,10 @@ sub gmt_class {
 
 sub qc_metrics_file_accessor {
     return 'out_prefix';
+}
+
+sub _non_metric_columns {
+    return qw(#SEQ_ID RG);
 }
 
 1;
