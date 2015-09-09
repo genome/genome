@@ -75,7 +75,7 @@ sub execute {
         ucsc_directory => $self->ucsc_directory,
         test_name => (Genome::Config::get('software_result_test_name') || undef),
         species => $self->species,
-        user_data => $users,
+        users => $users,
     );
 
     unless ($result) {
