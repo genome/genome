@@ -744,28 +744,28 @@ sub estimated_gtmp_for_instrument_data  {
 sub get_superseding_results {
     my $self = shift;
 
-    my @ars  = $self->collect_individual_alignments;
-    my $ars  = Set::Scalar->new(@ars);
+    my @per_lane_results = $self->collect_individual_alignments;
+    my $per_lane_results = Set::Scalar->new(@per_lane_results);
     
-    my %ct;
-    my @founds = ();
+    my %count;
+    my @superseding_results = ();
 
-    for my $ar (@ars) {
-        map{$ct{$_->id}++}$ar->get_merged_alignment_results;
+    for my $per_lane_result (@per_lane_results) {
+        map{$count{$_->id}++}$per_lane_result->get_merged_alignment_results;
     }
 
-    for my $supmr_id (keys %ct) {
-        next unless $ct{$supmr_id} == $ars->size;
-        next if $supmr_id eq $self->id;
+    for my $merged_result_id (keys %count) {
+        next unless $count{$merged_result_id} == $per_lane_results->size;
+        next if $merged_result_id eq $self->id;
 
-        my $supmr  = __PACKAGE__->get($supmr_id);
-        my $supars = Set::Scalar->new($supmr->collect_individual_alignments);
+        my $superseding_result = __PACKAGE__->get($merged_result_id);
+        my $superseding_per_lane_results = Set::Scalar->new($superseding_result->collect_individual_alignments);
         
-        if ($supars->is_proper_superset($ars)) {
-            push @founds, $supmr;
+        if ($superseding_per_lane_results->is_proper_superset($per_lane_results)) {
+            push @superseding_results, $superseding_result;
         }
     }
-    return @founds;
+    return @superseding_results;
 }
 
 
