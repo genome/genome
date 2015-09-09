@@ -48,7 +48,6 @@ sub execute {
     # if provided, grab the variants in TGI format and hash them by gene and mutation
     my %variants;
     if(defined($self->variant_file)){
-        open(VARFILE,">" . $self->output_file . ".varanno");
         my $var_fh = Genome::Sys->open_file_for_reading($self->variant_file);
         while (my $line = $var_fh->getline) {
             chomp $line;
@@ -86,7 +85,7 @@ sub execute {
             'WT Epitope Seq',
             'Fold Change',
         ],
-    );
+    ) or die "Unable to create SeparatedValueWriter\n";
 
     my %prediction;
     my $threshold = 500 ;
@@ -148,11 +147,15 @@ sub execute {
     }
 
 # REPORTING
-    
-    #print header for variant output, if needed
+
+    my $varfile;
     if(defined($self->variant_file)){
+        my $filename = $self->output_file . ".varanno";    
+        $varfile = Genome::Sys->open_file_for_writing($filename);
+
+        #print header for variant output, if needed        
         if(defined($variants{"header"})){
-            print VARFILE join("\t",($variants{"header"},
+            print $varfile join("\t",($variants{"header"},
                                      "GeneName","MutationEffect","HLAallele","PeptideLength",
                                      'SubPeptidePosition','MT Score',
                                      'WT Score','MT Epitope Seq',
@@ -165,13 +168,14 @@ sub execute {
         foreach my $gene (sort keys %{ $best{$sample} }) {
             foreach my $entry (@{ $best{$sample}->{$gene}->{GENES} }) {
                 if (($entry->{'MT Score'} < $threshold) && ($entry->{'Fold Change'} > $self->minimum_fold_change)){
+                    #write out epiptopes
                     $out_fh->write_one($entry);
 
-                    #also write out variants
+                    #also write out variants with epitopes appended
                     if(defined($self->variant_file)){
                         my $key = join("\t",$gene,$entry->{'Point Mutation'});
                         if(defined($variants{$key})){                            
-                            print VARFILE join("\t", ($variants{$key},
+                            print $varfile join("\t", ($variants{$key},
                                                       $gene,$entry->{'Point Mutation'},$entry->{Allele},
                                                       $entry->{Length},$entry->{'Sub Peptide Position'},$entry->{'MT Score'},
                                                       $entry->{'WT Score'},$entry->{'MT Epitope Seq'},
@@ -179,7 +183,7 @@ sub execute {
 
                         } else {
                             
-                            $self->warning_message("Couldn't find variant for " . $gene . " " . $entry->{'Point Mutation'});
+                            $self->warning_message("Couldn't find variant for " . $gene . " " . $entry->{'Point Mutation'} . "in variant_file");
                         }
                     }
                 }
