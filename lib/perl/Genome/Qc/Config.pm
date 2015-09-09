@@ -46,7 +46,7 @@ sub get_commands_for_alignment_result {
         },
         picard_collect_alignment_summary_metrics => {
             class => 'Genome::Qc::Tool::Picard::CollectAlignmentSummaryMetrics',
-            parms => {
+            params => {
                 input_file => 'bam_file',
                 reference_sequence => 'reference_sequence',
                 use_version => 1.123,
@@ -55,7 +55,7 @@ sub get_commands_for_alignment_result {
         },
         picard_collect_insert_size_metrics => {
             class => 'Genome::Qc::Tool::Picard::CollectInsertSizeMetrics',
-            parms => {
+            params => {
                 input_file => 'bam_file',
                 reference_sequence => 'reference_sequence',
                 use_version => 1.123,
