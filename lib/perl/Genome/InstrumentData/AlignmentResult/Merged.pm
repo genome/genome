@@ -751,15 +751,7 @@ sub get_superseding_results {
     my @founds = ();
 
     for my $ar (@ars) {
-        my @sup_mrs = $ar->get_merged_alignment_results;
-        for my $sup_mr (@sup_mrs) {
-            if ($ct{$sup_mr->id}) {
-                $ct{$sup_mr->id}++;
-            }
-            else {
-                $ct{$sup_mr->id} = 1;
-            }
-        }
+        map{$ct{$_->id}++}$ar->get_merged_alignment_results;
     }
 
     for my $supmr_id (keys %ct) {
