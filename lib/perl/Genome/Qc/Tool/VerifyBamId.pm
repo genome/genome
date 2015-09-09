@@ -20,20 +20,22 @@ sub cmd_line {
 sub get_metrics {
     my $self = shift;
 
-    my $file = $self->qc_metrics_file . '.selfSM';
-    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $file,
-        separator => '\t',
-        is_regex => 1,
-    );
-
     my %metrics;
-    while ( my $line = $reader->next ) {
-        if ($line->{'#SEQ_ID'} eq $self->sample_name) {
-            for my $column (@{$reader->headers}) {
-                next if any { $_ eq $column } $self->_non_metric_columns;
-                my $metric_name = join('-', $line->{RG}, $column);
-                $metrics{$metric_name} = $line->{$column};
+    for my $file_extension ($self->_file_extensions_to_parse) {
+        my $file = $self->qc_metrics_file . ".$file_extension";
+        my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+            input => $file,
+            separator => '\t',
+            is_regex => 1,
+        );
+
+        while ( my $line = $reader->next ) {
+            if ($line->{'#SEQ_ID'} eq $self->sample_name) {
+                for my $column (@{$reader->headers}) {
+                    next if any { $_ eq $column } $self->_non_metric_columns;
+                    my $metric_name = join('-', $line->{RG}, $column);
+                    $metrics{$metric_name} = $line->{$column};
+                }
             }
         }
     }
@@ -50,6 +52,10 @@ sub qc_metrics_file_accessor {
 
 sub _non_metric_columns {
     return qw(#SEQ_ID RG);
+}
+
+sub _file_extensions_to_parse {
+    return qw(selfSM selfRG);
 }
 
 1;
