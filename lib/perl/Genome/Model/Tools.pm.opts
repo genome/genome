@@ -14882,6 +14882,10 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'output-file=s',
       'files',
+      'variant-file=s',
+      'files',
+      'minimum-fold-change=s',
+      undef,
       'help!',
       undef
     ],
