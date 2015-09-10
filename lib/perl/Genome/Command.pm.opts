@@ -4551,7 +4551,7 @@ $Genome::Command::OPTS_SPEC = [
       [
         'dry-run!',
         undef,
-        'build=s',
+        'builds=s@',
         undef,
         'help!',
         undef
@@ -26164,6 +26164,10 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'output-file=s',
         'files',
+        'variant-file=s',
+        'files',
+        'minimum-fold-change=s',
+        undef,
         'help!',
         undef
       ],
