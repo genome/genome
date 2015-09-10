@@ -42,7 +42,7 @@ sub _flatten_metrics_hash {
 
     while (my ($metric_category, $nested_metrics_hash) = each %{$picard_metrics_hash}) {
         while (my ($metric_name, $metric_value) = each %{$nested_metrics_hash}) {
-            next if $metric_header_as_key eq $metric_name;
+            next if defined($metric_header_as_key) && $metric_header_as_key eq $metric_name;
             my $key;
             if ($metric_header_as_key) {
                 $key = join('-', $metric_category, $metric_name);
