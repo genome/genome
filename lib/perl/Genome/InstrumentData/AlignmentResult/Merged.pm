@@ -9,6 +9,7 @@ use File::Path 'rmtree';
 use List::MoreUtils qw{ uniq };
 use List::Util qw(shuffle);
 use Try::Tiny qw(try catch finally);
+use Set::Scalar;
 
 use Genome;
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
@@ -738,5 +739,34 @@ sub estimated_gtmp_for_instrument_data  {
         $class
     );
 }
+
+
+sub get_superseding_results {
+    my $self = shift;
+
+    my @per_lane_results = $self->collect_individual_alignments;
+    my $per_lane_results = Set::Scalar->new(@per_lane_results);
+    
+    my %count;
+    my @superseding_results = ();
+
+    for my $per_lane_result (@per_lane_results) {
+        map{$count{$_->id}++}$per_lane_result->get_merged_alignment_results;
+    }
+
+    for my $merged_result_id (keys %count) {
+        next unless $count{$merged_result_id} == $per_lane_results->size;
+        next if $merged_result_id eq $self->id;
+
+        my $superseding_result = __PACKAGE__->get($merged_result_id);
+        my $superseding_per_lane_results = Set::Scalar->new($superseding_result->collect_individual_alignments);
+        
+        if ($superseding_per_lane_results->is_proper_superset($per_lane_results)) {
+            push @superseding_results, $superseding_result;
+        }
+    }
+    return @superseding_results;
+}
+
 
 1;
