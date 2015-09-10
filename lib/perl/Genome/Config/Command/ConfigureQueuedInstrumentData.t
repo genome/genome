@@ -331,7 +331,7 @@ sub _rna_seq_config_hash {
 
 my $som_val_project;
 sub _generate_som_val_instrument_data {
-    $som_val_project ||= Genome::Project->create(name => sprintf('test %s %s',  __FILE__));
+    $som_val_project ||= Genome::Project->create(name => sprintf('test %s %s', $$, __FILE__));
 
     my $sample_1 = Genome::Test::Factory::Sample->setup_object(
         extraction_type => 'genomic_dna',
