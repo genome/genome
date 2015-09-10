@@ -49,20 +49,15 @@ sub execute {
     }
     my $reference_build = $self->reference_build;
     my $chromosomes = $reference_build->chromosome_array_ref;
+    my %chromosomes = map { $_ => 1 } @{$chromosomes};
     my $slice_adaptor = $self->slice_adaptor;
+    my @slices = @{ $slice_adaptor->fetch_all('toplevel', undef, 1, 1, 1) };
     my $data;
-    for my $chr (sort @{$chromosomes}) {
-        if ($chr =~ /random/) {
-            warn('Skipping random chromosome: '. $chr);
+    for my $slice ( @slices ) {
+        my $chr = $slice->seq_region_name();
+        unless ( $chromosomes{$chr} ) {
+            $self->warning_message('Skipping slice for chromosome '. $chr .' as it is not found in the reference genome.');
             next;
-        }
-        my $slice = $slice_adaptor->fetch_by_region( 'chromosome', $chr );
-        unless ($slice) {
-            $slice = $slice_adaptor->fetch_by_region( 'supercontig', $chr );
-            unless ($slice) {
-                $self->error_message('Slice not found for: '. $chr);
-                die($self->error_message);
-            }
         }
         my @genes = @{ $slice->get_all_Genes() };
         for my $gene (@genes){
