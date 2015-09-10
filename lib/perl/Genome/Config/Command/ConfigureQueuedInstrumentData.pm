@@ -328,13 +328,67 @@ sub _get_items_to_process {
             -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample']
         );
     } else {
-        return Genome::Config::AnalysisProject::InstrumentDataBridge->get(
+        my @bridges;
+        my $it = $self->_ordered_sample_id_iterator;
+        while(my $sample_id = $it->()) {
+            push @bridges, Genome::Config::AnalysisProject::InstrumentDataBridge->get(
+                'instrument_data.sample_id' => $sample_id,
+                status => ['new', 'failed'],
+                'analysis_project.status' => 'In Progress',
+                -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample'],
+            );
+            last if(@bridges >= $self->limit);
+        }
+        return @bridges;
+    }
+}
+
+sub _ordered_sample_id_iterator {
+    my $self = shift;
+
+    if(!defined UR::Context->query_underlying_context or UR::Context->query_underlying_context) {
+        my $dbh = Genome::Sample->__meta__->data_source->get_default_handle;
+        my $sth = $dbh->prepare(q{
+            SELECT sample.subject_id
+            FROM subject.subject sample
+            INNER JOIN instrument.fragment_library library ON library.sample_id = sample.subject_id
+            INNER JOIN instrument.data id ON id.library_id = library.library_id
+            INNER JOIN config.instrument_data_analysis_project_bridge bridge ON bridge.instrument_data_id = id.id
+            INNER JOIN config.analysis_project anp ON bridge.analysis_project_id = anp.id
+            WHERE anp.status = 'In Progress'
+            AND bridge.status IN ('new', 'failed')
+            GROUP BY sample.subject_id
+            ORDER BY SUM(bridge.fail_count) ASC;
+        });
+
+        $sth->execute;
+        return sub {
+            my $next_value = $sth->fetchrow_arrayref;
+            unless($next_value) {
+                if(my $error = $sth->err) {
+                    die $self->error_message('Error loading samples: %s', $error);
+                } else {
+                    return;
+                }
+            }
+
+            return $next_value->[0];
+        };
+    } else {
+        my @all_bridges = Genome::Config::AnalysisProject::InstrumentDataBridge->get(
             status => ['new', 'failed'],
             'analysis_project.status' => 'In Progress',
             -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample'],
-            -order => ['fail_count'],
-            -limit => $self->limit,
         );
+        my %sample_fail_counts;
+        for my $bridge (@all_bridges) {
+            $sample_fail_counts{$bridge->instrument_data->sample_id} += $bridge->fail_count;
+        }
+
+        my @ordered_sample_ids = sort { $sample_fail_counts{$a} <=> $sample_fail_counts{$b} } keys %sample_fail_counts;
+        return sub {
+            return shift @ordered_sample_ids;
+        };
     }
 }
 

@@ -26,6 +26,42 @@ use warnings;
 my $class = 'Genome::Config::Command::ConfigureQueuedInstrumentData';
 use_ok($class);
 
+subtest '_get_items_to_process respects limits' => sub {
+    #this test must be first before other in-memory objects have been created!
+
+    my (undef, undef, undef, $anp) = _generate_som_val_instrument_data();
+    my @bridges = $anp->analysis_project_bridges;
+    is(scalar(@bridges), 2, 'created expected bridges');
+    $bridges[1]->fail_count(1);
+
+    my @sample_ids = map $_->instrument_data->sample_id, @bridges;
+
+    my $cmd = $class->create(limit => 1);
+    isa_ok($cmd, $class, 'created CQID command');
+
+    #avoid finding production objects
+    my $original_quc = UR::Context->query_underlying_context();
+    UR::Context->query_underlying_context(0);
+
+    my @items = $cmd->_get_items_to_process();
+    is(scalar(@items), 1, 'found one item');
+    is($items[0], $bridges[0], 'found the item with the lowest fail count');
+
+    $bridges[0]->fail_count(2);
+
+    @items = $cmd->_get_items_to_process();
+    is(scalar(@items), 1, 'found one item again');
+    is($items[0], $bridges[1], 'still found the item with the lowest fail count');
+
+    $cmd->limit(5);
+    @items = $cmd->_get_items_to_process();
+    is(scalar(@items), 2, 'found both items');
+
+    done_testing();
+    UR::Context->query_underlying_context($original_quc);
+    map $_->delete, @bridges; #reset for future tests
+};
+
 #new model
 my ($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
 build_and_run_cmd($rna_instrument_data);
