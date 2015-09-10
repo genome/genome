@@ -22,6 +22,7 @@ experts:
         plugins_version: 1
         joinx_version: 1.9
         short_name: 0
+        allow_same_file: 0
     dbsnp:
         joinx_version: 1.10
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
