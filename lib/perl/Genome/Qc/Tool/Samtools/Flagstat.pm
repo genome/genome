@@ -25,11 +25,7 @@ sub get_metrics {
     my $self = shift;
 
     my $file = $self->qc_metrics_file;
-    my $metrics = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($file);
-
-    return (
-        pct_interchromosomal_mappings => $metrics->{reads_mapped_in_interchromosomal_pairs_percentage},
-    );
+    return %{Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($file)};
 }
 
 sub qc_metrics_file_accessor {

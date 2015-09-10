@@ -37,7 +37,23 @@ my @expected_cmd_line =(
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
 
 my %expected_metrics = (
-    pct_interchromosomal_mappings => '0.0145251396648045',
+   'hq_reads_mapped_in_interchromosomal_pairs' => '1',
+   'reads_mapped' => '910',
+   'reads_mapped_as_singleton' => '1',
+   'reads_mapped_as_singleton_percentage' => '0.11',
+   'reads_mapped_in_interchromosomal_pairs' => '13',
+   'reads_mapped_in_interchromosomal_pairs_percentage' => '0.0145251396648045',
+   'reads_mapped_in_pair' => '909',
+   'reads_mapped_in_proper_pairs' => '895',
+   'reads_mapped_in_proper_pairs_percentage' => '98.24',
+   'reads_mapped_percentage' => '99.89',
+   'reads_marked_as_read1' => '450',
+   'reads_marked_as_read2' => '461',
+   'reads_marked_duplicates' => '0',
+   'reads_marked_failing_qc' => '0',
+   'reads_marked_passing_qc' => '911',
+   'reads_paired_in_sequencing' => '911',
+   'total_reads' => '911',
 );
 is_deeply({$tool->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
 
