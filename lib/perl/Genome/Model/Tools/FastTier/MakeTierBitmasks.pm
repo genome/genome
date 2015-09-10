@@ -65,12 +65,14 @@ sub execute {
 
     my $result = Genome::Model::Tools::FastTier::TierBitmasks->get_or_create(
         reference_sequence_build => $self->reference_sequence_build,
-        annotation_structures => Genome::Db::Ensembl::AnnotationStructures->get_or_create(version => $self->transcript_version,
-               software_version => $self->annotation_import_version,
-               reference_build_id => $self->reference_sequence_build->id,
-               species => $self->species,
-               data_set => 'Core',
-               test_name => (Genome::Config::get('software_result_test_name') || undef),
+        annotation_structures => Genome::Db::Ensembl::AnnotationStructures->get_or_create(
+            version => $self->transcript_version,
+            software_version => $self->annotation_import_version,
+            reference_build_id => $self->reference_sequence_build->id,
+            species => $self->species,
+            data_set => 'Core',
+            test_name => (Genome::Config::get('software_result_test_name') || undef),
+            users => Genome::SoftwareResult::User->user_hash_for_build($build),
         ),
         ucsc_directory => $self->ucsc_directory,
         test_name => (Genome::Config::get('software_result_test_name') || undef),
