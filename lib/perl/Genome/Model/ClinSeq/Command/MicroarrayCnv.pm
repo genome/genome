@@ -350,7 +350,7 @@ sub get_copynumber_file {
                                   $microarray_model->id);
     }
     my $dd = $build->data_directory;
-    my $cn_file = glob(File::Spec->join($dd, "*.original"));
+    my $cn_file = $build->original_genotype_file_path;
     if(-e $cn_file) {
         return $cn_file;
     } else {
