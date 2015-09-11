@@ -134,12 +134,12 @@ sub execute {
     my $min_width = $self->min_width;
     my $undo_splits_sd = $self->undo_splits_sd;
     #sanity checks
-    unless( (defined($output_R_object)) || (defined($output_file))){
+    unless(List::MoreUtils::any { defined } ( $output_R_object, $output_file )) {
         die $self->error_message("You must specify either the output_file OR output_R_object file");
     }
 
-    unless( (defined($bamwindow_file)) || (defined($bam2cna_file)) ||
-            (defined($array_file) || (defined($tcga_array_file))) || defined($microarray_original_file)){
+    unless(List::MoreUtils::any { defined } ( $bamwindow_file, $bam2cna_file,
+                                              $array_file, $tcga_array_file, $microarray_original_file )) {
         die $self->error_message("You must specify either a bamwindow file, a bam2cna file, an array
             or a microarray original file");
     }
