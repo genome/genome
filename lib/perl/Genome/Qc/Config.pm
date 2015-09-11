@@ -62,17 +62,7 @@ sub get_commands_for_alignment_result {
                 metric_accumulation_level => ['SAMPLE']
             }
         },
-        verify_bam_id => {
-            class => 'Genome::Qc::Tool::VerifyBamId',
-            params => {
-                vcf_file => '/gscmnt/gc2802/halllab/abelhj/gatk_utah_041815/indiv/vbid/Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.vcf.gz',
-                bam => 'bam_file',
-                max_depth => '20',
-                precise => '0',
-                version => '20120620',
-                ignore_read_group => 0,
-            }
-        },
+
     );
 
     if ($is_capture) {
@@ -95,6 +85,19 @@ sub get_commands_for_alignment_result {
                 reference_sequence => 'reference_sequence',
                 use_version => 1.123,
             },
+        };
+        #Ultimately we also want to run verifyBamId on exome data but we need
+        #to preprocess the vcf to limit to ROI
+        $config{verify_bam_id} = {
+            class => 'Genome::Qc::Tool::VerifyBamId',
+            params => {
+                vcf_file => '/gscmnt/gc2802/halllab/abelhj/gatk_utah_041815/indiv/vbid/Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.vcf.gz',
+                bam => 'bam_file',
+                max_depth => '150',
+                precise => '1',
+                version => '20120620',
+                ignore_read_group => 0,
+            }
         };
     }
 

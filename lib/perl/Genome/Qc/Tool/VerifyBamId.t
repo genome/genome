@@ -50,8 +50,8 @@ my $config_override = Sub::Override->new(
                 params => {
                     vcf => $vcf_file,
                     bam => $bam_file,
-                    max_depth => '20',
-                    precise => '0',
+                    max_depth => '150',
+                    precise => '1',
                     version => '20120620',
                     ignore_read_group => 0,
                 },
@@ -81,7 +81,8 @@ my @expected_cmd_line = (
     '--out',
     $output,
     '--maxDepth',
-    20,
+    150,
+    '--precise',
 );
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
 
