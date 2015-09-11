@@ -49,13 +49,29 @@ sub _create_getopt_specs {
 
     my @getopt_specs;
     while (my ($bsub_option, $submit_field) = each %option) {
-        push @getopt_specs, "$bsub_option=s" => sub {
-            my ($option_name, $option_value) = @_;
-            $destination->{$submit_field} = $option_value;
-        };
+        push @getopt_specs, _lookup_spec_for_bsub_option(
+            $bsub_option, $submit_field, $destination);
     }
 
     return @getopt_specs;
+}
+
+sub _lookup_spec_for_bsub_option {
+    my ($bsub_option, $submit_field, $destination) = @_;
+    if ($bsub_option eq 'n') {
+        return("$bsub_option=s" => sub {
+                my ($option_name, $option_value) = @_;
+                my ($num, $max_num) = split q{,}, $option_value;
+                $destination->{numProcessors} = $num;
+                $destination->{maxNumProcessors} = $max_num if defined $max_num;
+            });
+    }
+    else {
+        return("$bsub_option=s" => sub {
+                my ($option_name, $option_value) = @_;
+                $destination->{$submit_field} = $option_value;
+            });
+    }
 }
 
 sub _create_option_spec {
@@ -119,6 +135,7 @@ sub construct_lsf_param_string {
 
 sub _construct_lsf_param_string {
     my ($source, %param_lookup) = @_;
+    $source = _preprocess_params($source);
 
     my @params;
     while (my ($submit_field, $value) = each %$source) {
@@ -142,6 +159,20 @@ sub _construct_lsf_param_string {
 sub _lookup_param {
     my ($submit_field, $lookup) = @_;
     return exists($lookup->{$submit_field}) && $lookup->{$submit_field};
+}
+
+sub _preprocess_params {
+    my ($source) = @_;
+
+    my $result = {%$source};
+    if (exists $result->{maxNumProcessors}
+        && defined $result->{maxNumProcessors}
+    ) {
+        $result->{numProcessors} = join q{,}, $result->{numProcessors},
+            delete($result->{'maxNumProcessors'});
+    }
+
+    return $result;
 }
 
 

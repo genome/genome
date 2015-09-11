@@ -40,6 +40,14 @@ parse_ok("-R 'span[hosts=1] rusage[mem=1000]' -n 4", {
         },
         'rLimits' => {}
     });
+parse_ok("-R 'span[hosts=1] rusage[mem=1000]' -n 4,6", {
+        'options' => {
+            'numProcessors' => '4',
+            'maxNumProcessors' => '6',
+            'resReq' => 'span[hosts=1] rusage[mem=1000]'
+        },
+        'rLimits' => {}
+    });
 parse_ok('select[tmp>1000] rusage[tmp=1000]', {
         'options' => {
             'resReq' => 'select[tmp>1000] rusage[tmp=1000]'
