@@ -10,6 +10,7 @@ BEGIN {
 };
 
 use above "Genome";
+use File::Spec;
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
@@ -31,7 +32,8 @@ subtest "somatic mode" => sub {
 
     #Dump the output to a log file
     my @output1 = $somatic_microarray_cnv->status_messages();
-    my $log_file = $somatic_opdir . "/RunMicroarrayCnv.log.txt";
+    my $log_file = File::Spec->join($somatic_opdir,
+                                    "RunMicroarrayCnv.log.txt");
     my $log = IO::File->new(">$log_file");
     $log->print(join("\n", @output1));
     $log->close();
@@ -74,7 +76,8 @@ subtest "single-sample mode" => sub {
 
     #Dump the output to a log file
     my @output1 = $microarray_cnv->status_messages();
-    my $log_file = $single_opdir . "/RunMicroarrayCnv.log.txt";
+    my $log_file = File::Spec->join($single_opdir,
+                                    "RunMicroarrayCnv.log.txt");
     my $log = IO::File->new(">$log_file");
     $log->print(join("\n", @output1));
     $log->close();
