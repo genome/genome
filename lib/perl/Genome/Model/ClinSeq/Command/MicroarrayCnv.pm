@@ -367,15 +367,13 @@ sub run_cbs {
     if($self->microarray_model_single) {
         my $single_copynumber = $self->get_copynumber_file($self->microarray_model_single);
         $self->status_message("Using microarray file $single_copynumber");
-        $cbs = Genome::Model::Tools::CopyNumber::Cbs->create(microarray_original_file =>
-                                                                $single_copynumber,
-                                                             output_file =>
-                                                                $cbs_op);
+        $cbs = Genome::Model::Tools::CopyNumber::Cbs->create(microarray_original_file => $single_copynumber,
+                                                             output_file => $cbs_op);
         $self->create_single_cnv_diff_hq_file($single_copynumber,
                                               $cnv_diff_file, $cnv_hq_file);
     } else {
         $self->create_somatic_cnv_diff_hq_file($tumor_copynumber, $normal_copynumber,
-                                       $cnv_diff_file, $cnv_hq_file);
+                                               $cnv_diff_file, $cnv_hq_file);
         $cbs = Genome::Model::Tools::CopyNumber::Cbs->create(array_file => $cnv_diff_file,
                                                              output_file => $cbs_op);
     }
