@@ -48,21 +48,21 @@ sub get_commands_for_alignment_result {
             class => 'Genome::Qc::Tool::Picard::CollectAlignmentSummaryMetrics',
             params => {
                 input_file => 'bam_file',
-                reference_sequence => 'reference_sequence',
+                refseq_file => 'reference_sequence',
                 use_version => 1.123,
-                metric_accumulation_level => ['SAMPLE', 'READ_GROUP']
+                metric_accumulation_level => ['SAMPLE', 'READ_GROUP'],
             }
         },
         picard_collect_insert_size_metrics => {
             class => 'Genome::Qc::Tool::Picard::CollectInsertSizeMetrics',
             params => {
                 input_file => 'bam_file',
+                histogram_file => 'histogram_file',
                 reference_sequence => 'reference_sequence',
                 use_version => 1.123,
-                metric_accumulation_level => ['SAMPLE']
+                metric_accumulation_level => ['SAMPLE'],
             }
         },
-
     );
 
     if ($is_capture) {
