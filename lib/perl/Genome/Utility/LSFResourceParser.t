@@ -33,16 +33,13 @@ parse_ok('rusage[tmp=100]', {
         },
         'rLimits' => {}
     });
-SKIP: {
-    skip 'Remember this lsf_resource string is invalid', 2;
-    parse_ok("-R 'span[hosts=1] rusage[mem=1000] -n 4'", {
-            'options' => {
-                'numProcessors' => '4',
-                'resReq' => 'span[hosts=1] rusage[mem=1000]'
-            },
-            'rLimits' => {}
-        }); #invalid argument to -R (notice where the '' are)
-};
+parse_ok("-R 'span[hosts=1] rusage[mem=1000]' -n 4", {
+        'options' => {
+            'numProcessors' => '4',
+            'resReq' => 'span[hosts=1] rusage[mem=1000]'
+        },
+        'rLimits' => {}
+    });
 parse_ok('select[tmp>1000] rusage[tmp=1000]', {
         'options' => {
             'resReq' => 'select[tmp>1000] rusage[tmp=1000]'
