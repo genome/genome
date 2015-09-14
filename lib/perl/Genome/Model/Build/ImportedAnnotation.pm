@@ -850,7 +850,7 @@ sub generate_rRNA_MT_file {
         if ($squashed) {
             die('Support for squashed representations of GTF files is not supported!');
         }
-        my $cat = Genome::Model::Tools::Gtf::Cat->execute(
+        my $cat = Genome::Model::Tools::Gtf::Cat->create(
             input_files => \@input_files,
             output_file => $file_name,
             remove_originals => 0,
