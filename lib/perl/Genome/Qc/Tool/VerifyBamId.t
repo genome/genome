@@ -18,7 +18,7 @@ use Cwd qw(abs_path);
 my $pkg = 'Genome::Qc::Tool::VerifyBamId';
 use_ok($pkg);
 
-my $data_dir = __FILE__.".d";
+my $data_dir = abs_path(__FILE__.".d");
 
 use Genome::Qc::Tool;
 my $sample_name_override = Sub::Override->new(
@@ -37,7 +37,7 @@ my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->s
     instrument_data => $instrument_data,
 );
 
-my $vcf_file = abs_path(File::Spec->join($data_dir, 'Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.chrY.vcf'));
+my $vcf_file = File::Spec->join($data_dir, 'Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.chrY.vcf');
 my $bam_file = abs_path(File::Spec->join($data_dir, 'speedseq_merged.bam'));
 
 use Genome::Qc::Config;

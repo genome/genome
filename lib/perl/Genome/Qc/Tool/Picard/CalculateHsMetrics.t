@@ -21,7 +21,7 @@ use Cwd qw(abs_path);
 my $pkg = 'Genome::Qc::Tool::Picard::CalculateHsMetrics';
 use_ok($pkg);
 
-my $data_dir = __FILE__.".d";
+my $data_dir = abs_path(__FILE__.".d");
 
 my $reference_sequence_model = Genome::Test::Factory::Model::ReferenceSequence->setup_object();
 my $reference_sequence = Genome::Test::Factory::Build->setup_object(
@@ -51,9 +51,9 @@ my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->s
     instrument_data => $instrument_data,
 );
 
-my $bam_file = abs_path(File::Spec->join($data_dir, 'speedseq_merged.bam'));
-my $bait_intervals = abs_path(File::Spec->join($data_dir, 'bait.intervals'));
-my $target_intervals = abs_path(File::Spec->join($data_dir, 'target.intervals'));
+my $bam_file = File::Spec->join($data_dir, 'speedseq_merged.bam');
+my $bait_intervals = File::Spec->join($data_dir, 'bait.intervals');
+my $target_intervals = File::Spec->join($data_dir, 'target.intervals');
 my $temp_file = Genome::Sys->create_temp_file_path;
 
 use Genome::Qc::Config;
