@@ -71,6 +71,7 @@ class Genome::Model::Tools::Picard::CollectGcBiasMetrics {
             is_many => 1,
             is_optional => 1,
             picard_param_name => 'METRIC_ACCUMULATION_LEVEL',
+            valid_values => ['ALL_READS', 'SAMPLE', 'LIBRARY', 'READ_GROUP'],
         },
     ],
 };
