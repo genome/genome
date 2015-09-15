@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use IO::File;
+use Net::LDAP;
 
 class Genome::Site::TGI::Command::SyncSysUserWithLdap{
     is => 'Command::V2',
@@ -13,10 +14,10 @@ class Genome::Site::TGI::Command::SyncSysUserWithLdap{
 sub execute {
     my $self = shift;
 
-    my $ldap_user = get_ldap_users();
+    my $ldap_users = get_ldap_users();
     my @db_users = Genome::Sys::User->fix_params_and_get();
 
-    my $changes = get_changes($ldap_user,\@db_users);
+    my $changes = get_changes($ldap_users,\@db_users);
     my $creates = $changes->{'create'};
     my $deletes = $changes->{'delete'};
 
@@ -35,11 +36,12 @@ sub execute {
     }
 
     for my $u (@{ $changes->{'create'} }) {
-        $self->status("CREATE: " . $u->{'mail'} . "\n");
+        my $email = $u->get_value('mail');
+        $self->status("CREATE: $email\n");
         Genome::Sys::User->create(
-            email => $u->{'mail'},
-            name => $u->{'cn'},
-            username => $u->{'uid'},
+            email => $email,
+            name => $u->get_value('cn'),
+            username => $u->get_value('uid'),
         );
     }
 
@@ -52,40 +54,36 @@ sub execute {
 }
 
 sub get_ldap_users {
-    my $ldap_user = {};
-    my $cmd = 'ldapsearch -z 0 -x';
-    my $fh  = IO::File->new($cmd . "|");
-    my @users;
-    my $user;
+    my $ldap = Net::LDAP->new('ipa1.gsc.wustl.edu', version => 3);
+    my $mesg = $ldap->start_tls(verify => 'none');
+    $mesg->code && die $mesg->error;
 
-    # go through each line of ldapsearch output
-    while (my $c = $fh->getline) {
-        next if $c =~ /^\#/;
-        chomp($c);
+    $mesg = $ldap->bind;
+    $mesg->code && die Dumper($mesg);
 
-        if ($c =~ /^$/) {
-            # process/destroy user
-            push @users, $user;
-            undef $user;
-        } else {
-            my ($key, $value) = split(/\:\s+/,$c);
-            $user->{$key} = $value;
-        }
-    }
-    $fh->close;
+    $mesg = $ldap->search(
+        base => "dc=gsc,dc=wustl,dc=edu",
+        filter => "(objectClass=Person)",
+        #filter => "(&(objectClass=Person)(uid=$username))",
+    );
+    $mesg->code && die $mesg->error;
 
-    # filter out users that didnt have email address entry in ldap
-    for my $u (@users) {
-        next if !$u->{'mail'};
-        $ldap_user->{$u->{'mail'}} = $u;
+    my %ldap_users;
+    foreach my $ldap_user ($mesg->entries) {
+        my $mail = $ldap_user->get_value('mail');
+        next if not $mail; # skip if no email address
+        $ldap_users{$mail} = $ldap_user;
+        #$ldap_user->dump;
     }
 
-    return $ldap_user;
+    $mesg = $ldap->unbind;   # take down session
+    $mesg->code && die $mesg->error;
+
+    return \%ldap_users
 }
 
-
 sub get_changes {
-    my ($ldap_user, $db_users) = @_;
+    my ($ldap_users, $db_users) = @_;
     my @db_users = @$db_users;
     # email is called email in db, mail in ldap
     my $changes = {};
@@ -95,7 +93,7 @@ sub get_changes {
     for my $u (@db_users) {
 
         my $email = $u->email();
-        if (!$ldap_user->{$email}) {
+        if (!$ldap_users->{$email}) {
             push @{$changes->{'delete'}}, $u;
         } else {
             $db_user->{$email} = $u;
@@ -103,8 +101,8 @@ sub get_changes {
     }
 
     # look for people in ldap but not db
-    for my $mail (keys %$ldap_user) {
-        my $u = $ldap_user->{$mail};
+    for my $mail (keys %$ldap_users) {
+        my $u = $ldap_users->{$mail};
 
         if (!$db_user->{$mail}) {
             push @{$changes->{'create'}}, $u;
