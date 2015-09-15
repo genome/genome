@@ -51,7 +51,7 @@ sub qc_metrics_file_accessor {
 }
 
 sub _non_metric_columns {
-    return qw(#SEQ_ID RG);
+    return split(' ', '#SEQ_ID RG');
 }
 
 sub _file_extensions_to_parse {
