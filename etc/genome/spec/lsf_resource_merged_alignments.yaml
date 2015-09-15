@@ -1,4 +1,4 @@
 # This spec controls the LSF resource for instrument data merged alignments
 ---
-default_value: "-R 'span[hosts=1] select[gtmp>90 && mem>16000] rusage[gtmp=90,mem=16000]' -M 16000000";
+default_value: "-R 'span[hosts=1] select[gtmp>90 && mem>16000] rusage[gtmp=90,mem=16000]' -M 16000000"
 env: XGENOME_LSF_RESOURCE_MERGED_ALIGNMENTS
