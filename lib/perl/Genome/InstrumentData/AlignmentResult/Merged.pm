@@ -399,7 +399,7 @@ sub collect_individual_alignments {
 }
 
 sub required_rusage {
-    return ''; #FIXME This needs to be filled in
+    return Genome::Config::get('lsf_resource_merged_alignments');
 }
 
 sub resolve_allocation_kilobytes_requested {
