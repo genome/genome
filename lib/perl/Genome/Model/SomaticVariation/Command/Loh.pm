@@ -45,7 +45,7 @@ class Genome::Model::SomaticVariation::Command::Loh {
 sub shortcut {
     my $self = shift;
 
-    return 1 if $self->should_skip_run;
+    return 1 if $self->should_skip_run($self->build);
 
     my @params = $self->_params_for_result;
     return unless @params;
@@ -62,7 +62,7 @@ sub execute {
     my $self = shift;
     my $build = $self->build;
 
-    return 1 if $self->should_skip_run;
+    return 1 if $self->should_skip_run($build);
 
     my $normal_build = $build->normal_build;
     unless ($normal_build){
@@ -114,7 +114,6 @@ sub execute {
 
 sub should_skip_run {
     my ($class, $build) = @_;
-    $build = $class->build unless $build;
 
     unless ($build){
         die $class->error_message("no build provided!");
