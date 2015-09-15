@@ -30,14 +30,6 @@ sub get_commands_for_alignment_result {
                 # metric_accumulation_level => ['SAMPLE'], #not supported in 1.123
             },
         },
-        picard_mark_duplicates => {
-            class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
-            params => {
-                output_file => 'output_file',
-                input_file => 'bam_file',
-                use_version => 1.123,
-            },
-        },
         samtools_flagstat => {
             class => 'Genome::Qc::Tool::Samtools::Flagstat',
             params => {
