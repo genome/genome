@@ -75,6 +75,8 @@ sub get_commands_for_alignment_result {
                 input_file => 'bam_file',
                 reference_sequence => 'reference_sequence',
                 use_version => 1.123,
+                minimum_mapping_quality => 0,
+                minimum_base_quality => 0,
             },
         };
         #Ultimately we also want to run verifyBamId on exome data but we need
