@@ -90,7 +90,7 @@ sub get_commands_for_alignment_result {
         $config{verify_bam_id} = {
             class => 'Genome::Qc::Tool::VerifyBamId',
             params => {
-                vcf_file => '/gscmnt/gc2802/halllab/abelhj/gatk_utah_041815/indiv/vbid/Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.vcf.gz',
+                vcf => '/gscmnt/gc2802/halllab/abelhj/gatk_utah_041815/indiv/vbid/Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.vcf.gz',
                 bam => 'bam_file',
                 max_depth => '150',
                 precise => '1',
