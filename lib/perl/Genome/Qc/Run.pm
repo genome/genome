@@ -16,7 +16,7 @@ class Genome::Qc::Run {
     ],
     has_param => [
         lsf_resource => {
-            value => q{-R 'select[mem>16000] rusage[mem=16000]' -M 16000000},
+            value => q{-R 'span[hosts=1] select[mem>16000] rusage[mem=16000]' -M 16000000 -n 6},
         },
     ],
 };
