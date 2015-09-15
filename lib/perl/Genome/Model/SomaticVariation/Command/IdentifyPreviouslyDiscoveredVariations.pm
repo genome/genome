@@ -101,7 +101,7 @@ sub execute {
             $self->link_result_to_build($result);
         } elsif($snv_result) {
 
-            my $detected_snv_path = defined($build->loh_version) ? $build->data_set_path("loh/snvs.somatic",$version,'bed') : $build->data_set_path("variants/snvs.hq",$version,"bed"); 
+            my $detected_snv_path = Genome::Model::SomaticVariation::Command::Loh->should_skip_run($build) ? $build->data_set_path("variants/snvs.hq",$version,"bed") : $build->data_set_path("loh/snvs.somatic",$version,'bed'); 
             my $novel_detected_snv_path = $build->data_set_path("novel/snvs.hq.novel",$version,'bed');
             my $previously_detected_snv_path = $build->data_set_path("novel/snvs.hq.previously_detected",$version,'bed');
 
@@ -259,7 +259,7 @@ sub skip_run {
         $detected_path = $r->path($variant_type . '.hq.bed');
     } else {
         my $version = '2';
-        $detected_path = ($variant_type eq 'snv' && defined($build->loh_version)) ? $build->data_set_path("loh/snvs.somatic",$version,'bed') : $build->data_set_path("variants/" . $variant_type . "s.hq",$version,"bed");
+        $detected_path = ($variant_type eq 'snv' && !Genome::Model::SomaticVariation::Command::Loh->should_skip_run($build)) ? $build->data_set_path("loh/snvs.somatic",$version,'bed') : $build->data_set_path("variants/" . $variant_type . "s.hq",$version,"bed");
     }
     File::Copy::copy($detected_path, $novel);
     system("touch $previously_detected");
@@ -274,7 +274,7 @@ sub params_for_result {
     my $build = $self->build;
 
     my $prior_result;
-    if($variant_type eq 'snv' and $build->loh_version) {
+    if($variant_type eq 'snv' and !Genome::Model::SomaticVariation::Command::Loh->should_skip_run($build)) {
         my @results = $build->results;
         for my $r (@results) {
             if($r->class eq 'Genome::Model::Tools::DetectVariants2::Classify::Loh') {
