@@ -113,26 +113,26 @@ sub execute {
 }
 
 sub should_skip_run {
-    my $self = shift;
-    my $build = $self->build;
+    my ($class, $build) = @_;
+    $build = $class->build unless $build;
 
     unless ($build){
-        die $self->error_message("no build provided!");
+        die $class->error_message("no build provided!");
     }
 
     unless(defined($build->loh_version)){
-        $self->debug_message("No LOH version was found, skipping LOH detection!");
+        $class->debug_message("No LOH version was found, skipping LOH detection!");
         return 1;
     }
 
     unless(defined($build->model->snv_detection_strategy)){
-        $self->debug_message("No SNV Detection Strategy, skipping LOH.");
+        $class->debug_message("No SNV Detection Strategy, skipping LOH.");
         return 1;
     }
 
     my $normal_model = $build->normal_model;
     unless($normal_model->can('snv_detection_strategy') and $normal_model->snv_detection_strategy) {
-        $self->debug_message("No SNV Detection Strategy on normal model, skipping LOH.");
+        $class->debug_message("No SNV Detection Strategy on normal model, skipping LOH.");
         return 1;
     }
 
