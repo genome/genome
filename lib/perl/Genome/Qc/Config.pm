@@ -58,7 +58,6 @@ sub get_commands_for_alignment_result {
             params => {
                 input_file => 'bam_file',
                 histogram_file => 'histogram_file',
-                reference_sequence => 'reference_sequence',
                 use_version => 1.123,
                 metric_accumulation_level => ['SAMPLE'],
             }
