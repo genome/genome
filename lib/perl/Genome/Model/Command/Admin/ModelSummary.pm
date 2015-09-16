@@ -142,7 +142,7 @@ sub execute {
     $self->print_message("Requested builds for $build_requested_count models.") if $build_requested_count;
     $self->print_message("Cleaned up " . $cleanup_rv{1} . ".") if $cleanup_rv{1};
     $self->print_message("Failed to clean up " . $cleanup_rv{0} . ".") if $cleanup_rv{0};
-    $self->print_message("Abandoned builds for ". $abandon_count . " (out of " . $abandon_attempt_count . " attempted).");
+    $self->print_message("Abandoned builds for ". $abandon_count . " (out of " . $abandon_attempt_count . " attempted).") if $abandon_attempt_count;
     return 1;
 }
 
