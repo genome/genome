@@ -179,7 +179,7 @@ sub generate_model_summary {
     if ($latest_build_status eq 'Disabled') {
         $action = 'abandon';
     }
-    if (!$latest_build && $model->build_requested){
+    elsif (!$latest_build && $model->build_requested){
         $action = 'none';
     }
     elsif (!$latest_build) {
