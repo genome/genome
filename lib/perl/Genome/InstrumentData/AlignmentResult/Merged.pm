@@ -756,6 +756,10 @@ sub get_superseding_results {
         next if $merged_result_id eq $self->id;
 
         my $superseding_result = __PACKAGE__->get($merged_result_id);
+
+        my @samples = uniq map { $_->sample_id } $superseding_result->instrument_data;
+        next if @samples > 1;
+
         my $superseding_per_lane_results = Set::Scalar->new($superseding_result->collect_individual_alignments);
         
         if ($superseding_per_lane_results->is_proper_superset($per_lane_results)) {
