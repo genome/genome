@@ -187,9 +187,8 @@ sub _ensure_bresume_if_commit {
     my $self = shift;
     my $job_id = shift;
 
-    my $commit_observer = UR::Context->process->add_observer(
-        aspect => 'commit',
-        callback => sub {
+    my $commit_observer = Genome::Sys::CommitAction->create(
+        on_commit => sub {
             my $bresume_output = `bresume $job_id`; chomp $bresume_output;
             $self->error_message($bresume_output) unless ( $bresume_output =~ /^Job <$job_id> is being resumed$/ );
         },

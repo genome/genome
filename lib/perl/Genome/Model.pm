@@ -694,23 +694,11 @@ sub _lock {
         die("Unable to acquire the lock to request $model_id. Is something already running or did it exit uncleanly?")
             unless $lock;
 
-        my ($commit_observer, $rollback_observer);
-        $commit_observer = UR::Context->process->add_observer(
-                               aspect => 'commit',
-                               once => 1,
-                               callback => sub {
-                                   $lock->unlock();
-                                   $rollback_observer->delete;
-                               }
-                           );
-        $rollback_observer = UR::Context->current->add_observer(
-                               aspect => 'rollback',
-                               once => 1,
-                               callback => sub {
-                                   $lock->unlock();
-                                   $commit_observer->delete;
-                               }
-                           );
+        my $cleanup = sub { $lock->unlock };
+        my $commit_action = Genome::Sys::CommitAction->create(
+            on_commit => $cleanup,
+            on_rollback => $cleanup,
+        );
     }
 }
 

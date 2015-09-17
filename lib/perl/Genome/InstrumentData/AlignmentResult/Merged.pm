@@ -280,12 +280,9 @@ sub _remove_per_lane_bam_post_commit {
     my ($self, $alignment) = @_;
 
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        $self->debug_message("Now removing the per lane bam");
-
-        UR::Context->process->add_observer(
-            aspect => 'commit',
-            once => 1,
-            callback => sub {
+        Genome::Sys::CommitAction->create(
+            on_commit => sub {
+                $self->debug_message("Now removing the per lane bam");
                 $alignment->remove_bam;
             }
         );
