@@ -24,4 +24,17 @@ subtest 'lpad_users' => sub {
 
 };
 
+subtest 'changes delete' => sub {
+    plan tests => 2;
+
+    my %ldap_users = map { $_ => 1 } $apipe_users->members;
+    my $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
+    is_deeply($changes, {}, 'no changes needed');
+
+    delete $ldap_users{ $apipe_db_users[0]->email };
+    $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
+    is_deeply($changes, { delete => [ @apipe_db_users[0] ] }, 'need to delete '.$apipe_db_users[0]->email);
+
+};
+
 done_testing();
