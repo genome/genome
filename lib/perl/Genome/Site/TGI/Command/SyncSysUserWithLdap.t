@@ -6,7 +6,7 @@ use warnings;
 use above 'Genome';
 use Set::Scalar;
 use Test::MockObject;
-use Test::More tests => 2;
+use Test::More tests => 4;
 
 my $class = 'Genome::Site::TGI::Command::SyncSysUserWithLdap';
 use_ok($class);
@@ -34,6 +34,19 @@ subtest 'changes delete' => sub {
     delete $ldap_users{ $apipe_db_users[0]->email };
     $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
     is_deeply($changes, { delete => [ @apipe_db_users[0] ] }, 'need to delete '.$apipe_db_users[0]->email);
+
+};
+
+subtest 'changes create' => sub {
+    plan tests => 2;
+
+    my $cnt = 0; # this is the ldap user 'object', just use a number for simplicity
+    my %ldap_users = map { $_ => ++$cnt } $apipe_users->members;
+    my $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
+    is_deeply($changes, {}, 'no create changes needed');
+
+    $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, [ @apipe_db_users[0..1] ]);
+    is_deeply($changes, { create => [ 3 ] }, 'need to create '.$apipe_db_users[$#apipe_db_users]->email);
 
 };
 
