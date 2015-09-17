@@ -49,13 +49,13 @@ sub execute {
     }
     my $reference_build = $self->reference_build;
     my $chromosomes = $reference_build->chromosome_array_ref;
-    my %chromosomes = map { $_ => 1 } @{$chromosomes};
+    my %chromosomes_to_use_annotation = map { $_ => 1 } @{$chromosomes};
     my $slice_adaptor = $self->slice_adaptor;
     my @slices = @{ $slice_adaptor->fetch_all('toplevel', undef, 1, 1, 1) };
     my $data;
     for my $slice ( @slices ) {
         my $chr = $slice->seq_region_name();
-        unless ( $chromosomes{$chr} ) {
+        unless ( $chromosomes_to_use_annotation{$chr} ) {
             $self->warning_message('Skipping slice for chromosome '. $chr .' as it is not found in the reference genome.');
             next;
         }
