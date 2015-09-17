@@ -173,7 +173,7 @@ sub _execute_build {
                 output_directory => $annotation_directory."/tiering_bitmasks",
                 reference_sequence_build => $build->reference_sequence,
                 transcript_version => $build->ensembl_version,
-                ucsc_directory => $build->reference_sequence->get_or_create_ucsc_tiering_directory,
+                ucsc_directory => $build->reference_sequence->get_or_create_ucsc_tiering_directory || undef,
                 species => $species_name,
                 annotation_import_version => $build->annotation_import_version,
                 build => $build,
@@ -195,7 +195,7 @@ sub _execute_build {
         my $ucsc_directory = $annotation_directory."/ucsc_conservation";
         my $original_ucsc_dir = $build->reference_sequence->get_or_create_ucsc_conservation_directory;
         if ($original_ucsc_dir) {
-        Genome::Sys->create_symlink($original_ucsc_dir, $ucsc_directory); 
+            Genome::Sys->create_symlink($original_ucsc_dir, $ucsc_directory);
         }
 
         #generate the rna seq files
@@ -204,11 +204,6 @@ sub _execute_build {
         #Make ROI FeatureList
         $build->get_or_create_roi_bed;
 
-        my $gap_list_command =
-            Genome::Model::ImportedAnnotation::Command::FetchUcscGapList->execute(
-                annotation_build => $build,
-            );
-        $build->gap_feature_list($gap_list_command->gap_feature_list);
     }
 
     return 1;
