@@ -47,9 +47,9 @@ sub create {
 
     $self->debug_message('Create TierBitmasks');
 
-    my @chromosomes = $self->chromosome_name_list;
+    my $chromosome_array_ref = $self->reference_sequence_build->chromosome_array_ref;
 
-    my ($genome_size, $masked_genome_size, %genome) = $self->create_genome_bit_vector(@chromosomes);
+    my ($genome_size, $masked_genome_size, %genome) = $self->create_genome_bit_vector($chromosome_array_ref);
 
     #This script calculates the number of the bases in the genome covered by each current tier definition (as of 5/26/2009)
 
@@ -61,7 +61,7 @@ sub create {
     printf "Calculated genome size is %u\n", $genome_size;
     printf "Masked genome size is %u\n", $masked_genome_size;
 
-    my $tier1 = $self->create_tier1_bitmask(\%genome, @chromosomes); 
+    my $tier1 = $self->create_tier1_bitmask(\%genome, $chromosome_array_ref);
     $self->write_genome_bitmask($self->temp_staging_directory."/tier1.bitmask", $tier1);
     print $self->report_coverage("Tier1", $tier1, $masked_genome_size);
     undef($tier1);
@@ -76,34 +76,29 @@ sub create {
         #Tier2 contains all coding bases (silent mutations), as well as conserved bases via phastConsElements and non-repeat regulatory
         #Scan through phastConsElements
         $tier2 = $self->create_conserved_bitmask(\%genome);
-        print STDERR "Calculated Tier2 conserved set\n";
         $self->debug_message("Calculated Tier2 conserved set\n");
 
         $repeatmasker_regions = $self->create_repeatmasker_bitmask(\%genome);
-        print STDERR "Calculated repeatmasker regions\n";
         $self->debug_message("Calculated repeatmasker regions\n");
 
         #next build up the regulatory annotated regions
         my $regulatory_regions = $self->create_regulatory_bitmask(\%genome);
-        print STDERR "Calculated Tier2 regulatory regions\n";
         $self->debug_message("Calculated Tier2 regulatory regions\n");
 
 
         $self->in_place_difference_genomes($regulatory_regions, $repeatmasker_regions); 
-        print STDERR "Calculated Tier2 regulatory regions / repeatmasker\n";
         $self->debug_message("Calculated Tier2 regulatory regions / repeatmasker\n");
 
         $self->in_place_union_genomes($tier2, $regulatory_regions);
-        print STDERR "Calculated Tier2 conserved U regulatory regions / repeatmasker\n";
         $self->debug_message("Calculated Tier2 conserved U regulatory regions / repeatmasker\n");
+
         $self->in_place_difference_genomes($tier2, $tier1); #exclude things hitting Tier1
-        print STDERR "Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1\n";
         $self->debug_message("Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1\n");
+
         $self->in_place_difference_genomes($tier2, \%genome); #account for masking
-        print STDERR "Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1 / masked genome\n";
         $self->debug_message("Calculated (Tier2 conserved U regulatory regions / repeatmasker) / Tier1 / masked genome\n");
     }
-    printf $self->report_coverage("Tier2", $tier2, $masked_genome_size);
+    print $self->report_coverage("Tier2", $tier2, $masked_genome_size);
     $self->write_genome_bitmask($self->temp_staging_directory."/tier2.bitmask", $tier2);
 
     #Tier3
@@ -114,14 +109,14 @@ sub create {
     $self->in_place_difference_genomes($tier3, \%genome);
     $self->write_genome_bitmask($self->temp_staging_directory."/tier3.bitmask", $tier3);
 
-    printf $self->report_coverage("Tier3", $tier3, $masked_genome_size);
+    print $self->report_coverage("Tier3", $tier3, $masked_genome_size);
     my $tier4 = $self->union_genomes($tier2, $tier3);
 
     ($tier1,$tier2,$tier3) = (undef,undef,undef);
 
     $self->in_place_complement_genome($tier4);
     $self->in_place_difference_genomes($tier4, \%genome);
-    printf $self->report_coverage("Tier4", $tier4, $masked_genome_size);
+    print $self->report_coverage("Tier4", $tier4, $masked_genome_size);
     $self->write_genome_bitmask($self->temp_staging_directory."/tier4.bitmask", $tier4);
 
     $self->_prepare_output_directory;
@@ -319,31 +314,15 @@ sub bases_covered {
     return $total;
 }
 
-sub chromosome_name_list {
-    my $self = shift;
-    
-    my $ref = $self->reference_sequence_build->full_consensus_path('fa');
-    my $ref_list_fh = Genome::Sys->open_file_for_reading($self->reference_sequence_build->full_consensus_sam_index_path);
-
-    my @chromosomes;
-    while(my $line = $ref_list_fh->getline) {
-        chomp $line;
-        my ($chr) = split /\t/, $line;
-        push @chromosomes, $chr; 
-    }
-    $ref_list_fh->close;
-    return @chromosomes;
-}
-
 sub create_genome_bit_vector {
-    my ($self, @chromosomes) = @_;
+    my ($self, $chromosome_array_ref) = @_;
 
     my %genome;
     
     my $ref = $self->reference_sequence_build->full_consensus_path('fa');
     my $genome_size = 0;
     my $masked_genome_size = 0;
-    for my $ref_chr (@chromosomes) {
+    for my $ref_chr (@{$chromosome_array_ref}) {
         $self->debug_message("Running samtools faidx on $ref_chr");
         unless(open(FAIDX,"samtools faidx $ref $ref_chr |")) {
             die "Couldn't pipe samtools faidx\n";
@@ -397,7 +376,7 @@ sub report_coverage {
 } 
 
 sub create_tier1_bitmask {
-    my ($self, $genome, @chromosomes) = @_;
+    my ($self, $genome, $chromosome_array_ref) = @_;
 
     my $tier1_coding = $self->shadow_genome($genome);
     my $tier1_rna = $self->shadow_genome($genome);
@@ -406,7 +385,7 @@ sub create_tier1_bitmask {
     my $transcript;
     my @exons;
     #now iterate over all transcripts
-    for my $chromosome_name(@chromosomes) {
+    for my $chromosome_name (@{$chromosome_array_ref}) {
         #Preload substructures
         my @substructures = Genome::TranscriptStructure->get(
             chrom_name => $chromosome_name,
