@@ -51,6 +51,7 @@ my $p = Genome::ProcessingProfile::ClinSeq->create(
     sireport_max_normal_vaf => 10,
     sireport_min_coverage => 20,
     sireport_min_mq_bq => "30,40;30,20",
+    exome_cnv => 1,
 );
 ok($p, "created a processing profile") or diag(Genome::ProcessingProfile::ClinSeq->error_message);
 
