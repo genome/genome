@@ -314,7 +314,6 @@ sub processed_bed_file_content {
             if (!defined($entry[3])) {
                 $entry[3] = $entry[0] .':'. $entry[1] .'-'. $entry[2];
             }
-            $entry[0] =~ s/chr//g;
             if ($entry[0] =~ /random/) { next; }
 
             # Correct for 1-based start positions in imported BED files,
