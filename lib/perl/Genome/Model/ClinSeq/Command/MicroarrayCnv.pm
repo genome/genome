@@ -427,14 +427,17 @@ sub run_cnview {
 
     foreach my $symbol(@cnv_symbols){
         my $symbol_outdir =  $self->outdir;
-        if ($symbol eq "All") {
-            my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build => $self->annotation_build_id, cnv_file => $cnv_hq_file, segments_file => $cnv_hmm_file, output_dir => $symbol_outdir, name => $symbol, cancer_annotation_db => $cancer_annotation_db, window_size => 0, verbose => 1, chr => $plot_chr);
-            $cnview_cmd->execute();
-        } else {
-            my $gene_targets_file = "$gene_symbol_dir/$symbol" . ".txt";
-            my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build =>  $self->annotation_build_id, cnv_file => $cnv_hq_file, segments_file => $cnv_hmm_file, output_dir => $symbol_outdir, gene_targets_file => $gene_targets_file, name => $symbol, cancer_annotation_db => $cancer_annotation_db, window_size => 0, verbose => 1, chr => $plot_chr);
-            $cnview_cmd->execute();
+        my %params = (annotation_build =>  $self->annotation_build_id,
+                      cnv_file => $cnv_hq_file,
+                      segments_file => $cnv_hmm_file,
+                      output_dir => $symbol_outdir, name => $symbol,
+                      cancer_annotation_db => $cancer_annotation_db,
+                      window_size => 0, verbose => 1, chr => $plot_chr);
+        if ($symbol ne 'All') {
+              $params{gene_targets_file} = "$gene_symbol_dir/$symbol" . ".txt";
         }
+        my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(%params);
+        $cnview_cmd->execute;
     }
 }
 
