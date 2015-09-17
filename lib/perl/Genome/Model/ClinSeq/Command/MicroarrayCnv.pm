@@ -396,20 +396,19 @@ sub run_cnview {
     #Create cnvhmm file
     my $cnv_hmm_file = $cbs_op . ".cnvhmm";
     #print only cnv segments with atleast five snp markers.
-    my $make_hmmfile_cmd;
+    my ($make_hmmfile_cmd, $cn_diff, $cn1, $cn2);
     if($self->microarray_model_single) {
-        my $cn_diff = '$5';
-        my $cn1 = '$5';
-        my $cn2 = '0';
-        $make_hmmfile_cmd = 'awk \'{ size = $3-$2; nmarkers=$4; cn_diff = ' . $cn_diff . '; event = "NA"; if(cn_diff>0) { event = "Gain" } else if(cn_diff<0) { event = "Loss" } cn1 = ' . $cn1 . '; cn2 = ' . $cn2 . '; if((event == "Gain" || event == "Loss") && (cn_diff > ' . $min_cnv_diff . ' || cn_diff < -1 * ' . $min_cnv_diff . ' ) && $4 >=5) print $1"\t"$2"\t"$3"\t"size"\t"nmarkers"\t"cn1"\t"cn1"\t"cn2"\t"cn2"\tNA\t"event; } \' ' . $cbs_op . ' > ' .  $cnv_hmm_file;
+        $cn_diff = '$5';
+        $cn1 = '$5';
+        $cn2 = '0';
     } else {
-        my $cn_diff = '(2 ^ $5 * 2) - 2';
-        my $cn1 = 'cn_diff + 2';
-        my $cn2 = '2';
-        $make_hmmfile_cmd = 'awk \'{ size = $3-$2; nmarkers=$4; cn_diff = ' . $cn_diff . '; event = "NA"; if(cn_diff>0) { event = "Gain" } else if(cn_diff<0) { event = "Loss" } cn1 = ' . $cn1 . '; cn2 = ' . $cn2 . '; if((event == "Gain" || event == "Loss") && (cn_diff > ' . $min_cnv_diff . ' || cn_diff < -1 * ' . $min_cnv_diff . ' ) && $4 >=5) print $1"\t"$2"\t"$3"\t"size"\t"nmarkers"\t"cn1"\t"cn1"\t"cn2"\t"cn2"\tNA\t"event; } \' ' . $cbs_op . ' > ' .  $cnv_hmm_file;
+        $cn_diff = '(2 ^ $5 * 2) - 2';
+        $cn1 = 'cn_diff + 2';
+        $cn2 = '2';
     }
+    my $make_hmmfile_cmd = 'awk \'{ size = $3-$2; nmarkers=$4; cn_diff = ' . $cn_diff . '; event = "NA"; if(cn_diff>0) { event = "Gain" } else if(cn_diff<0) { event = "Loss" } cn1 = ' . $cn1 . '; cn2 = ' . $cn2 . '; if((event == "Gain" || event == "Loss") && (cn_diff > ' . $min_cnv_diff . ' || cn_diff < -1 * ' . $min_cnv_diff . ' ) && $4 >=5) print $1"\t"$2"\t"$3"\t"size"\t"nmarkers"\t"cn1"\t"cn1"\t"cn2"\t"cn2"\tNA\t"event; } \' ' . $cbs_op . ' > ' .  $cnv_hmm_file;
     Genome::Sys->shellcmd(cmd => $make_hmmfile_cmd);
-   
+
     #For each list of gene symbols, run the CNView analysis
     my @cnv_symbols;
     if($self->test) {
