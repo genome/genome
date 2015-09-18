@@ -55,7 +55,7 @@ sub parse_line {
     my $id = ".";
     my $qual = ".";
     my $filter = "PASS";
-    my $info = "TYPE=1";
+    my $info = ".";
     my $format = "GT";
     my $sample = "1";
 
