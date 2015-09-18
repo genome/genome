@@ -2396,6 +2396,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'sireport-min-tumor-vaf=s',
         undef,
+        'exome-cnv!',
+        undef,
         'help!',
         undef
       ],
@@ -14882,6 +14884,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>run-wgs-qc',
+      [
+        'debug!',
+        undef,
+        'model-group=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>sammy',
       [
         '>adjust-coverage',
@@ -16535,19 +16546,17 @@ $Genome::Command::OPTS_SPEC = [
       '>make-tier-bitmasks',
       [
         'annotation-import-version=s',
-        'files',
-        'build=s',
-        'files',
+        undef,
         'output-directory=s',
         'files',
         'species=s',
         'files',
         'transcript-version=s',
         'files',
-        'ucsc-directory=s',
-        'files',
         'debug!',
         undef,
+        'ucsc-directory=s',
+        'files',
         'help!',
         undef
       ],
