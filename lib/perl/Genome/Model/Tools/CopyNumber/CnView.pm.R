@@ -493,8 +493,8 @@ if (length(which(cnvs[,"DIFF"] < hard_cap_lower)) > 0){
 if (length(which(cnvs[,"DIFF"] > hard_cap_upper)) > 0){
   cnvs[which(cnvs[,"DIFF"] > hard_cap_upper),"DIFF"] = hard_cap_upper
 }
-if (length(rownames(segments))>0){
-  segments[which(segments[,"Adjusted_CN_DIFF"] > hard_cap_upper),"Adjusted_CN_DIFF"] = hard_cap_upper
+if(length(rownames(segments))>0 && segments[,"Adjusted_CN_DIFF"] > hard_cap_upper) {
+    segments[which(segments[,"Adjusted_CN_DIFF"] > hard_cap_upper),"Adjusted_CN_DIFF"] = hard_cap_upper
 }
 
 #TODO: Apply a further more aggressive hard-capping near centromeres where outliers in the gain direction are common?

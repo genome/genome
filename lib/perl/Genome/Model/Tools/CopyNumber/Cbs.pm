@@ -36,6 +36,12 @@ class Genome::Model::Tools::CopyNumber::Cbs {
         doc => 'File containing 3-column binary array data (chr, pos, 0/1)',
     },
 
+    microarray_original_file => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'File from the genotype-microarray builds that are named *.original' .
+               'These files have a header and a column with the logR ratio value.',
+    },
 
     tcga_array_file => {
         is => 'String',
@@ -119,6 +125,7 @@ sub execute {
     my $bam2cna_file = $self->bam2cna_file;
     my $array_file = $self->array_file; 
     my $binary_array_file = $self->binary_array_file;    
+    my $microarray_original_file = $self->microarray_original_file;
     my $tcga_array_file = $self->tcga_array_file;    
     my $output_R_object = $self->output_R_object;
     my $output_file = $self->output_file;
@@ -127,12 +134,14 @@ sub execute {
     my $min_width = $self->min_width;
     my $undo_splits_sd = $self->undo_splits_sd;
     #sanity checks
-    unless( (defined($output_R_object)) || (defined($output_file))){
+    unless(List::MoreUtils::any { defined } ( $output_R_object, $output_file )) {
         die $self->error_message("You must specify either the output_file OR output_R_object file");
     }
 
-    unless( (defined($bamwindow_file)) || (defined($bam2cna_file)) || (defined($array_file) || (defined($tcga_array_file)))){
-        die $self->error_message("You must specify either a bamwindow file, a bam2cna file, or an array file");
+    unless(List::MoreUtils::any { defined } ( $bamwindow_file, $bam2cna_file,
+                                              $array_file, $tcga_array_file, $microarray_original_file )) {
+        die $self->error_message("You must specify either a bamwindow file, a bam2cna file, an array
+            or a microarray original file");
     }
     
     #set up a temp file for the R commands
@@ -175,6 +184,9 @@ sub execute {
     } elsif(defined($tcga_array_file)) {
         print R_COMMANDS 'cn <- read.table("' . $tcga_array_file . '", header=F, sep="\t", comment.char="#", colClasses=c("character","character","numeric","numeric"))[,2:4]' . "\n";
         #print R_COMMANDS 'sd <- sd(cn[,3])' . "\n";
+
+    } elsif(defined($microarray_original_file)) {
+        print R_COMMANDS 'cn <- read.table("' . $microarray_original_file . '", header=T, sep="\t")' . "\n";
     }
 
     if($convert_names){            
@@ -190,6 +202,8 @@ sub execute {
         print R_COMMANDS "log2(cn[,3]/cn[,4])";
     } elsif(defined($array_file) || defined($tcga_array_file) || defined($binary_array_file)) {
         print R_COMMANDS "cn[,3]";
+    } elsif(defined($microarray_original_file)) {
+        print R_COMMANDS "cn['log_r_ratio']";
     }
     
     print R_COMMANDS ", chrom = cn[,1], maploc = cn[,2], ";    
