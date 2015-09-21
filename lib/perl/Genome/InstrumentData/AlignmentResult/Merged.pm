@@ -290,7 +290,6 @@ sub _remove_per_lane_bam_post_commit {
     return 1;
 }
 
-    
 sub collect_individual_alignments {
     my $self = shift;
     my $result_users = shift || $self->_user_data_for_nested_results;
@@ -743,7 +742,7 @@ sub get_superseding_results {
 
     my @per_lane_results = $self->collect_individual_alignments;
     my $per_lane_results = Set::Scalar->new(@per_lane_results);
-    
+
     my %count;
     my @superseding_results = ();
 
@@ -765,7 +764,7 @@ sub get_superseding_results {
         next unless $sample_set->is_equal($superseding_sample_set);
 
         my $superseding_per_lane_results = Set::Scalar->new($superseding_result->collect_individual_alignments);
-        
+
         if ($superseding_per_lane_results->is_proper_superset($per_lane_results)) {
             push @superseding_results, $superseding_result;
         }
