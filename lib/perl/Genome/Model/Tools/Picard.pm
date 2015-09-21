@@ -485,51 +485,34 @@ sub parse_metrics_file_into_histogram_hashref {
 }
 
 sub _parse_metrics_file_into_hashref {
-    my ($class, $metrics_file, $metric_header_as_key, $header_regex) = @_;
+    my ($class, $metrics_file, $metric_header_as_key, $header_regex, $accumulations) = @_;
 
-    my $metrics_fh = Genome::Sys->open_file_for_reading($metrics_file);
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        separator => "\t",
+        ignore_lines_starting_with => '#|(?:^$)',
+        input => $metrics_file,
+    );
+    die $class->error_message('Failed to generate parser for %s', $metrics_file) unless $reader;
 
-    my $metric_key_index;
     unless (defined $metric_header_as_key) {
         if ($class->can('_metric_header_as_key')) {
             $metric_header_as_key = $class->_metric_header_as_key;
         } else {
             $class->debug_message('Assuming the first column is the key for the metrics hashref in file: '. $metrics_file);
-            $metric_key_index = 0;
+            $metric_header_as_key = $reader->headers->[0];
         }
     }
 
-    my @headers;
     my %data;
-    while (my $line = $metrics_fh->getline) {
-        chomp($line);
-        if ($line =~ $header_regex) {
-            my $next_line = $metrics_fh->getline;
-            chomp($next_line);
-            @headers = split("\t",$next_line);
-            for (my $i = 0; $i < scalar(@headers); $i++) {
-                unless (defined($metric_key_index)) {
-                    if ($headers[$i] eq $metric_header_as_key) {
-                        $metric_key_index = $i;
-                    }
-                }
+    while(my $line = $reader->next) {
+        my $place_to_assign = \%data;
+        if ($accumulations) {
+            for my $accumulation (@$accumulations) {
+                $place_to_assign = $place_to_assign->{$line->{$accumulation}} ||= {};
             }
-            next;
         }
 
-        if (@headers) {
-            if ($line =~ /^\s*$/) {
-                last;
-            } else {
-                my @values = split("\t",$line);
-                my $metric_key = $headers[$metric_key_index] .'-'. $values[$metric_key_index];
-                for (my $i = 0; $i < scalar(@values); $i++) {
-                    my $header = $headers[$i];
-                    my $value = $values[$i];
-                    $data{$metric_key}{$header} = $value;
-                }
-            }
-        }
+        $place_to_assign->{$line->{$metric_header_as_key}} = $line;
     }
 
     return \%data;

@@ -30,14 +30,6 @@ sub get_commands_for_alignment_result {
                 # metric_accumulation_level => ['SAMPLE'], #not supported in 1.123
             },
         },
-        picard_mark_duplicates => {
-            class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
-            params => {
-                output_file => 'output_file',
-                input_file => 'bam_file',
-                use_version => 1.123,
-            },
-        },
         samtools_flagstat => {
             class => 'Genome::Qc::Tool::Samtools::Flagstat',
             params => {
@@ -58,7 +50,6 @@ sub get_commands_for_alignment_result {
             params => {
                 input_file => 'bam_file',
                 histogram_file => 'histogram_file',
-                reference_sequence => 'reference_sequence',
                 use_version => 1.123,
                 metric_accumulation_level => ['SAMPLE'],
             }
@@ -84,6 +75,8 @@ sub get_commands_for_alignment_result {
                 input_file => 'bam_file',
                 reference_sequence => 'reference_sequence',
                 use_version => 1.123,
+                minimum_mapping_quality => 0,
+                minimum_base_quality => 0,
             },
         };
         #Ultimately we also want to run verifyBamId on exome data but we need
@@ -91,7 +84,7 @@ sub get_commands_for_alignment_result {
         $config{verify_bam_id} = {
             class => 'Genome::Qc::Tool::VerifyBamId',
             params => {
-                vcf_file => '/gscmnt/gc2802/halllab/abelhj/gatk_utah_041815/indiv/vbid/Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.vcf.gz',
+                vcf => '/gscmnt/gc2802/halllab/abelhj/gatk_utah_041815/indiv/vbid/Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.vcf.gz',
                 bam => 'bam_file',
                 max_depth => '150',
                 precise => '1',
