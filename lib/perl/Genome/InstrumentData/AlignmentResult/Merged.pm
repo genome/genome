@@ -751,14 +751,18 @@ sub get_superseding_results {
         map{$count{$_->id}++}$per_lane_result->get_merged_alignment_results;
     }
 
+    my @sample_ids = uniq map { $_->sample_id } $self->instrument_data;
+    my $sample_set = Set::Scalar->new(@sample_ids);
+
     for my $merged_result_id (keys %count) {
         next unless $count{$merged_result_id} == $per_lane_results->size;
         next if $merged_result_id eq $self->id;
 
         my $superseding_result = __PACKAGE__->get($merged_result_id);
 
-        my @samples = uniq map { $_->sample_id } $superseding_result->instrument_data;
-        next if @samples > 1;
+        my @superseding_sample_ids = uniq map { $_->sample_id } $superseding_result->instrument_data;
+        my $superseding_sample_set = Set::Scalar->new(@superseding_sample_ids);
+        next unless $sample_set->is_equal($superseding_sample_set);
 
         my $superseding_per_lane_results = Set::Scalar->new($superseding_result->collect_individual_alignments);
         
