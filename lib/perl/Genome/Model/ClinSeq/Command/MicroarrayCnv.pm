@@ -396,7 +396,7 @@ sub run_cnview {
     #Create cnvhmm file
     my $cnv_hmm_file = $cbs_op . ".cnvhmm";
     #print only cnv segments with atleast five snp markers.
-    my ($make_hmmfile_cmd, $cn_diff, $cn1, $cn2);
+    my ($cn_diff, $cn1, $cn2);
     if($self->microarray_model_single) {
         $cn_diff = '$5';
         $cn1 = '$5';
