@@ -159,7 +159,7 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
           default => "4",
       },
 
-      force_use_latest_build => {
+      fallback_to_latest_build => {
           is => 'Boolean',
           is_optional => 1,
           doc => "Use the latest build on this model, even if it's unsuccessful or still running",
@@ -640,8 +640,8 @@ sub execute {
   my $build = $model->last_succeeded_build;
   unless( defined($build) ){
       $self->error_message("Model %s has no succeeded builds",$model->id);
-      if($self->force_use_latest_build){
-          $self->warning_message("--force-use-latest-build was set, so attempting to use build %s",$model->latest_build->id);
+      if($self->fallback_to_latest_build){
+          $self->warning_message("--fallback-to-latest-build was set, so attempting to use build %s",$model->latest_build->id);
           $build = $model->latest_build;
           unless(defined($build)){
               $self->error_message("Model %s has no latest build",$model->id);
