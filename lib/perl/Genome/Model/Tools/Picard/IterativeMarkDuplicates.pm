@@ -298,7 +298,7 @@ sub execute {
 
     my @probabilities = sort {$b <=> $a} keys %metrics;
     #my @libraries = keys %{ $metrics{$probabilities[0]} };
-    my @headers= keys %{ $metrics{$probabilities[0]}->{'LIBRARY-'.$libraries[0]} };
+    my @headers= keys %{ $metrics{$probabilities[0]}->{$libraries[0]} };
     
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
         output => $self->output_file,
@@ -311,7 +311,7 @@ sub execute {
 
     for my $probability (@probabilities) {
         for my $library (@libraries) {
-            my $data = $metrics{$probability}->{'LIBRARY-'. $library};
+            my $data = $metrics{$probability}->{$library};
             $writer->write_one($data);
         }
     }
