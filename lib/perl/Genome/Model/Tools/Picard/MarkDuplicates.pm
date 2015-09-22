@@ -108,4 +108,8 @@ sub calculate_max_file_handles {
     return int(0.95 * `sh -ec "ulimit -n"`);
 }
 
+sub _metric_header_as_key {
+    return 'LIBRARY';
+}
+
 1;
