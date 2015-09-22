@@ -500,8 +500,8 @@ sub _parse_metrics_file_into_hashref {
         } elsif ($accumulations) {
             $metric_header_as_key = shift @$accumulations;
         } else {
-            $class->debug_message('Assuming the first column is the key for the metrics hashref in file: '. $metrics_file);
-            $metric_header_as_key = $reader->headers->[0];
+            #There's only one thing... or something is wrong!
+            return $reader->next;
         }
     }
 

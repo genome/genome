@@ -103,15 +103,15 @@ my @expected_cmd_line = (
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
 
 my %expected_metrics = (
-    'TEST-patient1-somval_tumor1-extlibs	ESTIMATED_LIBRARY_SIZE' => '',
-    'TEST-patient1-somval_tumor1-extlibs	LIBRARY' => 'TEST-patient1-somval_tumor1-extlibs',
-    'TEST-patient1-somval_tumor1-extlibs	PERCENT_DUPLICATION' => 0,
-    'TEST-patient1-somval_tumor1-extlibs	READ_PAIRS_EXAMINED' => 16,
-    'TEST-patient1-somval_tumor1-extlibs	READ_PAIR_DUPLICATES' => 0,
-    'TEST-patient1-somval_tumor1-extlibs	READ_PAIR_OPTICAL_DUPLICATES' => 0,
-    'TEST-patient1-somval_tumor1-extlibs	UNMAPPED_READS' => 2,
-    'TEST-patient1-somval_tumor1-extlibs	UNPAIRED_READS_EXAMINED' => 2,
-    'TEST-patient1-somval_tumor1-extlibs	UNPAIRED_READ_DUPLICATES' => 0,
+    'ESTIMATED_LIBRARY_SIZE' => '',
+    'LIBRARY' => 'TEST-patient1-somval_tumor1-extlibs',
+    'PERCENT_DUPLICATION' => 0,
+    'READ_PAIRS_EXAMINED' => 16,
+    'READ_PAIR_DUPLICATES' => 0,
+    'READ_PAIR_OPTICAL_DUPLICATES' => 0,
+    'UNMAPPED_READS' => 2,
+    'UNPAIRED_READS_EXAMINED' => 2,
+    'UNPAIRED_READ_DUPLICATES' => 0,
 );
 is_deeply({$command->output_result->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
 
