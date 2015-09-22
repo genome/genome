@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Genome;
 
+use Hash::Flatten;
+
 class Genome::Qc::Tool::Picard {
     is => 'Genome::Qc::Tool',
     is_abstract => 1,
@@ -36,24 +38,27 @@ sub gmt_class {
 }
 
 sub _flatten_metrics_hash {
-    my ($self, $picard_metrics_hash, %params) = @_;
+    my ($self, $picard_metrics_hash) = @_;
     my %flattened_metrics_hash;
-    my $metric_header_as_key = $params{metric_header_as_key};
 
-    while (my ($metric_category, $nested_metrics_hash) = each %{$picard_metrics_hash}) {
-        while (my ($metric_name, $metric_value) = each %{$nested_metrics_hash}) {
-            next if defined($metric_header_as_key) && $metric_header_as_key eq $metric_name;
-            my $key;
-            if ($metric_header_as_key) {
-                $key = join('-', $metric_category, $metric_name);
-                $key =~ s/^$metric_header_as_key-//;
-            } else {
-                $key = $metric_name;
-            }
-            $flattened_metrics_hash{$key} = $metric_value;
+    my $flattener = Hash::Flatten->new({
+        HashDelimiter => "\t",
+        OnRefScalar => 'die',
+        OnRefRef => 'die',
+        OnRefGlob => 'die',
+        ArrayDelimiter => "ERROR!",
+    });
+
+    my $flat_hash = $flattener->flatten($picard_metrics_hash);
+    for my $key (keys %$flat_hash) {
+        if ($key =~ /\t{2,}/) {
+            my $value = delete $flat_hash->{$key};
+            $key =~ s/\t{2,}/\t/g;
+            $flat_hash->{$key} = $value;
         }
     }
-    return %flattened_metrics_hash;
+
+    return %$flat_hash;
 }
 
 1;
