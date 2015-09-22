@@ -183,7 +183,7 @@ EOS
         my $tumor_rnaseq_build=$build->tumor_rnaseq_build;
         my $expression = Genome::Sys->read_file("$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
         my $expression_fh = Genome::Sys->open_file_for_writing("$output_directory/data/genes.fpkm.expsort.top1percent.tsv");
-        while ($expression =~ /\w+\t(\w+)\t\w+\t\w+\t(\w+):(\d+)-(\d+)\t\w+\t\w+\t(\S+)/g) {
+        while ($expression =~ /\w+\t(\S+)\t\w+\t\w+\t(\w+):(\d+)-(\d+)\t\w+\t\w+\t(\d+)[\t\S]+\n/g) {
             $$genes_noAmpDel{$1}="hs$2\t$3\t$4";
             $$genes_AmpDel{$1}="hs$2\t$3\t$4";
             #if($5>=2 || $5<=-2){ Is this necessary
