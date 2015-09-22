@@ -15,7 +15,7 @@ my @apipe_uids = (qw/ apipe apipe-builder apipe-tester /);
 my $apipe_users = Set::Scalar->new( map{$_.'@'.Genome::Config::get('email_domain')} @apipe_uids );
 my @apipe_db_users = map { my $o = Test::MockObject->new; $o->set_always('email', $_); $o; } $apipe_users->members;
 
-subtest 'lpad_users' => sub {
+subtest 'ldap_users' => sub {
     plan tests => 1;
 
     my $ldap_users = $class->get_ldap_users;
