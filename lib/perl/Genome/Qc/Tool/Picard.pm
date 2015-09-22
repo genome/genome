@@ -22,7 +22,7 @@ sub get_metrics {
 
     my $file = $self->qc_metrics_file;
     my $gmt_class = $self->gmt_class;
-    my $metric_results = $gmt_class->parse_file_into_metrics_hashref($file);
+    my $metric_results = $gmt_class->_parse_metrics_file_into_hashref($file, undef, undef, $self->gmt_params->{metric_accumulation_level});
     my $metric_header_as_key = $gmt_class->can('_metric_header_as_key') ? $gmt_class->_metric_header_as_key : undef;
     return $self->_flatten_metrics_hash($metric_results, metric_header_as_key => $metric_header_as_key);
 }
