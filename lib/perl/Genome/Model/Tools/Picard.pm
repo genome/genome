@@ -497,6 +497,8 @@ sub _parse_metrics_file_into_hashref {
     unless (defined $metric_header_as_key) {
         if ($class->can('_metric_header_as_key')) {
             $metric_header_as_key = $class->_metric_header_as_key;
+        } elsif ($accumulations) {
+            $metric_header_as_key = shift @$accumulations;
         } else {
             $class->debug_message('Assuming the first column is the key for the metrics hashref in file: '. $metrics_file);
             $metric_header_as_key = $reader->headers->[0];
