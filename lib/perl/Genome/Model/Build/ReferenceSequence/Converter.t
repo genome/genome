@@ -60,10 +60,10 @@ ok(!$diff, 'converter produced expected result')
         algorithm => 'drop_extra_contigs',
         resource => 'convert_chrXX_contigs_to_GL',
     );
-    my $dc_converted_bed_file = $feature_list->converted_bed_file(reference => $ref_seq_c);
-    ok($dc_converted_bed_file, 'got converted BED file');
 
     Memoize::flush_cache('Genome::FeatureList::processed_bed_file');
+    my $dc_converted_bed_file = $feature_list->converted_bed_file(reference => $ref_seq_c);
+    ok($dc_converted_bed_file, 'got converted BED file');
 
     my $dc_expected_result = <<EOBED
 1	2	3	r0
