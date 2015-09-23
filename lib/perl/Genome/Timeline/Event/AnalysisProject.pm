@@ -30,7 +30,7 @@ class Genome::Timeline::Event::AnalysisProject {
             is => 'Text',
             len => 255,
             default_value => 'Pending',
-            valid_values => [ "Pending", "Approved", "In Progress", "Completed", "Archived", "Hold" ],
+            valid_values => [ "Pending", "Approved", "In Progress", "Completed", "Archived", "Hold", "Deprecated" ],
         },
         is_cle => { is => 'Boolean', len => 1 },
         run_as => { is => 'Text', len => 64 },
