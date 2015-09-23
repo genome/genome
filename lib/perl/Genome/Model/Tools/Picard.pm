@@ -395,7 +395,7 @@ sub create {
 }
 
 sub monitor_shellcmd {
-    my ($self,$shellcmd_args) = @_;
+    my ($self, $shellcmd_args) = @_;
     my $check_interval = $self->_monitor_check_interval;
     my $max_stdout_interval = $self->_monitor_stdout_interval;
 
@@ -469,23 +469,7 @@ MESSAGE
 
 
 sub parse_file_into_metrics_hashref {
-    my ($class,$metrics_file,$metric_header_as_key) = @_;
-
-    my $header_regex = qr(^## METRICS CLASS);
-
-    return $class->_parse_metrics_file_into_hashref($metrics_file, $metric_header_as_key, $header_regex);
-}
-
-sub parse_metrics_file_into_histogram_hashref {
-    my ($class,$metrics_file,$metric_header_as_key) = @_;
-
-    my $header_regex = qr(^## HISTOGRAM);
-
-    return $class->_parse_metrics_file_into_hashref($metrics_file, $metric_header_as_key, $header_regex);
-}
-
-sub _parse_metrics_file_into_hashref {
-    my ($class, $metrics_file, $metric_header_as_key, $header_regex, $accumulations) = @_;
+    my ($class, $metrics_file, $metric_header_as_key, $accumulations) = @_;
 
     my $reader = Genome::Utility::IO::SeparatedValueReader->create(
         separator => "\t",
@@ -497,9 +481,12 @@ sub _parse_metrics_file_into_hashref {
     unless (defined $metric_header_as_key) {
         if ($class->can('_metric_header_as_key')) {
             $metric_header_as_key = $class->_metric_header_as_key;
+        } elsif ($accumulations) {
+            $metric_header_as_key = shift @$accumulations;
         } else {
-            $class->debug_message('Assuming the first column is the key for the metrics hashref in file: '. $metrics_file);
-            $metric_header_as_key = $reader->headers->[0];
+            my $data = $reader->next;
+            die $class->error_message('Must define header key or accumulation levels if multiple lines present in metric file!') if $reader->next;
+            return $data;
         }
     }
 
@@ -518,6 +505,58 @@ sub _parse_metrics_file_into_hashref {
     return \%data;
 }
 
+sub parse_metrics_file_into_histogram_hashref {
+    my ($class, $metrics_file, $metric_header_as_key) = @_;
+
+    my $header_regex = qr(^## HISTOGRAM);
+
+    my $metrics_fh = Genome::Sys->open_file_for_reading($metrics_file);
+
+    my $metric_key_index;
+    unless (defined $metric_header_as_key) {
+        if ($class->can('_metric_header_as_key')) {
+            $metric_header_as_key = $class->_metric_header_as_key;
+        } else {
+            $class->debug_message('Assuming the first column is the key for the metrics hashref in file: '. $metrics_file);
+            $metric_key_index = 0;
+        }
+    }
+
+    my @headers;
+    my %data;
+    while (my $line = $metrics_fh->getline) {
+        chomp($line);
+        if ($line =~ $header_regex) {
+            my $next_line = $metrics_fh->getline;
+            chomp($next_line);
+            @headers = split("\t",$next_line);
+            for (my $i = 0; $i < scalar(@headers); $i++) {
+                unless (defined($metric_key_index)) {
+                    if ($headers[$i] eq $metric_header_as_key) {
+                        $metric_key_index = $i;
+                    }
+                }
+            }
+            next;
+        }
+
+        if (@headers) {
+            if ($line =~ /^\s*$/) {
+                last;
+            } else {
+                my @values = split("\t",$line);
+                my $metric_key = $headers[$metric_key_index] .'-'. $values[$metric_key_index];
+                for (my $i = 0; $i < scalar(@values); $i++) {
+                    my $header = $headers[$i];
+                    my $value = $values[$i];
+                    $data{$metric_key}{$header} = $value;
+                }
+            }
+        }
+    }
+
+    return \%data;
+}
 
 1;
 
