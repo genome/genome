@@ -395,7 +395,7 @@ sub create {
 }
 
 sub monitor_shellcmd {
-    my ($self,$shellcmd_args) = @_;
+    my ($self, $shellcmd_args) = @_;
     my $check_interval = $self->_monitor_check_interval;
     my $max_stdout_interval = $self->_monitor_stdout_interval;
 
@@ -469,7 +469,7 @@ MESSAGE
 
 
 sub parse_file_into_metrics_hashref {
-    my ($class,$metrics_file,$metric_header_as_key,$accumulations) = @_;
+    my ($class, $metrics_file, $metric_header_as_key, $accumulations) = @_;
 
     my $reader = Genome::Utility::IO::SeparatedValueReader->create(
         separator => "\t",
@@ -505,7 +505,7 @@ sub parse_file_into_metrics_hashref {
 }
 
 sub parse_metrics_file_into_histogram_hashref {
-    my ($class,$metrics_file,$metric_header_as_key) = @_;
+    my ($class, $metrics_file, $metric_header_as_key) = @_;
 
     my $header_regex = qr(^## HISTOGRAM);
 
