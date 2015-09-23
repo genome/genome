@@ -27,6 +27,11 @@ class Genome::Model::Tools::EpitopePrediction::BindingFilter {
             doc => 'Minimum fold change between mutant binding score and wild-type score. The default is 0, which filters no results, but 1 is often a sensible default (requiring that binding is better to the MT than WT)',
             default => 0,
         },
+        binding_threshold => {
+            is => 'Numeric',
+            doc => 'report only epitopes where the mutant allele has ic50 binding scores below this value',
+            default => 500,
+        },
 
     ],
     has_output => [
@@ -88,7 +93,7 @@ sub execute {
     ) or die "Unable to create SeparatedValueWriter\n";
 
     my %prediction;
-    my $threshold = 500 ;
+    my $threshold = $self->binding_threshold;
     while (my $file = $fof_fh->getline) {
         chomp $file;
         my $basename = basename( $file);
