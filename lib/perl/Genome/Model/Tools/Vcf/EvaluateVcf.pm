@@ -362,6 +362,7 @@ sub allelic_primitives_commands {
 sub pass_only_commands {
     my $self = shift;
     my ($input_file, $expression) = @_;
+    return unless $expression;
     my $vcffilter = $self->vcflib_tool('vcffilter');
     return ("$vcffilter $expression $input_file");
 }
