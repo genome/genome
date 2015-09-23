@@ -95,4 +95,8 @@ sub _java_class {
     return qw(picard analysis CollectGcBiasMetrics);
 }
 
+sub _metric_header_as_key {
+    return 'GC';
+}
+
 1;
