@@ -1,10 +1,10 @@
-package Genome::Qc::Tool::Picard::CollectWgsMetrics;
+package Genome::Qc::Tool::Picard::CollectAlignmentSummaryMetrics;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Qc::Tool::Picard::CollectWgsMetrics {
+class Genome::Qc::Tool::Picard::CollectAlignmentSummaryMetrics {
     is => 'Genome::Qc::Tool::Picard',
 };
 
@@ -17,7 +17,7 @@ sub qc_metrics_file_accessor {
 }
 
 sub gmt_class {
-    return 'Genome::Model::Tools::Picard::CollectWgsMetrics';
+    return 'Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics';
 }
 
 1;

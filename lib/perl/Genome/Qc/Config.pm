@@ -27,22 +27,7 @@ sub get_commands_for_alignment_result {
                 use_version => 1.123,
                 output_file=> 'output_file',
                 chart_output => 'chart_output',
-            },
-        },
-        picard_mark_duplicates => {
-            class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
-            params => {
-                output_file => 'output_file',
-                input_file => 'bam_file',
-                use_version => 1.123,
-            },
-        },
-        picard_collect_multiple_metrics => {
-            class => 'Genome::Qc::Tool::Picard::CollectMultipleMetrics',
-            params => {
-                input_file => 'bam_file',
-                reference_sequence => 'reference_sequence',
-                use_version => 1.123,
+                # metric_accumulation_level => ['SAMPLE'], #not supported in 1.123
             },
         },
         samtools_flagstat => {
@@ -50,6 +35,24 @@ sub get_commands_for_alignment_result {
             params => {
                 'bam-file' => 'bam_file',
             },
+        },
+        picard_collect_alignment_summary_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CollectAlignmentSummaryMetrics',
+            params => {
+                input_file => 'bam_file',
+                refseq_file => 'reference_sequence',
+                use_version => 1.123,
+                metric_accumulation_level => ['SAMPLE', 'READ_GROUP'],
+            }
+        },
+        picard_collect_insert_size_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CollectInsertSizeMetrics',
+            params => {
+                input_file => 'bam_file',
+                histogram_file => 'histogram_file',
+                use_version => 1.123,
+                metric_accumulation_level => ['SAMPLE'],
+            }
         },
     );
 
@@ -61,6 +64,7 @@ sub get_commands_for_alignment_result {
                 bait_intervals => 'bait_intervals', #region_of_interest_set
                 target_intervals => 'target_intervals', #target_region_set
                 use_version => 1.123,
+                metric_accumulation_level => ['SAMPLE'],
             },
         };
     }
@@ -71,7 +75,22 @@ sub get_commands_for_alignment_result {
                 input_file => 'bam_file',
                 reference_sequence => 'reference_sequence',
                 use_version => 1.123,
+                minimum_mapping_quality => 0,
+                minimum_base_quality => 0,
             },
+        };
+        #Ultimately we also want to run verifyBamId on exome data but we need
+        #to preprocess the vcf to limit to ROI
+        $config{verify_bam_id} = {
+            class => 'Genome::Qc::Tool::VerifyBamId',
+            params => {
+                vcf => '/gscmnt/gc2802/halllab/abelhj/gatk_utah_041815/indiv/vbid/Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.vcf.gz',
+                bam => 'bam_file',
+                max_depth => '150',
+                precise => '1',
+                version => '20120620',
+                ignore_read_group => 0,
+            }
         };
     }
 
