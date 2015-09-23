@@ -70,6 +70,6 @@ compare_ok($expected_detailed_metrics,$output_detailed_metrics, name => 'detaile
 compare_ok($expected_summary_metrics,$output_summary_metrics, name => 'summary metrics files match', filters => $filters );
 
 # test the parsing of the metrics
-my $expected_summary_metrics_hashref = Genome::Model::Tools::Picard->parse_file_into_metrics_hashref($expected_summary_metrics);  
-my $output_summary_metrics_hashref = Genome::Model::Tools::Picard->parse_file_into_metrics_hashref($output_summary_metrics);
+my $expected_summary_metrics_hashref = Genome::Model::Tools::Picard::GenotypeConcordance->parse_file_into_metrics_hashref($expected_summary_metrics);
+my $output_summary_metrics_hashref = Genome::Model::Tools::Picard::GenotypeConcordance->parse_file_into_metrics_hashref($output_summary_metrics);
 is_deeply($output_summary_metrics_hashref, $expected_summary_metrics_hashref, 'expected and output summary metrics are the same');
