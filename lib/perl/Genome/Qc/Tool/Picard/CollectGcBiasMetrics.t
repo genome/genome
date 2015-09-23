@@ -36,7 +36,7 @@ my @expected_cmd_line =(
     '-Xmx4096m',
     '-XX:MaxPermSize=64m',
     '-cp',
-    '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CollectGcBiasMetrics.jar',
+    '/usr/share/java/ant.jar:/usr/share/java/picard-tools1.123/CollectGcBiasMetrics.jar',
     'picard.analysis.CollectGcBiasMetrics',
     'CHART_OUTPUT=GC_bias_chart.pdf',
     sprintf('INPUT=%s', $temp_file),

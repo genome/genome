@@ -71,7 +71,7 @@ my @expected_cmd_line =(
     '-Xmx4096m',
     '-XX:MaxPermSize=64m',
     '-cp',
-    '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CalculateHsMetrics.jar',
+    '/usr/share/java/ant.jar:/usr/share/java/picard-tools1.123/CalculateHsMetrics.jar',
     'picard.analysis.directed.CalculateHsMetrics',
     sprintf('BAIT_INTERVALS=%s', $temp_file),
     sprintf('INPUT=%s', $temp_file),
