@@ -241,13 +241,19 @@ sub parse_config_file {
             vcf => Path::Class::File->new($path)->absolute,
             gold_vcf => Path::Class::File->new($gold_vcf)->absolute,
             sample => $sample,
-            reference => $reference,
+            reference => reference_path($reference),
             clean_indels => $clean_indels,
         };
         push(@inputs, $i);
     }
 
     return \@inputs;
+}
+
+sub reference_path {
+    my $reference = shift;
+    my $path = $reference->full_consensus_path('fa');
+    return $path;
 }
 
 sub _run_evaluate_vcf {
