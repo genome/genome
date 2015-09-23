@@ -484,8 +484,9 @@ sub parse_file_into_metrics_hashref {
         } elsif ($accumulations) {
             $metric_header_as_key = shift @$accumulations;
         } else {
-            #There's only one thing... or something is wrong!
-            return $reader->next;
+            my $data = $reader->next;
+            die $class->error_message('Must define header key or accumulation levels if multiple lines present in metric file!') if $reader->next;
+            return $data;
         }
     }
 
