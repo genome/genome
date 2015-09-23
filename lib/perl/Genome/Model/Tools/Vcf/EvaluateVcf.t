@@ -113,5 +113,5 @@ sub setup_evaluate_vcf_params {
 
     my $ref = Genome::Model::Build::ReferenceSequence->get(106942997);
 
-    return ($vcf, $gold_vcf, $roi, $true_negative_bed, $output_dir, $ref);
+    return ($vcf, $gold_vcf, $roi, $true_negative_bed, $output_dir, $ref->full_consensus_path('fa'));
 }

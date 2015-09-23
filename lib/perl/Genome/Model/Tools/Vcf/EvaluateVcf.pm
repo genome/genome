@@ -16,8 +16,8 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
     is => "Command::V2",
     has_input => [
         reference => {
-            is => 'Genome::Model::Build::ReferenceSequence',
-            doc => 'a reference sequence of interest.',
+            is => 'Path',
+            doc => 'a reference sequence of interest (fasta).',
         },
 
         bedtools_version => {
@@ -233,12 +233,6 @@ sub vcflib_tool {
     return $path;
 }
 
-sub reference_path {
-    my $self = shift;
-    my $path = $self->reference->full_consensus_path('fa');
-    return $path;
-}
-
 sub _process_input_file {
     my ($self, $input_file, $output_file) = @_;
     my @cmds = (
@@ -246,7 +240,7 @@ sub _process_input_file {
         $self->restrict_to_sample_commands("/dev/stdin", $self->old_sample),
         $self->pass_only_commands("/dev/stdin", $self->pass_only_expression),
         $self->allelic_primitives_commands("/dev/stdin"),
-        $self->normalize_vcf_commands("/dev/stdin", $self->reference_path),
+        $self->normalize_vcf_commands("/dev/stdin", $self->reference),
         $self->sort_commands("/dev/stdin"),
         $self->restrict_commands("stdin", $self->roi),
         "bgzip -c",
