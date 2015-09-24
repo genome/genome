@@ -30,16 +30,14 @@ sub get_metrics {
         );
 
         while ( my $line = $reader->next ) {
-            if ($line->{'#SEQ_ID'} eq $self->sample_name) {
-                for my $column (@{$reader->headers}) {
-                    next if any { $_ eq $column } $self->_non_metric_columns;
-                    my $metric_name = join('-', $line->{RG}, $column);
-                    $metrics{$metric_name} = $line->{$column};
-                }
+            my $place_to_assign = \%metrics;
+            for my $accumulation ('RG') {
+                $place_to_assign = $place_to_assign->{$line->{$accumulation}} ||= {};
             }
+            %$place_to_assign = %$line;
         }
     }
-    return %metrics;
+    return $self->_flatten_metrics_hash(\%metrics);
 }
 
 sub gmt_class {
