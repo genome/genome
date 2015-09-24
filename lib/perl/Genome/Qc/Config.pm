@@ -42,7 +42,6 @@ sub get_commands_for_alignment_result {
                 input_file => 'bam_file',
                 refseq_file => 'reference_sequence',
                 use_version => 1.123,
-                metric_accumulation_level => ['SAMPLE', 'READ_GROUP'],
             }
         },
         picard_collect_insert_size_metrics => {
@@ -51,7 +50,6 @@ sub get_commands_for_alignment_result {
                 input_file => 'bam_file',
                 histogram_file => 'histogram_file',
                 use_version => 1.123,
-                metric_accumulation_level => ['SAMPLE'],
             }
         },
     );
@@ -64,7 +62,6 @@ sub get_commands_for_alignment_result {
                 bait_intervals => 'bait_intervals', #region_of_interest_set
                 target_intervals => 'target_intervals', #target_region_set
                 use_version => 1.123,
-                metric_accumulation_level => ['SAMPLE'],
             },
         };
     }
