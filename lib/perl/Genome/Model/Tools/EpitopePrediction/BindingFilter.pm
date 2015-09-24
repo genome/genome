@@ -23,12 +23,12 @@ class Genome::Model::Tools::EpitopePrediction::BindingFilter {
             doc => 'Original variant file in TGI annotation format. If provided, this will create a second output file that appends binding prediction information to the variant annotation lines and outputs those that pass filters',
         },
         minimum_fold_change => {
-            is => 'Numeric',
+            is => 'Number',
             doc => 'Minimum fold change between mutant binding score and wild-type score. The default is 0, which filters no results, but 1 is often a sensible default (requiring that binding is better to the MT than WT)',
             default => 0,
         },
         binding_threshold => {
-            is => 'Numeric',
+            is => 'Number',
             doc => 'report only epitopes where the mutant allele has ic50 binding scores below this value',
             default => 500,
         },
