@@ -77,6 +77,7 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
 
         true_negative_bed => {
             is => "Text",
+            is_optional => 1,
             doc => "BED file containing regions where no "
                    . "variant call should be made",
         },
@@ -140,7 +141,9 @@ sub execute {
     Genome::Sys->create_symlink($roi, $output_dir->file("roi.bed")->stringify);
     Genome::Sys->create_symlink($gold_vcf, $output_dir->file("gold.vcf")->stringify);
 
-    $self->restrict($tn_bed, $roi, $final_tn_file);
+    if ($tn_bed) {
+        $self->restrict($tn_bed, $roi, $final_tn_file);
+    }
 
 
     # input file processing
@@ -164,14 +167,20 @@ sub execute {
         $new_sample
         );
 
-    my $tn_bed_size = $self->true_negative_size
+    my $tn_bed_size = 'NA';
+    if ($tn_bed) {
+        $tn_bed_size = $self->true_negative_size
       || $self->bed_size($final_tn_file);
+    }
 
-    my $false_positives_in_roi = $self->number_within_roi(
-        $final_input_file,
-        $final_tn_file,
-        $fp_roi_file,
+    my $false_positives_in_roi = 'NA';
+    if ($tn_bed) {
+        $false_positives_in_roi = $self->number_within_roi(
+            $final_input_file,
+            $final_tn_file,
+            $fp_roi_file,
         );
+    }
 
     my %results = $self->true_positives(
         $final_input_file,
@@ -544,6 +553,9 @@ sub stat_exact_specificity {
             return "NaN";
         }
     }
+    if ($results->{true_negatives} eq 'NA') {
+        return 'NA';
+    }
 
     my $stat =
       ($results->{true_negatives} - $results->{false_positive_exact}) / $tn;
@@ -562,6 +574,9 @@ sub stat_partial_specificity {
         }
     }
 
+    if ($results->{true_negatives} eq 'NA') {
+        return "NA";
+    }
     my $stat =
       ($results->{true_negatives} - $results->{false_positive_partial}) / $tn;
     return $stat;
@@ -623,6 +638,10 @@ sub stat_lines_specificity_in_tn_only {
         if ($tn == 0) {
             return "NaN";
         }
+    }
+
+    if ($results->{false_positives_in_roi} eq 'NA') {
+        return 'NA';
     }
 
     my $stat = ($tn - $results->{false_positives_in_roi}) / $tn;
