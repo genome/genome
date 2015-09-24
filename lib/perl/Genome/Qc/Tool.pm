@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use List::MoreUtils qw(uniq);
+use Hash::Flatten;
 
 class Genome::Qc::Tool {
     is_abstract => 1,
@@ -81,6 +82,30 @@ sub sample_id {
 sub sample_name {
     my $self = shift;
     return $self->sample->name;
+}
+
+sub _flatten_metrics_hash {
+    my ($self, $metrics_hash) = @_;
+    my %flattened_metrics_hash;
+
+    my $flattener = Hash::Flatten->new({
+        HashDelimiter => "\t",
+        OnRefScalar => 'die',
+        OnRefRef => 'die',
+        OnRefGlob => 'die',
+        ArrayDelimiter => "ERROR!",
+    });
+
+    my $flat_hash = $flattener->flatten($metrics_hash);
+    for my $key (keys %$flat_hash) {
+        if ($key =~ /\t{2,}/) {
+            my $value = delete $flat_hash->{$key};
+            $key =~ s/\t{2,}/\t/g;
+            $flat_hash->{$key} = $value;
+        }
+    }
+
+    return %$flat_hash;
 }
 
 1;
