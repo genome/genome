@@ -7122,12 +7122,12 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'algorithm=s',
           [
-            'convert_position',
             'convert_chrXX_contigs_to_GL',
             'chop_chr',
             'prepend_chr',
             'lift_over',
-            'no_op'
+            'no_op',
+            'drop_extra_contigs'
           ],
           'resource=s',
           'files',
@@ -29959,8 +29959,13 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'maximum-permgen-memory=s',
         undef,
-        'metric-accumulation-level=s',
-        'files',
+        'metric-accumulation-level=s@',
+        [
+          'ALL_READS',
+          'SAMPLE',
+          'LIBRARY',
+          'READ_GROUP'
+        ],
         'per-target-coverage-file=s',
         'files',
         'reference-sequence=s',
@@ -30088,6 +30093,13 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'maximum-permgen-memory=s',
         undef,
+        'metric-accumulation-level=s@',
+        [
+          'ALL_READS',
+          'SAMPLE',
+          'LIBRARY',
+          'READ_GROUP'
+        ],
         'temp-directory=s',
         'files',
         'use-version=s',
@@ -30131,6 +30143,13 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'maximum-permgen-memory=s',
         undef,
+        'metric-accumulation-level=s@',
+        [
+          'ALL_READS',
+          'SAMPLE',
+          'LIBRARY',
+          'READ_GROUP'
+        ],
         'min-genome-fraction=s',
         undef,
         'summary-output=s',
@@ -30178,6 +30197,13 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'maximum-permgen-memory=s',
         undef,
+        'metric-accumulation-level=s@',
+        [
+          'ALL_READS',
+          'SAMPLE',
+          'LIBRARY',
+          'READ_GROUP'
+        ],
         'minimum-pct=s',
         undef,
         'stop-after=s',
