@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Genome;
 use List::MoreUtils qw(uniq);
-use Hash::Flatten;
 
 class Genome::Qc::Tool {
     is_abstract => 1,
@@ -88,13 +87,7 @@ sub _flatten_metrics_hash {
     my ($self, $metrics_hash) = @_;
     my %flattened_metrics_hash;
 
-    my $flattener = Hash::Flatten->new({
-        HashDelimiter => "\t",
-        OnRefScalar => 'die',
-        OnRefRef => 'die',
-        OnRefGlob => 'die',
-        ArrayDelimiter => "ERROR!",
-    });
+    my $flattener = Genome::SoftwareResult::Metric->hash_flattener();
 
     my $flat_hash = $flattener->flatten($metrics_hash);
     for my $key (keys %$flat_hash) {
