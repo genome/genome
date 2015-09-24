@@ -59,7 +59,7 @@ sub get_ldap_users {
     $mesg->code && die $mesg->error;
 
     $mesg = $ldap->bind;
-    $mesg->code && die Dumper($mesg);
+    $mesg->code && die $mesg->error;
 
     $mesg = $ldap->search(
         base => "dc=gsc,dc=wustl,dc=edu",
