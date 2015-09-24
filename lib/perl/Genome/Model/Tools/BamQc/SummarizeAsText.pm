@@ -388,12 +388,12 @@ sub execute {
         my $as_metrics = $self->_load_alignment_summary_metrics($label_dir);
         my $is_paired_end;
         my $as_category;
-        if ($as_metrics->{'CATEGORY-PAIR'}) {
+        if ($as_metrics->{'PAIR'}) {
             $is_paired_end = 1;
-            $as_category = 'CATEGORY-PAIR';
-        } elsif ($as_metrics->{'CATEGORY-UNPAIRED'}) {
+            $as_category = 'PAIR';
+        } elsif ($as_metrics->{'UNPAIRED'}) {
             $is_paired_end = 0;
-            $as_category = 'CATEGORY-UNPAIRED';
+            $as_category = 'UNPAIRED';
         } else {
             die('Failed to identify the read type!');
         }
