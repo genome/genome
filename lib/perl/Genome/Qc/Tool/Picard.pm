@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use Genome;
 
-use Hash::Flatten;
-
 class Genome::Qc::Tool::Picard {
     is => 'Genome::Qc::Tool',
     is_abstract => 1,
@@ -35,30 +33,6 @@ sub metrics {
 sub gmt_class {
     my $self = shift;
     die $self->error_message("Abstract method gmt_class must be overridden by subclass");
-}
-
-sub _flatten_metrics_hash {
-    my ($self, $picard_metrics_hash) = @_;
-    my %flattened_metrics_hash;
-
-    my $flattener = Hash::Flatten->new({
-        HashDelimiter => "\t",
-        OnRefScalar => 'die',
-        OnRefRef => 'die',
-        OnRefGlob => 'die',
-        ArrayDelimiter => "ERROR!",
-    });
-
-    my $flat_hash = $flattener->flatten($picard_metrics_hash);
-    for my $key (keys %$flat_hash) {
-        if ($key =~ /\t{2,}/) {
-            my $value = delete $flat_hash->{$key};
-            $key =~ s/\t{2,}/\t/g;
-            $flat_hash->{$key} = $value;
-        }
-    }
-
-    return %$flat_hash;
 }
 
 1;
