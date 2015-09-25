@@ -15,6 +15,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Inputs {
         instrument_data_properties => { is => 'HASH', default_value => {}, },
         source_paths => { is => 'ARRAY', },
     },
+    has_optional => {
+        process_id => { is => 'Text', },
+    },
     has_transient => {
         format => { via => 'source_files', to => 'format', },
         library_name => { via => 'library', to => 'name', },
@@ -49,7 +52,12 @@ sub library {
 
 sub add_process {
     my ($self, $process) = @_;
+    $self->process_id($process->id);
     return $self->{instrument_data_properties}->{process_id} = $process->id
+}
+
+sub process {
+    return Genome::InstrumentData::Command::Import::Process->get(id => $_[0]->process_id);
 }
 
 sub instrument_data_for_original_data_path {

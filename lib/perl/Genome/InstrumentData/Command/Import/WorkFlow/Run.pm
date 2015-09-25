@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use Genome::InstrumentData::Command::Import::WorkFlow::Inputs;
 require File::Temp;
 require List::MoreUtils;
 use Workflow::Simple;
@@ -51,6 +52,10 @@ sub execute {
     my $inputs = $self->work_flow_inputs->as_hashref;
     return if not $inputs;
     $inputs->{working_directory} = $self->_working_directory;
+    my $process = $self->work_flow_inputs->process;
+    if ( $process ) {
+        $workflow->log_dir($process->log_directory);
+    }
 
     my $success = Workflow::Simple::run_workflow($workflow, %$inputs);
     die 'Run wf failed!' if not $success;
