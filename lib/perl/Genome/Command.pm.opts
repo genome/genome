@@ -26183,6 +26183,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'minimum-fold-change=s',
         undef,
+        'binding-threshold=s',
+        undef,
         'help!',
         undef
       ],
