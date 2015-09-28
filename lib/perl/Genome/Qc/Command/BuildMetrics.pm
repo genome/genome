@@ -18,7 +18,7 @@ class Genome::Qc::Command::BuildMetrics {
         },
         output_file => {
             is => 'Text',
-            doc => 'The file path to output build QC metrics.',
+            doc => 'The file path to output build QC metrics as YAML.',
         },
     ],
 };
@@ -27,12 +27,12 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    'Dump QC result metrics from the database to tab-delimited output.'
+    'Dump QC result metrics from the database to a YAML output file.'
 }
 
 sub help_detail{
     return <<"EOS"
-The QC framework stores result metrics in the database for each QC result.  This tool will dump the instrument data QC result metrics for all input builds.  A tab-delimited output of all QC metrics along with build id and instrument data id are output to the terminal.
+The QC framework stores result metrics in the database for each QC result.  This tool will dump the QC result metrics for all input builds.  A YAML format output of all QC metrics along with build id and instrument data ids are output to the defined output file.
 EOS
 }
 
@@ -60,22 +60,21 @@ sub metrics_for_build {
     my $build = shift;
 
     my @metrics;
-    my @build_instrument_data = $build->instrument_data;
-    my @build_instrument_data_ids = sort(map {$_->id} @build_instrument_data);
+    my $build_instdata_set = Set::Scalar->new($build->instrument_data);
     my @qc_results = grep {$_->isa('Genome::Qc::Result')} $build->results;
     for my $qc_result (@qc_results) {
         my $as = $qc_result->alignment_result;
-        my @result_instrument_data = $as->instrument_data;
-        my @result_instrument_data_ids = sort(map {$_->id} @result_instrument_data);
-        # There has to be a way to run diagnostics off
-        unless (is_deeply(\@build_instrument_data_ids,\@result_instrument_data_ids)) {
-            $self->error_message('Build instrument data and QC result instrument data are not the same!');
+        my $result_instdata_set = Set::Scalar->new($as->instrument_data);
+        if ($build_instdata_set->is_equal($result_instdata_set)) {
+            my %result_metrics = $qc_result->get_unflattened_metrics;
+            $result_metrics{build_id} = $build->id;
+            $result_metrics{instrument_data_count} = $result_instdata_set->size;
+            $result_metrics{instrument_data_ids} = join(',',map {$_->id} $result_instdata_set->members);
+            push @metrics, \%result_metrics;
+        } else {
+            $self->error_message('Build and QC result instrument data are not the same!');
             die($self->error_message);
         }
-        my %result_metrics = $qc_result->get_unflattened_metrics;
-        $result_metrics{instrument_data_count} = scalar(@result_instrument_data_ids);
-        $result_metrics{instrument_data_ids} = join(',',@result_instrument_data_ids);
-        push @metrics, \%result_metrics;
     }
 
     return @metrics;

@@ -12,6 +12,8 @@ use warnings;
 use above "Genome";
 
 use Test::More;
+use YAML::Syck;
+
 use Genome::Utility::Test qw(compare_ok);
 
 use Genome::Test::Factory::InstrumentData::Solexa;
@@ -34,7 +36,11 @@ reinstall_sub(
            metric_B => 2,
            metric_C => 3,
            metric_D => 4,
-           );
+           label_1 => {
+                   metric_E => 5,
+                   metric_F => 6,
+           },
+         );
     },   
 },
 );
@@ -43,11 +49,19 @@ my $pkg = 'Genome::Qc::Command::BuildMetrics';
 use_ok($pkg);
 
 my $test_dir = __FILE__.'.d';
-my $expected_output_file = $test_dir .'/expected_build_metrics.tsv';
+my $expected_output_file = $test_dir .'/expected_build_metrics.yml';
 my $test_output_file = Genome::Sys->create_temp_file_path();
 
-my $expected_instrument_data_id = '5dacb1b2284a4b71afdf9680d4ef3691';
-my $expected_build_id = 'c10605dbabfc49229838cc02fbd87e98';
+# TSV expected output IDs
+#my $expected_instrument_data_id = '5dacb1b2284a4b71afdf9680d4ef3691';
+#my $expected_build_id = 'c10605dbabfc49229838cc02fbd87e98';
+
+# Get expected IDs from YAML file.
+my @expected_metrics = LoadFile($expected_output_file);
+my $expected_metrics_hash = $expected_metrics[0];
+my $expected_build_id = $expected_metrics_hash->{'build_id'};
+my $expected_instrument_data_id = $expected_metrics_hash->{'instrument_data_ids'};
+
 
 my $test_model = Genome::Test::Factory::Model::SomaticValidation->setup_object();
 my $test_build = Genome::Test::Factory::Build->setup_object(
@@ -60,6 +74,13 @@ my $replace = [
                               [$expected_build_id,$test_build->id],
 ];
 
+my $instrument_data_build_input = Genome::Model::Build::Input->__define__(
+        model => $test_model,
+        build => $test_build,
+        value => $test_inst_data_1,
+        name => 'instrument_data',
+);      
+    
 my $test_alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
    instrument_data => $test_inst_data_1,
    build => $test_build,
@@ -67,18 +88,12 @@ my $test_alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResu
 
 my $test_qc_result = Genome::Test::Factory::Qc::Result->setup_object(
    alignment_result => $test_alignment_result,
-   config_name => 'test_per_read_group_qc_config'
+   config_name => 'test_qc_config'
 );
 $test_qc_result->add_user(
         label => 'qc test result',
         user => $test_build
 ); 
-
-my $cmd = Genome::Qc::Command::BuildMetrics->create(
-   builds => $test_build,
-);
-isa_ok($cmd,'Genome::Qc::Command::BuildMetrics');       
-ok($cmd->execute,'execute build-metrics command');
 
 my $cmd_with_out = Genome::Qc::Command::BuildMetrics->create(
    builds => $test_build,
