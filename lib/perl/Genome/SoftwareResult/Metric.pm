@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Genome;
+use Hash::Flatten;
+
 class Genome::SoftwareResult::Metric {
     table_name => 'result.metric',
     type_name => 'software result metric',
@@ -22,5 +24,15 @@ class Genome::SoftwareResult::Metric {
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
 };
+
+sub hash_flattener {
+    return Hash::Flatten->new({
+        HashDelimiter => "\t",
+        OnRefScalar => 'die',
+        OnRefRef => 'die',
+        OnRefGlob => 'die',
+        ArrayDelimiter => "ERROR!",
+    });
+}
 
 1;

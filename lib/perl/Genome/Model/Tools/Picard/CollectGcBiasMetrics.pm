@@ -66,6 +66,13 @@ class Genome::Model::Tools::Picard::CollectGcBiasMetrics {
             doc => 'Assume that the BAM file is sorted, regardless of what the header says',
             picard_param_name => 'ASSUME_SORTED',
         },
+        metric_accumulation_level => {
+            is => 'Text',
+            is_many => 1,
+            is_optional => 1,
+            picard_param_name => 'METRIC_ACCUMULATION_LEVEL',
+            valid_values => ['ALL_READS', 'SAMPLE', 'LIBRARY', 'READ_GROUP'],
+        },
     ],
 };
 
@@ -86,6 +93,10 @@ sub _jar_name {
 
 sub _java_class {
     return qw(picard analysis CollectGcBiasMetrics);
+}
+
+sub _metric_header_as_key {
+    return 'GC';
 }
 
 1;

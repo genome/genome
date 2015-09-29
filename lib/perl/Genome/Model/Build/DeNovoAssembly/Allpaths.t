@@ -148,8 +148,19 @@ my $model = Genome::Model::DeNovoAssembly->create(
 );
 
 ok($model, 'create allpaths de novo model') or die;
-ok($model->add_instrument_data($frag_inst_data), 'add frag inst data to model');
 ok($model->add_instrument_data($jump_inst_data), 'add jump inst data to model');
+
+my $bad_build = Genome::Model::Build::DeNovoAssembly->create(
+    model => $model,
+    data_directory => $tmpdir,
+);
+
+ok($bad_build, 'created build');
+my @bad_invalid_tags = $bad_build->validate_for_start;
+is(scalar(@bad_invalid_tags), 1, 'build cannot start without frag inst data');
+like($bad_invalid_tags[0]->desc, qr/No sloptig library instrument data found/, 'tag indicates proper error');
+
+ok($model->add_instrument_data($frag_inst_data), 'add frag inst data to model');
 
 my $build = Genome::Model::Build::DeNovoAssembly->create(
     model => $model,

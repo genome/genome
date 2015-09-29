@@ -8,6 +8,7 @@ BEGIN {
 use above 'Genome';
 
 use Test::More;
+use Test::Exception;
 
 if (Genome::Sys->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -46,7 +47,7 @@ my $gatk_tumor_cmd = Genome::Model::Tools::Gatk::IndelRealigner->create(
 );
 
 isa_ok($gatk_tumor_cmd, 'Genome::Model::Tools::Gatk::IndelRealigner', "Made the tumor command");
-ok(!$gatk_tumor_cmd->execute, "Failed to execute the tumor command when target intervals are not sorted");
+throws_ok(sub {$gatk_tumor_cmd->execute}, qr/Version 2.4 does not support non-sorted target intervals/, "Failed to execute the tumor command when target intervals are not sorted");
 # Can't really diff bams effectively as far as I know, so for now just make sure they exist
 
 $gatk_tumor_cmd = Genome::Model::Tools::Gatk::IndelRealigner->create(

@@ -22,8 +22,8 @@ eval {
     my $bam_file_2 = "$data_dir/168_pre_chr21.10k.bam";
     ok(-s $bam_file_2, 'bam file 2 exists: bam_file_2') or abort;
 
-    my $reference_genome = "$data_dir/21.fa";
-    ok(-s $reference_genome, 'reference genome exists: reference_genome') or abort;
+    my $reference_fasta = "$data_dir/21.fa";
+    ok(-s $reference_fasta, 'reference genome exists: reference_fasta') or abort;
     my $snp_file = "$data_dir/dbsnp_138.hg19.sort.uniq.chr21";
     ok(-s $snp_file, 'SNP file exists: snp_file') or abort;
 
@@ -36,7 +36,7 @@ eval {
         bam_file_1   => $bam_file_1,
         bam_file_2   => $bam_file_2,
         snp_file    => $snp_file,
-        reference_genome    => $reference_genome,
+        reference_fasta    => $reference_fasta,
         output_file => "$tmpdir/out_file",
         bam_readcount_version => 0.6,
     );

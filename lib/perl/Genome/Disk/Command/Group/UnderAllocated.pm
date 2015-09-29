@@ -20,7 +20,7 @@ class Genome::Disk::Command::Group::UnderAllocated {
         },
         alert_recipients => {
             is => 'Text',
-            default => 'jeldred,iferguso,apipebulk',
+            default => 'jeldred,apipebulk',
             doc => 'If an alert is sent, these are the recipients',
         },
         percent_tolerance => {

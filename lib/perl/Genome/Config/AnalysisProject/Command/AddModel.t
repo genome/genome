@@ -53,7 +53,7 @@ ok(!$cmd4->execute, 'command fails when models already assigned to a different p
 ok(!$other_model->analysis_project, 'unassigned model not assigned to');
 for my $m (@models) {
     is($m->analysis_project, $analysis_project, 'analysis project remains properly assigned');
-    is($m->config_profile_items, $profile_item, 'model linked to correct configuration');
+    is($m->config_profile_item, $profile_item, 'model linked to correct configuration');
 }
 
 $other_profile_item->status('active');
@@ -74,7 +74,7 @@ isa_ok($cmd6, $class, 'created command');
 ok(!$cmd6->execute, 'command fails when attempting to assign to a config profile item for the wrong model type');
 ok(!$other_model->analysis_project, 'unassigned model not assigned to');
 
-$other_profile_item->status('disabled');
+$other_profile_item->status('inactive');
 my $cmd7 = $class->create(
     profile_item => $other_profile_item,
     models => [$other_model],
@@ -82,7 +82,7 @@ my $cmd7 = $class->create(
 isa_ok($cmd7, $class, 'created command');
 ok($cmd7->execute, 'command succeeds in "normal" case');
 is($other_model->analysis_project, $other_analysis_project, 'model assigned appropriately');
-is($other_model->config_profile_items, $other_profile_item, 'model linked to correct configuration');
+is($other_model->config_profile_item, $other_profile_item, 'model linked to correct configuration');
 
 
 sub add_config {
@@ -98,7 +98,7 @@ EOFILE
     my $config_file = Genome::Sys->create_temp_file_path;
     Genome::Sys->write_file($config_file, $config);
 
-    my $early_profile_item = Genome::Config::Profile::Item->get(analysis_project => $analysis_project, status => 'disabled');
+    my $early_profile_item = Genome::Config::Profile::Item->get(analysis_project => $analysis_project, status => 'inactive');
     ok(!$early_profile_item, 'config does not already exist before testing command');
     my $add_cmd = Genome::Config::AnalysisProject::Command::AddConfigFile->create(
         analysis_project => $analysis_project,
@@ -108,7 +108,7 @@ EOFILE
     );
     my $ok = $add_cmd->execute();
     ok($ok, 'executed add command');
-    my $profile_item = Genome::Config::Profile::Item->get(analysis_project => $analysis_project, status => 'disabled');
+    my $profile_item = Genome::Config::Profile::Item->get(analysis_project => $analysis_project, status => 'inactive');
     isa_ok($profile_item, 'Genome::Config::Profile::Item', 'created config');
     return $profile_item;
 }

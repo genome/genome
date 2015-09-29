@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Genome;
+use IO::File;
+use Net::LDAP;
 
 class Genome::Site::TGI::Command::SyncSysUserWithLdap{
     is => 'Command::V2',
@@ -12,12 +14,12 @@ class Genome::Site::TGI::Command::SyncSysUserWithLdap{
 sub execute {
     my $self = shift;
 
-    my $ldap_user = get_ldap_users();
+    my $ldap_users = get_ldap_users();
     my @db_users = Genome::Sys::User->fix_params_and_get();
 
-    my $changes = get_changes($ldap_user,\@db_users);
-    my $creates = $changes->{'create'};  
-    my $deletes = $changes->{'deletes'};  
+    my $changes = get_changes($ldap_users,\@db_users);
+    my $creates = $changes->{'create'};
+    my $deletes = $changes->{'delete'};
 
     my $create_count = $creates ? scalar(@$creates) : 0;
     my $delete_count = $deletes ? scalar(@$deletes) : 0;
@@ -29,60 +31,59 @@ sub execute {
     }
 
     if ($changes_count > 10) {
-        print "Too many changes ($create_count creates, $delete_count deletes, $changes_count total). Sync manually if this is OK.";
+        print "Too many changes ($create_count creates, $delete_count deletes, $changes_count total). Sync manually if this is OK.\n";
         return;
     }
 
     for my $u (@{ $changes->{'create'} }) {
-        $self->status("CREATE: " . $u->{'mail'} . "\n");
+        my $email = $u->get_value('mail');
+        $self->status("CREATE: $email\n");
         Genome::Sys::User->create(
-            email => $u->{'mail'},
-            name => $u->{'cn'},
-            username => $u->{'uid'},
+            email => $email,
+            name => $u->get_value('cn'),
+            username => $u->get_value('uid'),
         );
-    } 
+    }
 
     for my $u (@{ $changes->{'delete'} }) {
         $self->status("DELETE: " . $u->email . "\n");
         $u->delete();
-    } 
+    }
 
     $self->status("done- $create_count creates, $delete_count deletes, $changes_count total\n");
 }
 
 sub get_ldap_users {
-    my $ldap_user = {};
-    my @c = `ldapsearch -z 1000 -x`; # gets max 1000 records
-    my @users;
-    my $user;
+    my $ldap = Net::LDAP->new('ipa1.gsc.wustl.edu', version => 3);
+    my $mesg = $ldap->start_tls(verify => 'none');
+    $mesg->code && die $mesg->error;
 
-    # go through each line of ldapsearch output
-    for my $c (@c) {
-        next if $c =~ /^\#/;
-        chomp($c);
+    $mesg = $ldap->bind;
+    $mesg->code && die $mesg->error;
 
-        if ($c =~ /^$/) {
-            # process/destroy user
-            push @users, $user;
-            undef $user;
-        } else {
-            my ($key, $value) = split(/\:\s+/,$c);
-            $user->{$key} = $value;       
-        }
+    $mesg = $ldap->search(
+        base => "dc=gsc,dc=wustl,dc=edu",
+        filter => "(objectClass=Person)",
+        #filter => "(&(objectClass=Person)(uid=$username))",
+    );
+    $mesg->code && die $mesg->error;
+
+    my %ldap_users;
+    foreach my $ldap_user ($mesg->entries) {
+        my $mail = $ldap_user->get_value('mail');
+        next if not $mail; # skip if no email address
+        $ldap_users{$mail} = $ldap_user;
+        #$ldap_user->dump;
     }
 
-    # filter out users that didnt have email address entry in ldap
-    for my $u (@users) {
-        next if !$u->{'mail'};
-        $ldap_user->{$u->{'mail'}} = $u;
-    }
+    $mesg = $ldap->unbind;   # take down session
+    $mesg->code && die $mesg->error;
 
-    return $ldap_user;
+    return \%ldap_users
 }
 
-
 sub get_changes {
-    my ($ldap_user, $db_users) = @_;
+    my ($ldap_users, $db_users) = @_;
     my @db_users = @$db_users;
     # email is called email in db, mail in ldap
     my $changes = {};
@@ -92,7 +93,7 @@ sub get_changes {
     for my $u (@db_users) {
 
         my $email = $u->email();
-        if (!$ldap_user->{$email}) {
+        if (!$ldap_users->{$email}) {
             push @{$changes->{'delete'}}, $u;
         } else {
             $db_user->{$email} = $u;
@@ -100,8 +101,8 @@ sub get_changes {
     }
 
     # look for people in ldap but not db
-    for my $mail (keys %$ldap_user) {
-        my $u = $ldap_user->{$mail};
+    for my $mail (keys %$ldap_users) {
+        my $u = $ldap_users->{$mail};
 
         if (!$db_user->{$mail}) {
             push @{$changes->{'create'}}, $u;

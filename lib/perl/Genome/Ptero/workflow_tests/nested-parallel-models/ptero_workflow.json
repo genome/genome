@@ -1,22 +1,19 @@
 {
    "links" : [
       {
-         "destination" : "Outer",
-         "destinationProperty" : "prefix_list",
-         "source" : "input connector",
-         "sourceProperty" : "prefix_lists"
-      },
-      {
-         "destination" : "Outer",
-         "destinationProperty" : "suffixes",
-         "source" : "input connector",
-         "sourceProperty" : "suffixes"
-      },
-      {
+         "dataFlow" : {
+            "outputs" : "outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "outputs",
-         "source" : "Outer",
-         "sourceProperty" : "outputs"
+         "source" : "Outer"
+      },
+      {
+         "dataFlow" : {
+            "prefix_lists" : "prefix_list",
+            "suffixes" : "suffixes"
+         },
+         "destination" : "Outer",
+         "source" : "input connector"
       }
    ],
    "tasks" : {
@@ -27,22 +24,19 @@
                "parameters" : {
                   "links" : [
                      {
+                        "dataFlow" : {
+                           "prefix_list" : "prefixes",
+                           "suffixes" : "suffixes"
+                        },
                         "destination" : "Inner",
-                        "destinationProperty" : "prefixes",
-                        "source" : "input connector",
-                        "sourceProperty" : "prefix_list"
+                        "source" : "input connector"
                      },
                      {
-                        "destination" : "Inner",
-                        "destinationProperty" : "suffixes",
-                        "source" : "input connector",
-                        "sourceProperty" : "suffixes"
-                     },
-                     {
+                        "dataFlow" : {
+                           "outputs" : "outputs"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "outputs",
-                        "source" : "Inner",
-                        "sourceProperty" : "outputs"
+                        "source" : "Inner"
                      }
                   ],
                   "tasks" : {
@@ -53,22 +47,19 @@
                               "parameters" : {
                                  "links" : [
                                     {
+                                       "dataFlow" : {
+                                          "prefixes" : "prefix",
+                                          "suffixes" : "suffix"
+                                       },
                                        "destination" : "Appender",
-                                       "destinationProperty" : "prefix",
-                                       "source" : "input connector",
-                                       "sourceProperty" : "prefixes"
+                                       "source" : "input connector"
                                     },
                                     {
-                                       "destination" : "Appender",
-                                       "destinationProperty" : "suffix",
-                                       "source" : "input connector",
-                                       "sourceProperty" : "suffixes"
-                                    },
-                                    {
+                                       "dataFlow" : {
+                                          "output" : "outputs"
+                                       },
                                        "destination" : "output connector",
-                                       "destinationProperty" : "outputs",
-                                       "source" : "Appender",
-                                       "sourceProperty" : "output"
+                                       "source" : "Appender"
                                     }
                                  ],
                                  "tasks" : {
@@ -88,11 +79,14 @@
                                                    "--log-directory",
                                                    "test_logs/nested-parallel-models"
                                                 ],
-                                                "environment" : {},
-                                                "user" : null,
-                                                "workingDirectory" : ""
+                                                "environment" : {
+                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
+                                                },
+                                                "user" : "dmorton",
+                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                                              },
-                                             "service" : "shell-command"
+                                             "service" : "job",
+                                             "serviceUrl" : "http://example.com/v1"
                                           },
                                           {
                                              "name" : "execute",
@@ -108,11 +102,14 @@
                                                    "--log-directory",
                                                    "test_logs/nested-parallel-models"
                                                 ],
-                                                "environment" : {},
-                                                "user" : null,
-                                                "workingDirectory" : ""
+                                                "environment" : {
+                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
+                                                },
+                                                "user" : "dmorton",
+                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                                              },
-                                             "service" : "shell-command"
+                                             "service" : "job",
+                                             "serviceUrl" : "http://example.com/v1"
                                           }
                                        ],
                                        "parallelBy" : "suffix"

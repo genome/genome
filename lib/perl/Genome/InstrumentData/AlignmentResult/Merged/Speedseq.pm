@@ -10,6 +10,7 @@ use Genome::InstrumentData::AlignmentResult::Merged::Helpers qw(
     resolve_allocation_disk_group_name
 );
 use File::stat;
+use Genome::Utility::Text;
 
 class Genome::InstrumentData::AlignmentResult::Merged::Speedseq {
     is => ['Genome::InstrumentData::AlignedBamResult::Merged', 'Genome::SoftwareResult::WithNestedResults'],
@@ -84,7 +85,7 @@ sub create {
         version => $self->aligner_version,
         temp_directory => $temp_directory,
     );
-    my %aligner_params = eval($self->aligner_params);
+    my %aligner_params = $class->_parse_aligner_params($self->aligner_params);
     $aligner_params{threads} = $self->_available_cpu_count;
     my $command = Genome::Model::Tools::Speedseq::Realign->create(%params, %aligner_params);
     unless ($command->execute) {
@@ -129,6 +130,42 @@ sub estimated_gtmp_for_instrument_data {
     }
 
     return 3 * $st->size();
+}
+
+sub _modify_params_for_lookup_hash {
+    my $class = shift;
+    my $params_ref = shift;
+
+    my $aligner_param_str = delete $params_ref->{aligner_params};
+    return unless $aligner_param_str;
+
+    my %aligner_params = $class->_parse_aligner_params($aligner_param_str);
+
+    delete $aligner_params{sort_memory};
+    delete $aligner_params{verbose};
+    delete $aligner_params{threads};
+
+    $aligner_param_str = join(',', map(
+        join(' => ', $_, Genome::Utility::Text::wrap_as_string($aligner_params{$_})),
+        sort keys %aligner_params)
+    );
+    $params_ref->{aligner_params} = $aligner_param_str;
+
+    return $params_ref;
+}
+
+sub _parse_aligner_params {
+    my $class = shift;
+    my $param_str = shift;
+
+    local $@;
+    my %params_parsed = eval($param_str);
+    my $error = $@;
+    if($error) {
+        die $class->error_message('Failed to parse aligner params: %s', $error);
+    }
+
+    return %params_parsed;
 }
 
 1;

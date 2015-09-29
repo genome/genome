@@ -1,0 +1,129 @@
+{
+   "links" : [
+      {
+         "dataFlow" : {
+            "output" : "output"
+         },
+         "destination" : "output connector",
+         "source" : "level 1"
+      },
+      {
+         "dataFlow" : {
+            "bar" : "bar",
+            "foo" : "foo"
+         },
+         "destination" : "level 1",
+         "source" : "input connector"
+      }
+   ],
+   "tasks" : {
+      "level 1" : {
+         "methods" : [
+            {
+               "name" : "level 1",
+               "parameters" : {
+                  "links" : [
+                     {
+                        "dataFlow" : {
+                           "bar" : "bar",
+                           "foo" : "foo"
+                        },
+                        "destination" : "level 2",
+                        "source" : "input connector"
+                     },
+                     {
+                        "dataFlow" : {
+                           "output" : "output"
+                        },
+                        "destination" : "output connector",
+                        "source" : "level 2"
+                     }
+                  ],
+                  "tasks" : {
+                     "level 2" : {
+                        "methods" : [
+                           {
+                              "name" : "level 2",
+                              "parameters" : {
+                                 "links" : [
+                                    {
+                                       "dataFlow" : {
+                                          "output" : "output"
+                                       },
+                                       "destination" : "output connector",
+                                       "source" : "the command"
+                                    },
+                                    {
+                                       "dataFlow" : {
+                                          "bar" : "optional_input",
+                                          "foo" : "required_input"
+                                       },
+                                       "destination" : "the command",
+                                       "source" : "input connector"
+                                    }
+                                 ],
+                                 "tasks" : {
+                                    "the command" : {
+                                       "methods" : [
+                                          {
+                                             "name" : "shortcut",
+                                             "parameters" : {
+                                                "commandLine" : [
+                                                   "genome",
+                                                   "ptero",
+                                                   "wrapper",
+                                                   "--command-class",
+                                                   "Genome::Ptero::TestCommand::OptionalInputCommand",
+                                                   "--method",
+                                                   "shortcut",
+                                                   "--log-directory",
+                                                   "test_logs/optional-input-properties"
+                                                ],
+                                                "environment" : {
+                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
+                                                },
+                                                "user" : "dmorton",
+                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                             },
+                                             "service" : "job",
+                                             "serviceUrl" : "http://example.com/v1"
+                                          },
+                                          {
+                                             "name" : "execute",
+                                             "parameters" : {
+                                                "commandLine" : [
+                                                   "genome",
+                                                   "ptero",
+                                                   "wrapper",
+                                                   "--command-class",
+                                                   "Genome::Ptero::TestCommand::OptionalInputCommand",
+                                                   "--method",
+                                                   "execute",
+                                                   "--log-directory",
+                                                   "test_logs/optional-input-properties"
+                                                ],
+                                                "environment" : {
+                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
+                                                },
+                                                "user" : "dmorton",
+                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                             },
+                                             "service" : "job",
+                                             "serviceUrl" : "http://example.com/v1"
+                                          }
+                                       ]
+                                    }
+                                 }
+                              },
+                              "service" : "workflow"
+                           }
+                        ]
+                     }
+                  }
+               },
+               "service" : "workflow"
+            }
+         ]
+      }
+   }
+}

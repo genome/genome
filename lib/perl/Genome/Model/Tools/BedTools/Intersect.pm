@@ -22,7 +22,7 @@ class Genome::Model::Tools::BedTools::Intersect {
             is_optional => 1,
             doc => 'The format of input file A',
             default_value => $DEFAULT_FILE_A_FORMAT,
-            valid_values => ['bed','bam'],
+            valid_values => ['bed','vcf','bam'],
         },
         input_file_b => {
             is => 'Text',
@@ -84,10 +84,7 @@ EOS
 
 sub execute {
     my $self = shift;
-    if ($self->header) {
-        my $grep_cmd = 'grep "^#" '.$self->input_file_a." > ".$self->output_file;
-        system($grep_cmd);
-    }
+
     my $a_flag = '-a';
     if ($self->input_file_a_format eq 'bam') {
         $a_flag .= 'bam';
@@ -120,6 +117,15 @@ sub execute {
             $options .= ' -v';
         }
     }
+    if ($self->header) {
+        if ($self->version_newer_than('2.9.0')) {
+            $options .= ' -header';
+        } else {
+            my $grep_cmd = 'grep "^#" '.$self->input_file_a." > ".$self->output_file;
+            system($grep_cmd);
+        }
+    }
+
     my $temp_file = Genome::Sys->create_temp_file_path;
     my $cmd = $self->bedtools_path .'/bin/intersectBed '. $options .' '. $a_flag .' '. $self->input_file_a .' -b '. $self->input_file_b .' > '. $temp_file;
     Genome::Sys->shellcmd(

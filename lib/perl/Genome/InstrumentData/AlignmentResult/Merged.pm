@@ -9,6 +9,7 @@ use File::Path 'rmtree';
 use List::MoreUtils qw{ uniq };
 use List::Util qw(shuffle);
 use Try::Tiny qw(try catch finally);
+use Set::Scalar;
 
 use Genome;
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
@@ -279,12 +280,9 @@ sub _remove_per_lane_bam_post_commit {
     my ($self, $alignment) = @_;
 
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        $self->debug_message("Now removing the per lane bam");
-
-        UR::Context->process->add_observer(
-            aspect => 'commit',
-            once => 1,
-            callback => sub {
+        Genome::Sys::CommitAction->create(
+            on_commit => sub {
+                $self->debug_message("Now removing the per lane bam");
                 $alignment->remove_bam;
             }
         );
@@ -292,7 +290,6 @@ sub _remove_per_lane_bam_post_commit {
     return 1;
 }
 
-    
 sub collect_individual_alignments {
     my $self = shift;
     my $result_users = shift || $self->_user_data_for_nested_results;
@@ -398,7 +395,7 @@ sub collect_individual_alignments {
 }
 
 sub required_rusage {
-    return ''; #FIXME This needs to be filled in
+    return Genome::Config::get('lsf_resource_merged_alignments');
 }
 
 sub resolve_allocation_kilobytes_requested {
@@ -738,5 +735,42 @@ sub estimated_gtmp_for_instrument_data  {
         $class
     );
 }
+
+
+sub get_superseding_results {
+    my $self = shift;
+
+    my @per_lane_results = $self->collect_individual_alignments;
+    my $per_lane_results = Set::Scalar->new(@per_lane_results);
+
+    my %count;
+    my @superseding_results = ();
+
+    for my $per_lane_result (@per_lane_results) {
+        map{$count{$_->id}++}$per_lane_result->get_merged_alignment_results;
+    }
+
+    my @sample_ids = uniq map { $_->sample_id } $self->instrument_data;
+    my $sample_set = Set::Scalar->new(@sample_ids);
+
+    for my $merged_result_id (keys %count) {
+        next unless $count{$merged_result_id} == $per_lane_results->size;
+        next if $merged_result_id eq $self->id;
+
+        my $superseding_result = __PACKAGE__->get($merged_result_id);
+
+        my @superseding_sample_ids = uniq map { $_->sample_id } $superseding_result->instrument_data;
+        my $superseding_sample_set = Set::Scalar->new(@superseding_sample_ids);
+        next unless $sample_set->is_equal($superseding_sample_set);
+
+        my $superseding_per_lane_results = Set::Scalar->new($superseding_result->collect_individual_alignments);
+
+        if ($superseding_per_lane_results->is_proper_superset($per_lane_results)) {
+            push @superseding_results, $superseding_result;
+        }
+    }
+    return @superseding_results;
+}
+
 
 1;

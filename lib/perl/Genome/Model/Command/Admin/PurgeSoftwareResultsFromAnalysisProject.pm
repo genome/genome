@@ -55,7 +55,7 @@ my $sql = qq(
         INNER JOIN model.build b ON b.build_id = sru.user_id
         INNER JOIN config.analysis_project_model_bridge bridge ON bridge.model_id = b.model_id
         INNER JOIN config.profile_item cpi ON cpi.id = bridge.profile_item_id
-        WHERE cpi.status = 'active'
+        WHERE cpi.status != 'disabled'
         AND candidates.result_id = sr.id
     ) AND NOT EXISTS (
         SELECT sr.id

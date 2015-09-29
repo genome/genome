@@ -28,6 +28,13 @@ class Genome::Model::Tools::BioSamtools::ErrorRate {
             doc => 'version of C pileup tool',
         },
     ],
+    has_param => [
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_build_worker_alt'),
+            is_optional => 1,
+            doc => 'queue to use when running in a workflow',
+        },
+    ],
 };
 
 
@@ -36,8 +43,7 @@ my %versions = (
     0.7 => Genome::Config::get('sw') . '/bam-errorrate/0.7/bam-errorrate0.7',
     0.8 => Genome::Config::get('sw') . '/bam-errorrate/0.8/bam-errorrate0.8',
     0.9 => Genome::Config::get('sw') . '/bam-errorrate/0.9/bam-errorrate0.9',
-    '1.0a2' => '/gscuser/iferguso/bin/bam-errorrate1.0a2',
-    #C++ util is running out of iferguson home directory until it has been tested and can be deployed to the blades
+    '1.0a3' => '/usr/bin/bam-errorrate1.0a3',
 );
 
 
@@ -64,9 +70,9 @@ sub execute {
         die $self->error_message('bam-errorrate version'.$version.' is not valid tool');
     }
 
-    my $cmd = "samtools view $bam_file | $tool_path > $output_file";
-    if ($version eq '1.0a2') {
-        $cmd = "$tool_path $bam_file > $output_file";
+    my $cmd = "$tool_path $bam_file > $output_file";
+    if (grep { $version eq $_ } qw(0.6 0.7 0.8 0.9)) {
+        $cmd = "samtools view $bam_file | $tool_path > $output_file";
     }
 
     Genome::Sys->shellcmd(

@@ -168,16 +168,24 @@ sub _compare_flagstat {
     
     if ($ignore_duplicates) { #expect only one line diff on duplicates
         unless (_parse_flagstat_ignore_duplicates($temp_flagstat, $flagstat)) {
+            $self->_debug_flagstats($temp_flagstat, $flagstat);
             die $self->error_message("The diff between extracting bam flagstat and the comparison flagstat $flagstat is not expected");
         }
     }
     else {
         unless (compare($temp_flagstat, $flagstat) == 0) {
+            $self->_debug_flagstats($temp_flagstat, $flagstat);
             die $self->error_message("The bam flagstat after reverting markdup is unexpectedly different from the comparison flagstat $flagstat");
         }
     }
 }
 
+sub _debug_flagstats {
+    my ($self, $temp_flagstat, $flagstat) = @_;
+
+    $self->debug_message('Generated flagstat: %s', Data::Dumper::Dumper(Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($temp_flagstat)));
+    $self->debug_message('Expected flagstat: %s', Data::Dumper::Dumper(Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat)));
+}
 
 sub _parse_flagstat_ignore_duplicates {
     my ($temp_flagstat, $flagstat) = @_;

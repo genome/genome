@@ -50,7 +50,8 @@ sub _run {
 
     # TODO: This should probably use the merged_alignment_result to make unique entries per sample and avoid duplicates.
     my %sample_to_pp;
-    for my $build ($self->builds) {
+    for my $build (sort {$a->tumor_sample->name cmp $b->tumor_sample->name ||
+        $a->region_of_interest_set->name cmp $b->region_of_interest_set->name} $self->builds) {
         my $tumor_sample = $build->tumor_sample;
         if ($sample_to_pp{$tumor_sample->name}) {
             if ($sample_to_pp{$tumor_sample->name} eq $build->processing_profile->id) {
@@ -144,7 +145,8 @@ sub _alignment_metrics_from_result {
         $total_bases += $lane->total_base_count;
         $total_mapped_bases += $lane->total_aligned_base_count;
         my $filt_error_rate_avg;
-        if ($mismatches ne "NA" and $lane->instrument_data->can("filt_error_rate_avg")) {
+        if ($mismatches ne "NA" and $lane->instrument_data->can("filt_error_rate_avg")
+            and defined($lane->instrument_data->filt_error_rate_avg)) {
             $mismatches += $lane->total_base_count * $lane->instrument_data->filt_error_rate_avg / 100;
         }
         else {

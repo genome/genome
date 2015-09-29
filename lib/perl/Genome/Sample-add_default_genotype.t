@@ -148,15 +148,10 @@ sub create_ref_align_model {
 }
 
 sub make_genotype_pp {
-    my %params = (
-        instrument_type => 'infinium',
-    );
-
-    my @pp = Genome::ProcessingProfile::GenotypeMicroarray->get(%params);
+    my @pp = Genome::ProcessingProfile::GenotypeMicroarray->get(); # GM PP do not affect the processing - grab the last one
     return $pp[-1] if @pp;
 
     return Genome::ProcessingProfile::GenotypeMicroarray->create(
-        %params,
         name => 'test genotype pp',
     );
 }

@@ -84,6 +84,8 @@ sub lock_resource {
         }
     };
 
+    Genome::Sys->disconnect_default_handles if $args{max_try} > 1;
+
     for my $backend (backends($args{scope})) {
         my @lock_args = $backend->translate_lock_args(%args);
         my $lock = $backend->lock(@lock_args);

@@ -181,8 +181,6 @@ sub _run_aligner {
 
     }
 
-    # TODO (iferguso) should do something to handle the log files
-
     return 1;
 }
 
@@ -216,7 +214,6 @@ sub _filter_sam_output {
         $all_seq_fh->print($_) unless $_ =~ /^@/;
     }
 
-    # TODO (iferguso) may already be filtered of header?
     while (<$unaligned_fh>) {
         #write out the aligned map, excluding the default header- all lines starting with @.
         $all_seq_fh->print($_) unless $_ =~ /^@/;

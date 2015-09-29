@@ -98,6 +98,7 @@ my %STATUS_COLORS = (
 
     # values for config items
     active => "green",
+    inactive => "yellow",
     disabled => "magenta",
 );
 my $MAX_STATUS_WIDTH = max(map {length($_)} keys %STATUS_COLORS) + 1;

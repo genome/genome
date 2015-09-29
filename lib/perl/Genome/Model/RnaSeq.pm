@@ -567,7 +567,7 @@ sub _resolve_workflow_for_build {
         ###Post Fusion Detection Annotation
         if($self->cancer_annotation_db){
             my $annotation_operation = $workflow->add_operation(
-                name => 'Fusion Detection Annotation',
+                name => 'RnaSeq Fusion Detection Annotation',
                 operation_type => Workflow::OperationType::Command->create(
                     command_class_name => 'Genome::Model::RnaSeq::Command::AnnotateChimerascan',
                 )

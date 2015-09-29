@@ -361,6 +361,48 @@ sub sw_path {
     die $class->error_message("Failed to find app $app_name (package $pkg_name) at version $version!");
 }
 
+sub java_executable_path {
+    my ($class, $version, $bin) = @_;
+
+    my $java_path = $class->java_path($version);
+    $bin ||= 'java';
+
+    my $exe_path = File::Spec->join($java_path, 'bin', $bin);
+    unless(-x $exe_path) {
+        die $class->error_message('No java executable found in bin of <%s> for version: %s', $java_path, $version);
+    }
+
+    return $exe_path;
+}
+
+sub java_path {
+    my ($class, $version) = @_;
+    unless(version->parse($version)) {
+        die $class->error_message('Version does not appear to be valid: %s', $version);
+    }
+
+    my @available_versions = glob(File::Spec->join(Genome::Config::get('java_path'), "jre$version*"));
+
+    if (@available_versions == 0) {
+        die $class->error_message('No java path found for version: %s', $version);
+    } elsif (@available_versions == 1) {
+        return $available_versions[0];
+    } else {
+        my $most_recent_path;
+        my $most_recent_version = 0;
+
+        for my $next_path (@available_versions) {
+            my ($next_version) = $next_path =~ /jre(.+)$/;
+            if(version->parse($next_version) > version->parse($most_recent_version)) {
+                $most_recent_path = $next_path;
+                $most_recent_version = $next_version;
+            }
+        }
+
+        return $most_recent_path;
+    }
+}
+
 sub jar_path {
     my ($class, $jar_name, $version) = @_;
     # check the default path
@@ -841,6 +883,8 @@ sub create_directory {
 sub make_path {
     my ($path) = validate_pos(@_, {type => SCALAR});
 
+    return 1 if -d $path; #This also triggers the automounter so mkdir() gets EEXIST instead of EACCES.
+
     my $gid = gidgrnam(Genome::Config::get('sys_group'));
 
     my @dirs = File::Spec->splitdir($path);
@@ -1008,6 +1052,12 @@ sub write_file {
         $fh->close or Carp::croak "Failed to close file $fname! $!";
     }
     return $fname;
+}
+
+sub write_temp_file {
+    my ($self, @content) = @_;
+    my $filename = $self->create_temp_file_path();
+    return $self->write_file($filename, @content);
 }
 
 sub _open_file {

@@ -35,6 +35,8 @@ sub help_detail {
 EOS
 }
 
+sub minimum_version_required { '1.17'; }
+
 sub _jar_name {
     return 'CompareSAMs.jar';
 }
@@ -44,11 +46,6 @@ sub _java_class {
     return $self->version_older_than('1.21')
         ? qw(samtools apps CompareSAMs) # before 1.21
         : qw(picard sam CompareSAMs); # 1.21 and later
-}
-
-sub _validate_params {
-    my $self = shift;
-    $self->enforce_minimum_version('1.17');
 }
 
 sub _redirects {

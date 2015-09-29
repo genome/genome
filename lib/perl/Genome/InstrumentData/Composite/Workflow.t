@@ -123,28 +123,7 @@ subtest 'simple alignments' => sub {
 };
 
 subtest 'simple alignments with qc decoration' => sub {
-    {
-        package TestTool1;
-
-        use Genome;
-
-        class TestTool1 {
-            is => ['Genome::Qc::Tool'],
-            has => {param1 => {}},
-        };
-
-        sub cmd_line {
-            my $self = shift;
-            return ("echo", $self->param1);
-        }
-
-        sub supports_streaming { return 0; }
-
-        sub get_metrics {
-            return ( metric1 => 1 );
-        }
-    }
-
+    initialize_test_tool();
     use Genome::Qc::Config;
     my $override = Sub::Override->new(
         'Genome::Qc::Config::get_commands_for_alignment_result',
@@ -219,31 +198,9 @@ subtest 'simple align_and_merge strategy' => sub {
 };
 
 subtest 'simple align_and_merge strategy with qc decoration' => sub {
-    {
-        package TestTool1;
-
-        use Genome;
-
-        class TestTool1 {
-            is => ['Genome::Qc::Tool'],
-            has => {param1 => {}},
-        };
-
-        sub cmd_line {
-            my $self = shift;
-            return ("echo", $self->param1);
-        }
-
-        sub supports_streaming { return 0; }
-
-        sub get_metrics {
-            return ( metric1 => 1 );
-        }
-    }
-
-    my $config_name = 'qc2 for Workflow test';
-
+    initialize_test_tool();
     use Genome::Qc::Config;
+    my $config_name = 'qc2 for Workflow test';
     my $config = Genome::Qc::Config->__define__(name => $config_name);
     my $override = Sub::Override->new(
         'Genome::Qc::Config::get_commands_for_alignment_result',
@@ -279,8 +236,8 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
     check_result_bam(@ad_results);
 
     for my $instrument_data (@two_instrument_data) {
-        my $per_lane_result = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data_id => $instrument_data->id);
-        my $qc_result = Genome::Qc::Result->get(alignment_result => $per_lane_result, config_name => $config_name);
+        my ($per_lane_result) = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data_id => $instrument_data->id);
+        my ($qc_result) = Genome::Qc::Result->get(alignment_result => $per_lane_result, config_name => $config_name);
         ok($qc_result, sprintf('Qc result for instrument_data (%s) was created successfully', $instrument_data->id));
         is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
     }
@@ -289,28 +246,7 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
 };
 
 subtest 'simple align_and_merge strategy with qc decoration for merged result' => sub {
-    {
-        package TestTool1;
-
-        use Genome;
-
-        class TestTool1 {
-            is => ['Genome::Qc::Tool'],
-            has => {param1 => {}},
-        };
-
-        sub cmd_line {
-            my $self = shift;
-            return ("echo", $self->param1);
-        }
-
-        sub supports_streaming { return 0; }
-
-        sub get_metrics {
-            return ( metric1 => 1 );
-        }
-    }
-
+    initialize_test_tool();
     use Genome::Qc::Config;
     my $override = Sub::Override->new(
         'Genome::Qc::Config::get_commands_for_alignment_result',
@@ -346,7 +282,7 @@ subtest 'simple align_and_merge strategy with qc decoration for merged result' =
     is_deeply([$speedseq_result], [sort @ad_results], 'found speedseq result');
     check_result_bam(@ad_results);
 
-    my $qc_result = Genome::Qc::Result->get(alignment_result => $speedseq_result, config_name => $config_name);
+    my ($qc_result) = Genome::Qc::Result->get(alignment_result => $speedseq_result, config_name => $config_name);
     ok($qc_result, sprintf('Qc result was created successfully'));
     is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
 
@@ -812,3 +748,25 @@ sub check_result_bam {
 }
 
 done_testing();
+
+sub initialize_test_tool {
+    package TestTool1;
+
+    use Genome;
+
+    class TestTool1 {
+        is => ['Genome::Qc::Tool'],
+        has => {param1 => {}},
+    };
+
+    sub cmd_line {
+        my $self = shift;
+        return ("echo", $self->param1);
+    }
+
+    sub supports_streaming { return 0; }
+
+    sub get_metrics {
+        return ( metric1 => 1 );
+    }
+}

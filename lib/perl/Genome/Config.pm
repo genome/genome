@@ -125,7 +125,7 @@ sub all_specs {
 }
 
 sub all_keys {
-    return map { $_->key } all_specs();
+    return sort { $a cmp $b } map { $_->key } all_specs();
 }
 
 sub config_subpath { Path::Class::File->new('genome', 'config.yaml') }

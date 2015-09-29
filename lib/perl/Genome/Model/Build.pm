@@ -299,7 +299,7 @@ sub model_class {
 sub data_set_path {
     my ($self, $dataset, $version, $file_format) = @_;
     my $path;
-    
+
     if ($version and $file_format) {
         $version =~ s/^v//;
         $path = $self->data_directory."/$dataset.v$version.$file_format";
@@ -361,7 +361,7 @@ sub __extend_namespace__ {
     if ($model_subclass_meta and $model_subclass_name->isa('Genome::Model')) {
         my $build_subclass_name = 'Genome::Model::Build::' . $ext;
         # The actual inputs and metrics are added during subclass definition preprocessing.
-        # Then the whole set is expanded, allowing the developer to write less of 
+        # Then the whole set is expanded, allowing the developer to write less of
         # # the build class.
         # See Genome/Model/Build.pm _preprocess_subclass_description.
         my $build_subclass_meta = UR::Object::Type->define(
@@ -1081,6 +1081,7 @@ sub validate_for_start_methods {
     # Be very wary of removing any of these as many subclasses use SUPER::validate_for_start_methods.
     # Each method should return tags.
     my @methods = (
+        'validate_model_is_not_disabled',
         # 'validate_inputs_have_values' should be checked first.
         'validate_inputs_have_values',
         'inputs_have_compatible_reference',
@@ -1106,6 +1107,20 @@ sub validate_for_start {
         push @tags, @returned_tags if @returned_tags;
     }
 
+    return @tags;
+}
+
+sub validate_model_is_not_disabled {
+    my $self = shift;
+    my @tags;
+
+    if($self->model->status eq 'Disabled') {
+        push @tags, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['model'],
+            desc => 'Model has been disabled.',
+        );
+    }
     return @tags;
 }
 
@@ -1597,7 +1612,6 @@ sub success {
         $self->debug_message('Firing build success commit callback.');
         my $result = eval {
             Genome::Search->queue_for_update($self->model);
-            $self->model->_trigger_downstream_builds($self);
         };
         if($@) {
             $self->error_message('Error executing success callback: ' . $@);
@@ -2136,9 +2150,6 @@ sub compare_output {
     my $other_build = Genome::Model::Build->get($other_build_id);
     confess "Could not get build $other_build_id!" unless $other_build;
 
-    unless ($self->model_id eq $other_build->model_id) {
-        confess "Builds $build_id and $other_build_id are not from the same model!";
-    }
     unless ($self->class eq $other_build->class) {
         confess "Builds $build_id and $other_build_id are not the same type!";
     }
@@ -2448,7 +2459,7 @@ sub _preprocess_subclass_description {
                 #warn "in parent: $name on $build_subclass_name\n";
                 next;
             }
-            
+
             my %data = %{$p};
             my $type = $data{data_type};
             if (!$type) {
@@ -2465,14 +2476,14 @@ sub _preprocess_subclass_description {
             }
             $data{data_type} = $type;
             $data{property_name} = $name;
-            
+
             if (($p->can("is_input") and $p->is_input) or ($p->can("is_metric") and $p->is_metric)) {
                 # code below will augment these with via/to/where
                 #warn "build gets input/metric $name ($build_subclass_name)\n";
             }
             elsif ($data{via} and $data{via} eq 'last_complete_build') {
                 # model properites which go through the last complete build exist directly on the build
-                #%data = $data{meta_for_build_attribute}; 
+                #%data = $data{meta_for_build_attribute};
                 #warn "build gets direct $name ($build_subclass_name)\n";
             }
             #elsif (not $data{via} or ($data{via} ne 'inputs' and $data{via} ne 'metrics') ) {
@@ -2491,11 +2502,11 @@ sub _preprocess_subclass_description {
             $has->{$name} = \%data;
         }
     }
-    
+
     my @names = keys %{ $desc->{has} };
     for my $prop_name (@names) {
         my $prop_desc = $desc->{has}{$prop_name};
-       
+
         # skip old things for which the developer has explicitly set-up indirection
         next if $prop_desc->{id_by};
         next if $prop_desc->{via};
@@ -2506,19 +2517,27 @@ sub _preprocess_subclass_description {
             die "class $class has is_param and is_input on the same property! $prop_name";
         }
 
-        if (exists $prop_desc->{'is_param'} and $prop_desc->{'is_param'}) {
+        if ($prop_desc->{'is_param'}) {
             $prop_desc->{'via'} = 'processing_profile',
             $prop_desc->{'to'} = $prop_name;
             $prop_desc->{'is_mutable'} = 0;
             $prop_desc->{'is_delegated'} = 1;
         }
 
-        if (exists $prop_desc->{'is_input'} and $prop_desc->{'is_input'}) {
+        if ($prop_desc->{'is_output'}) {
+            $prop_desc->{'via'} = 'result_users';
+            $prop_desc->{'to'} = 'software_result';
+            $prop_desc->{'where'} = [label => $prop_name];
+            $prop_desc->{'is_mutable'} = 0;
+            $prop_desc->{'is_delegated'} = 1;
+        }
+
+        if ($prop_desc->{'is_input'}) {
             my $assoc = $prop_name . '_association' . ($prop_desc->{is_many} ? 's' : '');
             next if $desc->{has}{$assoc};
 
             my @where_class;
-            if (exists $prop_desc->{'data_type'} and $prop_desc->{'data_type'}) {
+            if ($prop_desc->{'data_type'}) {
                 my $prop_class = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
                     $prop_desc->{'data_type'},
                     $class
@@ -2554,7 +2573,7 @@ sub _preprocess_subclass_description {
         }
 
         # Metrics
-        if ( exists $prop_desc->{is_metric} and $prop_desc->{is_metric} ) {
+        if ($prop_desc->{is_metric} ) {
             $prop_desc->{via} = 'metrics';
             $prop_desc->{where} = [ name => join(' ', split('_', $prop_name)) ];
             $prop_desc->{to} = 'value';

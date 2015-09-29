@@ -4,6 +4,7 @@ use Genome;
 use warnings;
 use strict;
 use Sys::Hostname;
+use List::Util qw( first );
 
 class Genome::Model::Build::ReferenceSequence::Converter {
     is => ['Genome::SoftwareResult'],
@@ -30,7 +31,7 @@ class Genome::Model::Build::ReferenceSequence::Converter {
     has_metric => [
         algorithm => { # README - If adding an algorithm, please add to the list of valid algorithms
             is => 'Text',
-            valid_values => [qw/ convert_position convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op /],
+            valid_values => [qw/ convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op drop_extra_contigs/],
             doc => 'method to use to convert from the source to the destination',
         },
         resource => {
@@ -65,25 +66,8 @@ sub convert_bed {
         return;
     }
 
-    if($self->is_per_position_algorithm) {
-        my $source_fh = Genome::Sys->open_file_for_reading($source_bed);
-        my $destination_fh = Genome::Sys->open_file_for_writing($destination_bed);
-
-        while(my $line = <$source_fh>) {
-            chomp $line;
-            my ($chrom, $start, $stop, @extra) = split("\t", $line);
-            unless($chrom && $start && $stop) {
-                $self->debug_message('Not converting non-entry line %s', $line);
-                $destination_fh->say($line);
-                next;
-            }
-            my ($new_chrom, $new_start, $new_stop) = $self->convert_position($chrom, $start, $stop);
-            my $new_line = join("\t", $new_chrom, $new_start, $new_stop, @extra) . "\n";
-            print $destination_fh $new_line;
-        }
-
-       $source_fh->close;
-       $destination_fh->close;
+    if($self->is_per_position_algorithm($self->algorithm)) {
+        $self->parse_and_write_bed($source_bed, $destination_bed, $self->algorithm, undef);
     } else {
         #operate on the whole BED file at once
         my $algorithm = $self->algorithm;
@@ -95,21 +79,20 @@ sub convert_bed {
 
 sub is_per_position_algorithm {
     my $self = shift;
+    my ($algorithm) = @_;
 
-    my $algorithm = $self->algorithm;
-    return !grep($_ eq $algorithm, 'liftOver', 'no_op');
+    return !grep($_ eq $algorithm, 'liftOver', 'no_op', 'drop_extra_contigs');
 }
 
 sub convert_position {
     my $self = shift;
-    my ($chrom, $start, $stop) = @_;
+    my ($algorithm, $chrom, $start, $stop) = @_;
 
     unless($chrom and $start and $stop) {
         $self->error_message('Missing one or more of chrom, start, stop. Got: (' . ($chrom || '') . ', ' . ($start || '') . ', ' . ($stop || '') . ').');
         return;
     }
 
-    my $algorithm = $self->algorithm;
     my ($new_chrom, $new_start, $new_stop) =  $self->$algorithm($chrom, $start, $stop);
     unless($new_chrom and $new_start and $new_stop) {
         $self->error_message('Could not convert one or more of chrom, start, stop. Got: (' . ($new_chrom || '') . ', ' . ($new_start || '') . ', ' . ($new_stop || '') . ').');
@@ -182,6 +165,58 @@ sub no_op {
     #possibly useful for recording that two reference sequences are completely equivalent except in name
     Genome::Sys->copy_file($source_bed, $destination_bed);
     return $destination_bed;
+}
+
+sub parse_and_write_bed {
+    my $self = shift;
+    my ($source_bed, $destination_bed, $position_algorithm, $site_test) = @_;
+
+    my $source_fh = Genome::Sys->open_file_for_reading($source_bed);
+    my $destination_fh = Genome::Sys->open_file_for_writing($destination_bed);
+    
+    while(my $line = <$source_fh>) {
+        chomp $line;
+        my ($chrom, $start, $stop, @extra) = split("\t", $line);
+        unless($chrom && $start && $stop) {
+            $self->debug_message('Not converting non-entry line %s', $line);
+            $destination_fh->say($line);
+            next;
+        }
+        my ($new_chrom, $new_start, $new_stop) = ($chrom, $start, $stop);
+        if($position_algorithm) {
+            ($new_chrom, $new_start, $new_stop) = $self->convert_position($position_algorithm, $chrom, $start, $stop);
+        }
+        my $new_line = join("\t", $new_chrom, $new_start, $new_stop, @extra) . "\n";
+        print $destination_fh $new_line if !$site_test || $site_test->($new_chrom, $new_start, $new_stop);
+    }
+    $source_fh->close;
+    $destination_fh->close;
+}
+
+sub drop_extra_contigs {
+    my $self = shift;
+    my ($source_bed, $source_reference, $destination_bed, $destination_reference) = @_;
+
+    my $chromosome_set = Set::Scalar->new(@{$self->destination_reference_build->chromosome_array_ref});
+    my $algorithm = $self->resource;
+    if($algorithm) {
+        unless($self->validate_algorithm_name($algorithm) && $self->is_per_position_algorithm($algorithm)) {
+            die "Per-position algorithm from resource property is not a valid converter\n";
+        }
+    }
+
+    my $site_test = sub {
+        my ($chrom) = @_;
+        return $chromosome_set->has($chrom);
+    };
+    $self->parse_and_write_bed($source_bed, $destination_bed, $algorithm, $site_test);
+}
+
+sub validate_algorithm_name {
+    my $self = shift;
+    my ($algorithm_name) = @_;
+
+    return first { $_ eq $algorithm_name } @{$self->__meta__->property_meta_for_name('algorithm')->valid_values};
 }
 
 1;

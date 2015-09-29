@@ -23,7 +23,7 @@ class Genome::Model::Tools::DetectVariants2::GatkGermlineIndel{
     ],
     has_param => [
          lsf_resource => {
-             default_value => "-M 8000000 -R 'select[mem>8000] rusage[mem=8000]'",
+             default_value => Genome::Config::get('lsf_resource_dv2_gatk'),
          },
      ],
 };

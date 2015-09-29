@@ -235,6 +235,8 @@ sub files_ignored_by_diff {
         validation/large_indel/normal.csv
         variants/(.*)\.tbi$
         control_variants_for_loh/(.*)\.tbi$
+        variants/snv/strelka.*/output/.*
+        variants/indel/strelka.*/output/.*
     );
 }
 sub dirs_ignored_by_diff {

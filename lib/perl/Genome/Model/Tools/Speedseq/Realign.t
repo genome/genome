@@ -11,7 +11,7 @@ use Genome::Test::Data qw(get_test_file);
 my $pkg = 'Genome::Model::Tools::Speedseq::Realign';
 use_ok($pkg);
 
-my $speedseq_version = '0.0.3a-gms';
+my $speedseq_version = '0.1.0-gms';
 
 my $expected_output_dir = __FILE__.".out";
 

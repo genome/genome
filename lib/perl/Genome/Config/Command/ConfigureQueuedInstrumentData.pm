@@ -328,14 +328,40 @@ sub _get_items_to_process {
             -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample']
         );
     } else {
-        return Genome::Config::AnalysisProject::InstrumentDataBridge->get(
-            status => ['new', 'failed'],
-            'analysis_project.status' => 'In Progress',
-            -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample'],
-            -order => ['fail_count'],
-            -limit => $self->limit,
-        );
+        my @bridges;
+        my $it = $self->_ordered_sample_id_iterator;
+        while(my $sample_id = $it->()) {
+            push @bridges, Genome::Config::AnalysisProject::InstrumentDataBridge->get(
+                'instrument_data.sample_id' => $sample_id,
+                status => ['new', 'failed'],
+                'analysis_project.status' => 'In Progress',
+                -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample'],
+            );
+            last if(@bridges >= $self->limit);
+        }
+        return @bridges;
     }
+}
+
+sub _ordered_sample_id_iterator {
+    my $self = shift;
+
+    my $it = Genome::Config::AnalysisProject::InstrumentDataBridge->create_iterator(
+        status => ['new', 'failed'],
+        'analysis_project.status' => 'In Progress',
+        -order => ['fail_count'],
+        -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample'],
+    );
+
+    my %subjects_seen;
+    return sub {
+        while(my $bridge = $it->next) {
+            my $subject_id = $bridge->instrument_data->sample_id;
+            next if $subjects_seen{$subject_id}++;
+            return $subject_id;
+        }
+        return;
+    };
 }
 
 sub _assign_model_to_analysis_project {
@@ -381,9 +407,8 @@ sub _lock {
         die('Unable to acquire the lock! Is ConfigureQueuedInstrumentData already running or did it exit uncleanly?')
             unless $lock;
 
-        UR::Context->current->add_observer(
-            aspect => 'commit',
-            callback => sub {
+        Genome::Sys::CommitAction->create(
+            on_commit => sub {
                 $lock->unlock();
             }
         );

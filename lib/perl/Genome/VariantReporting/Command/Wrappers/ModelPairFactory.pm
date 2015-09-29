@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Command::Wrappers::ModelPairFactory {
+    is => ['Genome::VariantReporting::Command::Wrappers::Utils'],
     has => {
         models => {
             is => 'Genome::Model::SomaticValidation',
@@ -138,29 +139,11 @@ sub get_common_translations {
                 sprintf('Normal(%s)', $self->normal_sample->name),
         },
         library_name_labels => {
-            $self->get_library_name_labels('discovery'),
-            $self->get_library_name_labels('followup'),
-            $self->get_library_name_labels('normal'),
+            $self->get_library_name_labels('discovery', $self->discovery_sample, [$self->models]),
+            $self->get_library_name_labels('followup', $self->followup_sample, [$self->models]),
+            $self->get_library_name_labels('normal', $self->normal_sample, [$self->models]),
         },
     };
-}
-
-my %counters;
-sub get_library_name_labels {
-    my ($self, $category) = @_;
-
-    my %labels;
-    $counters{$category} = 1;
-
-    my $accessor = sprintf('%s_sample', $category);
-    for my $library ($self->$accessor->libraries) {
-        $labels{$library->name} = sprintf('%s-Library%d(%s)',
-            ucfirst($category),
-            $counters{$category}++,
-            $library->name,
-        );
-    }
-    return %labels;
 }
 
 sub is_model_discovery {
@@ -179,4 +162,3 @@ sub is_single_bam {
 }
 
 1;
-

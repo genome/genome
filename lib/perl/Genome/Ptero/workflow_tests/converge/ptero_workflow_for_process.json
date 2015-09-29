@@ -1,80 +1,58 @@
 {
    "links" : [
       {
-         "destination" : "Converge Test",
-         "destinationProperty" : "a",
-         "source" : "input connector",
-         "sourceProperty" : "a"
+         "destination" : "set status Running",
+         "source" : "input connector"
       },
       {
          "destination" : "Converge Test",
-         "destinationProperty" : "b",
-         "source" : "input connector",
-         "sourceProperty" : "b"
+         "source" : "set status Running"
       },
       {
+         "dataFlow" : {
+            "a" : "a",
+            "b" : "b"
+         },
+         "destination" : "Converge Test",
+         "source" : "input connector"
+      },
+      {
+         "dataFlow" : {
+            "out" : "out"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "out",
-         "source" : "Converge Test",
-         "sourceProperty" : "out"
+         "source" : "Converge Test"
       },
       {
          "destination" : "set status Succeeded",
-         "destinationProperty" : "out",
-         "source" : "Converge Test",
-         "sourceProperty" : "out"
+         "source" : "Converge Test"
       },
       {
          "destination" : "output connector",
-         "destinationProperty" : "dummy_output for Genome::Process(123)",
-         "source" : "set status Succeeded",
-         "sourceProperty" : "dummy_output"
+         "source" : "set status Succeeded"
       }
    ],
    "tasks" : {
       "Converge Test" : {
          "methods" : [
             {
-               "name" : "set status Running",
-               "parameters" : {
-                  "commandLine" : [
-                     "genome",
-                     "process",
-                     "set-status",
-                     "123",
-                     "Running",
-                     "--exit-code",
-                     1
-                  ],
-                  "environment" : {
-                     "FOO" : "bar"
-                  },
-                  "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
-               },
-               "service" : "shell-command"
-            },
-            {
                "name" : "Converge Test",
                "parameters" : {
                   "links" : [
                      {
+                        "dataFlow" : {
+                           "a" : "a",
+                           "b" : "b"
+                        },
                         "destination" : "Convergence",
-                        "destinationProperty" : "a",
-                        "source" : "input connector",
-                        "sourceProperty" : "a"
+                        "source" : "input connector"
                      },
                      {
-                        "destination" : "Convergence",
-                        "destinationProperty" : "b",
-                        "source" : "input connector",
-                        "sourceProperty" : "b"
-                     },
-                     {
+                        "dataFlow" : {
+                           "out" : "out"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "out",
-                        "source" : "Convergence",
-                        "sourceProperty" : "out"
+                        "source" : "Convergence"
                      }
                   ],
                   "tasks" : {
@@ -111,12 +89,40 @@
                      1
                   ],
                   "environment" : {
-                     "FOO" : "bar"
+                     "FOO" : "bar",
+                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
                   "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
-               "service" : "shell-command"
+               "service" : "job",
+               "serviceUrl" : "http://example.com/v1"
+            }
+         ]
+      },
+      "set status Running" : {
+         "methods" : [
+            {
+               "name" : "set status Running",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Running",
+                     "--exit-code",
+                     0
+                  ],
+                  "environment" : {
+                     "FOO" : "bar",
+                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "job",
+               "serviceUrl" : "http://example.com/v1"
             }
          ]
       },
@@ -135,12 +141,14 @@
                      0
                   ],
                   "environment" : {
-                     "FOO" : "bar"
+                     "FOO" : "bar",
+                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
                   "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
-               "service" : "shell-command"
+               "service" : "job",
+               "serviceUrl" : "http://example.com/v1"
             }
          ]
       }

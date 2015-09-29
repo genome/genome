@@ -34,17 +34,14 @@ sub help_detail {
 EOS
 }
 
+sub minimum_version_required { '1.23'; }
+
 sub _jar_name {
     return 'BuildBamIndex.jar';
 }
 
 sub _java_class {
     return qw(picard sam BuildBamIndex);
-}
-
-sub _validate_params {
-    my $self = shift;
-    $self->enforce_minimum_version("1.23");
 }
 
 sub _shellcmd_extra_params {

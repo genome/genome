@@ -195,11 +195,11 @@ class Genome::Model {
             to => 'analysis_project',
             is_many => 0,
         },
-        config_profile_items => {
+        config_profile_item => {
             is => 'Genome::Config::Profile::Item',
             via => 'analysis_project_bridges',
             to => 'config_profile_item',
-            is_many => 1,
+            is_many => 0,
         },
     ],
     has_many_optional_deprecated => [
@@ -232,17 +232,6 @@ class Genome::Model {
             reverse_as => 'model',
             where => [ -order_by => '-created_at' ],
             doc => 'Versions of a model over time, with varying quantities of evidence',
-        },
-        downstream_model_associations => {
-            is => 'Genome::Model::Input',
-            reverse_as => '_model_value',
-            doc => 'links to models which use this model as an input',
-        },
-        downstream_models => {
-            is => 'Genome::Model',
-            via => 'downstream_model_associations',
-            to => 'model',
-            doc => 'models which use this model as an input',
         },
         inputs => {
             is => 'Genome::Model::Input',
@@ -670,6 +659,11 @@ sub build_requested {
     my ($self, $value, $reason) = @_;
     # Writing the if like this allows someone to do build_requested(undef)
     if (@_ > 1) {
+        if($value and $self->status eq 'Disabled') {
+            $self->error_message('Cannot request a build for disabled model %s', $self->__display_name__);
+            return;
+        }
+
         $self->_lock();
         my $default_reason = Carp::shortmess('no reason given');
         $self->add_note(
@@ -700,23 +694,11 @@ sub _lock {
         die("Unable to acquire the lock to request $model_id. Is something already running or did it exit uncleanly?")
             unless $lock;
 
-        my ($commit_observer, $rollback_observer);
-        $commit_observer = UR::Context->process->add_observer(
-                               aspect => 'commit',
-                               once => 1,
-                               callback => sub {
-                                   $lock->unlock();
-                                   $rollback_observer->delete;
-                               }
-                           );
-        $rollback_observer = UR::Context->current->add_observer(
-                               aspect => 'rollback',
-                               once => 1,
-                               callback => sub {
-                                   $lock->unlock();
-                                   $commit_observer->delete;
-                               }
-                           );
+        my $cleanup = sub { $lock->unlock };
+        my $commit_action = Genome::Sys::CommitAction->create(
+            on_commit => $cleanup,
+            on_rollback => $cleanup,
+        );
     }
 }
 
@@ -747,7 +729,10 @@ sub build_needed {
 sub status_with_build {
     my $self = shift;
     my ($status, $build);
-    if ($self->build_requested) {
+
+    if ($self->is_disabled) {
+        $status = 'Disabled';
+    } elsif ($self->build_requested) {
         $status = 'Build Requested';
     } elsif ($self->build_needed) {
         $status = 'Build Needed';
@@ -763,6 +748,12 @@ sub status {
     my $self = shift;
     my ($status) = $self->status_with_build;
     return $status;
+}
+
+sub is_disabled {
+    my $self = shift;
+
+    return ($self->config_profile_item and $self->config_profile_item->status eq 'disabled');
 }
 
 # Copy model to a new model, overridding some properties
@@ -886,39 +877,6 @@ sub real_input_properties {
 
     return @properties;
 }
-
-# Called when a build of this model succeeds, requests builds for "downstream" models
-# (eg, models that have this model as an input)
-sub _trigger_downstream_builds {
-    my ($self, $build) = @_;
-    
-    my @downstream_models = $self->downstream_models;
-    for my $next_model (@downstream_models) {
-        my $latest_build = $next_model->latest_build;
-        if (my @found = $latest_build->input_associations(value_id => $build->id)) {
-            $self->status_message("Downstream model has build " . $latest_build->__display_name__ . ", which already uses this build.");
-            next;  
-        }
-        
-        unless ($next_model->can("auto_build")) {
-            $self->status_message("Downstream model " . $next_model->__display_name__ . " is has no auto-build method!  New builds should be started manually as needed.");
-            next;
-        }
-
-
-        unless ($next_model->auto_build) {
-            $self->status_message("Downstream model " . $next_model->__display_name__ . " is not set to auto-build.  New builds should be started manually as needed.");
-            next;
-        }
-
-        $self->status_message("Requesting rebuild of subsequent model " . $next_model->__display_name__ . ".");
-        $next_model->build_requested(1, 'auto build after completion of ' . $build->__display_name__); 
-    }
-
-    return 1;
-}
-
-
 
 # TODO This method should return a generic default model name and be overridden in subclasses.
 sub default_model_name {

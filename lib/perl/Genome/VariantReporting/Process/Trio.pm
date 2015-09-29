@@ -142,14 +142,26 @@ sub special_compare_functions {
     my @functions = $self->SUPER::special_compare_functions(@_);
     push @functions, qr(\.xml$) => sub {Genome::VariantReporting::Process::Trio::compare_igv_xml(@_)};
     push @functions, qr(\.yaml$) => sub {return 0};
+    push @functions, qr(alignment_stats.tsv$) => sub {Genome::VariantReporting::Process::Trio::compare_alignment_summary(@_)};
     return @functions;
 }
 
 sub compare_igv_xml {
     my ($first_file, $second_file) = @_;
-    my $first_md5 = qx(grep -vP 'https' $first_file | md5sum);
-    my $second_md5 = qx(grep -vP 'https' $second_file | md5sum);
-    return ($first_md5 eq $second_md5 ? 0 : 1);
+    return compare_md5s($first_file, $second_file, "grep -vP 'https'");
+}
+
+#We need to ignore the error rate because it is not currently calculated in a consistent way
+sub compare_alignment_summary {
+    my ($first_file, $second_file) = @_;
+    return compare_md5s($first_file, $second_file, "cut -f 1-7,9-10");
+}
+
+sub compare_md5s {
+    my ($first_file, $second_file, $command) = @_;
+    my $first_md5 = qx($command $first_file | md5sum);
+    my $second_md5 = qx($command $second_file | md5sum);
+    return ($first_md5 eq $second_md5 ? 0: 1);
 }
 
 1;

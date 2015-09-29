@@ -63,12 +63,13 @@ sub get_ptero_builder_task {
 }
 
 sub _get_ptero_shortcut_method {
-    require Ptero::Builder::ShellCommand;
+    require Ptero::Builder::Job;
 
     my $self = shift;
     my $log_dir = shift;
-    return Ptero::Builder::ShellCommand->new(
+    return Ptero::Builder::Job->new(
         name => 'shortcut',
+        service_url => Genome::Config::get('ptero_shell_command_service_url'),
         parameters => {
             commandLine => [
                 'genome', 'ptero', 'wrapper',
@@ -84,13 +85,15 @@ sub _get_ptero_shortcut_method {
 }
 
 sub _get_ptero_execute_method {
-    require Ptero::Builder::ShellCommand;
+    require Ptero::Builder::Job;
+
 
     my $self = shift;
     my $log_dir = shift;
-    # XXX This should use the LSF service, or be configuration based
-    return Ptero::Builder::ShellCommand->new(
+    return Ptero::Builder::Job->new(
         name => 'execute',
+        # XXX This should use the LSF service, or be configuration based
+        service_url => Genome::Config::get('ptero_shell_command_service_url'),
         parameters => {
             commandLine => [
                 'genome', 'ptero', 'wrapper',
@@ -177,9 +180,10 @@ sub validate {
         my $prop = $self->command->__meta__->properties(
             property_name => $self->parallel_by, is_input => 1);
         if (!defined($prop)) {
-            die $self->error_message(sprintf("Failed to verify that requested "
-                    . "parallel_by property '%s' was an input",
-                    $self->parallel_by));
+            die sprintf("Failed to verify that requested " .
+                    "parallel_by property '%s' was an input " .
+                    "on command (%s)",
+                    $self->parallel_by, $self->command->class);
         }
     }
 }

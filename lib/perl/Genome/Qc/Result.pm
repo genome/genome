@@ -30,6 +30,13 @@ sub get_metrics {
     return map {$_->metric_name => $_->metric_value} @metrics;
 }
 
+sub get_unflattened_metrics {
+    my $self = shift;
+    my %metrics = $self->get_metrics;
+    my $flattener = Genome::SoftwareResult::Metric->hash_flattener();
+    return %{$flattener->unflatten(\%metrics)};
+}
+
 sub _run {
     my $self = shift;
     my %tools = $self->_tools;

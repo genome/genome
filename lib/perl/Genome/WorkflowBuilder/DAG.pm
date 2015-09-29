@@ -9,12 +9,17 @@ use Set::Scalar qw();
 use JSON;
 use List::MoreUtils qw();
 use Genome::Utility::Inputs qw(encode decode);
+use Data::Dump qw(pp);
 
 
 class Genome::WorkflowBuilder::DAG {
     is => 'Genome::WorkflowBuilder::Detail::Operation',
 
     has => [
+        _optional_input_properties => {
+            is => 'ARRAY',
+            default => [],
+        },
         operations => {
             is => 'ARRAY',
             default => [],
@@ -25,6 +30,11 @@ class Genome::WorkflowBuilder::DAG {
             is => 'ARRAY',
             default => [],
             doc => 'Genome::WorkflowBuilder::Link objects',
+        },
+
+        _links => {
+            is => 'HASH',
+            default => {},
         },
 
         log_dir => {
@@ -67,7 +77,8 @@ sub add_operation {
 
 sub add_link {
     my ($self, $link) = Params::Validate::validate_pos(@_, 1, 1);
-    push @{$self->links}, $link;
+    $self->_links->{$link->to_string} = $link;
+    $self->links([values %{$self->_links}]);
     return $link;
 }
 
@@ -93,7 +104,7 @@ sub execute {
         return $self->_execute_with_workflow($inputs);
 
     } else {
-        die $self->error_message("Unknown backend specified: %s", $backend);
+        die sprintf("Unknown backend specified: %s", $backend);
     }
 }
 
@@ -117,7 +128,8 @@ sub submit {
             $wf_proxy->url);
         return $wf_proxy;
     } else {
-        die $self->error_message("Only the ptero backend is supported for 'submit' not: %s", $backend);
+        die sprintf("Only the ptero backend is supported " .
+            "for 'submit' not: %s", $backend);
     }
 }
 
@@ -126,10 +138,13 @@ sub _execute_with_workflow {
 
     my ($self, $inputs) = @_;
 
-    my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, %$inputs);
+    my $xml = $self->get_xml;
+
+    Genome::Sys->disconnect_default_handles;
+
+    my $result = Workflow::Simple::run_workflow_lsf($xml, %$inputs);
     unless (defined($result)) {
-        die $self->error_message(
-            "Workflow failed with these errors: %s",
+        die sprintf("Workflow failed with these errors: %s",
             Data::Dumper::Dumper(map {$_->error} @Workflow::Simple::ERROR)
         );
     }
@@ -139,23 +154,27 @@ sub _execute_with_workflow {
 sub _execute_with_ptero {
     my ($self, $inputs, $polling_interval) = @_;
 
+    $self->remove_all_links_from_unspecified_inputs($inputs);
+    my $used_inputs = $self->get_used_inputs($inputs);
+
     my $wf_builder = $self->get_ptero_builder($self->name);
 
-    my $wf_proxy = $wf_builder->submit( inputs => encode($inputs) );
+    my $wf_proxy = $wf_builder->submit( inputs => encode($used_inputs) );
     $self->status_message("Waiting on PTero workflow (%s) to complete",
         $wf_proxy->url);
+    Genome::Sys->disconnect_default_handles;
     $wf_proxy->wait(polling_interval => $polling_interval);
 
     if ($wf_proxy->has_succeeded) {
         if (!defined($wf_proxy->outputs)) {
-            die $self->error_message('PTero workflow (%s) returned no results', $wf_proxy->url);
+            die sprintf('PTero workflow (%s) returned no results',
+                $wf_proxy->url);
         } else {
             return decode($wf_proxy->outputs);
         }
     }
     else {
-        die $self->error_message('PTero workflow (%s) did not succeed',
-            $wf_proxy->url);
+        die sprintf('PTero workflow (%s) did not succeed', $wf_proxy->url);
     }
 }
 
@@ -165,6 +184,7 @@ sub get_ptero_builder {
     my $self = shift;
 
     $self->validate;
+    $self->remove_all_links_to_unused_input_properties();
 
     my $dag_method = Ptero::Builder::Workflow->new(name => $self->name);
 
@@ -172,12 +192,12 @@ sub get_ptero_builder {
         unless (defined $self->log_dir) {
             die sprintf("DAG (%s) has no log_dir set!", $self->name);
         }
-        $dag_method->_add_task($operation->get_ptero_builder_task($self->log_dir));
+        $dag_method->add_task($operation->get_ptero_builder_task($self->log_dir));
     }
 
     for my $link (@{$self->links}) {
         $link->validate;
-        $dag_method->link_tasks(
+        $dag_method->add_data_flow(
             source => $link->source_operation_name,
             source_property => $link->source_property,
             destination => $link->destination_operation_name,
@@ -216,72 +236,59 @@ sub get_ptero_builder_for_process {
 
     my $outer_dag = Ptero::Builder::Workflow->new(name => $process->workflow_name);
 
-    my $inner_task = $self->get_ptero_builder_task();
-    $inner_task->methods([
-        $self->_get_method_to_set_status($process_id, 'Running', 1),
-        @{$inner_task->methods},
+    my $set_to_running_task = $outer_dag->add_task(
+        $self->_get_task_to_set_status($process_id, 'Running', 0)
+    );
+    $outer_dag->create_link(destination => $set_to_running_task);
+
+    my $payload_task = $self->get_ptero_builder_task();
+    $payload_task->methods([
+        @{$payload_task->methods},
         $self->_get_method_to_set_status($process_id, 'Crashed', 1),
     ]);
+    $outer_dag->add_task($payload_task);
+    $outer_dag->create_link(
+        source => $set_to_running_task,
+        destination => $payload_task,
+    );
+    for my $input_property ($self->input_properties) {
+        $outer_dag->add_data_flow(
+            destination => $payload_task,
+            source_property => $input_property,
+            destination_property => $input_property,
+        );
+    }
+    for my $output_property ($self->output_properties) {
+        $outer_dag->add_data_flow(
+            source => $payload_task,
+            source_property => $output_property,
+            destination_property => $output_property,
+        );
+    }
 
-    $outer_dag->_add_task($inner_task);
-    my $success_task = $outer_dag->_add_task(
+    my $set_to_succeeded_task = $outer_dag->add_task(
         $self->_get_task_to_set_status($process_id, 'Succeeded', 0)
     );
-
-    my $last_destination;
-    my $linked_inputs = Set::Scalar->new();
-    my $linked_outputs = Set::Scalar->new();
-    for my $link (@{$self->links}) {
-        $link->validate;
-
-        my $source = $link->source_property;
-        my $destination = $link->destination_property;
-
-        if ($link->external_input and
-                !$linked_inputs->contains($source)) {
-            $linked_inputs->insert($source);
-            $outer_dag->link_tasks(
-                source => $link->source_operation_name,
-                source_property => $source,
-                destination => $inner_task->name,
-                destination_property => $source,
-            );
-        } elsif ($link->external_output and
-                !$linked_outputs->contains($destination)) {
-            $linked_outputs->insert($destination);
-            $last_destination = $destination;
-            $outer_dag->link_tasks(
-                source => $inner_task->name,
-                source_property => $destination,
-                destination => $link->destination_operation_name,
-                destination_property => $destination,
-            );
-        }
-    }
-    $outer_dag->link_tasks(
-        source => $inner_task->name,
-        source_property => $last_destination,
-        destination => $success_task->name,
-        destination_property => $last_destination,
+    $outer_dag->create_link(
+        source => $payload_task,
+        destination => $set_to_succeeded_task,
     );
-    $outer_dag->link_tasks(
-        source => $success_task->name,
-        source_property => "dummy_output",
-        destination => 'output connector',
-        destination_property => "dummy_output for Genome::Process($process_id)",
+    $outer_dag->create_link(
+        source => $set_to_succeeded_task,
     );
 
     return $outer_dag;
 }
 
 sub _get_method_to_set_status {
-    require Ptero::Builder::ShellCommand;
+    require Ptero::Builder::Job;
 
     my ($self, $process_id, $status, $exit_code) = Params::Validate::validate_pos(
         @_, 1, 1, 1, 1);
 
-    return Ptero::Builder::ShellCommand->new(
+    return Ptero::Builder::Job->new(
         name => "set status $status",
+        service_url => Genome::Config::get('ptero_shell_command_service_url'),
         parameters => {
             commandLine => [
                 'genome', 'process', 'set-status',
@@ -366,6 +373,12 @@ sub is_input_property {
     return List::MoreUtils::any {$property_name eq $_} $self->input_properties;
 }
 
+sub is_optional_input_property {
+    my ($self, $property_name) = @_;
+
+    return List::MoreUtils::any {$property_name eq $_} $self->optional_input_properties;
+}
+
 sub is_output_property {
     my ($self, $property_name) = @_;
 
@@ -394,10 +407,134 @@ sub from_xml_element {
 
     $self->_add_operations_from_xml_element($element);
     $self->_add_links_from_xml_element($element);
+    $self->_add_optional_inputs_from_xml_element($element);
 
     return $self;
 }
 
+sub _add_optional_inputs_from_xml_element {
+    my ($self, $element) = @_;
+
+    my $ot_nodelist = $element->find('operationtype');
+    for my $ot_node ($ot_nodelist->get_nodelist) {
+        my $input_nodelist = $ot_node->find('inputproperty');
+        for my $input_node ($input_nodelist->get_nodelist) {
+            if ($input_node->getAttribute('isOptional')) {
+                my $input_name = $input_node->textContent();
+                push @{$self->_optional_input_properties}, $input_name;
+            }
+        }
+    }
+}
+
+sub remove_all_links_from_unspecified_inputs {
+    my ($self, $inputs) = @_;
+
+    my @unspecified_inputs = $self->get_unspecified_optional_inputs($inputs);
+    for my $input_property (@unspecified_inputs) {
+        $self->remove_links_from_unspecified_input($input_property);
+    }
+    return;
+}
+
+sub remove_links_from_unspecified_input {
+    my ($self, $input_property) = @_;
+
+    if ($self->is_optional_input_property($input_property)) {
+        my @kept_links;
+        for my $link (@{$self->links}) {
+            if ($link->external_input and
+                $link->source_property eq $input_property) {
+                my $destination = $link->destination;
+                if ($destination) {
+                    my $destination_property = $link->destination_property;
+                    $destination->remove_links_from_unspecified_input(
+                        $destination_property);
+                } else {
+                    push @kept_links, $link;
+                }
+            } else {
+                push @kept_links, $link;
+            }
+        }
+        $self->links([@kept_links]);
+    } else {
+        die sprintf("Cannot remove links from unspecified input (%s) " .
+            "since it is not an optional input for DAG named (%s)",
+            $input_property, $self->name);
+    }
+    return;
+}
+
+sub get_unspecified_optional_inputs {
+    my ($self, $inputs) = @_;
+
+    my @unspecified_inputs;
+    for my $input_property ($self->optional_input_properties) {
+        unless (exists $inputs->{$input_property}) {
+            push @unspecified_inputs, $input_property;
+        }
+    }
+    return @unspecified_inputs;
+}
+
+sub get_used_inputs {
+    my ($self, $inputs) = @_;
+    my %used_inputs;
+    my @extra_inputs;
+    for my $input_property (keys %$inputs) {
+        if ($self->is_input_property($input_property)) {
+            $used_inputs{$input_property} = $inputs->{$input_property};
+        } else {
+            if ($self->is_optional_input_property($input_property)) {
+                $self->debug_message("Ignoring unused optional input named (%s)",
+                    $input_property);
+            } else {
+                push @extra_inputs, $input_property;
+            }
+        }
+    }
+
+    if (@extra_inputs) {
+        die sprintf("Extra inputs were specified to DAG->execute: %s",
+            pp(\@extra_inputs));
+    }
+
+    return \%used_inputs;
+}
+
+sub remove_all_links_to_unused_input_properties {
+    my $self = shift;
+    $self->recurse_do('remove_links_to_unused_input_properties');
+}
+
+sub recurse_do {
+    my ($self, $method_name) = @_;
+
+    for my $operation (@{$self->operations}) {
+        $operation->recurse_do($method_name);
+    }
+    $self->$method_name;
+    return;
+}
+
+sub remove_links_to_unused_input_properties {
+    my $self = shift;
+
+    my $optionals = Set::Scalar->new($self->optional_input_properties);
+    my @kept_links;
+    for my $link (@{$self->links}) {
+        if ($link->destination_is_unused_and_optional) {
+            $self->debug_message("Removing link to DAG named (%s) that " .
+                "targets unused optional input property named (%s)",
+                $link->destination->name, $link->destination_property);
+        } else {
+            push @kept_links, $link;
+        }
+    }
+    $self->links([@kept_links]);
+    return;
+}
 
 sub get_xml_element {
     my $self = shift;
@@ -420,6 +557,11 @@ sub input_properties {
     my $self = shift;
     return sort $self->_property_names_from_links('external_input',
         'source_property');
+}
+
+sub optional_input_properties {
+    my $self = shift;
+    return sort @{$self->_optional_input_properties};
 }
 
 sub output_properties {
@@ -511,9 +653,8 @@ sub _validate_operation_names_are_unique {
     my $operation_names = new Set::Scalar;
     for my $op (@{$self->operations}) {
         if ($operation_names->contains($op->name)) {
-            die $self->error_message(sprintf(
-                    "Workflow DAG '%s' contains multiple operations named '%s'",
-                    $self->name, $op->name));
+            die sprintf("DAG '%s' contains multiple operations named '%s'",
+                    $self->name, $op->name);
         }
         $operation_names->insert($op->name);
     }
@@ -540,10 +681,9 @@ sub _validate_operation_ownership {
 
     if (defined($op)) {
         unless ($operations_hash->{$op}) {
-            die $self->error_message(sprintf(
-                    "Unowned operation (%s) linked in DAG (%s)",
+            die sprintf("Unowned operation (%s) linked in DAG (%s)",
                     $op->name, $self->name,
-            ));
+            );
         }
     }
 }
@@ -561,10 +701,9 @@ sub _validate_mandatory_inputs {
     }
 
     unless ($mandatory_inputs->is_empty) {
-        die $self->error_message(sprintf(
-            "%d mandatory input(s) missing in DAG: %s",
+        die sprintf("%d mandatory input(s) missing in DAG: %s",
             $mandatory_inputs->size, $mandatory_inputs
-        ));
+        );
     }
 }
 
@@ -600,11 +739,11 @@ sub _validate_non_conflicting_inputs {
         my $ei = $self->_encode_input($link->destination_operation_name,
             $link->destination_property);
         if ($encoded_inputs->contains($ei)) {
-            die $self->error_message(sprintf(
-"Conflicting input to '%s' on (%s) found.  One link is from '%s' on (%s)",
+            die sprintf("Conflicting input to '%s' on (%s) found.  " .
+                "One link is from '%s' on (%s)",
                 $link->destination_property, $link->destination_operation_name,
                 $link->source_property, $link->source_operation_name
-            ));
+            );
         }
         $encoded_inputs->insert($ei);
     }

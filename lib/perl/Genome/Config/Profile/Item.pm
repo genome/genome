@@ -32,7 +32,7 @@ class Genome::Config::Profile::Item {
         },
         status => {
             is => 'Text',
-            valid_values => [ "disabled", "active" ],
+            valid_values => [ "disabled", "active", "inactive" ],
             default_value => 'active',
         },
         model_bridges => {
@@ -134,7 +134,7 @@ sub _create_allocation_for_file {
 
     my $allocation = Genome::Disk::Allocation->create(
         owner_id            => $self->id,
-        disk_group_name     => 'info_apipe_ref',
+        disk_group_name     => Genome::Config::get('disk_group_references'),
         allocation_path     => 'analysis_configuration/' . $self->id,
         owner_class_name    => $self->class,
         kilobytes_requested => $self->_get_size_in_kb($file_to_store),
@@ -152,6 +152,7 @@ sub _copy_file_to_allocation {
     my $destination_file_path = File::Spec->catdir($allocation->absolute_path, $filename);
     Genome::Sys->copy_file($original_file_path, $destination_file_path);
     $allocation->reallocate();
+    $allocation->archivable(0);
     return $destination_file_path;
 }
 
@@ -182,7 +183,7 @@ sub _is_created {
 sub is_current {
     my $self = shift;
 
-    return $self->status eq 'active' and $self->analysis_project->is_current;
+    return $self->status ne 'disabled' and $self->analysis_project->is_current;
 }
 
 1;

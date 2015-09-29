@@ -16,14 +16,6 @@ sub qc_metrics_file_accessor {
     return 'output_file';
 }
 
-sub metrics {
-    return (
-        haploid_coverage => {
-            picard_metric => 'MEAN_COVERAGE',
-        },
-    );
-}
-
 sub gmt_class {
     return 'Genome::Model::Tools::Picard::CollectWgsMetrics';
 }

@@ -62,17 +62,24 @@ subtest 'get_unarchived_merged_alignment_results' => sub {
 
 
 subtest 'get_smallest_merged_alignment_result and get_merged_bam_to_revivify_per_lane_bam' => sub {
+    my $small_merged_bam = File::Spec->join($smaller_merged_result->output_dir, $small_merge_id.'.bam');
+    my $merged_bam       = File::Spec->join($merged_result->output_dir, $merge_id.'.bam');
+
     is_deeply([$ar1->get_smallest_merged_alignment_result($ar1->get_merged_alignment_results)], [$smaller_merged_result], 'Got smallest merged result for ar1');
-    is($ar1->get_merged_bam_to_revivify_per_lane_bam, File::Spec->join($smaller_merged_result->output_dir, $small_merge_id.'.bam'), 'Got smallest merged bam to revivify per lane bam for ar1');
+    is($ar1->get_merged_bam_to_revivify_per_lane_bam, $small_merged_bam, 'Got smallest merged bam to revivify per lane bam for ar1');
+
+    unlink $small_merged_bam;
+    ok(!-s $small_merged_bam, "Small merged bam is deleted");
+    is($ar1->get_merged_bam_to_revivify_per_lane_bam, $merged_bam, 'Got merged bam to revivify per lane bam for ar1 since small merged bam is deleted');
 
     is_deeply([$ar2->get_smallest_merged_alignment_result($ar2->get_merged_alignment_results)], [$merged_result], 'Got smallest merged result for ar2');
-    is($ar2->get_merged_bam_to_revivify_per_lane_bam, File::Spec->join($merged_result->output_dir, $merge_id.'.bam'), 'Got smallest merged result to revivify per lane bam for ar2');
+    is($ar2->get_merged_bam_to_revivify_per_lane_bam, $merged_bam, 'Got smallest merged result to revivify per lane bam for ar2');
 
     my $archived_allocation = Test::MockObject::Extends->new($smaller_merged_result->_disk_allocation);
     is($archived_allocation->owner, $smaller_merged_result, 'The new archived allocation has the smaller merged result as the owner');
     $archived_allocation->mock('is_archived', sub { 1 });
 
-    is($ar1->get_merged_bam_to_revivify_per_lane_bam, File::Spec->join($merged_result->output_dir, $merge_id.'.bam'), 'We prefer the unarchived bam to the smaller one');
+    is($ar1->get_merged_bam_to_revivify_per_lane_bam, $merged_bam, 'We prefer the unarchived bam to the smaller one');
     $archived_allocation->unmock('is_archived');
 };
 

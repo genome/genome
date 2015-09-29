@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Qc::Command {
     is => 'Command::Tree',
-    doc => 'commands related to QC',
+    doc => 'work with qc configuration and results',
 };
 
 1;

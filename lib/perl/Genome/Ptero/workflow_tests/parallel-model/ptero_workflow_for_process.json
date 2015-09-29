@@ -1,80 +1,58 @@
 {
    "links" : [
       {
-         "destination" : "Parallel Model Test",
-         "destinationProperty" : "prefixes",
-         "source" : "input connector",
-         "sourceProperty" : "prefixes"
+         "destination" : "set status Running",
+         "source" : "input connector"
       },
       {
          "destination" : "Parallel Model Test",
-         "destinationProperty" : "suffix",
-         "source" : "input connector",
-         "sourceProperty" : "suffix"
+         "source" : "set status Running"
       },
       {
+         "dataFlow" : {
+            "prefixes" : "prefixes",
+            "suffix" : "suffix"
+         },
+         "destination" : "Parallel Model Test",
+         "source" : "input connector"
+      },
+      {
+         "dataFlow" : {
+            "outputs" : "outputs"
+         },
          "destination" : "output connector",
-         "destinationProperty" : "outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "outputs"
+         "source" : "Parallel Model Test"
       },
       {
          "destination" : "set status Succeeded",
-         "destinationProperty" : "outputs",
-         "source" : "Parallel Model Test",
-         "sourceProperty" : "outputs"
+         "source" : "Parallel Model Test"
       },
       {
          "destination" : "output connector",
-         "destinationProperty" : "dummy_output for Genome::Process(123)",
-         "source" : "set status Succeeded",
-         "sourceProperty" : "dummy_output"
+         "source" : "set status Succeeded"
       }
    ],
    "tasks" : {
       "Parallel Model Test" : {
          "methods" : [
             {
-               "name" : "set status Running",
-               "parameters" : {
-                  "commandLine" : [
-                     "genome",
-                     "process",
-                     "set-status",
-                     "123",
-                     "Running",
-                     "--exit-code",
-                     1
-                  ],
-                  "environment" : {
-                     "FOO" : "bar"
-                  },
-                  "user" : "dmorton",
-                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
-               },
-               "service" : "shell-command"
-            },
-            {
                "name" : "Parallel Model Test",
                "parameters" : {
                   "links" : [
                      {
+                        "dataFlow" : {
+                           "prefixes" : "prefix",
+                           "suffix" : "suffix"
+                        },
                         "destination" : "Inner",
-                        "destinationProperty" : "prefix",
-                        "source" : "input connector",
-                        "sourceProperty" : "prefixes"
+                        "source" : "input connector"
                      },
                      {
-                        "destination" : "Inner",
-                        "destinationProperty" : "suffix",
-                        "source" : "input connector",
-                        "sourceProperty" : "suffix"
-                     },
-                     {
+                        "dataFlow" : {
+                           "output" : "outputs"
+                        },
                         "destination" : "output connector",
-                        "destinationProperty" : "outputs",
-                        "source" : "Inner",
-                        "sourceProperty" : "output"
+                        "source" : "Inner"
                      }
                   ],
                   "tasks" : {
@@ -85,22 +63,19 @@
                               "parameters" : {
                                  "links" : [
                                     {
+                                       "dataFlow" : {
+                                          "prefix" : "prefix",
+                                          "suffix" : "suffix"
+                                       },
                                        "destination" : "Appender",
-                                       "destinationProperty" : "prefix",
-                                       "source" : "input connector",
-                                       "sourceProperty" : "prefix"
+                                       "source" : "input connector"
                                     },
                                     {
-                                       "destination" : "Appender",
-                                       "destinationProperty" : "suffix",
-                                       "source" : "input connector",
-                                       "sourceProperty" : "suffix"
-                                    },
-                                    {
+                                       "dataFlow" : {
+                                          "output" : "output"
+                                       },
                                        "destination" : "output connector",
-                                       "destinationProperty" : "output",
-                                       "source" : "Appender",
-                                       "sourceProperty" : "output"
+                                       "source" : "Appender"
                                     }
                                  ],
                                  "tasks" : {
@@ -121,12 +96,14 @@
                                                    "test_logs/parallel-model"
                                                 ],
                                                 "environment" : {
-                                                   "FOO" : "bar"
+                                                   "FOO" : "bar",
+                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                 },
                                                 "user" : "dmorton",
                                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                                              },
-                                             "service" : "shell-command"
+                                             "service" : "job",
+                                             "serviceUrl" : "http://example.com/v1"
                                           },
                                           {
                                              "name" : "execute",
@@ -143,12 +120,14 @@
                                                    "test_logs/parallel-model"
                                                 ],
                                                 "environment" : {
-                                                   "FOO" : "bar"
+                                                   "FOO" : "bar",
+                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                 },
                                                 "user" : "dmorton",
                                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                                              },
-                                             "service" : "shell-command"
+                                             "service" : "job",
+                                             "serviceUrl" : "http://example.com/v1"
                                           }
                                        ]
                                     }
@@ -176,12 +155,40 @@
                      1
                   ],
                   "environment" : {
-                     "FOO" : "bar"
+                     "FOO" : "bar",
+                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
                   "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
-               "service" : "shell-command"
+               "service" : "job",
+               "serviceUrl" : "http://example.com/v1"
+            }
+         ]
+      },
+      "set status Running" : {
+         "methods" : [
+            {
+               "name" : "set status Running",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Running",
+                     "--exit-code",
+                     0
+                  ],
+                  "environment" : {
+                     "FOO" : "bar",
+                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "job",
+               "serviceUrl" : "http://example.com/v1"
             }
          ]
       },
@@ -200,12 +207,14 @@
                      0
                   ],
                   "environment" : {
-                     "FOO" : "bar"
+                     "FOO" : "bar",
+                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
                   "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
-               "service" : "shell-command"
+               "service" : "job",
+               "serviceUrl" : "http://example.com/v1"
             }
          ]
       }

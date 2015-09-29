@@ -48,6 +48,13 @@ class Genome::Model::Tools::Picard::CollectInsertSizeMetrics {
             is_optional   => 1,
             picard_param_name => 'STOP_AFTER',
         },
+        metric_accumulation_level => {
+            is => 'Text',
+            is_many => 1,
+            is_optional => 1,
+            picard_param_name => 'METRIC_ACCUMULATION_LEVEL',
+            valid_values => ['ALL_READS', 'SAMPLE', 'LIBRARY', 'READ_GROUP'],
+        }
     ],
 };
 

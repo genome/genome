@@ -90,4 +90,22 @@ sub sample_name {
     return $self->sample->name;
 }
 
+sub _flatten_metrics_hash {
+    my ($self, $metrics_hash) = @_;
+    my %flattened_metrics_hash;
+
+    my $flattener = Genome::SoftwareResult::Metric->hash_flattener();
+
+    my $flat_hash = $flattener->flatten($metrics_hash);
+    for my $key (keys %$flat_hash) {
+        if ($key =~ /\t{2,}/) {
+            my $value = delete $flat_hash->{$key};
+            $key =~ s/\t{2,}/\t/g;
+            $flat_hash->{$key} = $value;
+        }
+    }
+
+    return %$flat_hash;
+}
+
 1;

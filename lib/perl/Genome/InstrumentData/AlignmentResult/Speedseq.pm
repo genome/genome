@@ -176,12 +176,19 @@ sub bwa_version {
     my %speedseq_version_to_bwa_version = (
         'test' => '0.7.10',
         '0.0.3a-gms' => '0.7.10',
+        '0.1.0-gms' => '0.7.10',
     );
     my $bwa_version = $speedseq_version_to_bwa_version{$speedseq_version};
     unless ($bwa_version) {
         die $class->error_message('No bwa version assigned to speedseq version (%s)', $speedseq_version);
     }
     return $bwa_version;
+}
+
+sub _modify_params_for_lookup_hash {
+    my $class = shift;
+
+    return Genome::InstrumentData::AlignmentResult::Merged::Speedseq->_modify_params_for_lookup_hash(@_);
 }
 
 1;
