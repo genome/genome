@@ -15,12 +15,29 @@ require Genome::Utility::Test;
 require File::Compare;
 require File::Spec;
 require File::Temp;
+require Sub::Install;
 use Test::More;
 
-use_ok('Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam') or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v3') or die;
+my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam';
+use_ok($class) or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v4') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+
+my $autogenerate_new_object_id_uuid_sub = UR::Object::Type->can('autogenerate_new_object_id_uuid');
+Sub::Install::reinstall_sub({ # to set the RG ID in the bam
+        into => 'UR::Object::Type',
+        as => 'autogenerate_new_object_id_uuid',
+        code => sub{
+            my @caller = caller;
+            if ( $caller[0] eq $class ) {
+                return 'a' x 32;
+            }
+            else {
+                return $autogenerate_new_object_id_uuid_sub->();
+            }
+        },
+    });
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 

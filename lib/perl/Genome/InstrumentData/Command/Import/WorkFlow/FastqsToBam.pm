@@ -113,7 +113,7 @@ sub _fastqs_to_bam {
         quality_format => 'Standard',
         sample_name => $self->sample_name,
         library_name => $self->library_name,
-        read_group_name => $self->library_name,
+        read_group_name => UR::Object::Type->autogenerate_new_object_id_uuid,
         use_version => '1.113',
     );
     if ( $fastqs[1] ) {
