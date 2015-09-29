@@ -20,14 +20,6 @@ use Genome::Disk::Allocation;
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
 #$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
-# Temp testing directory, used as mount path for test volumes and allocations
-my $test_dir = tempdir(
-    'allocation_testing_XXXXXX',
-    TMPDIR => 1,
-    UNLINK => 1,
-    CLEANUP => 1,
-);
-
 # Create test group
 my $group = Genome::Disk::Group->create(
     disk_group_name => 'test',
@@ -42,7 +34,7 @@ ok($group, 'created test disk group');
 # Create temp archive volume
 my $archive_volume_path = tempdir(
     "test_volume_XXXXXXX",
-    DIR => $test_dir,
+    TMPDIR => 1,
     CLEANUP => 1,
     UNLINK => 1,
 );
@@ -59,7 +51,7 @@ ok($archive_volume, 'created test volume');
 # Create temp active volume
 my $volume_path = tempdir(
     "test_volume_XXXXXXX",
-    DIR => $test_dir,
+    TMPDIR => 1,
     CLEANUP => 1,
     UNLINK => 1,
 );
