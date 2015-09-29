@@ -181,13 +181,14 @@ EOS
     
     }else{
         my $tumor_rnaseq_build=$build->tumor_rnaseq_build;
-        my $expression = Genome::Sys->read_file("$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
+        my $reader = Genome::Utility::IO::SeparatedValueReader->create(separator => "\t", input => "$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
         my $expression_fh = Genome::Sys->open_file_for_writing("$output_directory/data/genes.fpkm.expsort.top1percent.tsv");
-        while ($expression =~ /\w+\t(\S+)\t\w+\t\w+\t(\w+):(\d+)-(\d+)\t\w+\t\w+\t(\S+)[\t\S]+\n/g) {
-            $$genes_noAmpDel{$1}="hs$2\t$3\t$4";
-            $$genes_AmpDel{$1}="hs$2\t$3\t$4";
+        while(my $data = $reader->next) {
+            my ($chr, $start, $stop) = split(/[:-]/, $data->{locus});
+            $$genes_noAmpDel{$data->{mapped_gene_name}}=join("\t","hs$chr", $start, $stop);
+            $$genes_AmpDel{$data->{mapped_gene_name}}=join("\t","hs$chr", $start, $stop);
             #if($5>=2 || $5<=-2){ Is this necessary
-                print $expression_fh ("hs$2 $3 $4 ".log($5)/log(2)."\n");
+                print $expression_fh ("hs$chr $start $stop ".log($data->{FPKM})/log(2)."\n");
             #}
         }
         $expression_fh->close;    
