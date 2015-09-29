@@ -1,0 +1,19 @@
+[4mOVERVIEW[0m
+Output wildtype and mutant variant sequences for epitope prediction
+
+[4mPROPERTIES[0m
+  [1mpeptide_sequence_length[0m   Number
+    The length of the peptide sequences
+    valid values:
+     17
+     21
+     31
+    Default value 21 if not specified
+
+[4mREQUIRED EXPERTS[0m
+vep
+
+[4mAVAILABLE FIELDS[0m
+  [1mvariant_sequences[0m
+    A hash of wildtype and mutant variant sequences for the entry's transcripts
+
