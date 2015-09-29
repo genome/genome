@@ -107,30 +107,34 @@ my $allocation_creator = sub {
     return $allocation;
 };
 
-my $allocation = $allocation_creator->();
-
 # Override these methods so archive/active volume linking works for our test volumes
 no warnings 'redefine', 'once';
 *Genome::Disk::Volume::archive_volume_prefix = sub { return $archive_volume->mount_path };
 *Genome::Disk::Volume::active_volume_prefix = sub { return $volume->mount_path };
 use warnings;
 
-# Create command object and execute it
-my $cmd = Genome::Disk::Command::Allocation::Archive->create(
-    allocations => [$allocation],
-);
-ok($cmd, 'created archive command');
-ok($cmd->execute, 'successfully executed archive command');
-is($allocation->volume->id, $archive_volume->id, 'allocation moved to archive volume');
-ok($allocation->is_archived, 'allocation is now archived');
+subtest 'call archive command with allocation' => sub {
+    my $allocation = $allocation_creator->();
 
-$allocation = $allocation_creator->();
+    # Create command object and execute it
+    my $cmd = Genome::Disk::Command::Allocation::Archive->create(
+        allocations => [$allocation],
+    );
+    ok($cmd, 'created archive command');
+    ok($cmd->execute, 'successfully executed archive command');
+    is($allocation->volume->id, $archive_volume->id, 'allocation moved to archive volume');
+    ok($allocation->is_archived, 'allocation is now archived');
+};
 
-# Now simulate the command being run from the CLI
-my @args = ($allocation->id);
-my $rv = Genome::Disk::Command::Allocation::Archive->_execute_with_shell_params_and_return_exit_code(@args);
-ok($rv == 0, 'successfully executed command using simulated command line arguments');
-is($allocation->volume->id, $archive_volume->id, 'allocation updated as expected after archive');
+subtest 'call archive command with allocation from command line' => sub {
+    my $allocation = $allocation_creator->();
+
+    # Now simulate the command being run from the CLI
+    my @args = ($allocation->id);
+    my $rv = Genome::Disk::Command::Allocation::Archive->_execute_with_shell_params_and_return_exit_code(@args);
+    ok($rv == 0, 'successfully executed command using simulated command line arguments');
+    is($allocation->volume->id, $archive_volume->id, 'allocation updated as expected after archive');
+};
 
 done_testing();
 
