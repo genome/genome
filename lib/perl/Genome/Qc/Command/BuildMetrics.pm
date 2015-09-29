@@ -5,7 +5,6 @@ use warnings;
 
 use Genome;
 use YAML::Syck;
-use Test::More qw/no_plan/;
 
 class Genome::Qc::Command::BuildMetrics {
     is => 'Command::V2',
