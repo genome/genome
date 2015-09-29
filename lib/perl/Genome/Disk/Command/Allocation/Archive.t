@@ -106,7 +106,7 @@ ok($allocation, 'created test allocation');
 system("touch " . $allocation->absolute_path . "/a.out");
 
 # Override these methods so archive/active volume linking works for our test volumes
-no warnings 'redefine';
+no warnings 'redefine', 'once';
 *Genome::Disk::Volume::archive_volume_prefix = sub { return $archive_volume->mount_path };
 *Genome::Disk::Volume::active_volume_prefix = sub { return $volume->mount_path };
 use warnings;
