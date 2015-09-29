@@ -87,23 +87,27 @@ my $archive_assignment = Genome::Disk::Assignment->create(
 ok($archive_assignment, 'added archiev volume to test group successfully');
 Genome::Sys->create_directory(join('/', $archive_volume->mount_path, $group->subdirectory));
 
-# Make test allocation
-my $allocation_path = tempdir(
-    "allocation_test_1_XXXXXX",
-    CLEANUP => 1,
-    UNLINK => 1,
-    DIR => $test_dir,
-);
-my $allocation = Genome::Disk::Allocation->create(
-    disk_group_name => $group->disk_group_name,
-    allocation_path => $allocation_path,
-    kilobytes_requested => 100,
-    owner_class_name => 'UR::Value',
-    owner_id => 'test',
-    mount_path => $volume->mount_path,
-);
-ok($allocation, 'created test allocation');
-system("touch " . $allocation->absolute_path . "/a.out");
+my $allocation_creator = sub {
+    my $allocation_path = tempdir(
+        "allocation_test_1_XXXXXX",
+        CLEANUP => 1,
+        UNLINK => 1,
+    );
+    my $allocation = Genome::Disk::Allocation->create(
+        disk_group_name => $group->disk_group_name,
+        allocation_path => $allocation_path,
+        kilobytes_requested => 100,
+        owner_class_name => 'UR::Value',
+        owner_id => 'test',
+        mount_path => $volume->mount_path,
+    );
+    ok($allocation, 'created test allocation');
+    system("touch " . $allocation->absolute_path . "/a.out");
+
+    return $allocation;
+};
+
+my $allocation = $allocation_creator->();
 
 # Override these methods so archive/active volume linking works for our test volumes
 no warnings 'redefine', 'once';
@@ -120,22 +124,7 @@ ok($cmd->execute, 'successfully executed archive command');
 is($allocation->volume->id, $archive_volume->id, 'allocation moved to archive volume');
 ok($allocation->is_archived, 'allocation is now archived');
 
-# Make another allocation
-$allocation_path = tempdir(
-    "allocation_test_1_XXXXXX",
-    CLEANUP => 1,
-    UNLINK => 1,
-);
-$allocation = Genome::Disk::Allocation->create(
-    disk_group_name => $group->disk_group_name,
-    allocation_path => $allocation_path,
-    kilobytes_requested => 100,
-    owner_class_name => 'UR::Value',
-    owner_id => 'test',
-    mount_path => $volume->mount_path,
-);
-ok($allocation, 'created test allocation');
-system("touch " . $allocation->absolute_path . "/a.out");
+$allocation = $allocation_creator->();
 
 # Now simulate the command being run from the CLI
 my @args = ($allocation->id);
