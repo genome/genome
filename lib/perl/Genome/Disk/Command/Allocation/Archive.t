@@ -76,7 +76,7 @@ my $archive_assignment = Genome::Disk::Assignment->create(
     group => $group,
     volume => $archive_volume
 );
-ok($archive_assignment, 'added archiev volume to test group successfully');
+ok($archive_assignment, 'added archive volume to test group successfully');
 Genome::Sys->create_directory(join('/', $archive_volume->mount_path, $group->subdirectory));
 
 my $allocation_creator = sub {
