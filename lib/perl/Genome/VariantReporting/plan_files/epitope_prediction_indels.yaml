@@ -6,6 +6,7 @@ experts:
         species: 'homo-sapiens'
         plugins:
             - Wildtype
+            - Downstream
         plugins_version: 1
         joinx_version: 1.11
         short_name: 0
