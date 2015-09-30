@@ -88,43 +88,38 @@ sub _write_reads {
         return;
     }
 
-    my $previous_line;
-    my $previous_id;
+    my $previous_tokens;
     my $previous_read_group_id;
     while ( my $line = $bam_fh->getline ) {
         my @tokens = split(/\t/, $line);
-        my $id = $tokens[0];
 
         $line =~ m/\sRG:Z:(.*?)\s/;
         my $read_group_id = $1;
         $read_group_id //= 'unknown';
 
-        unless($previous_line) {
-            $previous_line = $line;
-            $previous_id = $id;
+        unless($previous_tokens) {
+            $previous_tokens = \@tokens;
             $previous_read_group_id = $read_group_id;
             next;
         }
 
-        if($id eq $previous_id and $previous_read_group_id eq $read_group_id) {
+        if($tokens[0] eq $previous_tokens->[0] and $previous_read_group_id eq $read_group_id) {
             my $fh = $self->_fh_for_read_group_and_pairedness($read_group_id, 'paired');
-            $fh->print($previous_line, $line);
-            undef $previous_line;
-            undef $previous_id;
+            $fh->print( join("\t", @$previous_tokens) );
+            $fh->print( join("\t", @tokens) );
+            undef $previous_tokens;
             undef $previous_read_group_id;
         } else {
             my $fh = $self->_fh_for_read_group_and_pairedness($previous_read_group_id, 'singleton');
-            $fh->print($previous_line);
-
-            $previous_line = $line;
-            $previous_id = $id;
+            $fh->print( join("\t", @$previous_tokens) );
+            $previous_tokens = \@tokens;
             $previous_read_group_id = $read_group_id;
         }
     }
 
-    if($previous_line) {
+    if($previous_tokens) {
         my $fh = $self->_fh_for_read_group_and_pairedness($previous_read_group_id, 'singleton');
-        $fh->print($previous_line);
+        $fh->print( join("\t", @$previous_tokens) );
     }
 
     for my $fh ( $bam_fh, values %{$self->_read_group_fhs} ) {
