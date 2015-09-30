@@ -56,12 +56,13 @@ subtest 'all parameters specified' => sub {
         tmp_dir => '/tmp/testing',
         max_memory => 1,
         version => $gatk_version,
+        java_interpreter => '/path/to/custom-java',
     );
 
     isa_ok($cmd, $pkg, 'created a dummy test command');
 
     my @cmdline = $cmd->gatk_command;
-    is_deeply(\@cmdline,[qw(java -Xmx1g -Djava.io.tmpdir=/tmp/testing -jar), $cmd->gatk_path($gatk_version), qw(-et NO_ET -T Magic --word hocus --word pocus -mm -n 3)], 'generated the expected command line');
+    is_deeply(\@cmdline,[qw(/path/to/custom-java -Xmx1g -Djava.io.tmpdir=/tmp/testing -jar), $cmd->gatk_path($gatk_version), qw(-et NO_ET -T Magic --word hocus --word pocus -mm -n 3)], 'generated the expected command line');
 };
 
 subtest 'optional parameters not specified' => sub {

@@ -148,7 +148,7 @@ function main {
 
     if test -z "$DISABLE_DB" -a -z "$PERSIST_DB"
     then
-        test-db delete database $TESTDBSERVER_DB_NAME > /dev/null
+        cleanup_test_db
     fi
     exit $EXIT
 }
@@ -311,7 +311,7 @@ function set_defaults {
 
     if test -z "$DB_SNAPSHOT_NAME" -a -z "$DB_ID"
     then
-        DB_SNAPSHOT_NAME="39b0f15"
+        DB_SNAPSHOT_NAME="715f122"
     fi
 
     if test -z "$UR_REPO" -a -z "$DISABLE_UR"
@@ -488,6 +488,14 @@ function setup_test_db {
             fi
         )
     fi
+}
+
+# cleanup_test_db reverses setup_test_db by deleting any new disk allocations
+# from the test database, then deletes the test database
+function cleanup_test_db {
+    echo "=> Removing disk allocations created during $THIS..."
+    genome model admin remove-disk-allocations-from-testdb
+    test-db delete database $TESTDBSERVER_DB_NAME > /dev/null
 }
 
 # assert_module_missing only works with single word module names, e.g. UR, Workflow, and Genome.

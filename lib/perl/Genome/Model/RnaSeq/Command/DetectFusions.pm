@@ -27,6 +27,13 @@ class Genome::Model::RnaSeq::Command::DetectFusions {
             doc => 'The rna-seq build',
         },
     ],
+    has_param => [
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_build_worker'),
+            is_optional => 1,
+            doc => 'queue to use when running in a workflow',
+        },
+    ],
     doc => 'run a specified fusion detector',
 };
 

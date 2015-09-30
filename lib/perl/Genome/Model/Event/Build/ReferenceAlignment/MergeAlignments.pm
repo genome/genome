@@ -10,7 +10,7 @@ class Genome::Model::Event::Build::ReferenceAlignment::MergeAlignments {
 };
 
 sub bsub_rusage {
-    return "-R 'span[hosts=1] rusage[tmp=90000:mem=16000]' -M 16000000";
+    return Genome::Config::get('lsf_resource_merged_alignments');
 }
 
 sub shortcut {

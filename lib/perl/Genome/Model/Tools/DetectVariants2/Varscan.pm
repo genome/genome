@@ -16,7 +16,7 @@ class Genome::Model::Tools::DetectVariants2::Varscan {
     ],
     has_param => [
         lsf_resource => {
-            default => "-R 'select[ncpus>=2] span[hosts=1] rusage[mem=16000]' -M 16000000 -n 2",
+            default => Genome::Config::get('lsf_resource_dv2_varscan'),
         }
     ],
 };

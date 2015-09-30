@@ -124,6 +124,18 @@ sub sort_key {
         $self->source_property, $self->destination_property);
 }
 
+sub destination_is_unused_and_optional {
+    my $self = shift;
+
+    return unless defined($self->destination);
+
+    my $destination_is_unused = !$self->destination->is_input_property(
+        $self->destination_property);
+    my $destination_is_optional = $self->destination->is_optional_input_property(
+        $self->destination_property);
+    return ($destination_is_unused and $destination_is_optional);
+}
+
 
 # ------------------------------------------------------------------------------
 # Private Methods

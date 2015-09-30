@@ -444,7 +444,7 @@ sub get_failed_key {
     if ($self->error_text =~ m/gscarchive/) {
         return "Failed: Archived Data";
     }
-    if ($self->error_source_line ne 'Unknown') {
+    if ($self->error_source_line ne 'Unknown' and $self->error_source_line ne 'n/a') {
         (my $delocalized_file = $self->error_source_file) =~ s/^.*\/lib\/perl\///;
         return sprintf("Failed: %s %s", $delocalized_file, $self->error_source_line);
     } else {

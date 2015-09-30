@@ -700,11 +700,7 @@ sub _create_observer {
         return 1;
     }
 
-    $observer = UR::Context->add_observer(
-        aspect => 'commit',
-        callback => $callback,
-    );
-    return 1;
+    Genome::Sys::CommitAction->create( on_commit => $callback );
 }
 
 # Returns a closure that creates a directory at the given path

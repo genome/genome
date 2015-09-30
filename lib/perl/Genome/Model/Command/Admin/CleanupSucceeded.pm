@@ -28,10 +28,11 @@ sub execute {
     my $user = Genome::Sys->username;
     my @builds_to_abandon;
     for my $m ($self->models) {
-        next unless $m->latest_build;
+        my $latest_unabandoned_build = $m->builds(-order_by => ['-created_at'], -limit => 1, 'status !=' => 'Abandoned');
+        next unless $latest_unabandoned_build;
 
         my %params = (
-            'id !=' => $m->latest_build->id,
+            'id !=' => $latest_unabandoned_build->id,
         );
 
         if($user ne 'apipe-builder') {
@@ -40,13 +41,13 @@ sub execute {
 
         # if we made it out of Unstartable then the Unstartable problem is
         # fixed so we can abandon previous Unstartable builds
-        if ($m->latest_build->status ne 'Unstartable') {
+        if ($latest_unabandoned_build->status ne 'Unstartable') {
             push @builds_to_abandon,
                 $m->builds(%params, status => 'Unstartable');
         }
 
         # if we succeeded then previous failures can be abandoned
-        if ($m->latest_build->status eq 'Succeeded') {
+        if ($latest_unabandoned_build->status eq 'Succeeded') {
             push @builds_to_abandon,
                 $m->builds(%params, 'status in' => [qw(Failed New)]);
         }

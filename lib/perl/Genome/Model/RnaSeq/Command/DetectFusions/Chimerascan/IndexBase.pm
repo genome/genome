@@ -32,10 +32,14 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::IndexBase {
             is => 'Genome::SoftwareResult',
         },
     ],
-    has => [
+    has_param => [
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_build_worker_alt'),
+            is_optional => 1,
+            doc => 'queue to use when running in a workflow',
+        },
         lsf_resource => {
             default_value => "-R 'select[mem>32000] span[hosts=1] rusage[mem=32000]' -M 32000000 -n 2",
-            is_param => 1,
             is_optional => 1,
             doc => 'default LSF resource expectations',
         },

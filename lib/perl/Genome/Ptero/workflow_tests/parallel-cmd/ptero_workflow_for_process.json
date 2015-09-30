@@ -73,12 +73,14 @@
                                     "test_logs/parallel-cmd"
                                  ],
                                  "environment" : {
-                                    "FOO" : "bar"
+                                    "FOO" : "bar",
+                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "user" : "dmorton",
                                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
-                              "service" : "shell-command"
+                              "service" : "job",
+                              "serviceUrl" : "http://example.com/v1"
                            },
                            {
                               "name" : "execute",
@@ -95,12 +97,14 @@
                                     "test_logs/parallel-cmd"
                                  ],
                                  "environment" : {
-                                    "FOO" : "bar"
+                                    "FOO" : "bar",
+                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "user" : "dmorton",
                                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
-                              "service" : "shell-command"
+                              "service" : "job",
+                              "serviceUrl" : "http://example.com/v1"
                            }
                         ],
                         "parallelBy" : "prefix"
@@ -122,12 +126,14 @@
                      1
                   ],
                   "environment" : {
-                     "FOO" : "bar"
+                     "FOO" : "bar",
+                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
                   "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
-               "service" : "shell-command"
+               "service" : "job",
+               "serviceUrl" : "http://example.com/v1"
             }
          ]
       },
@@ -146,12 +152,14 @@
                      0
                   ],
                   "environment" : {
-                     "FOO" : "bar"
+                     "FOO" : "bar",
+                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
                   "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
-               "service" : "shell-command"
+               "service" : "job",
+               "serviceUrl" : "http://example.com/v1"
             }
          ]
       },
@@ -170,12 +178,14 @@
                      0
                   ],
                   "environment" : {
-                     "FOO" : "bar"
+                     "FOO" : "bar",
+                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
                   "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
-               "service" : "shell-command"
+               "service" : "job",
+               "serviceUrl" : "http://example.com/v1"
             }
          ]
       }

@@ -30,16 +30,18 @@ class Genome::Model::Tools::FastTier::MakeTierBitmasks {
             type => 'Text',
             is_input => 1,
             doc => 'The location of phastcons17,28, regulatory regions, etc',
+            is_optional => 1,
         },
         species => {
             type => 'Text',
             is_input => 1,
         },
         build => {
+            type => 'Genome::Model::Build',
             is_input => 1,
-            is_optional => 1,
         },
         annotation_import_version => {
+            type => 'Integer',
             is_input => 1,
         },
     ],
@@ -60,27 +62,30 @@ EOS
 sub execute {
     my $self = shift;
 
+    my $build = $self->build;
+    my $users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $users->{'fast-tier tier-bitmasks'} = $build;
+
     my $result = Genome::Model::Tools::FastTier::TierBitmasks->get_or_create(
         reference_sequence_build => $self->reference_sequence_build,
-        annotation_structures => Genome::Db::Ensembl::AnnotationStructures->get_or_create(version => $self->transcript_version,
-               software_version => $self->annotation_import_version,
-               reference_build_id => $self->reference_sequence_build->id,
-               species => $self->species,
-               data_set => 'Core',
-               test_name => (Genome::Config::get('software_result_test_name') || undef),
+        annotation_structures => Genome::Db::Ensembl::AnnotationStructures->get_or_create(
+            version => $self->transcript_version,
+            software_version => $self->annotation_import_version,
+            reference_build_id => $self->reference_sequence_build->id,
+            species => $self->species,
+            data_set => 'Core',
+            test_name => (Genome::Config::get('software_result_test_name') || undef),
+            users => Genome::SoftwareResult::User->user_hash_for_build($build),
         ),
-        ucsc_directory => $self->ucsc_directory,
+        ucsc_directory => $self->ucsc_directory || undef,
         test_name => (Genome::Config::get('software_result_test_name') || undef),
         species => $self->species,
+        users => $users,
     );
 
     unless ($result) {
         $self->error_message("Failed to generate TierBitmasks result");
         return;
-    }
-
-    if ($self->build) {
-        $result->add_user(label => 'fast-tier tier-bitmasks', user => $self->build);
     }
 
     $self->debug_message("Using TierBitmasks result: ".$result->id);

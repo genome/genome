@@ -21,7 +21,7 @@ class Genome::Model::Tools::DetectVariants2::Mutect {
     ],
     has_param => [
         lsf_resource => {
-            default_value => 'rusage[mem=4000] select[maxtmp>100000] span[hosts=1]',
+            default_value => Genome::Config::get('lsf_resource_dv2_mutect'),
         },
     ],
 };

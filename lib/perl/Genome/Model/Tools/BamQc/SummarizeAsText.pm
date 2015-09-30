@@ -388,12 +388,12 @@ sub execute {
         my $as_metrics = $self->_load_alignment_summary_metrics($label_dir);
         my $is_paired_end;
         my $as_category;
-        if ($as_metrics->{'CATEGORY-PAIR'}) {
+        if ($as_metrics->{'PAIR'}) {
             $is_paired_end = 1;
-            $as_category = 'CATEGORY-PAIR';
-        } elsif ($as_metrics->{'CATEGORY-UNPAIRED'}) {
+            $as_category = 'PAIR';
+        } elsif ($as_metrics->{'UNPAIRED'}) {
             $is_paired_end = 0;
-            $as_category = 'CATEGORY-UNPAIRED';
+            $as_category = 'UNPAIRED';
         } else {
             die('Failed to identify the read type!');
         }
@@ -425,11 +425,11 @@ sub execute {
             PCT_CHIMERAS => $as_metrics->{$as_category}{PCT_CHIMERAS} || "na",
             ERROR_RATE_READ_1 => $error_rate_sum->{1}->{error_rate} || "na",
             ERROR_RATE_READ_2 => $error_rate_sum->{2}->{error_rate} || "na",
-            MEDIAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEDIAN_INSERT_SIZE} || "na",
-            MEAN_INSERT_SIZE => $is_metrics->{'PAIR_ORIENTATION-FR'}{MEAN_INSERT_SIZE} || "na",
-            STANDARD_DEVIATION => $is_metrics->{'PAIR_ORIENTATION-FR'}{STANDARD_DEVIATION} || "na",
-            AT_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{AT_DROPOUT} || "na",
-            GC_DROPOUT => $gc_metrics->{'WINDOW_SIZE-100'}{GC_DROPOUT} || "na",
+            MEDIAN_INSERT_SIZE => $is_metrics->{'FR'}{MEDIAN_INSERT_SIZE} || "na",
+            MEAN_INSERT_SIZE => $is_metrics->{'FR'}{MEAN_INSERT_SIZE} || "na",
+            STANDARD_DEVIATION => $is_metrics->{'FR'}{STANDARD_DEVIATION} || "na",
+            AT_DROPOUT => $gc_metrics->{''}{AT_DROPOUT} || "na",
+            GC_DROPOUT => $gc_metrics->{''}{GC_DROPOUT} || "na",
             LIBRARY_NAME => $lib || 'na',
             PCT_DUPLICATION => 'na',
             ESTIMATED_LIBRARY_SIZE => 'na',

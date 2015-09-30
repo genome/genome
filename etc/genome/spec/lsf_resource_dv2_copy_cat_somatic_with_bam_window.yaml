@@ -1,0 +1,3 @@
+---
+default_value: "-R 'span[hosts=1] select[maxtmp>10000 && mem>4000] rusage[mem=4000]'"
+env: XGENOME_LSF_RESOURCE_DV2_COPY_CAT_SOMATIC_WITH_BAM_WINDOW

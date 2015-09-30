@@ -30,6 +30,11 @@ class Genome::Model::Tools::Gatk::Base {
             doc => 'The maximum memory (GB) to use when running Java VM. Limited to environmental constraints.',
             default => '4',
         },
+        java_interpreter => {
+            is => 'Text',
+            doc => 'The java interpreter to use',
+            default_value => 'java',
+        },
     ],
     has_optional => [
         tmp_dir => {
@@ -66,6 +71,7 @@ sub gatk_versions {
         '5336' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND,
         '5777' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.5777/' . $GATK_COMMAND,
         '2.4' => Genome::Sys->jar_path($GATK_BASE, "2.4"),
+        '3.4' => Genome::Sys->jar_path($GATK_BASE, "3.4"),
     );
     return %GATK_VERSIONS;
 }
@@ -225,7 +231,7 @@ sub max_memory {
 sub base_java_command {
     my $self = shift;
 
-    my @java_cmd = ('java');
+    my @java_cmd = ($self->java_interpreter);
 
     my $gatk_path = $self->gatk_path;
     if (defined $self->max_memory) {

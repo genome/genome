@@ -314,6 +314,38 @@ sub _validate_required_for_start_properties {
     return $tag;
 }
 
+sub build_needed {
+    my $self = shift;
+
+    return $self->SUPER::build_needed && !$self->_validate_instrument_data_present_for_each_sample;
+}
+
+sub _validate_instrument_data_present_for_each_sample {
+    my $self = shift;
+
+    my @tags;
+
+    my %sample_counts;
+    for my $i ($self->instrument_data) {
+        $sample_counts{$i->sample_id}++;
+    }
+
+    for my $s ($self->get_all_possible_samples) {
+        next unless $s;
+
+        my $count = $sample_counts{$s->id};
+        unless($count) {
+            push @tags, UR::Object::Tag->create(
+                type => 'error',
+                properties => ['instrument_data'],
+                desc => 'No instrument data assigned for sample: ' . $s->__display_name__,
+            );
+        }
+    }
+
+    return @tags;
+}
+
 #limit compatible instrument data check to these samples
 sub get_all_possible_samples {
     my $self = shift;

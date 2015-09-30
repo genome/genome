@@ -331,11 +331,7 @@ sub create {
 
     $self->_lock_proxy($lock);
 
-    my $unlock_callback = sub {
-        $self->_unlock;
-    };
-    $self->add_observer(aspect => 'commit', callback => $unlock_callback);
-    $self->add_observer(aspect => 'delete', callback => $unlock_callback);
+    $self->_add_unlock_observers;
 
     if (my $output_dir = $self->output_dir) {
         if (-d $output_dir) {
@@ -365,6 +361,19 @@ sub create {
     $self->subclass_name($class);
     $self->lookup_hash($self->calculate_lookup_hash());
     return $self;
+}
+
+sub _add_unlock_observers {
+    my $self = shift;
+
+    my $unlock_callback = sub {
+        $self->_unlock;
+    };
+    my @observers =
+        $self->add_observer(aspect => 'commit', callback => $unlock_callback, once => 1),
+        $self->add_observer(aspect => 'delete', callback => $unlock_callback);
+
+    return @observers;
 }
 
 sub _gather_params_for_get_or_create {
@@ -777,10 +786,8 @@ sub delete {
 
     #creating an anonymous sub to delete allocations when commit happens
     my $id = $self->id;
-    my $observer;
     my $upon_delete_callback = sub {
         print "Now Deleting Allocation with owner_id = $id\n";
-        $observer->delete if $observer;
         my $allocation = Genome::Disk::Allocation->get(owner_id=>$id, owner_class_name=>$class_name);
         if ($allocation) {
             $allocation->deallocate;
@@ -788,7 +795,7 @@ sub delete {
     };
 
     #hook our anonymous sub into the commit callback
-    $observer = $class_name->ghost_class->add_observer(aspect=>'commit', callback=>$upon_delete_callback);
+    Genome::Sys::CommitAction->create( on_commit => $upon_delete_callback );
 
     return $self->SUPER::delete(@_);
 }

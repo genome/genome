@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use File::Touch qw(touch);
+use version;
 
 my $DEFAULT_VER = '0.7';
 
@@ -80,10 +81,20 @@ sub default_version {
     return $DEFAULT_VER;
 }
 
-# The -w option was introduced in 0.5
+# The -w and -i options were introduced in 0.5
 sub version_has_warning_suppression {
+    return version->parse($_[1]) >= version->parse('0.5');
+}
+
+sub version_has_insertion_centric {
+    return version->parse($_[1]) >= version->parse('0.5');
+}
+
+sub assert_version_has_insertion_centric {
     my ($self, $version) = @_;
-    return ($version >= "0.5");
+    my $version_has_insertion_centric =  $self->version_has_insertion_centric($version);
+    return $version_has_insertion_centric if $version_has_insertion_centric;
+    die $self->error_message('Option insertion_centric is unsupported in version %s', $version);
 }
 
 sub readcount_path {
@@ -120,6 +131,7 @@ sub command {
         $command .= " -p";
     }
     if($self->insertion_centric) {
+        $self->assert_version_has_insertion_centric($version);
         $command .= " -i";
     }
     if($self->version_has_warning_suppression($version)) {

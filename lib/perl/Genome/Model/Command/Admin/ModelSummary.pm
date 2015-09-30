@@ -63,6 +63,8 @@ sub execute {
 
     my $build_requested_count = 0;
     my %cleanup_rv;
+    my $abandon_count = 0;
+    my $abandon_attempt_count = 0;
     my $change_count = 0;
 
     my $auto_batch_size_txn = UR::Context::Transaction->begin;
@@ -105,6 +107,19 @@ sub execute {
                 $cleanup_succeeded->execute;
                 $cleanup_rv{$cleanup_succeeded->result}++;
                 $change_count++;
+            } elsif ($action eq 'abandon') {
+                my @builds = $self->failure_build_set($model)->members;
+                local $ENV{UR_NO_REQUIRE_USER_VERIFY} = 1;
+                my $abandon = Genome::Model::Build::Command::Abandon->create(
+                    builds => \@builds,
+                    header_text => 'Automatically abandoning builds for disabled model',
+                    body_text => 'Triggered by ' . __PACKAGE__,
+                    show_display_command_summary_report => 0,
+                );
+                $abandon->execute;
+                $abandon_count += scalar(@builds) if $abandon->result;
+                $abandon_attempt_count += scalar(@builds);
+                $change_count++;
             }
         }
 
@@ -127,6 +142,7 @@ sub execute {
     $self->print_message("Requested builds for $build_requested_count models.") if $build_requested_count;
     $self->print_message("Cleaned up " . $cleanup_rv{1} . ".") if $cleanup_rv{1};
     $self->print_message("Failed to clean up " . $cleanup_rv{0} . ".") if $cleanup_rv{0};
+    $self->print_message("Abandoned builds for ". $abandon_count . " (out of " . $abandon_attempt_count . " attempted).") if $abandon_attempt_count;
     return 1;
 }
 
@@ -160,7 +176,10 @@ sub generate_model_summary {
     $summary{latest_build_rev} = $latest_build_revision;
 
     my $action;
-    if (!$latest_build && $model->build_requested){
+    if ($latest_build_status eq 'Disabled') {
+        $action = 'abandon';
+    }
+    elsif (!$latest_build && $model->build_requested){
         $action = 'none';
     }
     elsif (!$latest_build) {
@@ -201,6 +220,7 @@ sub _build_and_status_for_model {
     my $latest_build        = $build_iterator->next;
     my $latest_build_status = ($latest_build ? $latest_build->status : '-');
     $latest_build_status = 'Requested' if $model->build_requested;
+    $latest_build_status = 'Disabled' if $model->is_disabled;
 
     return ($latest_build, $latest_build_status);
 }
@@ -230,8 +250,7 @@ sub should_review_model {
     # If it has failed >X times in a row then submit for review.
     return 1 if $self->model_has_failed_too_many_times($model);
 
-    # If it hasn't made progress since last time then submit for review.
-    return 1 unless $self->model_has_progressed($model);
+    return 1 if $self->latest_failure_requires_review($model);
 
     return;
 }
@@ -250,25 +269,41 @@ sub model_has_failed_too_many_times {
 }
 
 
-sub model_has_progressed {
+sub latest_failure_requires_review {
     my $self = shift;
     my $model = shift;
 
     my $failure_set = $self->failure_build_set($model);
+    my $count = $failure_set->count;
 
-    #a first build has always made progress
-    return 1 unless ($failure_set->count > 1);
+    return unless $count > 0; #nothing to review
 
     my $it = $failure_set->member_iterator(-order_by => ['-created_at']);
     my $latest_build = $it->next;
     my $latest_error = determine_error_for_build($latest_build);
-    return unless $latest_error;
+    return 1 unless $latest_error;
+
+    return 1 if $self->_error_requires_review($latest_error);
+
+    #if this error doesn't require review, retry first failures
+    return unless $count > 1;
 
     my $previous_build = $it->next;
     my $previous_error = determine_error_for_build($previous_build);
-    return unless $previous_error;
+    return 1 unless $previous_error;
 
-    return $latest_error ne $previous_error;
+    #review if consistently failing
+    return $latest_error eq $previous_error;
+}
+
+sub _error_requires_review {
+    my $self = shift;
+    my $latest_error = shift;
+
+    return 1 if ($latest_error =~ /TERM_MEMLIMIT/);
+    return 1 if ($latest_error =~ /the allocation has been orphaned/);
+
+    return;
 }
 
 sub failure_build_set {

@@ -1,0 +1,3 @@
+---
+default_value: "-R 'span[hosts=1] select[maxtmp>100000 && mem>4000] rusage[mem=4000]' -M 4000000"
+env: XGENOME_LSF_RESOURCE_DV2_MUTECT

@@ -42,11 +42,10 @@ sub create_with_lock {
     if($obj) {
         return $obj;
     } else {
-        my $super_create ||= $super_create{$class} = $class->super_can('create');
+        my $super_create = $super_create{$class} ||= $class->super_can('create');
         $obj = $class->$super_create(@_);
-        UR::Context->current->add_observer(
-            aspect => 'commit',
-            callback => sub {
+        Genome::Sys::CommitAction->create(
+            on_commit => sub {
                 $lock->unlock();
             }
         );
