@@ -26,7 +26,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
     has_optional_transient => [
         headers => { is => 'Array', },
         read_groups_and_headers => { is => 'Hash', default => {} },
-        removed_reads_cnt => { is => 'Number', },
         _read_group_fhs => { is => 'HASH', default => {} },
     ],
     has_optional_calculated => [
@@ -89,7 +88,6 @@ sub _write_reads {
         return;
     }
 
-    my $removed_reads_cnt = 0;
     my $previous_line;
     my $previous_id;
     my $previous_read_group_id;
@@ -133,9 +131,6 @@ sub _write_reads {
         $fh->close;
     }
 
-    $self->debug_message('Removed reads count: '.$removed_reads_cnt);
-    $self->removed_reads_cnt($removed_reads_cnt);
-
     $self->debug_message('Write reads...done');
     return 1;
 }
@@ -168,11 +163,10 @@ sub _verify_read_count {
     return if not $original_flagstat;
 
     $self->debug_message('Original bam read count: '.$original_flagstat->{total_reads});
-    $self->debug_message('Removed reads count: '.$self->removed_reads_cnt);
     $self->debug_message('Read group bams read count: '.$read_count);
 
-    if ( $original_flagstat->{total_reads} - $self->removed_reads_cnt != $read_count ) {
-        $self->error_message('Original and read group bam read counts do not match!');
+    if ( $original_flagstat->{total_reads} != $read_count ) {
+        $self->error_message('Original and split by read group bam read counts do not match!');
         return;
     }
 
