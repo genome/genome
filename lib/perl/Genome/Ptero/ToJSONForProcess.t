@@ -56,6 +56,7 @@ for my $test_directory (glob test_data_directory('*')) {
         filters => [
             qr/^.*"workingDirectory" :.*$/,
             qr/^.*"user" :.*$/,
+            qr/^.*"cwd" :.*$/,
         ],
     );
 }

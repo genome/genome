@@ -21,6 +21,7 @@ sub parse_ok {
 }
 
 
+parse_ok('', { 'options' => {}, 'rLimits' => {} });
 parse_ok('rusage[mem=4000] span[hosts=1]', {
         'options' => {
             'resReq' => 'rusage[mem=4000] span[hosts=1]',

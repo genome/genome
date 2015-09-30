@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Cwd qw();
+use Genome::Utility::LSFResourceParser qw(parse_lsf_params);
 
 
 class Genome::WorkflowBuilder::Command {
@@ -90,22 +91,42 @@ sub _get_ptero_execute_method {
 
     my $self = shift;
     my $log_dir = shift;
+    my $ptero_lsf_parameters = $self->_get_ptero_lsf_parameters();
+    $ptero_lsf_parameters->{command} = sprintf(
+        'genome ptero wrapper --command-class %s '
+        .'--method execute --log-directory %s',
+        $self->command, $log_dir);
+    $ptero_lsf_parameters->{environment} = $self->_get_sanitized_env();
+    $ptero_lsf_parameters->{user} = Genome::Sys->username;
+    $ptero_lsf_parameters->{cwd} = Cwd::getcwd;
+
     return Ptero::Builder::Job->new(
         name => 'execute',
-        # XXX This should use the LSF service, or be configuration based
-        service_url => Genome::Config::get('ptero_shell_command_service_url'),
-        parameters => {
-            commandLine => [
-                'genome', 'ptero', 'wrapper',
-                '--command-class', $self->command,
-                '--method', 'execute',
-                '--log-directory', $log_dir,
-            ],
-            environment => $self->_get_sanitized_env(),
-            user => Genome::Sys->username,
-            workingDirectory => Cwd::getcwd,
-        },
-    );
+        service_url => Genome::Config::get('ptero_lsf_service_url'),
+        parameters => $ptero_lsf_parameters);
+}
+
+sub _get_lsf_resources_from_command {
+    my $self = shift;
+    my $prop = $self->command->__meta__->property_meta_for_name('lsf_resource');
+
+    if ($prop && $prop->{is_param}) {
+        if ($prop->default_value) {
+            return $prop->default_value;
+        } else {
+            die $self->command . "property lsf_resource should have a default value if it is a parameter.";
+        }
+    } else {
+        return '';
+    }
+}
+
+sub _get_ptero_lsf_parameters {
+    my $self = shift;
+    my $command_class = $self->command;
+    return Genome::Utility::LSFResourceParser::parse_lsf_params(
+        $self->_get_lsf_resources_from_command
+    )
 }
 
 
