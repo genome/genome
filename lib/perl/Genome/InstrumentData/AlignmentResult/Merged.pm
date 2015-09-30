@@ -370,7 +370,8 @@ sub collect_individual_alignments {
                 my $lookup_hash = Genome::InstrumentData::AlignmentResult->calculate_lookup_hash_from_arguments(%all_params); 
                 my @alignments  = Genome::InstrumentData::AlignmentResult->get(lookup_hash => $lookup_hash);
                 unless (@alignments and @alignments == 1) {
-                    die $self->error_message('Only 1 alignment is expected, but got '.scalar @alignments);
+                    die $self->error_message(sprintf("Only 1 alignment is expected, but got %d for instrument data %s of merged result %s",
+                        scalar @alignments, $i->id, $self->id));
                 }
                 $alignment = shift @alignments;
             }
