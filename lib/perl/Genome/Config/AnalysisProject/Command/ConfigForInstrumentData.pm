@@ -6,7 +6,8 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::Command::ConfigForInstrumentData {
-    is => ['Genome::Command::WithColor'],
+    is => ['Command::V2'],
+    roles => ['Genome::Role::CommandWithColor'],
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',

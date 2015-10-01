@@ -14,7 +14,8 @@ use Regexp::Common;
 use Try::Tiny qw(try catch);
 
 class Genome::Model::Build::Command::Start {
-    is => 'Genome::Command::WithColor',
+    is => 'Command::V2',
+    roles => 'Genome::Role::CommandWithColor',
     doc => "Create and start a build.",
     has => [
         models => {

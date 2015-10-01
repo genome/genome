@@ -9,7 +9,8 @@ require RT::Client::REST::Ticket;
 require WWW::Mechanize;
 
 class Genome::Model::Command::Admin::FailedModelTicketBase {
-    is => 'Genome::Command::WithColor',
+    is => 'Command::V2',
+    roles => 'Genome::Role::CommandWithColor',
     is_abstract => 1,
     doc => 'Base class for admin commands working with RT',
 };

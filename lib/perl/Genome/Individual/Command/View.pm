@@ -10,7 +10,8 @@ use Genome::Utility::List qw(in);
 
 class Genome::Individual::Command::View {
     doc => "Display basic information about an individual.",
-    is => ['Genome::Command::Viewer', 'Genome::Command::WithColor'],
+    is => ['Genome::Command::Viewer'],
+    roles => ['Genome::Role::CommandWithColor'],
     has => [
         individual => {
             is => 'Genome::Individual',

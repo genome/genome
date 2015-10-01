@@ -17,7 +17,8 @@ use Ptero::Proxy::Workflow::Execution qw();
 my $INDENTATION_STR = '. ';
 
 class Genome::Command::PteroWorkflowMixin {
-    is => ['Genome::Command::WithColor'],
+    is => ['Command::V2'],
+    roles => ['Genome::Role::CommandWithColor'],
     has => [
         summary_threshold => {
             is => 'Int',
