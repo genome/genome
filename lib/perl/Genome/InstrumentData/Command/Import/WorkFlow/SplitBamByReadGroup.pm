@@ -25,13 +25,13 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
     ],
     has_optional_transient => [
         headers => { is => 'Array', },
-        read_groups_and_headers => { is => 'Hash', default => {} },
+        read_groups_and_tags => { is => 'Hash', default => {} },
         _read_group_fhs => { is => 'HASH', default => {} },
     ],
     has_optional_calculated => [
         read_group_ids => {
-            calculate_from => [qw/ read_groups_and_headers /],
-            calculate => q( return keys %$read_groups_and_headers ), 
+            calculate_from => [qw/ read_groups_and_tags /],
+            calculate => q( return keys %$read_groups_and_tags ), 
         },
     ],
 };
@@ -63,14 +63,11 @@ sub _set_headers_and_read_groups {
     return if not $headers;
     
     my $read_group_headers = delete $headers->{'@RG'};
-    my (@read_group_ids, $read_groups_and_headers);
-    if ( $read_group_headers ) {
-        $read_groups_and_headers = $helpers->read_groups_from_headers($read_group_headers);
-        return if not $read_groups_and_headers;
-    }
+    my $read_groups_and_tags = $helpers->read_groups_and_tags_from_headers($read_group_headers);
+    return if not $read_groups_and_tags;
 
     $self->headers($headers);
-    $self->read_groups_and_headers($read_groups_and_headers);
+    $self->read_groups_and_tags($read_groups_and_tags);
 
     return 1;
 }
@@ -215,14 +212,16 @@ sub _write_headers_for_read_group {
 
     $fh->print( $headers_as_string );
 
-    my $read_groups_and_headers = $self->read_groups_and_headers;
-    unless(exists $read_groups_and_headers->{$read_group_id}) {
-        $read_groups_and_headers->{$read_group_id} = join("\t", 'CN:NA',);
+    my $read_groups_and_tags = $self->read_groups_and_tags;
+    unless(exists $read_groups_and_tags->{$read_group_id}) {
+        $read_groups_and_tags->{$read_group_id} = { ID => 'unknown', CN => 'NA', };
     }
 
-    $fh->print(
-        join("\t", '@RG', 'ID:'.$read_group_id, $read_groups_and_headers->{$read_group_id})."\n"
-    );
+    my %rg_tags = %{$read_groups_and_tags->{$read_group_id}};
+    my @tag_names = sort keys %rg_tags;
+    splice(@tag_names, (List::MoreUtils::firstidx { $_ eq 'ID' } @tag_names), 1);
+    unshift @tag_names, 'ID';
+    $fh->print( join( "\t", '@RG', map { join(':', $_, $rg_tags{$_}) } @tag_names)."\n" );
 
     return 1;
 }
