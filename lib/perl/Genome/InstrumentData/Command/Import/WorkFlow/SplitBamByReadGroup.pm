@@ -7,6 +7,7 @@ use Genome;
 
 require IO::File;
 require List::MoreUtils;
+use Params::Validate ':types';
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup { 
     is => 'Command::V2',
@@ -68,6 +69,11 @@ sub _set_headers_and_read_groups {
 
     # Add unknown rg
     $read_groups_and_tags->{unknown} = { ID => 'unkown', CN => 'NA', };
+    
+    # Add instdata uuid for each rg
+    for my $rg_tags ( values %$read_groups_and_tags ) {
+        $rg_tags->{ID} = UR::Object::Type->autogenerate_new_object_id_uuid;
+    }
 
     $self->headers($headers);
     $self->read_groups_and_tags($read_groups_and_tags);
@@ -92,10 +98,7 @@ sub _write_reads {
     my $previous_read_group_id;
     while ( my $line = $bam_fh->getline ) {
         my @tokens = split(/\t/, $line);
-
-        $line =~ m/\sRG:Z:(.*?)\s/;
-        my $read_group_id = $1;
-        $read_group_id //= 'unknown';
+        my $read_group_id = $self->_update_read_group_for_sam_tokens(\@tokens);
 
         unless($previous_tokens) {
             $previous_tokens = \@tokens;
@@ -128,6 +131,27 @@ sub _write_reads {
 
     $self->debug_message('Write reads...done');
     return 1;
+}
+
+sub _update_read_group_for_sam_tokens {
+    my ($self, $tokens) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => ARRAYREF},);
+
+    my $rg_tag_idx = List::MoreUtils::firstidx { $_ =~ m/^RG:/ } @$tokens;
+    my $rg_tag;
+    if ( defined $rg_tag_idx ) {
+        $rg_tag = splice(@$tokens, $rg_tag_idx, 1);
+    }
+    else {
+        $rg_tag = 'RG:Z:unknown';
+        $rg_tag_idx = $#$tokens;
+    }
+
+    my @rg_tokens = split(':', $rg_tag);
+    my $new_rg_id = $self->read_groups_and_tags->{$rg_tokens[2]}->{ID};
+    $rg_tag = 'RG:Z:'.$new_rg_id;
+    splice(@$tokens, $rg_tag_idx, 0, $rg_tag); # Add RG tag back
+
+    return $rg_tokens[2]; # return old rg id to reference the headers and fhs
 }
 
 sub _verify_read_count {
