@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use IO::File;
 
 class Genome::Disk::Command::Volume::List {
     is => 'Genome::Object::Command::List',
@@ -33,19 +34,33 @@ sub execute {
     return $self->$super_execute(@_);
 }
 
-my %cached_is_mounted;
 sub make_is_mounted_wrapper {
     my $original_sub = shift;
 
     return sub {
         my $volume = shift;
 
-        if ($cached_is_mounted{$volume->id} //= $volume->is_mounted) {
+        if (is_volume_mounted($volume)) {
             return $volume->$original_sub(@_);
         } else {
             return '<unmounted>';
         }
     };
+}
+
+my %cached_is_mounted;
+sub is_volume_mounted {
+    my $volume = shift;
+
+    unless (%cached_is_mounted) {
+        my $mounts = IO::File->new('/proc/mounts');
+        while(my $line = $mounts->getline) {
+            my(undef, $mount_path) = split(/\s/, $line);
+            $cached_is_mounted{$mount_path} = 1;
+        }
+    }
+
+    return $cached_is_mounted{$volume->mount_path};
 }
 
 1;
