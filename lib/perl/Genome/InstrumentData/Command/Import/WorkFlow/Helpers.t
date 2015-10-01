@@ -54,7 +54,7 @@ is_deeply(
     'headers',
 );
 
-ok(!eval{$helpers->read_groups_from_headers;}, 'failed to get read groups from headers w/o headers');
+throws_ok(sub{ $helpers->read_groups_from_headers; }, qr//, 'failed to get read groups from headers w/o headers');
 my $read_groups_from_headers = $helpers->read_groups_from_headers($headers->{'@RG'});
 is_deeply(
     $read_groups_from_headers, 
