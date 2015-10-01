@@ -11,6 +11,7 @@ require File::Copy;
 require Filesys::Df;
 require List::MoreUtils;
 require LWP::Simple;
+use Params::Validate ':types';
 use Regexp::Common;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Helpers { 
@@ -203,28 +204,28 @@ sub load_headers_from_bam {
     return $headers;
 }
  
-sub read_groups_from_headers {
-    my ($self, $rg_headers) = @_;
+sub read_groups_and_tags_from_headers {
+    my ($self, $rg_headers) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => ARRAYREF});
     $self->debug_message('Read groups from headers...');
 
     Carp::confess('No read group headers given to read groups from headers!') if not $rg_headers;
     Carp::confess('Invalid read group headers given to read groups from headers! '.Data::Dumper::Dumper($rg_headers)) unless ref($rg_headers) eq 'ARRAY';
 
-    my %read_groups_from_headers;
-    return \%read_groups_from_headers if not @$rg_headers;
+    my %read_groups_and_tags;
+    return \%read_groups_and_tags if not @$rg_headers;
 
     for my $rg_header ( @$rg_headers ) {
         my %tags = map { split(':', $_, 2) } split(/\t/, $rg_header);
-        my $rg_id = delete $tags{ID};
+        my $rg_id = $tags{ID};
         if ( not defined $rg_id ) {
             $self->error_message("No ID tag in read group header! \@RG\t$rg_header");
             return;
         }
-        $read_groups_from_headers{ $rg_id } = join("\t", map { $_.':'.$tags{$_} } sort keys %tags);
+        $read_groups_and_tags{ $rg_id } = \%tags;
     }
 
     $self->debug_message('Read groups from headers...done');
-    return \%read_groups_from_headers;
+    return \%read_groups_and_tags;
 }
 
 sub load_read_groups_from_bam {
@@ -234,11 +235,11 @@ sub load_read_groups_from_bam {
     my $headers = $self->load_headers_from_bam($bam_path);
     return if not $headers;
 
-    my $read_groups_from_headers = $self->read_groups_from_headers($headers->{'@RG'} || []);
-    return if not $read_groups_from_headers;
+    my $read_groups_and_tags = $self->read_groups_and_tags_from_headers($headers->{'@RG'} || []);
+    return if not $read_groups_and_tags;
 
     $self->debug_message('Load read groups from bam...done');
-    return [ sort keys %$read_groups_from_headers ];
+    return [ sort keys %$read_groups_and_tags ];
 }
 
 sub headers_to_string {
