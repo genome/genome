@@ -66,6 +66,9 @@ sub _set_headers_and_read_groups {
     my $read_groups_and_tags = $helpers->read_groups_and_tags_from_headers($read_group_headers);
     return if not $read_groups_and_tags;
 
+    # Add unknown rg
+    $read_groups_and_tags->{unknown} = { ID => 'unkown', CN => 'NA', };
+
     $self->headers($headers);
     $self->read_groups_and_tags($read_groups_and_tags);
 
@@ -213,10 +216,6 @@ sub _write_headers_for_read_group {
     $fh->print( $headers_as_string );
 
     my $read_groups_and_tags = $self->read_groups_and_tags;
-    unless(exists $read_groups_and_tags->{$read_group_id}) {
-        $read_groups_and_tags->{$read_group_id} = { ID => 'unknown', CN => 'NA', };
-    }
-
     my %rg_tags = %{$read_groups_and_tags->{$read_group_id}};
     my @tag_names = sort keys %rg_tags;
     splice(@tag_names, (List::MoreUtils::firstidx { $_ eq 'ID' } @tag_names), 1);
