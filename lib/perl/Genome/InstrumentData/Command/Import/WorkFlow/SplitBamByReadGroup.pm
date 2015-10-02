@@ -69,9 +69,8 @@ sub _set_headers_and_read_groups {
         my $rg_id = delete $rg_tags->{ID};
         $old_and_new_read_group_ids{$rg_id} = {
             paired => UR::Object::Type->autogenerate_new_object_id_uuid,
-            #singleton => UR::Object::Type->autogenerate_new_object_id_uuid,
+            singleton => UR::Object::Type->autogenerate_new_object_id_uuid,
         };
-        $old_and_new_read_group_ids{$rg_id}->{singleton} = $old_and_new_read_group_ids{$rg_id}->{paired};
     }
     $self->old_and_new_read_group_ids(\%old_and_new_read_group_ids);
 
