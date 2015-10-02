@@ -13,6 +13,7 @@ use above "Genome";
 
 require Genome::Utility::Test;
 require File::Compare;
+require File::Spec;
 require File::Temp;
 use Test::More;
 
@@ -26,7 +27,7 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam-rg-multi/v4');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->join('bam-rg-multi', 'v4'));
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my @bams = (
     [qw/ 2883581797.paired.bam 1 34 100 /],
@@ -34,13 +35,13 @@ my @bams = (
 );
 for my $bam ( @bams ) {
     my $bam_base_name = $bam->[0];
-    my $bam_path = $tmp_dir.'/'.$bam_base_name;
-    Genome::Sys->create_symlink($test_dir.'/'.$bam_base_name, $bam_path);
-    Genome::Sys->create_symlink($test_dir.'/'.$bam_base_name.'.flagstat', $bam_path.'.flagstat');
+    my $bam_path = File::Spec->join($tmp_dir, $bam_base_name);
+    Genome::Sys->create_symlink(File::Spec->join($test_dir, $bam_base_name), $bam_path);
+    Genome::Sys->create_symlink(File::Spec->join($test_dir, $bam_base_name.'.flagstat'), $bam_path.'.flagstat');
     ok(-s $bam_path, 'linked bam path') or die;
 }
 
-my $source_bam = $test_dir.'/input.rg-multi.bam';
+my $source_bam = File::Spec->join($test_dir, 'input.rg-multi.bam');
 my $md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($source_bam.'.md5');
 ok($md5, 'load source md5');
 
@@ -48,7 +49,7 @@ ok($md5, 'load source md5');
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     library => $library,
     analysis_project => $analysis_project,
-    bam_paths => [ map { $tmp_dir.'/'.$_->[0] } @bams ],
+    bam_paths => [ map { File::Spec->join($tmp_dir, $_->[0]) } @bams ],
     instrument_data_properties => { },
     source_md5s => [ $md5 ],
 );
@@ -100,10 +101,10 @@ for my $bam_data (@bams) {
 
     my $bam_path = $instrument_data->bam_path;
     ok(-s $bam_path, 'bam path exists');
-    is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
+    is($bam_path, File::Spec->join($instrument_data->data_directory, 'all_sequences.bam'), 'bam path correctly named');
     is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-    is(File::Compare::compare($bam_path, $test_dir.'/'.$bam_base_name), 0, 'bam matches');
-    is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/'.$bam_base_name.'.flagstat'), 0, 'flagstat matches');
+    is(File::Compare::compare($bam_path, File::Spec->join($test_dir, $bam_base_name)), 0, 'bam matches');
+    is(File::Compare::compare($bam_path.'.flagstat', File::Spec->join($test_dir, $bam_base_name.'.flagstat')), 0, 'flagstat matches');
 
     my $allocation = $instrument_data->disk_allocation;
     ok($allocation, 'got allocation');
@@ -114,7 +115,7 @@ for my $bam_data (@bams) {
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     library => $library,
     analysis_project => $analysis_project,
-    bam_paths => [ map { $tmp_dir.'/'.$_->[0] } @bams ],
+    bam_paths => [ map { File::Spec->join($tmp_dir, $_->[0]) } @bams ],
     instrument_data_properties => {
         original_data_path => $source_bam, 
         sequencing_platform => 'solexa',
