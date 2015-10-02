@@ -76,6 +76,8 @@ sub _interpret_entry {
                 next TRANSCRIPT;
             }
 
+            next TRANSCRIPT if position_out_of_bounds($position, $full_wildtype_sequence);
+
             my ($wildtype_subsequence, $mutant_subsequence, $variant_id);
             if (grep {$_ eq 'frameshift_variant'} @consequences) {
                 $wildtype_subsequence = $self->get_frameshift_wildtype_subsequence($position, $full_wildtype_sequence, $entry);
@@ -200,6 +202,13 @@ sub distance_from_end {
     my $sequence = shift;
 
     return length($sequence) - $position - 1;
+}
+
+sub position_out_of_bounds {
+    my $position = shift;
+    my $sequence = shift;
+
+    return ($position > length($sequence) - 1);
 }
 
 
