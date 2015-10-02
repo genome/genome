@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-use YAML::Syck;
+use YAML::Syck qw(DumpFile);
 
 class Genome::Qc::Command::BuildMetrics {
     is => 'Command::V2',

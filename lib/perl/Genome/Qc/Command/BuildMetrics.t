@@ -12,7 +12,7 @@ use warnings;
 use above "Genome";
 
 use Test::More;
-use YAML::Syck;
+use YAML::Syck qw(LoadFile);
 
 use Genome::Utility::Test qw(compare_ok);
 
@@ -52,16 +52,11 @@ my $test_dir = __FILE__.'.d';
 my $expected_output_file = $test_dir .'/expected_build_metrics.yml';
 my $test_output_file = Genome::Sys->create_temp_file_path();
 
-# TSV expected output IDs
-#my $expected_instrument_data_id = '5dacb1b2284a4b71afdf9680d4ef3691';
-#my $expected_build_id = 'c10605dbabfc49229838cc02fbd87e98';
-
 # Get expected IDs from YAML file.
 my @expected_metrics = LoadFile($expected_output_file);
 my $expected_metrics_hash = $expected_metrics[0];
 my $expected_build_id = $expected_metrics_hash->{'build_id'};
 my $expected_instrument_data_id = $expected_metrics_hash->{'instrument_data_ids'};
-
 
 my $test_model = Genome::Test::Factory::Model::SomaticValidation->setup_object();
 my $test_build = Genome::Test::Factory::Build->setup_object(
