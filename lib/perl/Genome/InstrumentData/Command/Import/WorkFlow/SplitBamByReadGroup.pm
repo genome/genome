@@ -39,7 +39,7 @@ sub execute {
     my $set_headers_and_read_groups = $self->_set_headers_and_read_groups;
     return if not $set_headers_and_read_groups;
 
-    my $write_reads_ok = $self->_write_reads();
+    my $write_reads_ok = $self->_process_reads;
     return if not $write_reads_ok;
 
     my $verify_read_count_ok = $self->_verify_read_count;
@@ -81,8 +81,7 @@ sub _set_headers_and_read_groups {
     return 1;
 }
 
-
-sub _write_reads {
+sub _process_reads {
     my ($self) = @_;
     $self->debug_message('Write reads...');
 
