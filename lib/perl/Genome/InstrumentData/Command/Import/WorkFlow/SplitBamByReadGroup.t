@@ -47,7 +47,7 @@ is(@output_bam_paths, @bam_basenames, '4 read group bam paths');
 for my $basename ( @bam_basenames ) {
     my $output_bam_path = File::Spec::->join($tmp_dir, 'input.rg-multi.'.$basename.'.bam');
     ok((List::MoreUtils::any { $_ eq $output_bam_path } @output_bam_paths), 'expected bam in output bams');
-    ok(-s $output_bam_path, 'expectred bam path exists');
+    ok(-s $output_bam_path, 'expected bam path exists');
     my $expected_bam_path = File::Spec->join($test_dir, 'split-by-rg.'.$basename.'.bam');
     is(File::Compare::compare($output_bam_path, $expected_bam_path), 0, "expected $basename bam path matches");
 }
