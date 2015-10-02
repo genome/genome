@@ -115,22 +115,30 @@ sub _write_reads {
         }
 
         if($tokens[0] eq $previous_tokens->[0] and $previous_read_group_id eq $read_group_id) {
-            my $fh = $self->_fh_for_read_group_and_pairedness($read_group_id, 'paired');
-            $fh->print( join("\t", @$previous_tokens) );
-            $fh->print( join("\t", @tokens) );
+            my $fh = $self->_write_reads_based_on_read_group_and_pairedness(
+                rg_id => $read_group_id,
+                pairedness => 'paired',
+                reads => [ $previous_tokens, \@tokens ],
+            );
             undef $previous_tokens;
             undef $previous_read_group_id;
         } else {
-            my $fh = $self->_fh_for_read_group_and_pairedness($previous_read_group_id, 'singleton');
-            $fh->print( join("\t", @$previous_tokens) );
+            my $fh = $self->_write_reads_based_on_read_group_and_pairedness(
+                rg_id => $previous_read_group_id,
+                pairedness => 'singleton',
+                reads => [ $previous_tokens, ],
+            );
             $previous_tokens = \@tokens;
             $previous_read_group_id = $read_group_id;
         }
     }
 
     if($previous_tokens) {
-        my $fh = $self->_fh_for_read_group_and_pairedness($previous_read_group_id, 'singleton');
-        $fh->print( join("\t", @$previous_tokens) );
+        my $fh = $self->_write_reads_based_on_read_group_and_pairedness(
+            rg_id => $previous_read_group_id,
+            pairedness => 'singleton',
+            reads => [ $previous_tokens, ],
+        );
     }
 
     for my $fh ( $bam_fh, values %{$self->_read_group_fhs} ) {
@@ -201,17 +209,21 @@ sub _verify_read_count {
     return 1;
 }
 
-sub _fh_for_read_group_and_pairedness {
-    my ($self, $read_group, $pairedness) = @_;
+sub _write_reads_based_on_read_group_and_pairedness {
+    my ($self, %params) = @_;
 
     my $fhs = $self->_read_group_fhs;
-    my $key = join('*', $read_group, $pairedness);
+    my $key = join('*', $params{rg_id}, $params{pairedness});
     unless(exists $fhs->{$key}) {
-        $fhs->{$key} = $self->_open_fh_for_read_group_and_pairedness($read_group, $pairedness);
+        $fhs->{$key} = $self->_open_fh_for_read_group_and_pairedness($params{rg_id}, $params{pairedness});
         $self->_read_group_fhs($fhs);
     }
 
-    return $fhs->{$key};
+    for my $read_tokens ( @{$params{reads}} ) {
+        $fhs->{$key}->print( join("\t", @$read_tokens) );
+    }
+
+    return 1;
 }
 
 sub _open_fh_for_read_group_and_pairedness {
