@@ -106,7 +106,7 @@ sub _write_reads {
     my $previous_read_group_id;
     while ( my $line = $bam_fh->getline ) {
         my @tokens = split(/\t/, $line);
-        my $read_group_id = $self->_update_read_group_for_sam_tokens(\@tokens);
+        my $read_group_id = $self->_get_rg_id_from_sam_tokens(\@tokens);
 
         unless($previous_tokens) {
             $previous_tokens = \@tokens;
@@ -149,25 +149,17 @@ sub _write_reads {
     return 1;
 }
 
-sub _update_read_group_for_sam_tokens {
-    my ($self, $tokens) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => ARRAYREF},);
+sub _get_rg_id_from_sam_tokens {
+    my ($self, $tokens) = @_;
 
     my $rg_tag_idx = List::MoreUtils::firstidx { $_ =~ m/^RG:/ } @$tokens;
     my $rg_tag;
     if ( defined $rg_tag_idx ) {
-        $rg_tag = splice(@$tokens, $rg_tag_idx, 1);
+        return (split(':', $tokens->[$rg_tag_idx]))[2];
     }
     else {
-        $rg_tag = 'RG:Z:unknown';
-        $rg_tag_idx = $#$tokens;
+        return 'unknown';
     }
-
-    my @rg_tokens = split(':', $rg_tag);
-    my $new_rg_id = $self->old_and_new_read_group_ids->{$rg_tokens[2]}->{paired}; #FIXME
-    $rg_tag = 'RG:Z:'.$new_rg_id;
-    splice(@$tokens, $rg_tag_idx, 0, $rg_tag); # Add RG tag back
-
-    return $rg_tokens[2]; # return old rg id to reference the headers and fhs
 }
 
 sub _verify_read_count {
@@ -220,8 +212,30 @@ sub _write_reads_based_on_read_group_and_pairedness {
     }
 
     for my $read_tokens ( @{$params{reads}} ) {
+        $self->_update_read_group_for_sam_tokens_based_on_paired_endness($read_tokens, $params{pairedness});
         $fhs->{$key}->print( join("\t", @$read_tokens) );
     }
+
+    return 1;
+}
+
+sub _update_read_group_for_sam_tokens_based_on_paired_endness {
+    my ($self, $tokens, $pairedness) = @_;
+
+    my $rg_tag_idx = List::MoreUtils::firstidx { $_ =~ m/^RG:/ } @$tokens;
+    my $rg_tag;
+    if ( defined $rg_tag_idx ) {
+        $rg_tag = splice(@$tokens, $rg_tag_idx, 1);
+    }
+    else {
+        $rg_tag = 'RG:Z:unknown';
+        $rg_tag_idx = $#$tokens;
+    }
+
+    my @rg_tokens = split(':', $rg_tag);
+    my $new_rg_id = $self->old_and_new_read_group_ids->{$rg_tokens[2]}->{$pairedness};
+    $rg_tag = 'RG:Z:'.$new_rg_id;
+    splice(@$tokens, $rg_tag_idx, 0, $rg_tag); # Add RG tag back
 
     return 1;
 }
