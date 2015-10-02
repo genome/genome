@@ -30,12 +30,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
         old_and_new_read_group_ids => { is => 'HASH', default => {}, },
         _read_group_fhs => { is => 'HASH', default => {} },
     ],
-    has_optional_calculated => [
-        read_group_ids => {
-            calculate_from => [qw/ read_groups_and_tags /],
-            calculate => q( return keys %$read_groups_and_tags ), 
-        },
-    ],
 };
 
 sub execute {
@@ -44,8 +38,6 @@ sub execute {
 
     my $set_headers_and_read_groups = $self->_set_headers_and_read_groups;
     return if not $set_headers_and_read_groups;
-
-    my @read_group_ids = $self->read_group_ids;
 
     my $write_reads_ok = $self->_write_reads();
     return if not $write_reads_ok;
