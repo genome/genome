@@ -26,7 +26,8 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
     ],
     has_optional_transient => [
         headers => { is => 'Array', },
-        read_groups_and_tags => { is => 'Hash', default => {} },
+        read_groups_and_tags => { is => 'HASH', default => {}, },
+        old_and_new_read_group_ids => { is => 'HASH', default => {}, },
         _read_group_fhs => { is => 'HASH', default => {} },
     ],
     has_optional_calculated => [
@@ -68,12 +69,19 @@ sub _set_headers_and_read_groups {
     return if not $read_groups_and_tags;
 
     # Add unknown rg
-    $read_groups_and_tags->{unknown} = { ID => 'unkown', CN => 'NA', };
+    $read_groups_and_tags->{unknown} = { ID => 'unknown', CN => 'NA', };
     
     # Add instdata uuid for each rg
+    my %old_and_new_read_group_ids;
     for my $rg_tags ( values %$read_groups_and_tags ) {
-        $rg_tags->{ID} = UR::Object::Type->autogenerate_new_object_id_uuid;
+        my $rg_id = delete $rg_tags->{ID};
+        $old_and_new_read_group_ids{$rg_id} = {
+            paired => UR::Object::Type->autogenerate_new_object_id_uuid,
+            #singleton => UR::Object::Type->autogenerate_new_object_id_uuid,
+        };
+        $old_and_new_read_group_ids{$rg_id}->{singleton} = $old_and_new_read_group_ids{$rg_id}->{paired};
     }
+    $self->old_and_new_read_group_ids(\%old_and_new_read_group_ids);
 
     $self->headers($headers);
     $self->read_groups_and_tags($read_groups_and_tags);
@@ -147,7 +155,7 @@ sub _update_read_group_for_sam_tokens {
     }
 
     my @rg_tokens = split(':', $rg_tag);
-    my $new_rg_id = $self->read_groups_and_tags->{$rg_tokens[2]}->{ID};
+    my $new_rg_id = $self->old_and_new_read_group_ids->{$rg_tokens[2]}->{paired}; #FIXME
     $rg_tag = 'RG:Z:'.$new_rg_id;
     splice(@$tokens, $rg_tag_idx, 0, $rg_tag); # Add RG tag back
 
@@ -218,7 +226,7 @@ sub _open_fh_for_read_group_and_pairedness {
         return;
     }
 
-    $self->_write_headers_for_read_group($fh, $read_group_id);
+    $self->_write_headers_for_read_group($fh, $read_group_id, $pairedness);
 
     my @output_bam_paths = $self->output_bam_paths;
     push @output_bam_paths, $read_group_bam_path;
@@ -228,7 +236,7 @@ sub _open_fh_for_read_group_and_pairedness {
 }
 
 sub _write_headers_for_read_group {
-    my ($self, $fh, $read_group_id) = @_;
+    my ($self, $fh, $read_group_id, $pairedness) = @_;
 
     my $headers = $self->headers;
     Carp::confess('No headers to write to read group bams!') if not $headers;
@@ -242,9 +250,13 @@ sub _write_headers_for_read_group {
     my $read_groups_and_tags = $self->read_groups_and_tags;
     my %rg_tags = %{$read_groups_and_tags->{$read_group_id}};
     my @tag_names = sort keys %rg_tags;
-    splice(@tag_names, (List::MoreUtils::firstidx { $_ eq 'ID' } @tag_names), 1);
-    unshift @tag_names, 'ID';
-    $fh->print( join( "\t", '@RG', map { join(':', $_, $rg_tags{$_}) } @tag_names)."\n" );
+    $fh->print( 
+        join(
+            "\t", '@RG',
+            'ID:'.$self->old_and_new_read_group_ids->{$read_group_id}->{$pairedness},
+            map { join(':', $_, $rg_tags{$_}) } @tag_names
+        )."\n"
+    );
 
     return 1;
 }
