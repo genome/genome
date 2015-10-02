@@ -85,10 +85,10 @@ is(@instrument_data_ids, 2, "found instrument data for md5 $source_md5");
 for my $bam_data ( @bams_info ) {
     my ($bam_base_name, $is_paired_end, $read_count, $read_length, $rg_id) = @$bam_data;
     my $instrument_data = Genome::InstrumentData::Imported->get(
-        id => \@instrument_data_ids,
+        id => $rg_id,
         is_paired_end => $is_paired_end,
     );
-    ok($instrument_data, "found instrument data for is_paired_end $is_paired_end") or die 'cannot continue without instrument data';
+    ok($instrument_data, "found instrument data with rg_id for id $rg_id is_paired_end $is_paired_end") or die 'cannot continue without instrument data';
     is($instrument_data->subset_name, 'unknown', 'subset_name correctly set');
     is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 

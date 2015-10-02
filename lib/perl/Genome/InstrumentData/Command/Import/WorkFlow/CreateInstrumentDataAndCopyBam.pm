@@ -144,24 +144,21 @@ sub _create_instrument_data_for_bam_path {
     $self->debug_message('Bam path: '.$bam_path);
 
     my $read_group_ids_from_bam = $self->helpers->load_read_groups_from_bam($bam_path);
-    return if not $read_group_ids_from_bam; # should only be one or 0
+    return if not $read_group_ids_from_bam;
+    if ( not @$read_group_ids_from_bam ) {
+        die $self->error_message('No read groups in bam!');
+    }
+    $self->debug_message("Read groups in bam: @$read_group_ids_from_bam");
     if ( @$read_group_ids_from_bam > 1 ) {
         $self->error_message('More than one read group in bam! '.$bam_path);
         return;
     }
 
     my $properties = $self->instrument_data_properties;
-
-    if ( @$read_group_ids_from_bam ) {
-        $self->debug_message("Read groups in bam: @$read_group_ids_from_bam");
-        if ( @$read_group_ids_from_bam > 1 ) {
-            $self->error_message('Multiple read groups in bam! '.$bam_path);
-            return;
-        }
-        $properties->{segment_id} = $read_group_ids_from_bam->[0];
-    }
+    $properties->{segment_id} = $read_group_ids_from_bam->[0];
 
     my $instrument_data = Genome::InstrumentData::Imported->create(
+        id => $read_group_ids_from_bam->[0],
         library => $self->library,
         subset_name => $self->instrument_data_subset_name,
         sequencing_platform => 'solexa',
