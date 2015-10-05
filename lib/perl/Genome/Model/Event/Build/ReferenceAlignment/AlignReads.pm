@@ -484,7 +484,7 @@ sub _process_and_link_alignments_to_build {
         return 0;
     }
 
-    $self->debug_message("Generating alignments...");
+    $self->debug_message("Generating alignment metrics...");
     $self->generate_metric($self->metrics_for_class);
 
     $self->debug_message("Verifying...");
