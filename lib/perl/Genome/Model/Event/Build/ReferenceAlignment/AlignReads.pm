@@ -484,21 +484,6 @@ sub _process_and_link_alignments_to_build {
         return 0;
     }
 
-    for my $alignment (@alignments) {
-        my $link = $alignment->user(user => $build, label => 'uses');
-        if ($link) {
-            $self->debug_message("Linked alignment " . $alignment->id . " to the build");
-        }
-        else {
-            $self->error_message(
-                "Failed to link the build to the alignment " 
-                . $alignment->__display_name__ 
-                . "!"
-            );
-            # TODO: die, but not for now
-        }
-    }
-
     $self->debug_message("Generating alignments...");
     $self->generate_metric($self->metrics_for_class);
 
