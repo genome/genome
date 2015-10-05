@@ -84,8 +84,8 @@ sub remove_intemediate_results {
         $iar_user->active(0);
 
         if($result_users) {
-            for my $value (values %$result_users) {
-                my @using = $iar->users(user => $value, label => ['created', 'shortcut', 'sponsor']);
+            while(my ($label, $user) = each %$result_users) {
+                my @using = $iar->users(user => $user, label => $label);
                 map $_->active(0), @using;
             }
         }
