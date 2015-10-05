@@ -16,14 +16,12 @@ use Genome::Test::Factory::Build;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Sub::Override;
+use Cwd qw(abs_path);
 
 my $pkg = 'Genome::Qc::Tool::Picard::CalculateHsMetrics';
 use_ok($pkg);
 
-my $data_dir = __FILE__.".d";
-
-my $output_file = File::Spec->join($data_dir, 'output_file.txt');
-my $temp_file = Genome::Sys->create_temp_file_path;
+my $data_dir = abs_path(__FILE__.".d");
 
 my $reference_sequence_model = Genome::Test::Factory::Model::ReferenceSequence->setup_object();
 my $reference_sequence = Genome::Test::Factory::Build->setup_object(
@@ -53,19 +51,43 @@ my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->s
     instrument_data => $instrument_data,
 );
 
-my $tool = $pkg->create(
-    gmt_params => {
-        bait_intervals => $temp_file,
-        input_file => $temp_file,
-        output_file => $output_file,
-        target_intervals => $temp_file,
-        temp_directory => $temp_file,
-        use_version => 1.123,
+my $bam_file = File::Spec->join($data_dir, 'speedseq_merged.bam');
+my $bait_intervals = File::Spec->join($data_dir, 'bait.intervals');
+my $target_intervals = File::Spec->join($data_dir, 'target.intervals');
+my $temp_file = Genome::Sys->create_temp_file_path;
+
+use Genome::Qc::Config;
+my $override_config = Sub::Override->new(
+    'Genome::Qc::Config::get_commands_for_alignment_result',
+    sub {
+        return {
+            picard_calculate_hs_metrics => {
+                class => 'Genome::Qc::Tool::Picard::CalculateHsMetrics',
+                params => {
+                    input_file => $bam_file,
+                    bait_intervals => $bait_intervals, #region_of_interest_set
+                    target_intervals => $target_intervals, #target_region_set
+                    temp_directory => $temp_file,
+                    use_version => 1.123,
+                    metric_accumulation_level => ['SAMPLE'],
+                },
+            }
+        };
     },
-    alignment_result => $alignment_result,
 );
+
+my $command = Genome::Qc::Run->create(
+    config_name => 'testing-qc-run',
+    alignment_result => $alignment_result,
+    %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
+);
+ok($command->execute, "Command executes ok");
+
+my %tools = $command->output_result->_tools;
+my ($tool) = values %tools;
 ok($tool->isa($pkg), 'Tool created successfully');
 
+my $output = $tool->qc_metrics_file;
 my @expected_cmd_line =(
     'java',
     '-Xmx4096m',
@@ -73,31 +95,119 @@ my @expected_cmd_line =(
     '-cp',
     '/usr/share/java/ant.jar:/usr/share/java/picard-tools1.123/CalculateHsMetrics.jar',
     'picard.analysis.directed.CalculateHsMetrics',
-    sprintf('BAIT_INTERVALS=%s', $temp_file),
-    sprintf('INPUT=%s', $temp_file),
+    sprintf('BAIT_INTERVALS=%s', $bait_intervals),
+    sprintf('INPUT=%s', $bam_file),
     'MAX_RECORDS_IN_RAM=500000',
-    sprintf('OUTPUT=%s', $output_file),
-    sprintf('TARGET_INTERVALS=%s', $temp_file),
+    'METRIC_ACCUMULATION_LEVEL=SAMPLE',
+    sprintf('OUTPUT=%s', $output),
+    sprintf('TARGET_INTERVALS=%s', $target_intervals),
     sprintf('TMP_DIR=%s', $temp_file),
     'VALIDATION_STRINGENCY=SILENT',
 );
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
 
 my %expected_metrics = (
-    'pct_bases_greater_than_2x_coverage' => 0,
-    'pct_bases_greater_than_10x_coverage' => 0,
-    'pct_bases_greater_than_20x_coverage' => 0,
-    'pct_bases_greater_than_30x_coverage' => 0,
-    'pct_bases_greater_than_40x_coverage' => 0,
-    'pct_bases_greater_than_50x_coverage' => 0,
-    'pct_bases_greater_than_100x_coverage' => 0,
+    'AT_DROPOUT' => '0',
+    'BAIT_DESIGN_EFFICIENCY' => '0.669528',
+    'BAIT_SET' => 'bait',
+    'BAIT_TERRITORY' => '466',
+    'FOLD_80_BASE_PENALTY' => '?',
+    'FOLD_ENRICHMENT' => '9269.481222',
+    'GC_DROPOUT' => '0',
+    'GENOME_SIZE' => '59373566',
+    'HS_LIBRARY_SIZE' => '',
+    'HS_PENALTY_100X' => '0',
+    'HS_PENALTY_10X' => '0',
+    'HS_PENALTY_20X' => '0',
+    'HS_PENALTY_30X' => '0',
+    'HS_PENALTY_40X' => '0',
+    'HS_PENALTY_50X' => '0',
+    'LIBRARY' => '',
+    'MEAN_BAIT_COVERAGE' => '0.33691',
+    'MEAN_TARGET_COVERAGE' => '?',
+    'NEAR_BAIT_BASES' => '161',
+    'OFF_BAIT_BASES' => '1840',
+    'ON_BAIT_BASES' => '157',
+    'ON_BAIT_VS_SELECTED' => '0.493711',
+    'ON_TARGET_BASES' => '69',
+    'PCT_OFF_BAIT' => '0.852641',
+    'PCT_PF_READS' => '1',
+    'PCT_PF_UQ_READS' => '1',
+    'PCT_PF_UQ_READS_ALIGNED' => '0.638889',
+    'PCT_SELECTED_BASES' => '0.147359',
+    'PCT_TARGET_BASES_100X' => '0',
+    'PCT_TARGET_BASES_10X' => '0',
+    'PCT_TARGET_BASES_20X' => '0',
+    'PCT_TARGET_BASES_2X' => '0',
+    'PCT_TARGET_BASES_30X' => '0',
+    'PCT_TARGET_BASES_40X' => '0',
+    'PCT_TARGET_BASES_50X' => '0',
+    'PCT_USABLE_BASES_ON_BAIT' => '0.043611',
+    'PCT_USABLE_BASES_ON_TARGET' => '0.019167',
+    'PF_READS' => '36',
+    'PF_UNIQUE_READS' => '36',
+    'PF_UQ_BASES_ALIGNED' => '2158',
+    'PF_UQ_READS_ALIGNED' => '23',
+    'READ_GROUP' => '',
+    'SAMPLE' => '',
+    'TARGET_TERRITORY' => '312',
+    'TEST-patient1-somval_tumor1	AT_DROPOUT' => '0',
+    'TEST-patient1-somval_tumor1	BAIT_DESIGN_EFFICIENCY' => '0.669528',
+    'TEST-patient1-somval_tumor1	BAIT_SET' => 'bait',
+    'TEST-patient1-somval_tumor1	BAIT_TERRITORY' => '466',
+    'TEST-patient1-somval_tumor1	FOLD_80_BASE_PENALTY' => '?',
+    'TEST-patient1-somval_tumor1	FOLD_ENRICHMENT' => '9269.481222',
+    'TEST-patient1-somval_tumor1	GC_DROPOUT' => '0',
+    'TEST-patient1-somval_tumor1	GENOME_SIZE' => '59373566',
+    'TEST-patient1-somval_tumor1	HS_LIBRARY_SIZE' => '',
+    'TEST-patient1-somval_tumor1	HS_PENALTY_100X' => '0',
+    'TEST-patient1-somval_tumor1	HS_PENALTY_10X' => '0',
+    'TEST-patient1-somval_tumor1	HS_PENALTY_20X' => '0',
+    'TEST-patient1-somval_tumor1	HS_PENALTY_30X' => '0',
+    'TEST-patient1-somval_tumor1	HS_PENALTY_40X' => '0',
+    'TEST-patient1-somval_tumor1	HS_PENALTY_50X' => '0',
+    'TEST-patient1-somval_tumor1	LIBRARY' => '',
+    'TEST-patient1-somval_tumor1	MEAN_BAIT_COVERAGE' => '0.33691',
+    'TEST-patient1-somval_tumor1	MEAN_TARGET_COVERAGE' => '?',
+    'TEST-patient1-somval_tumor1	NEAR_BAIT_BASES' => '161',
+    'TEST-patient1-somval_tumor1	OFF_BAIT_BASES' => '1840',
+    'TEST-patient1-somval_tumor1	ON_BAIT_BASES' => '157',
+    'TEST-patient1-somval_tumor1	ON_BAIT_VS_SELECTED' => '0.493711',
+    'TEST-patient1-somval_tumor1	ON_TARGET_BASES' => '69',
+    'TEST-patient1-somval_tumor1	PCT_OFF_BAIT' => '0.852641',
+    'TEST-patient1-somval_tumor1	PCT_PF_READS' => '1',
+    'TEST-patient1-somval_tumor1	PCT_PF_UQ_READS' => '1',
+    'TEST-patient1-somval_tumor1	PCT_PF_UQ_READS_ALIGNED' => '0.638889',
+    'TEST-patient1-somval_tumor1	PCT_SELECTED_BASES' => '0.147359',
+    'TEST-patient1-somval_tumor1	PCT_TARGET_BASES_100X' => '0',
+    'TEST-patient1-somval_tumor1	PCT_TARGET_BASES_10X' => '0',
+    'TEST-patient1-somval_tumor1	PCT_TARGET_BASES_20X' => '0',
+    'TEST-patient1-somval_tumor1	PCT_TARGET_BASES_2X' => '0',
+    'TEST-patient1-somval_tumor1	PCT_TARGET_BASES_30X' => '0',
+    'TEST-patient1-somval_tumor1	PCT_TARGET_BASES_40X' => '0',
+    'TEST-patient1-somval_tumor1	PCT_TARGET_BASES_50X' => '0',
+    'TEST-patient1-somval_tumor1	PCT_USABLE_BASES_ON_BAIT' => '0.043611',
+    'TEST-patient1-somval_tumor1	PCT_USABLE_BASES_ON_TARGET' => '0.019167',
+    'TEST-patient1-somval_tumor1	PF_READS' => '36',
+    'TEST-patient1-somval_tumor1	PF_UNIQUE_READS' => '36',
+    'TEST-patient1-somval_tumor1	PF_UQ_BASES_ALIGNED' => '2158',
+    'TEST-patient1-somval_tumor1	PF_UQ_READS_ALIGNED' => '23',
+    'TEST-patient1-somval_tumor1	READ_GROUP' => '',
+    'TEST-patient1-somval_tumor1	SAMPLE' => 'TEST-patient1-somval_tumor1',
+    'TEST-patient1-somval_tumor1	TARGET_TERRITORY' => '312',
+    'TEST-patient1-somval_tumor1	TOTAL_READS' => '36',
+    'TEST-patient1-somval_tumor1	ZERO_CVG_TARGETS_PCT' => '1',
+    'TOTAL_READS' => '36',
+    'ZERO_CVG_TARGETS_PCT' => '1',
 );
-is_deeply({$tool->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
 
-compare_ok($tool->bait_intervals, File::Spec->join($data_dir, 'bait.intervals'), 'bait_intervals file as expected');
-compare_ok($tool->target_intervals, File::Spec->join($data_dir, 'target.intervals'), 'target_intercals file as expected');
+is_deeply({$command->output_result->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
+
+compare_ok($tool->bait_intervals, $bait_intervals, 'bait_intervals file as expected');
+compare_ok($tool->target_intervals, $target_intervals, 'target_intercals file as expected');
 
 $override_file_path->restore;
 $override_seqdict->restore;
+$override_config->restore;
 
 done_testing;

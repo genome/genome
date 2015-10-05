@@ -11,35 +11,77 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Sub::Override;
+use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::InstrumentData::AlignmentResult;
+use Cwd qw(abs_path);
+
 
 my $pkg = 'Genome::Qc::Tool::Picard::MarkDuplicates';
 use_ok($pkg);
 
-my $data_dir = __FILE__.".d";
+my $data_dir = abs_path(__FILE__.".d");
 
-my $metrics_file = File::Spec->join($data_dir, 'output_file.txt');
-my $temp_file = Genome::Sys->create_temp_file_path;
-
-my $tool = $pkg->create(
-    gmt_params => {
-        input_file => $temp_file,
-        metrics_file => $metrics_file,
-        output_file => $temp_file,
-        temp_directory => $temp_file,
-        use_version => 1.123,
-    }
+use Genome::Qc::Tool;
+my $sample_name_override = Sub::Override->new(
+    'Genome::Qc::Tool::sample_name',
+    sub { return 'TEST-patient1-somval_tumor1'; },
 );
-ok($tool->isa($pkg), 'Tool created successfully');
+
+my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
+    flow_cell_id => '12345ABXX',
+    lane => '2',
+    subset_name => '2',
+    run_name => 'example',
+    id => 'NA12878',
+);
+my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
+    instrument_data => $instrument_data,
+);
+
+my $bam_file = File::Spec->join($data_dir, 'speedseq_merged.bam');
+my $reference_fasta = File::Spec->join($data_dir, 'reference.fasta');
+my $temp_file = Genome::Sys->create_temp_file_path;
+my $temp_directory = Genome::Sys->create_temp_file_path;
+
+use Genome::Qc::Config;
+my $config_override = Sub::Override->new(
+    'Genome::Qc::Config::get_commands_for_alignment_result',
+    sub {
+        return {
+            picard_mark_duplicates => {
+                class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
+                params => {
+                    output_file => $temp_file,
+                    input_file => $bam_file,
+                    use_version => 1.123,
+                    temp_directory => $temp_directory,
+                },
+            },
+        },
+    },
+);
 
 # Value is different between workstations and blades
 use Genome::Model::Tools::Picard::MarkDuplicates;
-my $override = Sub::Override->new(
+my $max_fh_override = Sub::Override->new(
     'Genome::Model::Tools::Picard::MarkDuplicates::calculate_max_file_handles',
     sub {
         return 972;
     }
 );
 
+my $command = Genome::Qc::Run->create(
+    config_name => 'testing-qc-run',
+    alignment_result => $alignment_result,
+    %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
+);
+ok($command->execute, "Command executes ok");
+
+my %tools = $command->output_result->_tools;
+my ($tool) = values %tools;
+ok($tool->isa($pkg), 'Tool created successfully');
+
+my $output = $tool->qc_metrics_file;
 my @expected_cmd_line = (
     'java',
     '-Xmx4096m',
@@ -48,12 +90,12 @@ my @expected_cmd_line = (
     '/usr/share/java/ant.jar:/usr/share/java/picard-tools1.123/MarkDuplicates.jar',
     'picard.sam.markduplicates.MarkDuplicates',
     'ASSUME_SORTED=true',
-    sprintf('INPUT=%s', $temp_file),
+    sprintf('INPUT=%s', $bam_file),
     'MAX_RECORDS_IN_RAM=500000',
-    sprintf('METRICS_FILE=%s', $metrics_file),
+    sprintf('METRICS_FILE=%s', $output),
     sprintf('OUTPUT=%s', $temp_file),
     'REMOVE_DUPLICATES=false',
-    sprintf('TMP_DIR=%s', $temp_file),
+    sprintf('TMP_DIR=%s', $temp_directory),
     'VALIDATION_STRINGENCY=SILENT',
     'MAX_FILE_HANDLES=972',
 
@@ -61,12 +103,19 @@ my @expected_cmd_line = (
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
 
 my %expected_metrics = (
-    'pct_duplicate_reads' => 0.005684,
-    'number_of_optical_duplicates' => 0,
-    'estimated_library_size' => 196212,
+    'TEST-patient1-somval_tumor1-extlibs	ESTIMATED_LIBRARY_SIZE' => '',
+    'TEST-patient1-somval_tumor1-extlibs	LIBRARY' => 'TEST-patient1-somval_tumor1-extlibs',
+    'TEST-patient1-somval_tumor1-extlibs	PERCENT_DUPLICATION' => 0,
+    'TEST-patient1-somval_tumor1-extlibs	READ_PAIRS_EXAMINED' => 16,
+    'TEST-patient1-somval_tumor1-extlibs	READ_PAIR_DUPLICATES' => 0,
+    'TEST-patient1-somval_tumor1-extlibs	READ_PAIR_OPTICAL_DUPLICATES' => 0,
+    'TEST-patient1-somval_tumor1-extlibs	UNMAPPED_READS' => 2,
+    'TEST-patient1-somval_tumor1-extlibs	UNPAIRED_READS_EXAMINED' => 2,
+    'TEST-patient1-somval_tumor1-extlibs	UNPAIRED_READ_DUPLICATES' => 0,
 );
-is_deeply({$tool->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
+is_deeply({$command->output_result->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
 
-$override->restore;
+$max_fh_override->restore;
+$config_override->restore;
 
 done_testing;

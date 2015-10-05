@@ -394,7 +394,7 @@ sub create {
 }
 
 sub monitor_shellcmd {
-    my ($self,$shellcmd_args) = @_;
+    my ($self, $shellcmd_args) = @_;
     my $check_interval = $self->_monitor_check_interval;
     my $max_stdout_interval = $self->_monitor_stdout_interval;
 
@@ -468,23 +468,46 @@ MESSAGE
 
 
 sub parse_file_into_metrics_hashref {
-    my ($class,$metrics_file,$metric_header_as_key) = @_;
+    my ($class, $metrics_file, $metric_header_as_key, $accumulations) = @_;
 
-    my $header_regex = qr(^## METRICS CLASS);
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        separator => "\t",
+        ignore_lines_starting_with => '#|(?:^$)',
+        input => $metrics_file,
+    );
+    die $class->error_message('Failed to generate parser for %s', $metrics_file) unless $reader;
 
-    return $class->_parse_metrics_file_into_hashref($metrics_file, $metric_header_as_key, $header_regex);
+    unless (defined $metric_header_as_key) {
+        if ($class->can('_metric_header_as_key')) {
+            $metric_header_as_key = $class->_metric_header_as_key;
+        } elsif ($accumulations) {
+            $metric_header_as_key = shift @$accumulations;
+        } else {
+            my $data = $reader->next;
+            die $class->error_message('Must define header key or accumulation levels if multiple lines present in metric file!') if $reader->next;
+            return $data;
+        }
+    }
+
+    my %data;
+    while(my $line = $reader->next) {
+        my $place_to_assign = \%data;
+        if ($accumulations) {
+            for my $accumulation (@$accumulations) {
+                $place_to_assign = $place_to_assign->{$line->{$accumulation}} ||= {};
+            }
+        }
+
+        $place_to_assign->{$line->{$metric_header_as_key}} = $line;
+    }
+
+    return \%data;
 }
 
 sub parse_metrics_file_into_histogram_hashref {
-    my ($class,$metrics_file,$metric_header_as_key) = @_;
+    my ($class, $metrics_file, $metric_header_as_key) = @_;
 
     my $header_regex = qr(^## HISTOGRAM);
-
-    return $class->_parse_metrics_file_into_hashref($metrics_file, $metric_header_as_key, $header_regex);
-}
-
-sub _parse_metrics_file_into_hashref {
-    my ($class, $metrics_file, $metric_header_as_key, $header_regex) = @_;
 
     my $metrics_fh = Genome::Sys->open_file_for_reading($metrics_file);
 
@@ -533,7 +556,6 @@ sub _parse_metrics_file_into_hashref {
 
     return \%data;
 }
-
 
 1;
 

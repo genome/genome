@@ -290,7 +290,6 @@ sub _remove_per_lane_bam_post_commit {
     return 1;
 }
 
-    
 sub collect_individual_alignments {
     my $self = shift;
     my $result_users = shift || $self->_user_data_for_nested_results;
@@ -371,7 +370,8 @@ sub collect_individual_alignments {
                 my $lookup_hash = Genome::InstrumentData::AlignmentResult->calculate_lookup_hash_from_arguments(%all_params); 
                 my @alignments  = Genome::InstrumentData::AlignmentResult->get(lookup_hash => $lookup_hash);
                 unless (@alignments and @alignments == 1) {
-                    die $self->error_message('Only 1 alignment is expected, but got '.scalar @alignments);
+                    die $self->error_message("Only 1 alignment is expected, but got %d for instrument data %s of merged result %s",
+                        scalar @alignments, $i->id, $self->id);
                 }
                 $alignment = shift @alignments;
             }
@@ -743,7 +743,7 @@ sub get_superseding_results {
 
     my @per_lane_results = $self->collect_individual_alignments;
     my $per_lane_results = Set::Scalar->new(@per_lane_results);
-    
+
     my %count;
     my @superseding_results = ();
 
@@ -751,13 +751,21 @@ sub get_superseding_results {
         map{$count{$_->id}++}$per_lane_result->get_merged_alignment_results;
     }
 
+    my @sample_ids = uniq map { $_->sample_id } $self->instrument_data;
+    my $sample_set = Set::Scalar->new(@sample_ids);
+
     for my $merged_result_id (keys %count) {
         next unless $count{$merged_result_id} == $per_lane_results->size;
         next if $merged_result_id eq $self->id;
 
         my $superseding_result = __PACKAGE__->get($merged_result_id);
+
+        my @superseding_sample_ids = uniq map { $_->sample_id } $superseding_result->instrument_data;
+        my $superseding_sample_set = Set::Scalar->new(@superseding_sample_ids);
+        next unless $sample_set->is_equal($superseding_sample_set);
+
         my $superseding_per_lane_results = Set::Scalar->new($superseding_result->collect_individual_alignments);
-        
+
         if ($superseding_per_lane_results->is_proper_superset($per_lane_results)) {
             push @superseding_results, $superseding_result;
         }
