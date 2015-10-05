@@ -228,4 +228,10 @@ for my $attr (qw/ bam_path is_paired_end read_count read_length /) {
     is($instdata->attributes(attribute_label => $attr)->attribute_value, $expected_attrs{$attr}, "$attr set")
 }
 
+# overload uuid generator for class
+isnt(UR::Object::Type->autogenerate_new_object_id_uuid, 1 x 32, 'uuid');
+throws_ok(sub{ $helpers->overload_uuid_generator_for_class; }, qr//, 'fail to overload uuid generator w/o class');
+ok($helpers->overload_uuid_generator_for_class('main'), 'overload uuid generator');
+is(UR::Object::Type->autogenerate_new_object_id_uuid, 1 x 32, 'overloaded uuid');
+
 done_testing();

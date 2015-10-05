@@ -16,22 +16,7 @@ use Test::More;
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup';
 use_ok($class) or die;
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->join('bam-rg-multi', 'v5')) or die;
-
-my $autogenerate_new_object_id_uuid_sub = UR::Object::Type->can('autogenerate_new_object_id_uuid');
-my $n = 0;
-Sub::Install::reinstall_sub({ # to set the RG ID in the bam
-        into => 'UR::Object::Type',
-        as => 'autogenerate_new_object_id_uuid',
-        code => sub{
-            my @caller = caller;
-            if ( $caller[0] eq $class ) {
-                return ++$n x 32;
-            }
-            else {
-                return $autogenerate_new_object_id_uuid_sub->();
-            }
-        },
-    });
+Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $multi_rg_base_name = 'input.rg-multi.bam';

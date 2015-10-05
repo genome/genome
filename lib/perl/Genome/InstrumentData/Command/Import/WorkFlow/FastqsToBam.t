@@ -20,25 +20,10 @@ use Test::More;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam';
 use_ok($class) or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v4') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v5') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-
-my $autogenerate_new_object_id_uuid_sub = UR::Object::Type->can('autogenerate_new_object_id_uuid');
-Sub::Install::reinstall_sub({ # to set the RG ID in the bam
-        into => 'UR::Object::Type',
-        as => 'autogenerate_new_object_id_uuid',
-        code => sub{
-            my @caller = caller;
-            if ( $caller[0] eq $class ) {
-                return 'a' x 32;
-            }
-            else {
-                return $autogenerate_new_object_id_uuid_sub->();
-            }
-        },
-    });
-
+$helpers->overload_uuid_generator_for_class($class);
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
 my @source_fastq_base_names = (qw/ input.1.fastq.gz input.2.fastq /);
