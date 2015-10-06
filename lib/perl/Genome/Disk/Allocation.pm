@@ -973,6 +973,19 @@ sub get_allocation_for_path {
     return $allocation;
 }
 
+sub _resolve_param_value_from_text_by_name_or_id {
+    my ($class, $param_arg) = @_;
+
+    my @results = Command::V2->_resolve_param_value_from_text_by_name_or_id($class, $param_arg);
+
+    if(!@results) {
+        my $allocation = $class->get_allocation_for_path($param_arg);
+        push @results, $allocation if $allocation;
+    }
+
+    return @results;
+}
+
 sub archive_after_time {
     my $self = shift;
 
