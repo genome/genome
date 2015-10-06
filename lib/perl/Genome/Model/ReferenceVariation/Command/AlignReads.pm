@@ -6,61 +6,19 @@ use warnings;
 use Genome;
 
 class Genome::Model::ReferenceVariation::Command::AlignReads {
-    is => 'Command::V2',
-    has_input => [
-        build => {
-            is => 'Genome::Model::Build::ReferenceVariation',
-            id_by => 'build_id',
-            doc => 'build for which to run alignments',
-            is_output => 1,
-        },
-    ],
+    is => 'Genome::Model::ReferenceVariation::Command::Base',
     doc => 'Align the instrument data to the reference for the build.',
 };
 
-sub shortcut {
-    my $self = shift;
-
-    my $cmd = $self->_alignment_command;
-    my $retval = $cmd->shortcut;
-
-    if ($retval and $cmd->result_id) {
-        $self->status_message('Found existing result: %s', $cmd->result_id);
-    }
-
-    return $retval;
+sub _result_accessor {
+    return 'alignment_result';
 }
 
-sub execute {
-    my $self = shift;
-
-    my $cmd = $self->_alignment_command;
-    my $retval = $cmd->execute;
-
-    if ($retval and $cmd->result_id) {
-        $self->status_message('Generated result: %s', $cmd->result_id);
-    } else {
-        die $self->error_message('Failed to produce aligned BAM.');
-    }
-
-    return $retval;
+sub _command_class {
+    return 'Genome::InstrumentData::Command::AlignAndMerge';
 }
 
-sub _alignment_command {
-    my $self = shift;
-
-    my @params = $self->_params_for_alignment;
-
-    my $cmd = Genome::InstrumentData::Command::AlignAndMerge->create(
-        @params,
-    );
-
-    die $self->error_messaage('Failed to create alignment command!') unless $cmd;
-
-    return $cmd;
-}
-
-sub _params_for_alignment {
+sub _params_for_command {
     my $self = shift;
     my $build = $self->build;
 
