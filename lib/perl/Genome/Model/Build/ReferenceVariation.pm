@@ -12,6 +12,10 @@ class Genome::Model::Build::ReferenceVariation {
             is => 'Genome::InstrumentData::AlignedBamResult::Merged',
             doc => 'the result of running alignment',
         },
+        qc_result => {
+            is => 'Genome::Qc::Result',
+            doc => 'the result of qc analysis on the alignment',
+        },
         #haplotype_caller_result => {
         #   is => 'Genome::SoftwareResult',
         #   doc => 'the result of running the haplotype caller',

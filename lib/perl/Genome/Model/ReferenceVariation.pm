@@ -21,6 +21,10 @@ class Genome::Model::ReferenceVariation {
             is => 'Text',
             doc => 'Aligner API version',
         },
+        qc_config => {
+            is => 'Text',
+            doc => 'Name of the QC configuration to use',
+        },
     ],
     has_input => [
         instrument_data => {
