@@ -1,0 +1,23 @@
+<?xml version='1.0' standalone='yes'?>
+
+<workflow name="Reference Variation Pipeline" logDir="/tmp/reference_variation_pipeline_log">
+  <link fromOperation="input connector" fromProperty="build" toOperation="Alignment" toProperty="build" />
+  <link fromOperation="Alignment" fromProperty="build" toOperation="QC" toProperty="build" />
+
+  <operation name="Alignment">
+      <operationtype commandClass="Genome::Model::ReferenceVariation::Command::AlignReads" typeClass="Workflow::OperationType::Command"/>
+  </operation>
+  <operation name="QC">
+      <operationtype commandClass="Genome::Model::ReferenceVariation::Command::QualityControl" typeClass="Workflow::OperationType::Command"/>
+  </operation>
+  <operation name="HaplotypeCaller">
+      <operationtype commandClass="Genome::Model::ReferenceVariation::Command::HaplotypeCaller" typeClass="Workflow::OperationType::Command"/>
+  </operation>
+
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>build</inputproperty>
+
+    <outputproperty>build</outputproperty>
+  </operationtype>
+
+</workflow>
