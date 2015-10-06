@@ -3,6 +3,8 @@
 <workflow name="Reference Variation Pipeline" logDir="/tmp/reference_variation_pipeline_log">
   <link fromOperation="input connector" fromProperty="build" toOperation="Alignment" toProperty="build" />
   <link fromOperation="Alignment" fromProperty="build" toOperation="QC" toProperty="build" />
+  <link fromOperation="Alignment" fromProperty="build" toOperation="HaplotypeCaller" toProperty="build" />
+  <link fromOperation="HaplotypeCaller" fromProperty="build" toOperation="output connector" toProperty="build" />
 
   <operation name="Alignment">
       <operationtype commandClass="Genome::Model::ReferenceVariation::Command::AlignReads" typeClass="Workflow::OperationType::Command"/>

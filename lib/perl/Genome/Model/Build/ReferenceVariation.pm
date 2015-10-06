@@ -16,10 +16,11 @@ class Genome::Model::Build::ReferenceVariation {
             is => 'Genome::Qc::Result',
             doc => 'the result of qc analysis on the alignment',
         },
-        #haplotype_caller_result => {
-        #   is => 'Genome::SoftwareResult',
-        #   doc => 'the result of running the haplotype caller',
-        #},
+        haplotype_caller_result => {
+           is => 'Genome::Model::ReferenceVariation::Result::HaplotypeCaller',
+           doc => 'the result of running the haplotype caller',
+           is_many => 1,
+        },
     ],
 };
 

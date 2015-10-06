@@ -25,6 +25,10 @@ class Genome::Model::ReferenceVariation {
             is => 'Text',
             doc => 'Name of the QC configuration to use',
         },
+        haplotype_caller_version => {
+            is => 'Text',
+            doc => 'Version of GATK to use',
+        },
     ],
     has_input => [
         instrument_data => {
