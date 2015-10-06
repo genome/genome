@@ -6,6 +6,10 @@ use warnings;
 use Test::More;
 use List::Util qw(sum);
 
+BEGIN {
+    $ENV{UR_DBI_NO_COMMIT} = 1;
+}
+
 require Sub::Override;
 
 use above "Genome";
@@ -24,7 +28,6 @@ my $text_is_indexable = sub {
 };
 
 subtest test_create_missing_subject => sub {
-    my $tx = UR::Context::Transaction->begin();
 
     my $index_queue = eval {
         Genome::Search::Queue->create();
@@ -34,11 +37,10 @@ subtest test_create_missing_subject => sub {
     is($index_queue, undef, 'failed to create index_queue when missing subject');
     like($error, qr/subject/, 'error mentions subject');
 
-    $tx->rollback();
+    UR::Context->rollback();
 };
 
 subtest test_create_missing_timestamp => sub {
-    my $tx = UR::Context::Transaction->begin();
 
     my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
 
@@ -51,11 +53,10 @@ subtest test_create_missing_timestamp => sub {
     isa_ok($index_queue, 'UR::Object', 'create returned an object');
     ok($index_queue->timestamp, 'timestamp was added');
 
-    $tx->rollback();
+    UR::Context->rollback();
 };
 
 subtest test_create_existing_subject => sub {
-    my $tx = UR::Context::Transaction->begin();
 
     my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
 
@@ -75,11 +76,10 @@ subtest test_create_existing_subject => sub {
 
     isnt($index_queue_2, $index_queue, 'new index_queue_2 is different than index_queue');
 
-    $tx->rollback();
+    UR::Context->rollback();
 };
 
 subtest test_create_non_indexable_subject => sub {
-    my $tx = UR::Context::Transaction->begin();
 
     my $subject = UR::Value::Text->get('Hello, world.');
     my $index_queue = eval {
@@ -93,11 +93,10 @@ subtest test_create_non_indexable_subject => sub {
     is($index_queue, undef, 'failed to create index_queue when subject is not indexable');
     like($error, qr/indexable/, 'error mentions indexable');
 
-    $tx->rollback();
+    UR::Context->rollback();
 };
 
 subtest test_priority_sorting => sub {
-    my $tx = UR::Context::Transaction->begin();
 
     my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
 
@@ -131,11 +130,10 @@ subtest test_priority_sorting => sub {
     isnt(join('', @timestamp_sorted_queue_subject_ids), join('', @sorted_subject_ids), 'ordering by timestamp does not match priorty sort');
     isnt(join('', @timestamp_sorted_queue_subject_ids), join('', @priority_sorted_queue_subject_ids), 'ordering by timestamp does not match priorty sort');
 
-    $tx->rollback();
+    UR::Context->rollback();
 };
 
 subtest test_dedup => sub {
-    my $tx = UR::Context::Transaction->begin();
 
     my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
     my $create_dedup_iterator = Sub::Override->new('Genome::Search::Queue::create_dedup_iterator' => sub{
@@ -162,7 +160,7 @@ subtest test_dedup => sub {
     is(scalar(() = Genome::Search::Queue->get(subject_class => 'UR::Value::Text')),
         scalar(@n_max), 'duplicates were removed');
 
-    $tx->rollback();
+    UR::Context->rollback();
 };
 
 done_testing();
