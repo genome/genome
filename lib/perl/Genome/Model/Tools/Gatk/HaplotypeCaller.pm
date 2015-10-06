@@ -51,6 +51,14 @@ class Genome::Model::Tools::Gatk::HaplotypeCaller {
             doc => 'GQ thresholds for reference confidence bands',
             is_optional => 1,
         },
+        intervals => {
+            is_input => 1,
+            is => 'Text',
+            gatk_param_name => '-L',
+            doc => 'restrict run to these regions (either a file or explicit intervals)',
+            is_many => 1,
+            is_optional => 1,
+        },
     ],
 };
 
