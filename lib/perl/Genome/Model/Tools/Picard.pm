@@ -145,7 +145,6 @@ EOS
 # Please put the most recent first.
 my $sw_legacy_java = Genome::Config::get('sw_legacy_java');
 my @PICARD_VERSIONS = (
-    '1.123' => '/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123',
     '1.82' => $sw_legacy_java . '/samtools/picard-tools-1.82',
     '1.77' => $sw_legacy_java . '/samtools/picard-tools-1.77',
     '1.52' => $sw_legacy_java . '/samtools/picard-tools-1.52',

@@ -78,7 +78,7 @@ my @expected_cmd_line = (
     '-Xmx4096m',
     '-XX:MaxPermSize=64m',
     '-cp',
-    '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CollectInsertSizeMetrics.jar',
+    '/usr/share/java/ant.jar:/usr/share/java/picard-tools1.123/CollectInsertSizeMetrics.jar',
     'picard.analysis.CollectInsertSizeMetrics',
     sprintf('HISTOGRAM_FILE=%s', $temp_file),
     sprintf('INPUT=%s', $bam_file),
