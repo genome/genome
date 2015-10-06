@@ -27,8 +27,8 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v4');
-my $source_bam = $test_dir.'/test.bam';
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1');
+my $source_bam = $test_dir.'/input.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
@@ -57,7 +57,7 @@ is($instrument_data->description, 'We took some DNA and sheared it and sequenced
 is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
 is($instrument_data->read_count, 252, 'read_count correctly set');
 is($instrument_data->read_length, 100, 'read_length correctly set');
-is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, 2883581797, 'segment_id correctly set');
+is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, '33333333333333333333333333333333', 'segment_id correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, 'f81fbc3d3a6b57d11e60b016bb2c950c', 'original_data_path_md5 correctly set');
 is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
@@ -65,8 +65,8 @@ my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');
 is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
 is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-is(File::Compare::compare($bam_path, $test_dir.'/test.clean.sorted.bam'), 0, 'bam matches');
-is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/test.clean.sorted.bam.flagstat'), 0, 'flagstat matches');
+is(File::Compare::compare($bam_path, $test_dir.'/all_sequences.basic-bam-t.bam'), 0, 'bam matches');
+is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/all_sequences.basic-bam-t.bam.flagstat'), 0, 'flagstat matches');
 
 my $allocation = $instrument_data->disk_allocation;
 ok($allocation, 'got allocation');
