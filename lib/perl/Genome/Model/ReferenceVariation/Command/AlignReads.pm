@@ -33,7 +33,7 @@ sub _params_for_command {
         instrument_data => [$build->instrument_data],
         reference_sequence_build => $build->reference_sequence_build,
         result_users => $result_users,
-        name => 'speedseq',
+        name => $build->aligner_name,
         version => $build->aligner_version,
         params => $build->aligner_params,
         %$api_inputs,

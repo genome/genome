@@ -63,6 +63,12 @@ class Genome::Model::ReferenceVariation {
             to => 'id'
         },
     ],
+    has_classwide => [
+        aligner_name => {
+            is_mutable => 0,
+            value => 'speedseq',
+        },
+    ],
 };
 
 sub _resolve_workflow_for_build {
