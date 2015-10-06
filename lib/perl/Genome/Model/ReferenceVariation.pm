@@ -17,6 +17,10 @@ class Genome::Model::ReferenceVariation {
             is_optional => 1,
             doc => 'Params to pass to speedseq',
         },
+        aligner_api_version => {
+            is => 'Text',
+            doc => 'Aligner API version',
+        },
     ],
     has_input => [
         instrument_data => {
@@ -64,6 +68,14 @@ sub _resolve_workflow_for_build {
     my $dag = Genome::WorkflowBuilder::DAG->from_xml_filename(__FILE__ . '.xml');
     $dag->log_dir($build->log_directory);
     $dag->name($build->workflow_name);
+
+    my ($alignment_op) = grep { $_->name eq 'Alignment' } @{$dag->operations};
+    $alignment_op->lsf_resource(
+        Genome::InstrumentData::Command::AlignAndMerge->lsf_resource_string_for_aligner_and_instrument_data(
+            'speedseq',
+            $build->instrument_data,
+        )
+    );
 
     return $dag;
 }
