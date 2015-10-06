@@ -72,6 +72,7 @@ sub _set_headers_and_read_groups {
             singleton => UR::Object::Type->autogenerate_new_object_id_uuid,
         };
     }
+
     $self->old_and_new_read_group_ids(\%old_and_new_read_group_ids);
 
     $self->headers($headers);
@@ -96,6 +97,7 @@ sub _process_reads {
     my $previous_read_group_id;
     while ( my $line = $bam_fh->getline ) {
         my @tokens = split(/\t/, $line);
+        chomp $tokens[$#tokens];
         my $read_group_id = $self->_get_rg_id_from_sam_tokens(\@tokens);
 
         unless($previous_tokens) {
@@ -203,7 +205,7 @@ sub _write_reads_based_on_read_group_and_pairedness {
 
     for my $read_tokens ( @{$params{reads}} ) {
         $self->_update_read_group_for_sam_tokens_based_on_paired_endness($read_tokens, $params{pairedness});
-        $fhs->{$key}->print( join("\t", @$read_tokens) );
+        $fhs->{$key}->print( join("\t", @$read_tokens)."\n" );
     }
 
     return 1;
@@ -222,9 +224,9 @@ sub _update_read_group_for_sam_tokens_based_on_paired_endness {
         $rg_tag_idx = $#$tokens;
     }
 
-    my @rg_tokens = split(':', $rg_tag);
-    my $new_rg_id = $self->old_and_new_read_group_ids->{$rg_tokens[2]}->{$pairedness};
-    $rg_tag = 'RG:Z:'.$new_rg_id;
+    my $rg_id = (split(':', $rg_tag))[2];
+    my $new_rg_id = $self->old_and_new_read_group_ids->{$rg_id}->{$pairedness};
+    $rg_tag = join(':', 'RG',  'Z', $new_rg_id);
     splice(@$tokens, $rg_tag_idx, 0, $rg_tag); # Add RG tag back
 
     return 1;
@@ -236,7 +238,9 @@ sub _open_fh_for_read_group_and_pairedness {
     my $read_group_bam_path = $self->bam_path;
     $read_group_bam_path =~ s/\.bam$//;
     $read_group_bam_path = join('.', $read_group_bam_path, $read_group_id, $pairedness, 'bam');
-    my $fh = IO::File->new("| samtools view -S -b -o $read_group_bam_path -");
+    my $samtools_cmd = "| samtools view -S -b -o $read_group_bam_path -";
+    $self->debug_message("Opening fh for $read_group_bam_path $pairedness with:\n$samtools_cmd");
+    my $fh = IO::File->new($samtools_cmd);
     if ( not $fh ) {
         $self->error_message('Failed to open file handle to samtools command!');
         return;
