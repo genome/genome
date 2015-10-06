@@ -3,8 +3,6 @@ package Genome::InstrumentData::Composite::Workflow::Generator::AlignAndMerge;
 use strict;
 use warnings;
 use Genome;
-use POSIX qw(ceil);
-use List::Util qw(sum);
 
 class Genome::InstrumentData::Composite::Workflow::Generator::AlignAndMerge {
     is => 'Genome::InstrumentData::Composite::Workflow::Generator::Base',
@@ -30,16 +28,18 @@ sub generate {
     my $workflows = {};
     map { $workflows->{$_} = $workflow } @$alignment_objects;
 
+    my $command_class = 'Genome::InstrumentData::Command::AlignAndMerge';
+
     #Make a align_and_merge operation
     my $operation = $workflow->add_operation(
         name => "$aligner_name operation",
         operation_type => Workflow::OperationType::Command->create(
-            command_class_name => 'Genome::InstrumentData::Command::AlignAndMerge',
+            command_class_name => $command_class,
         ),
     );
 
     my $instrument_data = $input_data->{instrument_data};
-    my $lsf_resource_string = $class->_get_lsf_resource_string_for_aligner_and_instrument_data(
+    my $lsf_resource_string = $command_class->lsf_resource_string_for_aligner_and_instrument_data(
         $aligner_name,
         @$instrument_data
     );
@@ -81,41 +81,5 @@ sub generate {
 
     return $workflows, $inputs;
 }
-
-sub _get_lsf_resource_string_for_aligner_and_instrument_data {
-    my $class = shift;
-    my $aligner_name = shift;
-    my @instrument_data = @_;
-
-    my $merged_result_class = Genome::InstrumentData::Command::AlignAndMerge->merged_result_class($aligner_name);
-    my $estimated_gtmp_bytes = sum(map { $merged_result_class->estimated_gtmp_for_instrument_data($_) } @instrument_data);
-    return $class->_format_lsf_resource_string($estimated_gtmp_bytes);
-}
-
-sub _format_lsf_resource_string {
-    my $class = shift;
-    my $gtmp_bytes = shift;
-
-    my $cpus = 8;
-    my $mem_gb = 60;
-    my $queue = Genome::Config::get('lsf_queue_alignment_default');
-
-    my $gtmp_kb = ceil($gtmp_bytes / 1024);
-    my $gtmp_mb = ceil($gtmp_kb / 1024);
-    my $gtmp_gb = ceil($gtmp_mb / 1024);
-
-    my $mem_mb = $mem_gb * 1024;
-    my $mem_kb = $mem_mb * 1024;
-
-    my $select  = "select[ncpus >= $cpus && mem >= $mem_mb && gtmp >= $gtmp_gb] span[hosts=1]";
-    my $rusage  = "rusage[mem=$mem_mb, gtmp=$gtmp_gb]";
-    my $options = "-M $mem_kb -n $cpus -q $queue";
-
-    my $required_usage = "-R \'$select $rusage\' $options";
-
-    return $required_usage;
-}
-
-# sub _workflow_
 
 1;
