@@ -57,10 +57,11 @@ subtest 'get job statuses' => sub {
 };
 
 subtest 'bsub_and_wait_for_completion' => sub {
-    plan tests => 5;
+    plan tests => 7;
 
     my @cmds = (['ls', '~'],
                 'exit 1',
+                { cmd => ['cat', '/dev/null'] },
                );
     my(%submitted, %completed);
     my @statuses = Genome::Sys->bsub_and_wait_for_completion(
@@ -70,7 +71,7 @@ subtest 'bsub_and_wait_for_completion' => sub {
                         on_complete => sub { my($idx, $job_id) = @_; $completed{$idx} = $job_id },
                     );
     is_deeply(\@statuses,
-              [SUCCESSFUL_JOB, FAILED_JOB],
+              [SUCCESSFUL_JOB, FAILED_JOB, SUCCESSFUL_JOB],
               'statuses are correct');
 
     for (my $i = 0; $i < @cmds; $i++) {

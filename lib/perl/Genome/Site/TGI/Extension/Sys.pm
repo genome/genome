@@ -85,9 +85,16 @@ sub bsub_and_wait_for_completion {
     my %seq_to_job_id;
     for(my $seq = 0; $seq < @$commands; $seq++) {
         my $cmd = $commands->[$seq];
+        my %this_cmd_bsub_args;
+        if (ref($cmd) and ref($cmd) eq 'HASH') {
+            %this_cmd_bsub_args = %$cmd;
+        } else {
+            %this_cmd_bsub_args = ( cmd => $cmd );
+        }
+
         my $job_id = $class->bsub(post_exec_cmd => qq(echo $seq | netcat $hostname $port),
                                   %bsub_args,
-                                  cmd => $cmd,
+                                  %this_cmd_bsub_args,
                                 );
         $on_submit_cb->($seq, $job_id) if $on_submit_cb;
         $seq_to_job_id{$seq} = $job_id;
