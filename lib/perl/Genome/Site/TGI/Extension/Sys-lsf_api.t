@@ -9,7 +9,7 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 use constant SUCCESSFUL_JOB => 'DONE';
 use constant FAILED_JOB => 'EXIT';
@@ -56,3 +56,17 @@ subtest 'get job statuses' => sub {
     is_deeply(\%job_statuses, \%expected_job_statuses, 'Job statuses are as expected');
 };
 
+subtest 'bsub_and_wait_for_completion' => sub {
+    plan tests => 1;
+
+    my @cmds = (['ls', '~'],
+                'exit 1',
+               );
+    my @statuses = Genome::Sys->bsub_and_wait_for_completion(
+                        queue => Genome::Config::get('lsf_queue_short'),
+                        cmds => \@cmds,
+                    );
+    is_deeply(\@statuses,
+              [SUCCESSFUL_JOB, FAILED_JOB],
+              'statuses are correct');
+};

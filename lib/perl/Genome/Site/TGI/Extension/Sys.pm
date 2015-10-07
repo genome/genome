@@ -20,6 +20,8 @@ require Genome::Utility::Text; #TODO remove, unused
 use Sys::Hostname;
 use File::Find;
 use Params::Validate qw(:types);
+use IO::Socket;
+use Sys::Hostname qw(hostname);
 #use Archive::Extract;
 
 require MIME::Lite;
@@ -67,6 +69,69 @@ sub get_lsf_job_status {
         die "Could not get status for job $job_id";
     }
     return $status;
+}
+
+sub bsub_and_wait_for_completion {
+    my($class, %bsub_args) = @_;
+
+    my $commands;
+    ($commands, %bsub_args) = _bsub_and_wait_for_completion__validate_args(%bsub_args);
+
+    my $hostname = hostname;
+    my $waiting_socket = IO::Socket::INET->new(Listen => 5, Proto => 'tcp', LocalHost => $hostname);
+    my $port = $waiting_socket->sockport;
+
+    my %seq_to_job_id;
+    for(my $seq = 0; $seq < @$commands; $seq++) {
+        my $cmd = $commands->[$seq];
+        my $job_id = $class->bsub(post_exec_cmd => qq(echo $seq | netcat $hostname $port),
+                                  %bsub_args,
+                                  cmd => $cmd,
+                                );
+        $seq_to_job_id{$seq} = $job_id;
+    }
+
+    $class->_bsub_and_wait_for_completion__wait_on_jobs($waiting_socket, %seq_to_job_id);
+
+    # immediately after being reaped in _bsub_and_wait_for_completion_wait_on_jobs(), bjobs
+    # reports their status as still "RUN".  Instead, we go into the traditional polling until
+    # LSF updates their status to EXIT or DONE
+    my %job_statuses = $class->wait_for_lsf_jobs(values %seq_to_job_id);
+    my @statuses = map { $job_statuses{$_} }
+                   map { $seq_to_job_id{$_} }
+                   ( 0 .. $#$commands );
+    return @statuses;
+}
+
+sub _bsub_and_wait_for_completion__validate_args {
+    my %bsub_args = @_;
+
+    my $commands = delete $bsub_args{cmds};
+    unless ($commands and ref($commands) and ref($commands) eq 'ARRAY') {
+        Carp::croak(q(arg 'commands' is required and must be an arrayref of commands'));
+    }
+    if (exists $bsub_args{cmd}) {
+        Carp::croak(q(arg 'cmd' is not allowed, use 'cmds' instead, an arrayref of commands));
+    }
+    return($commands, %bsub_args);
+}
+
+sub _bsub_and_wait_for_completion__wait_on_jobs {
+    my($class, $waiting_socket, %seq_to_job_id) = @_;
+
+    while (%seq_to_job_id) {
+        my $fh = $waiting_socket->accept();
+        my $seq = $fh->getline;
+        $fh->close;
+        $seq =~ s/\r|\n//g;
+
+        my $job_id = delete $seq_to_job_id{$seq};
+        unless ($job_id) {
+            Carp::croak("Got unexpected response '$seq' while waiting for these jobs:\n",
+                join("\n", map { join(' => ', $_, $seq_to_job_id{$_}) } keys %seq_to_job_id));
+        }
+    }
+    return 1;
 }
 
 sub wait_for_lsf_job {

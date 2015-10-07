@@ -127,6 +127,11 @@ sub _args_spec {
             option_flag => '-g',
             type => SCALAR,
         },
+        post_exec_cmd => {
+            optional => 1,
+            option_flag => '-Ep',
+            type => SCALAR,
+        },
         cmd => {
             type => SCALAR | ARRAYREF,
         },
