@@ -17,6 +17,7 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
+Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class('Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup');
 
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
@@ -26,8 +27,8 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v4');
-my $source_bam = $test_dir.'/test.bam';
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1');
+my $source_bam = $test_dir.'/input.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
@@ -56,7 +57,7 @@ is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
 is($instrument_data->read_count, 68, 'read_count correctly set');
 is($instrument_data->read_length, 100, 'read_length correctly set');
 cmp_ok(eval{$instrument_data->attributes(attribute_label => 'downsample_ratio')->attribute_value;}, '==', 0.25, 'downsample_ratio correctly set');
-is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, 2883581797, 'segment_id correctly set');
+is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, '33333333333333333333333333333333', 'segment_id correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, 'f81fbc3d3a6b57d11e60b016bb2c950c', 'original_data_path_md5 correctly set');
 is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
@@ -65,11 +66,11 @@ ok(-s $bam_path, 'bam path exists');
 is($bam_path, File::Spec->catfile($instrument_data->data_directory, 'all_sequences.bam'), 'bam path correctly named');
 is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
 is(# compare to the split version b/c just the downsampled bam header has attrs sorted differently
-    File::Compare::compare($bam_path, File::Spec->catfile($test_dir, 'test.clean.sorted.downsampled.split-by-rg.bam')),
+    File::Compare::compare($bam_path, File::Spec->catfile($test_dir, 'all_sequences.basic-bam-downsample-t.bam')),
     0, 'bam matches',
 );
 is(# compare to the downsampled flagstat
-    File::Compare::compare($bam_path.'.flagstat', File::Spec->catfile($test_dir, 'test.clean.sorted.downsampled.bam.flagstat')),
+    File::Compare::compare($bam_path.'.flagstat', File::Spec->catfile($test_dir, 'all_sequences.basic-bam-downsample-t.bam.flagstat')),
     0, 'flagstat matches',
 );
 
