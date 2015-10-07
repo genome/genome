@@ -10,7 +10,7 @@ require File::Spec;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath') or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v1') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
 
 # Minimal base class testing
 class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePathTest {

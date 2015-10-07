@@ -15,7 +15,7 @@ use Test::More;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup';
 use_ok($class) or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->join('bam-rg-multi', 'v5')) or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
 Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
