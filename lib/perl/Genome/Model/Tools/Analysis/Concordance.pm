@@ -43,7 +43,7 @@ class Genome::Model::Tools::Analysis::Concordance {
         snp_file => {
             is => 'String',
             is_optional => 0,
-            doc => '1-based Tab-delimited file of SNP positions. Three columns required: chr, start, end. Example bed below is ~5k sites from dbSNP v142 on human build 37 within the exome space',
+            doc => '1-based Tab-delimited file of SNP positions. Three columns required: chr, start, end. Example bed below is ~5k sites from dbSNP v142 on human build 37 within the chr1 exome space',
             example_values => ["/gscmnt/gc9018/info/feature_list/ccb8bd8a885b47a78eb81223ccfcb458/ccb8bd8a885b47a78eb81223ccfcb458.bed"]
         },
         output_file => {
@@ -216,7 +216,6 @@ sub execute {
     my (@norm_total, @norm_snp, @pre_total, @pre_snp);
 
 
-
     #now read the genotypes in, calculate matches
     my %genotypes;
 
@@ -254,7 +253,10 @@ sub execute {
         my $outfile = Genome::Sys->open_file_for_writing($self->output_genotypes);
         $outfile->print(join("\t",("Chr","Pos","ReferenceBase","Sample1","Sample2")) . "\n");
         for my $pos (keys(%genotypes)){
-            $outfile->print(join("\t",($pos,$genotypes{$pos}{"samp1"},$genotypes{$pos}{"samp2"})) . "\n");
+            #only output sites with coverage in both samples
+            if(defined($genotypes{$pos}{"samp1"}) && defined($genotypes{$pos}{"samp2"})){
+                $outfile->print(join("\t",($pos,$genotypes{$pos}{"samp1"},$genotypes{$pos}{"samp2"})) . "\n");
+            }
         }
         $outfile->close;
     }
