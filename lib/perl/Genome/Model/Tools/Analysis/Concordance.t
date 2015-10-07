@@ -5,7 +5,7 @@ use warnings;
 
 use above "Genome";
 use Genome::Utility::Test qw(compare_ok abort);
-use Test::More tests => 11;
+use Test::More tests => 12;
 
 eval {
     # create a class instance
@@ -13,22 +13,23 @@ eval {
     use_ok($class);
 
     # check test data files
-    my $data_dir = Genome::Utility::Test->data_dir($class, 'v2');
+    my $data_dir = Genome::Utility::Test->data_dir($class, 'v3');
     ok(-d $data_dir, "data_dir exists: $data_dir") or abort;
 
     # check inputs
     my $bam_file_1 = "$data_dir/168_norm_chr21.10k.bam";
-    ok(-s $bam_file_1, 'bam file 1 exists: bam_file_1') or abort;
+    ok(-s $bam_file_1, 'bam file 1 exists: $bam_file_1') or abort;
     my $bam_file_2 = "$data_dir/168_pre_chr21.10k.bam";
-    ok(-s $bam_file_2, 'bam file 2 exists: bam_file_2') or abort;
+    ok(-s $bam_file_2, 'bam file 2 exists: $bam_file_2') or abort;
 
     my $reference_fasta = "$data_dir/21.fa";
-    ok(-s $reference_fasta, 'reference genome exists: reference_fasta') or abort;
-    my $snp_file = "$data_dir/dbsnp_138.hg19.sort.uniq.chr21";
-    ok(-s $snp_file, 'SNP file exists: snp_file') or abort;
+    ok(-s $reference_fasta, 'reference genome exists: $reference_fasta') or abort;
 
-    my $output_file = "$data_dir/168_comp.chr21";
-    ok(-s $output_file, 'Output file exists: output_file') or abort;
+    my $snp_file = "$data_dir/input.snps";
+    ok(-s $snp_file, 'SNP file exists: $snp_file') or abort;
+
+    my $result_file = "$data_dir/expected_outfile";
+    ok(-s $result_file, 'Result file exists: $result_file') or abort;
 
     # create and execute command
     my $tmpdir = Genome::Sys->create_temp_directory();
@@ -38,6 +39,7 @@ eval {
         snp_file    => $snp_file,
         reference_fasta    => $reference_fasta,
         output_file => "$tmpdir/out_file",
+        output_genotypes => "$tmpdir/out_geno",
         bam_readcount_version => 0.6,
     );
 
@@ -51,5 +53,6 @@ eval {
             [ qr(\Q$data_dir\E) => 'TEST_INPUTS_DIR' ],
         ],
     );
-    compare_ok("$tmpdir/out_file", "$data_dir/168_comp.chr21", 'output_file matched expected', %compare_args);
+    compare_ok("$tmpdir/out_file", "$data_dir/expected_outfile", 'output_file matched expected', %compare_args);
+    compare_ok("$tmpdir/out_geno", "$data_dir/genotype.output", 'output_file matched expected', %compare_args);
 };
