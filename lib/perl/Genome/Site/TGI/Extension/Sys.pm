@@ -74,8 +74,9 @@ sub get_lsf_job_status {
 sub bsub_and_wait_for_completion {
     my($class, %bsub_args) = @_;
 
-    my $commands;
-    ($commands, %bsub_args) = _bsub_and_wait_for_completion__validate_args(%bsub_args);
+    my $special_args;
+    ($special_args, %bsub_args) = _bsub_and_wait_for_completion__validate_args(%bsub_args);
+    my($commands, $on_submit_cb, $on_complete_cb) = @$special_args{'commands','on_submit','on_complete'};
 
     my $hostname = hostname;
     my $waiting_socket = IO::Socket::INET->new(Listen => 5, Proto => 'tcp', LocalHost => $hostname);
@@ -88,10 +89,11 @@ sub bsub_and_wait_for_completion {
                                   %bsub_args,
                                   cmd => $cmd,
                                 );
+        $on_submit_cb->($seq, $job_id) if $on_submit_cb;
         $seq_to_job_id{$seq} = $job_id;
     }
 
-    $class->_bsub_and_wait_for_completion__wait_on_jobs($waiting_socket, %seq_to_job_id);
+    $class->_bsub_and_wait_for_completion__wait_on_jobs($waiting_socket, $on_complete_cb, %seq_to_job_id);
 
     # immediately after being reaped in _bsub_and_wait_for_completion_wait_on_jobs(), bjobs
     # reports their status as still "RUN".  Instead, we go into the traditional polling until
@@ -106,18 +108,21 @@ sub bsub_and_wait_for_completion {
 sub _bsub_and_wait_for_completion__validate_args {
     my %bsub_args = @_;
 
-    my $commands = delete $bsub_args{cmds};
+    my %special_args;
+    $special_args{commands} = my $commands = delete $bsub_args{cmds};
     unless ($commands and ref($commands) and ref($commands) eq 'ARRAY') {
         Carp::croak(q(arg 'commands' is required and must be an arrayref of commands'));
     }
     if (exists $bsub_args{cmd}) {
         Carp::croak(q(arg 'cmd' is not allowed, use 'cmds' instead, an arrayref of commands));
     }
-    return($commands, %bsub_args);
+    $special_args{on_submit} = delete $bsub_args{on_submit};
+    $special_args{on_complete} = delete $bsub_args{on_complete};
+    return(\%special_args, %bsub_args);
 }
 
 sub _bsub_and_wait_for_completion__wait_on_jobs {
-    my($class, $waiting_socket, %seq_to_job_id) = @_;
+    my($class, $waiting_socket, $on_complete_cb, %seq_to_job_id) = @_;
 
     while (%seq_to_job_id) {
         my $fh = $waiting_socket->accept();
@@ -130,6 +135,7 @@ sub _bsub_and_wait_for_completion__wait_on_jobs {
             Carp::croak("Got unexpected response '$seq' while waiting for these jobs:\n",
                 join("\n", map { join(' => ', $_, $seq_to_job_id{$_}) } keys %seq_to_job_id));
         }
+        $on_complete_cb->($seq, $job_id) if $on_complete_cb;
     }
     return 1;
 }
