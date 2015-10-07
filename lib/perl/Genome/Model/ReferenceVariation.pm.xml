@@ -5,7 +5,8 @@
   <link fromOperation="input connector" fromProperty="buckets" toOperation="HaplotypeCaller" toProperty="bucket" />
   <link fromOperation="Alignment" fromProperty="build" toOperation="QC" toProperty="build" />
   <link fromOperation="Alignment" fromProperty="build" toOperation="HaplotypeCaller" toProperty="build" />
-  <link fromOperation="HaplotypeCaller" fromProperty="build" toOperation="output connector" toProperty="build" />
+  <link fromOperation="HaplotypeCaller" fromProperty="build" toOperation="output connector" toProperty="hc_build" />
+  <link fromOperation="QC" fromProperty="build" toOperation="output connector" toProperty="qc_build" />
 
   <operation name="Alignment">
       <operationtype commandClass="Genome::Model::ReferenceVariation::Command::AlignReads" typeClass="Workflow::OperationType::Command"/>
@@ -21,7 +22,9 @@
     <inputproperty>build</inputproperty>
     <inputproperty>buckets</inputproperty>
 
-    <outputproperty>build</outputproperty>
+    <!-- outputs from terminal steps to satisfy connectivity -->
+    <outputproperty>hc_build</outputproperty>
+    <outputproperty>qc_build</outputproperty>
   </operationtype>
 
 </workflow>
