@@ -2,6 +2,7 @@
 
 <workflow name="Reference Variation Pipeline" logDir="/tmp/reference_variation_pipeline_log">
   <link fromOperation="input connector" fromProperty="build" toOperation="Alignment" toProperty="build" />
+  <link fromOperation="input connector" fromProperty="buckets" toOperation="HaplotypeCaller" toProperty="bucket" />
   <link fromOperation="Alignment" fromProperty="build" toOperation="QC" toProperty="build" />
   <link fromOperation="Alignment" fromProperty="build" toOperation="HaplotypeCaller" toProperty="build" />
   <link fromOperation="HaplotypeCaller" fromProperty="build" toOperation="output connector" toProperty="build" />
@@ -12,12 +13,13 @@
   <operation name="QC">
       <operationtype commandClass="Genome::Model::ReferenceVariation::Command::QualityControl" typeClass="Workflow::OperationType::Command"/>
   </operation>
-  <operation name="HaplotypeCaller">
+  <operation name="HaplotypeCaller" parallelBy="bucket">
       <operationtype commandClass="Genome::Model::ReferenceVariation::Command::HaplotypeCaller" typeClass="Workflow::OperationType::Command"/>
   </operation>
 
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>build</inputproperty>
+    <inputproperty>buckets</inputproperty>
 
     <outputproperty>build</outputproperty>
   </operationtype>

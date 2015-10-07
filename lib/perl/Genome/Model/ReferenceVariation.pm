@@ -98,8 +98,14 @@ sub map_workflow_inputs {
     my $self = shift;
     my $build = shift;
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{buckets_result} = $build;
+
+    my $bucket_count = $build->reference_sequence_build->buckets($result_users)->count;
+
     return (
         build => $build,
+        buckets => [1..$bucket_count],
     );
 }
 

@@ -21,6 +21,10 @@ class Genome::Model::Build::ReferenceVariation {
            doc => 'the result of running the haplotype caller',
            is_many => 1,
         },
+        buckets_result => {
+            is => 'Genome::Model::Build::ReferenceSequence::Buckets',
+            doc => 'the buckets used for parallelization',
+        },
     ],
 };
 

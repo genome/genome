@@ -9,9 +9,9 @@ class Genome::Model::ReferenceVariation::Command::HaplotypeCaller {
     is => 'Genome::Model::ReferenceVariation::Command::Base',
     doc => 'Runs the Haplotype Caller on the alignments',
     has_optional_input => [
-        intervals => {
+        bucket => {
             is => 'Text',
-            doc => 'intervals to restrict this run of the haplotype caller',
+            doc => 'bucket of chromosomes to restrict this run of the haplotype caller',
         },
     ],
 };
@@ -41,6 +41,14 @@ sub _params_for_command {
     );
 
     return @params;
+}
+
+sub intervals {
+    my $self = shift;
+    my $build = $self->build;
+    my $bucket = $self->bucket;
+
+    return $build->buckets_result->bucket($bucket);
 }
 
 1;
