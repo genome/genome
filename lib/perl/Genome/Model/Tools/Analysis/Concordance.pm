@@ -48,8 +48,13 @@ class Genome::Model::Tools::Analysis::Concordance {
         },
         output_file => {
             is => 'String',
-            is_optional => 1,
+            is_optional => 0,
             doc => 'Output file in which to place numbers and percentages of matched and mismatched SNPs',
+        },
+        output_genotypes => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Write out the genotypes for each sample at each position into this file',
         },
     ]
 };
@@ -183,6 +188,7 @@ sub execute {
     $open_readcount_2->close;
     $parse_file_2->close;
 
+    `cp $tempdir/norm_parse $tempdir/pre_parse /gscmnt/gc6134/cancer-genomics/medseq/GTB13/`;
     # run R script and output # goes in temp dir
     my $dir_name = dirname(__FILE__);
     my $r_script_file = "\"" . $dir_name . "/Concordance.R\"";
@@ -208,6 +214,8 @@ sub execute {
     my $pre = "$tempdir/pre_r";
 
     my (@norm_total, @norm_snp, @pre_total, @pre_snp);
+
+#here's where we write out the output_genotypes
 
     open (my $IN1,'<',$norm) or die "$!"; #open 1st file
     while (<$IN1>) {
