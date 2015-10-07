@@ -545,6 +545,18 @@ sub get_sequence_dictionary {
     return $path;
 }
 
+sub buckets {
+    my $self = shift;
+    my $users = shift;
+
+    my $buckets = Genome::Model::Build::ReferenceSequence::Buckets->get_with_lock(
+        reference_sequence_build => $self,
+        users => $users || Genome::SoftwareResult::User->user_hash_for_build($self),
+    );
+
+    return $buckets;
+}
+
 sub get_by_name {
     my ($class, $name) = @_;
 
