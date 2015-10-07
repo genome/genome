@@ -11,6 +11,12 @@ output <- args[2]
 
 data <- read.table(file,sep="\t",colClasses=c("character","numeric","character","character","numeric","character","numeric","character","numeric","character","numeric","character","numeric"))
 
+#require 10x of depth to make a call
+data = data[rowSums(data[,c(5,7,9,11)])>=10,]
+if(length(data[,1]) < 1){
+  stop("ERROR: no site has greater than 10x coverage");
+}
+
 for (i in 1:nrow(data)) {
 	counter <- 0; alpha <- c(NA,NA); num <- c(0,0)
 	for (j in seq(5,11,2)) {
@@ -39,7 +45,6 @@ for (i in 1:nrow(data)) {
 		}
 	}
 }
-
 
 write.table(data,file=output,row.names=F,col.names=F,quote=F,sep="\t")
 
