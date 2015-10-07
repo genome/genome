@@ -107,44 +107,45 @@ sub execute {
     my $tumor_var_col;
     my $linecount = 0;
 
+    #check the header for sanity and get the appropriate field locations
+    my $line = $fh->getline;
+    chomp $line;
+    my @F = split /\t/, $line;
+    
+    #get fields to query from header
+    if($F[0] ne "chromosome_name"){
+        $self->error_message("Expected header line was not present. Headered TGI annotation format required, with \"chromosome_name\" as first column and columns named Normal_ref_count, Normal_var_count, Tumor_ref_count, Tumor_var_count");
+        return;
+    }
+
+    $normal_ref_col = List::MoreUtils::first_index {$_ =~ /Normal_ref_count/ } @F;
+    $normal_var_col = List::MoreUtils::first_index {$_ =~ /Normal_var_count/ } @F;
+    $tumor_ref_col = List::MoreUtils::first_index {$_ =~ /Tumor_ref_count/ } @F;
+    $tumor_var_col = List::MoreUtils::first_index {$_ =~ /Tumor_var_count/ } @F;
+    
+    if(($normal_ref_col == -1) || 
+       ($normal_var_col == -1) ||
+       ($tumor_ref_col == -1) ||
+       ($tumor_var_col == -1)){
+        $self->error_message("At least one column is missing. Expected header to contain Normal_ref_count, Normal_var_count, Tumor_ref_count, and Tumor_var_count");
+        return();
+    }
+    
+    print OUTFILE $line . "\tFilterCall\tProb\tLLR\n";
+    if(defined($self->lq_output_file)){
+        print LQFILE $line . "\tFilterCall\tProb\tLLR\n";
+    }
+    
+
     #scan through file and identify where we think there are outliers
     while(my $line = $fh->getline) {
         chomp $line;
         my @F = split /\t/, $line;
 
-        #get fields to query from header
-        if($linecount == 0){
-            if($line =~ /chromosome_name/){
-                $normal_ref_col = List::MoreUtils::first_index {$_ =~ /Normal_ref_count/ } @F;
-                $normal_var_col = List::MoreUtils::first_index {$_ =~ /Normal_var_count/ } @F;
-                $tumor_ref_col = List::MoreUtils::first_index {$_ =~ /Tumor_ref_count/ } @F;
-                $tumor_var_col = List::MoreUtils::first_index {$_ =~ /Tumor_var_count/ } @F;
-
-                if(($normal_ref_col == -1) || ($normal_var_col == -1) ||($tumor_ref_col == -1) ||($tumor_var_col == -1)){
-                    $self->error_message("At least one column is missing. Expected headers Normal_ref_count, Normal_var_count, Tumor_ref_count, Tumor_var_count");
-                    return(undef);
-                }
-
-                print OUTFILE $line . "\tFilterCall\tProb\tLLR\n";
-                if(defined($self->lq_output_file)){
-                    print LQFILE $line . "\tFilterCall\tProb\tLLR\n";
-                }
-            } else {
-                $self->error_message("Expected header line was not present. TGI annotation format required, with \"chromosome_name\" as first column and columns named Normal_ref_count, Normal_var_count, Tumor_ref_count, Tumor_var_count");
-                return(undef)
-            }
-            $linecount++;
-            next;
-        }
-
         my $normal_ref = $F[$normal_ref_col];
         my $normal_var = $F[$normal_var_col];
         my $tumor_ref = $F[$tumor_ref_col];
         my $tumor_var = $F[$tumor_var_col];
-
-
-        #my ($normal_ref, $normal_var, $tumor_ref,$tumor_var,$varscan_pvalue,$varscan_call) = @fields[4,5,8,9,14,12];
-#        next if($varscan_pvalue > $self->min_p_value);
 
         my $llr = 0;
         my $max_llr;
@@ -158,7 +159,6 @@ sub execute {
             print OUTFILE $line . "\tSomatic\tNA\tNA\n";
             next;
         }
-
 
         if($normal_ref + $normal_var > 0 && $tumor_ref + $tumor_var > 0) {
 
