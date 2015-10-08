@@ -28,8 +28,8 @@ subtest 'input file with length 17' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.PRAMEF4.p.R195H' => 'LKILGMPFRNIRSILKM',
-                '>MT.PRAMEF4.p.R195H' => 'LKILGMPFHNIRSILKM',
+                '>WT.PRAMEF4.R195H' => 'LKILGMPFRNIRSILKM',
+                '>MT.PRAMEF4.R195H' => 'LKILGMPFHNIRSILKM',
             }
         }
     );
@@ -48,8 +48,8 @@ subtest 'input file with length 21' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.PRAMEF4.p.R195H' => 'KKLKILGMPFRNIRSILKMVN',
-                '>MT.PRAMEF4.p.R195H' => 'KKLKILGMPFHNIRSILKMVN',
+                '>WT.PRAMEF4.R195H' => 'KKLKILGMPFRNIRSILKMVN',
+                '>MT.PRAMEF4.R195H' => 'KKLKILGMPFHNIRSILKMVN',
             }
         }
     );
@@ -68,8 +68,8 @@ subtest 'input file with length 31' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.PRAMEF4.p.R195H' => 'LHLCCKKLKILGMPFRNIRSILKMVNLDCIQ',
-                '>MT.PRAMEF4.p.R195H' => 'LHLCCKKLKILGMPFHNIRSILKMVNLDCIQ',
+                '>WT.PRAMEF4.R195H' => 'LHLCCKKLKILGMPFRNIRSILKMVNLDCIQ',
+                '>MT.PRAMEF4.R195H' => 'LHLCCKKLKILGMPFHNIRSILKMVNLDCIQ',
             }
         }
     );
@@ -88,8 +88,8 @@ subtest 'input file with mutations at relative end of full sequence' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.PRSS55.p.S343F' => 'SPRSWLLLCPLSHVLFRAILY',
-                '>MT.PRSS55.p.S343F' => 'SPRSWLLLCPLFHVLFRAILY',
+                '>WT.PRSS55.S343F' => 'SPRSWLLLCPLSHVLFRAILY',
+                '>MT.PRSS55.S343F' => 'SPRSWLLLCPLFHVLFRAILY',
             }
         }
     );
@@ -108,8 +108,8 @@ subtest 'input file with mutations at relative beginning of full sequence' => su
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.IGHV3-53.p.V8I' => 'MEFWLSWVFLVAILKGVQCEV',
-                '>MT.IGHV3-53.p.V8I' => 'MEFWLSWIFLVAILKGVQCEV',
+                '>WT.IGHV3-53.V8I' => 'MEFWLSWVFLVAILKGVQCEV',
+                '>MT.IGHV3-53.V8I' => 'MEFWLSWIFLVAILKGVQCEV',
             }
         }
     );
@@ -128,10 +128,8 @@ subtest 'input file with wildtype sequence shorter than desired peptite sequence
     my %expected_return_values = (
         C => {
             variant_sequences => {
-                #'>WT.IGHJ5.1.p.F3L' => 'NWFDPWGQGTLVTVSS',
-                #'>MT.IGHJ5.1.p.F3L' => 'NWLDPWGQGTLVTVSS',
-                '>WT.IGHJ5.p.F3L' => 'NWFDPWGQGTLVTVSS',
-                '>MT.IGHJ5.p.F3L' => 'NWLDPWGQGTLVTVSS',
+                '>WT.IGHJ5.F3L' => 'NWFDPWGQGTLVTVSS',
+                '>MT.IGHJ5.F3L' => 'NWLDPWGQGTLVTVSS',
             }
         }
     );
@@ -150,8 +148,8 @@ subtest 'input file with inframe insertion - amino acid replacement' => sub {
     my %expected_return_values = (
         GTGC => {
             variant_sequences => {
-                '>WT.CNDP1.p.V15VL' => 'LGRMAASLLAVLLLLLERGMF',
-                '>MT.CNDP1.p.V15VL' => 'LGRMAASLLAVLLLLLLERGMF',
+                '>WT.CNDP1.V15VL' => 'LGRMAASLLAVLLLLLERGMF',
+                '>MT.CNDP1.V15VL' => 'LGRMAASLLAVLLLLLLERGMF',
             }
         }
     );
@@ -170,8 +168,8 @@ subtest 'input file with inframe deletion - amino acid replacement' => sub {
     my %expected_return_values = (
         A => {
             variant_sequences => {
-                '>WT.OR14A16.p.SL163-164L' => 'IAVMHTAGTFSLSYCGSNMVHQ',
-                '>MT.OR14A16.p.SL163-164L' => 'IAVMHTAGTFLSYCGSNMVHQ',
+                '>WT.OR14A16.SL163-164L' => 'IAVMHTAGTFSLSYCGSNMVHQ',
+                '>MT.OR14A16.SL163-164L' => 'IAVMHTAGTFLSYCGSNMVHQ',
             }
         }
     );
@@ -190,8 +188,8 @@ subtest 'input file with inframe insertion - amino acid insertion' => sub {
     my %expected_return_values = (
         TAGC => {
             variant_sequences => {
-                '>WT.OXA1L.p.-478-479S' => 'PGKDNPPNIPSSSSKPKSKY',
-                '>MT.OXA1L.p.-478-479S' => 'PGKDNPPNIPSSSSSKPKSKY',
+                '>WT.OXA1L.-478-479S' => 'PGKDNPPNIPSSSSKPKSKY',
+                '>MT.OXA1L.-478-479S' => 'PGKDNPPNIPSSSSSKPKSKY',
             }
         }
     );
@@ -210,8 +208,8 @@ subtest 'input file with inframe deletion - amino acid deletion' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.LRRC17.p.E214-' => 'RQIKSEQLCNEEEKEQLDPKP',
-                '>MT.LRRC17.p.E214-' => 'RQIKSEQLCNEEKEQLDPKP',
+                '>WT.LRRC17.E214-' => 'RQIKSEQLCNEEEKEQLDPKP',
+                '>MT.LRRC17.E214-' => 'RQIKSEQLCNEEKEQLDPKP',
             }
         }
     );
@@ -230,8 +228,8 @@ subtest 'input file with framshift variant feature truncation' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.NECAP2.p.FS.209' => 'LIPPPGEQLA',
-                '>MT.NECAP2.p.FS.209' => 'LIPPPGEQLAGGSLVQPAVAPSSDQLPARPSQAQAGSSSDLSTVFPHVTSGKALPHLGQRKEDEALLSWPVFGAWGDPSSSQQLLPVQINFQPDPARHRLGPVLT',
+                '>WT.NECAP2.FS.209' => 'LIPPPGEQLA',
+                '>MT.NECAP2.FS.209' => 'LIPPPGEQLAGGSLVQPAVAPSSDQLPARPSQAQAGSSSDLSTVFPHVTSGKALPHLGQRKEDEALLSWPVFGAWGDPSSSQQLLPVQINFQPDPARHRLGPVLT',
             }
         }
     );
@@ -250,8 +248,8 @@ subtest 'input file with framshift variant feature elongation' => sub {
     my %expected_return_values = (
         CG => {
             variant_sequences => {
-                '>WT.HSPG2.p.FS.322' => 'DGSDELDCGP',
-                '>MT.HSPG2.p.FS.322' => 'DGSDELDCGPPATL',
+                '>WT.HSPG2.FS.322' => 'DGSDELDCGP',
+                '>MT.HSPG2.FS.322' => 'DGSDELDCGPPATL',
             }
         }
     );

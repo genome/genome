@@ -181,7 +181,7 @@ sub make_hashes_from_input {
         }
         my $protein_type = $protein_arr[0];
         my $protein_name = $protein_arr[1];
-        my $variant_aa =  $protein_arr[3];
+        my $variant_aa =  $protein_arr[2];
 
         $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = $score;
         $epitope_seq{$protein_type}{$protein_name}{$variant_aa}{$position} = $epitope;

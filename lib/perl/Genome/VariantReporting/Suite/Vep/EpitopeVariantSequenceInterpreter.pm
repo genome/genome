@@ -82,14 +82,14 @@ sub _interpret_entry {
             if (grep {$_ eq 'frameshift_variant'} @consequences) {
                 $wildtype_subsequence = $self->get_frameshift_wildtype_subsequence($position, $full_wildtype_sequence, $entry);
                 $mutant_subsequence = $wildtype_subsequence . $transcript->{downstreamprotein};
-                $variant_id = $transcript->{symbol} . '.p.FS.' . $transcript->{protein_position};
+                $variant_id = $transcript->{symbol} . '.FS.' . $transcript->{protein_position};
             }
             else {
                 my $mutation_position;
                 ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry, $wildtype_amino_acid_length);
                 $mutant_subsequence = $wildtype_subsequence;
                 substr($mutant_subsequence, $mutation_position, $wildtype_amino_acid_length) = $mutant_amino_acid;
-                $variant_id = $transcript->{symbol} . '.p.' . $wildtype_amino_acid . $transcript->{protein_position} . ($mutant_amino_acid || '-');
+                $variant_id = $transcript->{symbol} . '.' . $wildtype_amino_acid . $transcript->{protein_position} . ($mutant_amino_acid || '-');
             }
             my @designations = qw(WT MT);
             my @subsequences = ($wildtype_subsequence, $mutant_subsequence);
