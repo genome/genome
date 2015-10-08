@@ -170,7 +170,6 @@ sub wait_for_lsf_jobs {
 
     my %job_statuses;
     my $all_jobs_complete = 1;
-    $DB::single = 1;
     do {
         $all_jobs_complete = 1;
         JOB_ID: for my $job_id (@job_ids) {
