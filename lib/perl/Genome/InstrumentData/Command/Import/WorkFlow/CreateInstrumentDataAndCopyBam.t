@@ -30,8 +30,8 @@ ok($library, 'Create library');
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1');
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my @bams_info = (
-    [qw/ split-by-rg.2883581797.paired.bam    1 34 100 55555555555555555555555555555555 /],
-    [qw/ split-by-rg.2883581797.singleton.bam 0 94 100 66666666666666666666666666666666 /],
+    [qw/ split-by-rg.2883581797.paired.bam    1 34 100 11111111111111111111111111111111 /],
+    [qw/ split-by-rg.2883581797.singleton.bam 0 94 100 22222222222222222222222222222222 /],
 );
 my @bam_paths;
 for ( my $i = 0; $i < @bams_info; $i++ ) {

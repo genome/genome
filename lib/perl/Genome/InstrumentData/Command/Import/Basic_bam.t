@@ -57,7 +57,7 @@ is($instrument_data->description, 'We took some DNA and sheared it and sequenced
 is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
 is($instrument_data->read_count, 252, 'read_count correctly set');
 is($instrument_data->read_length, 100, 'read_length correctly set');
-is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, '33333333333333333333333333333333', 'segment_id correctly set');
+is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, '11111111111111111111111111111111', 'segment_id correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, 'f81fbc3d3a6b57d11e60b016bb2c950c', 'original_data_path_md5 correctly set');
 is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
