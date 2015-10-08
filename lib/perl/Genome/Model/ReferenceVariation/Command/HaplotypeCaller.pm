@@ -29,7 +29,6 @@ sub _params_for_command {
     my $build = $self->build;
 
     my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
-    $result_users->{haplotype_caller_result} = $build;
 
     my @params = (
         alignment_result => $build->merged_alignment_result,
@@ -43,6 +42,10 @@ sub _params_for_command {
     push @params, intervals => $intervals if $intervals;
 
     return @params;
+}
+
+sub _label_for_result {
+    return 'haplotype_caller_result';
 }
 
 sub intervals {

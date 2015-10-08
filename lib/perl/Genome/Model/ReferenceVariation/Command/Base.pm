@@ -27,8 +27,9 @@ sub shortcut {
 
     my $accessor = $self->_result_accessor;
 
-    if ($retval and $cmd->$accessor) {
-        $self->status_message('Found existing result: %s', $cmd->$accessor->__display_name__);
+    if ($retval and my $result = $cmd->$accessor) {
+        $self->status_message('Found existing result: %s', $result->__display_name__);
+        $self->_postprocess_result($result);
     }
 
     return $retval;
@@ -42,8 +43,9 @@ sub execute {
 
     my $accessor = $self->_result_accessor;
 
-    if ($retval and $cmd->$accessor) {
-        $self->status_message('Generated result: %s', $cmd->$accessor->__display_name__);
+    if ($retval and my $result = $cmd->$accessor) {
+        $self->status_message('Generated result: %s', $result->__display_name__);
+        $self->_postprocess_result($result);
     } else {
         die $self->error_message('Failed to produce result.');
     }
@@ -74,6 +76,19 @@ sub _command_class {
 
 sub _params_for_command {
     Carp::confess('subclass must implement _params_for_command');
+}
+
+sub _label_for_result {
+    return;
+}
+
+sub _postprocess_result {
+    my $self = shift;
+    my $result = shift;
+
+    return unless $self->_label_for_result;
+
+    $result->add_user(user => $self->build, label => $self->_label_for_result);
 }
 
 sub sub_command_category {

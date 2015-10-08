@@ -23,7 +23,6 @@ sub _params_for_command {
     my $build = $self->build;
 
     my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
-    $result_users->{qc_result} = $build;
 
     my @params = (
         alignment_result => $build->merged_alignment_result,
@@ -32,6 +31,10 @@ sub _params_for_command {
     );
 
     return @params;
+}
+
+sub _label_for_result {
+    return 'qc_result';
 }
 
 1;

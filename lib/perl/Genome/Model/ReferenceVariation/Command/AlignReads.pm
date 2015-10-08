@@ -24,7 +24,6 @@ sub _params_for_command {
     my $model = $build->model;
 
     my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
-    $result_users->{merged_alignment_result} = $build;
 
     my $api_inputs = Genome::InstrumentData::Composite::Workflow::Generator->inputs_for_api_version(
         $model->aligner_api_version
@@ -41,6 +40,10 @@ sub _params_for_command {
     );
 
     return @params;
+}
+
+sub _label_for_result {
+    return 'merged_alignment_result';
 }
 
 1;
