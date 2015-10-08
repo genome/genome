@@ -104,6 +104,7 @@ sub wait_for_lsf_jobs {
             $job_statuses{$job_id} = $status;
             $all_jobs_complete = 0 unless $status eq 'DONE' or $status eq 'EXIT';
         }
+        sleep 10 unless $all_jobs_complete;
     } while (!$all_jobs_complete);
 
     return %job_statuses;

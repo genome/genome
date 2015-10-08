@@ -239,8 +239,6 @@ $Genome::Command::OPTS_SPEC = [
           'Warren',
           'Weinstock'
         ],
-        'paths=s@',
-        'files',
         'requestor=s',
         undef,
         'allocations=s@',
@@ -354,8 +352,6 @@ $Genome::Command::OPTS_SPEC = [
       [
         'allocations=s@',
         undef,
-        'paths=s',
-        'files',
         'duration=s',
         [
           1,

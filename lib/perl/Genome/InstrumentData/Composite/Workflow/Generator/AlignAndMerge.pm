@@ -98,7 +98,7 @@ sub _format_lsf_resource_string {
 
     my $cpus = 8;
     my $mem_gb = 60;
-    my $queue = Genome::Config::get('lsf_queue_alignment_prod');
+    my $queue = Genome::Config::get('lsf_queue_alignment_default');
 
     my $gtmp_kb = ceil($gtmp_bytes / 1024);
     my $gtmp_mb = ceil($gtmp_kb / 1024);
