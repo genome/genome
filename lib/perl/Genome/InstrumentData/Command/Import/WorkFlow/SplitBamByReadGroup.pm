@@ -55,27 +55,11 @@ sub _set_headers_and_read_groups {
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my $headers = $helpers->load_headers_from_bam($self->bam_path);
     return if not $headers;
+    $self->headers($headers);
     
-    my $read_group_headers = delete $headers->{'@RG'};
+    my $read_group_headers = delete $headers->{'@RG'} || [];
     my $read_groups_and_tags = $helpers->read_groups_and_tags_from_headers($read_group_headers);
     return if not $read_groups_and_tags;
-
-    # Add unknown rg
-    $read_groups_and_tags->{unknown} = { ID => 'unknown', CN => 'NA', };
-    
-    # Add instdata uuid for each rg
-    my %old_and_new_read_group_ids;
-    for my $rg_tags ( values %$read_groups_and_tags ) {
-        my $rg_id = delete $rg_tags->{ID};
-        $old_and_new_read_group_ids{$rg_id} = {
-            paired => UR::Object::Type->autogenerate_new_object_id_uuid,
-            singleton => UR::Object::Type->autogenerate_new_object_id_uuid,
-        };
-    }
-
-    $self->old_and_new_read_group_ids(\%old_and_new_read_group_ids);
-
-    $self->headers($headers);
     $self->read_groups_and_tags($read_groups_and_tags);
 
     return 1;
@@ -256,31 +240,44 @@ sub _open_fh_for_read_group_and_pairedness {
 }
 
 sub _write_headers_for_read_group {
-    my ($self, $fh, $read_group_id, $pairedness) = @_;
+    my ($self, $fh, $rg_id, $pairedness) = @_;
 
-    my $headers = $self->headers;
-    Carp::confess('No headers to write to read group bams!') if not $headers;
+    # Add mapping for old RG id to new RG UUID
+    my $old_and_new_read_group_ids = $self->old_and_new_read_group_ids;
+    if ( not exists $old_and_new_read_group_ids->{$rg_id} ) {
+        $old_and_new_read_group_ids->{$rg_id} = {
+            paired => UR::Object::Type->autogenerate_new_object_id_uuid,
+            singleton => UR::Object::Type->autogenerate_new_object_id_uuid,
+        };
+    }
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $headers_as_string = $helpers->headers_to_string($headers);
+    my $headers_as_string = $helpers->headers_to_string( $self->headers );
     return if not $headers_as_string;
-
     $fh->print( $headers_as_string );
-
-    my $read_groups_and_tags = $self->read_groups_and_tags;
-    my %rg_tags = %{$read_groups_and_tags->{$read_group_id}};
-    my @tag_names = sort keys %rg_tags;
-    $fh->print( 
-        join(
-            "\t", '@RG',
-            'ID:'.$self->old_and_new_read_group_ids->{$read_group_id}->{$pairedness},
-            map { join(':', $_, $rg_tags{$_}) } @tag_names
-        )."\n"
-    );
+    $fh->print( $self->_header_for_read_group_and_pairedness($rg_id, $pairedness) );
 
     return 1;
 }
 
+sub _header_for_read_group_and_pairedness {
+    my ($self, $rg_id, $pairedness) = @_;
+
+    my $read_groups_and_tags = $self->read_groups_and_tags;
+    if ( not exists $read_groups_and_tags->{$rg_id} ) {
+        # Add RG tags for groups that are not in the header. This includes the 'unknown' group
+        $read_groups_and_tags->{$rg_id} = { CN => 'NA', };
+    }
+    delete $read_groups_and_tags->{$rg_id}->{ID} if exists $read_groups_and_tags->{$rg_id}->{ID};
+    my %rg_tags = %{$read_groups_and_tags->{$rg_id}};
+    my @tag_names = sort keys %rg_tags;
+
+    return join(
+        "\t", '@RG',
+        'ID:'.$self->old_and_new_read_group_ids->{$rg_id}->{$pairedness},
+        map { join(':', $_, $rg_tags{$_}) } @tag_names
+    )."\n";
+}
 
 1;
 
