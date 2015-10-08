@@ -1035,7 +1035,7 @@ sub start {
         }
 
         # Launches the workflow (in a pend state, it's resumed by a commit hook)
-        my $workflow_xml = $workflow->save_to_xml();
+        my $workflow_xml = $self->_xml_for_workflow($workflow);
         unless ($self->_launch(\%params, $workflow_xml)) {
             Carp::croak "Build " . $self->__display_name__ . " could not be launched!";
         }
@@ -1511,9 +1511,23 @@ sub _initialize_workflow {
 
         $workflow->notify_url($url);
     }
-    $workflow->save_to_xml(OutputFile => $self->data_directory . '/build.xml');
+
+    Genome::Sys->write_file($self->data_directory . '/build.xml', $self->_xml_for_workflow($workflow));
 
     return $workflow;
+}
+
+sub _xml_for_workflow {
+    my $class = shift;
+    my $workflow = shift;
+
+    if ($workflow->can('get_xml')) {
+        return $workflow->get_xml;
+    } elsif ($workflow->can('save_to_xml')) {
+        return $workflow->save_to_xml();
+    } else {
+        Carp::confess 'Cannot retrieve workflow XML from object: ' . $workflow;
+    }
 }
 
 sub initialize {
