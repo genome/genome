@@ -105,7 +105,6 @@ sub execute {
     my $normal_var_col;
     my $tumor_ref_col;
     my $tumor_var_col;
-    my $linecount = 0;
 
     #check the header for sanity and get the appropriate field locations
     my $line = $fh->getline;
