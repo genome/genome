@@ -252,7 +252,10 @@ sub execute {
     if($self->output_genotypes){
         my $outfile = Genome::Sys->open_file_for_writing($self->output_genotypes);
         $outfile->print(join("\t",("Chr","Pos","ReferenceBase","Sample1","Sample2")) . "\n");
-        for my $pos (keys(%genotypes)){
+        #sort the array
+        my @unsorted_keys = keys(%genotypes);
+        my @k = sort {my @aarr=split("\t",$a); my @barr=split("\t",$b);return($aarr[0] <=> $barr[0] || $aarr[1] <=> $barr[1])} @unsorted_keys;
+        for my $pos (@k){
             #only output sites with coverage in both samples
             if(defined($genotypes{$pos}{"samp1"}) && defined($genotypes{$pos}{"samp2"})){
                 $outfile->print(join("\t",($pos,$genotypes{$pos}{"samp1"},$genotypes{$pos}{"samp2"})) . "\n");
@@ -260,7 +263,6 @@ sub execute {
         }
         $outfile->close;
     }
-
 
     # sort and uniq
     my %hashTemp;
