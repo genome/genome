@@ -87,6 +87,12 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
           doc => "if this is a recent build with vcf files (Jan 2013 or later), will add the rsids and GMAF information for all SNVs",
       },
 
+      evs_maf_file => {
+          is => 'String',
+          is_optional => 1,
+          doc => "path to file containing ESP population frequency information. Will be used to add MAF information from this cohort",
+      },
+
       process_svs => {
           is => 'Boolean',
           is_optional => 1,
@@ -165,7 +171,7 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
           doc => "Use the latest build on this model, even if it's unsuccessful or still running",
           default => 0,
       },
-      
+
       ],
 };
 
@@ -532,8 +538,6 @@ sub removeUnsupportedSites{
 }
 
 
-
-
 sub doAnnotation{
     my ($file,$annotation_build_name) = @_;
 
@@ -883,9 +887,6 @@ sub execute {
       $snv_file = removeUnsupportedSites($snv_file, $self->required_snv_callers, $build_dir);
   }
 
-
-
-
   ##------------------------------------------------------
   # do annotation
   $snv_file = doAnnotation($snv_file, $annotation_build_name);
@@ -932,6 +933,31 @@ sub execute {
           $indel_file = "$indel_file.rsid";
       } else {
           $self->warning_message("Couldn't find annotated SNV file in build, skipping dbsnp anno");
+      }
+  }
+
+
+
+  #----------------------------------------------------
+  # add dbsnp/gmaf
+
+  if ($self->evs_maf_file){
+      $self->status_message("==== adding evs maf info ====");
+      if(-s $self->evs_maf_file){
+          for my $anno_file ($snv_file, $indel_file) {
+              my $db_cmd = Genome::Model::Tools::Annotate::AddEvsMaf->create(
+                  anno_file => $anno_file,
+                  output_file => "$anno_file.evs",
+                  vcf_file => $self->evs_maf_file,
+                  );
+              unless ($db_cmd->execute) {
+                  die $self->error_message("Failed to add evs maf info to file $snv_file.");
+              }
+          }
+          $snv_file = "$snv_file.evs";
+          $indel_file = "$indel_file.evs";
+      } else {
+          $self->warning_message("Couldn't find provided evs_maf file, skipping that step");
       }
   }
 
