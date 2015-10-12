@@ -19,14 +19,10 @@ class Genome::Qc::Run {
             default_value => Genome::Config::get('lsf_queue_build_worker_alt'),
         },
         lsf_resource => {
-            value => &bsub_rusage,
+            default_value => Genome::Config::get('lsf_resource_qc_run'),
         },
     ],
 };
-
-sub bsub_rusage {
-    return sprintf("-q %s -R 'span[hosts=1] select[mem>16000] rusage[mem=16000]' -M 16000000 -n 4", Genome::Config::get('lsf_queue_build_worker_alt')),
-}
 
 sub result_class {
     return "Genome::Qc::Result";
