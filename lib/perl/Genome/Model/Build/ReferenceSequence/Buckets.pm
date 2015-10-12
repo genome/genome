@@ -50,7 +50,7 @@ sub bucket {
 sub _run {
     my $self = shift;
 
-    my $chr_lengths = $self->_chromosomes_with_lengths;
+    my $chr_lengths = $self->reference_sequence_build->chromosomes_with_lengths;
     my $max_length = max( map $_->[1], @$chr_lengths );
 
     my $bucketizer = Algorithm::Bucketizer->new(bucketsize => $max_length);
@@ -69,47 +69,6 @@ sub _run {
     }
 
     return 1;
-}
-
-sub _chromosomes_with_lengths {
-    my $self = shift;
-
-    my $reference = $self->reference_sequence_build;
-    my $seqdict = $reference->sequence_dictionary_path('sam');
-
-    unless(-s $seqdict) {
-        die $self->error_message('No sequence dictionary found for reference %s to create buckets', $reference->__display_name__);
-    }
-
-    my $parser = Genome::Utility::IO::SeparatedValueReader->create(
-        separator => "\t",
-        input => $seqdict,
-        headers => ['tag', 'name', 'length'],
-        allow_extra_columns => 1,
-        ignore_lines_starting_with => '(?!@SQ)',
-    );
-
-    my @chr_lengths;
-
-    while (my $line = $parser->next) {
-        unless ($line->{tag} eq '@SQ') {
-            Carp::confess 'parser error';
-        }
-
-        my ($sn, $chr) = split(':', $line->{name});
-        unless ($sn eq 'SN') {
-            die $self->error_message('Expected SN first in @SQ line but got %s', $sn);
-        }
-
-        my ($ln, $length) = split(':', $line->{length});
-        unless($ln eq 'LN') {
-            die $self->error_message('Expected LN second in @SQ line but got %s', $ln);
-        }
-
-        push @chr_lengths, [$chr, $length];
-    }
-
-    return \@chr_lengths;
 }
 
 sub _write_bucket {
