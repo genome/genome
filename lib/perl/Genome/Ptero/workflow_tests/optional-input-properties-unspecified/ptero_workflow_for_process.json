@@ -120,6 +120,7 @@
                                                                ],
                                                                "environment" : {
                                                                   "FOO" : "bar",
+                                                                  "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                                },
                                                                "user" : "dmorton",
@@ -135,6 +136,7 @@
                                                                "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                                                "environment" : {
                                                                   "FOO" : "bar",
+                                                                  "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                                },
                                                                "options" : {},
@@ -142,7 +144,7 @@
                                                                "user" : "dmorton"
                                                             },
                                                             "service" : "job",
-                                                            "serviceUrl" : "http://lsf.apipe-deis.gsc.wustl.edu/v1"
+                                                            "serviceUrl" : "http://lsf.example.com/v1"
                                                          }
                                                       ]
                                                    }
@@ -176,6 +178,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
@@ -202,6 +205,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
@@ -228,6 +232,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
