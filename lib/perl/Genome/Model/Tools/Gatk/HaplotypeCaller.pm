@@ -59,6 +59,13 @@ class Genome::Model::Tools::Gatk::HaplotypeCaller {
             is_many => 1,
             is_optional => 1,
         },
+        read_filters => {
+            is => 'Text',
+            is_many => 1,
+            is_optional => 1,
+            doc => 'Filters to apply to reads before analysis.',
+            gatk_param_name => '-rf',
+        },
     ],
 };
 
