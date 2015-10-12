@@ -944,24 +944,16 @@ sub execute {
   if ($self->evs_maf_file){
       $self->status_message("==== adding evs maf info ====");
       if(-s $self->evs_maf_file){
-          my $db_cmd = Genome::Model::Tools::Annotate::AddEvsMaf->create(
-              anno_file => $snv_file,
-              output_file => "$snv_file.evs",
-              vcf_file => $self->evs_maf_file,
-              );
-          unless ($db_cmd->execute) {
-              die $self->error_message("Failed to add evs maf info to file $snv_file.");
+          for my $anno_file ($snv_file, $indel_file) {
+              my $db_cmd = Genome::Model::Tools::Annotate::AddEvsMaf->create(
+                  anno_file => $anno_file,
+                  output_file => "$anno_file.evs",
+                  vcf_file => $self->evs_maf_file,
+                  );
+              unless ($db_cmd->execute) {
+                  die $self->error_message("Failed to add evs maf info to file $snv_file.");
+              }
           }
-          #do the same to the indel file:
-          $db_cmd = Genome::Model::Tools::Annotate::AddEvsMaf->create(
-              anno_file => $indel_file,
-              output_file => "$indel_file.evs",
-              vcf_file => $self->evs_maf_file,
-              );
-          unless ($db_cmd->execute) {
-              die $self->error_message("Failed to add evs maf info to file $indel_file.");
-          }
-
           $snv_file = "$snv_file.evs";
           $indel_file = "$indel_file.evs";
       } else {
