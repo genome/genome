@@ -135,8 +135,8 @@ sub execute {
 
         my $gc_summary_metrics_file = $output_prefix .'.genotype_concordance_summary_metrics';
         if (-e $gc_summary_metrics_file) {
-            my $gc_summary_metrics_hash_ref = Genome::Model::Tools::Picard->parse_file_into_metrics_hashref($gc_summary_metrics_file);
-            my $gc_summary_snp_metrics = $gc_summary_metrics_hash_ref->{'VARIANT_TYPE-SNP'};
+            my $gc_summary_metrics_hash_ref = Genome::Model::Tools::Picard->parse_file_into_metrics_hashref($gc_summary_metrics_file, 'VARIANT_TYPE');
+            my $gc_summary_snp_metrics = $gc_summary_metrics_hash_ref->{'SNP'};
             for my $key ($self->picard_metrics) {
                 $data{$key} = $gc_summary_snp_metrics->{$key};
             }
