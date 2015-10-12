@@ -16,10 +16,14 @@ class Genome::Qc::Run {
     ],
     has_param => [
         lsf_resource => {
-            value => q{-R 'span[hosts=1] select[mem>16000] rusage[mem=16000]' -M 16000000 -n 6},
+            value => &bsub_rusage,
         },
     ],
 };
+
+sub bsub_rusage {
+    return sprintf("-q %s -R 'span[hosts=1] select[mem>16000] rusage[mem=16000]' -M 16000000 -n 4", Genome::Config::get('lsf_queue_build_worker_alt')),
+}
 
 sub result_class {
     return "Genome::Qc::Result";
