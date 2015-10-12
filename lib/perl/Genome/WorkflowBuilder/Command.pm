@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 use Cwd qw();
-use Genome::Utility::LSFResourceParser qw(parse_lsf_params);
+use Genome::Sys::LSF::ResourceParser qw(parse_lsf_params);
 
 
 class Genome::WorkflowBuilder::Command {
@@ -124,7 +124,7 @@ sub _get_lsf_resources_from_command {
 sub _get_ptero_lsf_parameters {
     my $self = shift;
     my $command_class = $self->command;
-    return Genome::Utility::LSFResourceParser::parse_lsf_params(
+    return parse_lsf_params(
         $self->_get_lsf_resources_from_command
     )
 }

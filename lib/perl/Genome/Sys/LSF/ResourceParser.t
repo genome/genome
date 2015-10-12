@@ -2,9 +2,10 @@ use strict;
 use warnings FATAL => qw(all);
 use Test::More;
 use Data::Dumper;
+use above "Genome";
 
 BEGIN {
-    use_ok('Genome::Utility::LSFResourceParser',
+    use_ok('Genome::Sys::LSF::ResourceParser',
         'parse_lsf_params', 'construct_lsf_param_string')
 }
 

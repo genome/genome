@@ -1,4 +1,4 @@
-package Genome::Utility::LSFResourceParser;
+package Genome::Sys::LSF::ResourceParser;
 
 use strict;
 use warnings FATAL => qw(all);
