@@ -15,6 +15,9 @@ class Genome::Qc::Run {
         },
     ],
     has_param => [
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_build_worker_alt'),
+        },
         lsf_resource => {
             value => &bsub_rusage,
         },
