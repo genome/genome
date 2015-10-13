@@ -613,10 +613,10 @@ sub determine_read_length_in_bam {
 }
 #<>#
 
+my $autogenerate_new_object_id_uuid_sub = UR::Object::Type->can('autogenerate_new_object_id_uuid');
 sub overload_uuid_generator_for_class {
     my ($self, $class) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
 
-    my $autogenerate_new_object_id_uuid_sub = UR::Object::Type->can('autogenerate_new_object_id_uuid');
     my $n = 0;
     Sub::Install::reinstall_sub({ # to set the RG ID in the bam
             into => 'UR::Object::Type',
