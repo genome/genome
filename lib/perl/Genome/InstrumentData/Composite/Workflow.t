@@ -14,6 +14,7 @@ use Test::More;
 use above "Genome";
 
 use Genome::Utility::Test;
+use Genome::Test::Factory::InstrumentData::AlignmentResult::Merged::Speedseq;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
@@ -699,42 +700,17 @@ sub construct_speedseq_result {
     my $reference = shift;
     my @instrument_data = @_;
 
-    my $speedseq_result = Genome::InstrumentData::AlignmentResult::Merged::Speedseq->__define__(
+    return Genome::Test::Factory::InstrumentData::AlignmentResult::Merged::Speedseq->setup_object(
         reference_build => $reference,
         aligner_name => 'speedseq',
         aligner_version => '0.0.3a-gms',
         aligner_params => 'sort_memory => 8',
-    );
-    for my $i (0..$#instrument_data) {
-        $speedseq_result->add_input(
-            name => 'instrument_data-' . $i,
-            value_id => $instrument_data[$i]->id,
-        );
-    }
-    $speedseq_result->add_param(
-        name => 'instrument_data_count',
-        value_id=> scalar(@instrument_data),
-    );
-    $speedseq_result->add_param(
-        name => 'instrument_data_md5',
-        value_id => Genome::Sys->md5sum_data(join(':', sort(map($_->id, @instrument_data))))
-    );
-    $speedseq_result->lookup_hash($speedseq_result->calculate_lookup_hash());
-
-    for my $instrument_data (@instrument_data) {
-        my $per_lane_speedseq_result = Genome::InstrumentData::AlignmentResult::Speedseq->__define__(
-            instrument_data => $instrument_data,
-            reference_build => $reference,
-            aligner_name => 'speedseq',
-            aligner_version => '0.0.3a-gms',
-            aligner_params => 'sort_memory => 8',
-            samtools_version => 'r599',
+        instrument_data => \@instrument_data,
+        __per_lane_params => {
             picard_version => '1.29',
-        );
-        $per_lane_speedseq_result->lookup_hash($per_lane_speedseq_result->calculate_lookup_hash());
-    }
-
-    return $speedseq_result;
+            samtools_version => 'r599',
+        },
+    );
 }
 
 sub check_result_bam {
