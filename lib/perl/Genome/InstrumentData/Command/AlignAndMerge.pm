@@ -202,7 +202,7 @@ sub lsf_resource_string_for_aligner_and_instrument_data {
     my $aligner_name = shift;
     my @instrument_data = @_;
 
-    my $merged_result_class = Genome::InstrumentData::Command::AlignAndMerge->merged_result_class($aligner_name);
+    my $merged_result_class = $class->merged_result_class($aligner_name);
     my $estimated_gtmp_bytes = sum(map { $merged_result_class->estimated_gtmp_for_instrument_data($_) } @instrument_data);
     return $class->_format_lsf_resource_string($estimated_gtmp_bytes);
 }
