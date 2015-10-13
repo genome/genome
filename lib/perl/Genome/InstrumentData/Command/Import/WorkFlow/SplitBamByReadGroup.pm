@@ -7,6 +7,7 @@ use Genome;
 
 require IO::File;
 require List::MoreUtils;
+use Params::Validate ':types';
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup { 
     is => 'Command::V2',
@@ -25,15 +26,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
     ],
     has_optional_transient => [
         headers => { is => 'Array', },
-        read_groups_and_headers => { is => 'Hash', default => {} },
-        removed_reads_cnt => { is => 'Number', },
+        read_groups_and_tags => { is => 'HASH', default => {}, },
+        old_and_new_read_group_ids => { is => 'HASH', default => {}, },
         _read_group_fhs => { is => 'HASH', default => {} },
-    ],
-    has_optional_calculated => [
-        read_group_ids => {
-            calculate_from => [qw/ read_groups_and_headers /],
-            calculate => q( return keys %$read_groups_and_headers ), 
-        },
     ],
 };
 
@@ -42,11 +37,8 @@ sub execute {
     $self->debug_message('Spilt bam by read group...');
 
     my $set_headers_and_read_groups = $self->_set_headers_and_read_groups;
-    return if not $set_headers_and_read_groups;
 
-    my @read_group_ids = $self->read_group_ids;
-
-    my $write_reads_ok = $self->_write_reads();
+    my $write_reads_ok = $self->_process_reads;
     return if not $write_reads_ok;
 
     my $verify_read_count_ok = $self->_verify_read_count;
@@ -61,83 +53,87 @@ sub _set_headers_and_read_groups {
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my $headers = $helpers->load_headers_from_bam($self->bam_path);
-    return if not $headers;
-    
-    my $read_group_headers = delete $headers->{'@RG'};
-    my (@read_group_ids, $read_groups_and_headers);
-    if ( $read_group_headers ) {
-        $read_groups_and_headers = $helpers->read_groups_from_headers($read_group_headers);
-        return if not $read_groups_and_headers;
-    }
-
+    die $self->error_message('Failed to get headers!') if not $headers;
     $self->headers($headers);
-    $self->read_groups_and_headers($read_groups_and_headers);
+    
+    my $read_group_headers = delete $headers->{'@RG'} || [];
+    my $read_groups_and_tags = $helpers->read_groups_and_tags_from_headers($read_group_headers);
+    die $self->error_message('Failed to get read groups and tags from headers!') if not $read_groups_and_tags;
+    $self->read_groups_and_tags($read_groups_and_tags);
 
     return 1;
 }
 
-
-sub _write_reads {
+sub _process_reads {
     my ($self) = @_;
-    $self->debug_message('Write reads...');
+    $self->debug_message('Processing reads...');
 
     my $bam_path = $self->bam_path;
     $self->debug_message("Bam path: $bam_path");
     my $bam_fh = IO::File->new("samtools view $bam_path |");
     if ( not $bam_fh ) {
-        $self->error_message('Failed to open file handle to samtools command!');
-        return;
+        die $self->error_message('Failed to open file handle to samtools command!');
     }
 
-    my $removed_reads_cnt = 0;
-    my $previous_line;
-    my $previous_id;
+    my $previous_tokens;
     my $previous_read_group_id;
     while ( my $line = $bam_fh->getline ) {
+        chomp $line;
         my @tokens = split(/\t/, $line);
-        my $id = $tokens[0];
+        my $read_group_id = $self->_get_rg_id_from_sam_tokens(\@tokens);
 
-        $line =~ m/\sRG:Z:(.*?)\s/;
-        my $read_group_id = $1;
-        $read_group_id //= 'unknown';
-
-        unless($previous_line) {
-            $previous_line = $line;
-            $previous_id = $id;
+        unless($previous_tokens) {
+            $previous_tokens = \@tokens;
             $previous_read_group_id = $read_group_id;
             next;
         }
 
-        if($id eq $previous_id and $previous_read_group_id eq $read_group_id) {
-            my $fh = $self->_fh_for_read_group_and_pairedness($read_group_id, 'paired');
-            $fh->print($previous_line, $line);
-            undef $previous_line;
-            undef $previous_id;
+        if($tokens[0] eq $previous_tokens->[0] and $previous_read_group_id eq $read_group_id) {
+            $self->_write_reads_based_on_read_group_and_pairedness(
+                rg_id => $read_group_id,
+                pairedness => 'paired',
+                reads => [ $previous_tokens, \@tokens ],
+            );
+            undef $previous_tokens;
             undef $previous_read_group_id;
         } else {
-            my $fh = $self->_fh_for_read_group_and_pairedness($previous_read_group_id, 'singleton');
-            $fh->print($previous_line);
-
-            $previous_line = $line;
-            $previous_id = $id;
+            $self->_write_reads_based_on_read_group_and_pairedness(
+                rg_id => $previous_read_group_id,
+                pairedness => 'singleton',
+                reads => [ $previous_tokens, ],
+            );
+            $previous_tokens = \@tokens;
             $previous_read_group_id = $read_group_id;
         }
     }
 
-    if($previous_line) {
-        my $fh = $self->_fh_for_read_group_and_pairedness($previous_read_group_id, 'singleton');
-        $fh->print($previous_line);
+    if($previous_tokens) {
+        $self->_write_reads_based_on_read_group_and_pairedness(
+            rg_id => $previous_read_group_id,
+            pairedness => 'singleton',
+            reads => [ $previous_tokens, ],
+        );
     }
 
     for my $fh ( $bam_fh, values %{$self->_read_group_fhs} ) {
         $fh->close;
     }
 
-    $self->debug_message('Removed reads count: '.$removed_reads_cnt);
-    $self->removed_reads_cnt($removed_reads_cnt);
-
-    $self->debug_message('Write reads...done');
+    $self->debug_message('Processing reads...done');
     return 1;
+}
+
+sub _get_rg_id_from_sam_tokens {
+    my ($self, $tokens) = @_;
+
+    my $rg_tag_idx = List::MoreUtils::firstidx { $_ =~ m/^RG:/ } @$tokens;
+    my $rg_tag;
+    if ( defined $rg_tag_idx ) {
+        return (split(':', $tokens->[$rg_tag_idx]))[2];
+    }
+    else {
+        return 'unknown';
+    }
 }
 
 sub _verify_read_count {
@@ -158,8 +154,7 @@ sub _verify_read_count {
     }
 
     if ( not @validated_output_bam_paths ) {
-        $self->error_message('No read group bams passed validation!');
-        return;
+        die $self->error_message('No read group bams passed validation!');
     }
 
     $self->output_bam_paths(\@validated_output_bam_paths);
@@ -168,29 +163,53 @@ sub _verify_read_count {
     return if not $original_flagstat;
 
     $self->debug_message('Original bam read count: '.$original_flagstat->{total_reads});
-    $self->debug_message('Removed reads count: '.$self->removed_reads_cnt);
     $self->debug_message('Read group bams read count: '.$read_count);
 
-    if ( $original_flagstat->{total_reads} - $self->removed_reads_cnt != $read_count ) {
-        $self->error_message('Original and read group bam read counts do not match!');
-        return;
+    if ( $original_flagstat->{total_reads} != $read_count ) {
+        die $self->error_message('Original and split by read group bam read counts do not match!');
     }
 
     $self->debug_message('Verify read count...done');
     return 1;
 }
 
-sub _fh_for_read_group_and_pairedness {
-    my ($self, $read_group, $pairedness) = @_;
+sub _write_reads_based_on_read_group_and_pairedness {
+    my ($self, %params) = @_;
 
     my $fhs = $self->_read_group_fhs;
-    my $key = join('*', $read_group, $pairedness);
+    my $key = join('*', $params{rg_id}, $params{pairedness});
     unless(exists $fhs->{$key}) {
-        $fhs->{$key} = $self->_open_fh_for_read_group_and_pairedness($read_group, $pairedness);
+        $fhs->{$key} = $self->_open_fh_for_read_group_and_pairedness($params{rg_id}, $params{pairedness});
         $self->_read_group_fhs($fhs);
     }
 
-    return $fhs->{$key};
+    for my $read_tokens ( @{$params{reads}} ) {
+        $self->_update_read_group_for_sam_tokens_based_on_paired_endness($read_tokens, $params{pairedness});
+        $fhs->{$key}->print( join("\t", @$read_tokens)."\n" );
+    }
+
+    return 1;
+}
+
+sub _update_read_group_for_sam_tokens_based_on_paired_endness {
+    my ($self, $tokens, $pairedness) = @_;
+
+    my $rg_tag_idx = List::MoreUtils::firstidx { $_ =~ m/^RG:/ } @$tokens;
+    my $rg_tag;
+    if ( defined $rg_tag_idx ) {
+        $rg_tag = splice(@$tokens, $rg_tag_idx, 1);
+    }
+    else {
+        $rg_tag = 'RG:Z:unknown';
+        $rg_tag_idx = $#$tokens;
+    }
+
+    my $rg_id = (split(':', $rg_tag))[2];
+    my $new_rg_id = $self->old_and_new_read_group_ids->{$rg_id}->{$pairedness};
+    $rg_tag = join(':', 'RG',  'Z', $new_rg_id);
+    splice(@$tokens, $rg_tag_idx, 0, $rg_tag); # Add RG tag back
+
+    return 1;
 }
 
 sub _open_fh_for_read_group_and_pairedness {
@@ -199,13 +218,14 @@ sub _open_fh_for_read_group_and_pairedness {
     my $read_group_bam_path = $self->bam_path;
     $read_group_bam_path =~ s/\.bam$//;
     $read_group_bam_path = join('.', $read_group_bam_path, $read_group_id, $pairedness, 'bam');
-    my $fh = IO::File->new("| samtools view -S -b -o $read_group_bam_path -");
+    my $samtools_cmd = "| samtools view -S -b -o $read_group_bam_path -";
+    $self->debug_message("Opening fh for $read_group_bam_path $pairedness with:\n$samtools_cmd");
+    my $fh = IO::File->new($samtools_cmd);
     if ( not $fh ) {
-        $self->error_message('Failed to open file handle to samtools command!');
-        return;
+        die $self->error_message('Failed to open file handle to samtools command!');
     }
 
-    $self->_write_headers_for_read_group($fh, $read_group_id);
+    $self->_write_headers_for_read_group($fh, $read_group_id, $pairedness);
 
     my @output_bam_paths = $self->output_bam_paths;
     push @output_bam_paths, $read_group_bam_path;
@@ -215,29 +235,44 @@ sub _open_fh_for_read_group_and_pairedness {
 }
 
 sub _write_headers_for_read_group {
-    my ($self, $fh, $read_group_id) = @_;
+    my ($self, $fh, $rg_id, $pairedness) = @_;
 
-    my $headers = $self->headers;
-    Carp::confess('No headers to write to read group bams!') if not $headers;
-
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $headers_as_string = $helpers->headers_to_string($headers);
-    return if not $headers_as_string;
-
-    $fh->print( $headers_as_string );
-
-    my $read_groups_and_headers = $self->read_groups_and_headers;
-    unless(exists $read_groups_and_headers->{$read_group_id}) {
-        $read_groups_and_headers->{$read_group_id} = join("\t", 'CN:NA',);
+    # Add mapping for old RG id to new RG UUID
+    my $old_and_new_read_group_ids = $self->old_and_new_read_group_ids;
+    if ( not exists $old_and_new_read_group_ids->{$rg_id} ) {
+        $old_and_new_read_group_ids->{$rg_id} = {
+            paired => UR::Object::Type->autogenerate_new_object_id_uuid,
+            singleton => UR::Object::Type->autogenerate_new_object_id_uuid,
+        };
     }
 
-    $fh->print(
-        join("\t", '@RG', 'ID:'.$read_group_id, $read_groups_and_headers->{$read_group_id})."\n"
-    );
+    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+    my $headers_as_string = $helpers->headers_to_string( $self->headers );
+    return if not $headers_as_string;
+    $fh->print( $headers_as_string );
+    $fh->print( $self->_header_for_read_group_and_pairedness($rg_id, $pairedness) );
 
     return 1;
 }
 
+sub _header_for_read_group_and_pairedness {
+    my ($self, $rg_id, $pairedness) = @_;
+
+    my $read_groups_and_tags = $self->read_groups_and_tags;
+    if ( not exists $read_groups_and_tags->{$rg_id} ) {
+        # Add RG tags for groups that are not in the header. This includes the 'unknown' group
+        $read_groups_and_tags->{$rg_id} = { CN => 'NA', };
+    }
+    delete $read_groups_and_tags->{$rg_id}->{ID} if exists $read_groups_and_tags->{$rg_id}->{ID};
+    my %rg_tags = %{$read_groups_and_tags->{$rg_id}};
+    my @tag_names = sort keys %rg_tags;
+
+    return join(
+        "\t", '@RG',
+        'ID:'.$self->old_and_new_read_group_ids->{$rg_id}->{$pairedness},
+        map { join(':', $_, $rg_tags{$_}) } @tag_names
+    )."\n";
+}
 
 1;
 

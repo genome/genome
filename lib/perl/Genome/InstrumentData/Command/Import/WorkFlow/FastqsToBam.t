@@ -15,13 +15,15 @@ require Genome::Utility::Test;
 require File::Compare;
 require File::Spec;
 require File::Temp;
+require Sub::Install;
 use Test::More;
 
-use_ok('Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam') or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v3') or die;
+my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam';
+use_ok($class) or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-
+$helpers->overload_uuid_generator_for_class($class);
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
 my @source_fastq_base_names = (qw/ input.1.fastq.gz input.2.fastq /);

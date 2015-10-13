@@ -13,7 +13,7 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::SourceFile') or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v1') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
 my $source_base_name = 'input.fastq.tgz';
@@ -46,7 +46,7 @@ ok(!-e $cmd->extract_directory, 'removed extract directory after extracting');
 # FAIL - no fastqs in archive
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs->execute(
     working_directory => $tmp_dir,
-    archive_path => File::Spec->join($test_dir, 'input.fail.no-fastqs.tar'),
+    archive_path => File::Spec->join($test_dir, 'archive-to-fastq.no-fastqs.tar'),
 );
 ok(!$cmd->result, 'execute failed');
 is($cmd->error_message, 'No fastqs found in archive!', 'correct error');

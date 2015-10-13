@@ -54,14 +54,14 @@ is_deeply(
     'headers',
 );
 
-ok(!eval{$helpers->read_groups_from_headers;}, 'failed to get read groups from headers w/o headers');
-my $read_groups_from_headers = $helpers->read_groups_from_headers($headers->{'@RG'});
+throws_ok(sub{ $helpers->read_groups_and_tags_from_headers; }, qr//, 'failed to get read groups from headers w/o headers');
+my $read_groups_and_tags = $helpers->read_groups_and_tags_from_headers($headers->{'@RG'});
 is_deeply(
-    $read_groups_from_headers, 
+    $read_groups_and_tags,
     {
-        2883581797 => 'CN:WUGSC	DS:paired end	DT:2012-12-17T13:15:46-0600	LB:TEST-patient1-somval_normal1-extlibs	PI:165	PL:illumina	PU:2883581797.	SM:TEST-patient1-somval_normal1',
-        2883581798 => 'CN:WUGSC	DS:paired end	DT:2012-12-17T13:15:46-0600	LB:TEST-patient1-somval_normal1-extlibs	PI:165	PL:illumina	PU:2883581798.	SM:TEST-patient1-somval_normal1',
-        2883581799 => 'CN:WUGSC	DS:paired end	DT:2012-12-17T13:15:46-0600	LB:TEST-patient1-somval_normal1-extlibs	PI:165	PL:illumina	PU:2883581799.	SM:TEST-patient1-somval_normal1',
+        2883581797 => { ID => 2883581797, CN => 'WUGSC', DS => 'paired end', DT => '2012-12-17T13:15:46-0600', LB => 'TEST-patient1-somval_normal1-extlibs', PI => '165', PL => 'illumina', PU => '2883581797.', SM => 'TEST-patient1-somval_normal1', },
+        2883581798 => { ID => 2883581798, CN => 'WUGSC', DS => 'paired end', DT => '2012-12-17T13:15:46-0600', LB => 'TEST-patient1-somval_normal1-extlibs', PI => '165', PL => 'illumina', PU => '2883581798.', SM => 'TEST-patient1-somval_normal1', },
+        2883581799 => { ID => 2883581799, CN => 'WUGSC', DS => 'paired end', DT => '2012-12-17T13:15:46-0600', LB => 'TEST-patient1-somval_normal1-extlibs', PI => '165', PL => 'illumina', PU => '2883581799.', SM => 'TEST-patient1-somval_normal1' , },
     },
     'read groups from headers',
 );
@@ -227,5 +227,11 @@ my %expected_attrs = (
 for my $attr (qw/ bam_path is_paired_end read_count read_length /) {
     is($instdata->attributes(attribute_label => $attr)->attribute_value, $expected_attrs{$attr}, "$attr set")
 }
+
+# overload uuid generator for class
+isnt(UR::Object::Type->autogenerate_new_object_id_uuid, 1 x 32, 'uuid');
+throws_ok(sub{ $helpers->overload_uuid_generator_for_class; }, qr//, 'fail to overload uuid generator w/o class');
+ok($helpers->overload_uuid_generator_for_class('main'), 'overload uuid generator');
+is(UR::Object::Type->autogenerate_new_object_id_uuid, 1 x 32, 'overloaded uuid');
 
 done_testing();

@@ -25,7 +25,7 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
-my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->join('bam', 'v5'));
+my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
 my $source_file = File::Spec->join($data_dir, 'input.bam');
 
 throws_ok(
