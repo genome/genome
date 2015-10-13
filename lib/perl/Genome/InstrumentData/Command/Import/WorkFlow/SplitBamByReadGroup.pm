@@ -79,8 +79,8 @@ sub _process_reads {
     my $previous_tokens;
     my $previous_read_group_id;
     while ( my $line = $bam_fh->getline ) {
+        chomp $line;
         my @tokens = split(/\t/, $line);
-        chomp $tokens[$#tokens];
         my $read_group_id = $self->_get_rg_id_from_sam_tokens(\@tokens);
 
         unless($previous_tokens) {
