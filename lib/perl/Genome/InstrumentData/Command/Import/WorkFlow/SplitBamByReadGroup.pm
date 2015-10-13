@@ -67,7 +67,7 @@ sub _set_headers_and_read_groups {
 
 sub _process_reads {
     my ($self) = @_;
-    $self->debug_message('Write reads...');
+    $self->debug_message('Processing reads...');
 
     my $bam_path = $self->bam_path;
     $self->debug_message("Bam path: $bam_path");
@@ -120,7 +120,7 @@ sub _process_reads {
         $fh->close;
     }
 
-    $self->debug_message('Write reads...done');
+    $self->debug_message('Processing reads...done');
     return 1;
 }
 
