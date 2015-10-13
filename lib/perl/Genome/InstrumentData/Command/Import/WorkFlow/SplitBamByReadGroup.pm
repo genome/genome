@@ -91,7 +91,7 @@ sub _process_reads {
         }
 
         if($tokens[0] eq $previous_tokens->[0] and $previous_read_group_id eq $read_group_id) {
-            my $fh = $self->_write_reads_based_on_read_group_and_pairedness(
+            $self->_write_reads_based_on_read_group_and_pairedness(
                 rg_id => $read_group_id,
                 pairedness => 'paired',
                 reads => [ $previous_tokens, \@tokens ],
@@ -99,7 +99,7 @@ sub _process_reads {
             undef $previous_tokens;
             undef $previous_read_group_id;
         } else {
-            my $fh = $self->_write_reads_based_on_read_group_and_pairedness(
+            $self->_write_reads_based_on_read_group_and_pairedness(
                 rg_id => $previous_read_group_id,
                 pairedness => 'singleton',
                 reads => [ $previous_tokens, ],
@@ -110,7 +110,7 @@ sub _process_reads {
     }
 
     if($previous_tokens) {
-        my $fh = $self->_write_reads_based_on_read_group_and_pairedness(
+        $self->_write_reads_based_on_read_group_and_pairedness(
             rg_id => $previous_read_group_id,
             pairedness => 'singleton',
             reads => [ $previous_tokens, ],
