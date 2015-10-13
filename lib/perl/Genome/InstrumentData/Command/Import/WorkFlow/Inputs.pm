@@ -43,6 +43,11 @@ sub create {
     return $self;
 }
 
+sub add_process {
+    my ($self, $process) = @_;
+    return $self->{instrument_data_properties}->{process_id} = $process->id
+}
+
 sub instrument_data_for_original_data_path {
     my $self = shift;
     my @odp_attrs = Genome::InstrumentDataAttribute->get(

@@ -152,41 +152,20 @@ sub _launch_process {
     );
     $dag->add_operation($import_op);
     $dag->parallel_by('work_flow_inputs');
-
-    my $add_process_op = Genome::WorkflowBuilder::Command->create(
-        name => 'InstData Import : Add Process',
-        command => 'Genome::InstrumentData::Command::Import::WorkFlow::AddProcessToInstrumentData',
-    );
-    $dag->connect_input(
-        input_property => 'process',
-        destination => $add_process_op,
-        destination_property => 'process',
-    );
-    $dag->create_link(
-        source => $import_op,
-        source_property => 'instrument_data',
-        destination => $add_process_op,
-        destination_property => 'instrument_data',
-    );
     $dag->connect_output(
         output_property => 'instrument_data',
-        source => $add_process_op,
+        source => $import_op,
         source_property => 'instrument_data',
     );
-    $dag->add_operation($add_process_op);
 
     my $p = Genome::InstrumentData::Command::Import::Process->create(import_file => $self->file);
+    for ( @{$self->_imports} ) { $_->add_process($p) };
     $p->run(
         workflow_xml => $dag->get_xml,
-        workflow_inputs => { 
-            process => $p,
-            work_flow_inputs => $self->_imports,
-        },
+        workflow_inputs => { work_flow_inputs => $self->_imports, },
     );
     $self->process($p);
-
-    $self->debug_message('Started imports with process id: %s. View status with:', $p->id);
-    $self->debug_message('genome instrument-data import status %s', $p->id);
+    $self->status_message("Started imports!\nProcess id: %s\nMetadata directory: %s\nView status with:'genome process view %s'", $p->id, $p->metadata_directory, $p->id);
 
     return 1;
 }
