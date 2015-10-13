@@ -73,8 +73,7 @@ sub _process_reads {
     $self->debug_message("Bam path: $bam_path");
     my $bam_fh = IO::File->new("samtools view $bam_path |");
     if ( not $bam_fh ) {
-        $self->error_message('Failed to open file handle to samtools command!');
-        return;
+        die $self->error_message('Failed to open file handle to samtools command!');
     }
 
     my $previous_tokens;
@@ -156,8 +155,7 @@ sub _verify_read_count {
     }
 
     if ( not @validated_output_bam_paths ) {
-        $self->error_message('No read group bams passed validation!');
-        return;
+        die $self->error_message('No read group bams passed validation!');
     }
 
     $self->output_bam_paths(\@validated_output_bam_paths);
@@ -169,8 +167,7 @@ sub _verify_read_count {
     $self->debug_message('Read group bams read count: '.$read_count);
 
     if ( $original_flagstat->{total_reads} != $read_count ) {
-        $self->error_message('Original and split by read group bam read counts do not match!');
-        return;
+        die $self->error_message('Original and split by read group bam read counts do not match!');
     }
 
     $self->debug_message('Verify read count...done');
@@ -226,8 +223,7 @@ sub _open_fh_for_read_group_and_pairedness {
     $self->debug_message("Opening fh for $read_group_bam_path $pairedness with:\n$samtools_cmd");
     my $fh = IO::File->new($samtools_cmd);
     if ( not $fh ) {
-        $self->error_message('Failed to open file handle to samtools command!');
-        return;
+        die $self->error_message('Failed to open file handle to samtools command!');
     }
 
     $self->_write_headers_for_read_group($fh, $read_group_id, $pairedness);
