@@ -37,7 +37,6 @@ sub execute {
     $self->debug_message('Spilt bam by read group...');
 
     my $set_headers_and_read_groups = $self->_set_headers_and_read_groups;
-    return if not $set_headers_and_read_groups;
 
     my $write_reads_ok = $self->_process_reads;
     return if not $write_reads_ok;
@@ -54,12 +53,12 @@ sub _set_headers_and_read_groups {
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my $headers = $helpers->load_headers_from_bam($self->bam_path);
-    return if not $headers;
+    die $self->error_message('Failed to get headers!') if not $headers;
     $self->headers($headers);
     
     my $read_group_headers = delete $headers->{'@RG'} || [];
     my $read_groups_and_tags = $helpers->read_groups_and_tags_from_headers($read_group_headers);
-    return if not $read_groups_and_tags;
+    die $self->error_message('Failed to get read groups and tags from headers!') if not $read_groups_and_tags;
     $self->read_groups_and_tags($read_groups_and_tags);
 
     return 1;
