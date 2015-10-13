@@ -18929,6 +18929,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'debug!',
         undef,
+        'evs-maf-file=s',
+        'files',
         'fallback-to-latest-build!',
         undef,
         'filter-regions=s',
