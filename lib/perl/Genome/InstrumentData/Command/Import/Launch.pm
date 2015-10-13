@@ -20,7 +20,7 @@ class Genome::InstrumentData::Command::Import::Launch {
         },
         file => {
             is => 'Text',
-            doc => 'The metadata file containing sequence file, library names and other infomation to be associated with instrument data.',
+            doc => 'The metadata file containing sequence files, library names, and other information to be associated with instrument data.',
         },
         job_group_name => {
             is => 'Text',
