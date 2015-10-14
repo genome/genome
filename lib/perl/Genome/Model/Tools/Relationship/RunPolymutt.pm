@@ -76,7 +76,7 @@ class Genome::Model::Tools::Relationship::RunPolymutt {
     has_param => [
         lsf_resource => {
             is => 'Text',
-            default => "-R 'span[hosts=1] rusage[mem=1000] -n 4'",
+            default => "-R 'span[hosts=1] rusage[mem=1000]' -n 4",
         },
         lsf_queue => {
             is => 'Text',

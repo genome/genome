@@ -19,6 +19,12 @@ class Genome::Ptero::TestCommand::ParamAppender {
             is => "Text",
         },
     ],
+    has => [
+        lsf_resource => {
+            is => "Text",
+            default => "-R 'select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]' -n 1 -M 3000000",
+        }
+    ],
 };
 
 sub shortcut {

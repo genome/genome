@@ -141,6 +141,7 @@
                                  ],
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "user" : "dmorton",
@@ -152,26 +153,26 @@
                            {
                               "name" : "execute",
                               "parameters" : {
-                                 "commandLine" : [
-                                    "genome",
-                                    "ptero",
-                                    "wrapper",
-                                    "--command-class",
-                                    "Genome::Ptero::TestCommand::NullCommand",
-                                    "--method",
-                                    "execute",
-                                    "--log-directory",
-                                    "test_logs/n-shaped"
-                                 ],
+                                 "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::NullCommand --method execute --log-directory test_logs/n-shaped",
+                                 "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
-                                 "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "options" : {
+                                    "numProcessors" : "4",
+                                    "queue" : "short",
+                                    "resReq" : "rusage[mem=200:gtmp=5]"
+                                 },
+                                 "rLimits" : {
+                                    "RSS" : "200000",
+                                    "cpuTime" : "10"
+                                 },
+                                 "user" : "dmorton"
                               },
                               "service" : "job",
-                              "serviceUrl" : "http://example.com/v1"
+                              "serviceUrl" : "http://lsf.example.com/v1"
                            }
                         ]
                      },
@@ -193,6 +194,7 @@
                                  ],
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "user" : "dmorton",
@@ -204,26 +206,26 @@
                            {
                               "name" : "execute",
                               "parameters" : {
-                                 "commandLine" : [
-                                    "genome",
-                                    "ptero",
-                                    "wrapper",
-                                    "--command-class",
-                                    "Genome::Ptero::TestCommand::NullCommand",
-                                    "--method",
-                                    "execute",
-                                    "--log-directory",
-                                    "test_logs/n-shaped"
-                                 ],
+                                 "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::NullCommand --method execute --log-directory test_logs/n-shaped",
+                                 "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
-                                 "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "options" : {
+                                    "numProcessors" : "4",
+                                    "queue" : "short",
+                                    "resReq" : "rusage[mem=200:gtmp=5]"
+                                 },
+                                 "rLimits" : {
+                                    "RSS" : "200000",
+                                    "cpuTime" : "10"
+                                 },
+                                 "user" : "dmorton"
                               },
                               "service" : "job",
-                              "serviceUrl" : "http://example.com/v1"
+                              "serviceUrl" : "http://lsf.example.com/v1"
                            }
                         ]
                      },
@@ -245,6 +247,7 @@
                                  ],
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "user" : "dmorton",
@@ -256,26 +259,26 @@
                            {
                               "name" : "execute",
                               "parameters" : {
-                                 "commandLine" : [
-                                    "genome",
-                                    "ptero",
-                                    "wrapper",
-                                    "--command-class",
-                                    "Genome::Ptero::TestCommand::NullCommand",
-                                    "--method",
-                                    "execute",
-                                    "--log-directory",
-                                    "test_logs/n-shaped"
-                                 ],
+                                 "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::NullCommand --method execute --log-directory test_logs/n-shaped",
+                                 "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
-                                 "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "options" : {
+                                    "numProcessors" : "4",
+                                    "queue" : "short",
+                                    "resReq" : "rusage[mem=200:gtmp=5]"
+                                 },
+                                 "rLimits" : {
+                                    "RSS" : "200000",
+                                    "cpuTime" : "10"
+                                 },
+                                 "user" : "dmorton"
                               },
                               "service" : "job",
-                              "serviceUrl" : "http://example.com/v1"
+                              "serviceUrl" : "http://lsf.example.com/v1"
                            }
                         ]
                      },
@@ -297,6 +300,7 @@
                                  ],
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "user" : "dmorton",
@@ -308,26 +312,26 @@
                            {
                               "name" : "execute",
                               "parameters" : {
-                                 "commandLine" : [
-                                    "genome",
-                                    "ptero",
-                                    "wrapper",
-                                    "--command-class",
-                                    "Genome::Ptero::TestCommand::NullCommand",
-                                    "--method",
-                                    "execute",
-                                    "--log-directory",
-                                    "test_logs/n-shaped"
-                                 ],
+                                 "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::NullCommand --method execute --log-directory test_logs/n-shaped",
+                                 "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
-                                 "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "options" : {
+                                    "numProcessors" : "4",
+                                    "queue" : "short",
+                                    "resReq" : "rusage[mem=200:gtmp=5]"
+                                 },
+                                 "rLimits" : {
+                                    "RSS" : "200000",
+                                    "cpuTime" : "10"
+                                 },
+                                 "user" : "dmorton"
                               },
                               "service" : "job",
-                              "serviceUrl" : "http://example.com/v1"
+                              "serviceUrl" : "http://lsf.example.com/v1"
                            }
                         ]
                      }
@@ -349,6 +353,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
@@ -375,6 +380,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
@@ -401,6 +407,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",

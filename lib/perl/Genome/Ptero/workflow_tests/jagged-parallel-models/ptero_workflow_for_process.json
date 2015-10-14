@@ -92,6 +92,7 @@
                                  ],
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "user" : "dmorton",
@@ -103,26 +104,24 @@
                            {
                               "name" : "execute",
                               "parameters" : {
-                                 "commandLine" : [
-                                    "genome",
-                                    "ptero",
-                                    "wrapper",
-                                    "--command-class",
-                                    "Genome::Ptero::TestCommand::ParamAppender",
-                                    "--method",
-                                    "execute",
-                                    "--log-directory",
-                                    "test_logs/nested-parallel-models"
-                                 ],
+                                 "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::ParamAppender --method execute --log-directory test_logs/nested-parallel-models",
+                                 "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
-                                 "user" : "dmorton",
-                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                 "options" : {
+                                    "numProcessors" : "1",
+                                    "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
+                                 },
+                                 "rLimits" : {
+                                    "RSS" : "3000000"
+                                 },
+                                 "user" : "dmorton"
                               },
                               "service" : "job",
-                              "serviceUrl" : "http://example.com/v1"
+                              "serviceUrl" : "http://lsf.example.com/v1"
                            }
                         ],
                         "parallelBy" : "prefix"
@@ -191,6 +190,7 @@
                                                                ],
                                                                "environment" : {
                                                                   "FOO" : "bar",
+                                                                  "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                                },
                                                                "user" : "dmorton",
@@ -202,26 +202,24 @@
                                                          {
                                                             "name" : "execute",
                                                             "parameters" : {
-                                                               "commandLine" : [
-                                                                  "genome",
-                                                                  "ptero",
-                                                                  "wrapper",
-                                                                  "--command-class",
-                                                                  "Genome::Ptero::TestCommand::ParamAppender",
-                                                                  "--method",
-                                                                  "execute",
-                                                                  "--log-directory",
-                                                                  "test_logs/nested-parallel-models"
-                                                               ],
+                                                               "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::ParamAppender --method execute --log-directory test_logs/nested-parallel-models",
+                                                               "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                                                "environment" : {
                                                                   "FOO" : "bar",
+                                                                  "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                                },
-                                                               "user" : "dmorton",
-                                                               "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                                               "options" : {
+                                                                  "numProcessors" : "1",
+                                                                  "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
+                                                               },
+                                                               "rLimits" : {
+                                                                  "RSS" : "3000000"
+                                                               },
+                                                               "user" : "dmorton"
                                                             },
                                                             "service" : "job",
-                                                            "serviceUrl" : "http://example.com/v1"
+                                                            "serviceUrl" : "http://lsf.example.com/v1"
                                                          }
                                                       ],
                                                       "parallelBy" : "suffix"
@@ -258,6 +256,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
@@ -284,6 +283,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
@@ -310,6 +310,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
                   "user" : "dmorton",
