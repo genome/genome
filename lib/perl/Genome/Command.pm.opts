@@ -147,6 +147,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'show=s',
         'files',
+        'accurate-size!',
+        undef,
         'style=s',
         [
           'text',
@@ -21151,6 +21153,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'tmp-dir=s',
         'files',
+        'read-filters=s@',
+        'files',
         'input-bam=s@',
         'files',
         'version=s',
@@ -21173,6 +21177,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'gvcf-gq-bands=s@',
         undef,
+        'intervals=s@',
+        'files',
         'help!',
         undef
       ],
