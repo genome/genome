@@ -58,7 +58,6 @@ sub _run {
         $bucketizer->add_item( @$chr_with_length );
     }
 
-    #skip optimization to preserve order
     $bucketizer->optimize(maxrounds => 100_000);
 
     my @buckets = $bucketizer->buckets();
