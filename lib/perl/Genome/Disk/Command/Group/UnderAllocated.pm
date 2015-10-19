@@ -10,8 +10,9 @@ class Genome::Disk::Command::Group::UnderAllocated {
     has_optional => [
         disk_group_names => {
             is => 'Text',
-            doc => 'comma delimited list of disk groups to be checked',
-            default => join(',', Genome::Config::get('disk_group_alignments'), Genome::Config::get('disk_group_models')),
+            is_many => 1,
+            doc => 'disk groups to be checked',
+            default => [ Genome::Config::get('disk_group_alignments'), Genome::Config::get('disk_group_models') ],
         },
         percent_tolerance => {
             is => 'Number',
@@ -30,14 +31,13 @@ sub help_detail { help_brief() }
 
 sub execute {
     my $self = shift;
-    my @groups = split(',', $self->disk_group_names);
 
     my %under_allocated_volumes;
     my %under_allocated_allocations;
     my $tolerance = $self->percent_tolerance;
 
     # Why yes, I do like my if blocks and for loops nested. Thank you for noticing.
-    for my $group (@groups) {
+    for my $group ($self->disk_group_names) {
         my @volumes = Genome::Disk::Volume->get(disk_group_names => $group, disk_status => 'active', can_allocate => 1);
         next unless @volumes;
 
