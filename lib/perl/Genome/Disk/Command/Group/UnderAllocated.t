@@ -15,7 +15,6 @@ use_ok('Genome::Disk::Command::Group::UnderAllocated') or die;
 
 my $cmd = Genome::Disk::Command::Group::UnderAllocated->create(
     disk_group_names => Genome::Config::get('disk_group_dev'),
-    send_alert => 0,
 );
 ok($cmd, 'Created underallocated command object successfully');
 
