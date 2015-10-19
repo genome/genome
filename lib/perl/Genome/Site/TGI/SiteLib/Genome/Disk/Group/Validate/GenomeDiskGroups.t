@@ -24,7 +24,7 @@ subtest 'validate ok' => sub{
         unix_uid => 0,
         unix_gid => 0,
     );
-    ok( ! exception { $DB::single = 1; $group->validate },
+    ok( ! exception { $group->validate },
         'no exception thrown when disk_group_name is GENOME_DISK_GROUP_MODELS'
     );
 };
@@ -46,7 +46,7 @@ subtest 'validate fail' => sub{
         unix_uid => 0,
         unix_gid => 0,
     );
-    like( exception { $DB::single = 1; $group->validate },
+    like( exception { $group->validate },
         qr/not allowed/,
         'exception thrown when disk_group_name is not GENOME_DISK_GROUP_MODELS'
     );
