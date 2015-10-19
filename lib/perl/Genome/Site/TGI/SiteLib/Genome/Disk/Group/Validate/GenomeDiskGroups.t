@@ -9,7 +9,7 @@ use Genome qw();
 use Genome::Disk::Group qw();
 use List::MoreUtils qw(none);
 use List::Util qw(shuffle);
-use Test::Fatal qw(exception);
+use Test::Exception;
 
 subtest 'validate ok' => sub{
     plan tests => 1;
@@ -24,9 +24,7 @@ subtest 'validate ok' => sub{
         unix_uid => 0,
         unix_gid => 0,
     );
-    ok( ! exception { $group->validate },
-        'no exception thrown when disk_group_name is GENOME_DISK_GROUP_MODELS'
-    );
+    ok(!$group->validate, 'no exception thrown when disk_group_name is GENOME_DISK_GROUP_MODELS');
 };
 
 subtest 'validate fail' => sub{
@@ -46,7 +44,8 @@ subtest 'validate fail' => sub{
         unix_uid => 0,
         unix_gid => 0,
     );
-    like( exception { $group->validate },
+    throws_ok(
+        sub{ $group->validate; },
         qr/not allowed/,
         'exception thrown when disk_group_name is not GENOME_DISK_GROUP_MODELS'
     );
