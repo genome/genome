@@ -11,6 +11,7 @@ require Carp;
 use Regexp::Common;
 use POSIX;
 use Set::Scalar;
+use Filesys::Df qw();
 
 class Genome::Model::Build::ReferenceSequence {
     is => 'Genome::Model::Build',
@@ -687,7 +688,6 @@ sub local_cache_lock {
     return "LOCK-".$self->id;
 }
 
-#MOVE TO GENOME::SYS#
 sub available_kb {
     my ($self, $directory) = @_;
 
@@ -696,26 +696,16 @@ sub available_kb {
 
     $self->status_message('Get available kb for '.$directory);
 
-    my $cmd = "df -P -k $directory |";
-    $self->status_message('DF command: '.$cmd);
-    my $fh = IO::File->new($cmd);
-    if ( not $fh ) {
-        $self->error_message('Failed to create df command: '.$!);
-        return;
-    }
-    $fh->getline; # Filesystem           1K-blocks      Used Available Use% Mounted on
-    my $line = $fh->getline;
-    my @tokens = split(/\s+/, $line);
-    $fh->close;
+    my $df = Filesys::Df::df($directory);
 
-    if ( not defined $tokens[3] ) {
+    if ( not defined $df->{bavail} ) {
         $self->error_message('Failed to get kb available from df command');
         return;
     }
 
-    $self->status_message('KB available: '.$tokens[3]);
+    $self->status_message('KB available: '. $df->{bavail});
 
-    return $tokens[3];
+    return $df->{bavail};
 }
 
 sub copy_file {
