@@ -696,7 +696,7 @@ sub available_kb {
 
     $self->status_message('Get available kb for '.$directory);
 
-    my $cmd = "df -k $directory |";
+    my $cmd = "df -P -k $directory |";
     $self->status_message('DF command: '.$cmd);
     my $fh = IO::File->new($cmd);
     if ( not $fh ) {
