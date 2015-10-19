@@ -47,23 +47,26 @@ sub execute {
     my $self = shift;
 
     for my $allocation ($self->allocations) {
-        my %params;
-        if ($self->target_volume) {
-            $params{target_mount_path} = $self->target_volume->mount_path;
-        }
-
-        if ($self->target_group) {
-            $params{disk_group_name} = $self->target_group->disk_group_name;
-        } else {
-            $self->status_message("Allocation " . $allocation->id . " has target_group ".$allocation->disk_group_name);
-            $params{disk_group_name} = $allocation->disk_group_name;
-        }
-
-        $allocation->move(%params);
+        $allocation->move( $self->_resolve_move_params_for_allocation($allocation) );
     }
 
     $self->status_message("Successfully moved allocations!");
     return 1;
+}
+
+sub _resolve_move_params_for_allocation {
+    my ($self, $asllocation) = @_;
+
+    my %params;
+    if ($self->target_volume) {
+        $params{target_mount_path} = $self->target_volume->mount_path;
+    }
+
+    if ($self->target_group) {
+        $params{disk_group_name} = $self->target_group->disk_group_name;
+    }
+
+    return %params
 }
 
 1;
