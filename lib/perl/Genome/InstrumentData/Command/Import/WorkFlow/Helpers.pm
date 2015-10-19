@@ -69,8 +69,8 @@ sub run_flagstat {
     my $flagstat_path = $bam_path.'.flagstat';
     $self->debug_message("Bam path: $bam_path");
     $self->debug_message("Flagstat path: $flagstat_path");
-    my $cmd = "samtools flagstat $bam_path > $flagstat_path";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    my @cmd = (qw(samtools flagstat), $bam_path);
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => \@cmd, redirect_stdout => $flagstat_path); };
     if ( not $rv or not -s $flagstat_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run flagstat!');
@@ -353,8 +353,8 @@ sub run_md5 {
     $self->debug_message("Path: $path");
     $self->debug_message("MD5 path: $md5_path");
     die $self->error_message('Refusing to run MD5, the destination path exists! %s', $md5_path) if -s $md5_path;
-    my $cmd = "md5sum $path > $md5_path";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    my @cmd = ('md5sum', $path);
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => \@cmd, redirect_stdout => $md5_path); };
     if ( not $rv or not -s $md5_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run md5!');
