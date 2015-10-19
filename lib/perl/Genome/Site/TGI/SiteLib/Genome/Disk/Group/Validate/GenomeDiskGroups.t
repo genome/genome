@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 2;
 
 use Genome qw();
 use Genome::Disk::Group qw();
@@ -11,7 +11,9 @@ use List::MoreUtils qw(none);
 use List::Util qw(shuffle);
 use Test::Fatal qw(exception);
 
-do {
+subtest 'validate ok' => sub{
+    plan tests => 1;
+
     my $disk_group_name = random_string();
     my $disk_group_models_guard = Genome::Config::set_env('disk_group_models', $disk_group_name);
     local $ENV{UR_DBI_NO_COMMIT} = 0;
@@ -27,7 +29,9 @@ do {
     );
 };
 
-do {
+subtest 'validate fail' => sub{
+    plan tests => 2;
+
     my $disk_group_name = random_string();
     my $disk_group_models_guard = Genome::Config::set_env('disk_group_models', random_string());
     local $ENV{UR_DBI_NO_COMMIT} = 0;
@@ -47,6 +51,8 @@ do {
         'exception thrown when disk_group_name is not GENOME_DISK_GROUP_MODELS'
     );
 };
+
+done_testing();
 
 sub random_string {
     my @chars = map { (shuffle 'a'..'z', 'A'..'Z', 0..9)[0] } 1..10;
