@@ -32,7 +32,6 @@ my $expected_output_vcf = File::Spec->join($test_data_dir, $output_filename);
 
 my $gatk_cmd = $pkg->create(
     version => '3.4',
-    java_interpreter => Genome::Sys->java_executable_path('1.7'),
     max_memory => 2,
     input_bam => $input_bam,
     reference_fasta => $input_reference,
