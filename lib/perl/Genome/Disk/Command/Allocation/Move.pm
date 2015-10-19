@@ -55,15 +55,20 @@ sub execute {
 }
 
 sub _resolve_move_params_for_allocation {
-    my ($self, $asllocation) = @_;
+    my ($self, $allocation) = @_;
 
     my %params;
     if ($self->target_volume) {
         $params{target_mount_path} = $self->target_volume->mount_path;
     }
-
-    if ($self->target_group) {
-        $params{disk_group_name} = $self->target_group->disk_group_name;
+    else { 
+        if ($self->target_group) {
+            $params{disk_group_name} = $self->target_group->disk_group_name;
+        }
+        else {
+            # Use the existing allocation's disk group
+            $params{disk_group_name} = $allocation->disk_group_name;
+        }
     }
 
     return %params
