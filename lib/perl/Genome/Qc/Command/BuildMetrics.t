@@ -40,6 +40,12 @@ reinstall_sub(
                    metric_E => 5,
                    metric_F => 6,
            },
+           PAIR => {
+                PF_ALIGNED_BASES => 30000,
+                PF_READS_ALIGNED => 3000,
+           },
+           reads_marked_duplicates => 350,
+           GENOME_TERRITORY => 1000,
          );
     },   
 },
@@ -49,7 +55,7 @@ my $pkg = 'Genome::Qc::Command::BuildMetrics';
 use_ok($pkg);
 
 my $test_dir = __FILE__.'.d';
-my $expected_output_file = $test_dir .'/expected_build_metrics.yml';
+my $expected_output_file = $test_dir .'/expected_build_metrics_v2.yml';
 my $test_output_file = Genome::Sys->create_temp_file_path();
 
 # Get expected IDs from YAML file.
