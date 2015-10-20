@@ -24,7 +24,7 @@ subtest 'validate ok' => sub{
         unix_uid => 0,
         unix_gid => 0,
     );
-    ok(!$group->validate, 'no exception thrown when disk_group_name is GENOME_DISK_GROUP_MODELS');
+    lives_ok(sub{ $group->validate; }, 'no exception thrown when disk_group_name is GENOME_DISK_GROUP_MODELS');
 };
 
 subtest 'validate fail' => sub{
