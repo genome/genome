@@ -60,6 +60,7 @@ sub execute {
     my $report = $self->_create_report(\%under_allocated_volumes);
     if ($report) {
         $self->status_message($report);
+        return;
     }
 
     return 1;

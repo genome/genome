@@ -54,4 +54,21 @@ subtest 'volume not under allocated' => sub{
 
 };
 
+subtest 'volume under allocated' => sub{
+    plan tests => 3;
+
+    my $volume = Genome::Disk::Volume->get;
+    $volume->set_always('allocated_kb', 50);
+    $volume->set_always('used_kb', 55);
+
+    my $cmd = Genome::Disk::Command::Group::UnderAllocated->create(
+        disk_group_names => [ Genome::Config::get('disk_group_dev') ],
+    );
+    ok($cmd, 'Successfully create underallocated command');
+    ok(!$cmd->execute, 'Execute returned undef when disk is under allocated');
+    my @msgs = $cmd->status_message;
+    is($msgs[0], "Group info_apipe\n\tVolume jedi using 55 kB (55.00 %) but only 50 kB (50.00 %) allocated\n", 'correct status message');
+
+};
+
 done_testing();
