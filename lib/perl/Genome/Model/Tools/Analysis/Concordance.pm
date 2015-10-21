@@ -43,13 +43,18 @@ class Genome::Model::Tools::Analysis::Concordance {
         snp_file => {
             is => 'String',
             is_optional => 0,
-            doc => '1-based Tab-delimited file of SNP positions. Three columns required: chr, start, end. Example bed below is ~5k sites from dbSNP v142 on human build 37 within the exome space',
-            example_values => ["/gscmnt/gc9018/info/feature_list/ccb8bd8a885b47a78eb81223ccfcb458/ccb8bd8a885b47a78eb81223ccfcb458.bed"]
+            doc => '1-based Tab-delimited file of SNP positions. Three columns required: chr, start, end. Example sites below are from dbSNP v142 on human build 37 with MAF > 40%',
+            example_values => ["chr1 exome SNPS: /gscmnt/gc9018/info/feature_list/ccb8bd8a885b47a78eb81223ccfcb458/ccb8bd8a885b47a78eb81223ccfcb458.bed","AML RMG SNPs:/gscmnt/gc9018/info/feature_list/472c4f166c8a4a9686174b20c3312bc3/472c4f166c8a4a9686174b20c3312bc3.bed"]
         },
         output_file => {
             is => 'String',
-            is_optional => 1,
+            is_optional => 0,
             doc => 'Output file in which to place numbers and percentages of matched and mismatched SNPs',
+        },
+        output_genotypes => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Write out the genotypes for each sample at each position into this file',
         },
     ]
 };
@@ -119,7 +124,7 @@ sub execute {
         $reference_fasta = $ref_seq_build->full_consensus_path('fa');
     }
 
-    # index reference genome and bam files
+    # check for index on fa and bam files
     my $index_file = "$reference_fasta.fai";
     if (!(-e $index_file)){
         die "Index file for reference ($index_file) not found!\n";
@@ -157,12 +162,12 @@ sub execute {
         use_version => $self->bam_readcount_version,
     );
 
-    # empty result
+    # die if empty result
     if (-z "$tempdir/norm_rct" || -z "$tempdir/pre_rct"){
         die("Have zero read counts.\n");
     }
 
-    # parse in perl
+    # parse readcounts
     my $parse_file_1 = Genome::Sys->open_file_for_writing("$tempdir/norm_parse");
     my $open_readcount_1 = Genome::Sys->open_file_for_reading("$tempdir/norm_rct");
     while (my $line = $open_readcount_1->getline){
@@ -183,7 +188,8 @@ sub execute {
     $open_readcount_2->close;
     $parse_file_2->close;
 
-    # run R script and output # goes in temp dir
+
+    # run R script to make genotype calls
     my $dir_name = dirname(__FILE__);
     my $r_script_file = "\"" . $dir_name . "/Concordance.R\"";
     my $cmd_1 = "Rscript $r_script_file '$tempdir/norm_parse' '$tempdir/norm_r'";
@@ -209,27 +215,54 @@ sub execute {
 
     my (@norm_total, @norm_snp, @pre_total, @pre_snp);
 
+
+    #now read the genotypes in, calculate matches
+    my %genotypes;
+
     open (my $IN1,'<',$norm) or die "$!"; #open 1st file
     while (<$IN1>) {
-        chomp;                            #remove newline from each row of the 1st file
-        my @field = split(/\t/);          #read line from 1st file
+        chomp;
+        my @field = split(/\t/);
         if ($field[13] ne "NA"){
             push(@norm_total,join('_',$field[0],$field[1]));
             push(@norm_snp,join('_',$field[0],$field[1],$field[13]));
         }
-    }  
+        if($self->output_genotypes){
+            $genotypes{join("\t",(@field[0..2]))}{"samp1"} = $field[13];
+        }
+    }
     close $IN1;
 
     open (my $IN2,'<',$pre) or die "$!";  #open 2nd file
     while (<$IN2>) {
-        chomp;                            #remove newline from each row of the 2nd file
-        my @field = split(/\t/);          #read line from 2nd file
+        chomp;
+        my @field = split(/\t/);
         if ($field[13] ne "NA"){
             push(@pre_total,join('_',$field[0],$field[1]));
             push(@pre_snp,join('_',$field[0],$field[1],$field[13]));
         }
-    }  
+        if($self->output_genotypes){
+            $genotypes{join("\t",(@field[0..2]))}{"samp2"} = $field[13];
+        }
+    }
     close $IN2;
+
+
+    #output a file with all genotypes, if specified
+    if($self->output_genotypes){
+        my $outfile = Genome::Sys->open_file_for_writing($self->output_genotypes);
+        $outfile->print(join("\t",("Chr","Pos","ReferenceBase","Sample1","Sample2")) . "\n");
+        #sort the array
+        my @unsorted_keys = keys(%genotypes);
+        my @k = sort {my @aarr=split("\t",$a); my @barr=split("\t",$b);return($aarr[0] <=> $barr[0] || $aarr[1] <=> $barr[1])} @unsorted_keys;
+        for my $pos (@k){
+            #only output sites with coverage in both samples
+            if(defined($genotypes{$pos}{"samp1"}) && defined($genotypes{$pos}{"samp2"})){
+                $outfile->print(join("\t",($pos,$genotypes{$pos}{"samp1"},$genotypes{$pos}{"samp2"})) . "\n");
+            }
+        }
+        $outfile->close;
+    }
 
     # sort and uniq
     my %hashTemp;
