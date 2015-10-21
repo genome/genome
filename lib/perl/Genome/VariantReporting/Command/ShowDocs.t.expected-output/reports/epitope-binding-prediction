@@ -1,0 +1,9 @@
+[4mOVERVIEW[0m
+Output a fasta file of variant sequences for snps, frameshifts, and in frame indels for epitope binding prediction.
+
+[4mREQUIRED EXPERTS[0m
+vep
+
+[4mREQUIRED INTERPRETERS[0m
+epitope-variant-sequence
+

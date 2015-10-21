@@ -1,0 +1,24 @@
+experts:
+    vep:
+        ensembl_version: 75
+        reference_version: GRCh37
+        reference_fasta: reference_fasta
+        species: 'homo-sapiens'
+        plugins:
+            - Wildtype
+            - Downstream
+        plugins_version: 1
+        joinx_version: 1.11
+        short_name: 0
+        allow_same_file: 1
+reports:
+    'epitope-binding-prediction':
+        filters:
+            'consequence':
+                consequences:
+                    - frameshift_variant
+                    - inframe_insertion
+                    - inframe_deletion
+        interpreters:
+            'epitope-variant-sequence':
+                peptide_sequence_length: 21
