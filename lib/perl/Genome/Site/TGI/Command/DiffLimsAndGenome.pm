@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Command::Sync::DiffLimsAndGenome;
+package Genome::Site::TGI::Command::DiffLimsAndGenome;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome;
 use Genome::Site::TGI::Synchronize::Classes::Dictionary;
 use Set::Scalar;
 
-class Genome::Site::TGI::Command::Sync::DiffLimsAndGenome {
+class Genome::Site::TGI::Command::DiffLimsAndGenome {
     is => 'Command::V2',
     has => [
         entity_name => {

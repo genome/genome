@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Command::Sync::SysUserWithLdap;
+package Genome::Site::TGI::Command::SysUserWithLdap;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 use IO::File;
 use Net::LDAP;
 
-class Genome::Site::TGI::Command::Sync::SysUserWithLdap{
+class Genome::Site::TGI::Command::SysUserWithLdap{
     is => 'Command::V2',
 };
 

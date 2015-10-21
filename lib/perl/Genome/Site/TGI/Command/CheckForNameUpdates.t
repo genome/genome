@@ -13,7 +13,7 @@ use above "Genome";
 
 use Genome::Test::Factory::Sample;
 
-my $class = 'Genome::Site::TGI::Command::Sync::CheckForNameUpdates';
+my $class = 'Genome::Site::TGI::Command::CheckForNameUpdates';
 
 use_ok($class);
 

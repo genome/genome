@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Command::Sync::CheckForNameUpdates;
+package Genome::Site::TGI::Command::CheckForNameUpdates;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use constant TABLES_TO_PROCESS => [qw(gsc.organism_sample gsc.library_summary)];
 
-class Genome::Site::TGI::Command::Sync::CheckForNameUpdates {
+class Genome::Site::TGI::Command::CheckForNameUpdates {
     is => 'Command::V2',
     has_optional => [
         tables_to_process => {

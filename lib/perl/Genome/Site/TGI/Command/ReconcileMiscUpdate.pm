@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Command::Sync::ReconcileMiscUpdate;
+package Genome::Site::TGI::Command::ReconcileMiscUpdate;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome;
 use Date::Format;
 use Date::Parse;
 
-class Genome::Site::TGI::Command::Sync::ReconcileMiscUpdate {
+class Genome::Site::TGI::Command::ReconcileMiscUpdate {
     is => 'Command::V2',
     has => [
         start_from => { 
