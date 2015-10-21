@@ -228,30 +228,17 @@ sub get_lsf_job_status {
     my $result;
 
     if ( defined($lsf_job_id) ) {
-
-        #check the user specified flag to determine how to retrieve lsf status
-#        if ($self->use_lsf_file) {
-#            #get the data from the preloaded hash of lsf info (from file)
-#            #my %job_to_status = %{$self->_job_to_status};
-#            #$result = $job_to_status {$lsf_job_id};
-#            $result = $self->{'_job_to_status'}->{$lsf_job_id};
-#            if (!defined($result) ) {
-#                $result = "UNAVAILABLE";
-#            }
-#        } else {
-            #get the data directly from lsf via bjobs command
-            my @lines = `bjobs $lsf_job_id 2>/dev/null`;
-            #parse the bjobs output.  get the 3rd field of the 2nd line.
-            if ( (scalar(@lines)) > 1) {
-                my $line = $lines[1];
-                my @fields = split(" ",$line);
-                $result = $fields[2];
-            } else {
-                #if there are no results from bjobs, lsf forgot about the job already.
-                $result = "UNAVAILABLE";
-            }
-#        }
-
+        #get the data directly from lsf via bjobs command
+        my @lines = `bjobs $lsf_job_id 2>/dev/null`;
+        #parse the bjobs output.  get the 3rd field of the 2nd line.
+        if ( (scalar(@lines)) > 1) {
+            my $line = $lines[1];
+            my @fields = split(" ",$line);
+            $result = $fields[2];
+        } else {
+            #if there are no results from bjobs, lsf forgot about the job already.
+            $result = "UNAVAILABLE";
+        }
     } else {
         #if the input LSF ID is not defined, mark it as unscheduled.
         $result = "UNSCHEDULED";
