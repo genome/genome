@@ -144,6 +144,7 @@ subtest move_via_object => sub {
 
     my $cmd = Genome::Disk::Command::Allocation::Move->create(
         allocations => [$allocation],
+        target_group => $allocation->group,
         target_volume => $other_volume,
     );
     ok($cmd, 'created move command successfully');

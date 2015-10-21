@@ -85,8 +85,7 @@ sub _resolve_move_params_for_allocation {
     if ($self->target_volume) {
         $params{target_mount_path} = $self->target_volume->mount_path;
     }
-
-    if ($self->target_group) {
+    elsif ($self->target_group) {
         $params{disk_group_name} = $self->target_group->disk_group_name;
     }
 
