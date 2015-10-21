@@ -236,7 +236,7 @@ sub _profiles_matching_subclass_and_params {
     delete $params{name};
     
     my @all_ids = map { $_->id } $subclass->get();
-    Genome::ProcessingProfile::Param->get(processing_profile_id => \@all_ids);
+    Genome::ProcessingProfile::Param->get(processing_profile_id => \@all_ids) if @all_ids;
     my @matches = $subclass->get(%params);
     
     return @matches;
