@@ -71,13 +71,13 @@ subtest 'define required data for create' => sub {
 
     # SUBJECT
     $sample = Genome::Sample->__define__(
-    id => -654321,
-    name => 'TEST-00',
+        id => -654321,
+        name => 'TEST-00',
     );
     ok($sample, 'define sample') or die;
     $library = Genome::Library->__define__(
-    name => $sample->name.'-testlib',
-    sample_id => $sample->id,
+        name => $sample->name.'-testlib',
+        sample_id => $sample->id,
     );
     ok($library, 'define library');
 
