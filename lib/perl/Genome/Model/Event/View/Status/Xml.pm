@@ -221,32 +221,6 @@ sub calculate_elapsed_time {
 
 }
 
-
-our $JOB_TO_STATUS;
-sub load_lsf_job_status {
-    my $self = shift;
-
-    # NOTE: This caches the lsf job data for as long as the process stays alive.
-    # For now, this thing is run from a regular CGI script, so the process dies pretty
-    # quickly.  But if things change so that the process lives for a while, then
-    # a different cache aging mechanism should be set up
-    unless ($JOB_TO_STATUS) {
-        $JOB_TO_STATUS = {};
-
-        my $lsf_file = '/gsc/var/cache/testsuite/lsf-tmp/bjob_query_result.txt';
-        my $fh = IO::File->new($lsf_file);
-        my $lsf_file_data = do { local( $/ ) ; <$fh> } ;
-        $fh->close;
-        while ($lsf_file_data =~ m/^(\S+)\s+(\S+)\s+(\S+).*?\n/gm) {
-            $JOB_TO_STATUS->{$1} = $3;
-        }
-        delete $JOB_TO_STATUS->{'JOBID'};
-    }
-    return $JOB_TO_STATUS;
-}
-
-
-
 sub get_lsf_job_status {
     my $self = shift;
     my $lsf_job_id = shift;
