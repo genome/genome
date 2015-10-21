@@ -471,6 +471,8 @@ sub __display_name__ {
 sub create {
     my $class = shift;
 
+    no warnings 'redefine';
+    local *__errors__ = sub { () };
     # If create is being called directly on this class or on an abstract subclass, SUPER::create will
     # figure out the correct concrete subclass (if one exists) and call create on it.
     if ($class eq __PACKAGE__ or $class->__meta__->is_abstract) {
@@ -492,81 +494,80 @@ sub create {
         }
     }
 
-    my $self = $class->SUPER::create($bx);
-    unless ($self) {
-        return;
-    }
-
-    unless ($self->subject) {
-        my $subject = $self->_resolve_subject;
-        if ($subject and $subject->isa('Genome::Subject')) {
-            $self->subject($subject);
+    UR::Context::Transaction::do {
+        my $self = $class->SUPER::create($bx);
+        unless ($self) {
+            return;
         }
-        else {
-            $self->delete;
-            Carp::confess "Could not resolve subject for model";
-        }
-    }
 
-    unless ($self->processing_profile) {
-        my $reason = eval {
-            my $pp_id = $bx->value_for('processing_profile_id');
-            unless ($pp_id) {
-                return 'No processing profile specified!';
+        unless ($self->subject) {
+            my $subject = $self->_resolve_subject;
+            if ($subject and $subject->isa('Genome::Subject')) {
+                $self->subject($subject);
             }
-
-            my $pp = Genome::ProcessingProfile->get($pp_id);
-            unless ($pp) {
-                return "Specified processing profile ($pp_id) does not exist!";
+            else {
+                Carp::confess "Could not resolve subject for model";
             }
+        }
 
-            my $pp_type = Genome::Utility::Text::string_to_camel_case($pp->type_name);
-            my $model_type = ($self->class =~ /^Genome::Model::(.*)/)[0];
-            if ($pp_type && $model_type ne $pp_type) {
-                return "Processing profile type ($pp_type) does not match model type ($model_type)!";
+        unless ($self->processing_profile) {
+            my $reason = eval {
+                my $pp_id = $bx->value_for('processing_profile_id');
+                unless ($pp_id) {
+                    return 'No processing profile specified!';
+                }
+
+                my $pp = Genome::ProcessingProfile->get($pp_id);
+                unless ($pp) {
+                    return "Specified processing profile ($pp_id) does not exist!";
+                }
+
+                my $pp_type = Genome::Utility::Text::string_to_camel_case($pp->type_name);
+                my $model_type = ($self->class =~ /^Genome::Model::(.*)/)[0];
+                if ($pp_type && $model_type ne $pp_type) {
+                    return "Processing profile type ($pp_type) does not match model type ($model_type)!";
+                }
+
+                return "Missing processing profile; unknown error!";
+            };
+
+            Carp::confess $reason || $@;
+        }
+
+        for my $m (qw(run_as created_by)) {
+            $self->$m(Genome::Sys->username) unless $self->$m;
+        }
+
+        unless ($self->name) {
+            my $name = $self->default_model_name;
+            if ($name) {
+                $self->name($name);
             }
-
-            return "Missing processing profile; unknown error!";
-        };
-
-        $self->delete;
-        Carp::confess $reason || $@;
-    }
-
-    for my $m (qw(run_as created_by)) {
-        $self->$m(Genome::Sys->username) unless $self->$m;
-    }
-
-    unless ($self->name) {
-        my $name = $self->default_model_name;
-        if ($name) {
-            $self->name($name);
+            else {
+                Carp::confess "Could not resolve default name for model!";
+            }
         }
-        else {
-            $self->delete;
-            Carp::confess "Could not resolve default name for model!";
+
+        $self->creation_date(UR::Context->now);
+
+        $self->_verify_no_other_models_with_same_name_and_type_exist;
+
+        # If build requested was set as part of model creation, it didn't use the mutator method that's been
+        # overridden. Re-set it here so the required actions take place.
+        if ($self->build_requested) {
+            $self->build_requested($self->build_requested, 'model created with build requested set');
         }
-    }
 
-    $self->creation_date(UR::Context->now);
+        if ($self->subject) {
+            # TODO: get rid of this as soon as we drop the old database column
+            $self->_subject_class_name($self->subject->class);
+        }
 
-    $self->_verify_no_other_models_with_same_name_and_type_exist;
+        # TODO: the column behind this should become the new primary key when we are fully in sync
+        $self->_id($self->id);
 
-    # If build requested was set as part of model creation, it didn't use the mutator method that's been
-    # overridden. Re-set it here so the required actions take place.
-    if ($self->build_requested) {
-        $self->build_requested($self->build_requested, 'model created with build requested set');
-    }
-
-    if ($self->subject) {
-        # TODO: get rid of this as soon as we drop the old database column
-        $self->_subject_class_name($self->subject->class);
-    }
-
-    # TODO: the column behind this should become the new primary key when we are fully in sync
-    $self->_id($self->id);
-
-    return $self;
+        return $self;
+    };
 }
 
 # Delete the model and all of its builds/inputs
@@ -963,7 +964,6 @@ sub _verify_no_other_models_with_same_name_and_type_exist {
             Lingua::EN::Inflect::PL('model', scalar(@models)),
         );
 
-        $self->delete;
         Carp::croak $message;
     }
 

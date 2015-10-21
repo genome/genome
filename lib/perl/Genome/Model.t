@@ -13,8 +13,8 @@ use Genome::Utility::Test qw(is_equal_set);
 use Genome::Test::Factory::Model::ReferenceAlignment;
 
 require File::Temp;
-use Test::More tests => 10;
-use Test::Fatal qw(exception);
+use Test::More tests => 11;
+use Test::Exception;
 
 use_ok('Genome::Model') or die;
 
@@ -325,6 +325,95 @@ subtest 'should_run_as' => sub {
 
     $model->run_as('Elvis');
     ok($model->should_run_as, 'should_run_as should be true if current user is not Elvis');
+};
+
+subtest 'model create() failure does not delete existing builds' => sub {
+    plan tests => 4;
+
+    my $model_id = UR::Object::Type->autogenerate_new_object_id_uuid();
+    my @builds;
+    for my $i ( 1 .. 2 ) {
+        push @builds, Genome::Model::Build::TestyMcTesterson->__define__(
+            model_id => $model_id,
+            data_directory => $tmpdir.'/build'.$i,
+        );
+    }
+
+    subtest 'non existent subject' => sub {
+        plan tests => 3;
+
+        my $non_existent_subject_id = UR::Object::Type->autogenerate_new_object_id_uuid();
+        throws_ok {
+                Genome::Model::TestyMcTesterson->create(
+                    genome_model_id => $model_id,
+                    subject_id => $non_existent_subject_id,
+                    subject_class_name => $sample->class,
+                    processing_profile => $pp,
+                );
+            }
+            qr(Could not resolve subject for model),
+            'Expected model create() failure';
+        isa_ok($_, 'Genome::Model::Build', 'Build') foreach (@builds);
+    };
+
+    subtest 'missing processing profile' => sub {
+        plan tests => 3;
+
+        throws_ok {
+                Genome::Model::TestyMcTesterson->create(
+                    genome_model_id => $model_id,
+                    subject_id => $sample->id,
+                    subject_class_name => $sample->class,
+                );
+            }
+            qr(processing profile),
+            'Expected model create() failure';
+        isa_ok($_, 'Genome::Model::Build', 'Build') foreach (@builds);
+    };
+
+    subtest 'default model name' => sub {
+        plan tests => 3;
+
+        no warnings 'once';
+        local *Genome::Model::TestyMcTesterson::default_model_name = sub { undef };
+        throws_ok {
+                Genome::Model::TestyMcTesterson->create(
+                    genome_model_id => $model_id,
+                    subject_id => $sample->id,
+                    subject_class_name => $sample->class,
+                    processing_profile => $pp,
+                );
+            }
+            qr(Could not resolve default name for model),
+            'Expected model create() failure';
+        isa_ok($_, 'Genome::Model::Build', 'Build') foreach (@builds);
+    };
+
+    subtest 'verify no other models with same name and type exist' => sub {
+        plan tests => 4;
+
+        my $conflicting_name = 'conflict';
+        my $other_model = Genome::Model::TestyMcTesterson->create(
+                name => $conflicting_name,
+                genome_model_id => $model_id,
+                subject_id => $sample->id,
+                subject_class_name => $sample->class,
+                processing_profile => $pp,
+            );
+        ok($other_model, 'Created model');
+
+        throws_ok {
+                Genome::Model::TestyMcTesterson->create(
+                    name => $conflicting_name,
+                    subject_id => $sample->id,
+                    subject_class_name => $sample->class,
+                    processing_profile => $pp,
+                );
+            }
+            qr(Found the above model with the same name and type name),
+            'Expected model create() failure';
+        isa_ok($_, 'Genome::Model::Build', 'Build') foreach (@builds);
+    };
 };
 
 sub _are_model_inputs_the_same {
