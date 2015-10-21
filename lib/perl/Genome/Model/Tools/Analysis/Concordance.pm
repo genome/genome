@@ -43,8 +43,8 @@ class Genome::Model::Tools::Analysis::Concordance {
         snp_file => {
             is => 'String',
             is_optional => 0,
-            doc => '1-based Tab-delimited file of SNP positions. Three columns required: chr, start, end. Example bed below is ~5k sites from dbSNP v142 on human build 37 within the chr1 exome space',
-            example_values => ["/gscmnt/gc9018/info/feature_list/ccb8bd8a885b47a78eb81223ccfcb458/ccb8bd8a885b47a78eb81223ccfcb458.bed"]
+            doc => '1-based Tab-delimited file of SNP positions. Three columns required: chr, start, end. Example sites below are from dbSNP v142 on human build 37 with MAF > 40%',
+            example_values => ["chr1 exome SNPS: /gscmnt/gc9018/info/feature_list/ccb8bd8a885b47a78eb81223ccfcb458/ccb8bd8a885b47a78eb81223ccfcb458.bed","AML RMG SNPs:/gscmnt/gc9018/info/feature_list/472c4f166c8a4a9686174b20c3312bc3/472c4f166c8a4a9686174b20c3312bc3.bed"]
         },
         output_file => {
             is => 'String',
