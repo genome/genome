@@ -19,7 +19,7 @@ subtest 'setup' => sub {
 
     my $volume = Test::MockObject->new();
     ok($volume, 'define disk volume');
-    $volume->set_always('mount_path', 'jedi');
+    $volume->set_always('mount_path', 'obi-wan');
     $volume->set_always('total_kb', 100);
     $volume->mock('percent_used', sub{ 
             my $v = shift;
@@ -47,7 +47,7 @@ subtest 'volume not under allocated' => sub{
 
     ok( 
         Genome::Disk::Command::Group::UnderAllocated->execute(
-            disk_group_names => [ Genome::Config::get('disk_group_dev') ],
+            disk_group_names => [ 'jedi' ],
         ),
         'Successfully executed underallocated command',
     );
@@ -62,12 +62,12 @@ subtest 'volume under allocated' => sub{
     $volume->set_always('used_kb', 55);
 
     my $cmd = Genome::Disk::Command::Group::UnderAllocated->create(
-        disk_group_names => [ Genome::Config::get('disk_group_dev') ],
+        disk_group_names => [ 'jedi' ],
     );
     ok($cmd, 'Successfully create underallocated command');
     ok(!$cmd->execute, 'Execute returned undef when disk is under allocated');
     my @msgs = $cmd->status_message;
-    is($msgs[0], "Group info_apipe\n\tVolume jedi using 55 kB (55.00 %) but only 50 kB (50.00 %) allocated\n", 'correct status message');
+    is($msgs[0], "Group jedi\n\tVolume obi-wan using 55 kB (55.00 %) but only 50 kB (50.00 %) allocated\n", 'correct status message');
 
 };
 
