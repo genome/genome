@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Synchronize::SyncLimsAndGenome;
+package Genome::Site::TGI::Command::Sync::LimsAndGenome;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome::Sys::LockProxy qw();
 
 use constant MAX_GENOTYPE_DATA_TO_PROCESS => 500;
 
-class Genome::Site::TGI::Synchronize::SyncLimsAndGenome {
+class Genome::Site::TGI::Command::Sync::LimsAndGenome {
     is => 'Command::V2',
     has_optional => [
         expunge => {
@@ -172,7 +172,7 @@ sub _update_apipe_classes {
     my @entity_names = $dictionary->entity_names;
     for my $entity_name ( @entity_names ) {
         $self->status_message("Detemine $entity_name IDs to create...");
-        my $differ = Genome::Site::TGI::Synchronize::DiffLimsAndGenome->create(
+        my $differ = Genome::Site::TGI::Command::Sync::DiffLimsAndGenome->create(
             entity_name => $entity_name,
             print_diffs => 0,
         );

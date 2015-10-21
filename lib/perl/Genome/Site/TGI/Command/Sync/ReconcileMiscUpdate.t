@@ -14,12 +14,12 @@ use above 'Genome';
 use List::MoreUtils 'uniq';
 use Test::More;
 
-use_ok('Genome::Site::TGI::Synchronize::ReconcileMiscUpdate') or die;
+use_ok('Genome::Site::TGI::Command::Sync::ReconcileMiscUpdate') or die;
 
 my $cnt = 0;
 
 # Invalid start_from
-my $reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(start_from => 'BLAH-01');
+my $reconcile = Genome::Site::TGI::Command::Sync::ReconcileMiscUpdate->create(start_from => 'BLAH-01');
 ok($reconcile, 'Create reconcile command to test start from_value of "BLAH-01"');
 my @errors = $reconcile->__errors__;
 ok(@errors, 'Errors') or die;
@@ -28,7 +28,7 @@ $reconcile->delete;
 
 my $start_from = Date::Format::time2str("%Y-%m-%d %X", time()); # now
 my $stop_at = '2000-01-01 23:59:59'; # set stop at so we only do the updates for Jan 01 01
-$reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(
+$reconcile = Genome::Site::TGI::Command::Sync::ReconcileMiscUpdate->create(
     start_from => $start_from,
     _stop_at => $stop_at,
 );
@@ -66,7 +66,7 @@ my $misc_update_not_in_date_range = _define_misc_update_not_in_date_range();
 ok($misc_update_not_in_date_range, 'Define misc update not in date range');
 
 # Reconcile
-$reconcile = Genome::Site::TGI::Synchronize::ReconcileMiscUpdate->create(start_from => '2000-01-01 00:00:00');
+$reconcile = Genome::Site::TGI::Command::Sync::ReconcileMiscUpdate->create(start_from => '2000-01-01 00:00:00');
 ok($reconcile, 'Create reconcile command');
 @errors = $reconcile->__errors__;
 ok(!@errors, 'No errors for test date');
