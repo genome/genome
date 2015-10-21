@@ -43,6 +43,22 @@ sub help_brief {
     return 'moves alloations from one volume to another';
 }
 
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    my $target_group = $self->target_group;
+    my $target_volume = $self->target_volume;
+    if ( not $target_group and not $target_volume ) {
+        # No validation needed. The target group will be the allocation's current disk group.
+        return;
+    }
+
+    return;
+}
+
 sub execute {
     my $self = shift;
 

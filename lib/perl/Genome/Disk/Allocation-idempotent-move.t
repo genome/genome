@@ -11,6 +11,7 @@ use above 'Genome';
 use Test::More tests => 2;
 
 use Genome::Disk::Allocation;
+use Genome::Disk::Detail::Allocation::Mover;
 
 use File::Basename qw(dirname);
 
@@ -41,12 +42,10 @@ subtest 'idempotent move' => sub {
         allocation_id => $allocation->id);
     my $shadow = Genome::Disk::Allocation->create(
         $mover->_get_move_shadow_params($allocation),
-        disk_group_name => $volumes[2]->disk_group_names,
         mount_path => $volumes[2]->mount_path,
     );
 
     $allocation->move(
-        disk_group_name => $volumes[2]->disk_group_names,
         target_mount_path => $volumes[2]->mount_path,
     );
 
