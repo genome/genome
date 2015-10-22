@@ -22,7 +22,7 @@ my $called_params;
         is => 'Genome::InstrumentData::Composite::Decorator::Base',
     };
     sub decorate {
-        my($class, $operation, $params) = @_;
+        my($class, $operation, $workflow, $params) = @_;
         $call_count++;
         $called_params = $params;
     }
@@ -34,9 +34,11 @@ my $decoration = {
     params => $test_params,
 };
 
-my $operation = Workflow::Operation->__define__(name => 'test operation for decorators');
+my $dag = Genome::WorkflowBuilder::DAG->create(name => 'test workflow');
+my $operation = Genome::WorkflowBuilder::Command->create(name => 'test operation for decorators', command => 'Genome::Model::Tools::Example1');
+$dag->add_operation($operation);
 
-Genome::InstrumentData::Composite::Decorator->decorate($operation, $decoration);
+Genome::InstrumentData::Composite::Decorator->decorate($operation, $dag, $decoration);
 
 is($call_count, 1, 'decorator got called');
 is($called_params, $test_params, 'decorator was passed params');

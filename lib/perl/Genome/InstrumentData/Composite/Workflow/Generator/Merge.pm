@@ -11,6 +11,7 @@ class Genome::InstrumentData::Composite::Workflow::Generator::Merge {
 
 sub generate {
     my $class = shift;
+    my $master_workflow = shift;
     my $tree = shift;
     my $group = shift;
     my $alignment_objects = shift;
@@ -40,12 +41,12 @@ sub generate {
         }
 
         $merge_operation = $class->_generate_merge_operation($merge_tree, $group);
+        $class->_wire_merge_operation_to_master_workflow($master_workflow, $merge_operation);
     }
 
     return ($merge_operation, \@inputs);
 }
 
-my $_mergealignments_command_id;
 my $_generate_merge_operation_tmpl;
 sub _generate_merge_operation {
     my $class = shift;
@@ -53,22 +54,51 @@ sub _generate_merge_operation {
     my $grouping = shift;
 
     unless ($_generate_merge_operation_tmpl) {
-        $_generate_merge_operation_tmpl = UR::BoolExpr::Template->resolve('Workflow::Operation', 'id','name','workflow_operationtype_id')->get_normalized_template_equivalent();
-        $_mergealignments_command_id = Workflow::OperationType::Command->get('Genome::InstrumentData::Command::MergeAlignments')->id;
+        $_generate_merge_operation_tmpl = UR::BoolExpr::Template->resolve('Genome::WorkflowBuilder::Command', 'id','name','command')->get_normalized_template_equivalent();
     }
 
-    my $operation = Workflow::Operation->create(
+    my $operation = Genome::WorkflowBuilder::Command->create(
         $_generate_merge_operation_tmpl->get_rule_for_values(
+                'Genome::InstrumentData::Command::MergeAlignments',
                 UR::Object::Type->autogenerate_new_object_id_urinternal(),
                 'merge_' . $grouping,
-                $_mergealignments_command_id
         )
-
-        #name => 'merge_' . $grouping,
-        #operation_type => $_mergealignments_command_id
     );
 
     return $operation;
+}
+
+sub _wire_merge_operation_to_master_workflow {
+    my $class = shift;
+    my $master_workflow = shift;
+    my $merge = shift;
+
+    $master_workflow->add_operation($merge);
+    for my $property ($class->_merge_workflow_input_properties) {
+        $master_workflow->connect_input(
+            input_property => 'm_' . $property,
+            destination => $merge,
+            destination_property => $property,
+        );
+    }
+
+    return 1;
+}
+
+sub _merge_workflow_input_properties {
+    my $class = shift;
+
+    return qw(
+        merger_name
+        merger_version
+        merger_params
+        duplication_handler_name
+        duplication_handler_version
+        duplication_handler_params
+        bedtools_version
+        samtools_version
+        result_users
+        );
 }
 
 1;

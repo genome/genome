@@ -329,6 +329,7 @@ sub connect_input {
             input_property => { type => Params::Validate::SCALAR },
             destination => { type => Params::Validate::OBJECT },
             destination_property => { type => Params::Validate::SCALAR },
+            is_optional => { type => Params::Validate::SCALAR, default => 0, },
     });
 
     $self->add_link(Genome::WorkflowBuilder::Link->create(
@@ -336,6 +337,11 @@ sub connect_input {
         destination => $args{destination},
         destination_property => $args{destination_property},
     ));
+
+    if ($args{is_optional}) {
+        push @{$self->_optional_input_properties}, $args{input_property};
+    }
+
     return;
 }
 

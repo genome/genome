@@ -11,6 +11,7 @@ class Genome::InstrumentData::Composite::Workflow::Generator::Refine {
 
 sub generate {
     my $class = shift;
+    my $master_workflow = shift;
     my $tree = shift;
     my $input_data = shift;
     my $group = shift;
@@ -46,10 +47,14 @@ sub generate {
         }
     }
 
+    if(@refinement_operations) {
+        $class->_wire_refinement_operation_to_master_workflow($master_workflow, \@refinement_operations, \@refiners);
+        $class->_wire_refinement_to_refinement_operations($master_workflow, \@refinement_operations);
+    }
+
     return (\@refinement_operations, \@inputs, \@refiners);
 }
 
-my $_refinealignments_command_id;
 my $_generate_refinement_operation_tmpl;
 sub _generate_refinement_operation {
     my $class = shift;
@@ -57,15 +62,14 @@ sub _generate_refinement_operation {
     my $refiner = shift;
 
     unless ($_generate_refinement_operation_tmpl) {
-        $_generate_refinement_operation_tmpl = UR::BoolExpr::Template->resolve('Workflow::Operation', 'id','name','workflow_operationtype_id')->get_normalized_template_equivalent();
-        $_refinealignments_command_id = Workflow::OperationType::Command->get('Genome::InstrumentData::Command::RefineReads')->id;
+        $_generate_refinement_operation_tmpl = UR::BoolExpr::Template->resolve('Genome::WorkflowBuilder::Command', 'id','name','command')->get_normalized_template_equivalent();
     }
 
-    my $operation = Workflow::Operation->create(
+    my $operation = Genome::WorkflowBuilder::Command->create(
         $_generate_refinement_operation_tmpl->get_rule_for_values(
+                'Genome::InstrumentData::Command::RefineReads',
                 UR::Object::Type->autogenerate_new_object_id_urinternal(),
                 'refine_' . $refiner,
-                $_refinealignments_command_id
         )
     );
 
@@ -75,6 +79,97 @@ sub _generate_refinement_operation {
 sub refiner_key {
     my ($class, $group, $refiner_name) = @_;
     return join ("_", $group, $refiner_name);
+}
+
+sub _wire_refinement_operation_to_master_workflow {
+    my $class = shift;
+    my $master_workflow = shift;
+    my $refinement_operation = shift;
+    my $refiners = shift;
+
+    for my $refinement (@$refinement_operation) {
+        $master_workflow->add_operation($refinement);
+        my ($refiner) = grep { $refinement->name =~ /$_/ } @$refiners;
+
+        for my $property ($class->_base_refinement_workflow_input_properties) {
+            my $source_property = "m_" . $class->_construct_refiner_input_property($property, $refiner);
+            my $destination_property = $property;
+            $master_workflow->connect_input(
+                input_property => $source_property,
+                destination => $refinement,
+                destination_property => $destination_property,
+            );
+        }
+
+        $master_workflow->connect_input(
+            input_property => 'm_result_users',
+            destination => $refinement,
+            destination_property => 'result_users',
+        );
+    }
+
+    my $last_refinement = $refinement_operation->[-1];
+    for my $property ($last_refinement->output_properties) {
+        $master_workflow->connect_output(
+            source => $last_refinement,
+            source_property => $property,
+            output_property => 'm_' . join('_', $property, $last_refinement->name),
+        );
+    }
+
+    return 1;
+}
+
+sub _wire_refinement_to_refinement_operations {
+    my $class = shift;
+    my $master_workflow = shift;
+    my $refinement_operations = shift;
+
+    if (scalar @$refinement_operations > 1) {
+        for my $i (1..$#$refinement_operations) {
+            $master_workflow->create_link(
+                source => $refinement_operations->[$i-1],
+                source_property => 'result_id',
+                destination => $refinement_operations->[$i],
+                destination_property => 'input_result_id',
+            );
+        }
+    }
+
+    return 1;
+}
+
+sub _base_refinement_workflow_input_properties {
+    my $class = shift;
+
+    return qw(refiner_name refiner_version refiner_params refiner_known_sites_ids);
+}
+
+sub _refinement_workflow_input_properties {
+    my $class = shift;
+    my $refiners = shift;
+
+    my @refiners = @$refiners;
+
+    my @base_names = $class->_base_refinement_workflow_input_properties;
+
+    my @input_properties;
+    for my $refiner (@refiners) {
+        for my $base_name (@base_names) {
+            push @input_properties, $class->_construct_refiner_input_property($base_name, $refiner);
+        }
+    }
+
+    return @input_properties;
+}
+
+my $REFINEMENT_INPUT_PROPERTY_SEPARATOR = ':';
+sub _construct_refiner_input_property {
+    my $class = shift;
+    my $property = shift;
+    my $refiner = shift;
+
+    return join($REFINEMENT_INPUT_PROPERTY_SEPARATOR, $property, $refiner);
 }
 
 1;
