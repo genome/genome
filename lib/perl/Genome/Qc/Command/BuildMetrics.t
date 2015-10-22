@@ -55,7 +55,7 @@ my $pkg = 'Genome::Qc::Command::BuildMetrics';
 use_ok($pkg);
 
 my $test_dir = __FILE__.'.d';
-my $expected_output_file = $test_dir .'/expected_build_metrics_v2.yml';
+my $expected_output_file = $test_dir .'/expected_build_metrics.yml';
 my $test_output_file = Genome::Sys->create_temp_file_path();
 
 # Get expected IDs from YAML file.
