@@ -13628,6 +13628,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'bam-readcount-version=s',
         undef,
+        'output-file=s',
+        'files',
         'snp-file=s',
         'files',
         'bam-file-1=s',
@@ -13640,7 +13642,7 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'model-id-2=s',
         'files',
-        'output-file=s',
+        'output-genotypes=s',
         'files',
         'reference-fasta=s',
         'files',
