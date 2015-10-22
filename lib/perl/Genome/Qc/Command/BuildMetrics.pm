@@ -68,8 +68,9 @@ sub metrics_for_build {
             my %result_metrics = $qc_result->get_unflattened_metrics;
             $result_metrics{build_id} = $build->id;
             $result_metrics{instrument_data_count} = $result_instdata_set->size;
-            $result_metrics{instrument_data_ids} = join(',',map {$_->id} $result_instdata_set->members);
+            $result_metrics{instrument_data_ids} = join(',',sort map {$_->id} $result_instdata_set->members);
             if ($result_metrics{PAIR}) {
+                # Calculate Duplication Rate
                 if ( defined($result_metrics{reads_marked_duplicates}) ) {
                     $result_metrics{DUPLICATION_RATE} = $result_metrics{'reads_marked_duplicates'}
                         / $result_metrics{PAIR}->{PF_READS_ALIGNED};
@@ -77,15 +78,8 @@ sub metrics_for_build {
                     $self->error_message('Missing samtools reads_marked_duplicates!');
                     die($self->error_message);
                 }
-                if ( defined($result_metrics{GENOME_TERRITORY}) ) {
-                    $result_metrics{HAPLOID_COVERAGE} = (
-                        $result_metrics{PAIR}->{PF_ALIGNED_BASES} * ( 1 - $result_metrics{DUPLICATION_RATE} )
-                    ) / $result_metrics{GENOME_TERRITORY};
-                } else {
-                    # TODO: if CollectWgsMetrics did not run, get the number on non-N bases from a RefSeq build
-                    $self->error_meesage('Genome territory is not defined!');
-                    die($self->error_message);
-                }
+                # Calculate Haploid Coverage
+                $self->_calculate_haploid_coverage($build,\%result_metrics);
             } else {
                 $self->error_message('Missing CollectAlignmentSummaryMetrics PAIR category.');
                 die($self->error_message);
@@ -100,5 +94,28 @@ sub metrics_for_build {
     return @metrics;
 }
 
+sub _calculate_haploid_coverage {
+    my $self = shift;
+    my $build = shift;
+    my $result_metrics = shift;
+
+    if ( !defined($result_metrics->{GENOME_TERRITORY}) ) {
+        if ( !defined($build->reference_sequence_build->get_metric('GENOME_TERRITORY')) ) {
+            my $calc_genome_territory_cmd = Genome::Model::ReferenceSequence::Command::CalculateGenomeTerritory->create(
+                reference_sequence_build => $build->reference_sequence_build,
+            );
+            unless ($calc_genome_territory_cmd->execute) {
+                $self->error_message('Failed to execute CalcuateGenomeTerritory command!');
+                die($self->error_message);
+            }
+        }
+        $result_metrics->{GENOME_TERRITORY} = $build->reference_sequence_build->get_metric('GENOME_TERRITORY');
+    }
+    $result_metrics->{HAPLOID_COVERAGE} = (
+        $result_metrics->{PAIR}->{PF_ALIGNED_BASES} * ( 1 - $result_metrics->{DUPLICATION_RATE} )
+    ) / $result_metrics->{GENOME_TERRITORY};
+
+    return 1;
+}
 
 1;
