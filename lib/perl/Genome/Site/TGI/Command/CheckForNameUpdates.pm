@@ -26,7 +26,8 @@ class Genome::Site::TGI::Command::CheckForNameUpdates {
             is_many => 1,
             doc => 'Process these specific updates, bypassing the normal query',
         },
-    ]
+    ],
+    doc => 'Check for sample and library name changes in LIMS',
 };
 
 sub execute {

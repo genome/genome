@@ -26,8 +26,7 @@ class Genome::Site::TGI::Command::LimsAndGenome {
         _report => { is => 'Hash', default_value => {}, },
         _lock => { is => 'Text', },
     ],
-    doc => 'This command copies new objects in the old LIMS based classes to the new classes that use the GMS schema. ' .
-        'It then removes all non-imported instrument data that are no longer represented in the LIMS based classes', 
+    doc => 'Copy new objects in LIMS to Genome, and remove expunged non-imported instrument data from Genome', 
 };
 
 sub execute {

@@ -9,6 +9,7 @@ use Net::LDAP;
 
 class Genome::Site::TGI::Command::SyncSysUserWithLdap{
     is => 'Command::V2',
+    doc => 'Sync Genome sys users from LDAP users',
 };
 
 sub execute {

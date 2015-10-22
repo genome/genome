@@ -23,6 +23,7 @@ class Genome::Site::TGI::Command::ReconcileMiscUpdate {
         _stop_at => { is => 'Text', },
         stats => { is => 'Hash', default_value => {}, },
     ],
+    doc => 'From a starting point, apply changes stored in the misc_updatee table to Genome',
 };
 
 sub __errors__ {

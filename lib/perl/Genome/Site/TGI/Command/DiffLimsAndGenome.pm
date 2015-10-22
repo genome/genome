@@ -24,7 +24,7 @@ class Genome::Site::TGI::Command::DiffLimsAndGenome {
         in_lims_not_genome => { is => 'Set::Scalar', },
         in_genome_not_lims => { is => 'Set::Scalar', },
     ],
-    doc => 'Generate diffs of IDs in LIMS and Genome for an entity'
+    doc => 'Generate diffs of IDs in LIMS and Genome for entities',
 };
 
 sub lims_class {
