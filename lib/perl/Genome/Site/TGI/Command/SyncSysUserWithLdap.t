@@ -8,7 +8,7 @@ use Set::Scalar;
 use Test::MockObject;
 use Test::More tests => 4;
 
-my $class = 'Genome::Site::TGI::Command::SysUserWithLdap';
+my $class = 'Genome::Site::TGI::Command::SyncSysUserWithLdap';
 use_ok($class);
 
 my @apipe_uids = (qw/ apipe apipe-builder apipe-tester /);
@@ -28,11 +28,11 @@ subtest 'changes delete' => sub {
     plan tests => 2;
 
     my %ldap_users = map { $_ => 1 } $apipe_users->members;
-    my $changes = Genome::Site::TGI::Command::SysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
+    my $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
     is_deeply($changes, {}, 'no changes needed');
 
     delete $ldap_users{ $apipe_db_users[0]->email };
-    $changes = Genome::Site::TGI::Command::SysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
+    $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
     is_deeply($changes, { delete => [ @apipe_db_users[0] ] }, 'need to delete '.$apipe_db_users[0]->email);
 
 };
@@ -42,10 +42,10 @@ subtest 'changes create' => sub {
 
     my $cnt = 0; # this is the ldap user 'object', just use a number for simplicity
     my %ldap_users = map { $_ => ++$cnt } $apipe_users->members;
-    my $changes = Genome::Site::TGI::Command::SysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
+    my $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
     is_deeply($changes, {}, 'no create changes needed');
 
-    $changes = Genome::Site::TGI::Command::SysUserWithLdap::get_changes(\%ldap_users, [ @apipe_db_users[0..1] ]);
+    $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, [ @apipe_db_users[0..1] ]);
     is_deeply($changes, { create => [ 3 ] }, 'need to create '.$apipe_db_users[$#apipe_db_users]->email);
 
 };
