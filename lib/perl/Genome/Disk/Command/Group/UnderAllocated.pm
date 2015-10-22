@@ -2,26 +2,17 @@ package Genome::Disk::Command::Group::UnderAllocated;
 
 use strict;
 use warnings;
+
 use Genome;
-use Genome::Utility::Email;
 
 class Genome::Disk::Command::Group::UnderAllocated {
     is => 'Command::V2',
     has_optional => [
         disk_group_names => {
             is => 'Text',
-            doc => 'comma delimited list of disk groups to be checked',
-            default => join(',', Genome::Config::get('disk_group_alignments'), Genome::Config::get('disk_group_models')),
-        },
-        send_alert => {
-            is => 'Boolean',
-            default => 0,
-            doc => 'If set, an alert will be sent out if a disk group is does not have the minimum amount of free space',
-        },
-        alert_recipients => {
-            is => 'Text',
-            default => 'jeldred,apipebulk',
-            doc => 'If an alert is sent, these are the recipients',
+            is_many => 1,
+            doc => 'disk groups to be checked',
+            default => [ Genome::Config::get('disk_group_alignments'), Genome::Config::get('disk_group_models') ],
         },
         percent_tolerance => {
             is => 'Number',
@@ -40,14 +31,13 @@ sub help_detail { help_brief() }
 
 sub execute {
     my $self = shift;
-    my @groups = split(',', $self->disk_group_names);
 
     my %under_allocated_volumes;
     my %under_allocated_allocations;
     my $tolerance = $self->percent_tolerance;
 
     # Why yes, I do like my if blocks and for loops nested. Thank you for noticing.
-    for my $group (@groups) {
+    for my $group ($self->disk_group_names) {
         my @volumes = Genome::Disk::Volume->get(disk_group_names => $group, disk_status => 'active', can_allocate => 1);
         next unless @volumes;
 
@@ -70,7 +60,7 @@ sub execute {
     my $report = $self->_create_report(\%under_allocated_volumes);
     if ($report) {
         $self->status_message($report);
-        $self->_send_report(\%under_allocated_volumes, $report);
+        return;
     }
 
     return 1;
@@ -88,21 +78,6 @@ sub _create_report {
         $report .= "\n";
     }
     return $report;
-}
-
-sub _send_report {
-    my ($self, $under_allocated_volumes, $report) = @_;
-
-    if ((keys %{$under_allocated_volumes}) and $self->send_alert) {
-        my @to = map { Genome::Utility::Email::construct_address($_) } split(',', $self->alert_recipients);
-        Genome::Utility::Email::send(
-            from    => Genome::Sys::User->get_current->email,
-            to      => \@to,
-            subject => 'Underallocated Volumes Found!',
-            body    => $report,
-        );
-        $self->debug_message("Alert sent to " . $self->alert_recipients);
-    }
 }
 
 1;
