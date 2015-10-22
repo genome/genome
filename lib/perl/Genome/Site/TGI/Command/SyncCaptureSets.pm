@@ -1,4 +1,4 @@
-package Genome::Site::TGI::CaptureSet::Command::Synchronize;
+package Genome::Site::TGI::Command::SyncCaptureSets;
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 use Genome::Sys::LockProxy qw();
 
-class Genome::Site::TGI::CaptureSet::Command::Synchronize {
+class Genome::Site::TGI::Command::SyncCaptureSets {
     is => 'Command::V2',
     has => [
         direction => {
