@@ -222,6 +222,10 @@ sub create {
         }
     }
 
+    if ( Genome::Disk::Group->is_archive($params{disk_group_name}) ) {
+        die $class->error_message('Cannot create disk allocation in an archive group: '.$params{disk_group_name});
+    }
+
     my $self;
     Genome::Utility::Instrumentation::timer('disk.allocation.create', sub {
         $self = $class->_execute_system_command('_create', %params);
