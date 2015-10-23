@@ -1,5 +1,6 @@
 package Genome::DataSource::CommonRDBMS;
 
+use DBD::Pg v2.19.3;
 use Genome;
 use UR::DataSource::Pg;
 
@@ -63,27 +64,6 @@ sub _make_db_pause_function {
         print STDERR "Database updating has been resumed, continuing query!\n";
         return 1;
     };
-}
-
-
-sub _check_pg_version {
-    my $class = shift;
-
-    use version 0.77; my $required_pg_version = version->parse('v2.19.3');
-    require DBD::Pg;
-    if (($DBD::Pg::VERSION < $required_pg_version) && !defined $ENV{'LIMS_PERL'}) {
-        my $error_message = "**** INCORRECT POSTGRES DRIVER VERSION ****\n" .
-            "You are using a Perl version that includes an incorrect DBD::Pg driver.\n" .
-            "You are running $DBD::Pg::VERSION and need to be running $required_pg_version.\n" .
-            "Your sync has been aborted to protect data integrity in the Postgres database.\n" .
-            "Please be sure you are using 'genome-perl' and not /gsc/bin/perl.\n\n\n";
-        UR::Object->error_message($error_message);
-        die $error_message;
-    }
-}
-
-BEGIN {
-    __PACKAGE__->_check_pg_version();
 }
 
 
