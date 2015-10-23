@@ -473,6 +473,15 @@ sub create {
 
     no warnings 'redefine';
     local *__errors__ = sub { () };
+    local *Genome::Model::Input::__errors__ = sub {
+            my $input = shift;
+            my $errors_fcn = $input->super_can('__errors__');
+            # Some places create hangoff model inputs that have undef value_id
+            # and later fill them in before the final DB commit
+            return grep { ($_->properties)[0] ne 'value_id' }
+                    $input->$errors_fcn();
+        };
+
     # If create is being called directly on this class or on an abstract subclass, SUPER::create will
     # figure out the correct concrete subclass (if one exists) and call create on it.
     if ($class eq __PACKAGE__ or $class->__meta__->is_abstract) {
