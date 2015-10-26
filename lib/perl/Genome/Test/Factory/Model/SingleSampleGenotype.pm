@@ -1,4 +1,4 @@
-package Genome::Test::Factory::Model::ReferenceVariation;
+package Genome::Test::Factory::Model::SingleSampleGenotype;
 use Genome::Test::Factory::Model;
 @ISA = (Genome::Test::Factory::Model);
 
@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use Genome;
-use Genome::Test::Factory::ProcessingProfile::ReferenceVariation;
+use Genome::Test::Factory::ProcessingProfile::SingleSampleGenotype;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Sample;
@@ -16,12 +16,12 @@ our @required_params = qw(reference_sequence_build subject_id);
 sub generate_obj {
     my $self = shift;
 
-    my $m = Genome::Model::ReferenceVariation->create(@_);
+    my $m = Genome::Model::SingleSampleGenotype->create(@_);
     return $m;
 }
 
 sub create_processing_profile_id {
-    my $p = Genome::Test::Factory::ProcessingProfile::ReferenceVariation->setup_object();
+    my $p = Genome::Test::Factory::ProcessingProfile::SingleSampleGenotype->setup_object();
     return $p->id;
 }
 

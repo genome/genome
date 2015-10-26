@@ -1,12 +1,12 @@
-package Genome::Model::ReferenceVariation::Command::AlignReads;
+package Genome::Model::SingleSampleGenotype::Command::AlignReads;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::ReferenceVariation::Command::AlignReads {
-    is => 'Genome::Model::ReferenceVariation::Command::Base',
+class Genome::Model::SingleSampleGenotype::Command::AlignReads {
+    is => 'Genome::Model::SingleSampleGenotype::Command::Base',
     doc => 'Align the instrument data to the reference for the build.',
 };
 

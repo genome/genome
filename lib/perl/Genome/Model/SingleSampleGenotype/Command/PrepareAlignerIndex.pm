@@ -1,13 +1,13 @@
-package Genome::Model::ReferenceVariation::Command::PrepareAlignerIndex;
+package Genome::Model::SingleSampleGenotype::Command::PrepareAlignerIndex;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::ReferenceVariation::Command::PrepareAlignerIndex {
-    is => 'Genome::Model::ReferenceVariation::Command::Base',
-    doc => 'Prepare an aligner index for use in the reference variation pipeline',
+class Genome::Model::SingleSampleGenotype::Command::PrepareAlignerIndex {
+    is => 'Genome::Model::SingleSampleGenotype::Command::Base',
+    doc => 'Prepare an aligner index for use in the single-sample genotype pipeline',
     has_param => [
         lsf_resource => {
             is => 'Text',

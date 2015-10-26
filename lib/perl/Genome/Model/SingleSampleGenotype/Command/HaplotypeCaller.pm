@@ -1,12 +1,12 @@
-package Genome::Model::ReferenceVariation::Command::HaplotypeCaller;
+package Genome::Model::SingleSampleGenotype::Command::HaplotypeCaller;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::ReferenceVariation::Command::HaplotypeCaller {
-    is => 'Genome::Model::ReferenceVariation::Command::Base',
+class Genome::Model::SingleSampleGenotype::Command::HaplotypeCaller {
+    is => 'Genome::Model::SingleSampleGenotype::Command::Base',
     doc => 'Runs the Haplotype Caller on the alignments',
     has_optional_input => [
         bucket => {
@@ -21,7 +21,7 @@ sub _result_accessor {
 }
 
 sub _command_class {
-    return 'Genome::Model::ReferenceVariation::Result::HaplotypeCallerWrapper';
+    return 'Genome::Model::SingleSampleGenotype::Result::HaplotypeCallerWrapper';
 }
 
 sub _params_for_command {

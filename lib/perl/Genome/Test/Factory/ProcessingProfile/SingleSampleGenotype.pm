@@ -1,4 +1,4 @@
-package Genome::Test::Factory::ProcessingProfile::ReferenceVariation;
+package Genome::Test::Factory::ProcessingProfile::SingleSampleGenotype;
 use Genome::Test::Factory::ProcessingProfile;
 @ISA = (Genome::Test::Factory::ProcessingProfile);
 

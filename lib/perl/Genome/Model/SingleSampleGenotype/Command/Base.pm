@@ -1,21 +1,21 @@
-package Genome::Model::ReferenceVariation::Command::Base;
+package Genome::Model::SingleSampleGenotype::Command::Base;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::ReferenceVariation::Command::Base {
+class Genome::Model::SingleSampleGenotype::Command::Base {
     is => 'Command::V2',
     has_input => [
         build => {
-            is => 'Genome::Model::Build::ReferenceVariation',
+            is => 'Genome::Model::Build::SingleSampleGenotype',
             doc => 'build for which to run the command',
             is_output => 1,
             shell_args_position => 1,
         },
     ],
-    doc => 'Base class for reference variation pipeline commands.',
+    doc => 'Base class for single-sample genotype pipeline commands.',
     is_abstract => 1,
 };
 

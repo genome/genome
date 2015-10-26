@@ -9,16 +9,16 @@ BEGIN {
 
 use above 'Genome';
 
-use Genome::Test::Factory::ProcessingProfile::ReferenceVariation;
+use Genome::Test::Factory::ProcessingProfile::SingleSampleGenotype;
 use Genome::Test::Factory::Model::ReferenceSequence;
 use Genome::Test::Factory::Sample;
 
 use Test::More tests => 3;
 
-my $pkg = 'Genome::Model::ReferenceVariation';
+my $pkg = 'Genome::Model::SingleSampleGenotype';
 use_ok($pkg);
 
-my $pp = Genome::Test::Factory::ProcessingProfile::ReferenceVariation->setup_object();
+my $pp = Genome::Test::Factory::ProcessingProfile::SingleSampleGenotype->setup_object();
 my $reference = Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build();
 my $sample = Genome::Test::Factory::Sample->setup_object;
 

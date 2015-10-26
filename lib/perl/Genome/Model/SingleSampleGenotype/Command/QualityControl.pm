@@ -1,12 +1,12 @@
-package Genome::Model::ReferenceVariation::Command::QualityControl;
+package Genome::Model::SingleSampleGenotype::Command::QualityControl;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::ReferenceVariation::Command::QualityControl {
-    is => 'Genome::Model::ReferenceVariation::Command::Base',
+class Genome::Model::SingleSampleGenotype::Command::QualityControl {
+    is => 'Genome::Model::SingleSampleGenotype::Command::Base',
     doc => 'Perform quality control analysis on the alignments for the build.',
 };
 

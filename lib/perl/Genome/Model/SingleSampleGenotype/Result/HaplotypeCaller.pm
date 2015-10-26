@@ -1,11 +1,11 @@
-package Genome::Model::ReferenceVariation::Result::HaplotypeCaller;
+package Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::ReferenceVariation::Result::HaplotypeCaller {
+class Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller {
     is => 'Genome::SoftwareResult::StageableSimple',
     has_input => {
         alignment_result => {

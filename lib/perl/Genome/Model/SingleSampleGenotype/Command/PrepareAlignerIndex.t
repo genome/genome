@@ -10,16 +10,16 @@ use warnings;
 use above 'Genome';
 
 use Genome::Test::Factory::Build;
-use Genome::Test::Factory::Model::ReferenceVariation;
+use Genome::Test::Factory::Model::SingleSampleGenotype;
 
 use Sub::Override;
 
 use Test::More tests => 4;
 
-my $pkg = 'Genome::Model::ReferenceVariation::Command::PrepareAlignerIndex';
+my $pkg = 'Genome::Model::SingleSampleGenotype::Command::PrepareAlignerIndex';
 use_ok($pkg);
 
-my $model = Genome::Test::Factory::Model::ReferenceVariation->setup_object;
+my $model = Genome::Test::Factory::Model::SingleSampleGenotype->setup_object;
 my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 
 require Genome::Model::Build::ReferenceSequence::IndexBase;

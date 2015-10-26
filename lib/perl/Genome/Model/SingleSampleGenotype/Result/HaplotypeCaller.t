@@ -18,7 +18,7 @@ use Sub::Override;
 
 use Test::More tests => 2;
 
-my $pkg = 'Genome::Model::ReferenceVariation::Result::HaplotypeCaller';
+my $pkg = 'Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller';
 use_ok($pkg);
 
 my $reference_model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object;

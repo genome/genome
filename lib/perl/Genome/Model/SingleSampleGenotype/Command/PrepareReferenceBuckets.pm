@@ -1,12 +1,12 @@
-package Genome::Model::ReferenceVariation::Command::PrepareReferenceBuckets;
+package Genome::Model::SingleSampleGenotype::Command::PrepareReferenceBuckets;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::ReferenceVariation::Command::PrepareReferenceBuckets {
-    is => 'Genome::Model::ReferenceVariation::Command::Base',
+class Genome::Model::SingleSampleGenotype::Command::PrepareReferenceBuckets {
+    is => 'Genome::Model::SingleSampleGenotype::Command::Base',
     doc => 'Prepare buckets for running the HaplotypeCaller in parallel',
 };
 

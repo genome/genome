@@ -1,11 +1,11 @@
-package Genome::Model::Build::ReferenceVariation;
+package Genome::Model::Build::SingleSampleGenotype;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Build::ReferenceVariation {
+class Genome::Model::Build::SingleSampleGenotype {
     is => ['Genome::Model::Build'],
     has_output => [
         merged_alignment_result => {
@@ -17,7 +17,7 @@ class Genome::Model::Build::ReferenceVariation {
             doc => 'the result of qc analysis on the alignment',
         },
         haplotype_caller_result => {
-           is => 'Genome::Model::ReferenceVariation::Result::HaplotypeCaller',
+           is => 'Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller',
            doc => 'the result of running the haplotype caller',
            is_many => 1,
         },

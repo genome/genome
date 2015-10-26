@@ -11,14 +11,14 @@ use above 'Genome';
 
 use File::Basename qw();
 use Genome::Test::Factory::Build;
-use Genome::Test::Factory::Model::ReferenceVariation;
+use Genome::Test::Factory::Model::SingleSampleGenotype;
 
 use Test::More tests => 4;
 
-my $pkg = 'Genome::Model::ReferenceVariation::Command::PrepareReferenceBuckets';
+my $pkg = 'Genome::Model::SingleSampleGenotype::Command::PrepareReferenceBuckets';
 use_ok($pkg);
 
-my $model = Genome::Test::Factory::Model::ReferenceVariation->setup_object;
+my $model = Genome::Test::Factory::Model::SingleSampleGenotype->setup_object;
 my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 
 my $reference = $build->reference_sequence_build;

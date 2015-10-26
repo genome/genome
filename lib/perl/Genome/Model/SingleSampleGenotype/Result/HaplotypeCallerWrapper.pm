@@ -1,6 +1,6 @@
-package Genome::Model::ReferenceVariation::Result::HaplotypeCallerWrapper;
+package Genome::Model::SingleSampleGenotype::Result::HaplotypeCallerWrapper;
 
-class Genome::Model::ReferenceVariation::Result::HaplotypeCallerWrapper {
+class Genome::Model::SingleSampleGenotype::Result::HaplotypeCallerWrapper {
     is => 'Genome::Command::DelegatesToResult',
     has_input => {
         alignment_result => {
@@ -29,6 +29,6 @@ class Genome::Model::ReferenceVariation::Result::HaplotypeCallerWrapper {
     },
 };
 
-sub result_class { return 'Genome::Model::ReferenceVariation::Result::HaplotypeCaller'; }
+sub result_class { return 'Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller'; }
 
 1;

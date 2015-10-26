@@ -10,15 +10,15 @@ BEGIN {
 use above 'Genome';
 
 use Genome::Test::Factory::InstrumentData::Solexa;
-use Genome::Test::Factory::Model::ReferenceVariation;
+use Genome::Test::Factory::Model::SingleSampleGenotype;
 
 use Test::More tests => 3;
 
-my $pkg = 'Genome::Model::Build::ReferenceVariation';
+my $pkg = 'Genome::Model::Build::SingleSampleGenotype';
 use_ok($pkg);
 
 my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
-my $model = Genome::Test::Factory::Model::ReferenceVariation->setup_object();
+my $model = Genome::Test::Factory::Model::SingleSampleGenotype->setup_object();
 $model->add_instrument_data($instrument_data);
 
 my $build = $pkg->create(
