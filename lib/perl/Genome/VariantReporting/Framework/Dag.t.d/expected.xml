@@ -11,6 +11,8 @@
     <inputproperty>variant_type</inputproperty>
     <outputproperty>output_result (report_alpha)</outputproperty>
     <outputproperty>output_result (report_beta)</outputproperty>
+    <outputproperty>report_path (report_alpha)</outputproperty>
+    <outputproperty>report_path (report_beta)</outputproperty>
   </operationtype>
   <operation name="Generate Report (report_alpha)">
     <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -19,6 +21,7 @@
       <inputproperty>report_name</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_result</outputproperty>
+      <outputproperty>report_path</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
@@ -29,6 +32,7 @@
       <inputproperty>report_name</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_result</outputproperty>
+      <outputproperty>report_path</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
@@ -85,7 +89,9 @@
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run expert_two" toProperty="variant_type"/>
   </operation>
   <link fromOperation="Generate Report (report_alpha)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (report_alpha)"/>
+  <link fromOperation="Generate Report (report_alpha)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (report_alpha)"/>
   <link fromOperation="Generate Report (report_beta)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (report_beta)"/>
+  <link fromOperation="Generate Report (report_beta)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (report_beta)"/>
   <link fromOperation="expert_one" fromProperty="output_vcf" toOperation="expert_two" toProperty="input_vcf"/>
   <link fromOperation="expert_two" fromProperty="output_vcf" toOperation="Generate Report (report_alpha)" toProperty="input_vcf"/>
   <link fromOperation="expert_two" fromProperty="output_vcf" toOperation="Generate Report (report_beta)" toProperty="input_vcf"/>
