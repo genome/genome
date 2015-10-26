@@ -94,7 +94,7 @@ sub netmhc_path_for_version {
 
     my %netmhc_path_of_version = (
         '3.0' => '/gsc/bin/netMHC',
-        '3.4' => '/gsc/bin/netMHC3.4',
+        '3.4' => '/gsc/bin/netMHC3.4_mgi1',
     );
 
     return $netmhc_path_of_version{$netmhc_version};
