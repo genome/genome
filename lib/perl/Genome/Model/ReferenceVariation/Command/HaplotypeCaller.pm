@@ -37,8 +37,10 @@ sub _params_for_command {
         haplotype_caller_version => $build->model->haplotype_caller_version,
         emit_reference_confidence => 'GVCF',
         gvcf_gq_bands => [5,20,60],
-        intervals => $self->intervals,
     );
+
+    my $intervals = $self->intervals;
+    push @params, intervals => $intervals if $intervals;
 
     return @params;
 }
@@ -47,6 +49,8 @@ sub intervals {
     my $self = shift;
     my $build = $self->build;
     my $bucket = $self->bucket;
+
+    return unless $bucket;
 
     return $build->buckets_result->bucket($bucket);
 }

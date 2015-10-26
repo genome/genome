@@ -11,6 +11,7 @@ class Genome::Model::ReferenceVariation::Result::HaplotypeCallerWrapper {
             is_many => 1,
             is => 'Text',
             doc => 'regions to restrict this result',
+            is_optional => 1,
         },
         gvcf_gq_bands => {
             is_many => 1,
