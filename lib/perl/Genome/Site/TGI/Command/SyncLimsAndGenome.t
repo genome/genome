@@ -14,7 +14,7 @@ use above 'Genome';
 use Data::Dumper 'Dumper';
 use Test::More;
 
-use_ok('Genome::Site::TGI::Command::LimsAndGenome') or die;
+use_ok('Genome::Site::TGI::Command::SyncLimsAndGenome') or die;
 use_ok('Genome::Site::TGI::Synchronize::Classes::Dictionary') or die;
 
 class Iterator {
@@ -42,7 +42,7 @@ sub Transaction::commit { return 1; };
     *Genome::InstrumentData::Microarray::update_genotype_file = sub{ return 1; };
 }
 
-my $sync = Genome::Site::TGI::Command::LimsAndGenome->create(expunge => 0); # TODO test expunge!
+my $sync = Genome::Site::TGI::Command::SyncLimsAndGenome->create(expunge => 0); # TODO test expunge!
 ok($sync, 'create');
 my $i = -100;
 ok(init(), 'init') or die;
@@ -63,7 +63,7 @@ sub init {
     diag("INIT...");
     {
         no warnings 'redefine';
-        *Genome::Site::TGI::Command::LimsAndGenome::_load_successful_pidfas = sub{ return 1; };
+        *Genome::Site::TGI::Command::SyncLimsAndGenome::_load_successful_pidfas = sub{ return 1; };
     }
     my @lims_objects;
     for my $entity_name ( Genome::Site::TGI::Synchronize::Classes::Dictionary->entity_names ) {

@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Command::LimsAndGenome;
+package Genome::Site::TGI::Command::SyncLimsAndGenome;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome::Sys::LockProxy qw();
 
 use constant MAX_GENOTYPE_DATA_TO_PROCESS => 500;
 
-class Genome::Site::TGI::Command::LimsAndGenome {
+class Genome::Site::TGI::Command::SyncLimsAndGenome {
     is => 'Command::V2',
     has_optional => [
         expunge => {
