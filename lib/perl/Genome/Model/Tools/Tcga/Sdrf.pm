@@ -641,6 +641,14 @@ sub capture_reagents {
                 target_file    => 'https://earray.chem.agilent.com/earray/',
             },
         ],
+        'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'SureSelect Human All Exon 38 Mb v2',
+                catalog_number => 'S0293689',
+                target_file    => 'https://earray.chem.agilent.com/earray/',
+            },
+        ],
         'hg18 nimblegen exome version 2' => [
             {
                 reagent_vendor => 'Nimblegen',
