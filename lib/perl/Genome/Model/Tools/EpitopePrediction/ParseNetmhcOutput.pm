@@ -62,7 +62,7 @@ sub execute {
     my $type      = $self->output_filter;
     my $output_fh = Genome::Sys->open_file_for_writing($self->parsed_file);
 
-    my ($netmhc_results, $epitope_seq) = $self->parse_input;
+    my $netmhc_results = $self->parse_input;
 
     $self->print_header($output_fh);
 
@@ -70,9 +70,8 @@ sub execute {
     for my $protein_name (sort keys %{$netmhc_results->{$protein_type}}) {
         for my $variant_aa (sort keys %{$netmhc_results->{$protein_type}->{$protein_name}}) {
             %position_score = %{$netmhc_results->{$protein_type}{$protein_name}{$variant_aa}};
-            my @positions = sort {$position_score{$a} <=> $position_score{$b}} keys %position_score;
+            my @positions = sort {$position_score{$a}->{score} <=> $position_score{$b}->{score}} keys %position_score;
             my $total_positions = scalar @positions;
-
             if ($type eq 'all') {
                 for (my $i = 0; $i < $total_positions; $i++) {
 
@@ -81,13 +80,13 @@ sub execute {
                         # Filtering if mutant amino acid present
                     {
                         my $position = $positions[$i];
-                        $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}, $netmhc_results, $epitope_seq);
+                        $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}->{score}, $netmhc_results);
                     }
                 }
             }
             if ($type eq 'top') {
                 my $position = $positions[0];
-                $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}, $netmhc_results, $epitope_seq);
+                $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}->{score}, $netmhc_results);
             }
         }
     }
@@ -116,15 +115,15 @@ sub print_header {
 }
 
 sub print_output_line {
-    my ($self, $output_fh, $protein_name, $variant_aa, $position, $position_score, $netmhc_results, $epitope_seq) = @_;
+    my ($self, $output_fh, $protein_name, $variant_aa, $position, $position_score, $netmhc_results) = @_;
 
     print $output_fh join("\t", $protein_name, $variant_aa, $position, $position_score) . "\t";
-    print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position} . "\t";
+    print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{score} . "\t";
 
-    print $output_fh $epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$position} . "\t";
-    print $output_fh $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$position} . "\t";
+    print $output_fh $netmhc_results->{'MT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence} . "\t";
+    print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence} . "\t";
     my $fold_change =
-        $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position} / $position_score;
+        $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{score} / $position_score;
     my $rounded_FC = sprintf("%.3f", $fold_change);
     print $output_fh $rounded_FC . "\n";
 }
@@ -163,7 +162,7 @@ sub parse_input {
 
     my $protein_identifier_for_label = $self->protein_identifier_for_label if $self->netmhc_version eq '3.4';
 
-    my (%netmhc_results, %epitope_seq);
+    my %netmhc_results;
     while (my $line = $input_fh->next) {
         my $position      = $line->{position};
         my $score         = $line->{score};
@@ -181,11 +180,13 @@ sub parse_input {
         }
         my ($protein_type, $protein_name, $variant_aa) = split(/\./, $protein_identifier);
 
-        $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = $score;
-        $epitope_seq{$protein_type}{$protein_name}{$variant_aa}{$position} = $epitope;
+        $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = {
+            score => $score,
+            epitope_sequence => $epitope
+        };
     }
 
-    return \%netmhc_results, \%epitope_seq;
+    return \%netmhc_results;
 }
 
 1;
