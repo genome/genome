@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Synchronize::DiffLimsAndGenome;
+package Genome::Site::TGI::Command::DiffLimsAndGenome;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome;
 use Genome::Site::TGI::Synchronize::Classes::Dictionary;
 use Set::Scalar;
 
-class Genome::Site::TGI::Synchronize::DiffLimsAndGenome {
+class Genome::Site::TGI::Command::DiffLimsAndGenome {
     is => 'Command::V2',
     has => [
         entity_name => {
@@ -24,7 +24,7 @@ class Genome::Site::TGI::Synchronize::DiffLimsAndGenome {
         in_lims_not_genome => { is => 'Set::Scalar', },
         in_genome_not_lims => { is => 'Set::Scalar', },
     ],
-    doc => 'Generate diffs of IDs in LIMS and Genome for an entity'
+    doc => 'Generate diffs of IDs in LIMS and Genome for entities',
 };
 
 sub lims_class {

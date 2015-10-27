@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Synchronize::SyncLimsAndGenome;
+package Genome::Site::TGI::Command::SyncLimsAndGenome;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome::Sys::LockProxy qw();
 
 use constant MAX_GENOTYPE_DATA_TO_PROCESS => 500;
 
-class Genome::Site::TGI::Synchronize::SyncLimsAndGenome {
+class Genome::Site::TGI::Command::SyncLimsAndGenome {
     is => 'Command::V2',
     has_optional => [
         expunge => {
@@ -26,8 +26,7 @@ class Genome::Site::TGI::Synchronize::SyncLimsAndGenome {
         _report => { is => 'Hash', default_value => {}, },
         _lock => { is => 'Text', },
     ],
-    doc => 'This command copies new objects in the old LIMS based classes to the new classes that use the GMS schema. ' .
-        'It then removes all non-imported instrument data that are no longer represented in the LIMS based classes', 
+    doc => 'Copy new objects in LIMS to Genome, and remove expunged non-imported instrument data from Genome', 
 };
 
 sub execute {
@@ -172,7 +171,7 @@ sub _update_apipe_classes {
     my @entity_names = $dictionary->entity_names;
     for my $entity_name ( @entity_names ) {
         $self->status_message("Detemine $entity_name IDs to create...");
-        my $differ = Genome::Site::TGI::Synchronize::DiffLimsAndGenome->create(
+        my $differ = Genome::Site::TGI::Command::DiffLimsAndGenome->create(
             entity_name => $entity_name,
             print_diffs => 0,
         );

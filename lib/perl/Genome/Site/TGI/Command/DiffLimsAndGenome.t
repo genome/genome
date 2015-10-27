@@ -7,7 +7,7 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Site::TGI::Synchronize::DiffLimsAndGenome') or die;
+use_ok('Genome::Site::TGI::Command::DiffLimsAndGenome') or die;
 
 class Iterator {
     has => [
@@ -41,7 +41,7 @@ no strict;
 *{$genome_class.'::create_iterator'} = sub{ return Iterator->create(objects => \@genome_objects); };
 use strict;
 
-my $differ = Genome::Site::TGI::Synchronize::DiffLimsAndGenome->create;
+my $differ = Genome::Site::TGI::Command::DiffLimsAndGenome->create;
 ok($differ, 'create differ w/o entity name');
 ok(!$differ->execute, 'failed to execute w/o entity_name');
 

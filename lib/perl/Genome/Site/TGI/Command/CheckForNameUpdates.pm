@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Synchronize::CheckForNameUpdates;
+package Genome::Site::TGI::Command::CheckForNameUpdates;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use constant TABLES_TO_PROCESS => [qw(gsc.organism_sample gsc.library_summary)];
 
-class Genome::Site::TGI::Synchronize::CheckForNameUpdates {
+class Genome::Site::TGI::Command::CheckForNameUpdates {
     is => 'Command::V2',
     has_optional => [
         tables_to_process => {
@@ -26,7 +26,8 @@ class Genome::Site::TGI::Synchronize::CheckForNameUpdates {
             is_many => 1,
             doc => 'Process these specific updates, bypassing the normal query',
         },
-    ]
+    ],
+    doc => 'Check for sample and library name changes in LIMS',
 };
 
 sub execute {

@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Synchronize::ReconcileMiscUpdate;
+package Genome::Site::TGI::Command::ReconcileMiscUpdate;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome;
 use Date::Format;
 use Date::Parse;
 
-class Genome::Site::TGI::Synchronize::ReconcileMiscUpdate {
+class Genome::Site::TGI::Command::ReconcileMiscUpdate {
     is => 'Command::V2',
     has => [
         start_from => { 
@@ -23,6 +23,7 @@ class Genome::Site::TGI::Synchronize::ReconcileMiscUpdate {
         _stop_at => { is => 'Text', },
         stats => { is => 'Hash', default_value => {}, },
     ],
+    doc => 'From a starting point, apply changes stored in the misc_updatee table to Genome',
 };
 
 sub __errors__ {

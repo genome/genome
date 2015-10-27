@@ -14,7 +14,7 @@ use above 'Genome';
 use Data::Dumper 'Dumper';
 use Test::More;
 
-use_ok('Genome::Site::TGI::Synchronize::SyncLimsAndGenome') or die;
+use_ok('Genome::Site::TGI::Command::SyncLimsAndGenome') or die;
 use_ok('Genome::Site::TGI::Synchronize::Classes::Dictionary') or die;
 
 class Iterator {
@@ -42,10 +42,11 @@ sub Transaction::commit { return 1; };
     *Genome::InstrumentData::Microarray::update_genotype_file = sub{ return 1; };
 }
 
-my $sync = Genome::Site::TGI::Synchronize::SyncLimsAndGenome->create(expunge => 0); # TODO test expunge!
+my $sync = Genome::Site::TGI::Command::SyncLimsAndGenome->create(expunge => 0); # TODO test expunge!
 ok($sync, 'create');
 my $i = -100;
 ok(init(), 'init') or die;
+$DB::single=1;
 ok($sync->execute, 'execute');
 
 my $report = $sync->_report;
@@ -62,7 +63,7 @@ sub init {
     diag("INIT...");
     {
         no warnings 'redefine';
-        *Genome::Site::TGI::Synchronize::SyncLimsAndGenome::_load_successful_pidfas = sub{ return 1; };
+        *Genome::Site::TGI::Command::SyncLimsAndGenome::_load_successful_pidfas = sub{ return 1; };
     }
     my @lims_objects;
     for my $entity_name ( Genome::Site::TGI::Synchronize::Classes::Dictionary->entity_names ) {
@@ -236,6 +237,7 @@ sub verify {
                 @properties_to_copy = $lims_object->properties_to_copy;
             }
             my $genome_object = $genome_class->get(%get_params);
+            die 'no genome object!' if not $genome_object;
             $genome_object_cnt++ if $genome_object;
             my $ok = 0;
             for my $property ( @properties_to_copy ) {

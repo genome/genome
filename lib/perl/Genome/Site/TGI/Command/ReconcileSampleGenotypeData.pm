@@ -1,10 +1,10 @@
-package Genome::Site::TGI::ReconcileSampleGenotypeData;
+package Genome::Site::TGI::Command::ReconcileSampleGenotypeData;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Site::TGI::ReconcileSampleGenotypeData {
+class Genome::Site::TGI::Command::ReconcileSampleGenotypeData {
     is => 'Command::V2',
     doc => 'Updates the default_genotype_data column for Genome::Samples using data from the Organism Sample table',
 };
