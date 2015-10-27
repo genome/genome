@@ -60,7 +60,6 @@ sub execute {
     my %position_score;
 
     my $type      = $self->output_filter;
-    my $input_fh  = Genome::Sys->open_file_for_reading($self->netmhc_file);
     my $output_fh = Genome::Sys->open_file_for_writing($self->parsed_file);
 
     my $key_hash = $self->key_hash() if $self->netmhc_version eq '3.4';
@@ -97,6 +96,10 @@ sub execute {
     return 1;
 }
 
+sub netmhc_file_headers {
+    return qw(protein_label position peptide score);
+}
+
 sub print_header {
     my $self      = shift;
     my $output_fh = shift;
@@ -130,21 +133,21 @@ sub print_output_line {
 sub key_hash {
     my $self = shift;
 
-    my $key_fh = Genome::Sys->open_file_for_reading($self->key_file);
+    my $key_fh = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $self->key_file,
+        separator => "\t",
+        headers => [qw(new_name original_name)],
+    );
 
     my %key_hash;
-    while (my $keyline = $key_fh->getline) {
-        chomp $keyline;
-
+    while (my $keyline = $key_fh->next) {
         #Entry_1	>WT.GSTP1.R187W
-        my ($new_name, $original_name) = split(/\t/, $keyline);
+        my $new_name = $keyline->{new_name};
+        my $original_name = $keyline->{original_name};
         $original_name =~ s/>//g;
         $key_hash{$new_name} = ();
         $key_hash{$new_name}{'name'} = $original_name;
-
     }
-
-    close($key_fh);
 
     return \%key_hash;
 }
@@ -153,31 +156,30 @@ sub make_hashes_from_input {
     my $self     = shift;
     my $key_hash = shift;
 
-    my $input_fh  = Genome::Sys->open_file_for_reading($self->netmhc_file);
+    my $input_fh = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $self->netmhc_file,
+        separator => "\t",
+        headers => [$self->netmhc_file_headers],
+        ignore_lines_starting_with => 'NetMHC|Protein|(?:^$)',
+        allow_extra_columns => 1,
+    );
 
     my (%netmhc_results, %epitope_seq);
-    while (my $line = $input_fh->getline) {
-        chomp $line;
-
-        my @result_arr = split(/\t/, $line);
-
-        my $position         = $result_arr[1];
-        my $score            = $result_arr[3];
-        my $epitope          = $result_arr[2];
-        my $protein_new_name = $result_arr[0];
+    while (my $line = $input_fh->next) {
+        my $position         = $line->{position};
+        my $score            = $line->{score};
+        my $epitope          = $line->{peptide};
+        my $protein_new_name = $line->{protein_label};
 
         my (@protein_arr);
-        if ($self->netmhc_version eq '3.4' && $line =~ /^Entry/) {
+        if ($self->netmhc_version eq '3.4') {
             if (exists($key_hash->{$protein_new_name})) {
                 my $protein = $key_hash->{$protein_new_name}{'name'};
                 @protein_arr = split(/\./, $protein);
             }
         }
-        elsif ( $self->netmhc_version eq '3.0' && ( ($line =~ /^MT/) || ($line =~ /^WT/) ) )  {
+        elsif ( $self->netmhc_version eq '3.0' )  {
             @protein_arr = split (/\./,$protein_new_name);
-        }
-        else {
-            next;
         }
         my $protein_type = $protein_arr[0];
         my $protein_name = $protein_arr[1];
@@ -186,8 +188,6 @@ sub make_hashes_from_input {
         $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = $score;
         $epitope_seq{$protein_type}{$protein_name}{$variant_aa}{$position} = $epitope;
     }
-
-    close($input_fh);
 
     return \%netmhc_results, \%epitope_seq;
 }
