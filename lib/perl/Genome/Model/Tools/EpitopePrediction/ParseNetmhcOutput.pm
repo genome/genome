@@ -71,22 +71,20 @@ sub execute {
         for my $variant_aa (sort keys %{$netmhc_results->{$protein_type}->{$protein_name}}) {
             %position_score = %{$netmhc_results->{$protein_type}{$protein_name}{$variant_aa}};
             my @positions = sort {$position_score{$a}->{score} <=> $position_score{$b}->{score}} keys %position_score;
-            my $total_positions = scalar @positions;
+            my @positions_to_process;
             if ($type eq 'all') {
-                for (my $i = 0; $i < $total_positions; $i++) {
-
-                    if ($epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} ne
-                        $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]})
-                        # Filtering if mutant amino acid present
-                    {
-                        my $position = $positions[$i];
-                        $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}->{score}, $netmhc_results);
-                    }
-                }
+                @positions_to_process = @positions;
             }
-            if ($type eq 'top') {
-                my $position = $positions[0];
-                $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}->{score}, $netmhc_results);
+            elsif ($type eq 'top') {
+                @positions_to_process = ($positions[0]);
+            }
+            for my $position (@positions_to_process) {
+                if ($netmhc_results->{'MT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence} ne
+                    $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence})
+                    # Filtering if mutant amino acid present
+                {
+                    $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}->{score}, $netmhc_results);
+                }
             }
         }
     }
