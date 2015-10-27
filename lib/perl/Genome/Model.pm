@@ -473,6 +473,7 @@ sub create {
 
     no warnings 'redefine';
     local *__errors__ = sub { () };
+    require Genome::Model::Input;
     local *Genome::Model::Input::__errors__ = sub {
             my $input = shift;
             my $errors_fcn = $input->super_can('__errors__');
