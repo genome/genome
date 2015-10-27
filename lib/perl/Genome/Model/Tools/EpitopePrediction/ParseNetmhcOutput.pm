@@ -62,8 +62,7 @@ sub execute {
     my $type      = $self->output_filter;
     my $output_fh = Genome::Sys->open_file_for_writing($self->parsed_file);
 
-    my $key_hash = $self->key_hash() if $self->netmhc_version eq '3.4';
-    my ($netmhc_results, $epitope_seq) = $self->make_hashes_from_input($key_hash);
+    my ($netmhc_results, $epitope_seq) = $self->parse_input;
 
     $self->print_header($output_fh);
 
@@ -130,7 +129,7 @@ sub print_output_line {
     print $output_fh $rounded_FC . "\n";
 }
 
-sub key_hash {
+sub protein_identifier_for_label {
     my $self = shift;
 
     my $key_fh = Genome::Utility::IO::SeparatedValueReader->create(
@@ -151,9 +150,8 @@ sub key_hash {
     return \%key_hash;
 }
 
-sub make_hashes_from_input {
+sub parse_input {
     my $self     = shift;
-    my $key_hash = shift;
 
     my $input_fh = Genome::Utility::IO::SeparatedValueReader->create(
         input => $self->netmhc_file,
@@ -163,26 +161,25 @@ sub make_hashes_from_input {
         allow_extra_columns => 1,
     );
 
+    my $protein_identifier_for_label = $self->protein_identifier_for_label if $self->netmhc_version eq '3.4';
+
     my (%netmhc_results, %epitope_seq);
     while (my $line = $input_fh->next) {
-        my $position         = $line->{position};
-        my $score            = $line->{score};
-        my $epitope          = $line->{peptide};
-        my $protein_new_name = $line->{protein_label};
+        my $position      = $line->{position};
+        my $score         = $line->{score};
+        my $epitope       = $line->{peptide};
+        my $protein_label = $line->{protein_label};
 
-        my (@protein_arr);
+        my ($protein_identifier);
         if ($self->netmhc_version eq '3.4') {
-            if (exists($key_hash->{$protein_new_name})) {
-                my $protein = $key_hash->{$protein_new_name};
-                @protein_arr = split(/\./, $protein);
+            if (exists($protein_identifier_for_label->{$protein_label})) {
+                $protein_identifier = $protein_identifier_for_label->{$protein_label};
             }
         }
         elsif ( $self->netmhc_version eq '3.0' )  {
-            @protein_arr = split (/\./,$protein_new_name);
+            $protein_identifier = $protein_label;
         }
-        my $protein_type = $protein_arr[0];
-        my $protein_name = $protein_arr[1];
-        my $variant_aa =  $protein_arr[2];
+        my ($protein_type, $protein_name, $variant_aa) = split(/\./, $protein_identifier);
 
         $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = $score;
         $epitope_seq{$protein_type}{$protein_name}{$variant_aa}{$position} = $epitope;
