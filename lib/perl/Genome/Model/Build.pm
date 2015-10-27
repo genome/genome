@@ -2016,7 +2016,7 @@ sub set_metric {
     my $metric_value = shift;
 
     my $lock = Genome::Sys::LockProxy->new(
-        resource => join('/', 'build_metric', $self->id, $metric_name),
+        resource => join('/', 'build_metric', $self->id, Genome::Sys->md5sum_data($metric_name)),
         scope => 'site',
     )->lock();
 
