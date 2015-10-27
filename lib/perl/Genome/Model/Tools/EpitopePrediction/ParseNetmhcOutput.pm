@@ -60,11 +60,13 @@ sub execute {
     my %position_score;
 
     my $type      = $self->output_filter;
-    my $output_fh = Genome::Sys->open_file_for_writing($self->parsed_file);
+    my $output_fh = Genome::Utility::IO::SeparatedValueWriter->create(
+        output => $self->parsed_file,
+        separator => "\t",
+        headers => [$self->headers],
+    );
 
     my $netmhc_results = $self->parse_input;
-
-    $self->print_header($output_fh);
 
     my $protein_type = 'MT';
     for my $protein_name (sort keys %{$netmhc_results->{$protein_type}}) {
@@ -78,12 +80,27 @@ sub execute {
             elsif ($type eq 'top') {
                 @positions_to_process = ($positions[0]);
             }
+
             for my $position (@positions_to_process) {
-                if ($netmhc_results->{'MT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence} ne
-                    $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence})
-                    # Filtering if mutant amino acid present
-                {
-                    $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}->{score}, $netmhc_results);
+                my $mt_score            = $position_score{$position}->{score};
+                my $wt_score            = $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{score};
+                my $mt_epitope_sequence = $netmhc_results->{'MT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence};
+                my $wt_epitope_sequence = $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence};
+                my $fold_change         = $wt_score / $mt_score;
+
+                # Filtering if mutant amino acid present
+                if ($mt_epitope_sequence ne $wt_epitope_sequence) {
+                    my %data = (
+                        'Gene Name' => $protein_name,
+                        'Point Mutation' => $variant_aa,
+                        'Sub-peptide Position' => $position,
+                        'MT score' => $mt_score,
+                        'WT score' => $wt_score,
+                        'MT epitope seq' => $mt_epitope_sequence,
+                        'WT epitope seq' => $wt_epitope_sequence,
+                        'Fold change' => sprintf("%.3f", $fold_change),
+                    );
+                    $output_fh->write_one(\%data);
                 }
             }
         }
@@ -96,34 +113,17 @@ sub netmhc_file_headers {
     return qw(protein_label position peptide score);
 }
 
-sub print_header {
-    my $self      = shift;
-    my $output_fh = shift;
-
-    print $output_fh join("\t",
-        "Gene Name",
-        "Point Mutation",
-        "Sub-peptide Position",
-        "MT score",
-        "WT score",
-        "MT epitope seq",
-        "WT epitope seq",
-        "Fold change"
-    ) . "\n";
-}
-
-sub print_output_line {
-    my ($self, $output_fh, $protein_name, $variant_aa, $position, $position_score, $netmhc_results) = @_;
-
-    print $output_fh join("\t", $protein_name, $variant_aa, $position, $position_score) . "\t";
-    print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{score} . "\t";
-
-    print $output_fh $netmhc_results->{'MT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence} . "\t";
-    print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence} . "\t";
-    my $fold_change =
-        $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{score} / $position_score;
-    my $rounded_FC = sprintf("%.3f", $fold_change);
-    print $output_fh $rounded_FC . "\n";
+sub headers {
+    return (
+        'Gene Name',
+        'Point Mutation',
+        'Sub-peptide Position',
+        'MT score',
+        'WT score',
+        'MT epitope seq',
+        'WT epitope seq',
+        'Fold change'
+    );
 }
 
 sub protein_identifier_for_label {
