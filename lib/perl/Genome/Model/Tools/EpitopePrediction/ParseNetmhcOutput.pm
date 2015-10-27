@@ -145,8 +145,7 @@ sub key_hash {
         my $new_name = $keyline->{new_name};
         my $original_name = $keyline->{original_name};
         $original_name =~ s/>//g;
-        $key_hash{$new_name} = ();
-        $key_hash{$new_name}{'name'} = $original_name;
+        $key_hash{$new_name} = $original_name;
     }
 
     return \%key_hash;
@@ -174,7 +173,7 @@ sub make_hashes_from_input {
         my (@protein_arr);
         if ($self->netmhc_version eq '3.4') {
             if (exists($key_hash->{$protein_new_name})) {
-                my $protein = $key_hash->{$protein_new_name}{'name'};
+                my $protein = $key_hash->{$protein_new_name};
                 @protein_arr = split(/\./, $protein);
             }
         }
