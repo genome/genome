@@ -58,18 +58,20 @@ sub _create_getopt_specs {
 
 sub _lookup_spec_for_bsub_option {
     my ($bsub_option, $submit_field, $destination) = @_;
+    my $formatter = _formatters($bsub_option);
     if ($bsub_option eq 'n') {
         return("$bsub_option=s" => sub {
                 my ($option_name, $option_value) = @_;
                 my ($num, $max_num) = split q{,}, $option_value;
-                $destination->{numProcessors} = $num;
-                $destination->{maxNumProcessors} = $max_num if defined $max_num;
+                $destination->{numProcessors} = $formatter->($num);
+                $destination->{maxNumProcessors} = $formatter->($max_num)
+                    if defined $max_num;
             });
     }
     else {
         return("$bsub_option=s" => sub {
                 my ($option_name, $option_value) = @_;
-                $destination->{$submit_field} = $option_value;
+                $destination->{$submit_field} = $formatter->($option_value);
             });
     }
 }
@@ -77,6 +79,42 @@ sub _lookup_spec_for_bsub_option {
 sub _create_option_spec {
     my ($option, $dictionary) = @_;
     return ("$option=s" => sub { my ($option_name, $value, )});
+}
+
+sub null_formatter {
+    my $value = shift;
+    return $value;
+}
+
+sub number_formatter {
+    my $value = shift;
+    return $value + 0;
+}
+
+my %formatters = (
+    'b' => \&null_formatter,
+    'e' => \&null_formatter,
+    'g' => \&null_formatter,
+    'i' => \&null_formatter,
+    'J' => \&null_formatter,
+    'u' => \&null_formatter,
+    'n' => \&number_formatter,
+    'o' => \&null_formatter,
+    'E' => \&null_formatter,
+    'Ep' => \&null_formatter,
+    'P' => \&null_formatter,
+    'q' => \&null_formatter,
+    'R' => \&null_formatter,
+    't' => \&null_formatter,
+
+    'c' => \&number_formatter,
+    'M' => \&number_formatter,
+    'F' => \&number_formatter,
+    'S' => \&number_formatter,
+);
+sub _formatters {
+    my $key = shift;
+    return $formatters{$key};
 }
 
 my %valid_options = (
