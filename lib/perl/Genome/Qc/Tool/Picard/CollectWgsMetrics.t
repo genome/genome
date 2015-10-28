@@ -14,6 +14,7 @@ use Sub::Override;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Cwd qw(abs_path);
+use JSON qw(encode_json);
 
 my $pkg = 'Genome::Qc::Tool::Picard::CollectWgsMetrics';
 use_ok($pkg);
@@ -41,26 +42,27 @@ my $bam_file = File::Spec->join($data_dir, 'speedseq_merged.bam');
 my $reference_fasta = File::Spec->join($data_dir, 'reference.fasta');
 my $temp_directory = Genome::Sys->create_temp_file_path;
 
-use Genome::Qc::Config;
-my $config_override = Sub::Override->new(
-    'Genome::Qc::Config::get_commands_for_alignment_result',
-    sub {
-        return {
-            picard_collect_wgs_metrics => {
-                class => 'Genome::Qc::Tool::Picard::CollectWgsMetrics',
-                params => {
-                    input_file => $bam_file,
-                    reference_sequence => $reference_fasta,
-                    use_version => 1.123,
-                    temp_directory => $temp_directory,
-                },
-            },
+my $config = {
+    picard_collect_wgs_metrics => {
+        class => 'Genome::Qc::Tool::Picard::CollectWgsMetrics',
+        params => {
+            input_file => $bam_file,
+            reference_sequence => $reference_fasta,
+            use_version => 1.123,
+            temp_directory => $temp_directory,
         },
     },
+};
+
+my $qc_config_name = 'testing-qc-run';
+my $qc_config_item = Genome::Qc::Config->create(
+    name => $qc_config_name,
+    type => 'wgs',
+    config => encode_json($config),
 );
 
 my $command = Genome::Qc::Run->create(
-    config_name => 'testing-qc-run',
+    config_name => $qc_config_name,
     alignment_result => $alignment_result,
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );

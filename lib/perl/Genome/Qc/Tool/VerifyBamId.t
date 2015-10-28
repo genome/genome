@@ -14,6 +14,7 @@ use Sub::Override;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Cwd qw(abs_path);
+use JSON qw(encode_json);
 
 my $pkg = 'Genome::Qc::Tool::VerifyBamId';
 use_ok($pkg);
@@ -40,28 +41,29 @@ my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->s
 my $vcf_file = File::Spec->join($data_dir, 'Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.chrY.vcf');
 my $bam_file = abs_path(File::Spec->join($data_dir, 'speedseq_merged.bam'));
 
-use Genome::Qc::Config;
-my $config_override = Sub::Override->new(
-    'Genome::Qc::Config::get_commands_for_alignment_result',
-    sub {
-        return {
-            verify_bam_id => {
-                class => 'Genome::Qc::Tool::VerifyBamId',
-                params => {
-                    vcf => $vcf_file,
-                    bam => $bam_file,
-                    max_depth => '150',
-                    precise => '1',
-                    version => '20120620',
-                    ignore_read_group => 0,
-                },
-            }
-        };
-    },
+my $config = {
+    verify_bam_id => {
+        class => 'Genome::Qc::Tool::VerifyBamId',
+        params => {
+            vcf => $vcf_file,
+            bam => $bam_file,
+            max_depth => '150',
+            precise => '1',
+            version => '20120620',
+            ignore_read_group => 0,
+        },
+    }
+};
+
+my $qc_config_name = 'testing-qc-run';
+my $qc_config_item = Genome::Qc::Config->create(
+    name => $qc_config_name,
+    type => 'wgs',
+    config => encode_json($config),
 );
 
 my $command = Genome::Qc::Run->create(
-    config_name => 'testing-qc-run',
+    config_name => $qc_config_name,
     alignment_result => $alignment_result,
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );
