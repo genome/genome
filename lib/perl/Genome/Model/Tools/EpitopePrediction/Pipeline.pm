@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow::Simple;
 
 class Genome::Model::Tools::EpitopePrediction::Pipeline {
     is => 'Command::V2',
@@ -89,7 +88,6 @@ sub execute {
     my $result = $workflow->execute(inputs => $inputs);
 
     unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         die $self->error_message("Workflow did not return correctly.");
     }
 
