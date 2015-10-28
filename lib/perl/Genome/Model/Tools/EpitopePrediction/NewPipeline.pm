@@ -13,6 +13,7 @@ class Genome::Model::Tools::EpitopePrediction::NewPipeline {
         },
         build => {
             is => "Genome::Model::Build::SomaticVariation",
+            doc => 'The somatic variation build whose variants are to be used for analysis',
         },
         alleles => {
             is => 'Text',
