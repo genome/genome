@@ -3,7 +3,6 @@ package Genome::VariantReporting::Command::Wrappers::EpitopeBindingPredictionFas
 use strict;
 use warnings;
 use Genome;
-use File::Basename qw(dirname);
 use YAML;
 
 class Genome::VariantReporting::Command::Wrappers::EpitopeBindingPredictionFasta {

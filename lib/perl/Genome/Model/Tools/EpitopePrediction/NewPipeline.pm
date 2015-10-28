@@ -3,8 +3,6 @@ package Genome::Model::Tools::EpitopePrediction::NewPipeline;
 use strict;
 use warnings;
 use Genome;
-use File::Basename qw(dirname);
-use YAML;
 
 class Genome::Model::Tools::EpitopePrediction::NewPipeline {
     is => 'Command::V2',
