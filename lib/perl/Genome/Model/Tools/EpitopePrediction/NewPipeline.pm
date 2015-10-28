@@ -104,17 +104,14 @@ sub add_reports_to_workflow {
     my ($self, $dag) = @_;
 
     for my $variant_type (qw(snvs indels)) {
-        my $input_vcf = $self->input_vcf($variant_type);
-        next unless -s $input_vcf;
-
         my %report_params = (
-            input_vcf => $input_vcf,
+            build => $self->build,
             variant_type => $variant_type,
-            plan_file => $self->plan_file($variant_type),
-            translations_file => $self->translations_file,
         );
-        my $report = Genome::VariantReporting::Command::CreateReport->create(%report_params);
-        my $report_dag = $report->dag;
+        my $wrapper = Genome::VariantReporting::Command::Wrappers::EpitopeBindingPredictionFasta->create(%report_params);
+        next unless $wrapper->has_valid_variant_type_for_build;
+
+        my $report_dag = $wrapper->report_workflow;
         $dag->add_operation($report_dag);
         $dag->connect_input(
             input_property => 'process_id',
@@ -159,27 +156,6 @@ sub add_reports_to_workflow {
     }
 
     return;
-}
-
-sub translations_file {
-    my $self = shift;
-    my $translations_file = Genome::Sys->create_temp_file_path;
-    my %translations;
-    $translations{reference_fasta} = $self->build->reference_sequence_build->full_consensus_path("fa");
-    YAML::DumpFile(File::Spec->join($translations_file), \%translations);
-    return $translations_file;
-}
-
-sub plan_file {
-    my ($self, $variant_type) = @_;
-    my $base_dir = dirname(dirname(dirname(dirname(__FILE__))));
-    return File::Spec->join($base_dir, 'VariantReporting', 'plan_files', "epitope_prediction_$variant_type.yaml");
-}
-
-sub input_vcf {
-    my ($self, $variant_type) = @_;
-    my $accessor = "get_detailed_${variant_type}_vcf";
-    return $self->build->$accessor;
 }
 
 1;
