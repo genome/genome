@@ -13,9 +13,8 @@ class Genome::Model::Tools::EpitopePrediction::NewPipeline {
             is => 'Text',
             doc => 'the directory where you want results stored',
         },
-#should this be a build?
-        model => {
-            is => "Genome::Model::SomaticVariation",
+        build => {
+            is => "Genome::Model::Build::SomaticVariation",
         },
         alleles => {
             is => 'Text',
@@ -37,12 +36,6 @@ class Genome::Model::Tools::EpitopePrediction::NewPipeline {
             doc =>
                 'Type of epitopes to report in the final output - select \'top\' to report the top epitopes in terms of fold changes,  \'all\' to report all predictions ',
             valid_values => ['top', 'all'],
-        },
-    ],
-    has_calculated_optional => [
-        build => {
-            calculate_from => [qw(model)],
-            calculate => q/$model->last_succeeded_build/,
         },
     ],
 };
@@ -82,7 +75,7 @@ sub validate_inputs {
 sub process_params {
     my $self = shift;
     return (
-        model => $self->model,
+        build => $self->build,
     );
 }
 

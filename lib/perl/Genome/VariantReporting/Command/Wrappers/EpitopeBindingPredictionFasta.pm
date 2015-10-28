@@ -9,18 +9,14 @@ use YAML;
 class Genome::VariantReporting::Command::Wrappers::EpitopeBindingPredictionFasta {
     is => 'Command::V2',
     has_input => [
-        model => {
-            is => "Genome::Model::SomaticVariation",
+        build => {
+            is => "Genome::Model::Build::SomaticVariation",
         },
         output_directory => {
             is => 'Path',
         },
     ],
     has_calculated_optional => [
-        build => {
-            calculate_from => [qw(model)],
-            calculate => q/$model->last_succeeded_build/,
-        },
         translations_file => {
             calculate_from => [qw(output_directory)],
             calculate => q/File::Spec->join($output_directory, "resources.yaml")/,

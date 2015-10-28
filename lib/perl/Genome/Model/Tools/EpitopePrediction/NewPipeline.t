@@ -25,7 +25,7 @@ my $test_data_pkg = 'Genome::Model::SomaticVariation::Command::CreateReport';
 my $test_data_dir = Genome::Utility::Test->data_dir_ok($test_data_pkg, $TEST_DATA_VERSION);
 
 my $cmd = $pkg->create(
-    model => create_test_objects($test_data_dir),
+    build => create_test_objects($test_data_dir),
     alleles => ['HLA-A02:01'],
     output_filter => 'top',
     epitope_length => 10,
@@ -33,7 +33,6 @@ my $cmd = $pkg->create(
 );
 isa_ok($cmd, $pkg);
 
-$DB::single=1;
 test_dag_xml($cmd->dag, __FILE__);
 
 done_testing();
