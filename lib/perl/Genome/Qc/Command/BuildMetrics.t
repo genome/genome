@@ -40,6 +40,12 @@ reinstall_sub(
                    metric_E => 5,
                    metric_F => 6,
            },
+           PAIR => {
+                PF_ALIGNED_BASES => 30000,
+                PF_READS_ALIGNED => 3000,
+           },
+           reads_marked_duplicates => 350,
+           GENOME_TERRITORY => 1000,
          );
     },   
 },
