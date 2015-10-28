@@ -81,9 +81,9 @@ sub _create_option_spec {
     return ("$option=s" => sub { my ($option_name, $value, )});
 }
 
-sub null_formatter {
+sub string_formatter {
     my $value = shift;
-    return $value;
+    return "$value";
 }
 
 sub number_formatter {
@@ -92,20 +92,20 @@ sub number_formatter {
 }
 
 my %formatters = (
-    'b' => \&null_formatter,
-    'e' => \&null_formatter,
-    'g' => \&null_formatter,
-    'i' => \&null_formatter,
-    'J' => \&null_formatter,
-    'u' => \&null_formatter,
+    'b' => \&string_formatter,
+    'e' => \&string_formatter,
+    'g' => \&string_formatter,
+    'i' => \&string_formatter,
+    'J' => \&string_formatter,
+    'u' => \&string_formatter,
     'n' => \&number_formatter,
-    'o' => \&null_formatter,
-    'E' => \&null_formatter,
-    'Ep' => \&null_formatter,
-    'P' => \&null_formatter,
-    'q' => \&null_formatter,
-    'R' => \&null_formatter,
-    't' => \&null_formatter,
+    'o' => \&string_formatter,
+    'E' => \&string_formatter,
+    'Ep' => \&string_formatter,
+    'P' => \&string_formatter,
+    'q' => \&string_formatter,
+    'R' => \&string_formatter,
+    't' => \&string_formatter,
 
     'c' => \&number_formatter,
     'M' => \&number_formatter,
