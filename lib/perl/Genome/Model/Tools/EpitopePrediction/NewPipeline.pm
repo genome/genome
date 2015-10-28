@@ -73,7 +73,7 @@ sub validate_inputs {
     my $self = shift;
 
     if (-d $self->output_directory) {
-        die $self->error_message("Output directory %s already exists", $self->output_directory);
+        $self->fatal_message("Output directory %s already exists", $self->output_directory);
     }
 
     Genome::Sys::make_path($self->output_directory);

@@ -76,7 +76,7 @@ sub execute {
     my $result = $workflow->execute(inputs => $inputs);
 
     unless($result){
-        die $self->error_message("Workflow did not return correctly.");
+        $self->fatal_message("Workflow did not return correctly.");
     }
 
     return 1;
@@ -321,21 +321,21 @@ sub _validate_inputs {
     }
     else {
         unless (defined($self->sample_name)) {
-            die $self->error_message("Sample name must be defined if no somatic variation build is given")
+            $self->fatal_message("Sample name must be defined if no somatic variation build is given")
         }
     }
 
     unless (-s $self->input_fasta_file) {
-        die $self->error_message("Input fasta file %s does not exist or has no size", $self->input_fasta_file);
+        $self->fatal_message("Input fasta file %s does not exist or has no size", $self->input_fasta_file);
     }
 
     unless (Genome::Sys->create_directory($self->output_directory)) {
-        die $self->error_message("Coult not create directory (%s)", $self->output_directory);
+        $self->fatal_message("Coult not create directory (%s)", $self->output_directory);
     }
 
     for my $allele ($self->alleles) {
         unless (Genome::Model::Tools::EpitopePrediction::RunNetmhc->is_valid_allele_for_netmhc_version($allele, $self->netmhc_version)) {
-            die $self->error_message("Allele %s not valid for NetMHC version %s", $allele, $self->netmhc_version);
+            $self->fatal_message("Allele %s not valid for NetMHC version %s", $allele, $self->netmhc_version);
         }
     }
 
