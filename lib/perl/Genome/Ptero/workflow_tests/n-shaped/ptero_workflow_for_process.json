@@ -161,13 +161,13 @@
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "options" : {
-                                    "numProcessors" : "4",
+                                    "numProcessors" : 4,
                                     "queue" : "short",
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
                                  "rLimits" : {
-                                    "RSS" : "200000",
-                                    "cpuTime" : "10"
+                                    "RSS" : 200000,
+                                    "cpuTime" : 10
                                  },
                                  "user" : "dmorton"
                               },
@@ -214,13 +214,13 @@
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "options" : {
-                                    "numProcessors" : "4",
+                                    "numProcessors" : 4,
                                     "queue" : "short",
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
                                  "rLimits" : {
-                                    "RSS" : "200000",
-                                    "cpuTime" : "10"
+                                    "RSS" : 200000,
+                                    "cpuTime" : 10
                                  },
                                  "user" : "dmorton"
                               },
@@ -267,13 +267,13 @@
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "options" : {
-                                    "numProcessors" : "4",
+                                    "numProcessors" : 4,
                                     "queue" : "short",
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
                                  "rLimits" : {
-                                    "RSS" : "200000",
-                                    "cpuTime" : "10"
+                                    "RSS" : 200000,
+                                    "cpuTime" : 10
                                  },
                                  "user" : "dmorton"
                               },
@@ -320,13 +320,13 @@
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
                                  "options" : {
-                                    "numProcessors" : "4",
+                                    "numProcessors" : 4,
                                     "queue" : "short",
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
                                  "rLimits" : {
-                                    "RSS" : "200000",
-                                    "cpuTime" : "10"
+                                    "RSS" : 200000,
+                                    "cpuTime" : 10
                                  },
                                  "user" : "dmorton"
                               },
