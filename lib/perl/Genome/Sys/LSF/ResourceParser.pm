@@ -58,18 +58,20 @@ sub _create_getopt_specs {
 
 sub _lookup_spec_for_bsub_option {
     my ($bsub_option, $submit_field, $destination) = @_;
+    my $formatter = _formatters($bsub_option);
     if ($bsub_option eq 'n') {
         return("$bsub_option=s" => sub {
                 my ($option_name, $option_value) = @_;
                 my ($num, $max_num) = split q{,}, $option_value;
-                $destination->{numProcessors} = $num;
-                $destination->{maxNumProcessors} = $max_num if defined $max_num;
+                $destination->{numProcessors} = $formatter->($num);
+                $destination->{maxNumProcessors} = $formatter->($max_num)
+                    if defined $max_num;
             });
     }
     else {
         return("$bsub_option=s" => sub {
                 my ($option_name, $option_value) = @_;
-                $destination->{$submit_field} = $option_value;
+                $destination->{$submit_field} = $formatter->($option_value);
             });
     }
 }
@@ -77,6 +79,42 @@ sub _lookup_spec_for_bsub_option {
 sub _create_option_spec {
     my ($option, $dictionary) = @_;
     return ("$option=s" => sub { my ($option_name, $value, )});
+}
+
+sub string_formatter {
+    my $value = shift;
+    return "$value";
+}
+
+sub number_formatter {
+    my $value = shift;
+    return $value + 0;
+}
+
+my %formatters = (
+    'b' => \&string_formatter,
+    'e' => \&string_formatter,
+    'g' => \&string_formatter,
+    'i' => \&string_formatter,
+    'J' => \&string_formatter,
+    'u' => \&string_formatter,
+    'n' => \&number_formatter,
+    'o' => \&string_formatter,
+    'E' => \&string_formatter,
+    'Ep' => \&string_formatter,
+    'P' => \&string_formatter,
+    'q' => \&string_formatter,
+    'R' => \&string_formatter,
+    't' => \&string_formatter,
+
+    'c' => \&number_formatter,
+    'M' => \&number_formatter,
+    'F' => \&number_formatter,
+    'S' => \&number_formatter,
+);
+sub _formatters {
+    my $key = shift;
+    return $formatters{$key};
 }
 
 my %valid_options = (
