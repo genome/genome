@@ -62,7 +62,7 @@ sub plan_file {
 
 sub input_vcf {
     my ($self, $variant_type) = @_;
-    my $accessor = "get_detailed_$variant_type"."_vcf";
+    my $accessor = "get_detailed_${variant_type}_vcf";
     return $self->build->$accessor;
 }
 
