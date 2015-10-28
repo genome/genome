@@ -77,12 +77,12 @@ sub _run {
 
 sub _dependency_for_tool {
     my ($self, $name) = @_;
-    return $self->qc_config->get_commands_for_alignment_result->{$name}->{dependency};
+    return $self->qc_config->get_commands_for_alignment_result($self->is_capture)->{$name}->{dependency};
 }
 
 sub _input_file_for_tool {
     my ($self, $tool, $name) = @_;
-    my $input_file_method = $self->qc_config->get_commands_for_alignment_result->{$name}->{in_file};
+    my $input_file_method = $self->qc_config->get_commands_for_alignment_result($self->is_capture)->{$name}->{in_file};
     if (defined $input_file_method) {
         return $tool->$input_file_method;
     }
