@@ -431,13 +431,6 @@ sub get_summary_information
          ABSOLUTE => 1,
     }) || die "$Template::ERROR\n";
 
-    my $varstest = {
-        name     => 'Mickey',
-        debt     => '3 riffs and a solo',
-        deadline => 'the next chorus',
-        files_url => Genome::Config::get('sys_services_files_url'),
-    };
-
     $self->debug_message("processing template $template");
 
     my $rv = $tt->process($template, { @vars }, \$content) || die $tt->error(), "\n";
