@@ -114,7 +114,7 @@ sub get_summary_information
         die "please specify which template to use for this report!";
     }
 
-    my @vars = $self->_generate_summary_information;
+    my $vars = $self->_summary_information;
 
     my $tt = Template->new({
          ABSOLUTE => 1,
@@ -124,7 +124,7 @@ sub get_summary_information
 
     my $content;
 
-    my $rv = $tt->process($template, { @vars }, \$content) || die $tt->error(), "\n";
+    my $rv = $tt->process($template, $vars, \$content) || die $tt->error(), "\n";
     if ($rv != 1) {
         die "Bad return value from template processing for summary report generation: $rv ";
     }
@@ -136,9 +136,21 @@ sub get_summary_information
 }
 
 
+sub _summary_information
+{
+    my $self = shift;
+
+    unless(exists $self->{_summary_information}) {
+        $self->{_summary_information} = $self->_generate_summary_information;
+    }
+
+    return $self->{_summary_information};
+}
+
 sub _generate_summary_information
 {
     my $self = shift;
+
     my $build = $self->build;
     my $model = $build->model;
 
@@ -448,7 +460,7 @@ sub _generate_summary_information
         view_url => Genome::Config::get('sys_services_web_view_url'),
     );
 
-    return @vars;
+    return {@vars};
 }
 
 sub get_contents {
