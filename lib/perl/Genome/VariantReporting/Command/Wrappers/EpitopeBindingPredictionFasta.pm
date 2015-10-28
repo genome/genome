@@ -66,9 +66,4 @@ sub input_vcf {
     return $self->build->$accessor;
 }
 
-sub report_directory {
-    my ($self, $variant_type) = @_;
-    return File::Spec->join($self->output_directory, "report_$variant_type");
-}
-
 1;
