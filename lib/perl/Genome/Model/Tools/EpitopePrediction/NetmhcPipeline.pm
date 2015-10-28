@@ -330,7 +330,7 @@ sub _validate_inputs {
     }
 
     unless (Genome::Sys->create_directory($self->output_directory)) {
-        $self->fatal_message("Coult not create directory (%s)", $self->output_directory);
+        $self->fatal_message("Could not create directory (%s)", $self->output_directory);
     }
 
     for my $allele ($self->alleles) {
