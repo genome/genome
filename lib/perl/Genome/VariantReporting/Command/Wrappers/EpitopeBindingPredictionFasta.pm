@@ -34,7 +34,7 @@ sub execute {
 sub generate_translations_file {
     my $self = shift;
     my %translations;
-    $translations{reference_fasta} = $self->build->tumor_build->reference_sequence_build->full_consensus_path("fa");
+    $translations{reference_fasta} = $self->build->reference_sequence_build->full_consensus_path("fa");
     YAML::DumpFile(File::Spec->join($self->translations_file), \%translations);
 }
 
