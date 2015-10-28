@@ -68,7 +68,7 @@ sub validate_inputs {
         $self->fatal_message("Output directory %s already exists", $self->output_directory);
     }
 
-    Genome::Sys::make_path($self->output_directory);
+    Genome::Sys->create_directory($self->output_directory);
 }
 
 sub process_params {
@@ -119,7 +119,7 @@ sub add_reports_to_workflow {
         );
 
         my $output_directory = File::Spec->join($self->output_directory, $variant_type);
-        Genome::Sys::make_path($output_directory);
+        Genome::Sys->create_directory($output_directory);
         my %netmhc_params = (
             output_directory => $output_directory,
             epitope_length => $self->epitope_length,
