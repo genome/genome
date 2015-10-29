@@ -24,7 +24,7 @@ my $sample = Genome::Test::Factory::Sample->setup_object;
 
 my $model = $pkg->create(
     processing_profile => $pp,
-    name => 'Model/RefereVariation.t test',
+    name => 'Model/SingleSampleGenotype.t test',
     reference_sequence_build => $reference,
     subject => $sample,
 );

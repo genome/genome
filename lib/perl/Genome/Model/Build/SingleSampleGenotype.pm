@@ -30,7 +30,7 @@ class Genome::Model::Build::SingleSampleGenotype {
 
 sub workflow_name {
     my $self = shift;
-    return $self->build_id . ' Reference Variation Pipeline';
+    return $self->build_id . ' Single Sample Genotype Pipeline';
 }
 
 sub calculate_estimated_kb_usage {
