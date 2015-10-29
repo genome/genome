@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Genome::File::Vcf::Reader;
+use Genome::Utility::Vcf qw(convert_indel_gt_to_bed);
 use Sys::Hostname;
 use IPC::Run qw(run);
 
@@ -95,10 +96,10 @@ sub fill_in_positions {
         else {
             my (undef, $shifts) = convert_indel_gt_to_bed($entry->{reference_allele}, $allele);
             if ($entry->is_deletion($allele) ) {
-                $positions->{$pos + $shifts->[0] + 1}++;
+                $positions->{$pos + $shifts->[0]}++;
             }
             else {
-                $positions->{$pos + $shifts->[0]}++;
+                $positions->{$pos + $shifts->[0] - 1}++;
             }
         }
     }
