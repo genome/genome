@@ -7106,6 +7106,13 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>reference-sequence',
     [
+      '>calculate-genome-territory',
+      [
+        'reference-sequence-build=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>converter',
       [
         '>create',
