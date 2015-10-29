@@ -40,7 +40,7 @@ use_ok($result_class) or die;
 
 set_what_interpreter_x_requires('bam-readcount');
 
-my $test_data_dir = Genome::Utility::Test->data_dir_ok($cmd_class, 'v2');
+my $test_data_dir = Genome::Utility::Test->data_dir_ok($cmd_class, 'v3');
 my $input_vcf = $test_data_dir . '/input.vcf';
 my $expected_output_vcf  = $test_data_dir . '/expected.vcf';
 my $expected_region_list = $test_data_dir . '/expected.region_list';
