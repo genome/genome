@@ -162,7 +162,7 @@ sub fill_in_common_fields {
     #remaining required fields:
     my $sample_common_name = $build->subject->common_name;
     my $is_tumor;
-    if ($sample_common_name eq "normal") {
+    if ($sample_common_name eq "normal" or $sample_common_name eq "adjacent normal") {
         $is_tumor = "no";
     }
     elsif ($sample_common_name eq "tumor" or $sample_common_name eq "recurrent") {
