@@ -32,7 +32,7 @@ subtest 'parse ptero error log' => sub {
     is($error_source_line, 1027, 'error source line');
     is($error_host, 'blade1-2-3.example.com', 'error host');
     is($error_date, '2014/12/04 12:25:42', 'error date');
-    is($error_text, 'ERROR: This is a fake error', 'error text');
+    is($error_text, 'FATAL: This is a fake error', 'error text');
 };
 
 subtest 'workflow error log' => sub {
@@ -77,7 +77,7 @@ subtest 'find ptero die or warn in log' => sub {
     is($error_source_line, 1027, 'error source line');
     is($error_host, 'blade1-2-3.example.com', 'error host');
     is($error_date, '2014/12/04 12:25:42', 'error date');
-    is($error_text, 'ERROR: This is a fake error', 'error');
+    is($error_text, 'FATAL: This is a fake error', 'error');
 };
 
 subtest 'find workflow die or warn in log' => sub {
@@ -120,7 +120,7 @@ use constant PTERO_ERROR_LOG => <<'PTERO_ERROR';
 [2014/12/04 12:25:38.593359] Attempting to execute command Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledContigReference...
 [2014/12/04 12:25:38.593359] vvvvvvvvv
 [2014/12/04 12:25:42.728920] Generated model name "H_KA-312451-1106998_SV_Contigs-human".
-[2014/12/04 12:25:42.821850] ERROR: This is a fake error at /path/to/ptero/error.pm line 1027
+[2014/12/04 12:25:42.821850] FATAL: This is a fake error at /path/to/ptero/error.pm line 1027
 [2014/12/04 12:25:42.821850]    UR::Context::create_entity('UR::Context::Process=HASH(0x2e86be8)', 'Genome::Model::ImportedReferenceSequence', 'UR::BoolExpr=HASH(0x7899e98)') called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/UR/Object.pm line 20
 [2014/12/04 12:25:42.821850]    UR::Object::create('Genome::Model::ImportedReferenceSequence', 'UR::BoolExpr=HASH(0x7899e98)') called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/Genome/Model.pm line 495
 [2014/12/04 12:25:42.821850]    Genome::Model::create('Genome::Model::ImportedReferenceSequence', 'UR::BoolExpr=HASH(0x7899e98)') called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/Genome/ModelDeprecated.pm line 183
