@@ -88,12 +88,19 @@ sub fill_in_positions {
     my $entry = shift;
     my $positions = shift;
     my $pos = $entry->{position};
-
-    if ($entry->has_insertion or $entry->has_substitution) {
-        $positions->{$pos}++;
-    }
-    if ($entry->has_deletion) {
-        $positions->{$pos+1}++;
+    for my $allele (@{$entry->{alternate_alleles}}) {
+        if (length($allele) == length($entry->{reference_allele})) {
+            $positions->{$pos}++;
+        }
+        else {
+            my (undef, $shifts) = convert_indel_gt_to_bed($entry->{reference_allele}, $allele);
+            if ($entry->is_deletion($allele) ) {
+                $positions->{$pos + $shifts->[0] + 1}++;
+            }
+            else {
+                $positions->{$pos + $shifts->[0]}++;
+            }
+        }
     }
     return;
 }
