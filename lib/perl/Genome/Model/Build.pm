@@ -2015,7 +2015,22 @@ sub set_metric {
     my $metric_name  = shift;
     my $metric_value = shift;
 
-    my $metric = Genome::Model::Metric->get(build_id=>$self->id, name=>$metric_name);
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => join('/', 'build_metric', $self->id, Genome::Sys->md5sum_data($metric_name)),
+        scope => 'site',
+    )->lock();
+
+    unless($lock) {
+        $self->fatal_message('Could not lock for creation of metric "%s" on build %s.  Is something else trying to create this metric?', $metric_name, $self->__display_name__);
+    }
+
+    my $cleanup = sub { $lock->unlock(); };
+    Genome::Sys::CommitAction->create(
+        on_commit => $cleanup,
+        on_rollback => $cleanup,
+    );
+
+    my $metric = Genome::Model::Metric->load(build_id=>$self->id, name=>$metric_name);
     my $new_metric;
     if ($metric) {
         #delete an existing one and create the new one
