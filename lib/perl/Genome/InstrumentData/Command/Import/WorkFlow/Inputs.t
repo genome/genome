@@ -22,8 +22,8 @@ my $library = Genome::Library->__define__(name => 'TEST-sample-libs', sample => 
 ok($library, 'define library');
 my @source_files = (qw/ in.1.fastq in.2.fastq /);
 my %required_params = (
-    analysis_project => $analysis_project,
-    library => $library,
+    analysis_project_id => $analysis_project->id,
+    library_id => $library->id,
     source_paths => \@source_files,
 );
 

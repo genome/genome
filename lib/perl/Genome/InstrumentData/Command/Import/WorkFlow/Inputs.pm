@@ -10,8 +10,8 @@ use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 class Genome::InstrumentData::Command::Import::WorkFlow::Inputs { 
     is => 'UR::Object',
     has => {
-        analysis_project => { is => 'Genome::Config::AnalysisProject', },
-        library => { is => 'Genome::Library', },
+        analysis_project_id => { is => 'Text', },
+        library_id => { is => 'Text', },
         instrument_data_properties => { is => 'HASH', default_value => {}, },
         source_paths => { is => 'ARRAY', },
     },
@@ -28,7 +28,7 @@ sub create {
     my $self = $class->SUPER::create(%params);
     return if not $self;
 
-    for my $requried (qw/ analysis_project library source_paths /) {
+    for my $requried (qw/ analysis_project_id library_id source_paths /) {
         die $self->error_message("No $requried given to work flow inputs!") if not $self->$requried;
     }
 
@@ -37,6 +37,14 @@ sub create {
     }
 
     return $self;
+}
+
+sub analysis_project {
+    return Genome::Config::AnalysisProject->get(id => $_[0]->analysis_project_id);
+}
+
+sub library {
+    return Genome::Library->get(id => $_[0]->library_id);
 }
 
 sub add_process {
