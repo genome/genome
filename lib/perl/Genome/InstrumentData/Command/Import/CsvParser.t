@@ -28,10 +28,10 @@ is_deeply(
         sample => { name => 'TeSt-0000-01', nomenclature => 'TeSt', },
         library => { name => 'TeSt-0000-01-extlibs', },
         instdata => {
-            source_files => 'bam3.bam',
             lane => 7,
             downsample_ratio => '.1',
         },
+        source_files => ['bam3.bam'],
     }, 
     'last ref is correct',
 );

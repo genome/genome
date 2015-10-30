@@ -99,9 +99,7 @@ sub _load_file {
     my (%seen, @imports, @kb_required);
     while ( my $import = $parser->next ) {
         my $library_name = $import->{library}->{name};
-        my $source_files = delete $import->{instdata}->{source_files};
-        $import->{source_files} = [ split(',', $source_files) ]; # FIXME move to csv parser
-        my $string = join(' ', $library_name, $source_files, map { $import->{instdata}->{$_} } keys %{$import->{instdata}});
+        my $string = join(' ', $library_name, join(',', $import->{source_files}), map { $import->{instdata}->{$_} } keys %{$import->{instdata}});
         my $id = substr(Genome::Sys->md5sum_data($string), 0, 6);
         if ( $seen{$id} ) {
             die $self->error_message("Duplicate source file/library combination! $string");

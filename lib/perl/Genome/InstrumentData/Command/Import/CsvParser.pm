@@ -156,6 +156,12 @@ sub _resolve_entity_params_for_values {
         $entity_params{ $entity_attribute->{type} }->{ $entity_attribute->{attribute} } = $value;
     }
 
+    my $source_files = delete $entity_params{instdata}->{source_files};
+    if ( not $source_files ) {
+        $self->fatal_message('No source files for import! %s', Data::Dumper::Dumper(\%entity_params));
+    }
+    $entity_params{source_files} = [ split(',', $source_files) ]; # FIXME what if this was CSV and needs to be split on space?
+
     return \%entity_params;
 }
 
