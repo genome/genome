@@ -18,11 +18,18 @@ class Genome::InstrumentData::Command::Import::CsvParser {
             doc => 'Comma (.csv) or tab (.tsv) separated file of entity names, attributes and other metadata. Separator is determined by file extension.',
         },
     },
+    has_optional_calculated => {
+        _increment_line_number => {
+            calculate_from => [qw/ _line_number /],
+            calculate => q| return $self->_line_number( ++$_line_number ); |,
+        },
+    },
     has_optional_transient => {
         _entity_attributes => { is => 'ARRAY', },
         _fh => { },
+        _line_number => { is => 'Number', default => 0, },
         _parser => { },
-    }
+    },
 };
 
 sub csv_help {
@@ -114,6 +121,7 @@ sub next {
 
     my $entity_params = $self->_resolve_entity_params_for_values($line_ref);
     $self->_resolve_names_for_entities($entity_params);
+    $entity_params->{line_number} = $self->_increment_line_number;
 
     return $entity_params;
 }

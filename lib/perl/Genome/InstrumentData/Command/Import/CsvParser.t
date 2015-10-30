@@ -22,6 +22,7 @@ for (1..4) { $ref = $csv_parser->next }
 is_deeply(
     $ref,
     {
+        line_number => 4,
         individual => { name => 'TeSt-0000', nomenclature => 'TeSt', upn => '0000', },
         sample => { name => 'TeSt-0000-01', nomenclature => 'TeSt', },
         library => { name => 'TeSt-0000-01-extlibs', },
