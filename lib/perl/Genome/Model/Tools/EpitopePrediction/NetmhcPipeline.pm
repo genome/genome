@@ -1,14 +1,14 @@
-package Genome::Model::Tools::EpitopePrediction::Pipeline;
+package Genome::Model::Tools::EpitopePrediction::NetmhcPipeline;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::EpitopePrediction::Pipeline {
+class Genome::Model::Tools::EpitopePrediction::NetmhcPipeline {
     is => 'Command::V2',
-    doc => 'Run the epitope binding prediction pipeline',
-    has => [
+    doc => 'Run the netmhc portion of the epitope binding prediction pipeline',
+    has_input => [
         output_directory => {
             is => 'Text',
             doc => 'the directory where you want results stored',
@@ -18,26 +18,9 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
             is_optional => 1,
             doc => 'The somatic variation build to use for analysis',
         },
-        input_tsv_file => {
+        input_fasta_file => {
             is => 'Text',
-            is_optional => 1,
-            doc => 'The custom input tsv file to use for analysis if no somatic variation build is used',
-        },
-        anno_db => {
-            is => 'Text',
-            is_optional => 1,
-            doc => 'The name of the annotation database to use for retrieving the wildtypes.  Example: NCBI-human.combined-annotation',
-        },
-        anno_db_version => {
-            is => 'Text',
-            is_optional => 1,
-            doc => 'The version of the annotation databaseto use for retrieving the wildtypes. Example: 54_36p_v2',
-        },
-        peptide_sequence_length => {
-            is => 'Text',
-            doc => 'The length of the peptide sequences to be used when generating variant sequences',
-            valid_values => [17, 21, 31],
-            default_value => 21,
+            doc => 'The fasta file with variant sequences for epitope binding prediction',
         },
         alleles => {
             is => 'Text',
@@ -65,6 +48,11 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
             doc => 'The sample name of the file being processed',
             is_optional => 1,
         },
+        variant_type => {
+            is => 'Text',
+            doc => 'The variant type being processed',
+            is_optional => 1,
+        }
     ],
 };
 
@@ -98,27 +86,13 @@ sub _construct_workflow {
     my ($self) = @_;
 
     my $workflow = Genome::WorkflowBuilder::DAG->create(
-        name => 'EpitopePredictionWorkflow',
+        name => $self->_workflow_name,
         log_dir => $self->output_directory,
     );
 
-    my $get_wildtype_command = $self->_attach_get_wildtype_command($workflow);
-    my $generate_variant_sequences_command = $self->_attach_generate_variant_sequences_command($workflow);
     my $filter_sequences_command = $self->_attach_filter_sequences_command($workflow);
     my $generate_fasta_key_command = $self->_attach_generate_fasta_key_command($workflow);
 
-    $workflow->create_link(
-        source => $get_wildtype_command,
-        source_property => 'output_tsv_file',
-        destination => $generate_variant_sequences_command,
-        destination_property => 'input_file',
-    );
-    $workflow->create_link(
-        source => $generate_variant_sequences_command,
-        source_property => 'output_file',
-        destination => $filter_sequences_command,
-        destination_property => 'input_file',
-    );
     $workflow->create_link(
         source => $filter_sequences_command,
         source_property => 'output_file',
@@ -158,11 +132,22 @@ sub _construct_workflow {
     return $workflow;
 }
 
+sub _workflow_name {
+    my $self = shift;
+
+    if (defined($self->variant_type)) {
+        return sprintf('Epitope Prediction Workflow (%s)', $self->variant_type);
+    }
+    else {
+        return 'Epitope Prediction Workflow';
+    }
+}
+
 sub create_netmhc_workflow {
     my $self = shift;
 
     my $netmhc_workflow = Genome::WorkflowBuilder::DAG->create(
-        name => 'NetmhcWorkflow',
+        name => $self->_netmhc_workflow_name,
         log_dir => $self->output_directory,
         parallel_by => 'allele',
     );
@@ -185,44 +170,16 @@ sub create_netmhc_workflow {
     return $netmhc_workflow;
 }
 
-sub _attach_get_wildtype_command {
+sub _netmhc_workflow_name {
     my $self = shift;
-    my $workflow = shift;
 
-    my $get_wildtype_command = Genome::WorkflowBuilder::Command->create(
-        name => 'GetWildTypeCommand',
-        command => $self->get_wildtype_command_name,
-    );
-    $workflow->add_operation($get_wildtype_command);
-    $self->_add_common_inputs($workflow, $get_wildtype_command);
-    for my $property (qw/input_tsv_file anno_db anno_db_version/) {
-        $workflow->connect_input(
-            input_property => $property,
-            destination => $get_wildtype_command,
-            destination_property => $property,
-        );
+    if (defined($self->variant_type)) {
+        return sprintf('NetMHC Workflow (%s)', $self->variant_type);
     }
-    return $get_wildtype_command;
-}
-
-sub _attach_generate_variant_sequences_command {
-    my $self = shift;
-    my $workflow = shift;
-
-    my $generate_variant_sequences_command = Genome::WorkflowBuilder::Command->create(
-        name => 'GenerateVariantSequencesCommand',
-        command => $self->generate_variant_sequences_command_name,
-    );
-    $workflow->add_operation($generate_variant_sequences_command);
-    $self->_add_common_inputs($workflow, $generate_variant_sequences_command);
-    for my $property (qw/peptide_sequence_length/) {
-        $workflow->connect_input(
-            input_property => $property,
-            destination => $generate_variant_sequences_command,
-            destination_property => $property,
-        );
+    else {
+        return 'NetMHC Workflow';
     }
-    return $generate_variant_sequences_command;
+
 }
 
 sub _attach_filter_sequences_command {
@@ -235,6 +192,11 @@ sub _attach_filter_sequences_command {
     );
     $workflow->add_operation($filter_sequences_command);
     $self->_add_common_inputs($workflow, $filter_sequences_command);
+    $workflow->connect_input(
+        input_property => 'input_fasta_file',
+        destination => $filter_sequences_command,
+        destination_property => 'input_file',
+    );
     return $filter_sequences_command;
 }
 
@@ -347,48 +309,7 @@ sub _add_common_inputs {
 sub _validate_inputs {
     my $self = shift;
 
-    if (!defined($self->somatic_variation_build) && !defined($self->input_tsv_file)) {
-        $self->fatal_message("Either somatic variation build or input tsv file needs to be provided");
-    }
-
     if (defined($self->somatic_variation_build)) {
-        if (defined($self->input_tsv_file)) {
-            $self->fatal_message("Custom tsv file cannot be used in combination with somatic variation build");
-        }
-        else {
-            my $top_file = File::Spec->join(
-                $self->somatic_variation_build->data_directory,
-                'effects',
-                'snvs.hq.tier1.v1.annotated.top'
-            );
-            my $top_header_file = "$top_file.header";
-
-            my $tsv_file;
-            if (-f $top_header_file) {
-                $tsv_file = $top_header_file;
-            }
-            elsif (-f $top_file) {
-                $tsv_file = $top_file;
-            }
-            else {
-                $self->fatal_message("Somatic variation tsv files ($top_header_file) and ($top_file) don't exist.");
-            }
-            $self->status_message("Somatic variation build given. Setting input_tsv_file to $tsv_file");
-            $self->input_tsv_file($tsv_file);
-        }
-
-        if (defined($self->anno_db) || defined($self->anno_db_version)) {
-            $self->fatal_message("Custom anno db name and version cannot be used in combination with somatic variation build");
-        }
-        else {
-            my $annotation_build = $self->somatic_variation_build->annotation_build;
-            my $annotation_db_name = $annotation_build->model->name;
-            my $annotation_db_version = $annotation_build->version;
-            $self->status_message("Somatic variation build given. Setting anno_db to $annotation_db_name. Setting anno_db_version to $annotation_db_version");
-            $self->anno_db($annotation_db_name);
-            $self->anno_db_version($annotation_db_version);
-        }
-
         if (defined($self->sample_name)) {
             $self->status_message("Custom sample name provided. Using custom sample name %s instead of somatic variation build sample name", $self->sample_name);
         }
@@ -399,26 +320,17 @@ sub _validate_inputs {
         }
     }
     else {
-        unless (defined($self->sample_name) && defined($self->input_tsv_file) && defined($self->anno_db) && defined($self->anno_db_version)) {
-            $self->fatal_message("Sample name, input tsv file, anno db, and anno db version must be defined if no somatic variation build is given")
+        unless (defined($self->sample_name)) {
+            $self->fatal_message("Sample name must be defined if no somatic variation build is given")
         }
     }
 
-    unless (-s $self->input_tsv_file) {
-        $self->fatal_message("Input tsv file %s does not exist or has no size", $self->input_tsv_file);
+    unless (-s $self->input_fasta_file) {
+        $self->fatal_message("Input fasta file %s does not exist or has no size", $self->input_fasta_file);
     }
 
     unless (Genome::Sys->create_directory($self->output_directory)) {
-        $self->fatal_message("Coult not create directory (%s)", $self->output_directory);
-    }
-
-    my $annotation_model = Genome::Model::Tools::Annotate::VariantProtein->get_model_for_anno_db($self->anno_db);
-    unless ($annotation_model) {
-        $self->fatal_message("Anno DB invalid: " . $self->anno_db);
-    }
-
-    unless (Genome::Model::Tools::Annotate::VariantProtein->get_build_for_model_and_anno_db_version($annotation_model, $self->anno_db_version)) {
-        $self->fatal_message("Anno DB version invalid: " . $self->anno_db_version);
+        $self->fatal_message("Could not create directory (%s)", $self->output_directory);
     }
 
     for my $allele ($self->alleles) {
@@ -434,11 +346,8 @@ sub _get_workflow_inputs {
     my $self = shift;
 
     my %inputs = (
-        input_tsv_file => $self->input_tsv_file,
+        input_fasta_file => $self->input_fasta_file,
         output_directory => $self->output_directory,
-        anno_db => $self->anno_db,
-        anno_db_version => $self->anno_db_version,
-        peptide_sequence_length => $self->peptide_sequence_length,
         epitope_length => $self->epitope_length,
         netmhc_version => $self->netmhc_version,
         output_filter => $self->output_filter,

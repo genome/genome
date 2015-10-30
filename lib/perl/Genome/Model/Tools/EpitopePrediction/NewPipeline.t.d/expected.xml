@@ -1,0 +1,179 @@
+<?xml version="1.0"?>
+<operation name="Epitope Binding Predicition">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>Epitope Prediction Workflow (snvs).allele</inputproperty>
+    <inputproperty>Epitope Prediction Workflow (snvs).epitope_length</inputproperty>
+    <inputproperty>Epitope Prediction Workflow (snvs).netmhc_version</inputproperty>
+    <inputproperty>Epitope Prediction Workflow (snvs).output_directory</inputproperty>
+    <inputproperty>Epitope Prediction Workflow (snvs).output_filter</inputproperty>
+    <inputproperty>Epitope Prediction Workflow (snvs).sample_name</inputproperty>
+    <inputproperty>Variant Reporting (snvs).Generate Report (epitope-binding-prediction).label</inputproperty>
+    <inputproperty>Variant Reporting (snvs).Generate Report (epitope-binding-prediction).report_name</inputproperty>
+    <inputproperty>Variant Reporting (snvs).input_vcf</inputproperty>
+    <inputproperty>Variant Reporting (snvs).plan_json</inputproperty>
+    <inputproperty>Variant Reporting (snvs).variant_type</inputproperty>
+    <inputproperty>process_id</inputproperty>
+    <outputproperty>snvs_result (epitope-binding-prediction)</outputproperty>
+  </operationtype>
+  <operation name="Epitope Prediction Workflow (snvs)" logDir="test/snvs">
+    <operationtype typeClass="Workflow::OperationType::Model">
+      <inputproperty>allele</inputproperty>
+      <inputproperty>epitope_length</inputproperty>
+      <inputproperty>input_fasta_file</inputproperty>
+      <inputproperty>netmhc_version</inputproperty>
+      <inputproperty>output_directory</inputproperty>
+      <inputproperty>output_filter</inputproperty>
+      <inputproperty>sample_name</inputproperty>
+      <outputproperty>output_file</outputproperty>
+    </operationtype>
+    <operation name="FilterSequencesCommand">
+      <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::Tools::EpitopePrediction::FilterSequences">
+        <inputproperty>input_file</inputproperty>
+        <inputproperty>output_directory</inputproperty>
+        <outputproperty>output_file</outputproperty>
+        <outputproperty>result</outputproperty>
+      </operationtype>
+    </operation>
+    <operation name="GenerateFastaKeyCommand">
+      <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::Tools::EpitopePrediction::GenerateFastaKey">
+        <inputproperty>input_file</inputproperty>
+        <inputproperty>output_directory</inputproperty>
+        <outputproperty>output_file</outputproperty>
+        <outputproperty>result</outputproperty>
+      </operationtype>
+    </operation>
+    <operation name="NetMHC Workflow (snvs)" parallelBy="allele" logDir="test/snvs">
+      <operationtype typeClass="Workflow::OperationType::Model">
+        <inputproperty>allele</inputproperty>
+        <inputproperty>epitope_length</inputproperty>
+        <inputproperty>fasta_file</inputproperty>
+        <inputproperty>key_file</inputproperty>
+        <inputproperty>netmhc_version</inputproperty>
+        <inputproperty>output_directory</inputproperty>
+        <inputproperty>output_filter</inputproperty>
+        <inputproperty>sample_name</inputproperty>
+        <outputproperty>output_file</outputproperty>
+      </operationtype>
+      <operation name="ParseNetMHCCommand">
+        <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput">
+          <inputproperty>netmhc_file</inputproperty>
+          <inputproperty>output_directory</inputproperty>
+          <inputproperty>output_filter</inputproperty>
+          <outputproperty>parsed_file</outputproperty>
+          <outputproperty>result</outputproperty>
+        </operationtype>
+      </operation>
+      <operation name="RunNetMHCCommand">
+        <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::Tools::EpitopePrediction::RunNetmhc">
+          <inputproperty>allele</inputproperty>
+          <inputproperty>epitope_length</inputproperty>
+          <inputproperty>fasta_file</inputproperty>
+          <inputproperty>output_directory</inputproperty>
+          <inputproperty>sample_name</inputproperty>
+          <outputproperty>output_file</outputproperty>
+          <outputproperty>result</outputproperty>
+        </operationtype>
+      </operation>
+      <link fromOperation="ParseNetMHCCommand" fromProperty="parsed_file" toOperation="output connector" toProperty="output_file"/>
+      <link fromOperation="RunNetMHCCommand" fromProperty="output_file" toOperation="ParseNetMHCCommand" toProperty="netmhc_file"/>
+      <link fromOperation="input connector" fromProperty="key_file" toOperation="ParseNetMHCCommand" toProperty="key_file"/>
+      <link fromOperation="input connector" fromProperty="netmhc_version" toOperation="ParseNetMHCCommand" toProperty="netmhc_version"/>
+      <link fromOperation="input connector" fromProperty="output_directory" toOperation="ParseNetMHCCommand" toProperty="output_directory"/>
+      <link fromOperation="input connector" fromProperty="output_filter" toOperation="ParseNetMHCCommand" toProperty="output_filter"/>
+      <link fromOperation="input connector" fromProperty="allele" toOperation="RunNetMHCCommand" toProperty="allele"/>
+      <link fromOperation="input connector" fromProperty="epitope_length" toOperation="RunNetMHCCommand" toProperty="epitope_length"/>
+      <link fromOperation="input connector" fromProperty="fasta_file" toOperation="RunNetMHCCommand" toProperty="fasta_file"/>
+      <link fromOperation="input connector" fromProperty="netmhc_version" toOperation="RunNetMHCCommand" toProperty="netmhc_version"/>
+      <link fromOperation="input connector" fromProperty="output_directory" toOperation="RunNetMHCCommand" toProperty="output_directory"/>
+      <link fromOperation="input connector" fromProperty="sample_name" toOperation="RunNetMHCCommand" toProperty="sample_name"/>
+    </operation>
+    <link fromOperation="FilterSequencesCommand" fromProperty="output_file" toOperation="GenerateFastaKeyCommand" toProperty="input_file"/>
+    <link fromOperation="FilterSequencesCommand" fromProperty="output_file" toOperation="NetMHC Workflow (snvs)" toProperty="fasta_file"/>
+    <link fromOperation="GenerateFastaKeyCommand" fromProperty="output_file" toOperation="NetMHC Workflow (snvs)" toProperty="key_file"/>
+    <link fromOperation="NetMHC Workflow (snvs)" fromProperty="output_file" toOperation="output connector" toProperty="output_file"/>
+    <link fromOperation="input connector" fromProperty="input_fasta_file" toOperation="FilterSequencesCommand" toProperty="input_file"/>
+    <link fromOperation="input connector" fromProperty="output_directory" toOperation="FilterSequencesCommand" toProperty="output_directory"/>
+    <link fromOperation="input connector" fromProperty="output_directory" toOperation="GenerateFastaKeyCommand" toProperty="output_directory"/>
+    <link fromOperation="input connector" fromProperty="allele" toOperation="NetMHC Workflow (snvs)" toProperty="allele"/>
+    <link fromOperation="input connector" fromProperty="epitope_length" toOperation="NetMHC Workflow (snvs)" toProperty="epitope_length"/>
+    <link fromOperation="input connector" fromProperty="netmhc_version" toOperation="NetMHC Workflow (snvs)" toProperty="netmhc_version"/>
+    <link fromOperation="input connector" fromProperty="output_directory" toOperation="NetMHC Workflow (snvs)" toProperty="output_directory"/>
+    <link fromOperation="input connector" fromProperty="output_filter" toOperation="NetMHC Workflow (snvs)" toProperty="output_filter"/>
+    <link fromOperation="input connector" fromProperty="sample_name" toOperation="NetMHC Workflow (snvs)" toProperty="sample_name"/>
+  </operation>
+  <operation name="Variant Reporting (snvs)">
+    <operationtype typeClass="Workflow::OperationType::Model">
+      <inputproperty>Generate Report (epitope-binding-prediction).label</inputproperty>
+      <inputproperty>Generate Report (epitope-binding-prediction).report_name</inputproperty>
+      <inputproperty>input_vcf</inputproperty>
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>process_id</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_result (epitope-binding-prediction)</outputproperty>
+      <outputproperty>report_path (epitope-binding-prediction)</outputproperty>
+    </operationtype>
+    <operation name="Generate Report (epitope-binding-prediction)">
+      <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
+        <inputproperty>input_vcf</inputproperty>
+        <inputproperty>plan_json</inputproperty>
+        <inputproperty>report_name</inputproperty>
+        <inputproperty>variant_type</inputproperty>
+        <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
+        <outputproperty>result</outputproperty>
+      </operationtype>
+    </operation>
+    <operation name="vep">
+      <operationtype typeClass="Workflow::OperationType::Model">
+        <inputproperty>input_vcf</inputproperty>
+        <inputproperty>plan_json</inputproperty>
+        <inputproperty>process_id</inputproperty>
+        <inputproperty>variant_type</inputproperty>
+        <outputproperty>output_result</outputproperty>
+        <outputproperty>output_vcf</outputproperty>
+      </operationtype>
+      <operation name="Run vep">
+        <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;32000] rusage[mem=32000]' -M 32000000" commandClass="Genome::VariantReporting::Suite::Vep::Run">
+          <inputproperty>input_vcf</inputproperty>
+          <inputproperty>plan_json</inputproperty>
+          <inputproperty>variant_type</inputproperty>
+          <outputproperty>output_result</outputproperty>
+          <outputproperty>output_vcf</outputproperty>
+          <outputproperty>result</outputproperty>
+        </operationtype>
+      </operation>
+      <link fromOperation="Run vep" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
+      <link fromOperation="Run vep" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
+      <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run vep" toProperty="input_vcf"/>
+      <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run vep" toProperty="plan_json"/>
+      <link fromOperation="input connector" fromProperty="process_id" toOperation="Run vep" toProperty="process_id"/>
+      <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
+    </operation>
+    <link fromOperation="Generate Report (epitope-binding-prediction)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (epitope-binding-prediction)"/>
+    <link fromOperation="Generate Report (epitope-binding-prediction)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (epitope-binding-prediction)"/>
+    <link fromOperation="input connector" fromProperty="Generate Report (epitope-binding-prediction).label" toOperation="Generate Report (epitope-binding-prediction)" toProperty="label"/>
+    <link fromOperation="input connector" fromProperty="Generate Report (epitope-binding-prediction).report_name" toOperation="Generate Report (epitope-binding-prediction)" toProperty="report_name"/>
+    <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (epitope-binding-prediction)" toProperty="plan_json"/>
+    <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (epitope-binding-prediction)" toProperty="process_id"/>
+    <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (epitope-binding-prediction)" toProperty="variant_type"/>
+    <link fromOperation="input connector" fromProperty="input_vcf" toOperation="vep" toProperty="input_vcf"/>
+    <link fromOperation="input connector" fromProperty="plan_json" toOperation="vep" toProperty="plan_json"/>
+    <link fromOperation="input connector" fromProperty="process_id" toOperation="vep" toProperty="process_id"/>
+    <link fromOperation="input connector" fromProperty="variant_type" toOperation="vep" toProperty="variant_type"/>
+    <link fromOperation="vep" fromProperty="output_vcf" toOperation="Generate Report (epitope-binding-prediction)" toProperty="input_vcf"/>
+  </operation>
+  <link fromOperation="Epitope Prediction Workflow (snvs)" fromProperty="output_file" toOperation="output connector" toProperty="snvs_result (epitope-binding-prediction)"/>
+  <link fromOperation="Variant Reporting (snvs)" fromProperty="report_path (epitope-binding-prediction)" toOperation="Epitope Prediction Workflow (snvs)" toProperty="input_fasta_file"/>
+  <link fromOperation="input connector" fromProperty="Epitope Prediction Workflow (snvs).allele" toOperation="Epitope Prediction Workflow (snvs)" toProperty="allele"/>
+  <link fromOperation="input connector" fromProperty="Epitope Prediction Workflow (snvs).epitope_length" toOperation="Epitope Prediction Workflow (snvs)" toProperty="epitope_length"/>
+  <link fromOperation="input connector" fromProperty="Epitope Prediction Workflow (snvs).netmhc_version" toOperation="Epitope Prediction Workflow (snvs)" toProperty="netmhc_version"/>
+  <link fromOperation="input connector" fromProperty="Epitope Prediction Workflow (snvs).output_directory" toOperation="Epitope Prediction Workflow (snvs)" toProperty="output_directory"/>
+  <link fromOperation="input connector" fromProperty="Epitope Prediction Workflow (snvs).output_filter" toOperation="Epitope Prediction Workflow (snvs)" toProperty="output_filter"/>
+  <link fromOperation="input connector" fromProperty="Epitope Prediction Workflow (snvs).sample_name" toOperation="Epitope Prediction Workflow (snvs)" toProperty="sample_name"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (epitope-binding-prediction).label" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (epitope-binding-prediction).label"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (epitope-binding-prediction).report_name" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (epitope-binding-prediction).report_name"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).input_vcf" toOperation="Variant Reporting (snvs)" toProperty="input_vcf"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).plan_json" toOperation="Variant Reporting (snvs)" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).variant_type" toOperation="Variant Reporting (snvs)" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Variant Reporting (snvs)" toProperty="process_id"/>
+</operation>
