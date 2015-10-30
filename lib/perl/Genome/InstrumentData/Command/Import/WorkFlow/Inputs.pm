@@ -13,7 +13,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Inputs {
         analysis_project => { is => 'Genome::Config::AnalysisProject', },
         library => { is => 'Genome::Library', },
         instrument_data_properties => { is => 'HASH', default_value => {}, },
-        source_files => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles', },
+        source_paths => { is => 'ARRAY', },
     },
     has_transient => {
         format => { via => 'source_files', to => 'format', },
@@ -28,13 +28,9 @@ sub create {
     my $self = $class->SUPER::create(%params);
     return if not $self;
 
-    for my $requried (qw/ analysis_project library source_files /) {
+    for my $requried (qw/ analysis_project library source_paths /) {
         die $self->error_message("No $requried given to work flow inputs!") if not $self->$requried;
     }
-
-    $self->source_files(
-        Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles->create(paths => $self->source_files) 
-    );
 
     if ( not $self->instrument_data_properties->{original_data_path} ) {
         $self->instrument_data_properties->{original_data_path} = join(',', $self->source_files->paths);
@@ -56,6 +52,11 @@ sub instrument_data_for_original_data_path {
     );
     return if not @odp_attrs;
     return map { $_->instrument_data } @odp_attrs;
+}
+
+sub source_files {
+    my $self = shift;
+    return Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles->create(paths => $self->source_paths);
 }
 
 sub as_hashref {

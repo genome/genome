@@ -90,7 +90,7 @@ sub _resolve_work_flow_inputs {
     return Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
         analysis_project => $self->analysis_project,
         library => $self->library,
-        source_files => [ $self->source_files ],
+        source_paths => [ $self->source_files ],
         instrument_data_properties => $self->_resolve_instrument_data_properties,
     );
 }

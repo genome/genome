@@ -24,7 +24,7 @@ my @source_files = (qw/ in.1.fastq in.2.fastq /);
 my %required_params = (
     analysis_project => $analysis_project,
     library => $library,
-    source_files => \@source_files,
+    source_paths => \@source_files,
 );
 
 my $inputs = $class->create(

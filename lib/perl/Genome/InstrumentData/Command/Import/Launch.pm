@@ -114,7 +114,7 @@ sub _load_file {
             analysis_project => $self->analysis_project,
             library => $libraries[0],
             instrument_data_properties => $import->{instdata},
-            source_files => [ split(',', $source_files) ], # FIXME move to csv parser
+            source_paths => [ split(',', $source_files) ], # FIXME move to csv parser
         );
         push @imports, $import;
 
