@@ -14,14 +14,15 @@ my $class = 'Genome::InstrumentData::Command::Import::CsvParser';
 use_ok($class) or die;
 
 my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'generate-cmds');
-my $input_file = File::Spec->join($data_dir, 'info.csv');
+my $input_file = File::Spec->join($data_dir, 'info.tsv');
 
-my $csv_parser = $class->create(file => File::Spec->join($data_dir, 'info.tsv'));
+my $csv_parser = $class->create(file => $input_file);
 my $ref;
 for (1..4) { $ref = $csv_parser->next }
 is_deeply(
     $ref,
     {
+        file => $input_file,
         line_number => 4,
         individual => { name => 'TeSt-0000', nomenclature => 'TeSt', upn => '0000', },
         sample => { name => 'TeSt-0000-01', nomenclature => 'TeSt', },

@@ -121,6 +121,7 @@ sub next {
 
     my $entity_params = $self->_resolve_entity_params_for_values($line_ref);
     $self->_resolve_names_for_entities($entity_params);
+    $entity_params->{file} = $self->file;
     $entity_params->{line_number} = $self->_increment_line_number;
 
     return $entity_params;
