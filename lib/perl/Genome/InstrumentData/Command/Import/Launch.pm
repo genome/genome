@@ -9,6 +9,7 @@ use Genome::InstrumentData::Command::Import::CsvParser;
 use Genome::InstrumentData::Command::Import::WorkFlow::Inputs;
 use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 require List::Util;
+use Params::Validate ':types';
 
 class Genome::InstrumentData::Command::Import::Launch {
     is => 'Command::V2',
@@ -99,6 +100,7 @@ sub _load_file {
     while ( my $import = $parser->next ) {
         my $library_name = $import->{library}->{name};
         my $source_files = delete $import->{instdata}->{source_files};
+        $import->{source_files} = [ split(',', $source_files) ]; # FIXME move to csv parser
         my $string = join(' ', $library_name, $source_files, map { $import->{instdata}->{$_} } keys %{$import->{instdata}});
         my $id = substr(Genome::Sys->md5sum_data($string), 0, 6);
         if ( $seen{$id} ) {
@@ -109,23 +111,11 @@ sub _load_file {
         my @libraries = Genome::Library->get(name => $library_name);
         die $self->error_message('No library for name: %s', $library_name) if not @libraries;
         die $self->error_message('Multiple libraries for library name: %s', $library_name) if @libraries > 1;
+        $import->{library}->{id} = $libraries[0]->id;
 
-        my $import = Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
-            analysis_project_id => $self->analysis_project->id,
-            library_id => $libraries[0]->id,
-            instrument_data_properties => $import->{instdata},
-            source_paths => [ split(',', $source_files) ], # FIXME move to csv parser
-        );
         push @imports, $import;
-
-        my $kb_required = $import->source_files->kilobytes_required_for_processing;
-        $kb_required = 1048576 if $kb_required < 1048576; # 1 Gb 
-        push @kb_required, $kb_required;
     }
-
     $self->_imports(\@imports);
-    my $max_kb_required = List::Util::max(@kb_required);
-    $self->gtmp( $max_kb_required / ( 1024 * 1024 ) );
 
     return 1;
 }
@@ -133,8 +123,12 @@ sub _load_file {
 sub _launch_process {
     my $self = shift;
 
+    my $p = Genome::InstrumentData::Command::Import::Process->create(import_file => $self->file);
+    $self->process($p);
+    my $inputs = $self->_create_wf_inputs;
+
     my $dag = Genome::WorkflowBuilder::DAG->create(name => 'Import Instrument Data for '.$self->file);
-    my $gtmp = $self->gtmp;
+    my $gtmp = $self->_calculate_gtmp_required($inputs);
     my $mem = $self->mem;
     my $lsf_resource = sprintf(
         "-g %s -M %s -R 'select [mem>%s & gtmp>%s] rsuage[mem=%s,gtmp=%s]", 
@@ -158,16 +152,44 @@ sub _launch_process {
         source_property => 'instrument_data',
     );
 
-    my $p = Genome::InstrumentData::Command::Import::Process->create(import_file => $self->file);
-    for ( @{$self->_imports} ) { $_->add_process($p) };
     $p->run(
         workflow_xml => $dag->get_xml,
-        workflow_inputs => { work_flow_inputs => $self->_imports, },
+        workflow_inputs => { work_flow_inputs => $inputs, },
     );
-    $self->process($p);
     $self->status_message("Started imports!\nProcess id: %s\nMetadata directory: %s\nView status with:'genome process view %s'", $p->id, $p->metadata_directory, $p->id);
 
     return 1;
+}
+
+sub _create_wf_inputs {
+    my $self = shift;
+
+    my @inputs;
+    for my $import ( @{$self->_imports} ) {
+        push @inputs, Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
+            analysis_project_id => $self->analysis_project->id,
+            library_id => $import->{library}->{id},
+            instrument_data_properties => $import->{instdata},
+            source_paths => $import->{source_files},
+        );
+        $inputs[$#inputs]->add_process($self->process);
+    }
+
+    return \@inputs;
+}
+
+sub _calculate_gtmp_required {
+    my ($self, $inputs) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => ARRAYREF},);
+
+    my @kb_required;
+    for my $input ( @$inputs ) {
+        my $kb_required = $input->source_files->kilobytes_required_for_processing;
+        $kb_required = 1048576 if $kb_required < 1048576; # 1 Gb 
+        push @kb_required, $kb_required;
+    }
+
+    my $max_kb_required = List::Util::max(@kb_required);
+    return $self->gtmp( $max_kb_required / ( 1024 * 1024 ) );
 }
 
 1;
