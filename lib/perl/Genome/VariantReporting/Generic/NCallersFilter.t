@@ -50,6 +50,22 @@ subtest "sample 2" => sub {
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };
 
+subtest "sample 3 individual callers filtered" => sub {
+    my $filter = $pkg->create(
+        sample_name => "S3",
+        min_callers => 2,
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+
+    my $entry = create_entry();
+
+    my %expected_return_values = (
+        C => 0,
+        G => 0,
+    );
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Sample 3 return values as expected");
+};
+
 subtest "Nonexistent Caller" => sub {
     my $filter = $pkg->create(
         sample_name => "S1",
@@ -80,7 +96,7 @@ sub create_vcf_header {
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
 ##FORMAT=<ID=FT,Number=.,Type=String,Description="Filter">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S1-[VarscanSomatic]	S1-[Sniper]	S1-[Strelka]	S2	S2-[VarscanSomatic]	S2-[Sniper]	S2-[Strelka]
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S1-[VarscanSomatic]	S1-[Sniper]	S1-[Strelka]	S2	S2-[VarscanSomatic]	S2-[Sniper]	S2-[Strelka]	S3	S3-[VarscanSomatic]	S3-[Sniper]	S3-[Strelka]
 EOS
     my @lines = split("\n", $header_txt);
     my $header = Genome::File::Vcf::Header->create(lines => \@lines);
@@ -97,7 +113,7 @@ sub create_entry {
         '10.3',         # QUAL
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO
-        'GT:DP',     # FORMAT
+        'GT:DP:FT',     # FORMAT
         "0/1:12",   # FIRST_SAMPLE
         "0/0:12",   # FIRST_SAMPLE_Varscan
         "1/1:12",   # First_SAMPLE_Sniper
@@ -106,6 +122,10 @@ sub create_entry {
         ".",   # SECOND_SAMPLE_Varscan
         ".",   # SECOND_SAMPLE_Sniper
         "1/2:12",   # Second_SAMPLE_Strelka
+        "0/0:12",   # THIRD_SAMPLE
+        "1/2",   # THIRD_SAMPLE_Varscan
+        "1/2:.:NOT",   # THIRD_SAMPLE_Sniper
+        "1/2:12:NOT",   # THIRD_SAMPLE_Strelka
     );
 
     my $entry_txt = join("\t", @fields);

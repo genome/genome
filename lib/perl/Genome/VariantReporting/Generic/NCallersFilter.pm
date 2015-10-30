@@ -47,6 +47,10 @@ sub filter_entry {
         if ($error =~ /^\QSample name $sample_name not found in header\E/) {
             next;
         }
+        my $caller_filtered = $entry->sample_field($sample_index, "FT");
+        if (defined $caller_filtered and $caller_filtered ne ".") {
+            next;
+        }
         my @sample_alt_alleles = $entry->alt_bases_for_sample($sample_index);
         for my $sample_alt_allele (@sample_alt_alleles) {
             $caller_counts{$sample_alt_allele}++;
