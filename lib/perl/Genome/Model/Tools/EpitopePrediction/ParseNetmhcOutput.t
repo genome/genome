@@ -26,6 +26,17 @@ for my $netmhc_version (qw(3.0 3.4)) {
     }
 }
 
+subtest "Indel file with frameshifts and inframe indels" => sub {
+    my $output_filter = 'all';
+    my $netmhc_version = '3.4';
+    my $variant_type = 'indels';
+    test_for_output_type(
+        output_filter => $output_filter,
+        netmhc_version => $netmhc_version,
+        variant_type => $variant_type,
+    );
+};
+
 sub test_for_output_type {
     my %params = @_;
 
