@@ -12,6 +12,26 @@ use warnings FATAL => 'all';
 my $pkg = "Genome::File::Vcf::BamReadcountUtilities";
 use_ok($pkg);
 
+subtest "readcount position offsets" => sub {
+    my $entry1 = create_vcf_entry(20, 1234567, 'GTC', 'G,ATC,GTCT'); 
+    my $expected_offsets = [1, 0, 2];
+    is_deeply( [Genome::File::Vcf::BamReadcountUtilities::vcf_entry_to_allele_offsets($entry1)],
+        $expected_offsets,
+        "Positions match with multiple alleles as expected");
+
+    my $entry2 = create_vcf_entry(20, 1234567, 'G', 'A'); 
+    my ($pos2) = Genome::File::Vcf::BamReadcountUtilities::vcf_entry_to_allele_offsets($entry2);
+    is($pos2, 0, "SNP position matches");
+    
+    my $entry3 = create_vcf_entry(20, 1234567, 'GTC', 'G'); 
+    my ($pos3) = Genome::File::Vcf::BamReadcountUtilities::vcf_entry_to_allele_offsets($entry3);
+    is($pos3, 1, "Deletion position matches");
+    
+    my $entry4 = create_vcf_entry(20, 1234567, 'GTC', 'GTCT'); 
+    my ($pos4) = Genome::File::Vcf::BamReadcountUtilities::vcf_entry_to_allele_offsets($entry4);
+    is($pos4, 2, "Insertion position matches");
+};
+
 subtest "readcount position conversion" => sub {
     my $entry1 = create_vcf_entry(20, 1234567, 'GTC', 'G,ATC,GTCT'); 
     my $expected_positions = [1234567, 1234568, 1234569];

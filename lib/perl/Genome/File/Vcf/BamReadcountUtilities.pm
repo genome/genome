@@ -5,24 +5,31 @@ use warnings FATAL => 'all';
 use Genome;
 use Genome::Utility::Vcf qw(convert_indel_gt_to_bed);
 
-sub vcf_entry_to_readcount_positions {
+sub vcf_entry_to_allele_offsets {
     my ($entry) = @_;
-    my $pos = $entry->{position};
-    my %positions;
+    my @offsets;
     for my $allele (@{$entry->{alternate_alleles}}) {
         if (length($allele) == length($entry->{reference_allele})) {
-            $positions{$pos} = 1;
+           push @offsets, 0;
         }
         else {
             my (undef, $shifts) = convert_indel_gt_to_bed($entry->{reference_allele}, $allele);
             if ($entry->is_deletion($allele) ) {
-                $positions{$pos + $shifts->[0]} = 1;
+                push @offsets, $shifts->[0];
             }
             else {
-                $positions{$pos + $shifts->[0] - 1} = 1;
+                push @offsets, $shifts->[0] - 1;
             }
         }
     }
+    return @offsets;
+}
+
+
+sub vcf_entry_to_readcount_positions {
+    my ($entry) = @_;
+    my $pos = $entry->{position};
+    my %positions = map { $pos + $_ => 1 } vcf_entry_to_allele_offsets($entry);
     return sort { $a <=> $b } keys %positions;
 }
 
