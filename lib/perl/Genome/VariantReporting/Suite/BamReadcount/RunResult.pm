@@ -4,7 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Genome::File::Vcf::Reader;
-use Genome::Utility::Vcf qw(convert_indel_gt_to_bed);
+use Genome::File::Vcf::BamReadcountUtilities;
 use Sys::Hostname;
 use IPC::Run qw(run);
 
@@ -88,20 +88,8 @@ sub make_region_file {
 sub fill_in_positions {
     my $entry = shift;
     my $positions = shift;
-    my $pos = $entry->{position};
-    for my $allele (@{$entry->{alternate_alleles}}) {
-        if (length($allele) == length($entry->{reference_allele})) {
-            $positions->{$pos}++;
-        }
-        else {
-            my (undef, $shifts) = convert_indel_gt_to_bed($entry->{reference_allele}, $allele);
-            if ($entry->is_deletion($allele) ) {
-                $positions->{$pos + $shifts->[0]}++;
-            }
-            else {
-                $positions->{$pos + $shifts->[0] - 1}++;
-            }
-        }
+    for my $pos (Genome::File::Vcf::BamReadcountUtilities::vcf_entry_to_readcount_positions($entry)) {
+        $positions->{$pos}++;
     }
     return;
 }
