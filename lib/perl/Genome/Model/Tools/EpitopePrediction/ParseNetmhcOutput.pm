@@ -84,6 +84,7 @@ sub execute {
             for my $position (@positions_to_process) {
                 my $mt_score            = $position_score{$position}->{score};
                 my $wt_score            = $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{score};
+                next unless defined $wt_score;
                 my $mt_epitope_sequence = $netmhc_results->{'MT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence};
                 my $wt_epitope_sequence = $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence};
                 my $fold_change         = $wt_score / $mt_score;
@@ -176,7 +177,7 @@ sub parse_input {
         elsif ( $self->netmhc_version eq '3.0' )  {
             $protein_identifier = $protein_label;
         }
-        my ($protein_type, $protein_name, $variant_aa) = split(/\./, $protein_identifier);
+        my ($protein_type, $protein_name, $variant_aa) = split(/\./, $protein_identifier, 3);
 
         $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = {
             score => $score,
