@@ -69,7 +69,7 @@ sub generate_readcount_string {
     my ($vcf_entry, $allele_offsets, $reader) = @_;
     my %allele_hash = %$allele_offsets;
     my $offsets = Set::Scalar->new(values %allele_hash);
-    for my $offset ($offsets->members) {
+    for my $offset (sort { $a <=> $b } $offsets->members) {
         my $bam_readcount_entry = $reader->get_entry($vcf_entry->{chrom},
             $vcf_entry->{position} + $offset);
         if (defined $bam_readcount_entry) {
