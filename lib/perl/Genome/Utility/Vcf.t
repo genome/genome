@@ -36,7 +36,7 @@ subtest 'Indel simplification - none' => sub {
     my $ref = 'G';
     my $var = undef;
 
-    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::_simplify_indel_allele($ref, $var);
+    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::simplify_indel_allele($ref, $var);
     is($result_ref, 'G', "ref allele as expected");
     is($result_var, '', "var allele as expected");
     is($shift, 0, "no position shift as expected");
@@ -46,7 +46,7 @@ subtest 'Indel simplification - simple insertion' => sub {
     my $ref = 'G';
     my $var = 'GT';
 
-    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::_simplify_indel_allele($ref, $var);
+    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::simplify_indel_allele($ref, $var);
     is($result_ref, q{}, "ref allele as expected");
     is($result_var, 'T', "var allele as expected");
     is($shift, 1, "position shift as expected");
@@ -56,7 +56,7 @@ subtest 'Indel simplification - simple deletion' => sub {
     my $ref = 'GT';
     my $var = 'G';
 
-    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::_simplify_indel_allele($ref, $var);
+    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::simplify_indel_allele($ref, $var);
     is($result_ref, 'T', "ref allele as expected");
     is($result_var, "", "var allele as expected");
     is($shift, 1, "position shift as expected");
@@ -66,7 +66,7 @@ subtest 'Indel simplification - ambiguous deletion' => sub {
     my $ref = 'GTTC';
     my $var = 'GTC';
 
-    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::_simplify_indel_allele($ref, $var);
+    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::simplify_indel_allele($ref, $var);
     is($result_ref, 'T', "ref allele as expected");
     is($result_var, "", "var allele as expected");
     is($shift, 1, "position shift as expected");
@@ -76,7 +76,7 @@ subtest 'Indel simplification - ambiguous insertion' => sub {
     my $ref = 'AGC';
     my $var = 'AGGGGGC';
 
-    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::_simplify_indel_allele($ref, $var);
+    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::simplify_indel_allele($ref, $var);
     is($result_ref, "", "ref allele as expected");
     is($result_var, "GGGG", "var allele as expected");
     is($shift, 1, "position shift as expected");
@@ -86,7 +86,7 @@ subtest 'Indel simplification - ambiguous deletion' => sub {
     my $ref = 'AGTGTC';
     my $var = 'AGTC';
 
-    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::_simplify_indel_allele($ref, $var);
+    my ($result_ref, $result_var, $shift) = Genome::Utility::Vcf::simplify_indel_allele($ref, $var);
     is($result_ref, "GT", "ref allele as expected");
     is($result_var, "", "var allele as expected");
     is($shift, 1, "position shift as expected");
