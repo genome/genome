@@ -12,7 +12,7 @@ class Genome::Qc::Command::Config::List {
         },
         show => { default_value => 'id,name,type' },
     ],
-    doc => 'List Qc configurations',
+    doc => 'List QC configurations',
 };
 
 1;

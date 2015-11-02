@@ -11,16 +11,16 @@ class Genome::Qc::Command::Config::Add {
     has => [
         name => {
             is => 'String',
-            doc => 'Name of the qc configuration to add',
+            doc => 'Name of the QC configuration to add',
         },
         file_path => {
             is => 'Path',
-            doc => 'File path to the qc configuration file to add',
+            doc => 'File path to the QC configuration file to add',
         },
         type => {
             is => 'String',
             valid_values => ['wgs', 'exome', 'all'],
-            doc => 'Type of data this qc configuration applies to',
+            doc => 'Type of data this QC configuration applies to',
         },
     ],
     doc => 'A command to add a QC configuration to the database',
