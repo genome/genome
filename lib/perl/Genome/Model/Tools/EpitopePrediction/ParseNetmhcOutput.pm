@@ -87,12 +87,12 @@ sub execute {
                 if (defined($wt_position_score) && defined($wt_position_score->{$position})) {
                     $wt_score            = $wt_position_score->{$position}->{score};
                     $wt_epitope_sequence = $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence};
-                    $fold_change         = $wt_score / $mt_score;
+                    $fold_change         = sprintf("%.3f", $wt_score / $mt_score);
                     # Skip if mutant amino acid is not present
                     next unless $mt_epitope_sequence ne $wt_epitope_sequence;
                 }
                 else {
-                    next;
+                    $wt_score = $wt_epitope_sequence = $fold_change = 'NA';
                 }
 
                 my %data = (
@@ -103,7 +103,7 @@ sub execute {
                     'WT score' => $wt_score,
                     'MT epitope seq' => $mt_epitope_sequence,
                     'WT epitope seq' => $wt_epitope_sequence,
-                    'Fold change' => sprintf("%.3f", $fold_change),
+                    'Fold change' => $fold_change,
                 );
                 $output_fh->write_one(\%data);
             }
