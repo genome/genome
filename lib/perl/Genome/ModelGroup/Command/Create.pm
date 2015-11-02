@@ -55,7 +55,7 @@ sub execute {
         return;
     }
     $self->status_message('Created model group:');
-    $self->status_message('ID: ' . $model_group->id . ', NAME: ' . $model_group->name);
+    $self->status_message('ID: ' . $model_group->id . '  NAME: ' . $model_group->name);
     
     if ( @models ) {
         $self->status_message('Assigning '.scalar(@models).' to group...');
