@@ -14,11 +14,16 @@ sub vcf_entry_to_allele_offsets {
         }
         else {
             my (undef, $shifts) = convert_indel_gt_to_bed($entry->{reference_allele}, $allele);
-            if ($entry->is_deletion($allele) ) {
-                push @offsets, $shifts->[0];
+            if (defined $shifts->[0]) { 
+                if ($entry->is_deletion($allele)) {
+                    push @offsets, $shifts->[0];
+                }
+                else {
+                    push @offsets, $shifts->[0] - 1;
+                }
             }
             else {
-                push @offsets, $shifts->[0] - 1;
+                push @offsets, 0;
             }
         }
     }
