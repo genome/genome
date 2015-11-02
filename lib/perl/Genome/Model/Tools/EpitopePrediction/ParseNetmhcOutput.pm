@@ -97,7 +97,7 @@ sub execute {
 
                 my %data = (
                     'Gene Name' => $protein_name,
-                    'Point Mutation' => $variant_aa,
+                    'Mutation' => $variant_aa,
                     'Sub-peptide Position' => $position,
                     'MT score' => $mt_score,
                     'WT score' => $wt_score,
@@ -120,7 +120,7 @@ sub netmhc_file_headers {
 sub headers {
     return (
         'Gene Name',
-        'Point Mutation',
+        'Mutation',
         'Sub-peptide Position',
         'MT score',
         'WT score',
