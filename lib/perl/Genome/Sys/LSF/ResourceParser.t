@@ -396,7 +396,7 @@ parse_ok("-M 200000 -n 4 -c 10 -R 'rusage[mem=200:gtmp=5]' -q short", {
         },
         'rLimits' => {
             'RSS' => '200000',
-            'cpuTime' => '10'
+            'cpuTime' => '600'
         }
     });
 parse_ok("-M 14000000 -R 'select[mem>14000] rusage[mem=14000]'", {

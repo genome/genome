@@ -91,6 +91,11 @@ sub number_formatter {
     return $value + 0;
 }
 
+sub minutes_to_seconds_formatter {
+    my $value = shift;
+    return $value * 60;
+}
+
 my %formatters = (
     'b' => \&string_formatter,
     'e' => \&string_formatter,
@@ -107,7 +112,7 @@ my %formatters = (
     'R' => \&string_formatter,
     't' => \&string_formatter,
 
-    'c' => \&number_formatter,
+    'c' => \&minutes_to_seconds_formatter,
     'M' => \&number_formatter,
     'F' => \&number_formatter,
     'S' => \&number_formatter,
