@@ -88,13 +88,13 @@ sub convert_position {
     my $self = shift;
     my ($algorithm, $chrom, $start, $stop) = @_;
 
-    unless($chrom and $start and $stop) {
+    unless(defined $chrom and defined $start and defined $stop) {
         $self->error_message('Missing one or more of chrom, start, stop. Got: (' . ($chrom || '') . ', ' . ($start || '') . ', ' . ($stop || '') . ').');
         return;
     }
 
     my ($new_chrom, $new_start, $new_stop) =  $self->$algorithm($chrom, $start, $stop);
-    unless($new_chrom and $new_start and $new_stop) {
+    unless(defined $new_chrom and defined $new_start and defined $new_stop) {
         $self->error_message('Could not convert one or more of chrom, start, stop. Got: (' . ($new_chrom || '') . ', ' . ($new_start || '') . ', ' . ($new_stop || '') . ').');
         return;
     }
