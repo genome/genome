@@ -88,7 +88,7 @@ sub _check_for_running_processes {
 
     return 1 if not @active_processes;
 
-    $self->debug_message("Found '%s' process (%s) for metadata file: %s", $active_processes[0]->status, $active_processes[0]->id, $self->file);
+    $self->status_message("Found '%s' process (%s) for metadata file: %s", $active_processes[0]->status, $active_processes[0]->id, $self->file);
     die $self->error_message('Cannot start another import process until the previous one has completed!');
 }
 
