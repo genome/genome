@@ -45,20 +45,21 @@ sub copy {
         target_directory => $output_dir,
     );
     if ($allocation_object->is_archived) {
-        my $tar_path = $allocation_object->tar_path;
-        my $cmd = "tar -C $shadow_absolute_path -xf $tar_path";
+        Genome::Sys->create_directory($shadow_absolute_path);
+        eval {
+            my $tar_path = $allocation_object->tar_path;
+            my $cmd = "tar -C $shadow_absolute_path -xf $tar_path";
 
-        my $tx = UR::Context::Transaction->begin();
-        try {
             # It's very possible that if no commit is on, the volumes/allocations
             # being dealt with are test objects that don't exist out of this local
             # UR context, so bsubbing jobs would fail.
             if ($ENV{UR_DBI_NO_COMMIT}) {
                 Genome::Sys->shellcmd(cmd => $cmd);
-            } else {
+            }
+            else {
                 # If this process should be killed, the LSF job needs to be cleaned up
                 my ($job_id, $status);
-                
+            
                 # Signal handlers are added like this so an anonymous sub can be
                 # used, which handles variables defined in an outer scope
                 # differently than named subs (in this case, $job_id,
@@ -93,27 +94,21 @@ sub copy {
                         . "received status $status";
                 }
             }
-            if ($tx->commit()) {
-                undef $tx;
-                # No need to commit the allocation object.  It should not changed.
+            $rsync_params{source_directory} = $shadow_absolute_path;
+        };
+        my $unarchive_error_message = $@;
+        if ($unarchive_error_message) {
+            if ($shadow_absolute_path and -d $shadow_absolute_path and not $ENV{UR_DBI_NO_COMMIT}) {
+                if (Genome::Sys->remove_directory_tree($shadow_absolute_path)) {
+                    $shadow_allocation->delete;
+                }
             }
-            else {
-                die 'failed to commit transaction';
+            if ($allocation_lock) {
+                $allocation_lock->unlock();
             }
+            confess "Could not unarchive to shadow allocation, received error:\n$unarchive_error_message";
         }
-            catch {
-                if ($tx) {
-                    $tx->rollback();
-                }
-                if ($shadow_absolute_path and -d $shadow_absolute_path and not $ENV{UR_DBI_NO_COMMIT}) {
-                    Genome::Sys->remove_directory_tree($shadow_absolute_path);
-                }
-                confess "Could not unarchive to shadow allocation, received error:\n$_";
-            }
-                finally {
-                    $rsync_params{source_directory} = $shadow_absolute_path;
-                }
-            }
+    }
 
     # copy files to output_dir
     my $copy_rv = eval {
@@ -126,16 +121,18 @@ sub copy {
                 $shadow_allocation->delete;
             }
         }
-        $allocation_lock->unlock();
+        if ($allocation_lock) {
+            $allocation_lock->unlock();
+        }
         confess(sprintf(
-                "Could not copy allocation %s from %s to %s: %s",
-                $allocation_object->id, $original_absolute_path,
-                $shadow_absolute_path, $copy_error_message));
+            "Could not copy allocation %s from %s to %s: %s",
+            $allocation_object->id, $original_absolute_path,
+            $shadow_absolute_path, $copy_error_message));
     }
 
     Genome::Timeline::Event::Allocation->copied(
         sprintf("copied from %s to %s", $original_absolute_path,
-            $output_dir),
+                $output_dir),
         $allocation_object,
     );
 
