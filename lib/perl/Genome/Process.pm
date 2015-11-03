@@ -136,7 +136,6 @@ sub run {
         return $self->_execute_process($transaction);
     } else {
         if (Genome::Config::get('workflow_builder_backend') eq 'ptero') {
-            local $ENV{PTERO_WORKFLOW_SUBMIT_URL} = Genome::Config::get('ptero_workflow_submit_url');
             $self->_submit_process($transaction);
         } else {
             local $ENV{WF_USE_FLOW} = 1 unless
