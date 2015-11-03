@@ -177,7 +177,11 @@ sub parse_and_write_bed {
     while(my $line = <$source_fh>) {
         chomp $line;
         my ($chrom, $start, $stop, @extra) = split("\t", $line);
-        unless($chrom && $start && $stop) {
+        unless(
+            defined $chrom 
+            && defined $start 
+            && defined $stop
+        ) {
             $self->debug_message('Not converting non-entry line %s', $line);
             $destination_fh->say($line);
             next;
