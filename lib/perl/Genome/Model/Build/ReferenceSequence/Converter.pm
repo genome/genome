@@ -88,13 +88,13 @@ sub convert_position {
     my $self = shift;
     my ($algorithm, $chrom, $start, $stop) = @_;
 
-    unless(defined $chrom and defined $start and defined $stop) {
+    unless(_coords_are_valid($chrom, $start, $stop)) {
         $self->error_message('Missing one or more of chrom, start, stop. Got: (' . ($chrom || '') . ', ' . ($start || '') . ', ' . ($stop || '') . ').');
         return;
     }
 
     my ($new_chrom, $new_start, $new_stop) =  $self->$algorithm($chrom, $start, $stop);
-    unless(defined $new_chrom and defined $new_start and defined $new_stop) {
+    unless(_coords_are_valid($new_chrom, $new_start, $new_stop)) {
         $self->error_message('Could not convert one or more of chrom, start, stop. Got: (' . ($new_chrom || '') . ', ' . ($new_start || '') . ', ' . ($new_stop || '') . ').');
         return;
     }
@@ -177,17 +177,13 @@ sub parse_and_write_bed {
     while(my $line = <$source_fh>) {
         chomp $line;
         my ($chrom, $start, $stop, @extra) = split("\t", $line);
-        unless(
-            defined $chrom 
-            && defined $start 
-            && defined $stop
-        ) {
+        unless (_coords_are_valid($chrom, $start, $stop)) {
             $self->debug_message('Not converting non-entry line %s', $line);
             $destination_fh->say($line);
             next;
         }
         my ($new_chrom, $new_start, $new_stop) = ($chrom, $start, $stop);
-        if($position_algorithm) {
+        if ($position_algorithm) {
             ($new_chrom, $new_start, $new_stop) = $self->convert_position($position_algorithm, $chrom, $start, $stop);
         }
         my $new_line = join("\t", $new_chrom, $new_start, $new_stop, @extra) . "\n";
@@ -221,6 +217,15 @@ sub validate_algorithm_name {
     my ($algorithm_name) = @_;
 
     return first { $_ eq $algorithm_name } @{$self->__meta__->property_meta_for_name('algorithm')->valid_values};
+}
+
+sub _coords_are_valid {
+    my ($chrom, $start, $stop) = @_;
+    return (
+        defined $chrom and $chrom ne q{}
+            and defined $start and $start ne q{}
+            and $stop
+    );
 }
 
 1;
