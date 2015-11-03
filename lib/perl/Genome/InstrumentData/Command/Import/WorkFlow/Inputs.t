@@ -27,8 +27,11 @@ my %required_params = (
     source_paths => \@source_files,
 );
 
+my $process = Genome::InstrumentData::Command::Import::Process->__define__();
+
 my $inputs = $class->create(
     %required_params,
+    process_id => $process->id,
     instrument_data_properties => {
         description => 'imported',
         downsample_ratio => 0.7,
@@ -46,6 +49,7 @@ my %instrument_data_properties = (
     description => 'imported',
     import_source_name => 'TGI',
     original_data_path => join(',', @source_files),
+    process_id => $process->id,
     this => 'that', 
 );
 is_deeply(
@@ -60,12 +64,6 @@ my $instdata = Genome::InstrumentData::Imported->__define__;
 ok($instdata, 'define instdata');
 ok($instdata->original_data_path($inputs->source_files->original_data_path), 'add original_data_path');
 is_deeply([$inputs->instrument_data_for_original_data_path], [$instdata], 'instrument_data_for_original_data_path');
-
-# process
-my $process = Genome::InstrumentData::Command::Import::Process->__define__();
-ok($inputs->add_process($process), 'add_process');
-is($inputs->process_id, $process->id, 'process_id');
-is($inputs->instrument_data_properties->{process_id}, $process->id, 'instdata process_id');
 
 # as_hashref
 is_deeply(

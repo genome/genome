@@ -39,6 +39,10 @@ sub create {
         $self->instrument_data_properties->{original_data_path} = join(',', $self->source_files->paths);
     }
 
+    if ( $self->process_id ) {
+        $self->{instrument_data_properties}->{process_id} = $self->process_id;
+    }
+
     return $self;
 }
 
@@ -48,12 +52,6 @@ sub analysis_project {
 
 sub library {
     return Genome::Library->get(id => $_[0]->library_id);
-}
-
-sub add_process {
-    my ($self, $process) = @_;
-    $self->process_id($process->id);
-    return $self->{instrument_data_properties}->{process_id} = $process->id
 }
 
 sub process {

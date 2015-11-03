@@ -165,12 +165,12 @@ sub _create_wf_inputs {
     my @inputs;
     for my $import ( @{$self->_imports} ) {
         push @inputs, Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
+            process_id => $self->process->id,
             analysis_project_id => $self->analysis_project->id,
             library_id => $import->{library}->{id},
             instrument_data_properties => $import->{instdata},
             source_paths => $import->{source_files},
         );
-        $inputs[$#inputs]->add_process($self->process);
     }
 
     return \@inputs;
