@@ -540,7 +540,7 @@ sub dump_trimmed_fastq_files {
     # MAKE A TRIMMER IN THE SX API, AND FALL THROUGH TO THE "ELSE" BLOCK
     # EVENTUALLY, ALL OF THIS IF STATMENT NEEDS TO GO AWAY -SSMITH
 
-    $self->debug_message('Preceding w/ non SX processing');
+    $self->debug_message('Proceeding w/ non SX processing');
     my @fastq_pathnames = $self->dump_sanger_fastq_files(%$segment_params); # dies on error
     my @trimmed_fastq_pathnames;
     #if the trimmer supports paired end, we just run it once, otherwise we need to loop over the fastqs
