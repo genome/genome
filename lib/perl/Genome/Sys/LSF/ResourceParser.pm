@@ -5,7 +5,7 @@ use warnings FATAL => qw(all);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(parse_lsf_params construct_lsf_param_string);
+our @EXPORT_OK = qw(parse_lsf_params);
 
 use Getopt::Long qw(GetOptionsFromString);
 use IO::String;
@@ -157,60 +157,6 @@ sub _reverse_hash {
         $reversed_hash{$v} = $k;
     }
     return %reversed_hash;
-}
-
-sub construct_lsf_param_string {
-    my ($lsf_params) = @_;
-
-    my $lsf_param_string = join(q{ },
-        _construct_lsf_param_string(
-            $lsf_params->{options}, _option_lookup()),
-        _construct_lsf_param_string(
-            $lsf_params->{rLimits}, _rlimit_lookup()));
-
-    return $lsf_param_string;
-}
-
-sub _construct_lsf_param_string {
-    my ($source, %param_lookup) = @_;
-    $source = _preprocess_params($source);
-
-    my @params;
-    while (my ($submit_field, $value) = each %$source) {
-        my $param = _lookup_param($submit_field, \%param_lookup);
-        unless (defined $param) {
-            die sprintf(
-                'Failed to construct lsf params.  Unkown submit field: %s',
-                $submit_field);
-        }
-        push @params, "-$param", "'$value'";
-    }
-
-    if (@params) {
-        return join(q{ }, @params);
-    }
-    else {
-        return;
-    }
-}
-
-sub _lookup_param {
-    my ($submit_field, $lookup) = @_;
-    return exists($lookup->{$submit_field}) && $lookup->{$submit_field};
-}
-
-sub _preprocess_params {
-    my ($source) = @_;
-
-    my $result = {%$source};
-    if (exists $result->{maxNumProcessors}
-        && defined $result->{maxNumProcessors}
-    ) {
-        $result->{numProcessors} = join q{,}, $result->{numProcessors},
-            delete($result->{'maxNumProcessors'});
-    }
-
-    return $result;
 }
 
 
