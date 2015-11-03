@@ -53,11 +53,13 @@ for my $status (qw/ New Scheduled Running /) {
 $existing_process->status('Crashed');
 
 # fail - no library
+my $failed_cmd;
 throws_ok(
-    sub{ $class->execute(%params); },
+    sub{ $failed_cmd = $class->create(%params); $failed_cmd->execute; },
     qr/No library for name: TeSt\-0000\-00\-extlibs/,
     'failed to execute w/o libraries',
 );
+$failed_cmd->process->status('Crashed'); # IRL the process will deleted
 
 # define libraries
 my $base_sample_name = 'TeSt-0000-0';

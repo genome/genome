@@ -69,7 +69,6 @@ sub execute {
     my $self = shift;
 
     $self->_check_for_running_processes;
-    $self->_load_file;
     $self->_launch_process;
 
     return 1
@@ -90,32 +89,6 @@ sub _check_for_running_processes {
 
     $self->status_message("Found '%s' process (%s) for metadata file: %s", $active_processes[0]->status, $active_processes[0]->id, $self->file);
     die $self->error_message('Cannot start another import process until the previous one has completed!');
-}
-
-sub _load_file {
-    my $self = shift;
-
-    my $parser = Genome::InstrumentData::Command::Import::CsvParser->create(file => $self->file);
-    my (%seen, @imports, @kb_required);
-    while ( my $import = $parser->next ) {
-        my $library_name = $import->{library}->{name};
-        my $string = join(' ', $library_name, join(',', $import->{source_files}), map { $import->{instdata}->{$_} } keys %{$import->{instdata}});
-        my $id = substr(Genome::Sys->md5sum_data($string), 0, 6);
-        if ( $seen{$id} ) {
-            die $self->error_message("Duplicate source file/library combination! $string");
-        }
-        $seen{$id}++;
-
-        my @libraries = Genome::Library->get(name => $library_name);
-        die $self->error_message('No library for name: %s', $library_name) if not @libraries;
-        die $self->error_message('Multiple libraries for library name: %s', $library_name) if @libraries > 1;
-        $import->{library}->{id} = $libraries[0]->id;
-
-        push @imports, $import;
-    }
-    $self->_imports(\@imports);
-
-    return 1;
 }
 
 sub _launch_process {
@@ -163,11 +136,25 @@ sub _create_wf_inputs {
     my $self = shift;
 
     my @inputs;
-    for my $import ( @{$self->_imports} ) {
+    my $parser = Genome::InstrumentData::Command::Import::CsvParser->create(file => $self->file);
+    my %seen;
+    while ( my $import = $parser->next ) {
+        my $library_name = $import->{library}->{name};
+        my $string = join(' ', $library_name, join(',', $import->{source_files}), map { $import->{instdata}->{$_} } keys %{$import->{instdata}});
+        my $id = substr(Genome::Sys->md5sum_data($string), 0, 6);
+        if ( $seen{$id} ) {
+            die $self->error_message("Duplicate source file/library combination! $string");
+        }
+        $seen{$id}++;
+
+        my @libraries = Genome::Library->get(name => $library_name);
+        die $self->error_message('No library for name: %s', $library_name) if not @libraries;
+        die $self->error_message('Multiple libraries for library name: %s', $library_name) if @libraries > 1;
+
         push @inputs, Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
             process_id => $self->process->id,
             analysis_project_id => $self->analysis_project->id,
-            library_id => $import->{library}->{id},
+            library_id => $libraries[0]->id,
             instrument_data_properties => $import->{instdata},
             source_paths => $import->{source_files},
         );
