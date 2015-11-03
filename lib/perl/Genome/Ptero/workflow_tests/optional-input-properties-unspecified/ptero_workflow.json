@@ -83,8 +83,8 @@
                                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                 },
-                                                "user" : "dmorton",
-                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                                "user" : "mkiwala",
+                                                "workingDirectory" : "/gscuser/mkiwala/Projects/genome"
                                              },
                                              "service" : "job",
                                              "serviceUrl" : "http://example.com/v1"
@@ -93,14 +93,14 @@
                                              "name" : "execute",
                                              "parameters" : {
                                                 "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::OptionalInputCommand --method execute --log-directory test_logs/optional-input-properties",
-                                                "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
+                                                "cwd" : "/gscuser/mkiwala/Projects/genome",
                                                 "environment" : {
                                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                 },
                                                 "options" : {},
                                                 "rLimits" : {},
-                                                "user" : "dmorton"
+                                                "user" : "mkiwala"
                                              },
                                              "service" : "job",
                                              "serviceUrl" : "http://lsf.example.com/v1"
