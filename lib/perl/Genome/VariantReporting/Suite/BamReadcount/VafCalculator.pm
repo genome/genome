@@ -3,6 +3,7 @@ package Genome::VariantReporting::Suite::BamReadcount::VafCalculator;
 use strict;
 use warnings;
 use Genome;
+use Genome::Utility::Vcf qw( simplify_indel_allele );
 use List::Util 'sum';
 
 sub calculate_vaf_for_all_alts {
@@ -123,63 +124,16 @@ sub calculate_coverage_for_allele_and_library {
 sub translated_allele {
     my ($allele, $ref) = @_;
 
-    my $translated_allele;
-    if (is_insertion($ref, $allele)) {
-        $translated_allele = "+".translate_pure_indels($allele, $ref);
+    my ($translated_ref, $translated_alt) = Genome::Utility::Vcf::simplify_indel_allele($ref, $allele);
+    if (!($translated_alt eq q{} xor $translated_ref eq q{})) {
+        return $allele;
     }
-    elsif (is_deletion($ref, $allele)) {
-        $translated_allele = "-".translate_pure_indels($ref, $allele);
+    elsif ($translated_alt eq q{}) {
+        return '-'.$translated_ref;
     }
-    else {
-        $translated_allele = $allele;
+    elsif ($translated_ref eq q{}) {
+        return '+'.$translated_alt;
     }
-    return $translated_allele;
-}
-
-#This code attempts to calculate which bases of the longer sequence were
-#removed to arrive at the shorter sequence.
-#For a deletion the $long sequence is the reference and the $short sequence is
-#the alternate allele. We return the bases that were removed from the
-#reference to arrive at the alternate allele.
-#For an insertion the $short sequence is the reference and the $long sequence is
-#the alternate allele. We return the bases that were added to the reference
-#to arrive at the alternate allele
-sub translate_pure_indels {
-    my ($long, $short) = @_;
-    my @long = split('', $long);
-    my @short = split('', $short);
-
-    #This will match up the $short sequence to the $long sequence, starting
-    #from the end. It will then calculate the first position (inclusive)
-    #that differs. This is the end position of the indel.
-    #We remove all matched bases from the $short sequence. This leaves only
-    #bases that still need to be matched the $long sequence, starting from the
-    #beginning.
-    my $end = $#long;
-    for my $i (reverse 0..$#long) {
-        if ($long[$i] eq $short[$#short]) {
-            $end = $i - 1;
-            pop @short;
-            last if (scalar(@short) == 0);
-        }
-        else {
-            last;
-        }
-    }
-
-    #This will match up the $short sequence to the $long sequence, starting
-    #from the beginning. It will then calculate the first position (inclusive)
-    #that differs. This is the start position of the indel.
-    my $start = 0;
-    for my $i (0..$#short) {
-        if ($long[$i] eq $short[$i]) {
-            $start = $i + 1;
-        }
-        else {
-            last;
-        }
-    }
-    return substr($long, $start, $end - $start + 1);
 }
 
 1;
