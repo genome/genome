@@ -129,6 +129,12 @@ sub connect_reports {
             source => $report_op,
             source_property => 'output_result',
         );
+
+        $dag->connect_output(
+            output_property => sprintf('report_path (%s)', $name),
+            source => $report_op,
+            source_property => 'report_path',
+        );
     }
 }
 

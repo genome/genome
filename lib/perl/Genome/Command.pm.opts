@@ -26027,6 +26027,29 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>new-pipeline',
+      [
+        'output-directory=s',
+        'files',
+        'build=s',
+        undef,
+        'alleles=s@',
+        'files',
+        'epitope-length=s',
+        'files',
+        'netmhc-version=s',
+        [
+          '3.0',
+          '3.4'
+        ],
+        'output-filter=s',
+        [
+          'top',
+          'all'
+        ],
+        'help!',
+        undef
+      ],
       '>parse-netmhcpan-key',
       [
         'netmhc-file=s',
@@ -26052,6 +26075,35 @@ $Genome::Command::OPTS_SPEC = [
         'output-file=s',
         'files',
         'epitope-length=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>netmhc-pipeline',
+      [
+        'output-directory=s',
+        'files',
+        'input-fasta-file=s',
+        'files',
+        'alleles=s@',
+        'files',
+        'epitope-length=s',
+        'files',
+        'netmhc-version=s',
+        [
+          '3.0',
+          '3.4'
+        ],
+        'output-filter=s',
+        [
+          'top',
+          'all'
+        ],
+        'somatic-variation-build=s',
+        undef,
+        'sample-name=s',
+        'files',
+        'variant-type=s',
         'files',
         'help!',
         undef
@@ -38066,6 +38118,18 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'output-directory=s',
         undef,
+        'help!',
+        undef
+      ],
+      '>epitope-binding-prediction-fasta',
+      [
+        'build=s',
+        undef,
+        'variant-type=s',
+        [
+          'indels',
+          'snvs'
+        ],
         'help!',
         undef
       ],
