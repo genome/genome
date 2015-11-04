@@ -31,6 +31,9 @@ sub copy {
 
     my ($allocation_object, $allocation_lock) =
         Genome::Disk::Allocation->get_with_lock($id);
+
+    my $unlocker = Scope::Guard->new(sub { $allocation_lock->unlock if $allocation_lock });
+
     my $original_absolute_path = $allocation_object->absolute_path;
     
     # make shadow allocation
@@ -49,51 +52,7 @@ sub copy {
         eval {
             my $tar_path = $allocation_object->tar_path;
             my $cmd = "tar -C $shadow_absolute_path -xf $tar_path";
-
-            # It's very possible that if no commit is on, the volumes/allocations
-            # being dealt with are test objects that don't exist out of this local
-            # UR context, so bsubbing jobs would fail.
-            if ($ENV{UR_DBI_NO_COMMIT}) {
-                Genome::Sys->shellcmd(cmd => $cmd);
-            }
-            else {
-                # If this process should be killed, the LSF job needs to be cleaned up
-                my ($job_id, $status);
-            
-                # Signal handlers are added like this so an anonymous sub can be
-                # used, which handles variables defined in an outer scope
-                # differently than named subs (in this case, $job_id,
-                # $allocation_object, and $archive_path).
-                my @signals = qw/ INT TERM /;
-                for my $signal (@signals) {
-                    $SIG{$signal} = sub {
-                        print STDERR "Cleanup activated within allocation, ",
-                            "cleaning up LSF jobs\n";
-                        eval { Genome::Sys->kill_lsf_job($job_id) } if $job_id;
-                        die "Received signal, exiting.";
-                    }
-                }
-                
-                # Entire path must be wrapped in quotes because older allocation
-                # IDs contain spaces If the command isn't wrapped in quotes, the
-                # '&&' is misinterpreted by bash (rather than being "bsub '1 && 2'
-                # it is looked at as 'bsub 1' && '2')
-                ($job_id, $status) = Genome::Sys->bsub_and_wait(
-                    queue => Genome::Config::get('archive_lsf_queue'),
-                    job_group => '/unarchive',
-                    log_file => "/tmp/$id",
-                    cmd => $cmd,
-                );
-                
-                for my $signal (@signals) {
-                    delete $SIG{$signal};
-                }
-                
-                unless ($status eq 'DONE') {
-                    confess "Could not execute command $cmd via LSF job $job_id, "
-                        . "received status $status";
-                }
-            }
+            Genome::Disk::Detail::Allocation::Unarchiver->_do_unarchive_cmd($cmd);
             $rsync_params{source_directory} = $shadow_absolute_path;
         };
         my $unarchive_error_message = $@;
@@ -102,9 +61,6 @@ sub copy {
                 if (Genome::Sys->remove_directory_tree($shadow_absolute_path)) {
                     $shadow_allocation->delete;
                 }
-            }
-            if ($allocation_lock) {
-                $allocation_lock->unlock();
             }
             confess "Could not unarchive to shadow allocation, received error:\n$unarchive_error_message";
         }
@@ -121,9 +77,6 @@ sub copy {
                 $shadow_allocation->delete;
             }
         }
-        if ($allocation_lock) {
-            $allocation_lock->unlock();
-        }
         confess(sprintf(
             "Could not copy allocation %s from %s to %s: %s",
             $allocation_object->id, $original_absolute_path,
@@ -137,8 +90,6 @@ sub copy {
     );
 
     Genome::Disk::Allocation::_commit_unless_testing();
-
-    $allocation_lock->unlock();
 
     $shadow_allocation->delete;
 
