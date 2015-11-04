@@ -166,8 +166,7 @@
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
                                  "rLimits" : {
-                                    "RSS" : 200000,
-                                    "cpuTime" : 10
+                                    "RSS" : 200000
                                  },
                                  "user" : "dmorton"
                               },
@@ -219,8 +218,7 @@
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
                                  "rLimits" : {
-                                    "RSS" : 200000,
-                                    "cpuTime" : 10
+                                    "RSS" : 200000
                                  },
                                  "user" : "dmorton"
                               },
@@ -272,8 +270,7 @@
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
                                  "rLimits" : {
-                                    "RSS" : 200000,
-                                    "cpuTime" : 10
+                                    "RSS" : 200000
                                  },
                                  "user" : "dmorton"
                               },
@@ -325,8 +322,7 @@
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
                                  "rLimits" : {
-                                    "RSS" : 200000,
-                                    "cpuTime" : 10
+                                    "RSS" : 200000
                                  },
                                  "user" : "dmorton"
                               },
