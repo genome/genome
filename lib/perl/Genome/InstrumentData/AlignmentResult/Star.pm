@@ -57,6 +57,7 @@ sub _run_aligner {
             aligner_params   => $aligner_params,
             reference_build  => $reference_build,
             annotation_build => $annotation_build,
+            users => $self->_user_data_for_nested_results,
         );
 
         unless ($aligner_index) {
