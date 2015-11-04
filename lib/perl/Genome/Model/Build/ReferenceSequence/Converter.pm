@@ -81,7 +81,7 @@ sub is_per_position_algorithm {
     my $self = shift;
     my ($algorithm) = @_;
 
-    return !grep($_ eq $algorithm, 'liftOver', 'no_op', 'drop_extra_contigs');
+    return !grep($_ eq $algorithm, 'lift_over', 'no_op', 'drop_extra_contigs');
 }
 
 sub convert_position {
@@ -143,7 +143,7 @@ sub lift_over {
 
     my $chain_file = $self->resource;
     unless($chain_file and -s $chain_file) {
-        $self->error_message('No chain file resource found for liftOver.');
+        $self->error_message('No chain file resource found for LiftOver.');
         die $self->error_message;
     }
     my $lift_over_cmd = Genome::Model::Tools::LiftOver->create(
