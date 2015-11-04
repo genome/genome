@@ -146,20 +146,18 @@ sub _do_unarchive_cmd {
     } else {
         # If this process should be killed, the LSF job needs to be cleaned up
         my ($job_id, $status);
-        
+
         # Signal handlers are added like this so an anonymous sub can be
         # used, which handles variables defined in an outer scope
-        # differently than named subs (in this case, $job_id,
-        # $allocation_object, and $archive_path).
-        my @signals = qw/ INT TERM /;
-        for my $signal (@signals) {
-            $SIG{$signal} = sub {
-                print STDERR "Cleanup activated within allocation, ",
-                    "cleaning up LSF jobs\n";
-                eval { Genome::Sys->kill_lsf_job($job_id) } if $job_id;
-                die "Received signal, exiting.";
-            }
-        }
+        # differently than named subs (in this case, $job_id).
+        my $sig_handler = sub {
+            print STDERR "Cleanup activated within allocation, ",
+                "cleaning up LSF jobs\n";
+            eval { Genome::Sys->kill_lsf_job($job_id) } if $job_id;
+            die "Received signal, exiting.";
+        };
+        
+        local @SIG{'INT','TERM'} = ($sig_handler, $sig_handler);
 
         # Entire path must be wrapped in quotes because older allocation
         # IDs contain spaces If the command isn't wrapped in quotes, the
@@ -172,10 +170,6 @@ sub _do_unarchive_cmd {
             cmd => $cmd,
         );
 
-        for my $signal (@signals) {
-            delete $SIG{$signal};
-        }
-        
         unless ($status eq 'DONE') {
             confess "Could not execute command $cmd via LSF job $job_id, "
                 . "received status $status";
