@@ -35,6 +35,11 @@ sub help_brief {
 sub execute {
     my $self = shift;
 
+    my $existing_allocation = Genome::Disk::Allocation->get_allocation_for_path($self->output_dir);
+    if ( $existing_allocation && ($existing_allocation->absolute_path eq $self->output_dir) ) {
+        die('Can not export allocation to allocated disk direcotory: '. $self->output_dir);
+    }
+
     for my $allocation ($self->allocations) {
         $allocation->copy( output_dir => $self->output_dir );
     }
