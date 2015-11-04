@@ -123,8 +123,8 @@
                                                                   "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                                },
-                                                               "user" : "mkiwala",
-                                                               "workingDirectory" : "/gscuser/mkiwala/Projects/genome"
+                                                               "user" : "dmorton",
+                                                               "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                                                             },
                                                             "service" : "job",
                                                             "serviceUrl" : "http://example.com/v1"
@@ -133,7 +133,7 @@
                                                             "name" : "execute",
                                                             "parameters" : {
                                                                "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::OptionalInputCommand --method execute --log-directory test_logs/optional-input-properties",
-                                                               "cwd" : "/gscuser/mkiwala/Projects/genome",
+                                                               "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                                                "environment" : {
                                                                   "FOO" : "bar",
                                                                   "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
@@ -141,7 +141,7 @@
                                                                },
                                                                "options" : {},
                                                                "rLimits" : {},
-                                                               "user" : "mkiwala"
+                                                               "user" : "dmorton"
                                                             },
                                                             "service" : "job",
                                                             "serviceUrl" : "http://lsf.example.com/v1"
@@ -181,8 +181,8 @@
                      "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
-                  "user" : "mkiwala",
-                  "workingDirectory" : "/gscuser/mkiwala/Projects/genome"
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "job",
                "serviceUrl" : "http://example.com/v1"
@@ -208,8 +208,8 @@
                      "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
-                  "user" : "mkiwala",
-                  "workingDirectory" : "/gscuser/mkiwala/Projects/genome"
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "job",
                "serviceUrl" : "http://example.com/v1"
@@ -235,8 +235,8 @@
                      "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
-                  "user" : "mkiwala",
-                  "workingDirectory" : "/gscuser/mkiwala/Projects/genome"
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
                "service" : "job",
                "serviceUrl" : "http://example.com/v1"
