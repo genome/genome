@@ -9,14 +9,15 @@ use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Inputs { 
     is => 'UR::Object',
+    id_by => {
+        process_id => { is => 'Text', },
+        line_number => { is => 'Number', },
+    },
     has => {
         analysis_project_id => { is => 'Text', },
         library_id => { is => 'Text', },
         instrument_data_properties => { is => 'HASH', default_value => {}, },
         source_paths => { is => 'ARRAY', },
-    },
-    has_optional => {
-        process_id => { is => 'Text', },
     },
     has_transient => {
         format => { via => 'source_files', to => 'format', },

@@ -88,6 +88,8 @@ sub _resolve_work_flow_inputs {
     my $self = shift;
 
     return Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
+        process_id => $$,
+        line_number => Genome::Sys->md5sum_data($self->source_files),
         analysis_project_id => $self->analysis_project->id,
         library_id => $self->library->id,
         source_paths => [ $self->source_files ],

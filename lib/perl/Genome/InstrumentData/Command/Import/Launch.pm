@@ -114,6 +114,7 @@ sub _create_wf_inputs {
 
         push @inputs, Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
             process_id => $self->process->id,
+            line_number => $import->{line_number},
             analysis_project_id => $self->analysis_project->id,
             library_id => $libraries[0]->id,
             instrument_data_properties => $import->{instdata},

@@ -26,12 +26,13 @@ my %required_params = (
     library_id => $library->id,
     source_paths => \@source_files,
 );
-
 my $process = Genome::InstrumentData::Command::Import::Process->__define__();
+my $line_number = 0;
 
 my $inputs = $class->create(
     %required_params,
     process_id => $process->id,
+    line_number => ++$line_number,
     instrument_data_properties => {
         description => 'imported',
         downsample_ratio => 0.7,
@@ -43,6 +44,11 @@ ok($inputs, 'create inputs');
 is($inputs->format, 'fastq', 'source files format is fastq');
 is($inputs->library_name, $library->name, 'library_name');
 is($inputs->sample_name, $library->sample->name, 'sample_name');
+is_deeply(
+    $class->get($inputs->id),
+    $inputs,
+    'get inputs',
+);
 
 my %instrument_data_properties = (
     downsample_ratio => 0.7,
@@ -84,7 +90,11 @@ is_deeply(
 for my $name ( sort keys %required_params ) {
     my $value = delete $required_params{$name};
     throws_ok(
-        sub { $class->create(%required_params); },
+        sub { $class->create(
+                process_id => $process->id,
+                line_number => ++$line_number,
+                %required_params,
+            ); },
         qr/No $name given to work flow inputs\!/,
         "create failed w/o $name",
     );
