@@ -12,7 +12,6 @@ use warnings;
 
 use above "Genome";
 
-require Cwd;
 use Data::Dumper;
 require Digest::MD5;
 require File::Spec;
@@ -23,7 +22,6 @@ use Test::Exception;
 my $class = 'Genome::InstrumentData::Command::Import::Launch';
 use_ok($class) or die;
 
-my $cwd = Cwd::getcwd();
 my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->join('launch', 'v1'));
 my $import_file = File::Spec->join($data_dir, 'info.tsv');
 chdir $data_dir;
@@ -100,5 +98,4 @@ throws_ok(
     'execute failed w/ non existing source file',
 );
 
-chdir $cwd;
 done_testing();

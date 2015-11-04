@@ -9,7 +9,6 @@ use Genome::InstrumentData::Command::Import::CsvParser;
 use Genome::InstrumentData::Command::Import::WorkFlow::Inputs;
 use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 require List::Util;
-use Params::Validate ':types';
 
 class Genome::InstrumentData::Command::Import::Launch {
     is => 'Command::V2',
@@ -36,7 +35,7 @@ class Genome::InstrumentData::Command::Import::Launch {
         },
     },
     has_optional_transient => {
-        _imports => { is => 'Array', },
+        _wf_inputs => { is => 'Array', },
         gtmp => { is => 'Number', },
         process => { is => 'Genome::InstrumentData::Command::Import::Process', },
     },
@@ -69,6 +68,9 @@ sub execute {
     my $self = shift;
 
     $self->_check_for_running_processes;
+    $self->process( Genome::InstrumentData::Command::Import::Process->create(import_file => $self->file) );
+    $self->_create_wf_inputs;
+    $self->_calculate_gtmp_required;
     $self->_launch_process;
 
     return 1
@@ -89,47 +91,6 @@ sub _check_for_running_processes {
 
     $self->status_message("Found '%s' process (%s) for metadata file: %s", $active_processes[0]->status, $active_processes[0]->id, $self->file);
     die $self->error_message('Cannot start another import process until the previous one has completed!');
-}
-
-sub _launch_process {
-    my $self = shift;
-
-    my $p = Genome::InstrumentData::Command::Import::Process->create(import_file => $self->file);
-    $self->process($p);
-    my $inputs = $self->_create_wf_inputs;
-
-    my $dag = Genome::WorkflowBuilder::DAG->create(name => 'Import Instrument Data for '.$self->file);
-    my $gtmp = $self->_calculate_gtmp_required($inputs);
-    my $mem = $self->mem;
-    my $lsf_resource = sprintf(
-        "-g %s -M %s -R 'select [mem>%s & gtmp>%s] rsuage[mem=%s,gtmp=%s]", 
-        $self->job_group_name, ($mem * 1024), $mem, $gtmp, $mem, $gtmp,
-    );
-    my $import_op = Genome::WorkflowBuilder::Command->create(
-        name => 'InstData Import : Run WF',
-        command => 'Genome::InstrumentData::Command::Import::WorkFlow::Run',
-        lsf_resource => $lsf_resource,
-    );
-    $dag->connect_input(
-        input_property => 'work_flow_inputs',
-        destination => $import_op,
-        destination_property => 'work_flow_inputs',
-    );
-    $dag->add_operation($import_op);
-    $dag->parallel_by('work_flow_inputs');
-    $dag->connect_output(
-        output_property => 'instrument_data',
-        source => $import_op,
-        source_property => 'instrument_data',
-    );
-
-    $p->run(
-        workflow_xml => $dag->get_xml,
-        workflow_inputs => { work_flow_inputs => $inputs, },
-    );
-    $self->status_message("Started imports!\nProcess id: %s\nMetadata directory: %s\nView status with:'genome process view %s'", $p->id, $p->metadata_directory, $p->id);
-
-    return 1;
 }
 
 sub _create_wf_inputs {
@@ -160,14 +121,14 @@ sub _create_wf_inputs {
         );
     }
 
-    return \@inputs;
+    return $self->_wf_inputs(\@inputs);
 }
 
 sub _calculate_gtmp_required {
-    my ($self, $inputs) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => ARRAYREF},);
+    my $self = shift;
 
     my @kb_required;
-    for my $input ( @$inputs ) {
+    for my $input ( @{$self->_wf_inputs} ) {
         my $kb_required = $input->source_files->kilobytes_required_for_processing;
         $kb_required = 1048576 if $kb_required < 1048576; # 1 Gb 
         push @kb_required, $kb_required;
@@ -175,6 +136,41 @@ sub _calculate_gtmp_required {
 
     my $max_kb_required = List::Util::max(@kb_required);
     return $self->gtmp( $max_kb_required / ( 1024 * 1024 ) );
+}
+
+sub _launch_process {
+    my $self = shift;
+
+    my $dag = Genome::WorkflowBuilder::DAG->create(name => 'Import Instrument Data for '.$self->file);
+    my $lsf_resource = sprintf(
+        "-g %s -M %s -R 'select [mem>%s & gtmp>%s] rsuage[mem=%s,gtmp=%s]", 
+        $self->job_group_name, ($self->mem * 1024), $self->mem, $self->gtmp, $self->mem, $self->gtmp,
+    );
+    my $import_op = Genome::WorkflowBuilder::Command->create(
+        name => 'InstData Import : Run WF',
+        command => 'Genome::InstrumentData::Command::Import::WorkFlow::Run',
+        lsf_resource => $lsf_resource,
+    );
+    $dag->connect_input(
+        input_property => 'work_flow_inputs',
+        destination => $import_op,
+        destination_property => 'work_flow_inputs',
+    );
+    $dag->add_operation($import_op);
+    $dag->parallel_by('work_flow_inputs');
+    $dag->connect_output(
+        output_property => 'instrument_data',
+        source => $import_op,
+        source_property => 'instrument_data',
+    );
+
+    $self->process->run(
+        workflow_xml => $dag->get_xml,
+        workflow_inputs => { work_flow_inputs => $self->_wf_inputs, },
+    );
+    $self->status_message("Started imports!\nProcess id: %s\nMetadata directory: %s\nView status with:'genome process view %s'", $self->process->id, $self->process->metadata_directory, $self->process->id);
+
+    return 1;
 }
 
 1;
