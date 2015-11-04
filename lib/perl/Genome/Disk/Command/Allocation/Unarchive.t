@@ -101,6 +101,7 @@ my $analysis_project = Genome::Config::AnalysisProject->__define__(name => 'test
 my $model = Genome::Test::Factory::Model::SingleSampleGenotype->setup_object(name => 'test model for Unarchive.t');
 Genome::Config::AnalysisProject::ModelBridge->create(analysis_project => $analysis_project, model => $model);
 my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
+my $sr = Genome::InstrumentData::AlignmentResult::Speedseq->__define__(test_name => 'testing Unarchive.t');
 
 # Make test allocation
 my $allocation_path = tempdir(
@@ -138,8 +139,8 @@ my $cmd = Genome::Disk::Command::Allocation::Unarchive->create(
 ok($cmd, 'created unarchive command');
 throws_ok(sub { $cmd->execute }, qr/currently not handled/, 'command fails with unsupported owner');
 
-$allocation->owner_id($build->id);
-$allocation->owner_class_name($build->class);
+$allocation->owner_id($sr->id);
+$allocation->owner_class_name($sr->class);
 $cmd = Genome::Disk::Command::Allocation::Unarchive->create(
     allocations => [$allocation],
     analysis_project => $analysis_project,
@@ -148,6 +149,8 @@ $cmd = Genome::Disk::Command::Allocation::Unarchive->create(
 ok($cmd->execute, 'successfully executed unarchive command');
 is($allocation->volume->id, $volume->id, 'allocation moved to active volume');
 ok($allocation->is_archived == 0, 'allocation is not archived');
+my @users = $sr->users;
+is($users[0]->user, $analysis_project, 'analysis project linked to SR whose allocation was unarchived');
 
 # Make another allocation
 $allocation_path = tempdir(
