@@ -15,7 +15,7 @@
       <operationtype commandClass="Genome::Model::SingleSampleGenotype::Command::QualityControl" typeClass="Workflow::OperationType::Command"/>
   </operation>
   <operation name="HaplotypeCaller" parallelBy="bucket">
-      <operationtype commandClass="Genome::Model::SingleSampleGenotype::Command::HaplotypeCaller" typeClass="Workflow::OperationType::Command"/>
+      <operationtype commandClass="Genome::Model::SingleSampleGenotype::Command::HaplotypeCaller::BucketIterator" typeClass="Workflow::OperationType::Command"/>
   </operation>
 
   <operationtype typeClass="Workflow::OperationType::Model">

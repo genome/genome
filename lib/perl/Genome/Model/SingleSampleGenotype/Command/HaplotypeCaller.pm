@@ -9,9 +9,10 @@ class Genome::Model::SingleSampleGenotype::Command::HaplotypeCaller {
     is => 'Genome::Model::SingleSampleGenotype::Command::Base',
     doc => 'Runs the Haplotype Caller on the alignments',
     has_optional_input => [
-        bucket => {
+        intervals => {
             is => 'Text',
-            doc => 'bucket of chromosomes to restrict this run of the haplotype caller',
+            doc => 'intervals to restrict this run of the haplotype caller',
+            is_many => 1,
         },
     ],
 };
@@ -46,16 +47,6 @@ sub _params_for_command {
 
 sub _label_for_result {
     return 'haplotype_caller_result';
-}
-
-sub intervals {
-    my $self = shift;
-    my $build = $self->build;
-    my $bucket = $self->bucket;
-
-    return unless $bucket;
-
-    return $build->buckets_result->bucket($bucket);
 }
 
 1;
