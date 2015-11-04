@@ -224,7 +224,8 @@ sub _coords_are_valid {
     return (
         defined $chrom and $chrom ne q{}
             and defined $start and $start ne q{}
-            and $stop
+            and defined $stop and $stop ne q{}
+            and $start <= $stop
     );
 }
 
