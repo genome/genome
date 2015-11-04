@@ -25,12 +25,9 @@ class Genome::Disk::Detail::Allocation::Copier {
 sub copy {
     my $self = shift;
 
-    my $id = $self->allocation_id;
-
     my $output_dir = $self->output_dir;
 
-    my ($allocation_object, $allocation_lock) =
-        Genome::Disk::Allocation->get_with_lock($id);
+    my ($allocation_object, $allocation_lock) = Genome::Disk::Allocation->get_with_lock($self->allocation_id);
 
     my $unlocker = Scope::Guard->new(sub { $allocation_lock->unlock if $allocation_lock });
 
@@ -52,7 +49,7 @@ sub copy {
         eval {
             my $tar_path = $allocation_object->tar_path;
             my $cmd = "tar -C $shadow_absolute_path -xf $tar_path";
-            Genome::Disk::Detail::Allocation::Unarchiver->_do_unarchive_cmd($cmd);
+            Genome::Disk::Detail::Allocation::Unarchiver->_do_unarchive_cmd($self->allocation_id,$cmd);
             $rsync_params{source_directory} = $shadow_absolute_path;
         };
         my $unarchive_error_message = $@;

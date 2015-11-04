@@ -59,7 +59,7 @@ sub unarchive {
 
     my $tx = UR::Context::Transaction->begin();
     try {
-        $self->_do_unarchive_command($cmd);
+        $self->_do_unarchive_cmd($id,$cmd);
 
         # Make updates to the allocation
         $self->_swap_shadow_allocation($shadow_allocation, $allocation_object);
@@ -135,6 +135,7 @@ sub _swap_shadow_allocation {
 
 sub _do_unarchive_cmd {
     my $class = shift;
+    my $id = shift;
     my $cmd = shift;
 
     # It's very possible that if no commit is on, the volumes/allocations
