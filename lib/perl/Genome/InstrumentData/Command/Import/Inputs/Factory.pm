@@ -9,6 +9,7 @@ require File::Basename;
 require List::MoreUtils;
 use Params::Validate qw( :types );
 use Text::CSV;
+use Tie::File;
 
 class Genome::InstrumentData::Command::Import::Inputs::Factory {
     is => 'UR::Object',
@@ -26,9 +27,9 @@ class Genome::InstrumentData::Command::Import::Inputs::Factory {
     },
     has_optional_transient => {
         _entity_attributes => { is => 'ARRAY', },
-        _fh => { },
+        _lines => { is => 'ARRAY', },
         _line_number => { is => 'Number', default => 0, },
-        _parser => { },
+        _parser => { is => 'Text::CSV', },
     },
 };
 
@@ -102,12 +103,14 @@ sub create {
     $self->_parser($parser);
 
     die $self->error_message('File (%s) is empty!', $file) if not -s $file;
-    my $fh = Genome::Sys->open_file_for_reading($file);
-    $self->_fh($fh);
-    my $headers = $parser->getline($fh);
-    $parser->column_names($headers);
+    tie my @lines, 'Tie::File', $file;
+    $self->_lines(\@lines);
+    $parser->parse($lines[0])
+        or $self->fatal_message('Failed to parse header line! %s', $lines[0]);
+    my @headers = $parser->fields;
+    $parser->column_names(\@headers);
 
-    my $entity_attributes_ok = $self->_resolve_headers($headers);
+    my $entity_attributes_ok = $self->_resolve_headers(\@headers);
     return if not $entity_attributes_ok;
 
     return $self;
@@ -116,13 +119,16 @@ sub create {
 sub next {
     my $self = shift;
 
-    my $line_ref = $self->_parser->getline_hr($self->_fh);
-    return if not $line_ref;
+    my $line_number = $self->_increment_line_number;
+    my $line = $self->_lines->[$line_number];
+    return if not $line;
+    $self->_parser->parse($line)
+        or $self->fatal_mesage('Failed to parse line! %s', $line);
 
-    my $entity_params = $self->_resolve_entity_params_for_values($line_ref);
+    my $entity_params = $self->_resolve_entity_params_for_values([ $self->_parser->fields ]);
     $self->_resolve_names_for_entities($entity_params);
     $entity_params->{file} = $self->file;
-    $entity_params->{line_number} = $self->_increment_line_number;
+    $entity_params->{line_number} = $line_number;
 
     return $entity_params;
 }
@@ -147,12 +153,14 @@ sub _resolve_headers {
 }
 
 sub _resolve_entity_params_for_values {
-    my ($self, $line_ref) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => HASHREF});
+    my ($self, $values) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => ARRAYREF});
 
     my %entity_params = map { $_ => {} } $self->entity_types;
-    for my $entity_attribute ( @{$self->_entity_attributes} ) {
-        my $value = $line_ref->{ $entity_attribute->{header} };
+    my $entity_attributes = $self->_entity_attributes;
+    for ( my $i = 0; $i <= $#$entity_attributes; $i++ ) {
+        my $value = $values->[$i];
         next if not defined $value;
+        my $entity_attribute = $entity_attributes->[$i];
         $entity_params{ $entity_attribute->{type} }->{ $entity_attribute->{attribute} } = $value;
     }
 
