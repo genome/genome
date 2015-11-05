@@ -118,8 +118,12 @@ sub create {
 
 sub next {
     my $self = shift;
+    return $self->from_line_number( $self->_increment_line_number );
+}
 
-    my $line_number = $self->_increment_line_number;
+sub from_line_number {
+    my ($self, $line_number) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
+
     my $line = $self->_lines->[$line_number];
     return if not $line;
 

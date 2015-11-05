@@ -8,7 +8,7 @@ use above 'Genome';
 use Genome::Utility::Test;
 use File::Spec;
 use Test::Exception;
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 my $class = 'Genome::InstrumentData::Command::Import::Inputs::Factory';
 use_ok($class) or die;
@@ -17,30 +17,42 @@ my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 my $input_file = File::Spec->join($data_dir, 'info.tsv');
 
 my $csv_parser = $class->create(file => $input_file);
-my $ref;
+my $expected_line4_ref = {
+    file => $input_file,
+    line_number => 4,
+    individual => { name => 'TeSt-0000', nomenclature => 'TeSt', upn => '0000', },
+    sample => { name => 'TeSt-0000-01', nomenclature => 'TeSt', },
+    library => { name => 'TeSt-0000-01-extlibs', },
+    instdata => {
+        lane => 7,
+        downsample_ratio => '.1',
+    },
+    source_files => ['bam3.bam'],
+};
 
 subtest 'next' => sub{
     plan tests => 2;
 
-    for (1..4) { $ref = $csv_parser->next }
+    for (1..3) { $csv_parser->next }
+    my $ref = $csv_parser->next;
     is_deeply(
         $ref,
-        {
-            file => $input_file,
-            line_number => 4,
-            individual => { name => 'TeSt-0000', nomenclature => 'TeSt', upn => '0000', },
-            sample => { name => 'TeSt-0000-01', nomenclature => 'TeSt', },
-            library => { name => 'TeSt-0000-01-extlibs', },
-            instdata => {
-                lane => 7,
-                downsample_ratio => '.1',
-            },
-            source_files => ['bam3.bam'],
-        }, 
+        $expected_line4_ref,
         'last ref is correct',
     );
     ok(!$csv_parser->next, 'reached end of file');
 };
+
+subtest 'from_line' => sub{
+    plan tests => 1;
+
+    is_deeply(
+        $csv_parser->from_line_number(4),
+        $expected_line4_ref,
+        'from_line 4 return is correct',
+    );
+};
+
 
 subtest 'fails' => sub{
     plan tests => 8;
