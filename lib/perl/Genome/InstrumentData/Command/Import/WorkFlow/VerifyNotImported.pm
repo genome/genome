@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 require File::Basename;
-require Genome::InstrumentData::Command::Import::WorkFlow::SourceFile;
+require Genome::InstrumentData::Command::Import::Inputs::SourceFile;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported { 
     is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithDownsampleRatio /],
@@ -46,7 +46,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
         source_file => {
             is_constant => 1,
             calculate_from => [qw/ source_path /],
-            calculate => q| return Genome::InstrumentData::Command::Import::WorkFlow::SourceFile->create(path => $source_path); |,
+            calculate => q| return Genome::InstrumentData::Command::Import::Inputs::SourceFile->create(path => $source_path); |,
         },
     },
 };

@@ -7,7 +7,6 @@ use Genome;
 
 use Genome::InstrumentData::Command::Import::Inputs::Factory;
 use Genome::InstrumentData::Command::Import::WorkFlow::Inputs;
-use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 require List::Util;
 
 class Genome::InstrumentData::Command::Import::Launch {

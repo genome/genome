@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::WorkFlow::SourceFile;
+package Genome::InstrumentData::Command::Import::Inputs::SourceFile;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ require File::Basename;
 require List::MoreUtils;
 require LWP::Simple;
 
-class Genome::InstrumentData::Command::Import::WorkFlow::SourceFile { 
+class Genome::InstrumentData::Command::Import::Inputs::SourceFile { 
     is => 'UR::Object',
     has => {
         path => { is => 'Text', },

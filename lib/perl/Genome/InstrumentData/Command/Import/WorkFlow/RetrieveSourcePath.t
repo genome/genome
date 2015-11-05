@@ -24,7 +24,7 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePathT
     source_path => 'input.bam',
 );
 ok($cmd->result, 'execute');
-my $destination_file = Genome::InstrumentData::Command::Import::WorkFlow::SourceFile->create(path => File::Spec->join($tmpdir, 'input.bam'));
+my $destination_file = Genome::InstrumentData::Command::Import::Inputs::SourceFile->create(path => File::Spec->join($tmpdir, 'input.bam'));
 is($cmd->destination_path, $destination_file->path, 'destination path named correctly');
 is($cmd->destination_original_md5_path, $destination_file->original_md5_path, 'destination md5 path named correctly');
 

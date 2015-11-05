@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
+package Genome::InstrumentData::Command::Import::Inputs::SourceFiles;
 
 use strict;
 use warnings;
@@ -8,17 +8,17 @@ use Genome;
 require File::Basename;
 require File::Copy;
 require Filesys::Df;
-use Genome::InstrumentData::Command::Import::WorkFlow::SourceFile;
+use Genome::InstrumentData::Command::Import::Inputs::SourceFile;
 require List::MoreUtils;
 use Params::Validate ':types';
 
-class Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles { 
+class Genome::InstrumentData::Command::Import::Inputs::SourceFiles { 
     is => 'UR::Object',
     has => {
         paths => { is => 'Text', is_many => 1, },
     },
     has_transient => {
-        source_files => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFile', is_many => 1 },
+        source_files => { is => 'Genome::InstrumentData::Command::Import::Inputs::SourceFile', is_many => 1 },
         format => { is =>'Text', },
         retrieval_method => { is =>'Text', },
     },
@@ -38,7 +38,7 @@ sub create {
 
     $self->source_files([
         map { 
-            Genome::InstrumentData::Command::Import::WorkFlow::SourceFile->create(path => $_)
+            Genome::InstrumentData::Command::Import::Inputs::SourceFile->create(path => $_)
         } $self->paths
         ]);
 

@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
+use Genome::InstrumentData::Command::Import::Inputs::SourceFiles;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Inputs { 
     is => 'UR::Object',
@@ -71,7 +71,7 @@ sub instrument_data_for_original_data_path {
 
 sub source_files {
     my $self = shift;
-    return Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles->create(paths => $self->source_paths);
+    return Genome::InstrumentData::Command::Import::Inputs::SourceFiles->create(paths => $self->source_paths);
 }
 
 sub as_hashref {
