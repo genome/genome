@@ -141,7 +141,10 @@ sub _resolve_headers {
     my @entity_attributes;
     for my $header ( @$headers ) {
         my ($type, $attribute) = split(/\./, $header, 2);
-        next if not defined $attribute; # silently skip columns w/o an entity type
+        if ( not defined $attribute ) {
+            push @entity_attributes, undef; # add to indicate unrecognized field
+            next;
+        }
         die $self->error_message('Invalid entity type: %s', $type) if not List::MoreUtils::any { $type eq $_ } $self->entity_types;
         push @entity_attributes, {
             header => $header,
@@ -164,9 +167,10 @@ sub _resolve_entity_params_from_line {
     my %entity_params = map { $_ => {} } $self->entity_types;
     my $entity_attributes = $self->_entity_attributes;
     for ( my $i = 0; $i <= $#$entity_attributes; $i++ ) {
+        my $entity_attribute = $entity_attributes->[$i];
+        next if not $entity_attribute; # skip unrecognized fields
         my $value = $values[$i];
         next if not defined $value;
-        my $entity_attribute = $entity_attributes->[$i];
         $entity_params{ $entity_attribute->{type} }->{ $entity_attribute->{attribute} } = $value;
     }
 
