@@ -40,7 +40,7 @@ is($converted_bed_file, $converted_bed_file_2, 'second conversion results in the
 
 my $expected_result = <<EOBED
 1	2	3	r0
-GL000209.1	1000	1100	r1
+GL000209.1	0	1100	r1
 X	15	25	r2
 EOBED
 ;
@@ -104,7 +104,7 @@ sub setup_test_data {
 
     my $test_bed_content = <<EOBED
 chr1	2	3	region1
-chr19_GL000209R	1000	1100	region2
+chr19_GL000209R	0	1100	region2
 chrX	15	25	region3
 EOBED
 ;

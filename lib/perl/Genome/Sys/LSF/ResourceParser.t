@@ -5,8 +5,7 @@ use Data::Dumper;
 use above "Genome";
 
 BEGIN {
-    use_ok('Genome::Sys::LSF::ResourceParser',
-        'parse_lsf_params', 'construct_lsf_param_string')
+    use_ok('Genome::Sys::LSF::ResourceParser', 'parse_lsf_params')
 }
 
 sub parse_ok {
@@ -14,11 +13,6 @@ sub parse_ok {
     my $parsed = parse_lsf_params($lsf_param_string);
     is_deeply($parsed, $lsf_params, "Parse: $lsf_param_string") or diag(Dumper({
         got => $parsed, expected => $lsf_params }));
-
-    my $reconstructed_lsf_resource = construct_lsf_param_string($parsed);
-    my $reparsed = parse_lsf_params($reconstructed_lsf_resource);
-    is_deeply($reparsed, $lsf_params, "Unparse: $lsf_param_string") or
-        diag(Dumper({got => $reparsed, expected => $lsf_params }));
 }
 
 
@@ -402,7 +396,7 @@ parse_ok("-M 200000 -n 4 -c 10 -R 'rusage[mem=200:gtmp=5]' -q short", {
         },
         'rLimits' => {
             'RSS' => '200000',
-            'cpuTime' => '10'
+            'cpuTime' => '600'
         }
     });
 parse_ok("-M 14000000 -R 'select[mem>14000] rusage[mem=14000]'", {
