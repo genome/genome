@@ -26,6 +26,7 @@ sub copy {
     my $self = shift;
 
     my $output_dir = $self->output_dir;
+    Genome::Sys->create_directory($output_dir);
 
     my ($allocation_object, $allocation_lock) = Genome::Disk::Allocation->get_with_lock($self->allocation_id);
 
@@ -39,17 +40,15 @@ sub copy {
     # The shadow allocation is just a way of keeping track of our temporary
     # additional disk usage during the copy.
     my $shadow_allocation = Genome::Disk::Allocation->shadow_get_or_create(%creation_params);
-    my $shadow_absolute_path = $shadow_allocation->absolute_path;
     my %rsync_params = (
         source_directory => $original_absolute_path,
         target_directory => $output_dir,
     );
+    my $shadow_absolute_path = $shadow_allocation->absolute_path;
     if ($allocation_object->is_archived) {
         Genome::Sys->create_directory($shadow_absolute_path);
         eval {
-            my $tar_path = $allocation_object->tar_path;
-            my $cmd = "tar -C $shadow_absolute_path -xf $tar_path";
-            Genome::Disk::Detail::Allocation::Unarchiver->_do_unarchive_cmd($self->allocation_id,$cmd);
+            Genome::Disk::Detail::Allocation::Unarchiver->_do_unarchive_cmd($allocation_object,$shadow_allocation);
             $rsync_params{source_directory} = $shadow_absolute_path;
         };
         my $unarchive_error_message = $@;
