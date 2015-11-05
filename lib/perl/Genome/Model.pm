@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use Genome::Sys::LockProxy qw();
 use Carp;
+use Scope::Guard;
+use UR::Context::Transaction qw(TRANSACTION_STATE_OPEN);
 
 class Genome::Model {
     is => [ "Genome::Notable", "Genome::Searchable" ],
@@ -471,18 +473,6 @@ sub __display_name__ {
 sub create {
     my $class = shift;
 
-    no warnings 'redefine';
-    local *__errors__ = sub { () };
-    require Genome::Model::Input;
-    local *Genome::Model::Input::__errors__ = sub {
-            my $input = shift;
-            my $errors_fcn = $input->super_can('__errors__');
-            # Some places create hangoff model inputs that have undef value_id
-            # and later fill them in before the final DB commit
-            return grep { ($_->properties)[0] ne 'value_id' }
-                    $input->$errors_fcn();
-        };
-
     # If create is being called directly on this class or on an abstract subclass, SUPER::create will
     # figure out the correct concrete subclass (if one exists) and call create on it.
     if ($class eq __PACKAGE__ or $class->__meta__->is_abstract) {
@@ -504,80 +494,83 @@ sub create {
         }
     }
 
-    UR::Context::Transaction::do {
-        my $self = $class->SUPER::create($bx);
-        unless ($self) {
-            return;
-        }
+    my $tx = UR::Context::Transaction->begin(commit_validator => sub { 1 });
+    my $guard = Scope::Guard->new(sub { $tx->rollback });
 
-        unless ($self->subject) {
-            my $subject = $self->_resolve_subject;
-            if ($subject and $subject->isa('Genome::Subject')) {
-                $self->subject($subject);
+    my $self = $class->SUPER::create($bx);
+    unless ($self) {
+        return;
+    }
+
+    unless ($self->subject) {
+        my $subject = $self->_resolve_subject;
+        if ($subject and $subject->isa('Genome::Subject')) {
+            $self->subject($subject);
+        }
+        else {
+            Carp::confess "Could not resolve subject for model";
+        }
+    }
+
+    unless ($self->processing_profile) {
+        my $reason = eval {
+            my $pp_id = $bx->value_for('processing_profile_id');
+            unless ($pp_id) {
+                return 'No processing profile specified!';
             }
-            else {
-                Carp::confess "Could not resolve subject for model";
+
+            my $pp = Genome::ProcessingProfile->get($pp_id);
+            unless ($pp) {
+                return "Specified processing profile ($pp_id) does not exist!";
             }
-        }
 
-        unless ($self->processing_profile) {
-            my $reason = eval {
-                my $pp_id = $bx->value_for('processing_profile_id');
-                unless ($pp_id) {
-                    return 'No processing profile specified!';
-                }
-
-                my $pp = Genome::ProcessingProfile->get($pp_id);
-                unless ($pp) {
-                    return "Specified processing profile ($pp_id) does not exist!";
-                }
-
-                my $pp_type = Genome::Utility::Text::string_to_camel_case($pp->type_name);
-                my $model_type = ($self->class =~ /^Genome::Model::(.*)/)[0];
-                if ($pp_type && $model_type ne $pp_type) {
-                    return "Processing profile type ($pp_type) does not match model type ($model_type)!";
-                }
-
-                return "Missing processing profile; unknown error!";
-            };
-
-            Carp::confess $reason || $@;
-        }
-
-        for my $m (qw(run_as created_by)) {
-            $self->$m(Genome::Sys->username) unless $self->$m;
-        }
-
-        unless ($self->name) {
-            my $name = $self->default_model_name;
-            if ($name) {
-                $self->name($name);
+            my $pp_type = Genome::Utility::Text::string_to_camel_case($pp->type_name);
+            my $model_type = ($self->class =~ /^Genome::Model::(.*)/)[0];
+            if ($pp_type && $model_type ne $pp_type) {
+                return "Processing profile type ($pp_type) does not match model type ($model_type)!";
             }
-            else {
-                Carp::confess "Could not resolve default name for model!";
-            }
+
+            return "Missing processing profile; unknown error!";
+        };
+
+        Carp::confess $reason || $@;
+    }
+
+    for my $m (qw(run_as created_by)) {
+        $self->$m(Genome::Sys->username) unless $self->$m;
+    }
+
+    unless ($self->name) {
+        my $name = $self->default_model_name;
+        if ($name) {
+            $self->name($name);
         }
-
-        $self->creation_date(UR::Context->now);
-
-        $self->_verify_no_other_models_with_same_name_and_type_exist;
-
-        # If build requested was set as part of model creation, it didn't use the mutator method that's been
-        # overridden. Re-set it here so the required actions take place.
-        if ($self->build_requested) {
-            $self->build_requested($self->build_requested, 'model created with build requested set');
+        else {
+            Carp::confess "Could not resolve default name for model!";
         }
+    }
 
-        if ($self->subject) {
-            # TODO: get rid of this as soon as we drop the old database column
-            $self->_subject_class_name($self->subject->class);
-        }
+    $self->creation_date(UR::Context->now);
 
-        # TODO: the column behind this should become the new primary key when we are fully in sync
-        $self->_id($self->id);
+    $self->_verify_no_other_models_with_same_name_and_type_exist;
 
-        return $self;
-    };
+    # If build requested was set as part of model creation, it didn't use the mutator method that's been
+    # overridden. Re-set it here so the required actions take place.
+    if ($self->build_requested) {
+        $self->build_requested($self->build_requested, 'model created with build requested set');
+    }
+
+    if ($self->subject) {
+        # TODO: get rid of this as soon as we drop the old database column
+        $self->_subject_class_name($self->subject->class);
+    }
+
+    # TODO: the column behind this should become the new primary key when we are fully in sync
+    $self->_id($self->id);
+
+    $tx->commit() && $guard->dismiss();
+
+    return $self;
 }
 
 # Delete the model and all of its builds/inputs
