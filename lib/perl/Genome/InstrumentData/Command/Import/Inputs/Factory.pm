@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::CsvParser;
+package Genome::InstrumentData::Command::Import::Inputs::Factory;
 
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ require List::MoreUtils;
 use Params::Validate qw( :types );
 use Text::CSV;
 
-class Genome::InstrumentData::Command::Import::CsvParser {
+class Genome::InstrumentData::Command::Import::Inputs::Factory {
     is => 'UR::Object',
     has => {
         file => {

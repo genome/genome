@@ -10,7 +10,7 @@ use File::Spec;
 use Test::Exception;
 use Test::More;
 
-my $class = 'Genome::InstrumentData::Command::Import::CsvParser';
+my $class = 'Genome::InstrumentData::Command::Import::Inputs::Factory';
 use_ok($class) or die;
 
 my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'generate-cmds');

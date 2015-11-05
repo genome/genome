@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use Genome::InstrumentData::Command::Import::CsvParser;
+use Genome::InstrumentData::Command::Import::Inputs::Factory;
 require File::Basename;
 require List::MoreUtils;
 use Params::Validate qw( :types );
@@ -15,7 +15,7 @@ class Genome::InstrumentData::Command::Import::CreateEntities {
     has_input => {
         file => {
             is => 'Text',
-            doc => Genome::InstrumentData::Command::Import::CsvParser->csv_help,
+            doc => Genome::InstrumentData::Command::Import::Inputs::Factory->csv_help,
         },
     },
     has_optional_transient => {
@@ -31,7 +31,7 @@ sub help_detail {
 sub execute {
     my $self = shift;
     
-    my $parser = Genome::InstrumentData::Command::Import::CsvParser->create(file => $self->file);
+    my $parser = Genome::InstrumentData::Command::Import::Inputs::Factory->create(file => $self->file);
     while ( my $entity_params = $parser->next ) {
         my $library = Genome::Library->get(name => $entity_params->{library}->{name});
         next if $library;

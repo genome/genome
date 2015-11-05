@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use Genome::InstrumentData::Command::Import::CsvParser;
+use Genome::InstrumentData::Command::Import::Inputs::Factory;
 use Genome::InstrumentData::Command::Import::WorkFlow::Inputs;
 use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 require List::Util;
@@ -60,7 +60,7 @@ Listing created instrument data:
 About the Metadata File
 
 HELP
-    $help .= Genome::InstrumentData::Command::Import::CsvParser->csv_help;
+    $help .= Genome::InstrumentData::Command::Import::Inputs::Factory->csv_help;
     return $help;
 }
 
@@ -97,7 +97,7 @@ sub _create_wf_inputs {
     my $self = shift;
 
     my @inputs;
-    my $parser = Genome::InstrumentData::Command::Import::CsvParser->create(file => $self->file);
+    my $parser = Genome::InstrumentData::Command::Import::Inputs::Factory->create(file => $self->file);
     my %seen;
     while ( my $import = $parser->next ) {
         my $library_name = $import->{library}->{name};
