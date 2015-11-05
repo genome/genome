@@ -45,7 +45,7 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::DetectorBase {
             doc => 'queue to use when running in a workflow',
         },
         lsf_resource => {
-            default_value => Genome::Config::get('lsf_resource_chimerascan'),
+            default_value => Genome::Config::get('lsf_resource_rnaseq_chimerascan'),
             is_optional => 1,
             doc => 'default LSF resource expectations',
         },
