@@ -13,7 +13,7 @@ use above "Genome";
 use Test::Exception;
 use Test::More;
 
-my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs';
+my $class = 'Genome::InstrumentData::Command::Import::::Inputs';
 use_ok($class) or die;
 
 my $analysis_project = Genome::Config::AnalysisProject->__define__(name => 'TEST-AnP');

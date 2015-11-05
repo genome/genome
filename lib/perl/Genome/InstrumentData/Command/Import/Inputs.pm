@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::WorkFlow::Inputs;
+package Genome::InstrumentData::Command::Import::::Inputs;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use Genome::InstrumentData::Command::Import::Inputs::SourceFiles;
 
-class Genome::InstrumentData::Command::Import::WorkFlow::Inputs { 
+class Genome::InstrumentData::Command::Import::::Inputs { 
     is => 'UR::Object',
     id_by => {
         process_id => { is => 'Text', },
