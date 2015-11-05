@@ -122,10 +122,8 @@ sub next {
     my $line_number = $self->_increment_line_number;
     my $line = $self->_lines->[$line_number];
     return if not $line;
-    $self->_parser->parse($line)
-        or $self->fatal_mesage('Failed to parse line! %s', $line);
 
-    my $entity_params = $self->_resolve_entity_params_for_values([ $self->_parser->fields ]);
+    my $entity_params = $self->_resolve_entity_params_from_line($line);
     $self->_resolve_names_for_entities($entity_params);
     $entity_params->{file} = $self->file;
     $entity_params->{line_number} = $line_number;
@@ -152,13 +150,17 @@ sub _resolve_headers {
     return 1;
 }
 
-sub _resolve_entity_params_for_values {
-    my ($self, $values) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => ARRAYREF});
+sub _resolve_entity_params_from_line {
+    my ($self, $line) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => SCALAR});
+
+    $self->_parser->parse($line)
+        or $self->fatal_mesage('Failed to parse line! %s', $line);
+    my @values = $self->_parser->fields;
 
     my %entity_params = map { $_ => {} } $self->entity_types;
     my $entity_attributes = $self->_entity_attributes;
     for ( my $i = 0; $i <= $#$entity_attributes; $i++ ) {
-        my $value = $values->[$i];
+        my $value = $values[$i];
         next if not defined $value;
         my $entity_attribute = $entity_attributes->[$i];
         $entity_params{ $entity_attribute->{type} }->{ $entity_attribute->{attribute} } = $value;
