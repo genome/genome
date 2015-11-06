@@ -71,18 +71,18 @@ sub execute {
     for my $protein_name (sort keys %{$netmhc_results->{$protein_type}}) {
         VARIANT_AA:
         for my $variant_aa (sort keys %{$netmhc_results->{$protein_type}->{$protein_name}}) {
-            my $mt_position_score = $netmhc_results->{$protein_type}{$protein_name}{$variant_aa};
-            my $wt_position_score = $netmhc_results->{'WT'}{$protein_name}{$variant_aa};
-            my @positions = sort {$mt_position_score->{$a}->{score} <=> $mt_position_score->{$b}->{score}} keys %{$mt_position_score};
+            my $mt_position_data = $netmhc_results->{$protein_type}{$protein_name}{$variant_aa};
+            my $wt_position_data = $netmhc_results->{'WT'}{$protein_name}{$variant_aa};
+            my @positions = sort {$mt_position_data->{$a}->{score} <=> $mt_position_data->{$b}->{score}} keys %{$mt_position_data};
 
             POSITION:
             for my $position (@positions) {
-                my $mt_score            = $mt_position_score->{$position}->{score};
-                my $mt_epitope_sequence = $netmhc_results->{'MT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence};
+                my $mt_score            = $mt_position_data->{$position}->{score};
+                my $mt_epitope_sequence = $mt_position_data->{$position}->{epitope_sequence};
                 my ($wt_score, $wt_epitope_sequence, $fold_change);
-                if (defined($wt_position_score) && defined($wt_position_score->{$position})) {
-                    $wt_score            = $wt_position_score->{$position}->{score};
-                    $wt_epitope_sequence = $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence};
+                if (defined($wt_position_data) && defined($wt_position_data->{$position})) {
+                    $wt_score            = $wt_position_data->{$position}->{score};
+                    $wt_epitope_sequence = $wt_position_data->{$position}->{epitope_sequence};
                     $fold_change         = sprintf("%.3f", $wt_score / $mt_score);
                     # Skip if mutant amino acid is not present
                     if ($mt_epitope_sequence eq $wt_epitope_sequence) {
