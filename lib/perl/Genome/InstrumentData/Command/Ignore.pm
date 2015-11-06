@@ -23,8 +23,7 @@ class Genome::InstrumentData::Command::Ignore {
 sub execute {
     my $self = shift;
     my $ignore = $self->ignore();
-    if($ignore != 1 and $ignore != 0)
-    {
+    if($ignore != 1 and $ignore != 0) {
         $self->error_message("Ignore is not 1 or 0. (Got: $ignore).");
         return 0;
     }
