@@ -12,6 +12,21 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>run-model-test',
+    [
+      'timeout=s',
+      undef,
+      'polling-interval=s',
+      undef,
+      'color!',
+      undef,
+      'software-revision=s',
+      'files',
+      'model=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>echo',
     [
       'input-statement=s',
