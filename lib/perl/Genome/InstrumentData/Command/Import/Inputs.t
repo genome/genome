@@ -67,6 +67,7 @@ is_deeply([$inputs->instrument_data_for_original_data_path], [$instdata], 'instr
 # as_hashref
 $instrument_data_properties->{process_id} = $process->id;
 $instrument_data_properties->{original_data_path} = join(',', @source_files);
+is_deeply($inputs->instrument_data_properties, $instrument_data_properties, 'instrument_data_properties');
 is_deeply(
     $inputs->as_hashref,
     {

@@ -74,6 +74,10 @@ sub process {
     return Genome::InstrumentData::Command::Import::Process->get(id => $_[0]->process_id);
 }
 
+sub instrument_data_properties {
+    return $_[0]->entity_params->{instdata};
+}
+
 sub instrument_data_for_original_data_path {
     my $self = shift;
     my @odp_attrs = Genome::InstrumentDataAttribute->get(
