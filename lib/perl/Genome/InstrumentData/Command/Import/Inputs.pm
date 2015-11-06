@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::::Inputs;
+package Genome::InstrumentData::Command::Import::Inputs;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use Genome::InstrumentData::Command::Import::Inputs::SourceFiles;
 
-class Genome::InstrumentData::Command::Import::::Inputs { 
+class Genome::InstrumentData::Command::Import::Inputs {
     is => 'UR::Object',
     id_by => {
         process_id => { is => 'Text', },
@@ -15,8 +15,12 @@ class Genome::InstrumentData::Command::Import::::Inputs {
     },
     has => {
         analysis_project_id => { is => 'Text', },
-        library_id => { is => 'Text', },
-        instrument_data_properties => { is => 'HASH', default_value => {}, },
+        entity_params => {
+            is => 'HASH',
+            default_value => {
+                individual => {}, sample => {}, library => {},
+            },
+        },
         source_paths => { is => 'ARRAY', },
     },
     has_transient => {
@@ -32,16 +36,16 @@ sub create {
     my $self = $class->SUPER::create(%params);
     return if not $self;
 
-    for my $requried (qw/ analysis_project_id library_id source_paths /) {
+    for my $requried (qw/ analysis_project_id source_paths /) {
         die $self->error_message("No $requried given to work flow inputs!") if not $self->$requried;
     }
 
-    if ( not $self->instrument_data_properties->{original_data_path} ) {
-        $self->instrument_data_properties->{original_data_path} = join(',', $self->source_files->paths);
+    if ( not $self->entity_params->{instdata}->{original_data_path} ) {
+        $self->entity_params->{instdata}->{original_data_path} = join(',', $self->source_files->paths);
     }
 
     if ( $self->process_id ) {
-        $self->{instrument_data_properties}->{process_id} = $self->process_id;
+        $self->entity_params->{instdata}->{process_id} = $self->process_id;
     }
 
     return $self;
@@ -52,7 +56,18 @@ sub analysis_project {
 }
 
 sub library {
-    return Genome::Library->get(id => $_[0]->library_id);
+    my $self = shift;
+    my %params;
+    if ( $self->entity_params->{library}->{id} ) {
+        %params = ( id => $self->entity_params->{library}->{id} );
+    }
+    elsif ( $self->entity_params->{library}->{name} ) {
+        %params = ( name => $self->entity_params->{library}->{name} );
+    }
+    else {
+        $self->fatal_message('No library id or name given to inputs!');
+    }
+    return Genome::Library->get(%params);
 }
 
 sub process {
@@ -78,9 +93,10 @@ sub as_hashref {
     my $self = shift;
 
     my %hash = map { $_ => $self->$_ } (qw/
-        analysis_project instrument_data_properties library library_name sample_name
+        analysis_project library library_name sample_name
         /);
-    $hash{downsample_ratio} = $self->instrument_data_properties->{downsample_ratio};
+    $hash{instrument_data_properties} = $self->entity_params->{instdata};
+    $hash{downsample_ratio} = $self->entity_params->{instdata}->{downsample_ratio};
     $hash{source_paths} = [ $self->source_files->paths ];
 
     return \%hash;

@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 use Genome::InstrumentData::Command::Import::Inputs::Factory;
-use Genome::InstrumentData::Command::Import::::Inputs;
+use Genome::InstrumentData::Command::Import::Inputs;
 require List::Util;
 
 class Genome::InstrumentData::Command::Import::Launch {
@@ -111,7 +111,7 @@ sub _create_wf_inputs {
         die $self->error_message('No library for name: %s', $library_name) if not @libraries;
         die $self->error_message('Multiple libraries for library name: %s', $library_name) if @libraries > 1;
 
-        push @inputs, Genome::InstrumentData::Command::Import::::Inputs->create(
+        push @inputs, Genome::InstrumentData::Command::Import::Inputs->create(
             process_id => $self->process->id,
             line_number => $import->{line_number},
             analysis_project_id => $self->analysis_project->id,

@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use Genome::InstrumentData::Command::Import::::Inputs;
+use Genome::InstrumentData::Command::Import::Inputs;
 require File::Temp;
 require List::MoreUtils;
 use Workflow::Simple;
@@ -13,7 +13,7 @@ use Workflow::Simple;
 class Genome::InstrumentData::Command::Import::WorkFlow::Run {
     is => 'Command::V2',
     has_input => {
-        work_flow_inputs => { is => 'Genome::InstrumentData::Command::Import::::Inputs', },
+        work_flow_inputs => { is => 'Genome::InstrumentData::Command::Import::Inputs', },
     },
     has_output => {
         instrument_data => { is => 'Genome::InstrumentData', is_many => 1, },

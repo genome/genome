@@ -13,55 +13,48 @@ use above "Genome";
 use Test::Exception;
 use Test::More;
 
-my $class = 'Genome::InstrumentData::Command::Import::::Inputs';
+my $class = 'Genome::InstrumentData::Command::Import::Inputs';
 use_ok($class) or die;
 
 my $analysis_project = Genome::Config::AnalysisProject->__define__(name => 'TEST-AnP');
 ok($analysis_project, 'define analysis project');
-my $library = Genome::Library->__define__(name => 'TEST-sample-libs', sample => Genome::Sample->__define__(name => 'TEST-sample'));
+my $sample_name = 'TEST-01-001';
+my $library = Genome::Library->__define__(name => $sample_name.'-libs', sample => Genome::Sample->__define__(name => $sample_name));
 ok($library, 'define library');
 my @source_files = (qw/ in.1.fastq in.2.fastq /);
 my %required_params = (
     analysis_project_id => $analysis_project->id,
-    library_id => $library->id,
     source_paths => \@source_files,
 );
 my $process = Genome::InstrumentData::Command::Import::Process->__define__();
 my $line_number = 0;
+my $instrument_data_properties = {
+    description => 'imported',
+    downsample_ratio => 0.7,
+    import_source_name => 'TGI',
+    this => 'that',
+};
 
 my $inputs = $class->create(
     %required_params,
     process_id => $process->id,
     line_number => ++$line_number,
-    instrument_data_properties => {
-        description => 'imported',
-        downsample_ratio => 0.7,
-        import_source_name => 'TGI',
-        this => 'that',
+    entity_params => {
+        individual => { name => 'TEST-01', nomenclature => 'TEST', upn => '01', },
+        sample => { name => $sample_name, nomenclature => 'TEST', },
+        library => { name => $sample_name.'-libs', },
+        instdata => $instrument_data_properties,
     },
 );
 ok($inputs, 'create inputs');
 is($inputs->format, 'fastq', 'source files format is fastq');
+is($inputs->library, $library, 'library');
 is($inputs->library_name, $library->name, 'library_name');
 is($inputs->sample_name, $library->sample->name, 'sample_name');
 is_deeply(
     $class->get($inputs->id),
     $inputs,
     'get inputs',
-);
-
-my %instrument_data_properties = (
-    downsample_ratio => 0.7,
-    description => 'imported',
-    import_source_name => 'TGI',
-    original_data_path => join(',', @source_files),
-    process_id => $process->id,
-    this => 'that', 
-);
-is_deeply(
-    $inputs->instrument_data_properties,
-    \%instrument_data_properties,
-    'instrument_data_properties',
 );
 
 # instrument data
@@ -72,12 +65,14 @@ ok($instdata->original_data_path($inputs->source_files->original_data_path), 'ad
 is_deeply([$inputs->instrument_data_for_original_data_path], [$instdata], 'instrument_data_for_original_data_path');
 
 # as_hashref
+$instrument_data_properties->{process_id} = $process->id;
+$instrument_data_properties->{original_data_path} = join(',', @source_files);
 is_deeply(
     $inputs->as_hashref,
     {
         analysis_project => $analysis_project,
-        downsample_ratio => $instrument_data_properties{downsample_ratio},
-        instrument_data_properties => \%instrument_data_properties,
+        downsample_ratio => 0.7,
+        instrument_data_properties => $instrument_data_properties,
         library => $library,
         library_name => $library->name,
         sample_name => $library->sample->name,
