@@ -45,14 +45,6 @@ sub is_insertion {
     return 0;
 }
 
-sub is_deletion {
-    my ($ref, $allele) = @_;
-    if (length($ref) > length($allele)) {
-        return 1;
-    }
-    return 0;
-}
-
 sub calculate_vaf {
     my ($bam_readcount_entry, $alt_allele, $ref) = @_;
     my $coverage = calculate_coverage_for_allele($bam_readcount_entry, $alt_allele, $ref);
