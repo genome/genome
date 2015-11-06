@@ -11,6 +11,7 @@ class Genome::InstrumentData::Command::Ignore {
         instrument_data => {
             is => 'Genome::InstrumentData',
             doc => 'The InstrumentData to be modified.',
+            is_many => 1,
         },
         ignore => {
             is => 'Number',
@@ -22,11 +23,13 @@ class Genome::InstrumentData::Command::Ignore {
 sub execute {
     my $self = shift;
     my $ignore = $self->ignore();
-    if($ignore != 1 and $ignore != 0)
-    {
+    if($ignore != 1 and $ignore != 0) {
         $self->error_message("Ignore is not 1 or 0. (Got: $ignore).");
         return 0;
     }
-    $self->instrument_data->ignored($self->ignore() );
+    foreach my $instrument_data ($self->instrument_data) {
+        $self->status_message("Trying instrument-data id: " . $instrument_data->id);
+        $instrument_data->ignored($self->ignore());
+    }
     return 1;
 }
