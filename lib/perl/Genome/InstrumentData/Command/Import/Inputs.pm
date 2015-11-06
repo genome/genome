@@ -30,6 +30,14 @@ class Genome::InstrumentData::Command::Import::Inputs {
     },
 };
 
+sub lib_and_source_file_md5sum {
+    my $self = shift;
+    return substr(
+        Genome::Sys->md5sum_data( join(' ', $self->library_name, @{$self->source_paths}) ), 
+        0, 6,
+    );
+}
+
 sub create {
     my ($class, %params) = @_;
 

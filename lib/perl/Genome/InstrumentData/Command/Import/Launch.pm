@@ -99,26 +99,26 @@ sub _create_wf_inputs {
     my $parser = Genome::InstrumentData::Command::Import::Inputs::Factory->create(file => $self->file);
     my %seen;
     while ( my $import = $parser->next ) {
-        my $library_name = $import->{library}->{name};
-        my $string = join(' ', $library_name, join(',', $import->{source_files}), map { $import->{instdata}->{$_} } keys %{$import->{instdata}});
-        my $id = substr(Genome::Sys->md5sum_data($string), 0, 6);
-        if ( $seen{$id} ) {
-            die $self->error_message("Duplicate source file/library combination! $string");
-        }
-        $seen{$id}++;
 
+        my $library_name = $import->{library}->{name};
         my @libraries = Genome::Library->get(name => $library_name);
         die $self->error_message('No library for name: %s', $library_name) if not @libraries;
         die $self->error_message('Multiple libraries for library name: %s', $library_name) if @libraries > 1;
 
-        push @inputs, Genome::InstrumentData::Command::Import::Inputs->create(
+        my $inputs = Genome::InstrumentData::Command::Import::Inputs->create(
             process_id => $self->process->id,
             line_number => $import->{line_number},
             analysis_project_id => $self->analysis_project->id,
-            library_id => $libraries[0]->id,
-            instrument_data_properties => $import->{instdata},
+            entity_params => $import,
             source_paths => $import->{source_files},
         );
+
+        my $id = $inputs->lib_and_source_file_md5sum;
+        if ( $seen{$id} ) {
+            $self->fatal_message("Duplicate source file/library combination! %s", join(' ', $inputs->library_name, $inputs->source_paths));
+        }
+        $seen{$id}++;
+        push @inputs, $inputs;
     }
 
     return $self->_wf_inputs(\@inputs);

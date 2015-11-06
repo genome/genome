@@ -57,6 +57,9 @@ is_deeply(
     'get inputs',
 );
 
+# md5 props
+is($inputs->lib_and_source_file_md5sum, '7f7d81', 'md5_properties');
+
 # instrument data
 ok(!$inputs->instrument_data_for_original_data_path, 'no instrument_data_for_original_data_path ... yet');
 my $instdata = Genome::InstrumentData::Imported->__define__;
