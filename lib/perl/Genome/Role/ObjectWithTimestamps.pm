@@ -3,6 +3,7 @@ package Genome::Role::ObjectWithTimestamps;
 use strict;
 use warnings;
 
+use Genome;
 use UR::Role;
 
 role Genome::Role::ObjectWithTimestamps {

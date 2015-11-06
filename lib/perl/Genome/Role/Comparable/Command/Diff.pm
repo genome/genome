@@ -2,6 +2,7 @@ package Genome::Role::Comparable::Command::Diff;
 
 use strict;
 use warnings;
+use Genome;
 use UR::Role;
 
 role Genome::Role::Comparable::Command::Diff {

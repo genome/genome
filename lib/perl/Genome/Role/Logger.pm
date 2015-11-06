@@ -3,6 +3,7 @@ package Genome::Role::Logger;
 use strict;
 use warnings;
 
+use Genome;
 use UR::Role;
 
 use Carp qw();

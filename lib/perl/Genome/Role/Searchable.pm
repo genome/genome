@@ -1,5 +1,6 @@
 package Genome::Role::Searchable;
 
+use Genome;
 use UR::Role;
 
 # A role indicating that this class creates a searchable item in the Solr system

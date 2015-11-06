@@ -3,6 +3,7 @@ package Genome::Role::ObjectWithLockedConstruction;
 use strict;
 use warnings;
 
+use Genome;
 use UR::Role;
 use Genome::Sys::LockProxy qw();
 

@@ -1,6 +1,7 @@
 package Genome::Role::Notable;
 use strict;
 use warnings;
+use Genome;
 use UR::Role;
 
 role Genome::Role::Notable {

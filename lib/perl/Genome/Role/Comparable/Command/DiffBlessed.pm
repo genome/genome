@@ -2,6 +2,7 @@ package Genome::Role::Comparable::Command::DiffBlessed;
 
 use strict;
 use warnings;
+use Genome;
 use UR::Role;
 
 use YAML qw();

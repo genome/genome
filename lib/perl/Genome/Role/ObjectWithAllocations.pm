@@ -3,6 +3,7 @@ package Genome::Role::ObjectWithAllocations;
 use strict;
 use warnings;
 
+use Genome;
 use UR::Role;
 
 require List::MoreUtils;
