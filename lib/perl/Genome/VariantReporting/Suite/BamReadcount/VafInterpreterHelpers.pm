@@ -161,13 +161,7 @@ sub translate_ref_allele {
     if ($right_shift < 0) {
         die "Non-normalized VCF alleles ref=$ref, alt=$alt\n";
     }
-    # XXX This overlaps with Genome::File::Vcf::BamReadcountUtilities::vcf_entry_to_allele_offsets. Fix that.
-    if (Genome::VariantReporting::Suite::BamReadcount::VafCalculator::is_deletion($ref, $alt)) {
-        return substr($ref, $right_shift, 1);
-    }
-    else {
-        return substr($ref, $right_shift - 1, 1);
-    }
+    return substr($ref, Genome::File::Vcf::BamReadcountUtilities::adjusted_offset($ref, $alt, $right_shift), 1);
 }
 
 1;

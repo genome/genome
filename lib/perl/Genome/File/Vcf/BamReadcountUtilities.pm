@@ -14,22 +14,32 @@ sub vcf_entry_to_allele_offsets {
         }
         else {
             my (undef, $shifts) = convert_indel_gt_to_bed($entry->{reference_allele}, $allele);
-            if (defined $shifts->[0]) { 
-                if ($entry->is_deletion($allele)) {
-                    push @offsets, $shifts->[0];
-                }
-                else {
-                    push @offsets, $shifts->[0] - 1;
-                }
-            }
-            else {
-                push @offsets, 0;
-            }
+            push @offsets, adjusted_offset($entry->{reference_allele}, $allele, $shifts->[0]);
         }
     }
     return @offsets;
 }
 
+sub adjusted_offset {
+    my ($ref, $alt, $offset) = @_;
+    if (!defined $offset) {
+        return 0;
+    }
+    if (_is_deletion($ref, $alt)) {
+        return $offset;
+    }
+    else {
+        return $offset - 1;
+    }
+}
+
+sub _is_deletion {
+    my ($ref, $allele) = @_;
+    if (length($ref) > length($allele)) {
+        return 1;
+    }
+    return 0;
+}
 
 sub vcf_entry_to_readcount_positions {
     my ($entry) = @_;
