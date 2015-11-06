@@ -67,20 +67,16 @@ sub execute {
     my $netmhc_results = $self->parse_input;
 
     my $protein_type = 'MT';
+    PROTEIN:
     for my $protein_name (sort keys %{$netmhc_results->{$protein_type}}) {
+        VARIANT_AA:
         for my $variant_aa (sort keys %{$netmhc_results->{$protein_type}->{$protein_name}}) {
             my $mt_position_score = $netmhc_results->{$protein_type}{$protein_name}{$variant_aa};
             my $wt_position_score = $netmhc_results->{'WT'}{$protein_name}{$variant_aa};
             my @positions = sort {$mt_position_score->{$a}->{score} <=> $mt_position_score->{$b}->{score}} keys %{$mt_position_score};
-            my @positions_to_process;
-            if ($type eq 'all') {
-                @positions_to_process = @positions;
-            }
-            elsif ($type eq 'top') {
-                @positions_to_process = ($positions[0]);
-            }
 
-            for my $position (@positions_to_process) {
+            POSITION:
+            for my $position (@positions) {
                 my $mt_score            = $mt_position_score->{$position}->{score};
                 my $mt_epitope_sequence = $netmhc_results->{'MT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence};
                 my ($wt_score, $wt_epitope_sequence, $fold_change);
@@ -89,7 +85,9 @@ sub execute {
                     $wt_epitope_sequence = $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position}->{epitope_sequence};
                     $fold_change         = sprintf("%.3f", $wt_score / $mt_score);
                     # Skip if mutant amino acid is not present
-                    next unless $mt_epitope_sequence ne $wt_epitope_sequence;
+                    if ($mt_epitope_sequence eq $wt_epitope_sequence) {
+                        next POSITION;
+                    }
                 }
                 else {
                     $wt_score = $wt_epitope_sequence = $fold_change = 'NA';
@@ -106,6 +104,10 @@ sub execute {
                     'Fold change' => $fold_change,
                 );
                 $output_fh->write_one(\%data);
+
+                if ($type eq 'top') {
+                    next VARIANT_AA;
+                }
             }
         }
     }
