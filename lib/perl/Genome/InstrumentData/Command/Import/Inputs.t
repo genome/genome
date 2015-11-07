@@ -52,7 +52,7 @@ is($inputs->library, $library, 'library');
 is($inputs->library_name, $library->name, 'library_name');
 is($inputs->sample_name, $library->sample->name, 'sample_name');
 is_deeply(
-    $class->get($inputs->id),
+    $class->get( join("\t", $process->id, $line_number) ),
     $inputs,
     'get inputs',
 );

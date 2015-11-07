@@ -9,10 +9,10 @@ use Genome::InstrumentData::Command::Import::Inputs::SourceFiles;
 
 class Genome::InstrumentData::Command::Import::Inputs {
     is => 'UR::Object',
-    id_by => {
+    id_by => [ # use arrayref to keep order
         process_id => { is => 'Text', },
         line_number => { is => 'Number', },
-    },
+    ],
     has => {
         analysis_project_id => { is => 'Text', },
         entity_params => {
