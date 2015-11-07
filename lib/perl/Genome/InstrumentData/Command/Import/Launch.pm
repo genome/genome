@@ -67,7 +67,10 @@ sub execute {
     my $self = shift;
 
     $self->_check_for_running_processes;
-    $self->process( Genome::InstrumentData::Command::Import::Process->create(import_file => $self->file) );
+    $self->process( Genome::InstrumentData::Command::Import::Process->create(
+            analysis_project => $self->analysis_project,
+            import_file => $self->file,
+        ) );
     $self->_create_wf_inputs;
     $self->_calculate_gtmp_required;
     $self->_launch_process;
@@ -108,7 +111,6 @@ sub _create_wf_inputs {
         my $inputs = Genome::InstrumentData::Command::Import::Inputs->create(
             process_id => $self->process->id,
             line_number => $import->{line_number},
-            analysis_project_id => $self->analysis_project->id,
             entity_params => $import,
             source_paths => $import->{source_files},
         );

@@ -14,7 +14,6 @@ class Genome::InstrumentData::Command::Import::Inputs {
         line_number => { is => 'Number', },
     ],
     has => {
-        analysis_project_id => { is => 'Text', },
         entity_params => {
             is => 'HASH',
             default_value => {
@@ -22,6 +21,9 @@ class Genome::InstrumentData::Command::Import::Inputs {
             },
         },
         source_paths => { is => 'ARRAY', },
+    },
+    has_optional => {
+        analysis_project_id => { is => 'Text', },
     },
     has_transient => {
         format => { via => 'source_files', to => 'format', },
@@ -44,7 +46,7 @@ sub create {
     my $self = $class->SUPER::create(%params);
     return if not $self;
 
-    for my $requried (qw/ analysis_project_id source_paths /) {
+    for my $requried (qw/ analysis_project source_paths /) {
         die $self->error_message("No $requried given to work flow inputs!") if not $self->$requried;
     }
 
@@ -60,7 +62,14 @@ sub create {
 }
 
 sub analysis_project {
-    return Genome::Config::AnalysisProject->get(id => $_[0]->analysis_project_id);
+    my $self = shift;
+    if ( $self->process ) {
+        return $self->process->analysis_project;
+    }
+    elsif ( $self->analysis_project_id ) {
+        return Genome::Config::AnalysisProject->get(id => $self->analysis_project_id);
+    }
+    $self->fatal_message('No process or analysis_project_id to get analysis project!');
 }
 
 sub library {

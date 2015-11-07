@@ -10,6 +10,7 @@ BEGIN {
 
 use above "Genome";
 
+require Genome::Utility::Test;
 use Test::Exception;
 use Test::More;
 
@@ -23,10 +24,15 @@ my $library = Genome::Library->__define__(name => $sample_name.'-libs', sample =
 ok($library, 'define library');
 my @source_files = (qw/ in.1.fastq in.2.fastq /);
 my %required_params = (
-    analysis_project_id => $analysis_project->id,
     source_paths => \@source_files,
 );
-my $process = Genome::InstrumentData::Command::Import::Process->__define__();
+
+my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'generate-cmds');
+my $import_file = File::Spec->join($data_dir, 'info.tsv');
+my $process = Genome::InstrumentData::Command::Import::Process->create(
+    analysis_project => $analysis_project,
+    import_file => $import_file,
+);
 my $line_number = 0;
 my $instrument_data_properties = {
     description => 'imported',

@@ -35,6 +35,7 @@ subtest 'fail - active processes' => sub{
     plan tests => 7;
 
     my $existing_process = Genome::InstrumentData::Command::Import::Process->create(
+        analysis_project => $analysis_project,
         import_file => $import_file,
     );
     ok($existing_process, 'create existing process');
