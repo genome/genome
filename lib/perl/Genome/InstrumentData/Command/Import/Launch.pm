@@ -99,9 +99,10 @@ sub _create_wf_inputs {
     my $self = shift;
 
     my @inputs;
-    my $parser = Genome::InstrumentData::Command::Import::Inputs::Factory->create(file => $self->file);
+    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->create;
+    $inputs_factory->set_file($self->file);
     my %seen;
-    while ( my $import = $parser->next ) {
+    while ( my $import = $inputs_factory->next ) {
 
         my $library_name = $import->{library}->{name};
         my @libraries = Genome::Library->get(name => $library_name);

@@ -13,7 +13,7 @@ use Tie::File;
 
 class Genome::InstrumentData::Command::Import::Inputs::Factory {
     is => 'UR::Object',
-    has => {
+    has_optional => {
         file => {
             is => 'Text',
             doc => 'Comma (.csv) or tab (.tsv) separated file of entity names, attributes and other metadata. Separator is determined by file extension.',
@@ -87,13 +87,9 @@ sub resolve_sep_char_from_file_extension {
     return ( $ext eq 'csv' ? ',' : "\t" ),
 }
 
-sub create {
-    my $class = shift;
+sub set_file {
+    my ($self, $file) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
 
-    my $self = $class->SUPER::create(@_);
-    return if not $self;
-
-    my $file = $self->file;
     my $sep_char = $self->resolve_sep_char_from_file_extension($file);
     my $parser = Text::CSV->new({
             sep_char => $sep_char,
@@ -108,7 +104,6 @@ sub create {
     $parser->parse($lines[0])
         or $self->fatal_message('Failed to parse header line! %s', $lines[0]);
     my @headers = $parser->fields;
-    $parser->column_names(\@headers);
 
     my $entity_attributes_ok = $self->_resolve_headers(\@headers);
     return if not $entity_attributes_ok;
