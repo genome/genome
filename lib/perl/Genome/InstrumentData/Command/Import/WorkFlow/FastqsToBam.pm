@@ -8,6 +8,7 @@ use Genome;
 use Data::Dumper 'Dumper';
 require File::Basename;
 require File::Spec;
+require Genome::Utility::Text;
 require List::Util;
 use Try::Tiny;
 
