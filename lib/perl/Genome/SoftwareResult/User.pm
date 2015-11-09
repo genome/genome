@@ -84,7 +84,8 @@ sub _validate_user_hash {
     for my $type (qw( sponsor requestor )) {
         my $obj = $user_hash->{$type};
         return 0 unless($obj);
-        return 0 unless(UNIVERSAL::isa($obj, _role_for_type($type)));
+        return 0 unless ref($obj);
+        return 0 unless $obj->does(_role_for_type($type));
     }
 
     return 1;
@@ -129,7 +130,7 @@ sub _register_users {
 
 sub _role_for_type {
     return sprintf(
-        'Genome::SoftwareResult::%s',
+        'Genome::Role::SoftwareResult%s',
         ucfirst(shift)
     );
 }
