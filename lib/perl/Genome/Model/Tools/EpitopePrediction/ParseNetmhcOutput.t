@@ -11,7 +11,7 @@ my $TEST_DATA_VERSION = 3;
 my $class = 'Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput';
 use_ok($class);
 
-my $test_dir = Genome::Utility::Test->data_dir_ok($class, $TEST_DATA_VERSION);
+my $test_dir = __FILE__ . '.d';
 
 for my $netmhc_version (qw(3.0 3.4)) {
     my $variant_type = 'snvs';
