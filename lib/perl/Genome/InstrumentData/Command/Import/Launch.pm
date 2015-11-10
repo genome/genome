@@ -99,22 +99,15 @@ sub _create_wf_inputs {
     my $self = shift;
 
     my @inputs;
-    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->create;
+    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->create(process => $self->process);
     $inputs_factory->set_file($self->file);
     my %seen;
-    while ( my $import = $inputs_factory->next ) {
+    while ( my $inputs = $inputs_factory->next ) {
 
-        my $library_name = $import->{library}->{name};
+        my $library_name = $inputs->entity_params->{library}->{name};
         my @libraries = Genome::Library->get(name => $library_name);
         die $self->error_message('No library for name: %s', $library_name) if not @libraries;
         die $self->error_message('Multiple libraries for library name: %s', $library_name) if @libraries > 1;
-
-        my $inputs = Genome::InstrumentData::Command::Import::Inputs->create(
-            process_id => $self->process->id,
-            line_number => $import->{line_number},
-            entity_params => $import,
-            source_paths => $import->{source_files},
-        );
 
         my $id = $inputs->lib_and_source_file_md5sum;
         if ( $seen{$id} ) {

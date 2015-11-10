@@ -14,6 +14,12 @@ use Tie::File;
 class Genome::InstrumentData::Command::Import::Inputs::Factory {
     is => 'UR::Object',
     has_optional => {
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+        },
+        process => {
+            is => 'Genome::InstrumentData::Command::Import::Process',
+        },
         file => {
             is => 'Text',
             doc => 'Comma (.csv) or tab (.tsv) separated file of entity names, attributes and other metadata. Separator is determined by file extension.',
@@ -124,10 +130,27 @@ sub from_line_number {
 
     my $entity_params = $self->_resolve_entity_params_from_line($line);
     $self->_resolve_names_for_entities($entity_params);
-    $entity_params->{file} = $self->file;
-    $entity_params->{line_number} = $line_number;
 
-    return $entity_params;
+    my $source_files = delete $entity_params->{instdata}->{source_files};
+    if ( not $source_files ) {
+        $self->fatal_message('No source files for import! %s', Data::Dumper::Dumper($entity_params));
+    }
+
+    my $process_id = ( $self->process ? $self->process->id : $$ );
+    my %params = (
+        process_id => $process_id,
+        line_number => $line_number,
+        source_paths => [ split(',', $source_files) ], # FIXME what if this was CSV and needs to be split on space?
+        entity_params => $entity_params,
+    );
+
+    if ( $self->analysis_project ) {
+        $params{analysis_project_id} = $self->analysis_project->id;
+    }
+
+    #print Data::Dumper::Dumper($line, \%params);
+
+    return Genome::InstrumentData::Command::Import::Inputs->create(%params);
 }
 
 sub _resolve_headers {
@@ -169,11 +192,6 @@ sub _resolve_entity_params_from_line {
         $entity_params{ $entity_attribute->{type} }->{ $entity_attribute->{attribute} } = $value;
     }
 
-    my $source_files = delete $entity_params{instdata}->{source_files};
-    if ( not $source_files ) {
-        $self->fatal_message('No source files for import! %s', Data::Dumper::Dumper(\%entity_params));
-    }
-    $entity_params{source_files} = [ split(',', $source_files) ]; # FIXME what if this was CSV and needs to be split on space?
 
     return \%entity_params;
 }

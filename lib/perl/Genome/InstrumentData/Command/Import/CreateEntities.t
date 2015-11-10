@@ -40,6 +40,7 @@ throws_ok(
     qr/Taxon does not exist for Pan troglodytes testerii\!/,
     'fails w/o taxon existing'
 );
+map { $_->delete } Genome::InstrumentData::Command::Import::Inputs->get;
 
 # Create taxon
 my $taxon = Genome::Taxon->create(name => 'Pan troglodytes testerii');
@@ -60,6 +61,7 @@ for my $name ( keys %names_and_srs_sample_names ) {
     is(@individuals, 1, "one $name individuals");
     is($samples[0]->source, $individuals[0], 'correct individual sample association');
 }
+map { $_->delete } Genome::InstrumentData::Command::Import::Inputs->get;
 
 # Rexecute to make sure things are not recreated
 $cmd = $class->execute(
@@ -77,6 +79,7 @@ for my $name ( keys %names_and_srs_sample_names ) {
     is(@individuals, 1, "one $name individuals");
     is($samples[0]->source, $individuals[0], 'correct individual sample association');
 }
+map { $_->delete } Genome::InstrumentData::Command::Import::Inputs->get;
 
 # Fails
 throws_ok(

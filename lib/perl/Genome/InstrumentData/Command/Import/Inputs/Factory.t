@@ -15,53 +15,61 @@ use_ok($class) or die;
 
 my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'generate-cmds');
 my $input_file = File::Spec->join($data_dir, 'info.tsv');
+my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
+my $process = Genome::InstrumentData::Command::Import::Process->create(
+    analysis_project => $analysis_project,
+    import_file => $input_file,
+);
 
 my $factory;
 subtest 'create and set_file' => sub{
     plan tests => 2;
 
-    $factory = $class->create;
+    $factory = $class->create(process => $process);
     ok($factory, 'create inputs factory');
     ok($factory->set_file($input_file), 'set_file');
 
 };
 
-my $expected_line4_ref = {
-    file => $input_file,
-    line_number => 4,
-    individual => { name => 'TeSt-0000', nomenclature => 'TeSt', upn => '0000', },
-    sample => { name => 'TeSt-0000-01', nomenclature => 'TeSt', },
-    library => { name => 'TeSt-0000-01-extlibs', },
-    instdata => {
-        lane => 7,
-        downsample_ratio => '.1',
-    },
-    source_files => ['bam3.bam'],
-};
-
 subtest 'next' => sub{
-    plan tests => 2;
+    plan tests => 4;
 
-    for (1..3) { $factory->next }
-    my $ref = $factory->next;
+    $factory->_line_number(1); # set line number
+    my $inputs = $factory->next; # line 2
+    ok($inputs, 'inputs from next (2)');
+    is($inputs->line_number, 2, 'line_number is correct');
+    is_deeply($inputs->source_paths, ['bam2.bam'], 'source_paths is correct');
     is_deeply(
-        $ref,
-        $expected_line4_ref,
-        'last ref is correct',
+        $inputs->entity_params,
+        {
+            individual => { name => 'TeSt-0000', nomenclature => 'TeSt', upn => '0000', },
+            sample     => { name => 'TeSt-0000-00', nomenclature => 'TeSt', },
+            library    => { name => 'TeSt-0000-00-extlibs', },
+            instdata   => { lane => 8, process_id => $process->id, original_data_path => 'bam2.bam', },
+        },
+        'entity_params are correct',
     );
-    ok(!$factory->next, 'reached end of file');
+
 };
 
 subtest 'from_line' => sub{
-    plan tests => 1;
+    plan tests => 4;
 
+    my $inputs = $factory->from_line_number(4);
+    ok($inputs, 'inputs from_line_number (4)');
+    is($inputs->line_number, 4, 'line_number is correct');
+    is_deeply($inputs->source_paths, ['bam3.bam'], 'source_paths is correct');
     is_deeply(
-        $factory->from_line_number(4),
-        $expected_line4_ref,
-        'from_line 4 return is correct',
+        $inputs->entity_params,
+        {
+            individual => { name => 'TeSt-0000', nomenclature => 'TeSt', upn => '0000', },
+            sample => { name => 'TeSt-0000-01', nomenclature => 'TeSt', },
+            library => { name => 'TeSt-0000-01-extlibs', },
+            instdata => { lane => 7, downsample_ratio => '.1', original_data_path => 'bam3.bam', process_id => $process->id, },
+        },
+        'entity_params are correct',
     );
 };
-
 
 subtest 'fails' => sub{
     plan tests => 8;
