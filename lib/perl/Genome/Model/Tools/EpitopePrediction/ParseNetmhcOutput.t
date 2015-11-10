@@ -6,6 +6,7 @@ use warnings;
 use above 'Genome';
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
+use YAML::Syck qw(LoadFile);
 
 my $TEST_DATA_VERSION = 3;
 my $class = 'Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput';
@@ -35,6 +36,49 @@ subtest "Indel file with frameshifts and inframe indels" => sub {
         netmhc_version => $netmhc_version,
         variant_type => $variant_type,
     );
+};
+
+my %match_count_test_cases = (
+    K10KM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K10KMM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K10KMMM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K10KMMMMM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K10KMMMMMM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K10KMMMMMMMMMM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K10KMMMMMMMMMMMMMMM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K0KM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K2KM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K5KM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K21KM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K19KM => 'ABCDEFGHIJKLNOPQRSTUV',
+    K16KM => 'ABCDEFGHIJKLNOPQRSTUV',
+    KL10K => 'ABCDEFGHIJKLNOPQRSTUVW',
+    AB0A => 'ABCDEFGHIJKLNOPQRSTUVW',
+    CD2C => 'ABCDEFGHIJKLNOPQRSTUVW',
+    FG5F => 'ABCDEFGHIJKLNOPQRSTUVW',
+    VW20V => 'ABCDEFGHIJKLNOPQRSTUVW',
+    TV19T => 'ABCDEFGHIJKLNOPQRSTUVW',
+    RS16R => 'ABCDEFGHIJKLNOPQRSTUVW',
+);
+
+subtest "Best Matches" => sub {
+    my $best_matches_test_dir = File::Spec->join($test_dir, 'best_matches');
+
+    while (my ($test_case, $wt_sequence) = each (%match_count_test_cases)) {
+        subtest $test_case => sub {
+            my $wt_file = File::Spec->join($best_matches_test_dir, "$wt_sequence.WT.yaml");
+            my $wt_position_data = LoadFile($wt_file);
+
+            my $mt_file = File::Spec->join($best_matches_test_dir, "$test_case.MT.yaml");
+            my $mt_match_data = LoadFile($mt_file);
+
+            for my $mt_sequence (keys %{$mt_match_data}) {
+                my $expected_data = $mt_match_data->{$mt_sequence};
+                my $best_matches = Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput::best_matches($mt_sequence, $wt_position_data);
+                is_deeply($best_matches, $expected_data, "Best matches determined correctly for MT sequences ($mt_sequence)");
+            }
+        };
+    }
 };
 
 sub test_for_output_type {

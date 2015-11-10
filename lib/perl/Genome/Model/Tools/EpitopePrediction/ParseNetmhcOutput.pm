@@ -193,4 +193,28 @@ sub parse_input {
     return \%netmhc_results;
 }
 
+sub best_matches {
+    my ($mt_sequence, $wt_position_data) = @_;
+
+    my %match_counts = %{match_counts($mt_sequence, $wt_position_data)};
+    my $highest_match_count = (sort {$b <=> $a} values %match_counts)[0];
+    my %best_matches;
+    while (my ($position, $match_count) = each %match_counts) {
+        if ($match_count == $highest_match_count) {
+            $best_matches{$position} = $match_count;
+        }
+    }
+    return \%best_matches;
+}
+
+sub match_counts {
+    my ($mt_sequence, $wt_position_data) = @_;
+
+    my $match_counts;
+    for my $position (keys %{$wt_position_data}) {
+        $match_counts->{$position} = ($mt_sequence ^ $wt_position_data->{$position}->{epitope_sequence}) =~ tr/\0//;
+    }
+    return $match_counts;
+}
+
 1;
