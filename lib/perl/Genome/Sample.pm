@@ -9,8 +9,7 @@ my $default_nomenclature = Genome::Config::get('nomenclature_default');
 
 class Genome::Sample {
     is => 'Genome::Subject',
-    roles => 'Genome::Searchable',
-    roles => ['Genome::Role::ObjectWithLockedConstruction'],
+    roles => ['Genome::Role::ObjectWithLockedConstruction', 'Genome::Role::Searchable'],
     has => [
         sample_id => {
             is => 'Text',

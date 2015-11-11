@@ -4,34 +4,35 @@ use strict;
 use warnings;
 
 use Genome;
-use UR::Role;
+use UR::Role qw(around);
 use Genome::Sys::LockProxy qw();
 
 role Genome::Role::ObjectWithLockedConstruction {
     requires => 'lock_id',
 };
 
-my %super_create;
-sub create {
+around 'create' => sub {
+    my $orig_create = shift;
     my $class = shift;
 
-    my $obj = $class->get(@_);
-    return $obj if $obj;
+    if (my $obj = $class->get(@_)) {
+        return $obj;
 
-    if ($ENV{UR_DBI_NO_COMMIT}) {
-        my $super_create = $super_create{$class} ||= $class->super_can('create');
-        return $class->$super_create(@_);
+    } elsif ($ENV{UR_DBI_NO_COMMIT}) {
+        return $class->$orig_create(@_);
+
     } else {
         my $lock_id = $class->lock_id(@_);
         my $lock_var = sprintf('%s/%s', $class, $lock_id);
 
-        return $class->create_with_lock($lock_var, @_);
+        return $class->_create_with_lock($lock_var, $orig_create, @_);
     }
-}
+};
 
-sub create_with_lock {
+sub _create_with_lock {
     my $class = shift;
     my $lock_var = shift;
+    my $orig_create = shift;
 
     my $lock = Genome::Sys::LockProxy->new(
         resource => $lock_var,
@@ -40,11 +41,8 @@ sub create_with_lock {
     die("Unable to get lock!") unless $lock;
 
     my $obj = $class->load(@_);
-    if($obj) {
-        return $obj;
-    } else {
-        my $super_create = $super_create{$class} ||= $class->super_can('create');
-        $obj = $class->$super_create(@_);
+    unless ($obj) {
+        $obj = $class->$orig_create(@_);
         Genome::Sys::CommitAction->create(
             on_commit => sub {
                 $lock->unlock();
