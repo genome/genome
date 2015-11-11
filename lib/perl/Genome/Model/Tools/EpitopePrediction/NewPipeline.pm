@@ -90,13 +90,16 @@ sub workflow_inputs {
 sub dag {
     my $self = shift;
 
-    my $dag = Genome::WorkflowBuilder::DAG->create(
-        name => 'Epitope Binding Predicition',
-    );
+    unless (defined($self->{dag})) {
+        my $dag = Genome::WorkflowBuilder::DAG->create(
+            name => 'Epitope Binding Predicition',
+        );
 
-    $self->add_reports_to_workflow($dag);
+        $self->add_reports_to_workflow($dag);
+        $self->{dag} = $dag;
+    }
 
-    return $dag;
+    return $self->{dag};
 }
 
 sub add_reports_to_workflow {
