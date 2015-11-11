@@ -41,10 +41,10 @@ sub execute {
     }
 
     for my $allocation ($self->allocations) {
-        $allocation->copy( output_dir => $self->output_dir );
+        $allocation->copy( output_dir => File::Spec->join($self->output_dir, $allocation->id) );
     }
 
-    $self->status_message("Successfully copied allocations!");
+    $self->status_message("Successfully exported allocations!");
     return 1;
 }
 
