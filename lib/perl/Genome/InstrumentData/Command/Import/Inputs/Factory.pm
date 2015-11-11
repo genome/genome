@@ -131,6 +131,8 @@ sub set_file {
     my $entity_attributes_ok = $self->_resolve_headers(\@headers);
     return if not $entity_attributes_ok;
 
+    $self->file($file);
+
     return $self;
 }
 
@@ -158,36 +160,49 @@ sub from_line_number {
         });
 }
 
-my $line_number = 'A';
+my $line_number = 1;
 sub from_params {
     my ($self, $params) = Params::Validate::validate_pos(
         @_, {isa => __PACKAGE__},
-        { entity_params => { type => HASHREF  },
-          source_paths  => { type => ARRAYREF }, },
+        { entity_params => { type => HASHREF  }, },
     );
 
-    if ( not $params->{source_paths} ) {
-        $self->fatal_message('No source paths given to create inputs! %s', Data::Dumper::Dumper$params);
-    }
-    $params->{entity_params}->{instdata}->{original_data_path} = join(',', @{$params->{source_paths}});
-
+    # Set input id properties process_id and line_number
     my $process_id;
     if ( $self->process ) {
         $params->{process_id} = $self->process->id;
         $params->{entity_params}->{instdata}->{process_id} = $self->process->id;
     }
+    elsif ( $self->file ) { # use md5 of file name
+        $params->{process_id} = Genome::Sys->md5sum_data($self->file);
+    }
     else {
-        $params->{process_id} = $$;
+        $params->{process_id} = $process_id++;
     }
 
     if ( not $params->{line_number} ) {
         $params->{line_number} = $line_number++;
     }
+    
+    # Check cache - get directly with UR::Object
+    my $inputs = UR::Object::get(
+        'Genome::InstrumentData::Command::Import::Inputs', 
+        join("\t", $params->{process_id}, $params->{line_number}),
+    );
+    return $inputs if $inputs;
 
+    # If not in cache, need source paths
+    if ( not $params->{source_paths} ) {
+        $self->fatal_message('No source paths given to create inputs! %s', Data::Dumper::Dumper$params);
+    }
+    $params->{entity_params}->{instdata}->{original_data_path} = join(',', @{$params->{source_paths}});
+
+    # Add AnP
     if ( $self->analysis_project ) {
         $params->{analysis_project_id} = $self->analysis_project->id;
     }
 
+    # Create using UR::Object, not the inputs class create, which redirects here
     return UR::Object::create('Genome::InstrumentData::Command::Import::Inputs', %$params);
 }
 

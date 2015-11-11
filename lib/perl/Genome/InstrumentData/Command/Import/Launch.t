@@ -49,7 +49,7 @@ subtest 'fail - active processes' => sub{
         );
     }
     $existing_process->status('Crashed');
-    map { $_->delete } Genome::InstrumentData::Command::Import::Inputs->get;
+    map { $_->delete } UR::Object::get('Genome::InstrumentData::Command::Import::Inputs');
 };
 
 subtest 'fail - no library' => sub{
@@ -62,7 +62,7 @@ subtest 'fail - no library' => sub{
         'failed to execute w/o libraries',
     );
     $failed_cmd->process->status('Crashed'); # IRL the process will deleted
-    map { $_->delete } Genome::InstrumentData::Command::Import::Inputs->get;
+    map { $_->delete } UR::Object::get('Genome::InstrumentData::Command::Import::Inputs');
 };
 
 my @libraries;
@@ -93,7 +93,7 @@ subtest 'fail - source file does not exist' => sub{
         qr/^Source file does not have any size\! bam4\.bam/,
         'execute failed w/ non existing source file',
     );
-    map { $_->delete } Genome::InstrumentData::Command::Import::Inputs->get;
+    map { $_->delete } UR::Object::get('Genome::InstrumentData::Command::Import::Inputs');
 };
 
 subtest 'success' => sub{
