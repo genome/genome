@@ -7,6 +7,8 @@ use Genome;
 
 use Data::Dumper 'Dumper';
 require File::Basename;
+require File::Spec;
+require Genome::Utility::Text;
 require List::Util;
 use Try::Tiny;
 
@@ -35,7 +37,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
         output_bam_path => {
             is => 'Text',
             calculate_from => [qw/ working_directory sample_name /],
-            calculate => q( return $working_directory.'/'.$sample_name.'.bam'; ),
+            calculate => q| return File::Spec->join($working_directory, Genome::Utility::Text::sanitize_string_for_filesystem($sample_name).'.bam'); |,
             doc => 'The path of the bam.',
         },
     ],
@@ -75,7 +77,7 @@ sub _unarchive_fastqs_if_necessary {
         $self->debug_message('Unarchiving: '.$fastq_path);
         
         my $success = try {
-            Genome::Sys->shellcmd(cmd => "gunzip $fastq_path");
+            Genome::Sys->shellcmd(cmd => [ 'gunzip', $fastq_path ]);
         }
         catch {
             $self->error_message($_) if $_;
