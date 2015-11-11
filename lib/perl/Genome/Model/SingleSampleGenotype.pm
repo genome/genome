@@ -112,5 +112,26 @@ sub map_workflow_inputs {
     );
 }
 
+sub add_target_region_set {
+    my $self = shift;
+
+    my $trs = Genome::FeatureList->get(@_) or die 'Failed to get FeatureList';
+    $self->target_region_set($trs);
+}
+
+sub add_region_of_interest_set {
+    my $self = shift;
+
+    my $rois = Genome::FeatureList->get(@_) or die 'Failed to get FeatureList';
+    $self->region_of_interest_set($rois);
+}
+
+sub add_reference_sequence_build {
+    my $self = shift;
+
+    my $build = Genome::Model::Build->get(@_);
+    $self->reference_sequence_build($build);
+}
+
 1;
 
