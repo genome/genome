@@ -80,6 +80,23 @@ Instrument Data (needed for generating source-files.tsv)
 HELP
 }
 
+sub from_inputs_id {
+    my ($self, $id) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
+
+    my $inputs = UR::Object::get('Genome::InstrumentData::Command::Import::Inputs', $id);
+    return $inputs if $inputs; # in cache
+
+    my ($process_id, $line_number) = split(/\t/, $id, 2);
+    $self->fatal_message('Failed to parse inputs id! %s', $id) if not defined $line_number;
+    my $process = Genome::InstrumentData::Command::Import::Process->get($process_id);
+    $self->fatal_message('Failed to get instdata import process for id: %s', $process_id) if not $process;
+
+    my $import_file = $process->import_file;
+    $self->set_file($import_file);
+
+    return $self->from_line_number($line_number);
+}
+
 sub entity_types {
     return (qw/ individual sample library instdata/);
 }

@@ -8,10 +8,11 @@ use above 'Genome';
 use Genome::Utility::Test;
 use File::Spec;
 use Test::Exception;
-use Test::More tests => 7;
+use Test::More tests => 9;
 
 my $class = 'Genome::InstrumentData::Command::Import::Inputs::Factory';
 use_ok($class) or die;
+use_ok('Genome::InstrumentData::Command::Import::Inputs') or die;
 
 my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'generate-cmds');
 my $input_file = File::Spec->join($data_dir, 'info.tsv');
@@ -52,15 +53,16 @@ subtest 'next' => sub{
 
 };
 
+my $inputs_from_line_4;
 subtest 'from_line' => sub{
     plan tests => 4;
 
-    my $inputs = $factory->from_line_number(4);
-    ok($inputs, 'inputs from_line_number (4)');
-    is($inputs->line_number, 4, 'line_number is correct');
-    is_deeply($inputs->source_paths, ['bam3.bam'], 'source_paths is correct');
+    $inputs_from_line_4 = $factory->from_line_number(4);
+    ok($inputs_from_line_4, 'inputs from_line_number (4)');
+    is($inputs_from_line_4->line_number, 4, 'line_number is correct');
+    is_deeply($inputs_from_line_4->source_paths, ['bam3.bam'], 'source_paths is correct');
     is_deeply(
-        $inputs->entity_params,
+        $inputs_from_line_4->entity_params,
         {
             individual => { name => 'TeSt-0000', nomenclature => 'TeSt', upn => '0000', },
             sample => { name => 'TeSt-0000-01', nomenclature => 'TeSt', },
@@ -124,6 +126,28 @@ subtest 'from_params' => sub{
             source_paths => \@source_files,
         },
         'inputs as_hashref',
+    );
+};
+
+subtest 'from_inputs_id' => sub {
+    plan tests => 5;
+
+    my $inputs_from_cache = Genome::InstrumentData::Command::Import::Inputs->get( join("\t", $process->id, 4) );
+    is($inputs_from_cache, $inputs_from_line_4, 'from_inputs_id for process id and line 4');
+
+    my $inputs_from_process_and_line_number = $factory->from_inputs_id( join("\t", $process->id, 3) );
+    ok($inputs_from_process_and_line_number, 'inputs from_line_number (3)');
+    is($inputs_from_process_and_line_number->line_number, 3, 'line_number is correct');
+    is_deeply($inputs_from_process_and_line_number->source_paths, ['bam3.bam'], 'source_paths is correct');
+    is_deeply(
+        $inputs_from_process_and_line_number->entity_params,
+        {
+            individual => { name => 'TeSt-0000', nomenclature => 'TeSt', upn => '0000', },
+            sample => { name => 'TeSt-0000-01', nomenclature => 'TeSt', },
+            library => { name => 'TeSt-0000-01-extlibs', },
+            instdata => { lane => 7, downsample_ratio => '.25', original_data_path => 'bam3.bam', process_id => $process->id, },
+        },
+        'entity_params are correct',
     );
 };
 
