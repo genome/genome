@@ -48,14 +48,14 @@ sub execute {
 
 sub _create_individual_if_needed {
     my ($self, $entity_params) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => HASHREF});
-    my $params = $entity_params->{individual};
-    return 1 if $self->_does_enitity_exist('individual', $params->{name});
-    my $taxon_name = delete $params->{taxon};
-    die $self->error_message('No taxon for %s!', $params->{name}) if not $taxon_name;
+    my %params = %{$entity_params->{individual}};
+    return 1 if $self->_does_enitity_exist('individual', $params{name});
+    my $taxon_name = $params{taxon};
+    die $self->error_message('No taxon for %s!', $params{name}) if not $taxon_name;
     my $taxon = Genome::Taxon->get(name => $taxon_name);
     die $self->error_message('Taxon does not exist for %s!', $taxon_name) if not $taxon;
-    $params->{taxon} = $taxon;
-    return $self->_create_entity('individual', $params);
+    $params{taxon} = $taxon;
+    return $self->_create_entity('individual', \%params);
 }
 
 sub _create_sample_if_needed {
