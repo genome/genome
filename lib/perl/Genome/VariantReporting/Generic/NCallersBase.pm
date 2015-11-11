@@ -31,7 +31,7 @@ sub get_callers {
             next;
         }
         my $caller_filtered = $entry->sample_field($sample_index, "FT");
-        if (defined $caller_filtered and $caller_filtered ne ".") {
+        if (defined $caller_filtered and $caller_filtered ne "." and $caller_filtered ne "PASS") {
             next;
         }
         my @sample_alt_alleles = $entry->alt_bases_for_sample($sample_index);
