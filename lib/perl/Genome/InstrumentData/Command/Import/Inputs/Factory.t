@@ -8,7 +8,7 @@ use above 'Genome';
 use Genome::Utility::Test;
 use File::Spec;
 use Test::Exception;
-use Test::More tests => 6;
+use Test::More tests => 7;
 
 my $class = 'Genome::InstrumentData::Command::Import::Inputs::Factory';
 use_ok($class) or die;
@@ -68,6 +68,62 @@ subtest 'from_line' => sub{
             instdata => { lane => 7, downsample_ratio => '.1', original_data_path => 'bam3.bam', process_id => $process->id, },
         },
         'entity_params are correct',
+    );
+};
+
+subtest 'from_params' => sub{
+    plan tests => 12;
+
+    my $sample_name = 'TEST-01-001';
+    my $library = Genome::Library->__define__(name => $sample_name.'-libs', sample => Genome::Sample->__define__(name => $sample_name));
+    ok($library, 'define library');
+
+    my @source_files = (qw/ in.1.fastq in.2.fastq /);
+    my $instrument_data_properties = {
+        description => 'imported',
+        downsample_ratio => 0.7,
+        import_source_name => 'TGI',
+        this => 'that',
+    };
+
+    my $inputs = $factory->from_params({
+            source_paths => \@source_files,
+            entity_params => {
+                individual => { name => 'TEST-01', nomenclature => 'TEST', upn => '01', },
+                sample => { name => $sample_name, nomenclature => 'TEST', },
+                library => { name => $sample_name.'-libs', },
+                instdata => $instrument_data_properties,
+            },
+        });
+    ok($inputs, 'create inputs');
+    is($inputs->format, 'fastq', 'source files format is fastq');
+    is($inputs->library, $library, 'library');
+    is($inputs->library_name, $library->name, 'library_name');
+    is($inputs->sample_name, $library->sample->name, 'sample_name');
+
+    # instrument data
+    ok(!$inputs->instrument_data_for_original_data_path, 'no instrument_data_for_original_data_path ... yet');
+    my $instdata = Genome::InstrumentData::Imported->__define__;
+    ok($instdata, 'define instdata');
+    ok($instdata->original_data_path($inputs->source_files->original_data_path), 'add original_data_path');
+    is_deeply([$inputs->instrument_data_for_original_data_path], [$instdata], 'instrument_data_for_original_data_path');
+
+    # as_hashref
+    $instrument_data_properties->{process_id} = $process->id;
+    $instrument_data_properties->{original_data_path} = join(',', @source_files);
+    is_deeply($inputs->instrument_data_properties, $instrument_data_properties, 'instrument_data_properties');
+    is_deeply(
+        $inputs->as_hashref,
+        {
+            analysis_project => $analysis_project,
+            downsample_ratio => 0.7,
+            instrument_data_properties => $instrument_data_properties,
+            library => $library,
+            library_name => $library->name,
+            sample_name => $library->sample->name,
+            source_paths => \@source_files,
+        },
+        'inputs as_hashref',
     );
 };
 

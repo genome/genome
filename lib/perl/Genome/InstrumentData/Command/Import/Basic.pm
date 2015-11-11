@@ -87,16 +87,15 @@ sub execute {
 sub _resolve_work_flow_inputs {
     my $self = shift;
 
-    return Genome::InstrumentData::Command::Import::Inputs->create(
-        process_id => $$,
-        line_number => Genome::Sys->md5sum_data($self->source_files),
-        analysis_project_id => $self->analysis_project->id,
-        entity_params => {
-            library => { id => $self->library->id, },
-            instdata => $self->_resolve_instrument_data_properties,
-        },
-        source_paths => [ $self->source_files ],
-    );
+    return Genome::InstrumentData::Command::Import::Inputs::Factory->create(
+        analysis_project => $self->analysis_project,
+    )->from_params({
+            entity_params => {
+                library => { id => $self->library->id, },
+                instdata => $self->_resolve_instrument_data_properties,
+            },
+            source_paths => [ $self->source_files ],
+        });
 }
 
 sub _resolve_instrument_data_properties {

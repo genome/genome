@@ -32,33 +32,14 @@ class Genome::InstrumentData::Command::Import::Inputs {
     },
 };
 
+sub create { Carp::confess('Use inputs factory to create!'); }
+
 sub lib_and_source_file_md5sum {
     my $self = shift;
     return substr(
         Genome::Sys->md5sum_data( join(' ', $self->library_name, @{$self->source_paths}) ), 
         0, 6,
     );
-}
-
-sub create {
-    my ($class, %params) = @_;
-
-    my $self = $class->SUPER::create(%params);
-    return if not $self;
-
-    for my $requried (qw/ analysis_project source_paths /) {
-        die $self->error_message("No $requried given to work flow inputs!") if not $self->$requried;
-    }
-
-    if ( not $self->entity_params->{instdata}->{original_data_path} ) {
-        $self->entity_params->{instdata}->{original_data_path} = join(',', $self->source_files->paths);
-    }
-
-    if ( $self->process_id ) {
-        $self->entity_params->{instdata}->{process_id} = $self->process_id;
-    }
-
-    return $self;
 }
 
 sub analysis_project {

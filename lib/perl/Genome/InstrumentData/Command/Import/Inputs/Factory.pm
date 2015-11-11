@@ -131,26 +131,47 @@ sub from_line_number {
     my $entity_params = $self->_resolve_entity_params_from_line($line);
     $self->_resolve_names_for_entities($entity_params);
 
-    my $source_files = delete $entity_params->{instdata}->{source_files};
-    if ( not $source_files ) {
-        $self->fatal_message('No source files for import! %s', Data::Dumper::Dumper($entity_params));
-    }
+    # FIXME what if this was CSV and needs to be split on spaces?
+    my $source_paths = [ split(',', delete $entity_params->{instdata}->{source_files}) ];
 
-    my $process_id = ( $self->process ? $self->process->id : $$ );
-    my %params = (
-        process_id => $process_id,
-        line_number => $line_number,
-        source_paths => [ split(',', $source_files) ], # FIXME what if this was CSV and needs to be split on space?
-        entity_params => $entity_params,
+    return $self->from_params({
+            line_number => $line_number,
+            source_paths => $source_paths,
+            entity_params => $entity_params,
+        });
+}
+
+my $line_number = 'A';
+sub from_params {
+    my ($self, $params) = Params::Validate::validate_pos(
+        @_, {isa => __PACKAGE__},
+        { entity_params => { type => HASHREF  },
+          source_paths  => { type => ARRAYREF }, },
     );
 
-    if ( $self->analysis_project ) {
-        $params{analysis_project_id} = $self->analysis_project->id;
+    if ( not $params->{source_paths} ) {
+        $self->fatal_message('No source paths given to create inputs! %s', Data::Dumper::Dumper$params);
+    }
+    $params->{entity_params}->{instdata}->{original_data_path} = join(',', @{$params->{source_paths}});
+
+    my $process_id;
+    if ( $self->process ) {
+        $params->{process_id} = $self->process->id;
+        $params->{entity_params}->{instdata}->{process_id} = $self->process->id;
+    }
+    else {
+        $params->{process_id} = $$;
     }
 
-    #print Data::Dumper::Dumper($line, \%params);
+    if ( not $params->{line_number} ) {
+        $params->{line_number} = $line_number++;
+    }
 
-    return Genome::InstrumentData::Command::Import::Inputs->create(%params);
+    if ( $self->analysis_project ) {
+        $params->{analysis_project_id} = $self->analysis_project->id;
+    }
+
+    return UR::Object::create('Genome::InstrumentData::Command::Import::Inputs', %$params);
 }
 
 sub _resolve_headers {
@@ -179,7 +200,7 @@ sub _resolve_entity_params_from_line {
     my ($self, $line) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => SCALAR});
 
     $self->_parser->parse($line)
-        or $self->fatal_mesage('Failed to parse line! %s', $line);
+        or $self->fatal_message('Failed to parse line! %s', $line);
     my @values = $self->_parser->fields;
 
     my %entity_params = map { $_ => {} } $self->entity_types;
