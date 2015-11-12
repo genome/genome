@@ -65,6 +65,7 @@ my %match_count_test_cases = (
     VW20V => 'ABCDEFGHIJKLNOPQRSTUVW',
     TV19T => 'ABCDEFGHIJKLNOPQRSTUVW',
     RS16R => 'ABCDEFGHIJKLNOPQRSTUVW',
+    'FS.10' => 'ABCDEGHIJKLMNOPQRSTU',
 );
 
 subtest "Best Matches" => sub {

@@ -1,0 +1,32 @@
+ABCDEGHIJK:
+    0: 10
+BCDEGHIJKF:
+    1: 9
+CDEGHIJKFF:
+    2: 8
+DEGHIJKFFF:
+    3: 7
+EGHIJKFFFF:
+    4: 6
+GHIJKFFFFF:
+    5: 5
+HIJKFFFFFF:
+    6: 4
+IJKFFFFFFF:
+    7: 3
+JKFFFFFFFF:
+    8: 2
+KFFFFFFFFF:
+    9: 1
+FFFFFFFFFF:
+    0: 0
+    1: 0
+    2: 0
+    3: 0
+    4: 0
+    5: 0
+    6: 0
+    7: 0
+    8: 0
+    9: 0
+    10: 0
