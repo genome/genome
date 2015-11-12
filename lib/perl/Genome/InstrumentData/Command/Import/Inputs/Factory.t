@@ -39,7 +39,7 @@ subtest 'next' => sub{
     my $inputs = $factory->next; # line 2
     ok($inputs, 'inputs from next (2)');
     is($inputs->line_number, 2, 'line_number is correct');
-    is_deeply($inputs->source_paths, ['bam2.bam'], 'source_paths is correct');
+    is_deeply([$inputs->source_paths], ['bam2.bam'], 'source_paths is correct');
     is_deeply(
         $inputs->entity_params,
         {
@@ -60,7 +60,7 @@ subtest 'from_line' => sub{
     $inputs_from_line_4 = $factory->from_line_number(4);
     ok($inputs_from_line_4, 'inputs from_line_number (4)');
     is($inputs_from_line_4->line_number, 4, 'line_number is correct');
-    is_deeply($inputs_from_line_4->source_paths, ['bam3.bam'], 'source_paths is correct');
+    is_deeply([$inputs_from_line_4->source_paths], ['bam3.bam'], 'source_paths is correct');
     is_deeply(
         $inputs_from_line_4->entity_params,
         {
@@ -138,7 +138,7 @@ subtest 'from_inputs_id' => sub {
     my $inputs_from_process_and_line_number = $factory->from_inputs_id( join("\t", $process->id, 3) );
     ok($inputs_from_process_and_line_number, 'inputs from_line_number (3)');
     is($inputs_from_process_and_line_number->line_number, 3, 'line_number is correct');
-    is_deeply($inputs_from_process_and_line_number->source_paths, ['bam3.bam'], 'source_paths is correct');
+    is_deeply([$inputs_from_process_and_line_number->source_paths], ['bam3.bam'], 'source_paths is correct');
     is_deeply(
         $inputs_from_process_and_line_number->entity_params,
         {

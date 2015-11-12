@@ -20,7 +20,7 @@ class Genome::InstrumentData::Command::Import::Inputs {
                 individual => {}, sample => {}, library => {},
             },
         },
-        source_paths => { is => 'ARRAY', },
+        source_paths => { is => 'Text', is_many => 1, },
     },
     has_optional => {
         analysis_project_id => { is => 'Text', },
@@ -38,7 +38,7 @@ sub create { Carp::confess('Use inputs factory to create!'); }
 sub lib_and_source_file_md5sum {
     my $self = shift;
     return substr(
-        Genome::Sys->md5sum_data( join(' ', $self->library_name, @{$self->source_paths}) ), 
+        Genome::Sys->md5sum_data( join(' ', $self->library_name, $self->source_paths) ), 
         0, 6,
     );
 }
@@ -89,7 +89,7 @@ sub instrument_data_for_original_data_path {
 
 sub source_files {
     my $self = shift;
-    return Genome::InstrumentData::Command::Import::Inputs::SourceFiles->create(paths => $self->source_paths);
+    return Genome::InstrumentData::Command::Import::Inputs::SourceFiles->create(paths => [$self->source_paths]);
 }
 
 sub as_hashref {
@@ -100,7 +100,7 @@ sub as_hashref {
         /);
     $hash{instrument_data_properties} = $self->entity_params->{instdata};
     $hash{downsample_ratio} = $self->entity_params->{instdata}->{downsample_ratio};
-    $hash{source_paths} = [ $self->source_files->paths ];
+    $hash{source_paths} = [ $self->source_paths ];
 
     return \%hash;
 }
