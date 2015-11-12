@@ -88,6 +88,7 @@ sub from_inputs_id {
     $self->fatal_message('Failed to parse inputs id! %s', $id) if not defined $line_number;
     my $process = Genome::InstrumentData::Command::Import::Process->get($process_id);
     $self->fatal_message('Failed to get instdata import process for id: %s', $process_id) if not $process;
+    $self->process($process);
 
     my $import_file = $process->import_file;
     $self->set_file($import_file);
