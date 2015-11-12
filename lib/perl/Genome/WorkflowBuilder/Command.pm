@@ -123,7 +123,12 @@ sub _get_lsf_resources_from_command {
 
 sub _get_ptero_lsf_parameters {
     my $self = shift;
-    my $command_class = $self->command;
+
+    my $lsf_resource = $self->lsf_resource;
+    if (defined($lsf_resource) && length($lsf_resource)) {
+        return parse_lsf_params($lsf_resource);
+    }
+
     return parse_lsf_params(
         $self->_get_lsf_resources_from_command
     )
