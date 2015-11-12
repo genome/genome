@@ -39,8 +39,8 @@ sub _params_for_command {
         gvcf_gq_bands => [5,20,60],
     );
 
-    my $intervals = $self->intervals;
-    push @params, intervals => $intervals if $intervals;
+    my @intervals = $self->intervals;
+    push @params, intervals => \@intervals if @intervals;
 
     return @params;
 }
