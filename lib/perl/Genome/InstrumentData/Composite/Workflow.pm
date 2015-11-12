@@ -54,7 +54,7 @@ sub execute {
     $self->_workflow($workflow);
 
     if($self->log_directory) {
-        $workflow->log_dir($self->log_directory);
+        $workflow->recursively_set_log_dir($self->log_directory);
     }
 
     $workflow->validate;
