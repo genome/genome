@@ -274,6 +274,43 @@ sub name_in_vcf {
     return $self->name;
 }
 
+sub get_tcga_names {
+    my $self = shift;
+    my @sample_attributes = $self->attributes(attribute_label => 'external_name');
+    my @tcga_names;
+
+    if (@sample_attributes) {
+        for my $attr (@sample_attributes) {
+            my $sample_tcga_name = $attr->attribute_value;
+
+            if ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
+                push @tcga_names, $sample_tcga_name;
+            }
+        }
+    }
+    else {
+        $self->debug_message("No sample attribute with attribute_label as external_name found for sample: %s", $self->name);
+    }
+    $self->debug_message("No TCGA name found from sample attributes for sample: %s", $self->name) unless @tcga_names;
+    return @tcga_names;
+}
+
+sub resolve_tcga_patient_id {
+    my $self = shift;
+    my @tcga_names = $self->get_tcga_names;
+    return unless @tcga_names;
+    
+    my %patient_ids;
+    for my $tcga_name (@tcga_names) {
+        my ($patient_id) = $tcga_name =~ /^(TCGA\-[A-Z]{2}\-\w{4})\-/;
+        $patient_ids{$patient_id}++;
+    }
+    my @patient_ids = keys %patient_ids;
+    return $patient_ids[0] if @patient_ids == 1;
+    my $patient_ids = join ',', @patient_ids;
+    $self->fatal_message("Multiple patient ids: %s found for sample %s", $patient_ids, $self->name);
+}
+
 sub get_source {
     my $self = shift;
     return $self->source;

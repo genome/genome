@@ -227,10 +227,13 @@ sub tar_and_md5_dir {
 }
 
 sub resolve_patient_id {
-    my $self = shift;
-    my $build = shift;
+    my ($self, $build) = @_;
     my $patient_id = $build->subject->source->upn;
-    die "Could not resolve patient_id for build ".$build->id unless (defined $patient_id);
+    unless ($patient_id =~ /^TCGA\-/) {
+        $patient_id = $build->subject->resolve_tcga_patient_id;
+    }
+    $self->fatal_message('Could not resolve TCGA patient_id for build '.$build->id)
+        unless defined $patient_id and $patient_id =~ /^TCGA\-/;
     return $patient_id;
 }
 
