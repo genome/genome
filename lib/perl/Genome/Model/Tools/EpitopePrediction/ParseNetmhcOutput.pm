@@ -5,6 +5,7 @@ use warnings;
 use Data::Dumper;
 use Genome;
 use File::Basename qw/fileparse/;
+use POSIX qw(ceil);
 
 class Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput {
     is        => ['Genome::Model::Tools::EpitopePrediction::Base'],
@@ -79,33 +80,47 @@ sub execute {
             for my $position (@positions) {
                 my $mt_score            = $mt_position_data->{$position}->{score};
                 my $mt_epitope_sequence = $mt_position_data->{$position}->{epitope_sequence};
-                my ($wt_score, $wt_epitope_sequence, $fold_change);
-                if (defined($wt_position_data) && defined($wt_position_data->{$position})) {
-                    $wt_score            = $wt_position_data->{$position}->{score};
-                    $wt_epitope_sequence = $wt_position_data->{$position}->{epitope_sequence};
-                    $fold_change         = sprintf("%.3f", $wt_score / $mt_score);
-                    # Skip if mutant amino acid is not present
-                    if ($mt_epitope_sequence eq $wt_epitope_sequence) {
+                my %best_matches        = %{best_matches($mt_epitope_sequence, $wt_position_data)};
+
+                MATCH:
+                while (my ($wt_position, $match_count) = each %best_matches) {
+                    if  ($match_count == length($mt_epitope_sequence)) {
+                        #All of the MT AAs match the WT
+                        #This MT sub-peptide sequence does not contain the mutation
                         next POSITION;
                     }
+                    else {
+                        my ($wt_score, $wt_epitope_sequence, $fold_change);
+                        if ($match_count < min_match_count(length($mt_epitope_sequence))) {
+                            #None of the WT sub-peptide sequence are a good
+                            #enough match
+                            $wt_score = $wt_epitope_sequence = $fold_change = 'NA';
+                        }
+                        else {
+                            $wt_score            = $wt_position_data->{$wt_position}->{score};
+                            $wt_epitope_sequence = $wt_position_data->{$wt_position}->{epitope_sequence};
+                            $fold_change         = sprintf("%.3f", $wt_score / $mt_score);
+                        }
+                        my %data = (
+                            'Gene Name' => $protein_name,
+                            'Mutation' => $variant_aa,
+                            'Sub-peptide Position' => $position,
+                            'MT score' => $mt_score,
+                            'WT score' => $wt_score,
+                            'MT epitope seq' => $mt_epitope_sequence,
+                            'WT epitope seq' => $wt_epitope_sequence,
+                            'Fold change' => $fold_change,
+                        );
+                        $output_fh->write_one(\%data);
+                        if ($match_count < min_match_count(length($mt_epitope_sequence))) {
+                            #Any other matches would also not be good enough
+                            #and when printed result in duplicate lines
+                            last MATCH;
+                        }
+                    }
                 }
-                else {
-                    $wt_score = $wt_epitope_sequence = $fold_change = 'NA';
-                }
-
-                my %data = (
-                    'Gene Name' => $protein_name,
-                    'Mutation' => $variant_aa,
-                    'Sub-peptide Position' => $position,
-                    'MT score' => $mt_score,
-                    'WT score' => $wt_score,
-                    'MT epitope seq' => $mt_epitope_sequence,
-                    'WT epitope seq' => $wt_epitope_sequence,
-                    'Fold change' => $fold_change,
-                );
-                $output_fh->write_one(\%data);
-
                 if ($type eq 'top') {
+                    #We only want to output the best-scoring position
                     next VARIANT_AA;
                 }
             }
@@ -215,6 +230,11 @@ sub match_counts {
         $match_counts->{$position} = ($mt_sequence ^ $wt_position_data->{$position}->{epitope_sequence}) =~ tr/\0//;
     }
     return $match_counts;
+}
+
+sub min_match_count {
+    my $sub_peptide_length = shift;
+    return ceil($sub_peptide_length / 2);
 }
 
 1;

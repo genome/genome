@@ -14,28 +14,34 @@ use_ok($class);
 
 my $test_dir = __FILE__ . '.d';
 
-for my $netmhc_version (qw(3.0 3.4)) {
-    my $variant_type = 'snvs';
-    for my $output_filter (qw(all top)) {
-        subtest "NetMHC version $netmhc_version - $variant_type - $output_filter" => sub {
-            test_for_output_type(
-                output_filter => $output_filter,
-                netmhc_version => $netmhc_version,
-                variant_type => $variant_type,
-            );
+subtest "SNVs file" => sub {
+    for my $netmhc_version (qw(3.0 3.4)) {
+        my $variant_type = 'snvs';
+        for my $output_filter (qw(all top)) {
+            subtest "NetMHC version $netmhc_version - $output_filter" => sub {
+                test_for_output_type(
+                    output_filter => $output_filter,
+                    netmhc_version => $netmhc_version,
+                    variant_type => $variant_type,
+                );
+            }
         }
     }
-}
+};
 
 subtest "Indel file with frameshifts and inframe indels" => sub {
     my $output_filter = 'all';
     my $netmhc_version = '3.4';
     my $variant_type = 'indels';
-    test_for_output_type(
-        output_filter => $output_filter,
-        netmhc_version => $netmhc_version,
-        variant_type => $variant_type,
-    );
+    for my $output_filter (qw(all top)) {
+        subtest "NetMHC version $netmhc_version - $output_filter" => sub {
+            test_for_output_type(
+                output_filter => $output_filter,
+                netmhc_version => $netmhc_version,
+                variant_type => $variant_type,
+            );
+        };
+    }
 };
 
 my %match_count_test_cases = (
