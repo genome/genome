@@ -22,14 +22,14 @@ my $process = Genome::InstrumentData::Command::Import::Process->create(
     import_file => $input_file,
 );
 
-my $factory;
-subtest 'create and set_file' => sub{
-    plan tests => 2;
+my $factory = $class->get;
+subtest 'get, set process and file' => sub{
+    plan tests => 3;
 
-    $factory = $class->create(process => $process);
-    ok($factory, 'create inputs factory');
+    ok($factory, 'get factory');
+    $factory->process($process);
+    is($factory->process, $process, 'set process');
     ok($factory->set_file($input_file), 'set_file');
-
 };
 
 subtest 'next' => sub{
@@ -174,50 +174,34 @@ subtest 'fails' => sub{
 
     throws_ok(
         sub{ 
-            my $f = $class->create;
-            $f->set_file(File::Spec->join($data_dir, 'invalid-sample-name.csv'));
-            $f->next;
+            $factory->set_file(File::Spec->join($data_dir, 'invalid-sample-name.csv'));
+            print Data::Dumper::Dumper $factory->next;
         },
         qr/Invalid sample name: INVALID.NAME-. It must have at least 3 parts separated by dashes./,
         'failed w/ invalid sample name',
     );
 
     throws_ok(
-        sub{
-            my $f = $class->create;
-            $f->set_file(File::Spec->join($data_dir, 'no-nomenclature.csv'));
-            $f->next;
-        },
+        sub{ $factory->set_file(File::Spec->join($data_dir, 'no-nomenclature.csv')); $factory->next; },
         qr/No sample\.nomenclature column given\! It is required to resolve entity names when no sample name is given\./,
         'failed w/o sample name and no sample.nomenclature',
     );
 
     throws_ok(
-        sub{
-            my $f = $class->create;
-            $f->set_file(File::Spec->join($data_dir, 'no-individual-name-part.csv'));
-            $f->next;
-        },
+        sub{ $factory->set_file(File::Spec->join($data_dir, 'no-individual-name-part.csv')); $factory->next; },
         qr/No individual\.name_part column_given! It is required to resolve entity names when no sample name is given\./,
         'failed w/o sample name and no individual.name_part',
     );
 
     throws_ok(
         sub{
-            my $f = $class->create;
-            $f->set_file(File::Spec->join($data_dir, 'no-sample-name-part.csv'));
-            $f->next;
-        },
+            $factory->set_file(File::Spec->join($data_dir, 'no-sample-name-part.csv')); $factory->next; },
         qr/No sample\.name_part column_given! It is required to resolve entity names when no sample name is given\./,
         'failed w/o sample name and no sample.name_part',
     );
 
     throws_ok(
-        sub{ 
-            my $f = $class->create;
-            $f->set_file(File::Spec->join($data_dir, 'individual-name-mismatch.csv'));
-            $f->next;
-        },
+        sub{ $factory->set_file(File::Spec->join($data_dir, 'individual-name-mismatch.csv')); $factory->next; },
         qr/Invalid individual name: TGI-AAAA\. It must include the first part of the sample name: TGI-AA12345-Z98765\./,
         'failed when sample name does not include individual name',
     );

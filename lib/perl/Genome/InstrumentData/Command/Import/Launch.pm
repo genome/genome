@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 
 use Genome::InstrumentData::Command::Import::Inputs::Factory;
-use Genome::InstrumentData::Command::Import::Inputs;
 require List::Util;
 
 class Genome::InstrumentData::Command::Import::Launch {
@@ -99,7 +98,8 @@ sub _create_wf_inputs {
     my $self = shift;
 
     my @inputs;
-    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->create(process => $self->process);
+    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->get;
+    $inputs_factory->process($self->process);
     $inputs_factory->set_file($self->file);
     my %seen;
     while ( my $inputs = $inputs_factory->next ) {

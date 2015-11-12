@@ -87,9 +87,9 @@ sub execute {
 sub _resolve_work_flow_inputs {
     my $self = shift;
 
-    return Genome::InstrumentData::Command::Import::Inputs::Factory->create(
-        analysis_project => $self->analysis_project,
-    )->from_params({
+    my $factory = Genome::InstrumentData::Command::Import::Inputs::Factory->get;
+    $factory->analysis_project($self->analysis_project);
+    return $factory->from_params({
             entity_params => {
                 library => { id => $self->library->id, },
                 instdata => $self->_resolve_instrument_data_properties,
