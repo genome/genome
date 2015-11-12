@@ -90,13 +90,16 @@ sub workflow_inputs {
 sub dag {
     my $self = shift;
 
-    my $dag = Genome::WorkflowBuilder::DAG->create(
-        name => 'Epitope Binding Predicition',
-    );
+    unless (defined($self->{dag})) {
+        my $dag = Genome::WorkflowBuilder::DAG->create(
+            name => 'Epitope Binding Predicition',
+        );
 
-    $self->add_reports_to_workflow($dag);
+        $self->add_reports_to_workflow($dag);
+        $self->{dag} = $dag;
+    }
 
-    return $dag;
+    return $self->{dag};
 }
 
 sub add_reports_to_workflow {
@@ -117,6 +120,7 @@ sub add_reports_to_workflow {
             destination => $report_dag,
             destination_property => 'process_id',
         );
+        $wrapper->delete();
 
         my $output_directory = File::Spec->join($self->output_directory, $variant_type);
         Genome::Sys->create_directory($output_directory);
@@ -135,6 +139,7 @@ sub add_reports_to_workflow {
         delete $netmhc_inputs{input_fasta_file};
         $netmhc_dag->declare_constant(%netmhc_inputs);
         $dag->add_operation($netmhc_dag);
+        $netmhc->delete();
 
         for my $report_output_name ($report_dag->output_properties) {
             if ($report_output_name =~ m/report_path \((.*)\)/) {
