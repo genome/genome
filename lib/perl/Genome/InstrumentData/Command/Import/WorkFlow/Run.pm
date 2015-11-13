@@ -22,6 +22,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Run {
         helpers => { calculate => q( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get; ), },
     },
     has_optional_transient => {
+        _input_properties => { is => 'ARRAY', },
         _workflow => {},
         _verify_not_imported_op => {},
         _working_directory => { is => 'Text', },
@@ -46,12 +47,13 @@ sub execute {
     my $space_available = $self->_verify_adequate_disk_space_is_available_for_source_files;
     return if not $space_available;
 
+    my $inputs = $self->work_flow_inputs->as_hashref;
+    $inputs->{working_directory} = $self->_working_directory;
+    $self->_input_properties([ keys %$inputs ]);
+
     my $workflow = $self->_build_workflow;
     return if not $workflow;
 
-    my $inputs = $self->work_flow_inputs->as_hashref;
-    return if not $inputs;
-    $inputs->{working_directory} = $self->_working_directory;
     my $process = $self->work_flow_inputs->process;
     if ( $process ) {
         $workflow->log_dir($process->log_directory);
@@ -90,7 +92,7 @@ sub _build_workflow {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Instrument Data',
-        input_properties => [qw/ analysis_project instrument_data_properties downsample_ratio library library_name sample_name source_paths working_directory /],
+        input_properties => $self->_input_properties,
         output_properties => [qw/ instrument_data /],
     );
     $self->_workflow($workflow);
