@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Info::TCGASpecialSampleNamingConversion;
 
 my $default_nomenclature = Genome::Config::get('nomenclature_default');
 
@@ -267,11 +268,23 @@ sub sample_name_to_name_in_vcf {
 sub name_in_vcf {
     my $self = shift;
     my $sample_tcga_name = $self->extraction_label;
-    if ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
-        $self->debug_message("Found TCGA name: $sample_tcga_name for sample: %s", $self->name);
-        return $sample_tcga_name;
+
+    unless ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
+        $sample_tcga_name = $self->name;
+        my @tcga_names = $self->get_tcga_names;
+        if (@tcga_names and @tcga_names == 1) {
+            $sample_tcga_name = shift @tcga_names;
+        }
+        else {
+            my %conversion = Genome::Info::TCGASpecialSampleNamingConversion->tcga_naming_conversion;
+            $sample_tcga_name = $conversion{$sample_tcga_name} if $conversion{$sample_tcga_name};
+        }
     }
-    return $self->name;
+
+    if ($sample_tcga_name =~ /^TCGA\-/) {
+        $self->debug_message("Found TCGA name: %s for sample: %s", $sample_tcga_name, $self->name);
+    }
+    return $sample_tcga_name;
 }
 
 sub get_tcga_names {
