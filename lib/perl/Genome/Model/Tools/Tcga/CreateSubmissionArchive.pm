@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::Reader;
+use Set::Scalar;
 
 my $IDF_FILE_EXTENSION = "idf";
 my $SDRF_FILE_EXTENSION = "sdrf";
@@ -124,7 +125,7 @@ sub execute {
         }
 
         for my $build(($normal_build, $tumor_build)) {
-            my $sample_info = $self->get_info_for_sample($build->subject->extraction_label, $vcf_sample_info);
+            my $sample_info = $self->get_info_for_sample($build->subject, $vcf_sample_info);
 
             for my $vcf($snvs_vcf, $indels_vcf) {
                 if ($self->bgzip_vcfs) {
@@ -195,15 +196,18 @@ sub print_manifest {
 }
 
 sub get_info_for_sample {
-    my $self = shift;
-    my $desired_sample = shift;
-    my $sample_info_collection = shift;
+    my ($self, $desired_sample, $sample_info_collection) = @_;
+    my $tcga_names = Set::Scalar->new($desired_sample->extraction_label, $desired_sample->get_tcga_names);
+    my $found_sample;
+    
     for my $sample (@$sample_info_collection) {
-        if ($sample->{"ID"}->{content} eq $desired_sample) {
-            return $sample;
+        if ($tcga_names->has($sample->{"ID"}->{content})) {
+            $found_sample = $sample;
+            last;
         }
     }
-    die "Info for sample $desired_sample was not available";
+    $self->fatal_message('Info for sample '.$desired_sample->name.' was not available') unless $found_sample;
+    return $found_sample;
 }
 
 sub get_sample_info_from_vcf {

@@ -315,7 +315,7 @@ sub resolve_tcga_patient_id {
     
     my %patient_ids;
     for my $tcga_name (@tcga_names) {
-        my ($patient_id) = $tcga_name =~ /^(TCGA\-[A-Z]{2}\-\w{4})\-/;
+        my ($patient_id) = $tcga_name =~ /^(TCGA\-\w{2}\-\w{4})\-/;
         $patient_ids{$patient_id}++;
     }
     my @patient_ids = keys %patient_ids;
