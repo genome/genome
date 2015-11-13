@@ -272,9 +272,7 @@ sub _add_fastqs_to_bam_op_to_workflow {
     }
     $self->_workflow->add_link(
         left_operation => $previous_op,
-        left_property => ( $previous_op->name eq 'verify not imported' ) # not ideal...
-        ? 'source_path'
-        : 'fastq_paths',
+        left_property => 'source_path',
         right_operation => $fastqs_to_bam_op,
         right_property => 'fastq_paths',
     );

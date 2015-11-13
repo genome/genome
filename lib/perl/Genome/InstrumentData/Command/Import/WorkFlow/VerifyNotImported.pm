@@ -17,6 +17,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
         },
         source_path => {
             is => 'Text',
+            is_output => 1,
             doc => 'Source path of sequences to get.',
         },
     },
