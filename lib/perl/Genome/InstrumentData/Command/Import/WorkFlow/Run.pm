@@ -270,9 +270,10 @@ sub _add_fastqs_to_bam_op_to_workflow {
             right_property => $property,
         );
     }
+    
     $self->_workflow->add_link(
         left_operation => $previous_op,
-        left_property => 'source_path',
+        left_property => ( $previous_op->name eq 'archive to fastqs' ) ? 'fastq_paths' : 'source_path',
         right_operation => $fastqs_to_bam_op,
         right_property => 'fastq_paths',
     );
