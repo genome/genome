@@ -14,6 +14,7 @@ use Genome::Disk::Group::Validate::GenomeDiskGroups;
 use Genome::Utility::Inputs qw(encode);
 use Cwd qw(abs_path);
 use File::DirCompare;
+use Genome::Ptero::Utils qw(ptero_proxy);
 
 class Genome::Process {
     is => [
@@ -337,6 +338,11 @@ sub lsf_job_id {
 sub workflow_name {
     my $self = shift;
     return sprintf('Genome::Process(%s)', $self->id);
+}
+
+sub ptero_workflow_proxy {
+    my $self = shift;
+    return ptero_proxy($self->workflow_name);
 }
 
 sub lsf_project_name {

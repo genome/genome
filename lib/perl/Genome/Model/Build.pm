@@ -554,6 +554,12 @@ sub workflow_name {
     return $self->build_id . ' all stages';
 }
 
+sub ptero_workflow_proxy {
+    my $self = shift;
+
+    return $self->process->ptero_workflow_proxy;
+}
+
 sub workflow_instances {
     my $self = shift;
     my @instances = Workflow::Operation::Instance->get(

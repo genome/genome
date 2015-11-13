@@ -60,9 +60,23 @@ sub _build_is_bad {
     #checking the jobs
     UR::Context->current->reload($build);
     if ($build->status eq "Scheduled" or $build->status eq "Running") {
+        if (_build_was_run_using_ptero($build)) {
+            # PTero builds are never bad!
+            return 0;
+        }
         return 1;
     }
     else {
+        return 0;
+    }
+}
+
+sub _build_was_run_using_ptero {
+    my $build = shift;
+
+    if ($build->ptero_workflow_proxy) {
+        return 1;
+    } else {
         return 0;
     }
 }
