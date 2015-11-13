@@ -108,6 +108,7 @@ class Genome::Model::Build {
         },
         software_revision => { is => 'Text', len => 1000 },
         process => {
+            is_many => 1,
             is => 'Genome::Model::Build::Process',
             reverse_as => 'build',
         }
