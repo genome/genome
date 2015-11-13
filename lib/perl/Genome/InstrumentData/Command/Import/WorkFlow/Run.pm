@@ -186,7 +186,7 @@ sub _add_retrieve_source_path_op_to_workflow {
         right_operation => $retrieve_source_path_op,
         right_property => 'source_path',
     );
-    $retrieve_source_path_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
+    $retrieve_source_path_op->parallel_by('source_path') if $self->work_flow_inputs->source_paths > 1;
 
     return $retrieve_source_path_op;
 }
@@ -210,7 +210,7 @@ sub _add_verify_not_imported_op_to_workflow {
         right_operation => $verify_not_imported_op,
         right_property => 'source_path',
    );
-   $verify_not_imported_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
+   $verify_not_imported_op->parallel_by('source_path') if $self->work_flow_inputs->source_paths > 1;
 
     return $verify_not_imported_op;
 }
@@ -386,7 +386,6 @@ sub _add_create_instdata_and_copy_bam_op_to_workflow {
         right_operation => $create_instdata_and_copy_bam_op,
         right_property => 'source_md5s',
     );
-    $create_instdata_and_copy_bam_op->parallel_by('bam_path');
 
     $workflow->add_link(
         left_operation => $create_instdata_and_copy_bam_op,

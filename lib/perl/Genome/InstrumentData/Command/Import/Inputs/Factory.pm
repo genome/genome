@@ -205,7 +205,7 @@ sub from_params {
 
     # If not in cache, need source paths
     if ( not $params->{source_paths} ) {
-        $self->fatal_message('No source paths given to create inputs! %s', Data::Dumper::Dumper$params);
+        $self->fatal_message('No source paths given to create inputs! %s', Data::Dumper::Dumper($params));
     }
     $params->{entity_params}->{instdata}->{original_data_path} = join(',', @{$params->{source_paths}});
 
