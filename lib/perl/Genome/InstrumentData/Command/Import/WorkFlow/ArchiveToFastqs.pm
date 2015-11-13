@@ -24,7 +24,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs {
         },
     ],
     has_output => [ 
-        fastq_paths => {
+        source_path => {
             is => 'Text',
             is_many => 1,
             doc => 'The paths of the extracted fastqs.',
@@ -122,7 +122,7 @@ sub _move_extracted_fastqs_to_working_directory {
         $self->error_message('No fastqs found in archive!');
         return;
     }
-    $self->fastq_paths(\@fastq_paths);
+    $self->source_path(\@fastq_paths);
 
     $self->debug_message('Move extracted fastqs to working directory...done');
     return 1;
