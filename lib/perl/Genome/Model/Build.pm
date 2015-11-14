@@ -108,6 +108,7 @@ class Genome::Model::Build {
         },
         software_revision => { is => 'Text', len => 1000 },
         process => {
+            is_many => 1,
             is => 'Genome::Model::Build::Process',
             reverse_as => 'build',
         }
@@ -551,6 +552,12 @@ sub build_event {
 sub workflow_name {
     my $self = shift;
     return $self->build_id . ' all stages';
+}
+
+sub ptero_workflow_proxy {
+    my $self = shift;
+
+    return $self->process->ptero_workflow_proxy;
 }
 
 sub workflow_instances {

@@ -13,6 +13,7 @@ use Genome::Utility::Text qw(justify strip_color);
 use Try::Tiny qw(try catch);
 use Ptero::Proxy::Workflow;
 use Ptero::Proxy::Workflow::Execution qw();
+use Genome::Ptero::Utils qw(ptero_proxy ptero_workflow_url);
 
 my $INDENTATION_STR = '. ';
 
@@ -51,14 +52,10 @@ sub _display_ptero_workflow {
     return unless $self->workflow;
     $handle->say($self->_color_heading("Workflow"));
 
-    my $url = sprintf("%s?name=%s", Genome::Config::get('ptero_workflow_submit_url'),
-        $workflow_name);
-
-    my $wf_proxy = try {
-        return Ptero::Proxy::Workflow->new($url);
-    };
+    my $wf_proxy = ptero_proxy($workflow_name);
     unless (defined($wf_proxy)) {
-        $handle->say("No ptero workflow found at url ($url)");
+        my $url = ptero_workflow_url($workflow_name);
+        $handle->say("No ptero workflow found for workflow named ($workflow_name) at url ($url)");
         return;
     }
 
