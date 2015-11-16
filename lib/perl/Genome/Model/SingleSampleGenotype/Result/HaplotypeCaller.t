@@ -16,7 +16,7 @@ use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use File::Spec;
 use Sub::Override;
 
-use Test::More tests => 2;
+use Test::More tests => 4;
 
 my $pkg = 'Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller';
 use_ok($pkg);
@@ -48,4 +48,8 @@ my $result = $pkg->create(
     emit_reference_confidence => 'GVCF',
 );
 isa_ok($result, $pkg, 'generated result');
+
+is($result->_vcf_filename, '1.g.vcf.gz', 'VCF filename is as expected');
+my $vcf = $result->vcf_file;
+ok(-s $vcf, 'vcf_file points to the VCF that was created');
 
