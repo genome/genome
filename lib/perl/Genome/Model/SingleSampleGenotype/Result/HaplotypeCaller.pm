@@ -33,6 +33,16 @@ class Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller {
             doc => 'Version of GATK to use',
         },
     },
+    has => {
+        vcf_file => {
+            is => 'Text',
+            is_calculated => 1,
+            calculate_from => ['output_dir'],
+            calculate => q{
+                File::Spec->join($output_dir, $self->_vcf_filename);
+            },
+        },
+    },
     doc => 'SoftwareResult wrapper for GATK HaplotypeCaller',
 };
 
