@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Genome::Utility::Text;
+
 class Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller {
     is => 'Genome::SoftwareResult::StageableSimple',
     has_input => {
@@ -35,13 +37,26 @@ class Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller {
 };
 
 
+sub _vcf_filename {
+    my $self = shift;
+
+    my @intervals = $self->intervals;
+    my $filename = (@intervals == 1)? Genome::Utility::Text::sanitize_string_for_filesystem($intervals[0]) : 'output';
+
+    $filename .= '.g.vcf';
+
+    return $filename;
+}
+
 sub _run {
     my $self = shift;
 
     my $input_bam = $self->alignment_result->bam_path;
     my $reference = $self->alignment_result->reference_build->full_consensus_path('fa');
     my $output_dir = $self->temp_staging_directory;
-    my $output_file = File::Spec->join($output_dir, 'output.g.vcf');
+    my $filename = $self->_vcf_filename;
+
+    my $output_file = File::Spec->join($output_dir, $filename);
 
 
     my $cmd = Genome::Model::Tools::Gatk::HaplotypeCaller->create(
