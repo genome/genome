@@ -54,56 +54,9 @@ sub unarchive {
     # to this old location.
     (my $old_absolute_path = $archive_path) =~ s/^\/gscarchive/\/gscmnt/;
 
-    my $tar_path = $allocation_object->tar_path;
-    my $cmd = "tar -C $target_path -xf $tar_path";
-
     my $tx = UR::Context::Transaction->begin();
     try {
-        # It's very possible that if no commit is on, the volumes/allocations
-        # being dealt with are test objects that don't exist out of this local
-        # UR context, so bsubbing jobs would fail.
-        if ($ENV{UR_DBI_NO_COMMIT}) {
-            Genome::Sys->shellcmd(cmd => $cmd);
-        } else {
-            # If this process should be killed, the LSF job needs to be cleaned up
-            my ($job_id, $status);
-
-            # Signal handlers are added like this so an anonymous sub can be
-            # used, which handles variables defined in an outer scope
-            # differently than named subs (in this case, $job_id,
-            # $allocation_object, and $archive_path).
-            my @signals = qw/ INT TERM /;
-            for my $signal (@signals) {
-                $SIG{$signal} = sub {
-                    print STDERR "Cleanup activated within allocation, ",
-                        "cleaning up LSF jobs\n";
-                    eval { Genome::Sys->kill_lsf_job($job_id) } if $job_id;
-                    $allocation_object->_cleanup_archive_directory(
-                        $archive_path);
-                    die "Received signal, exiting.";
-                }
-            }
-
-            # Entire path must be wrapped in quotes because older allocation
-            # IDs contain spaces If the command isn't wrapped in quotes, the
-            # '&&' is misinterpreted by bash (rather than being "bsub '1 && 2'
-            # it is looked at as 'bsub 1' && '2')
-            ($job_id, $status) = Genome::Sys->bsub_and_wait(
-                queue => Genome::Config::get('archive_lsf_queue'),
-                job_group => '/unarchive',
-                log_file => "/tmp/$id",
-                cmd => $cmd,
-            );
-
-            for my $signal (@signals) {
-                delete $SIG{$signal};
-            }
-
-            unless ($status eq 'DONE') {
-                confess "Could not execute command $cmd via LSF job $job_id, "
-                    . "received status $status";
-            }
-        }
+        $self->_do_unarchive_cmd($allocation_object,$shadow_allocation);
 
         # Make updates to the allocation
         $self->_swap_shadow_allocation($shadow_allocation, $allocation_object);
@@ -174,6 +127,47 @@ sub _swap_shadow_allocation {
                     $allocation_object->absolute_path)));
     };
 
+    return 1;
+}
+
+sub _do_unarchive_cmd {
+    my $class = shift;
+    my $archived_allocation = shift;
+    my $shadow_allocation = shift;
+
+    my $tar_path = $archived_allocation->tar_path;
+    my $target_path = $shadow_allocation->absolute_path;
+
+    my $cmd_array_ref = ['tar', '-C', $target_path, '-xf', $tar_path];
+    # It's very possible that if no commit is on, the volumes/allocations
+    # being dealt with are test objects that don't exist out of this local
+    # UR context, so bsubbing jobs would fail.
+    if ($ENV{UR_DBI_NO_COMMIT}) {
+        Genome::Sys->shellcmd(cmd => $cmd_array_ref);
+    } else {
+        # If this process should be killed, the LSF job needs to be cleaned up
+        # Signal handler added to kill LSF job
+        my $job_id;
+        my $sig_handler = sub {
+            print STDERR "Cleanup activated within allocation, ",
+                "cleaning up LSF jobs\n";
+            Genome::Sys->kill_lsf_job($job_id) if $job_id;
+            die 'Received signal, exiting.';
+        };
+        local @SIG{'INT','TERM'} = ($sig_handler, $sig_handler);
+
+        $job_id = Genome::Sys->bsub(
+            queue => Genome::Config::get('archive_lsf_queue'),
+            job_group => '/unarchive',
+            log_file => '/tmp/'. $archived_allocation->id,
+            cmd => $cmd_array_ref,
+        );
+
+        my $status = Genome::Sys->wait_for_lsf_job($job_id);
+        unless ($status eq 'DONE') {
+            confess('Could not execute command '. join(' ',@{$cmd_array_ref}) .'via LSF job '. $job_id .' received status '. $status);
+        }
+    }
     return 1;
 }
 

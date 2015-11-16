@@ -269,6 +269,14 @@ sub move {
     return $class->_execute_system_command('_move', %params);
 }
 
+sub copy {
+    my ($class, %params) = @_;
+
+    Genome::Utility::Instrumentation::inc('disk.allocation.copy');
+
+    return $class->_execute_system_command('_copy', %params);
+}
+
 sub archive {
     my ($class, %params) = @_;
 
@@ -404,6 +412,18 @@ sub _move {
         %parameters);
 
     return $mover->move;
+}
+
+sub _copy {
+    my $class = shift;
+
+    my %parameters = @_;
+    $parameters{allocation_id} = delete $parameters{id};
+
+    my $copier = Genome::Disk::Detail::Allocation::Copier->create(
+        %parameters);
+
+    return $copier->copy;
 }
 
 sub _archive {
