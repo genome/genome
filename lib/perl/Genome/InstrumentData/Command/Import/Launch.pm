@@ -142,7 +142,7 @@ sub _launch_process {
     );
     my $import_op = Genome::WorkflowBuilder::Command->create(
         name => 'InstData Import : Run WF',
-        command => 'Genome::InstrumentData::Command::Import::WorkFlow::Run',
+        command => 'Genome::InstrumentData::Command::Import::WorkFlow::ImportInstData',
         lsf_resource => $lsf_resource,
     );
     $dag->connect_input(

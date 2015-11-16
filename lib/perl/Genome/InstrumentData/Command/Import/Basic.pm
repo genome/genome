@@ -69,7 +69,7 @@ sub execute {
     my $self = shift;
 
     my $work_flow_inputs = $self->_resolve_work_flow_inputs;
-    my $run = Genome::InstrumentData::Command::Import::WorkFlow::Run->create(
+    my $run = Genome::InstrumentData::Command::Import::WorkFlow::ImportInstData->create(
         work_flow_inputs => $work_flow_inputs,
     );
     die $self->error_message(
