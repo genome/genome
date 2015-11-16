@@ -53,7 +53,7 @@ sub _vcf_filename {
     my @intervals = $self->intervals;
     my $filename = (@intervals == 1)? Genome::Utility::Text::sanitize_string_for_filesystem($intervals[0]) : 'output';
 
-    $filename .= '.g.vcf';
+    $filename .= '.g.vcf.gz';
 
     return $filename;
 }
