@@ -54,6 +54,25 @@ class Genome::Model::SomaticValidation::Command::DetectVariants{
 
 sub sub_command_category { 'pipeline steps' }
 
+sub shortcut {
+    my $self = shift;
+
+    return $self->should_skip_run;
+}
+
+sub should_skip_run {
+    my $self = shift;
+    my $build = $self->build;
+
+    unless ($build->snv_detection_strategy or $build->indel_detection_strategy or $build->sv_detection_strategy or $build->cnv_detection_strategy) {
+        $self->warning_message("No detection strategies provided. Skipping detect variants step");
+        return 1;
+    }
+
+    return;
+}
+
+
 sub execute{
     my $self = shift;
 
@@ -63,10 +82,7 @@ sub execute{
         die $self->error_message("no build provided!");
     }
 
-    unless ($build->snv_detection_strategy or $build->indel_detection_strategy or $build->sv_detection_strategy or $build->cnv_detection_strategy) {
-        $self->warning_message("No detection strategies provided. Skipping detect variants step");
-        return 1;
-    }
+    return 1 if $self->should_skip_run;
 
     my %params;
     $params{snv_detection_strategy} = $build->snv_detection_strategy if $build->snv_detection_strategy;

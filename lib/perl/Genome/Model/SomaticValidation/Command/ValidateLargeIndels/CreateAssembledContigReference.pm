@@ -87,19 +87,6 @@ sub execute {
     $self->tier_files(1);
 
     my $long_indel_bed_file = $self->_resolve_long_indel_bed_file;
-    my $skip_msg = 'Skipping long indel validation';
-
-    unless ($long_indel_bed_file) {
-        $self->warning_message("No long indel bed file exists with size. $skip_msg");
-        $self->skip(1);
-        return 1;
-    }
-    unless ($self->build->normal_sample) {
-        $self->warning_message("Somatic validation of a single bam.  $skip_msg");
-        $self->skip(1);
-        return 1;
-    }
-    $self->skip(0);
     $self->_long_indel_bed_file($long_indel_bed_file);
 
     my $sample_id = Data::UUID->new->create_str();
@@ -127,7 +114,7 @@ sub execute {
 
     my $contigs_file = $cmd->contigs_fasta;
     unless (-s $contigs_file) {
-        $self->warning_message("Failed to get valid assembly contig fasta. $skip_msg");
+        $self->warning_message("Failed to get valid assembly contig fasta. Skipping remainder of long indel validation.");
         $self->skip(1);
         return 1;
     }
@@ -211,7 +198,23 @@ sub skip_validation {
         return 1;
     }
 
+    my $long_indel_bed_file = $self->_resolve_long_indel_bed_file;
+    my $skip_msg = 'Skipping long indel validation';
+
+    unless ($long_indel_bed_file) {
+        $self->warning_message("No long indel bed file exists with size. $skip_msg");
+        $self->skip(1);
+        return 1;
+    }
+    unless ($self->build->normal_sample) {
+        $self->warning_message("Somatic validation of a single bam.  $skip_msg");
+        $self->skip(1);
+        return 1;
+    }
+
+    $self->skip(0);
     return;
 }
+
 1;
 
