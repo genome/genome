@@ -106,7 +106,17 @@ sub submit {
     my $inputs = $self->get_workflow_inputs;
     $self->status_message("Submitting workflow with inputs: %s", pp($inputs));
 
-    return $dag->submit(inputs => $inputs, process => $self->process);
+    my $commit_observer = Genome::Sys::CommitAction->create(
+        on_commit => sub {
+            my $wf_proxy = $dag->submit(inputs => $inputs, process => $self->process);
+            $self->status_message("Successfully launched process (%s) and ".
+                "submitted PTero workflow (%s)", $self->process->id, $wf_proxy->url);
+        },
+    );
+    unless ($commit_observer) {
+        $self->error_message(sprintf "Failed to add commit observer to "
+            ."submit PTero workflow for process (%s).", $self->process->id);
+    }
 }
 
 sub update_status {
