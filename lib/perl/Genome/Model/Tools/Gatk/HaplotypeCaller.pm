@@ -95,4 +95,19 @@ sub _shellcmd_extra_params {
     );
 }
 
+sub _cmdline_args {
+    my $self = shift;
+
+    my @args = $self->SUPER::_cmdline_args(@_);
+
+    if ($self->version eq '3.4' and
+            $self->output_vcf =~ /g\.vcf\.gz$/ and
+            $self->emit_reference_confidence eq 'GVCF') {
+        #Handle a bug in GATK 3.4 by including these deprecated parameters.
+        push @args, qw(-variant_index_type LINEAR -variant_index_parameter 128000);
+    }
+
+    return @args;
+}
+
 1;
