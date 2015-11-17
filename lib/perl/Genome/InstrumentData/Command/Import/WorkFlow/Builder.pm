@@ -45,7 +45,7 @@ sub build_workflow {
     return if not $verify_not_imported_op;
     $self->_verify_not_imported_op($verify_not_imported_op);
 
-    my @steps = $self->_resolve_workflow_steps;
+    my @steps = $self->_workflow_steps;
     my $previous_op = $verify_not_imported_op;
     for my $step ( @steps ) {
         $step =~ s/ /_/g;
@@ -60,11 +60,10 @@ sub build_workflow {
     return $workflow;
 }
 
-sub _resolve_workflow_steps {
+sub _workflow_steps {
     my $self = shift;
 
-    my $steps_method = '_steps_to_build_workflow_for_'.$self->work_flow_inputs->format;
-    my @steps = $self->$steps_method;
+    my @steps = $self->_steps_to_build_workflow;
     return @steps if not $self->work_flow_inputs->instrument_data_properties->{downsample_ratio};
 
     my $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sanitize bam' }, @steps);
@@ -74,38 +73,6 @@ sub _resolve_workflow_steps {
     splice(@steps, $idx + 1, 0, 'downsample bam');
 
     return @steps;
-}
-
-sub _steps_to_build_workflow_for_bam {
-    my $self = shift;
-
-    return (
-        'sort bam', 'sanitize bam', 'split bam by rg',
-    );
-}
-
-sub _steps_to_build_workflow_for_fastq {
-    my $self = shift;
-
-    return (
-       'fastqs to bam', 'sort bam',
-    );
-}
-
-sub _steps_to_build_workflow_for_fastq_archive {
-    my $self = shift;
-
-    return (
-       'archive to fastqs', 'fastqs to bam', 'sort bam',
-    );
-}
-
-sub _steps_to_build_workflow_for_sra {
-    my $self = shift;
-
-    return (
-        'sra to bam', 'sort bam', 'sanitize bam', 'split bam by rg',
-    );
 }
 
 sub _add_retrieve_source_path_op_to_workflow {
