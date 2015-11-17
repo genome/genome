@@ -241,8 +241,7 @@ sub _submit_process {
     }
 
     my $cmd = Genome::Process::Command::Run->create(
-        process => $self,
-    );
+        process => $self, update_with_commit => 0);
     my $wf_proxy = $cmd->submit();
     $self->status_message("Successfully launched process (%s) and ".
         "submitted PTero workflow (%s)",
