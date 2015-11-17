@@ -361,6 +361,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>export',
+      [
+        'output-dir=s',
+        'files',
+        'allocations=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>delay-archiving',
       [
         'allocations=s@',
