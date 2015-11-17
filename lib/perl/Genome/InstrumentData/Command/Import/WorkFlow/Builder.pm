@@ -24,9 +24,15 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Builder {
     },
     has_optional_transient => {
         _workflow => {},
+        _work_flow_ops => { is => 'HASH', default_value => {}, },
         _verify_not_imported_op => {},
     },
 };
+
+sub _work_flow_op_for {
+    my ($self, $name) = @_;
+    return $self->_work_flow_ops->{$name};
+}
 
 sub build_workflow {
     my $self = shift;
@@ -43,15 +49,16 @@ sub build_workflow {
 
     my $verify_not_imported_op = $self->_add_verify_not_imported_op_to_workflow($retrieve_source_path_op);
     return if not $verify_not_imported_op;
-    $self->_verify_not_imported_op($verify_not_imported_op);
+    $self->_work_flow_ops->{'verify not imported'} = $verify_not_imported_op;
 
     my @steps = $self->_workflow_steps;
     my $previous_op = $verify_not_imported_op;
     for my $step ( @steps ) {
-        $step =~ s/ /_/g;
-        my $add_step_method = '_add_'.$step.'_op_to_workflow';
-        $previous_op = $self->$add_step_method($previous_op);
-        return if not $previous_op;
+        my $add_step_method = join('_', '', 'add', split(' ', $step), 'op', 'to', 'workflow');
+        my $op = $self->$add_step_method($previous_op);
+        return if not $op;
+        $self->_work_flow_ops->{$step} = $op;
+        $previous_op = $op;
     }
 
     my $create_instdata_op = $self->_add_create_instdata_op_to_workflow($previous_op);
@@ -120,7 +127,7 @@ sub _add_verify_not_imported_op_to_workflow {
    );
    $verify_not_imported_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
 
-    return $verify_not_imported_op;
+   return $verify_not_imported_op;
 }
 
 sub _add_sra_to_bam_op_to_workflow {
@@ -131,7 +138,7 @@ sub _add_sra_to_bam_op_to_workflow {
     for my $property_mapping ( [qw/ working_directory working_directory /], [qw/ source_path sra_path /] ) {
         my ($left_property, $right_property) = @$property_mapping;
         $workflow->add_link(
-            left_operation => $self->_verify_not_imported_op,
+            left_operation => $self->_work_flow_op_for('verify not imported'),
             left_property => $left_property,
             right_operation => $sra_to_bam_op,
             right_property => $right_property,
@@ -153,7 +160,7 @@ sub _add_archive_to_fastqs_op_to_workflow {
         right_property => 'working_directory',
     );
     $self->_workflow->add_link(
-        left_operation => $self->_verify_not_imported_op,
+        left_operation => $self->_workflow_op_for('verify not imported'),
         left_property => 'source_path',
         right_operation => $archive_to_fastqs_op,
         right_property => 'archive_path',
@@ -291,7 +298,7 @@ sub _add_create_instdata_op_to_workflow {
     );
 
     $workflow->add_link(
-        left_operation => $self->_verify_not_imported_op,
+        left_operation => $self->_work_flow_op_for('verify not imported'),
         left_property => 'source_md5',
         right_operation => $create_instdata_op,
         right_property => 'source_md5s',
