@@ -44,15 +44,8 @@ sub build_workflow {
     );
     $self->_workflow($workflow);
 
-    my $retrieve_source_path_op = $self->_add_retrieve_source_path_op_to_workflow($workflow->get_input_connector);
-    return if not $retrieve_source_path_op;
-
-    my $verify_not_imported_op = $self->_add_verify_not_imported_op_to_workflow($retrieve_source_path_op);
-    return if not $verify_not_imported_op;
-    $self->_work_flow_ops->{'verify not imported'} = $verify_not_imported_op;
-
     my @steps = $self->_workflow_steps;
-    my $previous_op = $verify_not_imported_op;
+    my $previous_op = $self->_workflow->get_input_connector;
     for my $step ( @steps ) {
         my $add_step_method = join('_', '', 'add', split(' ', $step), 'op', 'to', 'workflow');
         my $op = $self->$add_step_method($previous_op);
@@ -60,9 +53,6 @@ sub build_workflow {
         $self->_work_flow_ops->{$step} = $op;
         $previous_op = $op;
     }
-
-    my $create_instdata_op = $self->_add_create_instdata_op_to_workflow($previous_op);
-    return if not $create_instdata_op;
 
     return $workflow;
 }
@@ -272,10 +262,10 @@ sub _add_split_bam_by_rg_op_to_workflow {
     return $split_bam_by_rg_op;
 }
 
-sub _add_create_instdata_op_to_workflow {
+sub _add_create_instrument_data_op_to_workflow {
     my ($self, $previous_op) = @_;
 
-    die 'No previous op given to _add_create_instdata_op_to_workflow!' if not $previous_op;
+    die 'No previous op given to _add_create_instrument_data_op_to_workflow!' if not $previous_op;
 
     my $workflow = $self->_workflow;
     my $create_instdata_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'create instrument data');
