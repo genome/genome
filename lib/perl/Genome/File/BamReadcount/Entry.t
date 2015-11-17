@@ -16,6 +16,7 @@ subtest 'Regular reporting' => sub {
     is($new_entry->position, "10400136", "Position correct");
     is($new_entry->ref_base, "T", "Reference base correct");
     is($new_entry->depth, 98, "Depth correct");
+    is($new_entry->calculated_depth, 98, "Calculated depth correct");
     is($new_entry->libraries, undef, "Libraries undefined");
     is($new_entry->num_libraries, 0, "Number of libraries is 0");
     ok(!$new_entry->has_per_library, "Does not report as having per library metrics");
@@ -35,6 +36,8 @@ subtest 'Per-lib reporting' => sub {
     is($second_entry->position, 10402985, "Position correct");
     is($second_entry->ref_base, "G", "Reference base correct");
     is($second_entry->depth, 344, "Depth correct");
+    # The below is correct based on summing up the per-library information.
+    is($second_entry->calculated_depth, 364, "Calculated depth correct");
     is($second_entry->num_libraries, 2, "Num libraries correct");
     ok($second_entry->has_per_library, "Reports as having per-library");
     eval {
