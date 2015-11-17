@@ -29,15 +29,15 @@ subtest 'no tumor_sample_names' => sub {
     my %expected_return_values = (
         G => {
             max_tumor_vaf_observed => '.',
-            max_normal_vaf_observed =>  99.1279069767442,
+            max_normal_vaf_observed =>  341/365*100,
         },
         C => {
             max_tumor_vaf_observed => '.',
-            max_normal_vaf_observed =>  0.290697674418605,
+            max_normal_vaf_observed =>  1/365*100,
         },
         AA => {
             max_tumor_vaf_observed => '.',
-            max_normal_vaf_observed =>  5.81395348837209,
+            max_normal_vaf_observed =>  20/365*100,
         },
     );
     is_deeply({$no_tumor->interpret_entry($entry, ['G', 'C', 'AA'])}, \%expected_return_values, "No tumor samples ok");
@@ -49,15 +49,15 @@ subtest 'no normal_sample_names' => sub {
     my %expected_return_values = (
         G => {
             max_normal_vaf_observed => '.',
-            max_tumor_vaf_observed =>  99.1279069767442,
+            max_tumor_vaf_observed =>  341/365*100,
         },
         C => {
             max_normal_vaf_observed => '.',
-            max_tumor_vaf_observed =>  0.290697674418605,
+            max_tumor_vaf_observed =>  1/365*100,
         },
         AA => {
             max_normal_vaf_observed => '.',
-            max_tumor_vaf_observed =>  5.81395348837209,
+            max_tumor_vaf_observed =>  20/365*100,
         },
     );
     is_deeply({$no_normal->interpret_entry($entry, ['G', 'C', 'AA'])}, \%expected_return_values, "No normal samples ok");
@@ -86,16 +86,16 @@ subtest 'no normal_or_tumor_sample_names' => sub {
 subtest 'all alt alleles' => sub {
     my %expected_return_values = (
         G => {
-            max_normal_vaf_observed =>  99.1279069767442,
-            max_tumor_vaf_observed =>  99.1279069767442,
+            max_normal_vaf_observed =>  341/365*100,
+            max_tumor_vaf_observed =>  341/365*100,
         },
         C => {
-            max_normal_vaf_observed =>  0.290697674418605,
-            max_tumor_vaf_observed =>  0.290697674418605,
+            max_normal_vaf_observed =>  1/365*100,
+            max_tumor_vaf_observed =>  1/365*100,
         },
         AA => {
-            max_normal_vaf_observed =>  5.81395348837209,
-            max_tumor_vaf_observed =>  5.81395348837209,
+            max_normal_vaf_observed =>  20/365*100,
+            max_tumor_vaf_observed =>  20/365*100,
         },
     );
 
