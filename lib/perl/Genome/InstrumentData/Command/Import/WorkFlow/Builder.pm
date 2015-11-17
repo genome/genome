@@ -54,8 +54,8 @@ sub build_workflow {
         return if not $previous_op;
     }
 
-    my $create_instdata_and_copy_bam_op = $self->_add_create_instdata_and_copy_bam_op_to_workflow($previous_op);
-    return if not $create_instdata_and_copy_bam_op;
+    my $create_instdata_op = $self->_add_create_instdata_op_to_workflow($previous_op);
+    return if not $create_instdata_op;
 
     return $workflow;
 }
@@ -265,18 +265,18 @@ sub _add_split_bam_by_rg_op_to_workflow {
     return $split_bam_by_rg_op;
 }
 
-sub _add_create_instdata_and_copy_bam_op_to_workflow {
+sub _add_create_instdata_op_to_workflow {
     my ($self, $previous_op) = @_;
 
-    die 'No previous op given to _add_create_instdata_and_copy_bam_op_to_workflow!' if not $previous_op;
+    die 'No previous op given to _add_create_instdata_op_to_workflow!' if not $previous_op;
 
     my $workflow = $self->_workflow;
-    my $create_instdata_and_copy_bam_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'create instrument data and copy bam');
+    my $create_instdata_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'create instrument data');
     for my $property (qw/ analysis_project library instrument_data_properties /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
-            right_operation => $create_instdata_and_copy_bam_op,
+            right_operation => $create_instdata_op,
             right_property => $property,
         );
     }
@@ -286,26 +286,26 @@ sub _add_create_instdata_and_copy_bam_op_to_workflow {
         left_property => ( $previous_op->name eq 'sort bam' ) # not ideal...
         ? 'output_bam_path'
         : 'output_bam_paths',
-        right_operation => $create_instdata_and_copy_bam_op,
+        right_operation => $create_instdata_op,
         right_property => 'bam_paths',
     );
 
     $workflow->add_link(
         left_operation => $self->_verify_not_imported_op,
         left_property => 'source_md5',
-        right_operation => $create_instdata_and_copy_bam_op,
+        right_operation => $create_instdata_op,
         right_property => 'source_md5s',
     );
-    $create_instdata_and_copy_bam_op->parallel_by('bam_path');
+    $create_instdata_op->parallel_by('bam_path');
 
     $workflow->add_link(
-        left_operation => $create_instdata_and_copy_bam_op,
+        left_operation => $create_instdata_op,
         left_property => 'instrument_data',
         right_operation => $workflow->get_output_connector,
         right_property => 'instrument_data',
     );
 
-    return $create_instdata_and_copy_bam_op;
+    return $create_instdata_op;
 }
 
 1;
