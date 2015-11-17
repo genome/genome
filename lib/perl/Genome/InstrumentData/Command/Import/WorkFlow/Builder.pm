@@ -6,11 +6,18 @@ use warnings;
 use Genome;
 
 require List::MoreUtils;
+require Workflow::Simple;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Builder {
-    is => 'Command::V2',
-    has_input => {
+    is => 'UR::Object',
+    is_abstract => 1,
+    subclassify_by => 'format',
+    has => {
         work_flow_inputs => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs', },
+        format => {
+            calculate_from => [qw/ work_flow_inputs /],
+            calculate => sub{ return join('::', __PACKAGE__, ucfirst($_[0]->format)); },
+        },
     },
     has_optional_constant_calculated => {
         helpers => { calculate => q( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get; ), },
