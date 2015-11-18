@@ -47,4 +47,6 @@ sub _file_name {
     return File::Basename::basename($self->source_file_path);
 }
 
+sub _needs_symlinks_followed_when_syncing { return 1; }
+
 1;
