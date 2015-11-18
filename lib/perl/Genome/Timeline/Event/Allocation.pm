@@ -7,6 +7,7 @@ use Genome;
 
 class Genome::Timeline::Event::Allocation {
     is => 'Genome::Timeline::Event',
+    roles => ['Genome::Role::ObjectWithCreatedBy', 'Genome::Role::ObjectWithTimestamps'],
     table_name => 'timeline.allocation',
     has => [
         allocation => {

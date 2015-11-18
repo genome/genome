@@ -7,7 +7,6 @@ use Genome;
 use Sub::Install ();
 
 class Genome::Timeline::Event {
-    roles => ['Genome::Role::ObjectWithTimestamps', 'Genome::Role::ObjectWithCreatedBy'],
     is_abstract => 1,
     id_generator => '-uuid',
     data_source => 'Genome::DataSource::GMSchema',
