@@ -16,7 +16,7 @@ sub _temp_staging_file_path {
 
 sub _file_name {
     my $self = shift;
-    $self->fatal_message("Abstract method (_vcf_file_name). Needs to be overwritten in your child class");
+    $self->fatal_message("Abstract method (_file_name). Needs to be overwritten in your child class");
 }
 
 sub file_path {
