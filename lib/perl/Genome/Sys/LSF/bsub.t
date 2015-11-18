@@ -6,11 +6,11 @@ use Test::Builder;
 use Test::Fatal qw(exception);
 use Genome::Sys::LSF::bsub qw();
 
-plan tests => 10;
+plan tests => 13;
 
 do {
     no warnings 'redefine';
-    *Genome::Sys::LSF::bsub::_queues = sub { qw(long short) };
+    *Genome::Sys::LSF::bsub::_queues = sub { qw(long short apipe) };
 };
 
 my $fake_queue = 'fake_queue';
@@ -20,7 +20,19 @@ ok( !Genome::Sys::LSF::bsub::_valid_lsf_queue($fake_queue),
     qq('$fake_queue' is not a valid queue));
 
 ok( Genome::Sys::LSF::bsub::_valid_lsf_queue($queues[0]),
-    qq('$queues[0]' is not a valid queue));
+    qq('$queues[0]' is a valid queue));
+
+do {
+    local $ENV{REMOTE_USER} = 'apipe-builder';
+    ok( !Genome::Sys::LSF::bsub::_valid_lsf_queue($fake_queue),
+        qq('$fake_queue' is not a valid queue for apipe-builder));
+
+    ok( Genome::Sys::LSF::bsub::_valid_lsf_queue($queues[0]),
+        qq('$queues[0]' is a valid queue for apipe-builder));
+
+    ok( !Genome::Sys::LSF::bsub::_valid_lsf_queue('apipe'),
+        qq('apipe' is not a valid queue for apipe-builder));
+};
 
 like( exception { Genome::Sys::LSF::bsub::_args(queue => $fake_queue, cmd => 'true') },
     qr/valid LSF queue/,

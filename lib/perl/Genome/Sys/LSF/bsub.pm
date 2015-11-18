@@ -6,26 +6,42 @@ use warnings;
 use Genome::Sys;
 use Exporter qw(import);
 use Params::Validate qw(:types);
+use List::MoreUtils qw(any);
+use Try::Tiny;
+use Genome::Utility::Email;
 
 our @EXPORT = qw(bsub);
 our @EXPORT_OK = qw(bsub);
 
 sub run {
     my $executable = shift;
-    my @args = args_builder(@_);
+    my @run_args = @_;
+    try {
+        my @args = args_builder(@run_args);
 
-    if (ref($executable) ne 'ARRAY') {
-        $executable = [$executable];
-    }
+        if (ref($executable) ne 'ARRAY') {
+            $executable = [$executable];
+        }
 
-    my @output = Genome::Sys->capture(@$executable, @args);
+        my @output = Genome::Sys->capture(@$executable, @args);
 
-    my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
-    unless ($job_id) {
-        die "Could not get job id from bsub output!";
-    }
+        my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
+        unless ($job_id) {
+            die "Could not get job id from bsub output!";
+        }
 
-    return $job_id;
+        return $job_id;
+    } catch {
+        if (Genome::Sys->username eq 'apipe-builder' and $_ =~ m/The 'queue' parameter \("apipe"\) to Genome::Sys::LSF::bsub::_args did not pass/) {
+            Genome::Utility::Email::send(
+                from => 'abrummet@genome.wustl.edu',
+                to => 'abrummet@genome.wustl.edu',
+                subject => 'apipe-builder using apipe queue',
+                body => $_,
+            );
+        }
+        die $_;
+    };
 }
 
 sub bsub {
@@ -139,7 +155,12 @@ sub _args_spec {
 }
 
 sub _valid_lsf_queue {
-    return grep { /$_[0]/ } _queues();
+    my $requested_queue = shift;
+
+    my $username = Genome::Sys->username;
+    return any { $requested_queue eq $_ }
+          grep { $username ne 'apipe-builder' or $_ ne 'apipe' }
+                _queues();
 }
 
 sub _queues {
