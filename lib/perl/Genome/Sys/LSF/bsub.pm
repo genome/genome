@@ -6,6 +6,7 @@ use warnings;
 use Genome::Sys;
 use Exporter qw(import);
 use Params::Validate qw(:types);
+use List::MoreUtils qw(any);
 
 our @EXPORT = qw(bsub);
 our @EXPORT_OK = qw(bsub);
@@ -139,7 +140,8 @@ sub _args_spec {
 }
 
 sub _valid_lsf_queue {
-    return grep { /$_[0]/ } _queues();
+    my $requested_queue = shift;
+    return any { $requested_queue eq $_ } _queues();
 }
 
 sub _queues {
