@@ -141,7 +141,11 @@ sub _args_spec {
 
 sub _valid_lsf_queue {
     my $requested_queue = shift;
-    return any { $requested_queue eq $_ } _queues();
+
+    my $username = Genome::Sys->username;
+    return any { $requested_queue eq $_ }
+          grep { $username ne 'apipe-builder' or $_ ne 'apipe' }
+                _queues();
 }
 
 sub _queues {
