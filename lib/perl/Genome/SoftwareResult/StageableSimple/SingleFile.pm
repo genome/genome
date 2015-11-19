@@ -7,6 +7,7 @@ use File::Basename;
 
 class Genome::SoftwareResult::StageableSimple::SingleFile {
     is => 'Genome::SoftwareResult::StageableSimple',
+    is_abstract => 1,
 };
 
 sub _temp_staging_file_path {
