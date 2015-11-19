@@ -209,7 +209,6 @@ sub execute {
         picard_version                 => $self->picard_version,
         output_directory               => $output_directory,
         bam_file                       => $bam_path,
-        clean_bam                      => 'none',
         picard_metrics_output_basename => $picard_metrics_basename,
         picard_maximum_permgen_memory  => $self->picard_maximum_permgen_memory,
         picard_maximum_memory          => $self->picard_maximum_memory,
