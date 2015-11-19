@@ -272,7 +272,7 @@ sub name_in_vcf {
     unless ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
         $sample_tcga_name = $self->name;
         my @tcga_names = $self->get_tcga_names;
-        if (@tcga_names and @tcga_names == 1) {
+        if (@tcga_names == 1) {
             $sample_tcga_name = shift @tcga_names;
         }
         else {
