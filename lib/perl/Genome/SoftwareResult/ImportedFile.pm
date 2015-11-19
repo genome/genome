@@ -39,7 +39,7 @@ sub create {
 
 sub _run{
     my $self = shift;
-    Genome::Sys->create_symlink($self->source_file_path, $self->_temp_staging_file_path);
+    Genome::Sys->create_symlink(Cwd::abs_path($self->source_file_path), $self->_temp_staging_file_path);
 }
 
 sub _file_name {
