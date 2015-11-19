@@ -11,6 +11,12 @@ class Genome::SoftwareResult::StageableSimple {
 
 sub create {
     my $class = shift;
+
+    if ($class eq __PACKAGE__ || $class->__meta__->is_abstract) {
+        # this class is abstract, and the super-class re-calls the constructor from the correct subclass
+        return $class->SUPER::create(@_);
+    }
+
     my $self = $class->SUPER::create(@_);
     return unless $self;
 
