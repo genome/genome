@@ -42,7 +42,7 @@ sub _resolve_format {
         sra => 'sra',
     );
     my $source_file = $self->path;
-    $source_file =~ s/\Q.$_\E$// for Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs->types;
+    $source_file =~ s/\.gz//;
     my ($source_file_base_name, $path, $suffix) = File::Basename::fileparse(
         $source_file, keys %suffixes_to_original_format
     );
@@ -50,13 +50,7 @@ sub _resolve_format {
         die $self->error_message('Unrecognized source file format! '.$source_file_base_name);
     }
 
-    my $format = $suffixes_to_original_format{$suffix};
-    if ( $self->is_tar ) {
-        die $self->error_message("Cannot process tar $format! %s", $source_file) if $format ne 'fastq';
-        $format .= '_archive';
-    }
-
-    return $self->format($format);
+    return $self->format( $suffixes_to_original_format{$suffix} );
 }
 
 sub retrieval_method {
@@ -113,7 +107,6 @@ sub kilobytes_required_for_processing {
     my %formats_and_multipliers = (
         bam => 3,
         fastq => 2,
-        fastq_archive => 2,
         sra => 4,
     );
 
