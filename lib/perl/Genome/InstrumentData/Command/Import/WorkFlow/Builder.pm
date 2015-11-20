@@ -25,7 +25,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Builder {
     has_optional_transient => {
         _workflow => {},
         _work_flow_ops => { is => 'HASH', default_value => {}, },
-        _verify_not_imported_op => {},
     },
 };
 
@@ -44,7 +43,7 @@ sub build_workflow {
     );
     $self->_workflow($workflow);
 
-    my @steps = $self->_workflow_steps;
+    my @steps = $self->_steps_to_build_workflow;
     my $previous_op = $self->_workflow->get_input_connector;
     for my $step ( @steps ) {
         my $add_step_method = join('_', '', 'add', split(' ', $step), 'op', 'to', 'workflow');
@@ -55,21 +54,6 @@ sub build_workflow {
     }
 
     return $workflow;
-}
-
-sub _workflow_steps {
-    my $self = shift;
-
-    my @steps = $self->_steps_to_build_workflow;
-    return @steps if not $self->work_flow_inputs->instrument_data_properties->{downsample_ratio};
-
-    my $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sanitize bam' }, @steps);
-    if ( not $idx ) {
-        $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sort bam' }, @steps);
-    }
-    splice(@steps, $idx + 1, 0, 'downsample bam');
-
-    return @steps;
 }
 
 sub _add_retrieve_source_path_op_to_workflow {
