@@ -12,6 +12,7 @@ class Genome::Qc::Command::ImportGenotypeVcfFile {
             doc => 'Path to the genotype vcf file to import',
         }
     ],
+    doc => 'Import a genotype vcf file for QC. This creates a software result and the genotype vcf file is copied into its allocation.',
 };
 
 sub result_class {
