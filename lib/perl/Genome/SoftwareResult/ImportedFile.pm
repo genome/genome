@@ -64,7 +64,7 @@ sub _gather_params_for_get_or_create {
     };
 }
 
-sub _run{
+sub _run {
     my $self = shift;
     $self->file_content_hash(Genome::Sys->md5sum($self->source_file_path));
     $self->lookup_hash($self->calculate_lookup_hash);
