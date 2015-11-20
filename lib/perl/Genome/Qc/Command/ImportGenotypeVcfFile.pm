@@ -26,4 +26,9 @@ sub input_hash {
     );
 }
 
+sub post_get_or_create {
+    my $self = shift;
+    $self->status_message("Software result id: %s", $self->id);
+}
+
 1;
