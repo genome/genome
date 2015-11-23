@@ -145,11 +145,17 @@ sub _valid_lsf_queue {
 
     my $username = Genome::Sys->username;
     if ($username eq 'apipe-builder' and $requested_queue eq 'apipe') {
+        my $message = join("\n",
+                            'apipe-builder using apipe queue',
+                            'Host ' . $ENV{HOSTNAME},
+                            'LSF jobID ' . $ENV{LSB_JOBID},
+                            'submission host '. $ENV{LSB_SUB_HOST});
+
         Genome::Utility::Email::send(
             from => 'abrummet@genome.wustl.edu',
             to => 'abrummet@genome.wustl.edu',
             subject => 'apipe-builder using apipe queue',
-            body => Carp::longmess('apipe-builder using apipe queue'),
+            body => Carp::longmess($message),
         );
     }
     return any { $requested_queue eq $_ } _queues();
