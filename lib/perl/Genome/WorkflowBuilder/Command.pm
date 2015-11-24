@@ -113,7 +113,8 @@ sub _get_ptero_lsf_parameters {
 
     my $set_lsf_option = sub {
         my ($option, $value) = @_;
-        if (defined($value) and length($value)) {
+        if (defined($value) and length($value) and
+            not exists($lsf_params->{options}->{$option})) {
             $lsf_params->{options}->{$option} = $value;
         }
     };
