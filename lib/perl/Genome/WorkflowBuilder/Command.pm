@@ -102,6 +102,11 @@ sub _get_ptero_execute_method {
     $ptero_lsf_parameters->{pollingInterval} =
         Genome::Config::get('ptero_lsf_polling_interval') + 0;
 
+    my $project_name = Genome::Config::get('lsf_project_name');
+    if ($project_name) {
+        $ptero_lsf_parameters->{options}{projectName} = $project_name;
+    }
+
     return Ptero::Builder::Job->new(
         name => 'execute',
         service_url => Genome::Config::get('ptero_lsf_service_url'),
