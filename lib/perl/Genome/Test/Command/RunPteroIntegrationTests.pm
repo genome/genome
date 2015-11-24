@@ -94,7 +94,7 @@ sub get_test_outputs {
 
 sub test_data_directory {
     my $name = shift;
-    my $genome_dir = dirname(dirname(dirname(__FILE__)));
+    my $genome_dir = Genome->base_dir();
 
     return File::Spec->join($genome_dir, 'Ptero', 'workflow_tests', $name);
 }
