@@ -13,6 +13,10 @@ class Genome::Qc::Run {
         alignment_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',
         },
+        qc_genotype_vcf_file => {
+            is => 'Genome::SoftwareResult::ImportedFile',
+            is_optional => 1,
+        },
     ],
     has_param => [
         lsf_queue => {
@@ -33,6 +37,7 @@ sub input_hash {
     return (
         alignment_result => $self->alignment_result,
         config_name => $self->config_name,
+        qc_genotype_vcf_file => $self->qc_genotype_vcf_file,
     );
 }
 

@@ -13,7 +13,11 @@ class Genome::Qc::Tool {
         },
         gmt_params => {
             is => 'Hash',
-        }
+        },
+        qc_genotype_vcf_file => {
+            is => 'Genome::SoftwareResult::ImportedFile',
+            is_optional => 1,
+        },
     ],
     has_calculated => [
         bam_file => {

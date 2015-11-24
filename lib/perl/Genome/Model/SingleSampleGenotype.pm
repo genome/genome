@@ -50,6 +50,11 @@ class Genome::Model::SingleSampleGenotype {
             is => 'Genome::Model::Build::ReferenceSequence',
             doc => 'the reference to which to align',
         },
+        qc_genotype_vcf_file => {
+            is => 'Genome::SoftwareResult::ImportedFile',
+            doc => 'the VCF file with genotyping information for QC',
+            is_optional => 1,
+        },
     ],
     has_optional_mutable => [ #convenience mutators for config
         region_of_interest_set_name => {
@@ -131,6 +136,14 @@ sub add_reference_sequence_build {
 
     my $build = Genome::Model::Build->get(@_);
     $self->reference_sequence_build($build);
+}
+
+sub add_qc_genotype_vcf_file {
+    my $self = shift;
+
+    my $vcf_file = Genome::SoftwareResult::ImportedFile->get(@_);
+    $self->qc_genotype_vcf_file($vcf_file);
+
 }
 
 1;
