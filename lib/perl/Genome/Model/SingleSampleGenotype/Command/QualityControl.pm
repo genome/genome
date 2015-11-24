@@ -35,7 +35,7 @@ sub _params_for_command {
     my @params = (
         alignment_result => $build->merged_alignment_result,
         config_name => $build->model->qc_config,
-        qc_genotype_vcf_file => $build->model->qc_genotype_vcf_file,
+        qc_genotype_vcf_file => $build->qc_genotype_vcf_file,
         result_users => $result_users,
     );
 
