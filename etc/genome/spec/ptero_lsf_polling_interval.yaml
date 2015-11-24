@@ -1,0 +1,3 @@
+---
+env: XGENOME_PTERO_LSF_POLLING_INTERVAL
+default_value: 300

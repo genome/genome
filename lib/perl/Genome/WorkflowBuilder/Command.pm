@@ -99,6 +99,8 @@ sub _get_ptero_execute_method {
     $ptero_lsf_parameters->{environment} = $self->_get_sanitized_env();
     $ptero_lsf_parameters->{user} = Genome::Sys->username;
     $ptero_lsf_parameters->{cwd} = Cwd::getcwd;
+    $ptero_lsf_parameters->{pollingInterval} =
+        Genome::Config::get('ptero_lsf_polling_interval');
 
     return Ptero::Builder::Job->new(
         name => 'execute',
