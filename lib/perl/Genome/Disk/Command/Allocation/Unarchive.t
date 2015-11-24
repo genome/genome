@@ -12,6 +12,10 @@ use above "Genome";
 use Test::More; #skip_all => 'unarchiving not fully implemented yet';
 use File::Temp 'tempdir';
 use Filesys::Df qw();
+use Test::Exception;
+
+use Genome::Test::Factory::Model::SingleSampleGenotype;
+use Genome::Test::Factory::Build;
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
@@ -93,6 +97,12 @@ no warnings qw(redefine once);
 *Genome::Disk::Volume::active_volume_prefix = sub { return $volume->mount_path };
 use warnings;
 
+my $analysis_project = Genome::Config::AnalysisProject->__define__(name => 'test AnP for Unarchive.t');
+my $model = Genome::Test::Factory::Model::SingleSampleGenotype->setup_object(name => 'test model for Unarchive.t');
+Genome::Config::AnalysisProject::ModelBridge->create(analysis_project => $analysis_project, model => $model);
+my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
+my $sr = Genome::InstrumentData::AlignmentResult::Speedseq->__define__(test_name => 'testing Unarchive.t');
+
 # Make test allocation
 my $allocation_path = tempdir(
     "allocation_test_1_XXXXXX",
@@ -124,12 +134,23 @@ unlink join('/', $allocation->absolute_path, 'a.out');
 # Create command object and execute it
 my $cmd = Genome::Disk::Command::Allocation::Unarchive->create(
     allocations => [$allocation],
-    lab => 'Mardis-Wilson',
+    analysis_project => $analysis_project,
 );
 ok($cmd, 'created unarchive command');
+throws_ok(sub { $cmd->execute }, qr/currently not handled/, 'command fails with unsupported owner');
+
+$allocation->owner_id($sr->id);
+$allocation->owner_class_name($sr->class);
+$cmd = Genome::Disk::Command::Allocation::Unarchive->create(
+    allocations => [$allocation],
+    analysis_project => $analysis_project,
+);
+
 ok($cmd->execute, 'successfully executed unarchive command');
 is($allocation->volume->id, $volume->id, 'allocation moved to active volume');
 ok($allocation->is_archived == 0, 'allocation is not archived');
+my @users = $sr->users;
+is($users[0]->user, $analysis_project, 'analysis project linked to SR whose allocation was unarchived');
 
 # Make another allocation
 $allocation_path = tempdir(
@@ -141,8 +162,8 @@ $allocation = Genome::Disk::Allocation->create(
     disk_group_name => $group->disk_group_name,
     allocation_path => $allocation_path,
     kilobytes_requested => 100,
-    owner_class_name => 'UR::Value',
-    owner_id => 'test',
+    owner_class_name => $build->class,
+    owner_id => $build->id,
     mount_path => $archive_volume->mount_path,
 );
 ok($allocation, 'created test allocation');
@@ -159,7 +180,7 @@ ok(-e join('/', $allocation->absolute_path, 'archive.tar'), 'archive tarball suc
 unlink join('/', $allocation->absolute_path, 'a.out');
 
 # Now simulate the command being run from the CLI
-my @args = ($allocation->id, '--lab', 'Mardis-Wilson');
+my @args = ($allocation->id, '--analysis-project', $analysis_project->id);
 my $rv = Genome::Disk::Command::Allocation::Unarchive->_execute_with_shell_params_and_return_exit_code(@args);
 ok($rv == 0, 'successfully executed command using simulated command line arguments');
 is($allocation->volume->id, $volume->id, 'allocation updated as expected after archive');
