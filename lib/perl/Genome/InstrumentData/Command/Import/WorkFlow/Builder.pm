@@ -5,8 +5,9 @@ use warnings;
 
 use Genome;
 
+require Genome::WorkflowBuilder::DAG;
 require List::MoreUtils;
-require Workflow::Simple;
+use Params::Validate ':types';
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Builder {
     is => 'UR::Object',
@@ -23,7 +24,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Builder {
         helpers => { calculate => q( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get; ), },
     },
     has_optional_transient => {
-        _workflow => {},
+        _dag => {},
         _work_flow_ops => { is => 'HASH', default_value => {}, },
     },
 };
@@ -36,15 +37,11 @@ sub _work_flow_op_for {
 sub build_workflow {
     my $self = shift;
 
-    my $workflow = Workflow::Model->create(
-        name => 'Import Instrument Data',
-        input_properties => [qw/ analysis_project instrument_data_properties downsample_ratio library library_name sample_name source_paths working_directory /],
-        output_properties => [qw/ instrument_data /],
-    );
-    $self->_workflow($workflow);
+    my $dag = Genome::WorkflowBuilder::DAG->create(name => 'Import Instrument Data');
+    $self->_dag($dag);
 
     my @steps = $self->_steps_to_build_workflow;
-    my $previous_op = $self->_workflow->get_input_connector;
+    my $previous_op;
     for my $step ( @steps ) {
         my $add_step_method = join('_', '', 'add', split(' ', $step), 'op', 'to', 'workflow');
         my $op = $self->$add_step_method($previous_op);
@@ -53,27 +50,34 @@ sub build_workflow {
         $previous_op = $op;
     }
 
-    return $workflow;
+    return $dag;
+}
+
+sub work_flow_operation_class_for_name {
+    my ($name) = Params::Validate::validate_pos(@_, {is => SCALAR});
+    die 'No name given to get work flow operation class!' if !@_;
+    return 'Genome::InstrumentData::Command::Import::WorkFlow::'
+        . join('', map { ucfirst } split(' ', $name));
 }
 
 sub _add_retrieve_source_path_op_to_workflow {
     my ($self, $previous_op) = @_;
 
-    my @op_name_parts = (qw/ retrieve source path from /);
-    push @op_name_parts, $self->work_flow_inputs->source_files->retrieval_method;
-    my $workflow = $self->_workflow;
-    my $retrieve_source_path_op = $self->helpers->add_operation_to_workflow_by_name($workflow, join(' ', @op_name_parts));
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'working_directory',
-        right_operation => $retrieve_source_path_op,
-        right_property => 'working_directory',
+    my $name = 'retrieve source path from '.$self->work_flow_inputs->source_files->retrieval_method;
+    my $retrieve_source_path_op = Genome::WorkflowBuilder::Command->create(
+        name => $name,
+        command => work_flow_operation_class_for_name($name),
     );
-    $workflow->add_link(
-        left_operation => $previous_op,
-        left_property => 'source_paths',
-        right_operation => $retrieve_source_path_op,
-        right_property => 'source_path',
+    $self->_dag->add_operation($retrieve_source_path_op);
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $retrieve_source_path_op,
+        destination_property => 'working_directory',
+    );
+    $self->_dag->connect_input(
+        input_property => 'source_paths',
+        destination => $retrieve_source_path_op,
+        destination_property => 'source_path',
     );
     $retrieve_source_path_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
 
@@ -85,23 +89,26 @@ sub _add_verify_not_imported_op_to_workflow {
 
     die 'No retrieve source files operation given!' if not $retrieve_source_path_op;
 
-    my $workflow = $self->_workflow;
-    my $verify_not_imported_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'verify not imported');
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'working_directory',
-        right_operation => $verify_not_imported_op,
-        right_property => 'working_directory',
+    my $name = 'verify not imported';
+    my $verify_not_imported_op = Genome::WorkflowBuilder::Command->create(
+        name => $name,
+        command => work_flow_operation_class_for_name($name),
     );
-    $workflow->add_link(
-        left_operation => $retrieve_source_path_op,
-        left_property => 'destination_path',
-        right_operation => $verify_not_imported_op,
-        right_property => 'source_path',
-   );
-   $verify_not_imported_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
+    $self->_dag->add_operation($verify_not_imported_op);
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $verify_not_imported_op,
+        destination_property => 'working_directory',
+    );
+    $self->_dag->create_link(
+        source => $retrieve_source_path_op,
+        source_property => 'destination_path',
+        destination => $verify_not_imported_op,
+        destination_property => 'source_path',
+    );
+    $verify_not_imported_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
 
-   return $verify_not_imported_op;
+    return $verify_not_imported_op;
 }
 
 sub _add_sra_to_bam_op_to_workflow {
@@ -127,13 +134,17 @@ sub _add_sanitize_bam_op_to_workflow {
 
     die 'No previous operation given to _add_sanitize_bam_op_to_workflow!' if not $previous_op;
 
-    my $sanitize_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'sanitize bam');
-    return if not $sanitize_bam_op;
-    $self->_workflow->add_link(
-        left_operation => $previous_op,
-        left_property => 'output_bam_path',
-        right_operation => $sanitize_bam_op,
-        right_property => 'bam_path',
+    my $name = 'sanitize bam';
+    my $sanitize_bam_op = Genome::WorkflowBuilder::Command->create(
+        name => $name,
+        command => work_flow_operation_class_for_name($name),
+    );
+    $self->_dag->add_operation($sanitize_bam_op);
+    $self->_dag->create_link(
+        source => $previous_op,
+        source_property => 'output_bam_path',
+        destination => $sanitize_bam_op,
+        destination_property => 'bam_path',
     );
 
     return $sanitize_bam_op;
@@ -144,14 +155,19 @@ sub _add_sort_bam_op_to_workflow {
 
     die 'No previous op given to _add_sort_bam_op_to_workflow!' if not $previous_op;
 
-    my $sort_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'sort bam');
-    $self->_workflow->add_link(
-        left_operation => $previous_op,
-        left_property => ( $previous_op->operation_type->command_class_name->can('output_bam_path') )
+    my $name = 'sort bam';
+    my $sort_bam_op = Genome::WorkflowBuilder::Command->create(
+        name => $name,
+        command => work_flow_operation_class_for_name($name),
+    );
+    $self->_dag->add_operation($sort_bam_op);
+    $self->_dag->create_link(
+        source => $previous_op,
+        source_property => ( $previous_op->command->can('output_bam_path') )
         ? 'output_bam_path'
         : 'source_path',
-        right_operation => $sort_bam_op,
-        right_property => 'bam_path',
+        destination => $sort_bam_op,
+        destination_property => 'bam_path',
     );
 
     return $sort_bam_op;
@@ -186,12 +202,17 @@ sub _add_split_bam_by_rg_op_to_workflow {
 
     die 'No previous op given to _add_split_bam_by_rg_op_to_workflow!' if not $previous_op;
 
-    my $split_bam_by_rg_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'split bam by read group');
-    $self->_workflow->add_link(
-        left_operation => $previous_op,
-        left_property => 'output_bam_path',
-        right_operation => $split_bam_by_rg_op,
-        right_property => 'bam_path',
+    my $name = 'split bam by read group';
+    my $split_bam_by_rg_op = Genome::WorkflowBuilder::Command->create(
+        name => $name,
+        command => work_flow_operation_class_for_name($name),
+    );
+    $self->_dag->add_operation($split_bam_by_rg_op);
+    $self->_dag->create_link(
+        source => $previous_op,
+        source_property => 'output_bam_path',
+        destination => $split_bam_by_rg_op,
+        destination_property => 'bam_path',
     );
 
     return $split_bam_by_rg_op;
@@ -202,39 +223,41 @@ sub _add_create_instrument_data_op_to_workflow {
 
     die 'No previous op given to _add_create_instrument_data_op_to_workflow!' if not $previous_op;
 
-    my $workflow = $self->_workflow;
-    my $create_instdata_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'create instrument data');
+    my $name = 'create instrument data';
+    my $create_instdata_op = Genome::WorkflowBuilder::Command->create(
+        name => $name,
+        command => work_flow_operation_class_for_name($name),
+    );
+    $self->_dag->add_operation($create_instdata_op);
+
     for my $property (qw/ analysis_project library instrument_data_properties /) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $property,
-            right_operation => $create_instdata_op,
-            right_property => $property,
+        $self->_dag->connect_input(
+            input_property => $property,
+            destination => $create_instdata_op,
+            destination_property => $property,
         );
     }
 
-    $workflow->add_link(
-        left_operation => $previous_op,
-        left_property => ( $previous_op->name eq 'sort bam' ) # not ideal...
+    $self->_dag->create_link(
+        source => $previous_op,
+        source_property => ( $previous_op->name eq 'sort bam' ) # not ideal...
         ? 'output_bam_path'
         : 'output_bam_paths',
-        right_operation => $create_instdata_op,
-        right_property => 'bam_paths',
+        destination => $create_instdata_op,
+        destination_property => 'bam_paths',
     );
-
-    $workflow->add_link(
-        left_operation => $self->_work_flow_op_for('verify not imported'),
-        left_property => 'source_md5',
-        right_operation => $create_instdata_op,
-        right_property => 'source_md5s',
+    $self->_dag->create_link(
+        source => $self->_work_flow_op_for('verify not imported'),
+        source_property => 'source_md5',
+        destination => $create_instdata_op,
+        destination_property => 'source_md5s',
     );
-    $create_instdata_op->parallel_by('bam_path');
+    #$create_instdata_op->parallel_by('bam_paths');
 
-    $workflow->add_link(
-        left_operation => $create_instdata_op,
-        left_property => 'instrument_data',
-        right_operation => $workflow->get_output_connector,
-        right_property => 'instrument_data',
+    $self->_dag->connect_output(
+        output_property => 'instrument_data',
+        source => $create_instdata_op,
+        source_property => 'instrument_data',
     );
 
     return $create_instdata_op;
