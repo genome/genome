@@ -13,7 +13,7 @@ class Genome::Qc::Tool::VerifyBamId {
             is_optional => 1,
         },
         default_genotype_vcf_file => {
-            is => 'Genome::SoftwareResult::ImportedFile',
+            is => 'Genome::SoftwareResult::StageableSimple::SingleFile',
             id_by => 'default_genotype_vcf_file_id',
         },
     ],
