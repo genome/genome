@@ -13,6 +13,7 @@ use Test::More;
 use Sub::Override;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
+use Genome::Test::Factory::SoftwareResult::ImportedFile;
 use Cwd qw(abs_path);
 
 my $pkg = 'Genome::Qc::Tool::VerifyBamId';
@@ -36,8 +37,14 @@ my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_objec
 my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
     instrument_data => $instrument_data,
 );
-
-my $vcf_file = File::Spec->join($data_dir, 'Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.chrY.vcf');
+my $vcf_file = Genome::Test::Factory::SoftwareResult::ImportedFile->setup_object();
+use Genome::SoftwareResult::StageableSimple::SingleFile;
+my $vcf_file_path_overwrite = Sub::Override->new(
+    'Genome::SoftwareResult::StageableSimple::SingleFile::file_path',
+    sub {
+        return File::Spec->join($data_dir, 'Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.chrY.vcf');
+    }
+);
 my $bam_file = abs_path(File::Spec->join($data_dir, 'speedseq_merged.bam'));
 
 use Genome::Qc::Config;
@@ -48,7 +55,7 @@ my $config_override = Sub::Override->new(
             verify_bam_id => {
                 class => 'Genome::Qc::Tool::VerifyBamId',
                 params => {
-                    vcf => $vcf_file,
+                    vcf => 'genotype_vcf_file',
                     bam => $bam_file,
                     max_depth => '150',
                     precise => '1',
@@ -63,6 +70,7 @@ my $config_override = Sub::Override->new(
 my $command = Genome::Qc::Run->create(
     config_name => 'testing-qc-run',
     alignment_result => $alignment_result,
+    qc_genotype_vcf_file => $vcf_file,
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );
 ok($command->execute, "Command executes ok");
@@ -75,7 +83,7 @@ my $output = $tool->qc_metrics_file;
 my @expected_cmd_line = (
     '/usr/bin/verifyBamID20120620',
     '--vcf',
-    $vcf_file,
+    $vcf_file->file_path,
     '--bam',
     $bam_file,
     '--out',

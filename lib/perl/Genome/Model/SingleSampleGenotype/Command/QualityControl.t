@@ -13,10 +13,11 @@ use Genome::Test::Factory::Build;
 use Genome::Test::Factory::InstrumentData::AlignmentResult::Merged::Speedseq;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::SingleSampleGenotype;
+use Genome::Test::Factory::SoftwareResult::ImportedFile;
 
 use Sub::Override;
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 my $pkg = 'Genome::Model::SingleSampleGenotype::Command::QualityControl';
 use_ok($pkg);
@@ -27,6 +28,8 @@ for(1..3) {
         Genome::Test::Factory::InstrumentData::Solexa->setup_object()
     );
 }
+use Genome::Test::Factory::SoftwareResult::ImportedFile;
+$model->add_qc_genotype_vcf_file(Genome::Test::Factory::SoftwareResult::ImportedFile->setup_object());
 
 my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 
@@ -45,7 +48,15 @@ my $override = Sub::Override->new(
     sub {
         package Genome::SoftwareResult;
         my $class = shift;
-        return $class->SUPER::create;
+        if ($class eq 'Genome::Qc::Result') {
+            my %params = @_;
+            return $class->SUPER::create(
+                qc_genotype_vcf_file => $params{'qc_genotype_vcf_file'},
+            );
+        }
+        else {
+            return $class->SUPER::create;
+        }
     }
 );
 
@@ -54,3 +65,6 @@ isa_ok($cmd, $pkg, 'created command');
 
 ok($cmd->execute, 'executed command');
 like($cmd->status_message, qr(^Generated result), 'software result created');
+
+my ($qc_result) = grep {$_->isa('Genome::Qc::Result')} $build->results;
+ok($qc_result->qc_genotype_vcf_file, 'QC genotype vcf file gets passed along correctly');
