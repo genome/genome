@@ -13,11 +13,11 @@ use Text::CSV;
 use Tie::File;
 
 class Genome::InstrumentData::Command::Import::Inputs::Factory {
-    is => 'UR::Singleton',
     has_optional => {
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
         },
+        file => { is => 'Text', },
         process => {
             is => 'Genome::InstrumentData::Command::Import::Process',
         },
@@ -30,7 +30,6 @@ class Genome::InstrumentData::Command::Import::Inputs::Factory {
     },
     has_optional_transient => {
         _entity_attributes => { is => 'ARRAY', },
-        _file => { is => 'Text', },
         _lines => { is => 'ARRAY', },
         _line_number => { is => 'Number', default => 0, },
         _parser => { is => 'Text::CSV', },
@@ -78,6 +77,17 @@ Instrument Data (needed for generating source-files.tsv)
 HELP
 }
 
+sub create {
+    my $class = shift;
+
+    my $self = $class->SUPER::create(@_);
+    return if not $self;
+
+    $self->_load_file if $self->file;
+
+    return $self;
+}
+
 sub from_inputs_id {
     my ($self, $id) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
 
@@ -91,7 +101,8 @@ sub from_inputs_id {
     $self->process($process);
 
     my $import_file = $process->import_file;
-    $self->set_file($import_file);
+    $self->file($import_file);
+    $self->_load_file($import_file);
 
     return $self->from_line_number($line_number);
 }
@@ -109,11 +120,10 @@ sub resolve_sep_char_from_file_extension {
     return ( $ext eq 'csv' ? ',' : "\t" ),
 }
 
-sub set_file {
-    my ($self, $file) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
+sub _load_file {
+    my $self = shift;
 
-    $self->_unset_file;
-
+    my $file = $self->file;
     my $sep_char = $self->resolve_sep_char_from_file_extension($file);
     my $parser = Text::CSV->new({
             sep_char => $sep_char,
@@ -123,7 +133,7 @@ sub set_file {
     $self->_parser($parser);
 
     die $self->error_message('File (%s) is empty!', $file) if not -s $file;
-    $self->_file($file);
+    $self->file($file);
     tie my @lines, 'Tie::File', $file;
     $self->_lines(\@lines);
     $parser->parse($lines[0])
@@ -135,17 +145,6 @@ sub set_file {
 
 
     return $self;
-}
-
-sub _unset_file {
-    my $self = shift;
-
-    $self->_file(undef);
-    $self->_line_number(0);
-    untie @{$self->_lines} if $self->_lines;
-    $self->_entity_attributes([]);
-
-    return 1;
 }
 
 sub next {
@@ -185,8 +184,8 @@ sub from_params {
         $params->{process_id} = $self->process->id;
         $params->{entity_params}->{instdata}->{process_id} = $self->process->id;
     }
-    elsif ( $self->_file ) { # use md5 of file name
-        $params->{process_id} = Genome::Sys->md5sum_data($self->_file);
+    elsif ( $self->file ) { # use md5 of file name
+        $params->{process_id} = Genome::Sys->md5sum_data($self->file);
     }
     else {
         $params->{process_id} = $process_id++;

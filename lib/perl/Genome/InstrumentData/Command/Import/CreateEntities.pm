@@ -31,8 +31,9 @@ sub help_detail {
 sub execute {
     my $self = shift;
     
-    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->get;
-    $inputs_factory->set_file($self->file);
+    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->create(
+        file => $self->file,
+    );
     while ( my $inputs = $inputs_factory->next ) {
         my $entity_params = $inputs->entity_params;
         my $library = Genome::Library->get(name => $entity_params->{library}->{name});

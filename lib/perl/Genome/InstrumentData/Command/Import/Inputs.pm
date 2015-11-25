@@ -32,7 +32,7 @@ class Genome::InstrumentData::Command::Import::Inputs {
     },
 };
 
-sub get { shift; Genome::InstrumentData::Command::Import::Inputs::Factory->get->from_inputs_id(@_); }
+sub get { shift; Genome::InstrumentData::Command::Import::Inputs::Factory->create->from_inputs_id(@_); }
 sub create { Carp::confess('Use inputs factory to create!'); }
 
 sub lib_and_source_file_md5sum {

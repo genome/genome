@@ -22,15 +22,11 @@ my $process = Genome::InstrumentData::Command::Import::Process->create(
     import_file => $input_file,
 );
 
-my $factory = $class->get;
-subtest 'get, set process and file' => sub{
-    plan tests => 3;
-
-    ok($factory, 'get factory');
-    $factory->process($process);
-    is($factory->process, $process, 'set process');
-    ok($factory->set_file($input_file), 'set_file');
-};
+my $factory = $class->create(
+    process => $process,
+    file => $input_file,
+);
+ok($factory, 'create factory');
 
 subtest 'next' => sub{
     plan tests => 4;
@@ -155,53 +151,50 @@ subtest 'fails' => sub{
     plan tests => 8;
 
     throws_ok(
-        sub{ $factory->set_file(File::Spec->join($data_dir, 'samples.blah')); },
+        sub{ $class->create(process => $process, file => File::Spec->join($data_dir, 'samples.blah')); },
         qr/Cannot determine type for file: .+. It needs to end with \.csv or \.tsv\./,
         'failed w/ invalid file type',
     );
 
     throws_ok(
-        sub{ $factory->set_file(File::Spec->join($data_dir, 'empty.csv')); },
+        sub{ $class->create(process => $process, file => File::Spec->join($data_dir, 'empty.csv')); },
         qr/File \(.+\) is empty\!/,
         'failed w/ empty file',
     );
 
     throws_ok(
-        sub{ $factory->set_file(File::Spec->join($data_dir, 'invalid-entity-type.csv')); },
+        sub{ $class->create(process => $process, file => File::Spec->join($data_dir, 'invalid-entity-type.csv')); },
         qr/Invalid entity type: unknown/,
         'failed w/ invalid entity type',
     );
 
     throws_ok(
-        sub{ 
-            $factory->set_file(File::Spec->join($data_dir, 'invalid-sample-name.csv'));
-            print Data::Dumper::Dumper $factory->next;
-        },
+        sub{ $class->create(process => $process, file => File::Spec->join($data_dir, 'invalid-sample-name.csv'))->next; },
         qr/Invalid sample name: INVALID.NAME-. It must have at least 3 parts separated by dashes./,
         'failed w/ invalid sample name',
     );
 
     throws_ok(
-        sub{ $factory->set_file(File::Spec->join($data_dir, 'no-nomenclature.csv')); $factory->next; },
+        sub{ $class->create(process => $process, file => File::Spec->join($data_dir, 'no-nomenclature.csv'))->next; },
         qr/No sample\.nomenclature column given\! It is required to resolve entity names when no sample name is given\./,
         'failed w/o sample name and no sample.nomenclature',
     );
 
     throws_ok(
-        sub{ $factory->set_file(File::Spec->join($data_dir, 'no-individual-name-part.csv')); $factory->next; },
+        sub{ $class->create(process => $process, file => File::Spec->join($data_dir, 'no-individual-name-part.csv'))->next; },
         qr/No individual\.name_part column_given! It is required to resolve entity names when no sample name is given\./,
         'failed w/o sample name and no individual.name_part',
     );
 
     throws_ok(
         sub{
-            $factory->set_file(File::Spec->join($data_dir, 'no-sample-name-part.csv')); $factory->next; },
+            $class->create(process => $process, file => File::Spec->join($data_dir, 'no-sample-name-part.csv'))->next; },
         qr/No sample\.name_part column_given! It is required to resolve entity names when no sample name is given\./,
         'failed w/o sample name and no sample.name_part',
     );
 
     throws_ok(
-        sub{ $factory->set_file(File::Spec->join($data_dir, 'individual-name-mismatch.csv')); $factory->next; },
+        sub{ $class->create(process => $process, file => File::Spec->join($data_dir, 'individual-name-mismatch.csv'))->next; },
         qr/Invalid individual name: TGI-AAAA\. It must include the first part of the sample name: TGI-AA12345-Z98765\./,
         'failed when sample name does not include individual name',
     );

@@ -98,9 +98,10 @@ sub _create_wf_inputs {
     my $self = shift;
 
     my @inputs;
-    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->get;
-    $inputs_factory->process($self->process);
-    $inputs_factory->set_file($self->file);
+    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->create(
+        process => $self->process,
+        file => $self->file,
+    );
     my %seen;
     while ( my $inputs = $inputs_factory->next ) {
 
