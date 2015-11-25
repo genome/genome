@@ -39,16 +39,16 @@ sub execute {
     my $space_available = $self->_verify_adequate_disk_space_is_available_for_source_files;
     return if not $space_available;
 
-    my $workflow = Genome::InstrumentData::Command::Import::WorkFlow::Builder->create(
+    my $dag = Genome::InstrumentData::Command::Import::WorkFlow::Builder->create(
         work_flow_inputs => $self->work_flow_inputs,
     )->build_workflow;
-    return if not $workflow;
+    return if not $dag;
 
     my $inputs = $self->work_flow_inputs->as_hashref;
     return if not $inputs;
     $inputs->{working_directory} = $self->_working_directory;
 
-    my $success = Workflow::Simple::run_workflow($workflow, %$inputs);
+    my $success = Workflow::Simple::run_workflow($dag->get_xml, %$inputs);
     die 'Run wf failed!' if not $success;
 
     $self->instrument_data($success->{instrument_data});
