@@ -1,6 +1,17 @@
 $Genome::Command::OPTS_SPEC = [
   '>test',
   [
+    '>run-ptero-integration-tests',
+    [
+      'color!',
+      undef,
+      'log-directory=s',
+      undef,
+      'test-pattern=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>run-simple-process',
     [
       'statement=s',
@@ -52,6 +63,23 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>qc',
   [
+    '>import-genotype-vcf-file',
+    [
+      'genotype-vcf-file=s',
+      undef,
+      'output-result=s',
+      undef,
+      'sponsor=s',
+      undef,
+      'requestor=s',
+      undef,
+      'user=s',
+      undef,
+      'label=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>build-metrics',
     [
       'output-file=s',
@@ -242,16 +270,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>unarchive',
       [
-        'lab=s',
-        [
-          'Ding',
-          'Informatics',
-          'Maher',
-          'Mardis-Wilson',
-          'Mitreva',
-          'Warren',
-          'Weinstock'
-        ],
+        'analysis-project=s',
+        undef,
         'requestor=s',
         undef,
         'allocations=s@',
@@ -9935,16 +9955,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>unarchive',
       [
-        'lab=s',
-        [
-          'Ding',
-          'Informatics',
-          'Maher',
-          'Mardis-Wilson',
-          'Mitreva',
-          'Warren',
-          'Weinstock'
-        ],
+        'analysis-project=s',
+        undef,
         'queue!',
         undef,
         'requestor=s',
@@ -10400,16 +10412,8 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>unarchive',
     [
-      'lab=s',
-      [
-        'Ding',
-        'Informatics',
-        'Maher',
-        'Mardis-Wilson',
-        'Mitreva',
-        'Warren',
-        'Weinstock'
-      ],
+      'analysis-project=s',
+      undef,
       'requestor=s',
       undef,
       'model-group=s',
