@@ -23,7 +23,7 @@ sub _add_fastqs_to_bam_op_to_workflow {
     my $fastqs_to_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'fastqs to bam');
     return if not $fastqs_to_bam_op;
 
-    for my $property (qw/ working_directory library_name sample_name /) {
+    for my $property (qw/ working_directory library /) {
         $self->_workflow->add_link(
             left_operation => $self->_workflow->get_input_connector,
             left_property => $property,

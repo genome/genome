@@ -17,8 +17,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Inputs {
     },
     has_transient => {
         format => { via => 'source_files', to => 'format', },
-        library_name => { via => 'library', to => 'name', },
-        sample_name => { via => 'library', to => 'sample_name', },
     },
 };
 
@@ -57,7 +55,7 @@ sub as_hashref {
     my $self = shift;
 
     my %hash = map { $_ => $self->$_ } (qw/
-        analysis_project instrument_data_properties library library_name sample_name
+        analysis_project instrument_data_properties library
         /);
     $hash{downsample_ratio} = $self->instrument_data_properties->{downsample_ratio};
     $hash{source_paths} = [ $self->source_files->paths ];

@@ -38,8 +38,6 @@ my $inputs = $class->create(
 );
 ok($inputs, 'create inputs');
 is($inputs->format, 'fastq', 'source files format is fastq');
-is($inputs->library_name, $library->name, 'library_name');
-is($inputs->sample_name, $library->sample->name, 'sample_name');
 
 my %instrument_data_properties = (
     downsample_ratio => 0.7,
@@ -69,8 +67,6 @@ is_deeply(
         downsample_ratio => $instrument_data_properties{downsample_ratio},
         instrument_data_properties => \%instrument_data_properties,
         library => $library,
-        library_name => $library->name,
-        sample_name => $library->sample->name,
         source_paths => \@source_files,
     },
     'inputs as_hashref',
