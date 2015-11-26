@@ -160,20 +160,23 @@ sub _add_downsample_bam_op_to_workflow {
 
     die 'No previous op given to _add_downsample_bam_op_to_workflow!' if not $previous_op;
 
-    my $downsample_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'downsample bam');
-    return if not $downsample_bam_op;
-
-    $self->_workflow->add_link(
-        left_operation => $self->_workflow->get_input_connector,
-        left_property => 'downsample_ratio',
-        right_operation => $downsample_bam_op,
-        right_property => 'downsample_ratio',
+    my $name = 'downsample bam';
+    my $downsample_bam_op = Genome::WorkflowBuilder::Command->create(
+        name => $name,
+        command => $self->work_flow_operation_class_for_name($name),
     );
-    $self->_workflow->add_link(
-        left_operation => $previous_op,
-        left_property => 'output_bam_path',
-        right_operation => $downsample_bam_op,
-        right_property => 'bam_path',
+    $self->_dag->add_operation($downsample_bam_op);
+
+    $self->_dag->connect_input(
+        input_property => 'downsample_ratio',
+        destination => $downsample_bam_op,
+        destination_property => 'downsample_ratio',
+    );
+    $self->_dag->create_link(
+        source => $previous_op,
+        source_property => 'output_bam_path',
+        destination => $downsample_bam_op,
+        destination_property => 'bam_path',
     );
 
     return $downsample_bam_op;
