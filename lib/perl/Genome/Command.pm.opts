@@ -9519,6 +9519,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'run-as=s',
         'files',
+        'qc-genotype-vcf-file=s',
+        undef,
         'help!',
         undef
       ],
