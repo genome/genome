@@ -20,41 +20,29 @@ sub _add_fastqs_to_bam_op_to_workflow {
 
     die 'No previous operation given!' if not $previous_op;
 
-    my $fastqs_to_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'fastqs to bam');
-    return if not $fastqs_to_bam_op;
+    my $name = 'fastqs to bam';
+    my $fastqs_to_bam_op = Genome::WorkflowBuilder::Command->create(
+        name => $name,
+        command => $self->work_flow_operation_class_for_name($name),
+    );
+    $self->_dag->add_operation($fastqs_to_bam_op);
 
     for my $property (qw/ working_directory library /) {
-        $self->_workflow->add_link(
-            left_operation => $self->_workflow->get_input_connector,
-            left_property => $property,
-            right_operation => $fastqs_to_bam_op,
-            right_property => $property,
+        $self->_dag->connect_input(
+            input_property => $property,
+            destination => $fastqs_to_bam_op,
+            destination_property => $property,
         );
     }
-    $self->_workflow->add_link(
-        left_operation => $previous_op,
-        left_property => 'source_path',
-        right_operation => $fastqs_to_bam_op,
-        right_property => 'fastq_paths',
+
+    $self->_dag->create_link(
+        source => $previous_op,
+        source_property => 'source_path',
+        destination => $fastqs_to_bam_op,
+        destination_property => 'fastq_paths',
     );
 
     return $fastqs_to_bam_op;
-}
-
-sub _add_sort_bam_op_to_workflow {
-    my ($self, $previous_op) = @_;
-
-    die 'No previous op given to _add_sort_bam_op_to_workflow!' if not $previous_op;
-
-    my $sort_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'sort bam');
-    $self->_workflow->add_link(
-        left_operation => $previous_op,
-        left_property => 'output_bam_path',
-        right_operation => $sort_bam_op,
-        right_property => 'bam_path',
-    );
-
-    return $sort_bam_op;
 }
 
 1;

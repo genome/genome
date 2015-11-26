@@ -24,6 +24,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath {
     },
     has_output => {
         destination_path => {
+            is_many => 1,
             via => 'destination_file',
             to => 'path',
             doc => 'Final destination path.',
