@@ -19,19 +19,28 @@ sub _steps_to_build_workflow {
 }
 
 sub _add_sra_to_bam_op_to_workflow {
-    my $self = shift;
+    my ($self, $previous_op) = @_;
 
-    my $workflow = $self->_workflow;
-    my $sra_to_bam_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'sra to bam');
-    for my $property_mapping ( [qw/ working_directory working_directory /], [qw/ source_path sra_path /] ) {
-        my ($left_property, $right_property) = @$property_mapping;
-        $workflow->add_link(
-            left_operation => $self->_work_flow_op_for('verify not imported'),
-            left_property => $left_property,
-            right_operation => $sra_to_bam_op,
-            right_property => $right_property,
-        );
-    }
+    die 'No previous op given to _add_split_bam_by_rg_op_to_workflow!' if not $previous_op;
+
+    my $name = 'sra to bam';
+    my $sra_to_bam_op = Genome::WorkflowBuilder::Command->create(
+        name => $name,
+        command => $self->work_flow_operation_class_for_name($name),
+    );
+    $self->_dag->add_operation($sra_to_bam_op);
+
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $sra_to_bam_op,
+        destination_property => 'working_directory',
+    );
+    $self->_dag->create_link(
+        source => $previous_op,
+        source_property => 'source_path',
+        destination => $sra_to_bam_op,
+        destination_property => 'sra_path',
+    );
 
     return $sra_to_bam_op;
 }
