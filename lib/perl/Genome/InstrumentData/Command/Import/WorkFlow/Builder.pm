@@ -54,7 +54,7 @@ sub build_workflow {
 }
 
 sub work_flow_operation_class_for_name {
-    my ($name) = Params::Validate::validate_pos(@_, {is => SCALAR});
+    my ($self, $name) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {is => SCALAR});
     die 'No name given to get work flow operation class!' if !@_;
     return 'Genome::InstrumentData::Command::Import::WorkFlow::'
         . join('', map { ucfirst } split(' ', $name));
@@ -66,7 +66,7 @@ sub _add_retrieve_source_path_op_to_workflow {
     my $name = 'retrieve source path from '.$self->work_flow_inputs->source_files->retrieval_method;
     my $retrieve_source_path_op = Genome::WorkflowBuilder::Command->create(
         name => $name,
-        command => work_flow_operation_class_for_name($name),
+        command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($retrieve_source_path_op);
     $self->_dag->connect_input(
@@ -92,7 +92,7 @@ sub _add_verify_not_imported_op_to_workflow {
     my $name = 'verify not imported';
     my $verify_not_imported_op = Genome::WorkflowBuilder::Command->create(
         name => $name,
-        command => work_flow_operation_class_for_name($name),
+        command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($verify_not_imported_op);
     $self->_dag->connect_input(
@@ -137,7 +137,7 @@ sub _add_sanitize_bam_op_to_workflow {
     my $name = 'sanitize bam';
     my $sanitize_bam_op = Genome::WorkflowBuilder::Command->create(
         name => $name,
-        command => work_flow_operation_class_for_name($name),
+        command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($sanitize_bam_op);
     $self->_dag->create_link(
@@ -158,7 +158,7 @@ sub _add_sort_bam_op_to_workflow {
     my $name = 'sort bam';
     my $sort_bam_op = Genome::WorkflowBuilder::Command->create(
         name => $name,
-        command => work_flow_operation_class_for_name($name),
+        command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($sort_bam_op);
     $self->_dag->create_link(
@@ -205,7 +205,7 @@ sub _add_split_bam_by_rg_op_to_workflow {
     my $name = 'split bam by read group';
     my $split_bam_by_rg_op = Genome::WorkflowBuilder::Command->create(
         name => $name,
-        command => work_flow_operation_class_for_name($name),
+        command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($split_bam_by_rg_op);
     $self->_dag->create_link(
@@ -226,7 +226,7 @@ sub _add_create_instrument_data_op_to_workflow {
     my $name = 'create instrument data';
     my $create_instdata_op = Genome::WorkflowBuilder::Command->create(
         name => $name,
-        command => work_flow_operation_class_for_name($name),
+        command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($create_instdata_op);
 
