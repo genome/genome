@@ -57,7 +57,7 @@ sub as_hashref {
     my %hash = map { $_ => $self->$_ } (qw/
         analysis_project instrument_data_properties library
         /);
-    $hash{downsample_ratio} = $self->instrument_data_properties->{downsample_ratio};
+    $hash{downsample_ratio} = $self->instrument_data_properties->{downsample_ratio} if $self->instrument_data_properties->{downsample_ratio};
     $hash{source_paths} = [ $self->source_files->paths ];
 
     return \%hash;
