@@ -1,0 +1,24 @@
+0:
+    epitope_sequence: ABCDEFGHIJ
+1:
+    epitope_sequence: BCDEFGHIJK
+2:
+    epitope_sequence: CDEFGHIJKL
+3:
+    epitope_sequence: DEFGHIJKLN
+4:
+    epitope_sequence: EFGHIJKLNO
+5:
+    epitope_sequence: FGHIJKLNOP
+6:
+    epitope_sequence: GHIJKLNOPQ
+7:
+    epitope_sequence: HIJKLNOPQR
+8:
+    epitope_sequence: IJKLNOPQRS
+9:
+    epitope_sequence: JKLNOPQRST
+10:
+    epitope_sequence: KLNOPQRSTU
+11:
+    epitope_sequence: LNOPQRSTUV

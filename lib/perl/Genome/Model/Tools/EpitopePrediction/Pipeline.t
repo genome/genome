@@ -15,7 +15,7 @@ use Genome::Utility::Test qw(compare_ok);
 use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::Build;
 
-my $TEST_DATA_VERSION = 2;
+my $TEST_DATA_VERSION = 3;
 my $class = 'Genome::Model::Tools::EpitopePrediction::Pipeline';
 use_ok($class);
 

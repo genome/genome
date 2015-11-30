@@ -80,8 +80,8 @@ sub _interpret_entry {
 
             my ($wildtype_subsequence, $mutant_subsequence, $variant_id);
             if (grep {$_ eq 'frameshift_variant'} @consequences) {
-                $wildtype_subsequence = $self->get_frameshift_wildtype_subsequence($position, $full_wildtype_sequence, $entry);
-                $mutant_subsequence = $wildtype_subsequence . $transcript->{downstreamprotein};
+                ($wildtype_subsequence, $mutant_subsequence) = $self->get_frameshift_subsequences($position, $full_wildtype_sequence, $entry);
+                $mutant_subsequence .= $transcript->{downstreamprotein};
                 $variant_id = $transcript->{symbol} . '.FS.' . $transcript->{protein_position};
             }
             else {
@@ -134,18 +134,21 @@ sub determine_flanking_sequence_length {
     return ($self->determine_peptide_sequence_length($full_wildtype_sequence_length, $entry) - 1) / 2;
 }
 
-sub get_frameshift_wildtype_subsequence {
+sub get_frameshift_subsequences {
     my ($self, $position, $full_wildtype_sequence, $entry) = @_;
 
     my $one_flanking_sequence_length = $self->determine_flanking_sequence_length(length($full_wildtype_sequence), $entry);
     my $start_position = $position - $one_flanking_sequence_length;
-    my $length = $one_flanking_sequence_length;
+    my $wildtype_subsequence_length =  2 * $one_flanking_sequence_length;
+    my $mutation_subsequence_length =  $one_flanking_sequence_length;
     if ($start_position < 0) {
         $start_position = 0;
-        $length = $position;
+        $wildtype_subsequence_length = $position + $one_flanking_sequence_length;
+        $mutation_subsequence_length = $position;
     }
-    my $wildtype_subsequence = substr($full_wildtype_sequence, $start_position, $length);
-    return $wildtype_subsequence;
+    my $wildtype_subsequence = substr($full_wildtype_sequence, $start_position, $wildtype_subsequence_length);
+    my $mutation_start_subsequence = substr($full_wildtype_sequence, $start_position, $mutation_subsequence_length);
+    return ($wildtype_subsequence, $mutation_start_subsequence);
 }
 
 sub get_wildtype_subsequence {

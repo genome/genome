@@ -228,7 +228,7 @@ subtest 'input file with framshift variant feature truncation' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.NECAP2.FS.209' => 'LIPPPGEQLA',
+                '>WT.NECAP2.FS.209' => 'LIPPPGEQLAVGGSLVQPAV',
                 '>MT.NECAP2.FS.209' => 'LIPPPGEQLAGGSLVQPAVAPSSDQLPARPSQAQAGSSSDLSTVFPHVTSGKALPHLGQRKEDEALLSWPVFGAWGDPSSSQQLLPVQINFQPDPARHRLGPVLT',
             }
         }
@@ -248,7 +248,7 @@ subtest 'input file with framshift variant feature elongation' => sub {
     my %expected_return_values = (
         CG => {
             variant_sequences => {
-                '>WT.HSPG2.FS.322' => 'DGSDELDCGP',
+                '>WT.HSPG2.FS.322' => 'DGSDELDCGPPPPCEPNEFP',
                 '>MT.HSPG2.FS.322' => 'DGSDELDCGPPATL',
             }
         }
