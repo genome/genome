@@ -103,7 +103,7 @@ my $command_without_qc_genotype_vcf_file = Genome::Qc::Run->create(
     alignment_result => $alignment_result,
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );
-ok($command_without_qc_genotype_vcf_file->execute, "Command with qc_genotype_vcf_file executes ok");
+ok($command_without_qc_genotype_vcf_file->execute, "Command without qc_genotype_vcf_file executes ok");
 
 my %expected_metrics = (
     '2883581792-2883255521	#READS' => 0,
