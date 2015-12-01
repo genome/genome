@@ -119,6 +119,7 @@
                      "queue" : "short",
                      "resReq" : "rusage[mem=200:gtmp=5]"
                   },
+                  "pollingInterval" : 300,
                   "rLimits" : {
                      "RSS" : 200000
                   },
@@ -169,6 +170,7 @@
                      "queue" : "short",
                      "resReq" : "rusage[mem=200:gtmp=5]"
                   },
+                  "pollingInterval" : 300,
                   "rLimits" : {
                      "RSS" : 200000
                   },
@@ -219,6 +221,7 @@
                      "queue" : "short",
                      "resReq" : "rusage[mem=200:gtmp=5]"
                   },
+                  "pollingInterval" : 300,
                   "rLimits" : {
                      "RSS" : 200000
                   },
@@ -269,6 +272,7 @@
                      "queue" : "short",
                      "resReq" : "rusage[mem=200:gtmp=5]"
                   },
+                  "pollingInterval" : 300,
                   "rLimits" : {
                      "RSS" : 200000
                   },
