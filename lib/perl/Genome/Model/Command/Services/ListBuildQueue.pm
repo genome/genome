@@ -69,7 +69,7 @@ sub execute {
         }
 
         my $max_running = ($run_as eq 'apipe-builder'? 650 : 150);
-        my $running_count = builds_for($run_as, 'Running');
+        my $running_count = $scheduled_count + builds_for($run_as, 'Running');
         if($running_count > $max_running) {
             Genome::Logger->infof(
                 "%s's running count (%d) meets or exceeds maximum (%d)\n",
