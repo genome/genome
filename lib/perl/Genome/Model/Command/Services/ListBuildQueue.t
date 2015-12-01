@@ -19,7 +19,7 @@ do {
     my $count;
     no warnings qw(once redefine);
     local *Genome::Model::Command::Services::ListBuildQueue::run_as_list = sub { uniq map { $_->run_as } @m };
-    local *Genome::Model::Command::Services::ListBuildQueue::scheduled_builds_for = sub { 0 };
+    local *Genome::Model::Command::Services::ListBuildQueue::builds_for = sub { 0 };
     local *Genome::Model::Command::Services::ListBuildQueue::print = sub { $count++ };
     Genome::Model::Command::Services::ListBuildQueue->execute(
         max => $max,

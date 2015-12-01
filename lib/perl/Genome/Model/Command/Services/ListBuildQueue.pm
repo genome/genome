@@ -55,7 +55,7 @@ sub execute {
 
     my @run_as = run_as_list();
     RUN_AS: while (my $run_as = shift @run_as) {
-        my $count = scheduled_builds_for($run_as);
+        my $count = builds_for($run_as, 'Scheduled');
 
         # avoid extra DB queries below if we are just going to skip anyway
         if ($count >= $self->max) {
@@ -97,10 +97,11 @@ sub run_as_list {
     return map { $_->[0] } @{$rows};
 }
 
-sub scheduled_builds_for {
+sub builds_for {
     my $username = shift;
+    my $status = shift;
 
-    my $set = Genome::Model::Build->define_set(run_by => $username, status => 'Scheduled');
+    my $set = Genome::Model::Build->define_set(run_by => $username, status => $status);
     return $set->count();
 }
 
