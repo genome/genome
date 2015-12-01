@@ -100,20 +100,8 @@ sub run_as_list {
 sub scheduled_builds_for {
     my $username = shift;
 
-    my $type = Genome::Model::Build->__meta__;
-
-    my $table_name    = $type->table_name;
-    my $run_by_column = $type->properties(property_name => 'run_by')->column_name;
-    my $status_column = $type->properties(property_name => 'status')->column_name;
-
-    my $sql_t = q/SELECT count(*) FROM %s WHERE %s = ? AND %s = 'Scheduled'/;
-    my $sql = sprintf($sql_t, $table_name, $run_by_column, $status_column);
-
-    my $dbh = $type->data_source->get_default_handle;
-    my $sth = $dbh->prepare($sql);
-    $sth->execute($username);
-    my $row = $sth->fetchrow_arrayref();
-    return $row->[0];
+    my $set = Genome::Model::Build->define_set(run_by => $username, status => 'Scheduled');
+    return $set->count();
 }
 
 sub sprint {
