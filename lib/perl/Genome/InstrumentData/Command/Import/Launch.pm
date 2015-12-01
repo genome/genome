@@ -5,9 +5,7 @@ use warnings;
 
 use Genome;
 
-use Genome::InstrumentData::Command::Import::CsvParser;
-use Genome::InstrumentData::Command::Import::WorkFlow::Inputs;
-use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
+use Genome::InstrumentData::Command::Import::Inputs::Factory;
 require List::Util;
 
 class Genome::InstrumentData::Command::Import::Launch {
@@ -35,7 +33,7 @@ class Genome::InstrumentData::Command::Import::Launch {
         },
     },
     has_optional_transient => {
-        _imports => { is => 'Array', },
+        _wf_inputs => { is => 'Array', },
         gtmp => { is => 'Number', },
         process => { is => 'Genome::InstrumentData::Command::Import::Process', },
     },
@@ -60,7 +58,7 @@ Listing created instrument data:
 About the Metadata File
 
 HELP
-    $help .= Genome::InstrumentData::Command::Import::CsvParser->csv_help;
+    $help .= Genome::InstrumentData::Command::Import::Inputs::Factory->csv_help;
     return $help;
 }
 
@@ -68,7 +66,12 @@ sub execute {
     my $self = shift;
 
     $self->_check_for_running_processes;
-    $self->_load_file;
+    $self->process( Genome::InstrumentData::Command::Import::Process->create(
+            analysis_project => $self->analysis_project,
+            import_file => $self->file,
+        ) );
+    $self->_create_wf_inputs;
+    $self->_calculate_gtmp_required;
     $self->_launch_process;
 
     return 1
@@ -87,58 +90,58 @@ sub _check_for_running_processes {
 
     return 1 if not @active_processes;
 
-    $self->debug_message("Found '%s' process (%s) for metadata file: %s", $active_processes[0]->status, $active_processes[0]->id, $self->file);
+    $self->status_message("Found '%s' process (%s) for metadata file: %s", $active_processes[0]->status, $active_processes[0]->id, $self->file);
     die $self->error_message('Cannot start another import process until the previous one has completed!');
 }
 
-sub _load_file {
+sub _create_wf_inputs {
     my $self = shift;
 
-    my $parser = Genome::InstrumentData::Command::Import::CsvParser->create(file => $self->file);
-    my (%seen, @imports, @kb_required);
-    while ( my $import = $parser->next ) {
-        my $library_name = $import->{library}->{name};
-        my $source_files = delete $import->{instdata}->{source_files};
-        my $string = join(' ', $library_name, $source_files, map { $import->{instdata}->{$_} } keys %{$import->{instdata}});
-        my $id = substr(Genome::Sys->md5sum_data($string), 0, 6);
-        if ( $seen{$id} ) {
-            die $self->error_message("Duplicate source file/library combination! $string");
-        }
-        $seen{$id}++;
+    my @inputs;
+    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->create(
+        process => $self->process,
+        file => $self->file,
+    );
+    my %seen;
+    while ( my $inputs = $inputs_factory->next ) {
 
+        my $library_name = $inputs->entity_params->{library}->{name};
         my @libraries = Genome::Library->get(name => $library_name);
         die $self->error_message('No library for name: %s', $library_name) if not @libraries;
         die $self->error_message('Multiple libraries for library name: %s', $library_name) if @libraries > 1;
 
-        my $import = Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
-            analysis_project => $self->analysis_project,
-            library => $libraries[0],
-            instrument_data_properties => $import->{instdata},
-            source_files => [ split(',', $source_files) ], # FIXME move to csv parser
-        );
-        push @imports, $import;
+        my $id = $inputs->lib_and_source_file_md5sum;
+        if ( $seen{$id} ) {
+            $self->fatal_message("Duplicate source file/library combination! %s", join(' ', $inputs->library_name, $inputs->source_paths));
+        }
+        $seen{$id}++;
+        push @inputs, $inputs;
+    }
 
-        my $kb_required = $import->source_files->kilobytes_required_for_processing;
+    return $self->_wf_inputs(\@inputs);
+}
+
+sub _calculate_gtmp_required {
+    my $self = shift;
+
+    my @kb_required;
+    for my $input ( @{$self->_wf_inputs} ) {
+        my $kb_required = $input->source_files->kilobytes_required_for_processing;
         $kb_required = 1048576 if $kb_required < 1048576; # 1 Gb 
         push @kb_required, $kb_required;
     }
 
-    $self->_imports(\@imports);
     my $max_kb_required = List::Util::max(@kb_required);
-    $self->gtmp( $max_kb_required / ( 1024 * 1024 ) );
-
-    return 1;
+    return $self->gtmp( $max_kb_required / ( 1024 * 1024 ) );
 }
 
 sub _launch_process {
     my $self = shift;
 
     my $dag = Genome::WorkflowBuilder::DAG->create(name => 'Import Instrument Data for '.$self->file);
-    my $gtmp = $self->gtmp;
-    my $mem = $self->mem;
     my $lsf_resource = sprintf(
         "-g %s -M %s -R 'select [mem>%s & gtmp>%s] rsuage[mem=%s,gtmp=%s]", 
-        $self->job_group_name, ($mem * 1024), $mem, $gtmp, $mem, $gtmp,
+        $self->job_group_name, ($self->mem * 1024), $self->mem, $self->gtmp, $self->mem, $self->gtmp,
     );
     my $import_op = Genome::WorkflowBuilder::Command->create(
         name => 'InstData Import : Run WF',
@@ -152,41 +155,17 @@ sub _launch_process {
     );
     $dag->add_operation($import_op);
     $dag->parallel_by('work_flow_inputs');
-
-    my $add_process_op = Genome::WorkflowBuilder::Command->create(
-        name => 'InstData Import : Add Process',
-        command => 'Genome::InstrumentData::Command::Import::WorkFlow::AddProcessToInstrumentData',
-    );
-    $dag->connect_input(
-        input_property => 'process',
-        destination => $add_process_op,
-        destination_property => 'process',
-    );
-    $dag->create_link(
-        source => $import_op,
-        source_property => 'instrument_data',
-        destination => $add_process_op,
-        destination_property => 'instrument_data',
-    );
     $dag->connect_output(
         output_property => 'instrument_data',
-        source => $add_process_op,
+        source => $import_op,
         source_property => 'instrument_data',
     );
-    $dag->add_operation($add_process_op);
 
-    my $p = Genome::InstrumentData::Command::Import::Process->create(import_file => $self->file);
-    $p->run(
+    $self->process->run(
         workflow_xml => $dag->get_xml,
-        workflow_inputs => { 
-            process => $p,
-            work_flow_inputs => $self->_imports,
-        },
+        workflow_inputs => { work_flow_inputs => $self->_wf_inputs, },
     );
-    $self->process($p);
-
-    $self->debug_message('Started imports with process id: %s. View status with:', $p->id);
-    $self->debug_message('genome instrument-data import status %s', $p->id);
+    $self->status_message("Started imports!\nProcess id: %s\nMetadata directory: %s\nView status with:'genome process view %s'", $self->process->id, $self->process->metadata_directory, $self->process->id);
 
     return 1;
 }

@@ -12,15 +12,15 @@ require File::Temp;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs') or die;
-use_ok('Genome::InstrumentData::Command::Import::WorkFlow::SourceFile') or die;
+use_ok('Genome::InstrumentData::Command::Import::Inputs::SourceFile') or die;
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
 my $source_base_name = 'input.fastq.tgz';
-my $source_file = Genome::InstrumentData::Command::Import::WorkFlow::SourceFile->create(
+my $source_file = Genome::InstrumentData::Command::Import::Inputs::SourceFile->create(
     path => File::Spec->join($test_dir, $source_base_name),
 );
-my $local_source_file = Genome::InstrumentData::Command::Import::WorkFlow::SourceFile->create(
+my $local_source_file = Genome::InstrumentData::Command::Import::Inputs::SourceFile->create(
     path => File::Spec->join($tmp_dir, $source_base_name),
 );
 Genome::Sys->create_symlink($source_file->path, $local_source_file->path) or die;

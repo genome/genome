@@ -18,7 +18,7 @@ use Test::Exception;
 use Test::MockObject;
 use Test::More;
 
-my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFile';
+my $class = 'Genome::InstrumentData::Command::Import::Inputs::SourceFile';
 use_ok($class) or die;
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import') or die;
 

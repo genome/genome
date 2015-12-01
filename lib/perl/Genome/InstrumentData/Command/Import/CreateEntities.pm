@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-use Genome::InstrumentData::Command::Import::CsvParser;
+use Genome::InstrumentData::Command::Import::Inputs::Factory;
 require File::Basename;
 require List::MoreUtils;
 use Params::Validate qw( :types );
@@ -15,7 +15,7 @@ class Genome::InstrumentData::Command::Import::CreateEntities {
     has_input => {
         file => {
             is => 'Text',
-            doc => Genome::InstrumentData::Command::Import::CsvParser->csv_help,
+            doc => Genome::InstrumentData::Command::Import::Inputs::Factory->csv_help,
         },
     },
     has_optional_transient => {
@@ -31,8 +31,11 @@ sub help_detail {
 sub execute {
     my $self = shift;
     
-    my $parser = Genome::InstrumentData::Command::Import::CsvParser->create(file => $self->file);
-    while ( my $entity_params = $parser->next ) {
+    my $inputs_factory = Genome::InstrumentData::Command::Import::Inputs::Factory->create(
+        file => $self->file,
+    );
+    while ( my $inputs = $inputs_factory->next ) {
+        my $entity_params = $inputs->entity_params;
         my $library = Genome::Library->get(name => $entity_params->{library}->{name});
         next if $library;
 
@@ -46,14 +49,14 @@ sub execute {
 
 sub _create_individual_if_needed {
     my ($self, $entity_params) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => HASHREF});
-    my $params = $entity_params->{individual};
-    return 1 if $self->_does_enitity_exist('individual', $params->{name});
-    my $taxon_name = delete $params->{taxon};
-    die $self->error_message('No taxon for %s!', $params->{name}) if not $taxon_name;
+    my %params = %{$entity_params->{individual}};
+    return 1 if $self->_does_enitity_exist('individual', $params{name});
+    my $taxon_name = $params{taxon};
+    die $self->error_message('No taxon for %s!', $params{name}) if not $taxon_name;
     my $taxon = Genome::Taxon->get(name => $taxon_name);
     die $self->error_message('Taxon does not exist for %s!', $taxon_name) if not $taxon;
-    $params->{taxon} = $taxon;
-    return $self->_create_entity('individual', $params);
+    $params{taxon} = $taxon;
+    return $self->_create_entity('individual', \%params);
 }
 
 sub _create_sample_if_needed {

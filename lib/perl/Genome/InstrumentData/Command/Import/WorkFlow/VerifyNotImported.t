@@ -22,7 +22,7 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->
     source_path => $source_path,
 );
 ok($cmd->result, 'execute');
-isa_ok($cmd->source_file, 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFile', 'source_file');
+isa_ok($cmd->source_file, 'Genome::InstrumentData::Command::Import::Inputs::SourceFile', 'source_file');
 my $md5_path = $cmd->source_md5_path;
 ok(-s $md5_path, 'md5 path exists');
 

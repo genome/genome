@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use Genome::InstrumentData::Command::Import::Inputs;
 require File::Temp;
 require List::MoreUtils;
 use Workflow::Simple;
@@ -12,7 +13,7 @@ use Workflow::Simple;
 class Genome::InstrumentData::Command::Import::WorkFlow::Run {
     is => 'Command::V2',
     has_input => {
-        work_flow_inputs => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs', },
+        work_flow_inputs => { is => 'Genome::InstrumentData::Command::Import::Inputs', },
     },
     has_output => {
         instrument_data => { is => 'Genome::InstrumentData', is_many => 1, },
@@ -21,6 +22,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Run {
         helpers => { calculate => q( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get; ), },
     },
     has_optional_transient => {
+        _input_properties => { is => 'ARRAY', },
         _workflow => {},
         _verify_not_imported_op => {},
         _working_directory => { is => 'Text', },
@@ -45,12 +47,17 @@ sub execute {
     my $space_available = $self->_verify_adequate_disk_space_is_available_for_source_files;
     return if not $space_available;
 
+    my $inputs = $self->work_flow_inputs->as_hashref;
+    $inputs->{working_directory} = $self->_working_directory;
+    $self->_input_properties([ keys %$inputs ]);
+
     my $workflow = $self->_build_workflow;
     return if not $workflow;
 
-    my $inputs = $self->work_flow_inputs->as_hashref;
-    return if not $inputs;
-    $inputs->{working_directory} = $self->_working_directory;
+    my $process = $self->work_flow_inputs->process;
+    if ( $process ) {
+        $workflow->log_dir($process->log_directory);
+    }
 
     my $success = Workflow::Simple::run_workflow($workflow, %$inputs);
     die 'Run wf failed!' if not $success;
@@ -85,7 +92,7 @@ sub _build_workflow {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Instrument Data',
-        input_properties => [qw/ analysis_project instrument_data_properties downsample_ratio library library_name sample_name source_paths working_directory /],
+        input_properties => $self->_input_properties,
         output_properties => [qw/ instrument_data /],
     );
     $self->_workflow($workflow);
@@ -179,7 +186,7 @@ sub _add_retrieve_source_path_op_to_workflow {
         right_operation => $retrieve_source_path_op,
         right_property => 'source_path',
     );
-    $retrieve_source_path_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
+    $retrieve_source_path_op->parallel_by('source_path') if $self->work_flow_inputs->source_paths > 1;
 
     return $retrieve_source_path_op;
 }
@@ -203,7 +210,7 @@ sub _add_verify_not_imported_op_to_workflow {
         right_operation => $verify_not_imported_op,
         right_property => 'source_path',
    );
-   $verify_not_imported_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
+   $verify_not_imported_op->parallel_by('source_path') if $self->work_flow_inputs->source_paths > 1;
 
     return $verify_not_imported_op;
 }
@@ -263,11 +270,10 @@ sub _add_fastqs_to_bam_op_to_workflow {
             right_property => $property,
         );
     }
+    
     $self->_workflow->add_link(
         left_operation => $previous_op,
-        left_property => ( $previous_op->name eq 'verify not imported' ) # not ideal...
-        ? 'source_path'
-        : 'fastq_paths',
+        left_property => ( $previous_op->name eq 'archive to fastqs' ) ? 'fastq_paths' : 'source_path',
         right_operation => $fastqs_to_bam_op,
         right_property => 'fastq_paths',
     );
@@ -381,7 +387,6 @@ sub _add_create_instdata_and_copy_bam_op_to_workflow {
         right_operation => $create_instdata_and_copy_bam_op,
         right_property => 'source_md5s',
     );
-    $create_instdata_and_copy_bam_op->parallel_by('bam_path');
 
     $workflow->add_link(
         left_operation => $create_instdata_and_copy_bam_op,
