@@ -59,7 +59,12 @@ sub execute {
 
         # avoid extra DB queries below if we are just going to skip anyway
         if ($count >= $self->max) {
-            Genome::Logger->infof(qq(%s's scheduled count exceeds %d\n), $run_as, $count);
+            Genome::Logger->infof(
+                "%s's scheduled count (%d) meets or exceeds specified maximum (%d)\n",
+                $run_as,
+                $count,
+                $self->max,
+            );
             next RUN_AS;
         }
 
@@ -68,7 +73,12 @@ sub execute {
 
             MODEL: while (my $model = $models->next) {
                 if ($count >= $self->max) {
-                    Genome::Logger->infof(qq(%s's scheduled count exceeds %d\n), $run_as, $count);
+                    Genome::Logger->infof(
+                        "%s's scheduled count (%d) reached specified maximum (%d)\n",
+                        $run_as,
+                        $count,
+                        $self->max,
+                    );
                     next RUN_AS;
                 }
                 $count++;
