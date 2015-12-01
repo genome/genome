@@ -5,7 +5,7 @@ use warnings;
 
 use Test::More tests => 2;
 
-use Genome;
+use above 'Genome';
 
 use Genome::Model::Command::Services::ListBuildQueue;
 use Genome::Test::Factory::Model::ReferenceAlignment;
