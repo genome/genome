@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Command::Services::ListBuildQueue {
-    is => 'Command',
+    is => 'Command::V2',
     doc => 'List queued models for processing by cron.',
     has => [
         delimiter => {
