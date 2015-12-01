@@ -55,15 +55,27 @@ sub execute {
 
     my @run_as = run_as_list();
     RUN_AS: while (my $run_as = shift @run_as) {
-        my $count = builds_for($run_as, 'Scheduled');
+        my $scheduled_count = builds_for($run_as, 'Scheduled');
 
         # avoid extra DB queries below if we are just going to skip anyway
-        if ($count >= $self->max) {
+        if ($scheduled_count >= $self->max) {
             Genome::Logger->infof(
                 "%s's scheduled count (%d) meets or exceeds specified maximum (%d)\n",
                 $run_as,
-                $count,
+                $scheduled_count,
                 $self->max,
+            );
+            next RUN_AS;
+        }
+
+        my $max_running = ($run_as eq 'apipe-builder'? 650 : 150);
+        my $running_count = builds_for($run_as, 'Running');
+        if($running_count > $max_running) {
+            Genome::Logger->infof(
+                "%s's running count (%d) meets or exceeds maximum (%d)\n",
+                $run_as,
+                $running_count,
+                $max_running,
             );
             next RUN_AS;
         }
@@ -72,16 +84,26 @@ sub execute {
             my $models = Genome::Model->create_iterator(%{$iterator_params}, run_as => $run_as);
 
             MODEL: while (my $model = $models->next) {
-                if ($count >= $self->max) {
+                if ($scheduled_count >= $self->max) {
                     Genome::Logger->infof(
                         "%s's scheduled count (%d) reached specified maximum (%d)\n",
                         $run_as,
-                        $count,
+                        $scheduled_count,
                         $self->max,
                     );
                     next RUN_AS;
                 }
-                $count++;
+                if($running_count > $max_running) {
+                    Genome::Logger->infof(
+                        "%s's running count (%d) reached maximum (%d)\n",
+                        $run_as,
+                        $running_count,
+                        $max_running,
+                    );
+                    next RUN_AS;
+                }
+                $scheduled_count++;
+                $running_count++;
                 $self->print($model->id);
             }
         }
