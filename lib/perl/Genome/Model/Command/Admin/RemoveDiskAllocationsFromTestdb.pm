@@ -222,7 +222,8 @@ my @ENV_VARS_FOR_TEST_DB = map { Genome::Config::spec($_)->env }
 sub _dbh_for_production_db {
     my $self = shift;
 
-    delete local @ENV{ @ENV_VARS_FOR_TEST_DB };
+    local @ENV{ @ENV_VARS_FOR_TEST_DB };
+    delete @ENV{ @ENV_VARS_FOR_TEST_DB };
     my $db_settings = $self->_parse_database_connection_info_from_config();
     my $conn = sprintf('dbi:Pg:dbname=%s;host=%s', $db_settings->{dbname}, $db_settings->{host});
     if ($db_settings->{port}) {
