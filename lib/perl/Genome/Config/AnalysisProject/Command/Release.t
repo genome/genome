@@ -17,12 +17,12 @@ my $ap = Genome::Config::AnalysisProject->create(
     name => 'Test Project',
     status => 'Hold',
 );
-is($ap->status, 'Hold', "AnP status is'Hold'");
+is($ap->status, 'Hold', "AnP status is 'Hold'");
 
 my $cmd = $class->execute(analysis_projects => [$ap]);
 ok($cmd->result, 'execute cmd');
-my $expexted_status = 'In Progress';
-is($ap->status, $expexted_status, "AnP status set to '$expexted_status'");
+my $expected_status = 'In Progress';
+is($ap->status, $expected_status, "AnP status set to '$expected_status'");
 is($cmd->status_message, 'Released: '.$ap->__display_name__, 'Status message about releasing');
 
 done_testing();
