@@ -163,7 +163,7 @@ sub _bsub_unarchives_and_wait_completion {
     my $log_file_dir = shift;
     my @allocations = @_;
 
-    my $lab = $self->lab;
+    my $analysis_project = $self->analysis_project->id;
     my $requestor = $self->requestor->id;
 
     my @allocation_ids = map { $_->id } @allocations;
@@ -171,7 +171,7 @@ sub _bsub_unarchives_and_wait_completion {
     for my $allocation (@allocations) {
         my $allocation_id = $allocation->id;
         my @cmd = ('genome', 'disk', 'allocation', 'unarchive', $allocation_id,
-            '--lab', $lab, '--requestor', $requestor,
+            '--analysis-project', $analysis_project, '--requestor', $requestor,
         );
         push @unarchive_commands,
                 { cmd => \@cmd,
@@ -188,7 +188,7 @@ sub _bsub_unarchives_and_wait_completion {
         $job_to_allocation_mapping{$job_id} = $allocation_ids[$idx];
     };
 
-    my @statuses = Genome::Sys->bsub_and_wait_completion(
+    my @statuses = Genome::Sys->bsub_and_wait_for_completion(
                     queue => Genome::Config::get('lsf_queue_build_worker'),
                     job_group => '/apipe/build-unarchive',
                     cmds => \@unarchive_commands,

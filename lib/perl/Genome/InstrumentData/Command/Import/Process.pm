@@ -13,6 +13,7 @@ require Genome::Sys;
 class Genome::InstrumentData::Command::Import::Process {
     is => 'Genome::Process',
     has_input => {
+        analysis_project => { is => 'Genome::Config::AnalysisProject', },
         import_file => { is => 'Text', }, # original location
         import_md5 => { is => 'Text', },
     },
@@ -21,18 +22,14 @@ class Genome::InstrumentData::Command::Import::Process {
 sub create {
     my ($class, %params) = @_;
 
-    my $import_file = delete $params{import_file};
-    die $class->error_message('No import file given to create process!') if not defined $import_file;
-    $import_file = Cwd::abs_path($import_file);
-    die $class->error_message('import file (%s) given to create process does not exist!', $import_file) if not -s $import_file;
+    die $class->error_message('No import file given to create process!') if not $params{import_file};
+    $params{import_file} = Cwd::abs_path($params{import_file});
+    die $class->error_message('Import file (%s) given to create process does not exist!', $params{import_file}) if not -s $params{import_file};
 
-    my $md5 = Genome::Sys->md5sum($import_file);
-    die $class->error_message('No md5 for import file! %s', $import_file) if not $md5;
+    $params{import_md5} = Genome::Sys->md5sum($params{import_file});
+    die $class->error_message('No md5 for import file! %s', $params{import_file}) if not $params{import_md5};
 
-    return $class->SUPER::create(
-        import_file => $import_file,
-        import_md5 => $md5,
-    );
+    return $class->SUPER::create(%params);
 }
 
 sub create_disk_allocation {

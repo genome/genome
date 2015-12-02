@@ -99,6 +99,13 @@ sub _get_ptero_execute_method {
     $ptero_lsf_parameters->{environment} = $self->_get_sanitized_env();
     $ptero_lsf_parameters->{user} = Genome::Sys->username;
     $ptero_lsf_parameters->{cwd} = Cwd::getcwd;
+    $ptero_lsf_parameters->{pollingInterval} =
+        Genome::Config::get('ptero_lsf_polling_interval') + 0;
+
+    my $project_name = Genome::Config::get('lsf_project_name');
+    if ($project_name) {
+        $ptero_lsf_parameters->{options}{projectName} = $project_name;
+    }
 
     return Ptero::Builder::Job->new(
         name => 'execute',
@@ -106,32 +113,23 @@ sub _get_ptero_execute_method {
         parameters => $ptero_lsf_parameters);
 }
 
-sub _get_lsf_resources_from_command {
-    my $self = shift;
-    my $prop = $self->command->__meta__->property_meta_for_name('lsf_resource');
-
-    if ($prop && $prop->{is_param}) {
-        if ($prop->default_value) {
-            return $prop->default_value;
-        } else {
-            die $self->command . "property lsf_resource should have a default value if it is a parameter.";
-        }
-    } else {
-        return '';
-    }
-}
-
 sub _get_ptero_lsf_parameters {
     my $self = shift;
+    my %attributes = $self->operation_type_attributes;
+    my $lsf_params = parse_lsf_params( $attributes{lsfResource} );
 
-    my $lsf_resource = $self->lsf_resource;
-    if (defined($lsf_resource) && length($lsf_resource)) {
-        return parse_lsf_params($lsf_resource);
-    }
+    my $set_lsf_option = sub {
+        my ($option, $value) = @_;
+        if (defined($value) and length($value) and
+            not exists($lsf_params->{options}->{$option})) {
+            $lsf_params->{options}->{$option} = $value;
+        }
+    };
 
-    return parse_lsf_params(
-        $self->_get_lsf_resources_from_command
-    )
+    $set_lsf_option->('queue', $attributes{lsfQueue});
+    $set_lsf_option->('projectName', $attributes{lsfProject});
+
+    return $lsf_params;
 }
 
 

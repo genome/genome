@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-require Genome::InstrumentData::Command::Import::WorkFlow::SourceFile;
+require Genome::InstrumentData::Command::Import::Inputs::SourceFile;
 require File::Basename;
 require File::Spec;
 
@@ -44,7 +44,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath {
             is_constant => 1,
             calculate_from => [qw/ working_directory source_path_basename /],
             calculate => q| 
-                return Genome::InstrumentData::Command::Import::WorkFlow::SourceFile->create(
+                return Genome::InstrumentData::Command::Import::Inputs::SourceFile->create(
                     path => File::Spec->join($working_directory, $source_path_basename)
                 );
             |,
@@ -52,7 +52,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath {
         source_file => {
             is_constant => 1,
             calculate_from => [qw/ source_path /],
-            calculate => q| return Genome::InstrumentData::Command::Import::WorkFlow::SourceFile->create(path => $source_path); |,
+            calculate => q| return Genome::InstrumentData::Command::Import::Inputs::SourceFile->create(path => $source_path); |,
         },
     },
 };

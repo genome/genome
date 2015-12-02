@@ -120,6 +120,7 @@
                                                    "numProcessors" : 1,
                                                    "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                                                 },
+                                                "pollingInterval" : 300,
                                                 "rLimits" : {
                                                    "RSS" : 3000000
                                                 },

@@ -20,6 +20,16 @@ class Genome::Model::SingleSampleGenotype::Command::HaplotypeCaller::BucketItera
             shell_args_position => 1,
         },
     ],
+    has_param => [
+        lsf_queue => {
+            is => 'Text',
+            default => Genome::Config::get('lsf_queue_build_worker_alt'),
+        },
+        lsf_resource => {
+            is => 'Text',
+            default => Genome::Config::get('lsf_resource_gatk_haplotype_caller'),
+        },
+    ],
     doc => 'Runs the haplotype-caller command for each interval in the bucket',
 };
 

@@ -1,4 +1,4 @@
 ---
 env: GENOMEX_LSF_RESOURCE_DV2_DISPATCHER
-default_value: "-R 'select[tmp>4000 && mem>600] rusage[tmp=4000,mem=600]' -M 600000"
+default_value: "-R 'select[tmp>4000 && mem>1000] rusage[tmp=4000,mem=1000]' -M 1000000"
 env: XGENOME_LSF_RESOURCE_DV2_DISPATCHER

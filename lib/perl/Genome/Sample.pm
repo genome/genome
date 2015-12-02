@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Info::TCGASpecialSampleNamingConversion;
 
 my $default_nomenclature = Genome::Config::get('nomenclature_default');
 
@@ -267,11 +268,60 @@ sub sample_name_to_name_in_vcf {
 sub name_in_vcf {
     my $self = shift;
     my $sample_tcga_name = $self->extraction_label;
-    if ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
-        $self->debug_message("Found TCGA name: $sample_tcga_name for sample: %s", $self->name);
-        return $sample_tcga_name;
+
+    unless ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
+        $sample_tcga_name = $self->name;
+        my @tcga_names = $self->get_tcga_names;
+        if (@tcga_names == 1) {
+            $sample_tcga_name = shift @tcga_names;
+        }
+        else {
+            my %conversion = Genome::Info::TCGASpecialSampleNamingConversion->tcga_naming_conversion;
+            $sample_tcga_name = $conversion{$sample_tcga_name} if $conversion{$sample_tcga_name};
+        }
     }
-    return $self->name;
+
+    if ($sample_tcga_name =~ /^TCGA\-/) {
+        $self->debug_message("Found TCGA name: %s for sample: %s", $sample_tcga_name, $self->name);
+    }
+    return $sample_tcga_name;
+}
+
+sub get_tcga_names {
+    my $self = shift;
+    my @sample_attributes = $self->attributes(attribute_label => 'external_name');
+    my @tcga_names;
+
+    if (@sample_attributes) {
+        for my $attr (@sample_attributes) {
+            my $sample_tcga_name = $attr->attribute_value;
+
+            if ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
+                push @tcga_names, $sample_tcga_name;
+            }
+        }
+    }
+    else {
+        $self->debug_message("No sample attribute with attribute_label as external_name found for sample: %s", $self->name);
+    }
+    $self->debug_message("No TCGA name found from sample attributes for sample: %s", $self->name) unless @tcga_names;
+    return @tcga_names;
+}
+
+sub resolve_tcga_patient_id {
+    my $self = shift;
+    my @tcga_names = $self->get_tcga_names;
+    return unless @tcga_names;
+    
+    my %patient_ids;
+    for my $tcga_name (@tcga_names) {
+        my ($patient_id) = $tcga_name =~ /^(TCGA\-\w{2}\-\w{4})\-/;
+        $patient_ids{$patient_id}++ if $patient_id;
+    }
+    my @patient_ids = keys %patient_ids;
+    return $patient_ids[0] if @patient_ids == 1;
+    my $patient_ids = join ',', @patient_ids;
+    $self->fatal_message("Multiple patient ids: %s found for sample %s", $patient_ids, $self->name);
 }
 
 sub get_source {

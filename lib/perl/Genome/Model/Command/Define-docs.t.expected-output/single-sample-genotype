@@ -4,6 +4,7 @@
     [--auto-build-alignments] --processing-profile=? --reference-sequence-build=?
     [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
     [--model-name=?] [--target-region-set=?] [--region-of-interest-set=?] [--run-as=?]
+    [--qc-genotype-vcf-file=?]
 
 [4mSYNOPSIS[0m
   genome model define single-sample-genotype \
@@ -35,6 +36,8 @@
     the region of interest set for the analysis 
   [1mrun-as[0m
     Specify who the model should run_as if run in production 
+  [1mqc-genotype-vcf-file[0m
+    the VCF file with genotyping information for QC 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m

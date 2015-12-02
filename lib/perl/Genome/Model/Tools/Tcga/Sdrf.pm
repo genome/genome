@@ -161,16 +161,17 @@ sub fill_in_common_fields {
     }
     #remaining required fields:
     my $sample_common_name = $build->subject->common_name;
+    my ($code) = $sample->{"ID"}->{content} =~ /^TCGA\-\w{2}\-\w{4}\-(\d)/;
     my $is_tumor;
-    if ($sample_common_name eq "normal" or $sample_common_name eq "adjacent normal") {
+
+    if ($sample_common_name eq "normal" or $sample_common_name eq "adjacent normal" or $code == 1) {
         $is_tumor = "no";
     }
-    elsif ($sample_common_name eq "tumor" or $sample_common_name eq "recurrent") {
+    elsif ($sample_common_name eq "tumor" or $sample_common_name eq "recurrent" or $code == 0) {
         $is_tumor = "yes";
     }
     else {
-        die $self->error_message("Unrecognized sample common name ".$sample_common_name.
-            " for build ".$build->id);
+        $self->fatal_message("Unrecognized sample common name: %s or sample type code: %s for build %s", $sample_common_name, $code, $build->id);
     }
     $row{"Material Comment [is tumor]"} = $is_tumor;
     $row{"Material Material Type"} = "DNA";

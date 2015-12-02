@@ -5,6 +5,7 @@ use warnings;
 use Data::Dumper;
 use Genome;
 use File::Basename qw/fileparse/;
+use POSIX qw(ceil);
 
 class Genome::Model::Tools::EpitopePrediction::ParseNetmhcOutput {
     is        => ['Genome::Model::Tools::EpitopePrediction::Base'],
@@ -57,39 +58,71 @@ sub help_brief {
 sub execute {
     my $self = shift;
 
-    my %position_score;
-
     my $type      = $self->output_filter;
-    my $input_fh  = Genome::Sys->open_file_for_reading($self->netmhc_file);
-    my $output_fh = Genome::Sys->open_file_for_writing($self->parsed_file);
+    my $output_fh = Genome::Utility::IO::SeparatedValueWriter->create(
+        output => $self->parsed_file,
+        separator => "\t",
+        headers => [$self->headers],
+    );
 
-    my $key_hash = $self->key_hash() if $self->netmhc_version eq '3.4';
-    my ($netmhc_results, $epitope_seq) = $self->make_hashes_from_input($key_hash);
-
-    $self->print_header($output_fh);
+    my $netmhc_results = $self->parse_input;
 
     my $protein_type = 'MT';
+    PROTEIN:
     for my $protein_name (sort keys %{$netmhc_results->{$protein_type}}) {
+        VARIANT_AA:
         for my $variant_aa (sort keys %{$netmhc_results->{$protein_type}->{$protein_name}}) {
-            %position_score = %{$netmhc_results->{$protein_type}{$protein_name}{$variant_aa}};
-            my @positions = sort {$position_score{$a} <=> $position_score{$b}} keys %position_score;
-            my $total_positions = scalar @positions;
+            my $mt_position_data = $netmhc_results->{$protein_type}{$protein_name}{$variant_aa};
+            my $wt_position_data = $netmhc_results->{'WT'}{$protein_name}{$variant_aa};
+            my @positions = sort {$mt_position_data->{$a}->{score} <=> $mt_position_data->{$b}->{score}} keys %{$mt_position_data};
 
-            if ($type eq 'all') {
-                for (my $i = 0; $i < $total_positions; $i++) {
+            POSITION:
+            for my $position (@positions) {
+                my $mt_score            = $mt_position_data->{$position}->{score};
+                my $mt_epitope_sequence = $mt_position_data->{$position}->{epitope_sequence};
+                my %best_matches        = %{best_matches($mt_epitope_sequence, $wt_position_data)};
 
-                    if ($epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$positions[$i]} ne
-                        $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$positions[$i]})
-                        # Filtering if mutant amino acid present
-                    {
-                        my $position = $positions[$i];
-                        $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}, $netmhc_results, $epitope_seq);
+                MATCH:
+                while (my ($wt_position, $match_count) = each %best_matches) {
+                    if  ($match_count == length($mt_epitope_sequence)) {
+                        #All of the MT AAs match the WT
+                        #This MT sub-peptide sequence does not contain the mutation
+                        next POSITION;
+                    }
+                    else {
+                        my ($wt_score, $wt_epitope_sequence, $fold_change);
+                        if ($match_count < min_match_count(length($mt_epitope_sequence))) {
+                            #None of the WT sub-peptide sequence are a good
+                            #enough match
+                            $wt_score = $wt_epitope_sequence = $fold_change = 'NA';
+                        }
+                        else {
+                            $wt_score            = $wt_position_data->{$wt_position}->{score};
+                            $wt_epitope_sequence = $wt_position_data->{$wt_position}->{epitope_sequence};
+                            $fold_change         = sprintf("%.3f", $wt_score / $mt_score);
+                        }
+                        my %data = (
+                            'Gene Name' => $protein_name,
+                            'Mutation' => $variant_aa,
+                            'Sub-peptide Position' => $position,
+                            'MT score' => $mt_score,
+                            'WT score' => $wt_score,
+                            'MT epitope seq' => $mt_epitope_sequence,
+                            'WT epitope seq' => $wt_epitope_sequence,
+                            'Fold change' => $fold_change,
+                        );
+                        $output_fh->write_one(\%data);
+                        if ($match_count < min_match_count(length($mt_epitope_sequence))) {
+                            #Any other matches would also not be good enough
+                            #and when printed result in duplicate lines
+                            last MATCH;
+                        }
                     }
                 }
-            }
-            if ($type eq 'top') {
-                my $position = $positions[0];
-                $self->print_output_line($output_fh, $protein_name, $variant_aa, $position, $position_score{$position}, $netmhc_results, $epitope_seq);
+                if ($type eq 'top') {
+                    #We only want to output the best-scoring position
+                    next VARIANT_AA;
+                }
             }
         }
     }
@@ -97,99 +130,111 @@ sub execute {
     return 1;
 }
 
-sub print_header {
-    my $self      = shift;
-    my $output_fh = shift;
-
-    print $output_fh join("\t",
-        "Gene Name",
-        "Point Mutation",
-        "Sub-peptide Position",
-        "MT score",
-        "WT score",
-        "MT epitope seq",
-        "WT epitope seq",
-        "Fold change"
-    ) . "\n";
+sub netmhc_file_headers {
+    return qw(protein_label position peptide score);
 }
 
-sub print_output_line {
-    my ($self, $output_fh, $protein_name, $variant_aa, $position, $position_score, $netmhc_results, $epitope_seq) = @_;
-
-    print $output_fh join("\t", $protein_name, $variant_aa, $position, $position_score) . "\t";
-    print $output_fh $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position} . "\t";
-
-    print $output_fh $epitope_seq->{'MT'}->{$protein_name}->{$variant_aa}->{$position} . "\t";
-    print $output_fh $epitope_seq->{'WT'}->{$protein_name}->{$variant_aa}->{$position} . "\t";
-    my $fold_change =
-        $netmhc_results->{'WT'}->{$protein_name}->{$variant_aa}->{$position} / $position_score;
-    my $rounded_FC = sprintf("%.3f", $fold_change);
-    print $output_fh $rounded_FC . "\n";
+sub headers {
+    return (
+        'Gene Name',
+        'Mutation',
+        'Sub-peptide Position',
+        'MT score',
+        'WT score',
+        'MT epitope seq',
+        'WT epitope seq',
+        'Fold change'
+    );
 }
 
-sub key_hash {
+sub protein_identifier_for_label {
     my $self = shift;
 
-    my $key_fh = Genome::Sys->open_file_for_reading($self->key_file);
+    my $key_fh = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $self->key_file,
+        separator => "\t",
+        headers => [qw(new_name original_name)],
+    );
 
     my %key_hash;
-    while (my $keyline = $key_fh->getline) {
-        chomp $keyline;
-
+    while (my $keyline = $key_fh->next) {
         #Entry_1	>WT.GSTP1.R187W
-        my ($new_name, $original_name) = split(/\t/, $keyline);
+        my $new_name = $keyline->{new_name};
+        my $original_name = $keyline->{original_name};
         $original_name =~ s/>//g;
-        $key_hash{$new_name} = ();
-        $key_hash{$new_name}{'name'} = $original_name;
-
+        $key_hash{$new_name} = $original_name;
     }
-
-    close($key_fh);
 
     return \%key_hash;
 }
 
-sub make_hashes_from_input {
+sub parse_input {
     my $self     = shift;
-    my $key_hash = shift;
 
-    my $input_fh  = Genome::Sys->open_file_for_reading($self->netmhc_file);
+    my $input_fh = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $self->netmhc_file,
+        separator => "\t",
+        headers => [$self->netmhc_file_headers],
+        ignore_lines_starting_with => 'NetMHC|Protein|(?:^$)',
+        allow_extra_columns => 1,
+    );
 
-    my (%netmhc_results, %epitope_seq);
-    while (my $line = $input_fh->getline) {
-        chomp $line;
+    my $protein_identifier_for_label = $self->protein_identifier_for_label if $self->netmhc_version eq '3.4';
 
-        my @result_arr = split(/\t/, $line);
+    my %netmhc_results;
+    while (my $line = $input_fh->next) {
+        my $position      = $line->{position};
+        my $score         = $line->{score};
+        my $epitope       = $line->{peptide};
+        my $protein_label = $line->{protein_label};
 
-        my $position         = $result_arr[1];
-        my $score            = $result_arr[3];
-        my $epitope          = $result_arr[2];
-        my $protein_new_name = $result_arr[0];
-
-        my (@protein_arr);
-        if ($self->netmhc_version eq '3.4' && $line =~ /^Entry/) {
-            if (exists($key_hash->{$protein_new_name})) {
-                my $protein = $key_hash->{$protein_new_name}{'name'};
-                @protein_arr = split(/\./, $protein);
+        my ($protein_identifier);
+        if ($self->netmhc_version eq '3.4') {
+            if (exists($protein_identifier_for_label->{$protein_label})) {
+                $protein_identifier = $protein_identifier_for_label->{$protein_label};
             }
         }
-        elsif ( $self->netmhc_version eq '3.0' && ( ($line =~ /^MT/) || ($line =~ /^WT/) ) )  {
-            @protein_arr = split (/\./,$protein_new_name);
+        elsif ( $self->netmhc_version eq '3.0' )  {
+            $protein_identifier = $protein_label;
         }
-        else {
-            next;
-        }
-        my $protein_type = $protein_arr[0];
-        my $protein_name = $protein_arr[1];
-        my $variant_aa =  $protein_arr[2];
+        my ($protein_type, $protein_name, $variant_aa) = split(/\./, $protein_identifier, 3);
 
-        $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = $score;
-        $epitope_seq{$protein_type}{$protein_name}{$variant_aa}{$position} = $epitope;
+        $netmhc_results{$protein_type}{$protein_name}{$variant_aa}{$position} = {
+            score => $score,
+            epitope_sequence => $epitope
+        };
     }
 
-    close($input_fh);
+    return \%netmhc_results;
+}
 
-    return \%netmhc_results, \%epitope_seq;
+sub best_matches {
+    my ($mt_sequence, $wt_position_data) = @_;
+
+    my %match_counts = %{match_counts($mt_sequence, $wt_position_data)};
+    my $highest_match_count = (sort {$b <=> $a} values %match_counts)[0];
+    my %best_matches;
+    while (my ($position, $match_count) = each %match_counts) {
+        if ($match_count == $highest_match_count) {
+            $best_matches{$position} = $match_count;
+        }
+    }
+    return \%best_matches;
+}
+
+sub match_counts {
+    my ($mt_sequence, $wt_position_data) = @_;
+
+    my $match_counts;
+    for my $position (keys %{$wt_position_data}) {
+        $match_counts->{$position} = ($mt_sequence ^ $wt_position_data->{$position}->{epitope_sequence}) =~ tr/\0//;
+    }
+    return $match_counts;
+}
+
+sub min_match_count {
+    my $sub_peptide_length = shift;
+    return ceil($sub_peptide_length / 2);
 }
 
 1;

@@ -1287,6 +1287,16 @@ sub stop {
         $self->status_message('Killing job: '.$job->{Job});
         $self->_kill_job($job);
         $self = Genome::Model::Build->load($self->id);
+    } else {
+        $self->status_message("No LSF job found, looking for PTero workflow...");
+        my $wf_proxy = $self->ptero_workflow_proxy;
+        if (defined $wf_proxy) {
+            $self->status_message("Found PTero workflow (%s), canceling it now.",
+                $wf_proxy->url);
+            $wf_proxy->cancel();
+        } else {
+            $self->status_message("No PTero workflow found.");
+        }
     }
 
     $self->add_note(
@@ -1394,6 +1404,11 @@ sub _launch {
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+
+    # we don't use 'local' because we want this to persist through
+    # spawned workflows, and since the build is launched in a commit
+    # observer the 'local' designations ensure the ENV isn't still around then
+    Genome::Config::set_env('lsf_project_name', sprintf("build/%s", $self->id));
 
     my $build_id_guard = set_build_id($self->id);
 

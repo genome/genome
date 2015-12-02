@@ -1,0 +1,22 @@
+0:
+    epitope_sequence: ABCDEGHIJK
+1:
+    epitope_sequence: BCDEGHIJKL
+2:
+    epitope_sequence: CDEGHIJKLM
+3:
+    epitope_sequence: DEGHIJKLMN
+4:
+    epitope_sequence: EGHIJKLMNO
+5:
+    epitope_sequence: GHIJKLMNOP
+6:
+    epitope_sequence: HIJKLMNOPQ
+7:
+    epitope_sequence: IJKLMNOPQR
+8:
+    epitope_sequence: JKLMNOPQRS
+9:
+    epitope_sequence: KLMNOPQRST
+10:
+    epitope_sequence: LMNOPQRSTU
