@@ -7,4 +7,4 @@ use above 'Genome';
 use Test::More tests => 1;
 
 # This model type is deprecated
-use_ok('Genome::Model::MetagenomicCompositionShotgun');
+use_ok('Genome::ProcessingProfile::MetagenomicCompositionShotgun');
