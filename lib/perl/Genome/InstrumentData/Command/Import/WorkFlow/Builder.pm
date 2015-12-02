@@ -14,7 +14,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Builder {
     is_abstract => 1,
     subclassify_by => 'format',
     has => {
-        work_flow_inputs => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs', },
+        work_flow_inputs => { is => 'Genome::InstrumentData::Command::Import::Inputs', },
         format => {
             calculate_from => [qw/ work_flow_inputs /],
             calculate => sub{ return join('::', __PACKAGE__, ucfirst($_[0]->format)); },

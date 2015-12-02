@@ -11,7 +11,7 @@ use Workflow::Simple;
 class Genome::InstrumentData::Command::Import::WorkFlow::ImportInstData {
     is => 'Command::V2',
     has_input => {
-        work_flow_inputs => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs', },
+        work_flow_inputs => { is => 'Genome::InstrumentData::Command::Import::Inputs', },
     },
     has_output => {
         instrument_data => { is => 'Genome::InstrumentData', is_many => 1, },

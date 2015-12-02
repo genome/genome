@@ -5,7 +5,7 @@ use warnings;
 
 use above 'Genome';
 
-use Test::More tests => 6;
+use Test::More tests => 5;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::Builder::Fastq';
 use_ok($class) or die;
@@ -13,15 +13,11 @@ use_ok($class) or die;
 my @source_files = (qw/ in.1.fastq.gz in.2.fastq /);
 my $analysis_project = Genome::Config::AnalysisProject->__define__(name => 'TEST-AnP');
 ok($analysis_project, 'define analysis project');
-my $library = Genome::Library->__define__(name => 'TEST-sample-libs', sample => Genome::Sample->__define__(name => 'TEST-sample'));
-ok($library, 'define library');
 
 my $builder = Genome::InstrumentData::Command::Import::WorkFlow::Builder->create(
-    work_flow_inputs => Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
-        source_files => \@source_files,
+    work_flow_inputs => Genome::InstrumentData::Command::Import::Inputs::Factory->create(
         analysis_project => $analysis_project,
-        library => $library,
-    ),
+    )->from_params({ source_paths => \@source_files, }),
 );
 isa_ok($builder, $class);
 my $wf = $builder->build_workflow;

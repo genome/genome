@@ -17,12 +17,12 @@ my $library = Genome::Library->__define__(name => 'TEST-sample-libs', sample => 
 ok($library, 'define library');
 
 my $builder = Genome::InstrumentData::Command::Import::WorkFlow::Builder->create(
-    work_flow_inputs => Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
-        source_files => \@source_files,
+    work_flow_inputs => Genome::InstrumentData::Command::Import::Inputs::Factory->create(
         analysis_project => $analysis_project,
-        library => $library,
-        instrument_data_properties => { downsample_ratio => .25, },
-    ),
+    )->from_params({
+            source_paths => \@source_files,
+            entity_params => { instdata => { downsample_ratio => .25, }, }, 
+        }),
 );
 isa_ok($builder, $class);
 my $wf = $builder->build_workflow;
