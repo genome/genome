@@ -27,7 +27,6 @@ class Genome::Model::Command::Admin::RemoveDiskAllocationsFromTestdb {
             is => 'Text',
             default_value => _get_default_database_server(),
             doc => 'database server name, derived from the ds_gmschema_server config value',
-        
         },
         database_port => {
             is => 'Text',
