@@ -33,13 +33,15 @@ Genome::Sys->copy_file($fastq_paths[0], $source_fastq_paths[0]);
 Genome::Sys->create_symlink($fastq_paths[1], $source_fastq_paths[1]);
 
 my $sample_name = '__TEST_SAMPLE__';
-my $library_name = join('-', $sample_name, 'extlibs');
+my $library = Genome::Library->__define__(
+    name => join('-', $sample_name, 'extlibs'),
+    sample => Genome::Sample->__define__(name => $sample_name),
+);
 
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam->execute(
     working_directory => $tmp_dir,
     fastq_paths => \@source_fastq_paths,
-    sample_name => $sample_name,
-    library_name => $library_name,
+    library => $library,
 );
 ok($cmd->result, 'execute');
 my $output_bam_path = $cmd->output_bam_path;

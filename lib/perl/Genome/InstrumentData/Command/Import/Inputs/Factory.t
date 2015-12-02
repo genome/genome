@@ -70,7 +70,7 @@ subtest 'from_line' => sub{
 };
 
 subtest 'from_params' => sub{
-    plan tests => 12;
+    plan tests => 10;
 
     my $sample_name = 'TEST-01-001';
     my $library = Genome::Library->__define__(name => $sample_name.'-libs', sample => Genome::Sample->__define__(name => $sample_name));
@@ -96,8 +96,6 @@ subtest 'from_params' => sub{
     ok($inputs, 'create inputs');
     is($inputs->format, 'fastq', 'source files format is fastq');
     is($inputs->library, $library, 'library');
-    is($inputs->library_name, $library->name, 'library_name');
-    is($inputs->sample_name, $library->sample->name, 'sample_name');
 
     # instrument data
     ok(!$inputs->instrument_data_for_original_data_path, 'no instrument_data_for_original_data_path ... yet');
@@ -117,8 +115,6 @@ subtest 'from_params' => sub{
             downsample_ratio => 0.7,
             instrument_data_properties => $instrument_data_properties,
             library => $library,
-            library_name => $library->name,
-            sample_name => $library->sample->name,
             source_paths => \@source_files,
         },
         'inputs as_hashref',

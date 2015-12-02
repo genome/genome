@@ -148,19 +148,6 @@ ok(# c w/ downsample_ratio of 0.25 should be found
 );
 is($helpers->error_message, 'Instrument data was previously downsampled by a ratio of 0.25 and imported! Found existing instrument data: -9', 'correct error message');
 
-# properties
-my $properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /);
-is_deeply(
-    $properties,
-    { sequencing_platform => 'solexa', lane => 2, flow_cell_id => 'XXXXXX', },
-    'key value piars to hash',
-);
-$properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa lane=2 lane=3 flow_cell_id=XXXXXX /);
-ok(!$properties, 'failed as expected to convert key value pairsr into hash with duplicate label');
-is($helpers->error_message, "Multiple values for instrument data property! lane => 2, 3", 'correct error');
-$properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa lane= flow_cell_id=XXXXXX /);
-is($helpers->error_message, 'Failed to parse with instrument data property label/value! lane=', 'correct error');
-
 # rm source files
 ok(!eval{$helpers->remove_path_and_auxiliary_files();}, 'failed to remove source paths and md5s w/o source paths');
 Genome::Sys->create_symlink($test_dir.'/bam/v1/'.$bam_basename.'.md5-orig', $bam_path.'.md5-orig');

@@ -28,18 +28,9 @@ for my $format (qw/ bam fastq sra /) {
     ok($sf, 'create');
     is($sf->format, $format, 'format');
     is($sf->retrieval_method, 'local disk', 'retrieval_method');
-    ok(!$sf->is_tar, 'source file is not archive');
     is($sf->md5_path, $source_file.'.md5', 'md5_path');
     is($sf->original_md5_path, $source_file.'.md5-orig', 'original_data_path_md5');
 }
-
-# Remote fastq archive
-my $sf = $class->create(path => File::Spec->join($test_dir, 'fastq', 'v3', 'input.fastq.tgz'));
-ok($sf, 'create');
-is($sf->format, 'fastq_archive', 'format for fastq_archive');
-is($sf->retrieval_method, 'local disk', 'retrieval_method for fastq_archive');
-is($sf->file_size, 92564, 'file_size');
-is($sf->kilobytes_required_for_processing, 182, 'kilobytes_required_for_processing fastq_archive');
 
 # Remote bam
 my $headers = Test::MockObject->new;
@@ -55,7 +46,7 @@ Sub::Install::reinstall_sub({
         as => 'new',
     });
 
-$sf = $class->create(path => 'http://file.bam');
+my $sf = $class->create(path => 'http://file.bam');
 ok($sf, 'create');
 is($sf->format, 'bam', 'format for remote bam');
 is($sf->retrieval_method, 'remote url', 'retrieval_method for remote bam');
@@ -67,12 +58,6 @@ throws_ok(
     sub{ $class->create; },
     qr/No source file given\!/,
     'create fails w/o source file',
-);
-
-throws_ok(
-    sub{ $class->create(path => 'file.bam.tgz'); },
-    qr/Cannot process tar bam\!/,
-    'create fails w/ tar bam',
 );
 
 done_testing();

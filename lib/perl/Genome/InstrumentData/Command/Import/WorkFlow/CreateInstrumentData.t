@@ -17,7 +17,7 @@ require File::Spec;
 require File::Temp;
 use Test::More;
 
-use_ok('Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam') or die;
+use_ok('Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentData') or die;
 
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
@@ -49,7 +49,7 @@ my $source_md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->loa
 ok($source_md5, 'loaded source md5');
 
 # failures
-my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
+my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentData->create(
     library => $library,
     analysis_project => $analysis_project,
     bam_paths => \@bam_paths,
@@ -114,7 +114,7 @@ for my $bam_data ( @bams_info ) {
 }
 
 # recreate
-$cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
+$cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentData->create(
     library => $library,
     analysis_project => $analysis_project,
     bam_paths => \@bam_paths,

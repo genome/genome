@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam;
+package Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentData;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome;
 require Cwd;
 require File::Basename;
 
-class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam { 
+class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentData {
     is => 'Command::V2',
     has_input => [
         bam_paths => {
