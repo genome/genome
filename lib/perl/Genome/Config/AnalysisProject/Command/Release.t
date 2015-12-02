@@ -8,7 +8,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Test::More;
+use Test::More tests => 5;
 
 my $class = 'Genome::Config::AnalysisProject::Command::Release';
 use_ok($class);
@@ -17,14 +17,12 @@ my $ap = Genome::Config::AnalysisProject->create(
     name => 'Test Project',
     status => 'Hold',
 );
+is($ap->status, 'Hold', "AnP status is'Hold'");
 
-is($ap->status, 'Hold', 'initial status should be pending');
-
-my $cmd = $class->create(analysis_projects => [$ap]);
-$cmd->execute();
-
-is($ap->status, 'In Progress', 'it should set the status to in progress');
+my $cmd = $class->execute(analysis_projects => [$ap]);
+ok($cmd->result, 'execute cmd');
+my $expexted_status = 'In Progress';
+is($ap->status, $expexted_status, "AnP status set to '$expexted_status'");
+is($cmd->status_message, 'Released: '.$ap->__display_name__, 'Status message about releasing');
 
 done_testing();
-
-1;
