@@ -37,6 +37,7 @@ sub execute {
 
     for my $ap ($self->analysis_projects) {
         $ap->status('In Progress');
+        $self->status_message("Released: %s", $ap->__display_name__);
     }
 
     return 1;
