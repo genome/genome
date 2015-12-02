@@ -19,6 +19,7 @@ use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::SoftwareResult::User;
+use JSON qw(encode_json);
 
 my $TEST_DATA_VERSION = 2;
 
@@ -125,19 +126,15 @@ subtest 'simple alignments' => sub {
 
 subtest 'simple alignments with qc decoration' => sub {
     initialize_test_tool();
-    use Genome::Qc::Config;
-    my $override = Sub::Override->new(
-        'Genome::Qc::Config::get_commands_for_alignment_result',
-        sub {
-            return {test1 => {class => "TestTool1", params => {param1 => 1}}};
-        },
+    my $config_name = 'qc for Workflow test';
+    my $config = {test1 => {class => "TestTool1", params => {param1 => 1}}};
+    my $config_item = Genome::Qc::Config->__define__(
+        name => $config_name,
+        config => encode_json($config),
     );
+    isa_ok($config_item, 'Genome::Qc::Config', 'test configuration exists') or die('cannot continue');
 
     my $log_directory = Genome::Sys->create_temp_directory();
-    my $qc_for_testing = Genome::Qc::Config->get(name => 'qc for Workflow test');
-    isa_ok($qc_for_testing, 'Genome::Qc::Config', 'test configuration exists') or die('cannot continue');
-
-    my $config_name = 'qc for Workflow test';
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@two_instrument_data,
@@ -165,8 +162,6 @@ subtest 'simple alignments with qc decoration' => sub {
     for my $qc_result (@qc_results) {
         is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
     }
-
-    $override->restore;
 };
 
 subtest 'simple align_and_merge strategy' => sub {
@@ -200,12 +195,11 @@ subtest 'simple align_and_merge strategy' => sub {
 
 subtest 'simple align_and_merge strategy with qc decoration' => sub {
     initialize_test_tool();
-    use Genome::Qc::Config;
-    my $override = Sub::Override->new(
-        'Genome::Qc::Config::get_commands_for_alignment_result',
-        sub {
-            return {test1 => {class => "TestTool1", params => {param1 => 1}}};
-        },
+    my $config_name = 'qc2 for Workflow test';
+    my $config = {test1 => {class => "TestTool1", params => {param1 => 1}}};
+    my $config_item = Genome::Qc::Config->__define__(
+        name => $config_name,
+        config => encode_json($config),
     );
     use Genome::InstrumentData::AlignmentResult::Merged::Speedseq;
     my $gtmp_override = Sub::Override->new(
@@ -213,7 +207,6 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
         sub { return 1; },
     );
 
-    my $config_name = 'qc2 for Workflow test';
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             instrument_data => \@two_instrument_data,
@@ -241,18 +234,15 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
         ok($qc_result, sprintf('Qc result for instrument_data (%s) was created successfully', $instrument_data->id));
         is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
     }
-
-    $override->restore;
 };
 
 subtest 'simple align_and_merge strategy with qc decoration for merged result' => sub {
     initialize_test_tool();
-    use Genome::Qc::Config;
-    my $override = Sub::Override->new(
-        'Genome::Qc::Config::get_commands_for_alignment_result',
-        sub {
-            return {test1 => {class => "TestTool1", params => {param1 => 1}}};
-        },
+    my $config_name = 'qc3 for Workflow test';
+    my $config = {test1 => {class => "TestTool1", params => {param1 => 1}}};
+    my $config_item = Genome::Qc::Config->__define__(
+        name => $config_name,
+        config => encode_json($config),
     );
     use Genome::InstrumentData::AlignmentResult::Merged::Speedseq;
     my $gtmp_override = Sub::Override->new(
@@ -260,7 +250,6 @@ subtest 'simple align_and_merge strategy with qc decoration for merged result' =
         sub { return 1; },
     );
 
-    my $config_name = 'qc3 for Workflow test';
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             instrument_data => \@two_instrument_data,
@@ -285,8 +274,6 @@ subtest 'simple align_and_merge strategy with qc decoration for merged result' =
     my ($qc_result) = Genome::Qc::Result->get(alignment_result => $speedseq_result, config_name => $config_name);
     ok($qc_result, sprintf('Qc result was created successfully'));
     is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
-
-    $override->restore;
 };
 
 

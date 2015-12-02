@@ -5,6 +5,13 @@ use warnings;
 use Genome;
 use List::MoreUtils qw(uniq);
 
+use Module::Pluggable
+    search_path => 'Genome::Qc::Tool',
+    except => [
+        'Genome::Qc::Tool::Picard',
+    ],
+    sub_name => 'available_tools';
+
 class Genome::Qc::Tool {
     is_abstract => 1,
     has => [

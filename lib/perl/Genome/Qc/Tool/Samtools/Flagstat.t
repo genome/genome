@@ -14,6 +14,7 @@ use Sub::Override;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Cwd qw(abs_path);
+use JSON qw(encode_json);
 
 my $pkg = 'Genome::Qc::Tool::Samtools::Flagstat';
 use_ok($pkg);
@@ -39,23 +40,24 @@ my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->s
 
 my $bam_file = abs_path(File::Spec->join($data_dir, 'speedseq_merged.bam'));
 
-use Genome::Qc::Config;
-my $config_override = Sub::Override->new(
-    'Genome::Qc::Config::get_commands_for_alignment_result',
-    sub {
-        return {
-            verify_bam_id => {
-                class => 'Genome::Qc::Tool::Samtools::Flagstat',
-                params => {
-                    'bam-file' => $bam_file,
-                },
-            }
-        };
-    },
+my $config = {
+    samtools_flagstat => {
+        class => 'Genome::Qc::Tool::Samtools::Flagstat',
+        params => {
+            'bam-file' => $bam_file,
+        },
+    }
+};
+
+my $qc_config_name = 'testing-qc-run';
+my $qc_config_item = Genome::Qc::Config->create(
+    name => $qc_config_name,
+    type => 'wgs',
+    config => encode_json($config),
 );
 
 my $command = Genome::Qc::Run->create(
-    config_name => 'testing-qc-run',
+    config_name => $qc_config_name,
     alignment_result => $alignment_result,
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );

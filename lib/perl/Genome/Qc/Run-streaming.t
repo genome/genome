@@ -111,6 +111,8 @@ my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->s
     instrument_data => $instrument_data,
 );
 
+my $config = Genome::Qc::Config->__define__(name => 'testing-qc-run');
+
 subtest "teed input" => sub {
     use Genome::Qc::Config;
     my $override = Sub::Override->new(
