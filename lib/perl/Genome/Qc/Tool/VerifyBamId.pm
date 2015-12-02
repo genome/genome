@@ -7,6 +7,16 @@ use List::MoreUtils qw(any);
 
 class Genome::Qc::Tool::VerifyBamId {
     is => 'Genome::Qc::Tool::WithVariationListVcf',
+    has => [
+        default_genotype_vcf_file_id => {
+            is => 'Text',
+            is_optional => 1,
+        },
+        default_genotype_vcf_file => {
+            is => 'Genome::SoftwareResult::StageableSimple::SingleFile',
+            id_by => 'default_genotype_vcf_file_id',
+        },
+    ],
 };
 
 
@@ -54,6 +64,19 @@ sub _non_metric_columns {
 
 sub _file_extensions_to_parse {
     return qw(selfSM selfRG);
+}
+
+sub genotype_vcf_file {
+    my $self = shift;
+    if ($self->qc_genotype_vcf_file) {
+        return $self->qc_genotype_vcf_file->file_path;
+    }
+    elsif ($self->default_genotype_vcf_file) {
+        return $self->default_genotype_vcf_file->file_path;
+    }
+    else {
+        $self->fatal_message("No qc genotype vcf file provided.");
+    }
 }
 
 1;

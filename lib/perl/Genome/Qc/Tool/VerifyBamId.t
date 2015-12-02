@@ -38,6 +38,7 @@ my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->s
     instrument_data => $instrument_data,
 );
 my $vcf_file = Genome::Test::Factory::SoftwareResult::ImportedFile->setup_object();
+my $default_vcf_file = Genome::Test::Factory::SoftwareResult::ImportedFile->setup_object();
 use Genome::SoftwareResult::StageableSimple::SingleFile;
 my $vcf_file_path_overwrite = Sub::Override->new(
     'Genome::SoftwareResult::StageableSimple::SingleFile::file_path',
@@ -61,6 +62,9 @@ my $config_override = Sub::Override->new(
                     precise => '1',
                     version => '20120620',
                     ignore_read_group => 0,
+                },
+                additional_params => {
+                    default_genotype_vcf_file_id => $default_vcf_file->id,
                 },
             }
         };
@@ -93,6 +97,13 @@ my @expected_cmd_line = (
     '--precise',
 );
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
+
+my $command_without_qc_genotype_vcf_file = Genome::Qc::Run->create(
+    config_name => 'testing-qc-run',
+    alignment_result => $alignment_result,
+    %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
+);
+ok($command_without_qc_genotype_vcf_file->execute, "Command without qc_genotype_vcf_file executes ok");
 
 my %expected_metrics = (
     '2883581792-2883255521	#READS' => 0,
