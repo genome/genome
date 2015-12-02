@@ -27,8 +27,6 @@ class Genome::InstrumentData::Command::Import::Inputs {
     },
     has_transient => {
         format => { via => 'source_files', to => 'format', },
-        library_name => { via => 'library', to => 'name', },
-        sample_name => { via => 'library', to => 'sample_name', },
     },
 };
 
@@ -38,7 +36,7 @@ sub create { Carp::confess('Use inputs factory to create!'); }
 sub lib_and_source_file_md5sum {
     my $self = shift;
     return substr(
-        Genome::Sys->md5sum_data( join(' ', $self->library_name, $self->source_paths) ), 
+        Genome::Sys->md5sum_data( join(' ', $self->library->name, $self->source_paths) ), 
         0, 6,
     );
 }
@@ -95,9 +93,7 @@ sub source_files {
 sub as_hashref {
     my $self = shift;
 
-    my %hash = map { $_ => $self->$_ } (qw/
-        analysis_project library library_name sample_name
-        /);
+    my %hash = map { $_ => $self->$_ } (qw/ analysis_project library /);
     $hash{instrument_data_properties} = $self->entity_params->{instdata};
     $hash{downsample_ratio} = $self->entity_params->{instdata}->{downsample_ratio};
     my @source_paths = $self->source_paths;
