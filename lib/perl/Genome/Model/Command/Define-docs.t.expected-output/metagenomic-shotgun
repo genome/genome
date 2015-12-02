@@ -29,15 +29,10 @@
       * instrument_data
     
      Specific params for Genome::Model::MetagenomicShotgun
-      * contamination_screen_reference (singular)
       * merge_roi_set (singular)
-      * metagenomic_nucleotide_reference (singular)
-      * metagenomic_protein_reference (singular)
       * region_of_interest_set_name (many)
       * roi_track_name (singular)
       * short_roi_names (singular)
-      * viral_nucleotide_reference (singular)
-      * viral_protein_reference (singular)
 
 
 
