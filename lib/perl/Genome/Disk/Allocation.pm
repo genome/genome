@@ -222,6 +222,10 @@ sub create {
         }
     }
 
+    if ( Genome::Disk::Group->is_archive($params{disk_group_name}) ) {
+        die $class->error_message('Cannot create disk allocation in an archive group: '.$params{disk_group_name});
+    }
+
     my $self;
     Genome::Utility::Instrumentation::timer('disk.allocation.create', sub {
         $self = $class->_execute_system_command('_create', %params);
@@ -263,6 +267,14 @@ sub move {
     Genome::Utility::Instrumentation::inc('disk.allocation.move');
 
     return $class->_execute_system_command('_move', %params);
+}
+
+sub copy {
+    my ($class, %params) = @_;
+
+    Genome::Utility::Instrumentation::inc('disk.allocation.copy');
+
+    return $class->_execute_system_command('_copy', %params);
 }
 
 sub archive {
@@ -400,6 +412,18 @@ sub _move {
         %parameters);
 
     return $mover->move;
+}
+
+sub _copy {
+    my $class = shift;
+
+    my %parameters = @_;
+    $parameters{allocation_id} = delete $parameters{id};
+
+    my $copier = Genome::Disk::Detail::Allocation::Copier->create(
+        %parameters);
+
+    return $copier->copy;
 }
 
 sub _archive {

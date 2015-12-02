@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Genome;
 
+use List::MoreUtils qw(uniq);
+
 class Genome::Qc::Tool::Picard::CalculateHsMetrics {
     is => 'Genome::Qc::Tool::Picard',
 };
@@ -37,20 +39,43 @@ sub target_intervals {
 sub translate_feature_list {
     my ($self, $track_name) = @_;
 
+    my $feature_list = $self->_feature_list_for_alignment_result($self->alignment_result);
+
     my $translated_list = Genome::Sys->create_temp_file_path;
     my %params = (
-        feature_list => $self->alignment_result->instrument_data->target_region_set,
+        feature_list => $feature_list,
         track_name => $track_name,
         output_path => $translated_list,
         merge => 0,
     );
-    unless ($self->reference_build eq $self->alignment_result->instrument_data->target_region_set->reference) {
+    unless ($self->reference_build eq $feature_list->reference) {
         $params{alternate_reference} = $self->reference_build;
     }
     my $translated_list_cmd = Genome::FeatureList::Command::DumpMergedList->create(%params);
     $translated_list_cmd->execute;
 
     return $translated_list;
+}
+
+sub _feature_list_for_alignment_result {
+    my $self = shift;
+    my $alignment_result = shift;
+
+    my @instrument_data = $alignment_result->instrument_data;
+    my @trsn = uniq map { $_->target_region_set_name } @instrument_data;
+    unless(@trsn) {
+        $self->fatal_message(
+            'Alignment result %s does not have an associated target region set.',
+            $alignment_result->__display_name__
+        );
+    } elsif(@trsn > 1) {
+        $self->fatal_message(
+            'Alignment result %s contains instrument data with different target region sets.',
+            $alignment_result->__display_name__
+        );
+    }
+
+    return $instrument_data[0]->target_region_set;
 }
 
 sub create_interval_file {

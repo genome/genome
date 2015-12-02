@@ -39,6 +39,12 @@ class Genome::Model::ReferenceSequence::Command::CreateAlignerIndex {
             is_optional => 1,
        },
     ],
+    has_transient_optional_output => {
+        aligner_index => {
+            is => 'Genome::Model::Build::RefereneceSequence::AlignerIndex',
+            doc => 'the newly created index',
+        },
+    },
     has_param => [
         lsf_resource => {
             is => 'Text',
@@ -151,6 +157,8 @@ sub _process {
             die $self->error_message;
         }
     }
+
+    $self->aligner_index($reference_sequence_index);
 
     $self->debug_message("Complete!");
     return 1;

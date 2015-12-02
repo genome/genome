@@ -15,7 +15,7 @@ if (Genome::Sys->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 7;
+    plan tests => 11;
 }
 
 my $pkg = 'Genome::Model::Tools::Gatk::HaplotypeCaller';
@@ -32,7 +32,6 @@ my $expected_output_vcf = File::Spec->join($test_data_dir, $output_filename);
 
 my $gatk_cmd = $pkg->create(
     version => '3.4',
-    java_interpreter => Genome::Sys->java_executable_path('1.7'),
     max_memory => 2,
     input_bam => $input_bam,
     reference_fasta => $input_reference,
@@ -46,3 +45,20 @@ ok(-s $output_vcf, 'output was created');
 ok(-s "$output_vcf.idx", 'output was indexed');
 
 compare_ok($output_vcf, $expected_output_vcf, name => 'file matched expectations', filters => [qr/^#.*$/]);
+
+
+my $output_vcf_gz = "$output_vcf.gz";
+my $gatk_cmd_with_gz = $pkg->create(
+    version => '3.4',
+    max_memory => 2,
+    input_bam => $input_bam,
+    reference_fasta => $input_reference,
+    emit_reference_confidence => 'GVCF',
+    output_vcf => $output_vcf_gz,
+);
+isa_ok($gatk_cmd_with_gz, $pkg, "Made the command");
+ok($gatk_cmd_with_gz->execute, 'Executed the command');
+
+ok(-s $output_vcf_gz, 'gzipped output was created');
+ok(-s "$output_vcf_gz.tbi", 'gzipped output was indexed');
+

@@ -25,6 +25,7 @@ class Genome::Timeline::Event::AllocationEventType {
                'unpreserved',
                'finalized',
                'invalidated',
+               'copied',
             ]
         }
     ],

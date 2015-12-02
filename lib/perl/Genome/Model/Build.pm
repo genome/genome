@@ -108,6 +108,7 @@ class Genome::Model::Build {
         },
         software_revision => { is => 'Text', len => 1000 },
         process => {
+            is_many => 1,
             is => 'Genome::Model::Build::Process',
             reverse_as => 'build',
         }
@@ -551,6 +552,12 @@ sub build_event {
 sub workflow_name {
     my $self = shift;
     return $self->build_id . ' all stages';
+}
+
+sub ptero_workflow_proxy {
+    my $self = shift;
+
+    return $self->process->ptero_workflow_proxy;
 }
 
 sub workflow_instances {
@@ -1035,7 +1042,7 @@ sub start {
         }
 
         # Launches the workflow (in a pend state, it's resumed by a commit hook)
-        my $workflow_xml = $workflow->save_to_xml();
+        my $workflow_xml = $workflow->get_xml;
         unless ($self->_launch(\%params, $workflow_xml)) {
             Carp::croak "Build " . $self->__display_name__ . " could not be launched!";
         }
@@ -1280,6 +1287,16 @@ sub stop {
         $self->status_message('Killing job: '.$job->{Job});
         $self->_kill_job($job);
         $self = Genome::Model::Build->load($self->id);
+    } else {
+        $self->status_message("No LSF job found, looking for PTero workflow...");
+        my $wf_proxy = $self->ptero_workflow_proxy;
+        if (defined $wf_proxy) {
+            $self->status_message("Found PTero workflow (%s), canceling it now.",
+                $wf_proxy->url);
+            $wf_proxy->cancel();
+        } else {
+            $self->status_message("No PTero workflow found.");
+        }
     }
 
     $self->add_note(
@@ -1387,6 +1404,11 @@ sub _launch {
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+
+    # we don't use 'local' because we want this to persist through
+    # spawned workflows, and since the build is launched in a commit
+    # observer the 'local' designations ensure the ENV isn't still around then
+    Genome::Config::set_env('lsf_project_name', sprintf("build/%s", $self->id));
 
     my $build_id_guard = set_build_id($self->id);
 
@@ -1511,7 +1533,8 @@ sub _initialize_workflow {
 
         $workflow->notify_url($url);
     }
-    $workflow->save_to_xml(OutputFile => $self->data_directory . '/build.xml');
+
+    Genome::Sys->write_file($self->data_directory . '/build.xml', $workflow->get_xml);
 
     return $workflow;
 }
@@ -2014,7 +2037,22 @@ sub set_metric {
     my $metric_name  = shift;
     my $metric_value = shift;
 
-    my $metric = Genome::Model::Metric->get(build_id=>$self->id, name=>$metric_name);
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => join('/', 'build_metric', $self->id, Genome::Sys->md5sum_data($metric_name)),
+        scope => 'site',
+    )->lock();
+
+    unless($lock) {
+        $self->fatal_message('Could not lock for creation of metric "%s" on build %s.  Is something else trying to create this metric?', $metric_name, $self->__display_name__);
+    }
+
+    my $cleanup = sub { $lock->unlock(); };
+    Genome::Sys::CommitAction->create(
+        on_commit => $cleanup,
+        on_rollback => $cleanup,
+    );
+
+    my $metric = Genome::Model::Metric->load(build_id=>$self->id, name=>$metric_name);
     my $new_metric;
     if ($metric) {
         #delete an existing one and create the new one

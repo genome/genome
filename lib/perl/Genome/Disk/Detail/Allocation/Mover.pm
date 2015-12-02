@@ -30,6 +30,22 @@ class Genome::Disk::Detail::Allocation::Mover {
     ],
 };
 
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    if ( $self->disk_group_name and $self->target_mount_path ) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => [qw/ group_name target_mount_path /],
+            desc => 'Can not specify both target group and volume!', 
+        );
+    }
+
+    return @errors;
+}
 
 sub move {
     my $self = shift;

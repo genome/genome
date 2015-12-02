@@ -20,7 +20,11 @@ class Genome::Qc::Tool {
         },
         gmt_params => {
             is => 'Hash',
-        }
+        },
+        qc_genotype_vcf_file => {
+            is => 'Genome::SoftwareResult::ImportedFile',
+            is_optional => 1,
+        },
     ],
     has_calculated => [
         bam_file => {
@@ -106,6 +110,16 @@ sub _flatten_metrics_hash {
     }
 
     return %$flat_hash;
+}
+
+sub genotype_vcf_file {
+    my $self = shift;
+    if ($self->qc_genotype_vcf_file) {
+        return $self->qc_genotype_vcf_file->file_path;
+    }
+    else {
+        $self->fatal_message("No qc genotype vcf file provided.");
+    }
 }
 
 1;

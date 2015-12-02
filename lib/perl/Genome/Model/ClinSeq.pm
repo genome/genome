@@ -1462,6 +1462,7 @@ sub files_ignored_by_build_diff {
         .*mutation_spectrum.input.tsv$
         .*/kinase_only.tsv$
         .*/all_interactions.tsv$
+        .*/expert_antineoplastic.tsv$
     );
 };
 

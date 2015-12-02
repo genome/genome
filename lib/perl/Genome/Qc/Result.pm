@@ -14,6 +14,10 @@ class Genome::Qc::Result {
         config_name => {
             is => 'Text',
         },
+        qc_genotype_vcf_file => {
+            is => 'Genome::SoftwareResult::ImportedFile',
+            is_optional => 1,
+        },
     ],
 };
 
@@ -143,6 +147,7 @@ sub _tool_from_name_and_params {
     my $tool = $name->create(
         gmt_params => $gmt_params,
         alignment_result => $self->alignment_result,
+        qc_genotype_vcf_file => $self->qc_genotype_vcf_file,
         %{$additional_params},
     );
     while (my ($param_name, $param_value) = each %$gmt_params) {

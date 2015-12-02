@@ -114,10 +114,45 @@ sub get_summary_information
         die "please specify which template to use for this report!";
     }
 
-    my $build = $self->build;
-    my $model = $build->model;
+    my $vars = $self->_summary_information;
+
+    my $tt = Template->new({
+         ABSOLUTE => 1,
+    }) || die "$Template::ERROR\n";
+
+    $self->debug_message("processing template $template");
 
     my $content;
+
+    my $rv = $tt->process($template, $vars, \$content) || die $tt->error(), "\n";
+    if ($rv != 1) {
+        die "Bad return value from template processing for summary report generation: $rv ";
+    }
+    unless ($content) {
+        die "No content returned from template processing!";
+    }
+
+    return $content;
+}
+
+
+sub _summary_information
+{
+    my $self = shift;
+
+    unless(exists $self->{_summary_information}) {
+        $self->{_summary_information} = $self->_generate_summary_information;
+    }
+
+    return $self->{_summary_information};
+}
+
+sub _generate_summary_information
+{
+    my $self = shift;
+
+    my $build = $self->build;
+    my $model = $build->model;
 
     #################################
     my $na = "Not Available";
@@ -425,30 +460,7 @@ sub get_summary_information
         view_url => Genome::Config::get('sys_services_web_view_url'),
     );
 
-    ##################################
-
-    my $tt = Template->new({
-         ABSOLUTE => 1,
-    }) || die "$Template::ERROR\n";
-
-    my $varstest = {
-        name     => 'Mickey',
-        debt     => '3 riffs and a solo',
-        deadline => 'the next chorus',
-        files_url => Genome::Config::get('sys_services_files_url'),
-    };
-
-    $self->debug_message("processing template $template");
-
-    my $rv = $tt->process($template, { @vars }, \$content) || die $tt->error(), "\n";
-    if ($rv != 1) {
-   	    die "Bad return value from template processing for summary report generation: $rv ";
-    }
-    unless ($content) {
-        die "No content returned from template processing!";
-    }
-
-    return $content;
+    return {@vars};
 }
 
 sub get_contents {

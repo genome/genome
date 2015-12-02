@@ -39,9 +39,9 @@ our $ERROR_FINDING_REGEX = qr{
                 )
                 \s
                 (?:
-                    (?:(?<error_text>ERROR:? .*?) \s $ERROR_LOCATION)
+                    (?:(?<error_text>(?:ERROR|FATAL):? .*?) \s $ERROR_LOCATION)
                     |
-                    (?<error_text>ERROR:? .*)
+                    (?<error_text>(?:ERROR|FATAL):? .*)
                 )
             }x;
 
@@ -178,7 +178,7 @@ sub handle_failed {
 sub find_error_log {
     my ($log_dir) = @_;
     try {
-        my @logs = capture(qw(grep -l ERROR), $log_dir);
+        my @logs = capture(qw(grep -l -P ERROR|FATAL), $log_dir);
         chomp @logs;
         return $logs[0];
     } catch {

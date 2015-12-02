@@ -17,6 +17,7 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
+Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class('Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup');
 
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
@@ -25,7 +26,7 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam-rg-multi/v4');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1');
 my $source_bam = $test_dir.'/input.rg-multi.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
@@ -41,29 +42,35 @@ ok($cmd->execute, "execute import command");
 
 my $md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($source_bam.'.md5');
 ok($md5, 'load source md5');
-my @instrument_data_attributes = Genome::InstrumentDataAttribute->get(
+my @instdata_md5_attr = Genome::InstrumentDataAttribute->get(
     attribute_label => 'original_data_path_md5',
     attribute_value => $md5,
 );
-my @instrument_data = Genome::InstrumentData::Imported->get(id => [ map { $_->instrument_data_id } @instrument_data_attributes ]);
-is(@instrument_data, 4, "got instrument data for md5 $md5");
+is(@instdata_md5_attr, 4, "got instrument data for md5 $md5");
 
-my %read_groups = (
-    2883581797 => { paired => 34, singleton => 94 },
-    2883581798 => { paired => 36, singleton => 92 },
+my %instrument_data = map { $_->attribute_value => $_->instrument_data } Genome::InstrumentDataAttribute->get(
+    attribute_label => 'segment_id',
+    instrument_data_id => [ map { $_->instrument_data_id } @instdata_md5_attr ],
 );
+my %expected_read_groups = (
+    '11111111111111111111111111111111' => [qw/ 2883581797 paired    34 /],
+    '22222222222222222222222222222222' => [qw/ 2883581797 singleton 94 /],
+    '33333333333333333333333333333333' => [qw/ 2883581798 paired    36 /],
+    '44444444444444444444444444444444' => [qw/ 2883581798 singleton 92 /],
+);
+is_deeply([sort keys %instrument_data], [sort keys %expected_read_groups], 'got instrument data for md5 and read groups');
 
-for my $instrument_data ( @instrument_data ) {
-    my $read_group_id = $instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;
+for my $rg_id ( sort keys %expected_read_groups ) {
+    my $instrument_data = $instrument_data{$rg_id};
+    ok($instrument_data, "got instrument data for rg_id: $rg_id");
 
     my $paired_key = $instrument_data->is_paired_end? 'paired' : 'singleton';
-    ok(!$read_groups{$read_group_id}{$paired_key.'-seen'}, "read group $read_group_id $paired_key not seen");
-    $read_groups{$read_group_id}{$paired_key.'-seen'} = 1;
+    is($paired_key, $expected_read_groups{$rg_id}->[1], "$rg_id is $paired_key");
 
     is($instrument_data->original_data_path, $source_bam, 'original_data_path correctly set');
     is($instrument_data->import_format, 'bam', 'import_format is bam');
     is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
-    is($instrument_data->read_count, $read_groups{$read_group_id}{$paired_key}, 'read_count correctly set');
+    is($instrument_data->read_count, $expected_read_groups{$rg_id}->[2], 'read_count correctly set');
     is($instrument_data->read_length, 100, 'read_length correctly set');
     is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
@@ -71,14 +78,15 @@ for my $instrument_data ( @instrument_data ) {
     ok(-s $bam_path, 'bam path exists');
     is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
     is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-    is(File::Compare::compare($bam_path, $test_dir.'/'.join('.', $read_group_id, $paired_key,'bam')), 0, 'bam matches');
-    is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/'.join('.', $read_group_id, $paired_key, 'bam.flagstat')), 0, 'flagstat matches');
+    my $bam_basename = join('.', 'all_sequences', 'basic-multi-rg', $expected_read_groups{$rg_id}->[0], $paired_key, 'bam');
+    is(File::Compare::compare($bam_path, $test_dir.'/'.$bam_basename), 0, 'bam matches');
+    is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/'.$bam_basename.'.flagstat'), 0, 'flagstat matches');
 
     my $allocation = $instrument_data->disk_allocation;
     ok($allocation, 'got allocation');
     ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 
-    #print join("\t", $read_group_id, $paired_key, $instrument_data->bam_path), "\n";
+    #print join("\t", $rg_id, $paired_key, $instrument_data->bam_path), "\n"; <STDIN>;
 }
 
 done_testing();

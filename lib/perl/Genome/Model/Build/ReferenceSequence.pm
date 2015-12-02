@@ -11,6 +11,7 @@ require Carp;
 use Regexp::Common;
 use POSIX;
 use Set::Scalar;
+use Filesys::Df qw();
 
 class Genome::Model::Build::ReferenceSequence {
     is => 'Genome::Model::Build',
@@ -545,6 +546,18 @@ sub get_sequence_dictionary {
     return $path;
 }
 
+sub buckets {
+    my $self = shift;
+    my $users = shift;
+
+    my $buckets = Genome::Model::Build::ReferenceSequence::Buckets->get_with_lock(
+        reference_sequence_build => $self,
+        users => $users || Genome::SoftwareResult::User->user_hash_for_build($self),
+    );
+
+    return $buckets;
+}
+
 sub get_by_name {
     my ($class, $name) = @_;
 
@@ -687,7 +700,6 @@ sub local_cache_lock {
     return "LOCK-".$self->id;
 }
 
-#MOVE TO GENOME::SYS#
 sub available_kb {
     my ($self, $directory) = @_;
 
@@ -696,26 +708,16 @@ sub available_kb {
 
     $self->status_message('Get available kb for '.$directory);
 
-    my $cmd = "df -k $directory |";
-    $self->status_message('DF command: '.$cmd);
-    my $fh = IO::File->new($cmd);
-    if ( not $fh ) {
-        $self->error_message('Failed to create df command: '.$!);
-        return;
-    }
-    $fh->getline; # Filesystem           1K-blocks      Used Available Use% Mounted on
-    my $line = $fh->getline;
-    my @tokens = split(/\s+/, $line);
-    $fh->close;
+    my $df = Filesys::Df::df($directory);
 
-    if ( not defined $tokens[3] ) {
+    if ( not defined $df->{bavail} ) {
         $self->error_message('Failed to get kb available from df command');
         return;
     }
 
-    $self->status_message('KB available: '.$tokens[3]);
+    $self->status_message('KB available: '. $df->{bavail});
 
-    return $tokens[3];
+    return $df->{bavail};
 }
 
 sub copy_file {
@@ -879,25 +881,60 @@ sub get_or_create_genome_file {
 
     my $genome_file = $self->data_directory .'/all_sequences.genome';
     unless (-s $genome_file) {
-        my $seqdict_sam = $self->get_sequence_dictionary('sam');
+        my $chromosomes_with_lengths = $self->chromosomes_with_lengths;
+
         my $genome_fh = Genome::Sys->open_file_for_writing($genome_file);
         unless ($genome_fh) {
             die('Failed to open genome file for writing: '. $genome_file);
         }
-        my $seqdict_fh = Genome::Sys->open_file_for_reading($seqdict_sam);
-        unless ($seqdict_fh) {
-            die('Failed to open seqdict file for reading: '. $seqdict_sam);
+
+        for my $chr (@$chromosomes_with_lengths) {
+            $genome_fh->say( join("\t", @$chr) );
         }
-        while (my $line = $seqdict_fh->getline) {
-            chomp($line);
-            if ($line =~ /^\@SQ\s+SN:(.+)\s+LN:(\d+)\s*/) {
-                print $genome_fh $1 ."\t". $2 ."\n";
-            }
-        }
-        $seqdict_fh->close;
+
         $genome_fh->close;
     }
     return $genome_file;
+}
+
+sub chromosomes_with_lengths {
+    my $self = shift;
+
+    my $seqdict = $self->sequence_dictionary_path('sam');
+
+    unless(-s $seqdict) {
+        die $self->error_message('No sequence dictionary found to create buckets');
+    }
+
+    my $parser = Genome::Utility::IO::SeparatedValueReader->create(
+        separator => "\t",
+        input => $seqdict,
+        headers => ['tag', 'name', 'length'],
+        allow_extra_columns => 1,
+        ignore_lines_starting_with => '(?!@SQ)',
+    );
+
+    my @chr_lengths;
+
+    while (my $line = $parser->next) {
+        unless ($line->{tag} eq '@SQ') {
+            Carp::confess 'parser error';
+        }
+
+        my ($sn, $chr) = split(':', $line->{name});
+        unless ($sn eq 'SN') {
+            die $self->error_message('Expected SN first in @SQ line but got %s', $sn);
+        }
+
+        my ($ln, $length) = split(':', $line->{length});
+        unless($ln eq 'LN') {
+            die $self->error_message('Expected LN second in @SQ line but got %s', $ln);
+        }
+
+        push @chr_lengths, [$chr, $length];
+    }
+
+    return \@chr_lengths;
 }
 
 sub is_superset_of {

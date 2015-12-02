@@ -24,6 +24,7 @@ class Genome::VariantReporting::Suite::Vep::Run {
         feature_list_ids => {
             is => 'HASH',
             is_translated => 1,
+            is_optional => 1,
             doc => 'A hash keyed on INFO TAG with values of FeatureList IDs',
         },
         reference_fasta => {
@@ -77,9 +78,16 @@ sub result_class {
 
 sub __planned_errors__ {
     my ($self, $params) = @_;
+
+    my @errors = $self->SUPER::__planned_errors__($params);
+
     my $version = $params->{joinx_version};
     my $allow_same_file = $params->{allow_same_file};
-    return $self->SUPER::__planned_errors__($params), $self->_get_joinx_version_error($version, $allow_same_file);
+    push @errors, $self->_get_joinx_version_error($version, $allow_same_file);
+
+    push @errors, $self->_get_custom_annotation_tags_error($params);
+
+    return @errors,
 }
 
 sub _get_joinx_version_error {
@@ -94,6 +102,20 @@ sub _get_joinx_version_error {
         );
     }
 
+    return @errors;
+}
+
+sub _get_custom_annotation_tags_error {
+    my ($self, $params) = @_;
+
+    my @errors;
+    if (defined($params->{custom_annotation_tags}) && !defined($params->{feature_list_ids})) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['joinx_version'],
+            desc => "Parameter custom_annotation_tags is provided but feature_list_ids parameter is not provided. Set feature_list_ids parameter in your plan file",
+        );
+    }
     return @errors;
 }
 

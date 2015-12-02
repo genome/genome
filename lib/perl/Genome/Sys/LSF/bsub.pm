@@ -6,6 +6,8 @@ use warnings;
 use Genome::Sys;
 use Exporter qw(import);
 use Params::Validate qw(:types);
+use List::MoreUtils qw(any);
+use Genome::Utility::Email;
 
 our @EXPORT = qw(bsub);
 our @EXPORT_OK = qw(bsub);
@@ -127,6 +129,11 @@ sub _args_spec {
             option_flag => '-g',
             type => SCALAR,
         },
+        post_exec_cmd => {
+            optional => 1,
+            option_flag => '-Ep',
+            type => SCALAR,
+        },
         cmd => {
             type => SCALAR | ARRAYREF,
         },
@@ -134,7 +141,24 @@ sub _args_spec {
 }
 
 sub _valid_lsf_queue {
-    return grep { /$_[0]/ } _queues();
+    my $requested_queue = shift;
+
+    my $username = Genome::Sys->username;
+    if ($username eq 'apipe-builder' and $requested_queue eq 'apipe') {
+        my $message = join("\n",
+                            'apipe-builder using apipe queue',
+                            'Host ' . $ENV{HOSTNAME},
+                            'LSF jobID ' . $ENV{LSB_JOBID},
+                            'submission host '. $ENV{LSB_SUB_HOST});
+
+        Genome::Utility::Email::send(
+            from => 'abrummet@genome.wustl.edu',
+            to => 'abrummet@genome.wustl.edu',
+            subject => 'apipe-builder using apipe queue',
+            body => Carp::longmess($message),
+        );
+    }
+    return any { $requested_queue eq $_ } _queues();
 }
 
 sub _queues {

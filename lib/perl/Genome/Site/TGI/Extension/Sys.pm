@@ -20,6 +20,8 @@ require Genome::Utility::Text; #TODO remove, unused
 use Sys::Hostname;
 use File::Find;
 use Params::Validate qw(:types);
+use IO::Socket;
+use Sys::Hostname qw(hostname);
 #use Archive::Extract;
 
 require MIME::Lite;
@@ -69,6 +71,82 @@ sub get_lsf_job_status {
     return $status;
 }
 
+sub bsub_and_wait_for_completion {
+    my($class, %bsub_args) = @_;
+
+    my $special_args;
+    ($special_args, %bsub_args) = _bsub_and_wait_for_completion__validate_args(%bsub_args);
+    my($commands, $on_submit_cb, $on_complete_cb) = @$special_args{'commands','on_submit','on_complete'};
+
+    my $hostname = hostname;
+    my $waiting_socket = IO::Socket::INET->new(Listen => 5, Proto => 'tcp', LocalHost => $hostname);
+    my $port = $waiting_socket->sockport;
+
+    my %seq_to_job_id;
+    for(my $seq = 0; $seq < @$commands; $seq++) {
+        my $cmd = $commands->[$seq];
+        my %this_cmd_bsub_args;
+        if (ref($cmd) and ref($cmd) eq 'HASH') {
+            %this_cmd_bsub_args = %$cmd;
+        } else {
+            %this_cmd_bsub_args = ( cmd => $cmd );
+        }
+
+        my $job_id = $class->bsub(post_exec_cmd => qq(echo $seq | netcat $hostname $port),
+                                  %bsub_args,
+                                  %this_cmd_bsub_args,
+                                );
+        $on_submit_cb->($seq, $job_id) if $on_submit_cb;
+        $seq_to_job_id{$seq} = $job_id;
+    }
+
+    $class->_bsub_and_wait_for_completion__wait_on_jobs($waiting_socket, $on_complete_cb, %seq_to_job_id);
+
+    # immediately after being reaped in _bsub_and_wait_for_completion_wait_on_jobs(), bjobs
+    # reports their status as still "RUN".  Instead, we go into the traditional polling until
+    # LSF updates their status to EXIT or DONE
+    my %job_statuses = $class->wait_for_lsf_jobs(values %seq_to_job_id);
+    my @statuses = map { $job_statuses{$_} }
+                   map { $seq_to_job_id{$_} }
+                   ( 0 .. $#$commands );
+    return @statuses;
+}
+
+sub _bsub_and_wait_for_completion__validate_args {
+    my %bsub_args = @_;
+
+    my %special_args;
+    $special_args{commands} = my $commands = delete $bsub_args{cmds};
+    unless ($commands and ref($commands) and ref($commands) eq 'ARRAY') {
+        Carp::croak(q(arg 'commands' is required and must be an arrayref of commands'));
+    }
+    if (exists $bsub_args{cmd}) {
+        Carp::croak(q(arg 'cmd' is not allowed, use 'cmds' instead, an arrayref of commands));
+    }
+    $special_args{on_submit} = delete $bsub_args{on_submit};
+    $special_args{on_complete} = delete $bsub_args{on_complete};
+    return(\%special_args, %bsub_args);
+}
+
+sub _bsub_and_wait_for_completion__wait_on_jobs {
+    my($class, $waiting_socket, $on_complete_cb, %seq_to_job_id) = @_;
+
+    while (%seq_to_job_id) {
+        my $fh = $waiting_socket->accept();
+        my $seq = $fh->getline;
+        $fh->close;
+        $seq =~ s/\r|\n//g;
+
+        my $job_id = delete $seq_to_job_id{$seq};
+        unless ($job_id) {
+            Carp::croak("Got unexpected response '$seq' while waiting for these jobs:\n",
+                join("\n", map { join(' => ', $_, $seq_to_job_id{$_}) } keys %seq_to_job_id));
+        }
+        $on_complete_cb->($seq, $job_id) if $on_complete_cb;
+    }
+    return 1;
+}
+
 sub wait_for_lsf_job {
     my ($class, $job_id) = @_;
     unless ($job_id) {
@@ -92,7 +170,6 @@ sub wait_for_lsf_jobs {
 
     my %job_statuses;
     my $all_jobs_complete = 1;
-    $DB::single = 1;
     do {
         $all_jobs_complete = 1;
         JOB_ID: for my $job_id (@job_ids) {
@@ -625,16 +702,29 @@ sub get_mem_total_from_proc {
 }
 
 sub get_mem_limit_from_bjobs {
-    my $mem_limit;
     my $LSB_JOBID = $ENV{LSB_JOBID};
     my $bjobs_cmd = qx(which bjobs);
     if ($bjobs_cmd && $LSB_JOBID) {
         chomp $bjobs_cmd;
         my $bjobs = qx($bjobs_cmd -l $LSB_JOBID);
-        my ($bjobs_mem_limit_kb) = $bjobs =~ /MEMLIMIT\s+(\d+)/;
-        $mem_limit = $bjobs_mem_limit_kb if ($bjobs_mem_limit_kb);
+        my ($bjobs_mem_limit, $bjobs_mem_limit_units) = $bjobs =~ /MEMLIMIT\s+(\d+\.?\d*)\s+([TGMK])\b/;
+        if ($bjobs_mem_limit_units eq 'T') {
+            return int($bjobs_mem_limit * 1024 * 1024 * 1024);
+        }
+        elsif ($bjobs_mem_limit_units eq 'G') {
+            return int($bjobs_mem_limit * 1024 * 1024);
+        }
+        elsif ($bjobs_mem_limit_units eq 'M') {
+            return int($bjobs_mem_limit * 1024);
+        }
+        elsif ($bjobs_mem_limit_units eq 'K') {
+            return int($bjobs_mem_limit);
+        }
+        else {
+            # failed to parse
+        }
     }
-    return $mem_limit;
+    return undef;
 }
 
 

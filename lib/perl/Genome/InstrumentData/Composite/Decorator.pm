@@ -13,10 +13,11 @@ class Genome::InstrumentData::Composite::Decorator {
 sub decorate {
     my $class = shift;
     my $operation = shift;
+    my $workflow = shift;
     my $decoration = shift;
 
     my $decorator = $class->_resolve_decorator($decoration);
-    return $decorator->decorate($operation, $decoration->{params});
+    return $decorator->decorate($operation, $workflow, $decoration->{params});
 }
 
 sub _resolve_decorator {

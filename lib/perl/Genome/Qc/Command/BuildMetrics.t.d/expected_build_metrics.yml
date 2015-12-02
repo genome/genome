@@ -1,7 +1,13 @@
 --- 
-build_id: a3dbe478702c4f3aa9f4c1c68bbcdebf
+DUPLICATION_RATE: 0.116666666666667
+GENOME_TERRITORY: 1000
+HAPLOID_COVERAGE: 26.5
+PAIR: 
+  PF_ALIGNED_BASES: 30000
+  PF_READS_ALIGNED: 3000
+build_id: 373409c039084aec90af7f0997c3e5e5
 instrument_data_count: 1
-instrument_data_ids: d0eef0c4ee574f70a61a95bae0fdc93a
+instrument_data_ids: f7a92847871f42ee93c879a8ccf53975
 label_1: 
   metric_E: 5
   metric_F: 6
@@ -9,3 +15,4 @@ metric_A: 1
 metric_B: 2
 metric_C: 3
 metric_D: 4
+reads_marked_duplicates: 350

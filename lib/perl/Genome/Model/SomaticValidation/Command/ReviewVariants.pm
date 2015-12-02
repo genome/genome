@@ -202,6 +202,22 @@ sub intersects{
     return 0;
 }
 
+sub shortcut {
+    my $self = shift;
+
+    return $self->should_skip_run;
+}
+
+sub should_skip_run {
+    my $self = shift;
+
+    unless ($self->build->snv_detection_strategy) {
+        $self->warning_message("snv_detection_strategy undefined, skipping Review Variants. This tool could be rewritten to allow for no snv_detection_strategy if a variant list is provided.");
+        return 1;
+    }
+
+    return;
+}
 
 sub execute {
     my $self = shift;
@@ -245,10 +261,7 @@ sub execute {
     #    $normal_bam = $build->normal_bam;
     #}
 
-    unless ($build->snv_detection_strategy) {
-        $self->warning_message("snv_detection_strategy undefined, skipping Review Variants. This tool could be rewritten to allow for no snv_detection_strategy if a variant list is provided.");
-        return 1;
-    }
+    return 1 if $self->should_skip_run;
 
     # Ensure the necessary files exist in this build
     my $snv_file = "$build_dir/variants/snvs.hq.bed";

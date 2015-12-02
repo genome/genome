@@ -6,7 +6,7 @@ use Genome;
 
 use File::Basename;
 use File::Spec;
-use Genome::DataSource::CommonRDBMS qw(log_error log_commit_time);
+use Genome::DataSource::CommonRDBMS;
 
 class Genome::DataSource::GMSchema {
     is => [Genome::Config::get('ds_gmschema_type'), 'Genome::DataSource::CommonRDBMS'],

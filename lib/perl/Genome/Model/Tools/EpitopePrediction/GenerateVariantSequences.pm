@@ -202,7 +202,9 @@ sub print_fasta_entry {
     my $output_fh = Genome::Sys->open_file_for_appending($self->output_file);
 
     my ($fasta_defline, $fasta_sequence);
-    my $identifier = $params{'designation'} . "." . $params{protein_arr}->[6] . "." . $params{protein_arr}->[15];
+    my $amino_acid_change = $params{protein_arr}->[15];
+    $amino_acid_change =~ s/^p\.//;
+    my $identifier = $params{'designation'} . "." . $params{protein_arr}->[6] . "." . $amino_acid_change;
     $fasta_defline = ">$identifier";
     $fasta_sequence = join "", @{$params{arr}};
 

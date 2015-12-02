@@ -200,10 +200,12 @@ sub execute {                               # replace with real execution logic.
 					my $normal_pileup = $self->samtools_path . " mpileup -f $reference -q 10 -r $chrom:1 $normal_bam";
 					my $tumor_pileup = $self->samtools_path . " mpileup -f $reference -q 10 -r $chrom:1 $tumor_bam";
 							
+					my $output_log = $output . ".$chrom.log";
+					my $error_log = $output . ".$chrom.err";
 					my $cmd = $self->command_line(" somatic <\($normal_pileup\) <\($tumor_pileup\) --output-snp $output_snp --output-indel $output_indel $varscan_params");
 	
 					print "Running $cmd\n";                
-					system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" $cmd");
+					system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -J varscan -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" -oo $output_log -eo $error_log $cmd");
 	 #                               system($cmd);					
 				}
 

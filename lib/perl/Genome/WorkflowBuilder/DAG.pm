@@ -123,7 +123,11 @@ sub submit {
     if ($backend eq 'ptero') {
         my $wf_builder = $self->get_ptero_builder_for_process($process);
 
-        my $wf_proxy = $wf_builder->submit(inputs => encode($inputs), name => $process->workflow_name);
+        my $wf_proxy = $wf_builder->submit(
+            inputs => encode($inputs),
+            submit_url => Genome::Config::get('ptero_workflow_submit_url'),
+            name => $process->workflow_name
+        );
         $self->status_message("Submitted workflow to petri service: %s",
             $wf_proxy->url);
         return $wf_proxy;
@@ -159,7 +163,10 @@ sub _execute_with_ptero {
 
     my $wf_builder = $self->get_ptero_builder($self->name);
 
-    my $wf_proxy = $wf_builder->submit( inputs => encode($used_inputs) );
+    my $wf_proxy = $wf_builder->submit(
+        inputs => encode($used_inputs),
+        submit_url => Genome::Config::get('ptero_workflow_submit_url'),
+    );
     $self->status_message("Waiting on PTero workflow (%s) to complete",
         $wf_proxy->url);
     Genome::Sys->disconnect_default_handles;
@@ -329,6 +336,7 @@ sub connect_input {
             input_property => { type => Params::Validate::SCALAR },
             destination => { type => Params::Validate::OBJECT },
             destination_property => { type => Params::Validate::SCALAR },
+            is_optional => { type => Params::Validate::SCALAR, default => 0, },
     });
 
     $self->add_link(Genome::WorkflowBuilder::Link->create(
@@ -336,6 +344,11 @@ sub connect_input {
         destination => $args{destination},
         destination_property => $args{destination_property},
     ));
+
+    if ($args{is_optional}) {
+        push @{$self->_optional_input_properties}, $args{input_property};
+    }
+
     return;
 }
 

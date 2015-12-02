@@ -20,109 +20,164 @@ use Genome::Disk::Allocation;
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
 #$Genome::Disk::Allocation::TESTING_DISK_ALLOCATION = 1;
 
+my ($volume, $other_volume, $another_volume, $allocation);
+subtest setup => sub {
+    plan tests => 9;
 
-my $group = Genome::Disk::Group->create(
-    disk_group_name => 'testing',
-    subdirectory => 'testing',
-    permissions => '755',
-    setgid => 1,
-    unix_uid => 0,
-    unix_gid => 0,
-);
-ok($group, 'created test group');
+    # Create some groups
+    my $group = Genome::Disk::Group->create(
+        disk_group_name => 'testing',
+        subdirectory => 'testing',
+        permissions => '755',
+        setgid => 1,
+        unix_uid => 0,
+        unix_gid => 0,
+    );
+    ok($group, 'created test group');
 
-# Temp testing directory, used as mount path for test volumes and allocations
-my $test_dir = tempdir(
-    'allocation_testing_XXXXXX',
-    TMPDIR => 1,
-    UNLINK => 1,
-    CLEANUP => 1,
-);
+    my $group2 = Genome::Disk::Group->create(
+        disk_group_name => 'testing2',
+        subdirectory => 'testing2',
+        permissions => '755',
+        setgid => 1,
+        unix_uid => 0,
+        unix_gid => 0,
+    );
+    ok($group2, 'create test group 2');
 
-# Create temp mount path for testing volume
-my $volume_path = tempdir(
-    "test_volume_XXXXXXX",
-    DIR => $test_dir,
-    CLEANUP => 1,
-    UNLINK => 1,
-);
-my $volume = Genome::Disk::Volume->create(
-    hostname => 'test',
-    physical_path => 'test',
-    mount_path => $volume_path,
-    disk_status => 'active',
-    can_allocate => 1,
-    total_kb => Filesys::Df::df($volume_path)->{blocks},
-);
-ok($volume, 'created test volume');
+    # Temp testing directory, used as mount path for test volumes and allocations
+    my $test_dir = tempdir(
+        'allocation_testing_XXXXXX',
+        TMPDIR => 1,
+        UNLINK => 1,
+        CLEANUP => 1,
+    );
 
-# Create another temp mount path for another testing volume
-my $other_volume_path = tempdir(
-    "test_volume_XXXXXXX",
-    DIR => $test_dir,
-    CLEANUP => 1,
-    UNLINK => 1,
-);
-my $other_volume = Genome::Disk::Volume->create(
-    hostname => 'test',
-    physical_path => 'test',
-    mount_path => $other_volume_path,
-    disk_status => 'active',
-    can_allocate => 1,
-    total_kb => Filesys::Df::df($volume_path)->{blocks},
-);
-ok($other_volume, 'created another test volume');
+    # Create temp mount path for testing volume
+    my $volume_path = tempdir(
+        "test_volume_XXXXXXX",
+        DIR => $test_dir,
+        CLEANUP => 1,
+        UNLINK => 1,
+    );
+    $volume = Genome::Disk::Volume->create(
+        hostname => 'test',
+        physical_path => 'test',
+        mount_path => $volume_path,
+        disk_status => 'active',
+        can_allocate => 1,
+        total_kb => Filesys::Df::df($volume_path)->{blocks},
+    );
+    ok($volume, 'created test volume');
 
-# Add volumes to test group
-my $assignment = Genome::Disk::Assignment->create(
-    volume => $volume,
-    group => $group,
-);
-ok($assignment, 'assigned first test volume to group');
-Genome::Sys->create_directory(join('/', $volume->mount_path, $group->subdirectory));
+    # Create another temp mount path for another testing volume
+    my $other_volume_path = tempdir(
+        "test_volume_XXXXXXX",
+        DIR => $test_dir,
+        CLEANUP => 1,
+        UNLINK => 1,
+    );
+    $other_volume = Genome::Disk::Volume->create(
+        hostname => 'test',
+        physical_path => 'test',
+        mount_path => $other_volume_path,
+        disk_status => 'active',
+        can_allocate => 1,
+        total_kb => Filesys::Df::df($volume_path)->{blocks},
+    );
+    ok($other_volume, 'created another test volume');
 
-my $other_assignment = Genome::Disk::Assignment->create(
-    volume => $other_volume,
-    group => $group,
-);
-ok($other_assignment, 'add second test volume to group');
-Genome::Sys->create_directory(join('/', $other_volume->mount_path, $group->subdirectory));
+    # This volume will be part of group 2
+    $another_volume = Genome::Disk::Volume->create(
+        hostname => 'test',
+        physical_path => 'test',
+        mount_path => '/tmp',
+        disk_status => 'active',
+        can_allocate => 1,
+    );
+    ok($another_volume, 'created another test volume');
 
-# Make test allocation
-my $allocation_path = tempdir(
-    "allocation_test_1_XXXXXX",
-    CLEANUP => 1,
-    UNLINK => 1,
-);
-my $allocation = Genome::Disk::Allocation->create(
-    mount_path => $volume->mount_path,
-    disk_group_name => $group->disk_group_name,
-    allocation_path => $allocation_path,
-    kilobytes_requested => 100,
-    owner_class_name => 'UR::Value',
-    owner_id => 'test',
-);
-ok($allocation, 'created test allocation');
-printf("Created allocation with mount_path = %s, expected mount_path = %s\n",
-    $allocation->mount_path,
-    $volume->mount_path);
+    # Add volumes to test group
+    my $assignment = Genome::Disk::Assignment->create(
+        volume => $volume,
+        group => $group,
+    );
+    ok($assignment, 'assigned first test volume to group');
+    Genome::Sys->create_directory(join('/', $volume->mount_path, $group->subdirectory));
 
-# Create and exeucte move command object
-my $cmd = Genome::Disk::Command::Allocation::Move->create(
-    allocations => [$allocation],
-    target_volume => $other_volume,
-);
+    my $other_assignment = Genome::Disk::Assignment->create(
+        volume => $other_volume,
+        group => $group,
+    );
+    ok($other_assignment, 'add second test volume to group');
+    Genome::Sys->create_directory(join('/', $other_volume->mount_path, $group->subdirectory));
 
-ok($cmd, 'created move command successfully');
-ok($cmd->execute, 'executed command');
-printf("alloc mount path: '%s', target mount path: '%s'\n",
-    $allocation->mount_path, $other_volume->mount_path);
-is($allocation->volume->id, $other_volume->id, 'allocation successfully moved to other volume');
+    my $another_assignment = Genome::Disk::Assignment->create(
+        volume => $another_volume,
+        group => $group2,
+    );
+    ok($another_assignment, 'add third test volume to group');
 
-# Now simulate the command being run from the CLI
-my @args = ('--target-volume', 'mount_path=' . $volume->mount_path, $allocation->id);
-my $rv = Genome::Disk::Command::Allocation::Move->_execute_with_shell_params_and_return_exit_code(@args);
-ok($rv == 0, 'successfully executed command using simulated command line arguments');
-is($allocation->volume->id, $volume->id, 'allocation updated as expected after move');
+    # Make test allocation
+    my $allocation_path = tempdir(
+        "allocation_test_1_XXXXXX",
+        CLEANUP => 1,
+        UNLINK => 1,
+    );
+    $allocation = Genome::Disk::Allocation->create(
+        mount_path => $volume->mount_path,
+        disk_group_name => $group->disk_group_name,
+        allocation_path => $allocation_path,
+        kilobytes_requested => 100,
+        owner_class_name => 'UR::Value',
+        owner_id => 'test',
+    );
+    ok($allocation, 'created test allocation');
+    printf("Created allocation with mount_path = %s, expected mount_path = %s\n",
+        $allocation->mount_path,
+        $volume->mount_path);
+
+};
+
+subtest move_via_object => sub {
+    plan tests => 3;
+
+    my $cmd = Genome::Disk::Command::Allocation::Move->create(
+        allocations => [$allocation],
+        target_group => $allocation->group,
+        target_volume => $other_volume,
+    );
+    ok($cmd, 'created move command successfully');
+    ok($cmd->execute, 'executed command');
+    printf("alloc mount path: '%s', target mount path: '%s'\n",
+        $allocation->mount_path, $other_volume->mount_path);
+    is($allocation->volume->id, $other_volume->id, 'allocation successfully moved to other volume');
+
+};
+
+subtest move_via_cli => sub {
+    plan tests => 2;
+
+    my @args = ('--target-volume', 'mount_path=' . $volume->mount_path, $allocation->id);
+    my $rv = Genome::Disk::Command::Allocation::Move->_execute_with_shell_params_and_return_exit_code(@args);
+    ok($rv == 0, 'successfully executed command using simulated command line arguments');
+    is($allocation->volume->id, $volume->id, 'allocation updated as expected after move');
+
+};
+
+subtest 'fail when specifing both group and volume where volume is not in group' => sub{
+    plan tests => 3;
+
+    my $cmd = Genome::Disk::Command::Allocation::Move->create(
+        allocations => [$allocation],
+        target_group => $volume->groups,
+        target_volume => $another_volume,
+    );
+    ok($cmd, 'created move command successfully');
+    ok(!$cmd->execute, 'failed to execute command');
+    my @errors = $cmd->__errors__;
+    like($errors[0]->desc, qr/Specified target volume \(.+\) does not belong to group: testing/, 'correct error');
+
+};
 
 done_testing();

@@ -1,0 +1,36 @@
+##fileformat=VCFv4.1
+##center=genome.wustl.edu
+##fileDate=20150819
+##phasing=none
+##reference=ftp://ftp.ncbi.nih.gov/genbank/genomes/Eukaryotes/vertebrates_mammals/Homo_sapiens/GRCh37/special_requests/GRCh37-lite.fa.gz
+##source=Samtools
+##source=Sniper
+##source=VarscanSomatic
+##INFO=<ID=ALLFILTERSPASS,Number=A,Type=Integer,Description="Flags whether the alternate allele passed all the soft filters: CONSEQUENCE_MISSENSE_VARIANT">
+##INFO=<ID=CONSEQUENCE_MISSENSE_VARIANT,Number=A,Type=Integer,Description="Transcript consequence is: missense_variant">
+##FORMAT=<ID=BQ,Number=.,Type=Integer,Description="Average base quality for reads supporting alleles">
+##FORMAT=<ID=BCOUNT,Number=4,Type=Integer,Description="Occurrence count for each base at this site (A,C,G,T)">
+##FORMAT=<ID=FA,Number=1,Type=Float,Description="Fraction of reads supporting ALT">
+##FORMAT=<ID=SSC,Number=1,Type=Integer,Description="Somatic score between 0 and 255">
+##FORMAT=<ID=DP4,Number=4,Type=Integer,Description="Number of high-quality ref-forward, ref-reverse, alt-forward and alt-reverse bases">
+##FORMAT=<ID=SS,Number=1,Type=Integer,Description="Variant status relative to non-adjacent Normal,0=wildtype,1=germline,2=somatic,3=LOH,4=post-transcriptional modification,5=unknown">
+##FORMAT=<ID=VAQ,Number=1,Type=Integer,Description="Variant allele quality">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Depth of reads supporting alleles 0/1/2/3...">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth at this position in the sample">
+##FORMAT=<ID=GQ,Number=.,Type=Integer,Description="Conditional Phred-scaled genotype quality">
+##FORMAT=<ID=AMQ,Number=.,Type=Integer,Description="Average mapping quality for each allele present in the genotype">
+##FORMAT=<ID=JGQ,Number=1,Type=Integer,Description="Joint genotype quality (only filled if called in join prior mode)">
+##FORMAT=<ID=FT,Number=1,Type=String,Description="Sample genotype filter">
+##FORMAT=<ID=MQ,Number=1,Type=Integer,Description="Phred style probability score that the variant is novel with respect to the genome's ancestor">
+##FORMAT=<ID=IGT,Number=1,Type=String,Description="Genotype when called independently (only filled if called in joint prior mode)">
+##FILTER=<ID=PASS,Description="Passed all filters">
+##FILTER=<ID=VarscanHighConfidence,Description="Filter description">
+##FILTER=<ID=FalsePositive,Description="Filter description">
+##FILTER=<ID=SnpFilter,Description="Filter description">
+##FILTER=<ID=SomaticScoreMappingQuality,Description="Filter description">
+##FILTER=<ID=MERGE_REJECT,Description="Rejected by vcf-merge (duplicate locus in same source file)">
+##FILTER=<ID=IntersectionFailure,Description="Variant callers do not agree on this position">
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence type as predicted by VEP. Format: Allele|Gene|Feature|Feature_type|Consequence|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|DISTANCE|STRAND|CANONICAL|SYMBOL|SYMBOL_SOURCE|SIFT|PolyPhen|HGVSc|HGVSp|WildtypeProtein|DownstreamProtein|ProteinLengthChange">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S2
+1	16778469	.	TG	T	.	.	CSQ=-|ENSG00000157191|ENST00000443980|Transcript|frameshift_variant&feature_truncation|653|627|209|||||||||1|YES|NECAP2|HGNC|||ENST00000443980.2:c.627delG|ENSP00000391942.2:p.Gly211AspfsTer30|MEESGYESVLCVKPDVHVYRIPPRATNRGYRAAEWQLDQPSWSGRLRITAKGQMAYIKLEDRTSGELFAQAPVDQFPGTAVESVTDSSRYFVIRIEDGNGRRAFIGIGFGDRGDAFDFNVALQDHFKWVKQQCEFAKQAQNPDQGPKLDLGFKEGQTIKLNIANMKKKEGAAGNPRVRPASTGGLSLLPPPPGGKTSTLIPPPGEQLAVGGSLVQPAVAPSSDQLPARPSQAQAGSSSDLSTVFPHVTSGKALPHLGQRKEDEALLSWPVFGA|GGSLVQPAVAPSSDQLPARPSQAQAGSSSDLSTVFPHVTSGKALPHLGQRKEDEALLSWPVFGAWGDPSSSQQLLPVQINFQPDPARHRLGPVLT|31	GT:DP:DP4:BQ:SS:FT	0/0:7:.,.,.,.:.:.:VarscanHighConfidenceIndel	0/1:10:2,4,3,1:.:2:VarscanHighConfidenceIndel

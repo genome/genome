@@ -65,7 +65,7 @@ sub _execute {
             $self->status_message("Found $num_allocations archived allocations related to this build, " .
                 "starting unarchive process now.");
             # Schedule unarchive of all allocations related to build via LSF
-            my %jobs_to_allocations = $self->_bsub_unarchives($dir, @allocations);
+            my %jobs_to_allocations = $self->_bsub_unarchives_and_wait_completion($dir, @allocations);
             %job_to_allocation_mapping = %jobs_to_allocations;
             my @job_ids = keys %job_to_allocation_mapping;
             $self->debug_message("Unarchives scheduled, waiting for completion");
@@ -83,7 +83,7 @@ sub _execute {
         if ( @symlinked_allocations_that_need_unarchiving ) {
             $num_allocations += @symlinked_allocations_that_need_unarchiving;
             $self->status_message("Found ".@symlinked_allocations_that_need_unarchiving." archived symlinked allocations. Unarchiving...");
-            my %jobs_to_allocations = $self->_bsub_unarchives($dir, @symlinked_allocations_that_need_unarchiving);
+            my %jobs_to_allocations = $self->_bsub_unarchives_and_wait_completion($dir, @symlinked_allocations_that_need_unarchiving);
             %job_to_allocation_mapping = %jobs_to_allocations;
             my @symlinked_allocation_job_ids = keys %jobs_to_allocations;
             $self->debug_message("Unarchives for symlinked allocations scheduled, waiting for completion");
@@ -158,31 +158,42 @@ sub _execute {
     return 1;
 }
 
-sub _bsub_unarchives {
+sub _bsub_unarchives_and_wait_completion {
     my $self = shift;
     my $log_file_dir = shift;
     my @allocations = @_;
 
-    my $lab = $self->lab;
+    my $analysis_project = $self->analysis_project->id;
     my $requestor = $self->requestor->id;
 
-    my %job_to_allocation_mapping;
+    my @allocation_ids = map { $_->id } @allocations;
+    my @unarchive_commands;
     for my $allocation (@allocations) {
         my $allocation_id = $allocation->id;
         my @cmd = ('genome', 'disk', 'allocation', 'unarchive', $allocation_id,
-            '--lab', $lab, '--requestor', $requestor,
+            '--analysis-project', $analysis_project, '--requestor', $requestor,
         );
-        my $job_id = Genome::Sys->bsub(
-            queue => Genome::Config::get('lsf_queue_build_worker'),
-            cmd => \@cmd,
-            log_file => "$log_file_dir/$allocation_id.out",
-            err_file => "$log_file_dir/$allocation_id.err",
-            job_group => '/apipe/build-unarchive',
-        );
-        $job_to_allocation_mapping{$job_id} = $allocation_id;
-        $self->debug_message("Scheduled unarchive of allocation $allocation_id  " .
-            "via LSF job $job_id");
+        push @unarchive_commands,
+                { cmd => \@cmd,
+                  log_file => "$log_file_dir/$allocation_id.out",
+                  err_file => "$log_file_dir/$allocation_id.err",
+                };
     }
+
+    my %job_to_allocation_mapping;
+    my $on_submit = sub {
+        my($idx, $job_id) = @_;
+        my $allocation_id = $allocation_ids[$idx];
+        $self->debug_message("Scheduled unarchive of allocation $allocation_id  via LSF job $job_id");
+        $job_to_allocation_mapping{$job_id} = $allocation_ids[$idx];
+    };
+
+    my @statuses = Genome::Sys->bsub_and_wait_for_completion(
+                    queue => Genome::Config::get('lsf_queue_build_worker'),
+                    job_group => '/apipe/build-unarchive',
+                    cmds => \@unarchive_commands,
+                    on_submit => $on_submit,
+                  );
     return %job_to_allocation_mapping;
 }
 

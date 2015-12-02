@@ -21,7 +21,6 @@ sub resolve_class_and_params_for_argv {
     }
     else {
         #warn "already on the LIMS interpreter: running normally\n";
-        $ENV{'LIMS_PERL'} = 1;
         return $class->SUPER::resolve_class_and_params_for_argv(@_);
     }
 }

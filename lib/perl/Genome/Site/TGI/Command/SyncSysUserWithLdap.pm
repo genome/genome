@@ -9,6 +9,7 @@ use Net::LDAP;
 
 class Genome::Site::TGI::Command::SyncSysUserWithLdap{
     is => 'Command::V2',
+    doc => 'Sync Genome sys users from LDAP users',
 };
 
 sub execute {
@@ -26,7 +27,7 @@ sub execute {
     my $changes_count = $create_count + $delete_count;
 
     if ($changes_count < 1) {
-        $self->status("No differences found between database and ldap...exiting.\n");
+        $self->status_message("No differences found between database and ldap...exiting.\n");
         return 1;
     }
 
@@ -37,7 +38,7 @@ sub execute {
 
     for my $u (@{ $changes->{'create'} }) {
         my $email = $u->get_value('mail');
-        $self->status("CREATE: $email\n");
+        $self->status_message("CREATE: $email\n");
         Genome::Sys::User->create(
             email => $email,
             name => $u->get_value('cn'),
@@ -46,11 +47,11 @@ sub execute {
     }
 
     for my $u (@{ $changes->{'delete'} }) {
-        $self->status("DELETE: " . $u->email . "\n");
+        $self->status_message("DELETE: " . $u->email . "\n");
         $u->delete();
     }
 
-    $self->status("done- $create_count creates, $delete_count deletes, $changes_count total\n");
+    $self->status_message("done- $create_count creates, $delete_count deletes, $changes_count total\n");
 }
 
 sub get_ldap_users {
@@ -112,11 +113,5 @@ sub get_changes {
     return $changes;
 }
 
-sub status {
-    # Suppress status when running in cron.
-    if ( -t STDOUT ) {
-        print @_;
-    }
-}
-
 1;
+

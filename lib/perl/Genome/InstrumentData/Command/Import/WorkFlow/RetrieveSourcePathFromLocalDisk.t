@@ -11,7 +11,7 @@ require File::Temp;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePathFromLocalDisk') or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v5') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
 my $source_basename = 'input.bam';
 my $source_path =File::Spec->join($test_dir, $source_basename);
 my $source_md5_path = $source_path.'.md5';

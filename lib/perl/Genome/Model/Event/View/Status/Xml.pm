@@ -221,32 +221,6 @@ sub calculate_elapsed_time {
 
 }
 
-
-our $JOB_TO_STATUS;
-sub load_lsf_job_status {
-    my $self = shift;
-
-    # NOTE: This caches the lsf job data for as long as the process stays alive.
-    # For now, this thing is run from a regular CGI script, so the process dies pretty
-    # quickly.  But if things change so that the process lives for a while, then
-    # a different cache aging mechanism should be set up
-    unless ($JOB_TO_STATUS) {
-        $JOB_TO_STATUS = {};
-
-        my $lsf_file = '/gsc/var/cache/testsuite/lsf-tmp/bjob_query_result.txt';
-        my $fh = IO::File->new($lsf_file);
-        my $lsf_file_data = do { local( $/ ) ; <$fh> } ;
-        $fh->close;
-        while ($lsf_file_data =~ m/^(\S+)\s+(\S+)\s+(\S+).*?\n/gm) {
-            $JOB_TO_STATUS->{$1} = $3;
-        }
-        delete $JOB_TO_STATUS->{'JOBID'};
-    }
-    return $JOB_TO_STATUS;
-}
-
-
-
 sub get_lsf_job_status {
     my $self = shift;
     my $lsf_job_id = shift;
@@ -254,30 +228,17 @@ sub get_lsf_job_status {
     my $result;
 
     if ( defined($lsf_job_id) ) {
-
-        #check the user specified flag to determine how to retrieve lsf status
-#        if ($self->use_lsf_file) {
-#            #get the data from the preloaded hash of lsf info (from file)
-#            #my %job_to_status = %{$self->_job_to_status};
-#            #$result = $job_to_status {$lsf_job_id};
-#            $result = $self->{'_job_to_status'}->{$lsf_job_id};
-#            if (!defined($result) ) {
-#                $result = "UNAVAILABLE";
-#            }
-#        } else {
-            #get the data directly from lsf via bjobs command
-            my @lines = `bjobs $lsf_job_id 2>/dev/null`;
-            #parse the bjobs output.  get the 3rd field of the 2nd line.
-            if ( (scalar(@lines)) > 1) {
-                my $line = $lines[1];
-                my @fields = split(" ",$line);
-                $result = $fields[2];
-            } else {
-                #if there are no results from bjobs, lsf forgot about the job already.
-                $result = "UNAVAILABLE";
-            }
-#        }
-
+        #get the data directly from lsf via bjobs command
+        my @lines = `bjobs $lsf_job_id 2>/dev/null`;
+        #parse the bjobs output.  get the 3rd field of the 2nd line.
+        if ( (scalar(@lines)) > 1) {
+            my $line = $lines[1];
+            my @fields = split(" ",$line);
+            $result = $fields[2];
+        } else {
+            #if there are no results from bjobs, lsf forgot about the job already.
+            $result = "UNAVAILABLE";
+        }
     } else {
         #if the input LSF ID is not defined, mark it as unscheduled.
         $result = "UNSCHEDULED";

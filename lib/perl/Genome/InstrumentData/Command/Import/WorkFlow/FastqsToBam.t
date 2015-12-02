@@ -15,13 +15,15 @@ require Genome::Utility::Test;
 require File::Compare;
 require File::Spec;
 require File::Temp;
+require Sub::Install;
 use Test::More;
 
-use_ok('Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam') or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v3') or die;
+my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam';
+use_ok($class) or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-
+$helpers->overload_uuid_generator_for_class($class);
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
 my @source_fastq_base_names = (qw/ input.1.fastq.gz input.2.fastq /);
@@ -31,13 +33,15 @@ Genome::Sys->copy_file($fastq_paths[0], $source_fastq_paths[0]);
 Genome::Sys->create_symlink($fastq_paths[1], $source_fastq_paths[1]);
 
 my $sample_name = '__TEST_SAMPLE__';
-my $library_name = join('-', $sample_name, 'extlibs');
+my $library = Genome::Library->__define__(
+    name => join('-', $sample_name, 'extlibs'),
+    sample => Genome::Sample->__define__(name => $sample_name),
+);
 
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam->execute(
     working_directory => $tmp_dir,
     fastq_paths => \@source_fastq_paths,
-    sample_name => $sample_name,
-    library_name => $library_name,
+    library => $library,
 );
 ok($cmd->result, 'execute');
 my $output_bam_path = $cmd->output_bam_path;

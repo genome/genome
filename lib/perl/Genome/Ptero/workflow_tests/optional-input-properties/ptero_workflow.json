@@ -80,6 +80,7 @@
                                                    "test_logs/optional-input-properties"
                                                 ],
                                                 "environment" : {
+                                                   "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                 },
                                                 "user" : "dmorton",
@@ -91,25 +92,19 @@
                                           {
                                              "name" : "execute",
                                              "parameters" : {
-                                                "commandLine" : [
-                                                   "genome",
-                                                   "ptero",
-                                                   "wrapper",
-                                                   "--command-class",
-                                                   "Genome::Ptero::TestCommand::OptionalInputCommand",
-                                                   "--method",
-                                                   "execute",
-                                                   "--log-directory",
-                                                   "test_logs/optional-input-properties"
-                                                ],
+                                                "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::OptionalInputCommand --method execute --log-directory test_logs/optional-input-properties",
+                                                "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                                 "environment" : {
+                                                   "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                 },
-                                                "user" : "dmorton",
-                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                                "options" : {},
+                                                "pollingInterval" : 300,
+                                                "rLimits" : {},
+                                                "user" : "dmorton"
                                              },
                                              "service" : "job",
-                                             "serviceUrl" : "http://example.com/v1"
+                                             "serviceUrl" : "http://lsf.example.com/v1"
                                           }
                                        ]
                                     }

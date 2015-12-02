@@ -1,0 +1,37 @@
+ABCDEFGHIJ:
+    0: 10
+BCDEFGHIJK:
+    1: 10
+CDEFGHIJKL:
+    2: 10
+DEFGHIJKLN:
+    3: 10
+EFGHIJKLNO:
+    4: 10
+FGHIJKLNOP:
+    5: 10
+GHIJKLNOPQ:
+    6: 10
+HIJKLNOPQR:
+    7: 10
+IJKLNOPQRS:
+    8: 10
+JKLNOPQRST:
+    9: 10
+KLNOPQRSTU:
+    10: 10
+LNOPQRSTUV:
+    11: 10
+NOPQRSTUVM:
+    0: 0
+    1: 0
+    2: 0
+    3: 0
+    4: 0
+    5: 0
+    6: 0
+    7: 0
+    8: 0
+    9: 0
+    10: 0
+    11: 0

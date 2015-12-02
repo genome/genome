@@ -9,11 +9,12 @@ use Data::Dump qw(pp);
 use Scalar::Util qw();
 use Try::Tiny qw(try catch);
 use JSON qw(to_json);
-use List::MoreUtils qw(uniq);
+use List::MoreUtils qw(uniq any);
 use Genome::Disk::Group::Validate::GenomeDiskGroups;
 use Genome::Utility::Inputs qw(encode);
 use Cwd qw(abs_path);
 use File::DirCompare;
+use Genome::Ptero::Utils qw(ptero_proxy);
 
 class Genome::Process {
     is => [
@@ -136,7 +137,6 @@ sub run {
         return $self->_execute_process($transaction);
     } else {
         if (Genome::Config::get('workflow_builder_backend') eq 'ptero') {
-            local $ENV{PTERO_WORKFLOW_SUBMIT_URL} = Genome::Config::get('ptero_workflow_submit_url');
             $self->_submit_process($transaction);
         } else {
             local $ENV{WF_USE_FLOW} = 1 unless
@@ -241,12 +241,8 @@ sub _submit_process {
     }
 
     my $cmd = Genome::Process::Command::Run->create(
-        process => $self,
-    );
-    my $wf_proxy = $cmd->submit();
-    $self->status_message("Successfully launched process (%s) and ".
-        "submitted PTero workflow (%s)",
-        $self->id, $wf_proxy->url);
+        process => $self, update_with_commit => 0);
+    $cmd->submit();
 }
 
 sub create {
@@ -338,6 +334,11 @@ sub lsf_job_id {
 sub workflow_name {
     my $self = shift;
     return sprintf('Genome::Process(%s)', $self->id);
+}
+
+sub ptero_workflow_proxy {
+    my $self = shift;
+    return ptero_proxy($self->workflow_name);
 }
 
 sub lsf_project_name {
@@ -657,7 +658,7 @@ sub is_cle_verified {
     my $self = shift;
 
     for my $result ($self->unique_results) {
-        unless ($self->result_is_on_cle_disk_group($result)) {
+        unless ($self->result_is_index_result($result) or $self->result_is_on_cle_disk_group($result)) {
             return 0;
         }
     }
@@ -672,6 +673,13 @@ sub result_is_on_cle_disk_group {
     my $disk_group_name = $allocation->disk_group_name;
 
     return Genome::Disk::Group::Validate::GenomeDiskGroups::is_cle_disk_group_name($disk_group_name);
+}
+
+sub result_is_index_result {
+    my $self = shift;
+    my $result = shift;
+
+    return any { $result->isa($_) } (qw(Genome::Db::Ensembl::Api Genome::Db::Ensembl::VepCache));
 }
 
 sub compare_output {

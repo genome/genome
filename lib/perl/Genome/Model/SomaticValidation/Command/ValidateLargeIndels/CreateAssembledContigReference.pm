@@ -87,19 +87,6 @@ sub execute {
     $self->tier_files(1);
 
     my $long_indel_bed_file = $self->_resolve_long_indel_bed_file;
-    my $skip_msg = 'Skipping long indel validation';
-
-    unless ($long_indel_bed_file) {
-        $self->warning_message("No long indel bed file exists with size. $skip_msg");
-        $self->skip(1);
-        return 1;
-    }
-    unless ($self->build->normal_sample) {
-        $self->warning_message("Somatic validation of a single bam.  $skip_msg");
-        $self->skip(1);
-        return 1;
-    }
-    $self->skip(0);
     $self->_long_indel_bed_file($long_indel_bed_file);
 
     my $sample_id = Data::UUID->new->create_str();
@@ -127,7 +114,7 @@ sub execute {
 
     my $contigs_file = $cmd->contigs_fasta;
     unless (-s $contigs_file) {
-        $self->warning_message("Failed to get valid assembly contig fasta. $skip_msg");
+        $self->warning_message("Failed to get valid assembly contig fasta. Skipping remainder of long indel validation.");
         $self->skip(1);
         return 1;
     }
@@ -199,19 +186,37 @@ sub _create_output_directory {
 sub skip_validation {
     my $self = shift;
 
+    my $should_skip = 0;
     unless($self->build->run_indel_validation) {
         $self->debug_message('Build indicates indel validation should be skipped.');
+        $should_skip = 1;
+    }
+
+    my $long_indel_bed_file = $self->_resolve_long_indel_bed_file;
+    my $skip_msg = 'Skipping long indel validation';
+
+    unless ($long_indel_bed_file) {
+        $self->warning_message("No long indel bed file exists with size. $skip_msg");
+        $should_skip = 1;
+    }
+    unless ($self->build->normal_sample) {
+        $self->warning_message("Somatic validation of a single bam.  $skip_msg");
+        $should_skip = 1;
+    }
+
+    if ($should_skip) {
         $self->skip(1);
         $self->_resolve_output_directory;
 
         $self->reference_build_id(1);
         $self->contigs_fasta(1);
         $self->tier_files(1);
-
-        return 1;
+    } else {
+        $self->skip(0);
     }
 
-    return;
+    return $self->skip;
 }
+
 1;
 
