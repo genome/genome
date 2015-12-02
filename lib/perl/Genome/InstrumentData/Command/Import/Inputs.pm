@@ -95,7 +95,7 @@ sub as_hashref {
 
     my %hash = map { $_ => $self->$_ } (qw/ analysis_project library /);
     $hash{instrument_data_properties} = $self->entity_params->{instdata};
-    $hash{downsample_ratio} = $self->entity_params->{instdata}->{downsample_ratio};
+    $hash{downsample_ratio} = $self->entity_params->{instdata}->{downsample_ratio} if $self->entity_params->{instdata}->{downsample_ratio};
     my @source_paths = $self->source_paths;
     $hash{source_paths} = ( @source_paths > 1 ) ? \@source_paths : $source_paths[0];
 
