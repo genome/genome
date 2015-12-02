@@ -29,15 +29,10 @@
       * instrument_data
     
      Specific params for Genome::Model::MetagenomicCompositionShotgun
-      * contamination_screen_reference (many)
-      * first_viral_verification_alignment_reference (singular)
       * merge_roi_set (singular)
-      * metagenomic_references (many)
       * region_of_interest_set_name (many)
       * roi_track_name (singular)
-      * second_viral_verification_alignment_reference (singular)
       * short_roi_names (singular)
-      * unaligned_metagenomic_alignment_reference (singular)
 
 
 
