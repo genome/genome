@@ -91,6 +91,60 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>config',
+    [
+      '>add',
+      [
+        'name=s',
+        'files',
+        'file-path=s',
+        undef,
+        'type=s',
+        [
+          'wgs',
+          'exome',
+          'all'
+        ],
+        'help!',
+        undef
+      ],
+      '>save-to-file',
+      [
+        'config-item=s',
+        undef,
+        'file-path=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>list',
+      [
+        'show=s',
+        'files',
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'order-by=s',
+        'files',
+        'filter=s',
+        'files',
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     'help!',
     undef
   ],
