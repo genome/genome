@@ -220,7 +220,7 @@ sub resolve_cghub_id {
         unless (defined $id) {
             $id = $id_by_bam_base->{basename $merged_bam};
             unless (defined $id) {
-                $self->fatal_message("CGHub id could not be resolved for build %s with bam file: %s", $build->id, $build->whole_rmdup_bam_file);
+                $self->fatal_message("CGHub id could not be resolved for build %s with bam file: %s", $build->id, $merged_bam);
             }
         }
     }
