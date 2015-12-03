@@ -3,6 +3,7 @@ package Genome::Model::Tools::Tcga::Sdrf;
 use strict;
 use warnings;
 use Genome;
+use File::Basename;
 
 my $NULL_CHARACTER = "->";
 
@@ -197,21 +198,30 @@ sub fill_in_common_fields {
 }
 
 sub resolve_cghub_id {
-    my $self = shift;
-    my $build = shift;
+    my ($self, $build) = @_;
 
     unless (defined $CGHUB_INFO) {
         $CGHUB_INFO = $self->load_cghub_info("BAM_path");
     }
 
+    my $id_by_bam_base;
+    while (my($bam_path, $cghub_id) = each %$CGHUB_INFO) {
+        $id_by_bam_base->{basename $bam_path} = $cghub_id;
+    }
+
     unless (defined $CGHUB_INFO_BY_TCGA_NAME) {
         $CGHUB_INFO_BY_TCGA_NAME = $self->load_cghub_info("TCGA_Name");
     }
-    my $id = $CGHUB_INFO->{$build->whole_rmdup_bam_file};
+
+    my $merged_bam = $build->whole_rmdup_bam_file;
+    my $id = $CGHUB_INFO->{$merged_bam};
     unless (defined $id) {
-        $id = $CGHUB_INFO_BY_TCGA_NAME->{$build->subject->extraction_label};
+        $id = $id_by_bam_base->{basename $merged_bam};
         unless (defined $id) {
-            die("CGHub id could not be resolved for build ".$build->id." with bam file ".$build->whole_rmdup_bam_file);
+            $id = $CGHUB_INFO_BY_TCGA_NAME->{$build->subject->extraction_label};
+            unless (defined $id) {
+                $self->fatal_message("CGHub id could not be resolved for build %s with bam file: %s", $build->id, $build->whole_rmdup_bam_file);
+            }
         }
     }
     return $id;
