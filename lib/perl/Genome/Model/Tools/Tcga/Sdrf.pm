@@ -216,9 +216,9 @@ sub resolve_cghub_id {
     my $merged_bam = $build->whole_rmdup_bam_file;
     my $id = $CGHUB_INFO->{$merged_bam};
     unless (defined $id) {
-        $id = $id_by_bam_base->{basename $merged_bam};
+        $id = $CGHUB_INFO_BY_TCGA_NAME->{$build->subject->name_in_vcf};
         unless (defined $id) {
-            $id = $CGHUB_INFO_BY_TCGA_NAME->{$build->subject->name_in_vcf};
+            $id = $id_by_bam_base->{basename $merged_bam};
             unless (defined $id) {
                 $self->fatal_message("CGHub id could not be resolved for build %s with bam file: %s", $build->id, $build->whole_rmdup_bam_file);
             }
