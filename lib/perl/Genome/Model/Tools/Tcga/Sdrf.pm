@@ -47,7 +47,9 @@ my @HEADERS = (
 );
 
 my $CGHUB_INFO;
+my $CGHUB_INFO_BY_BAM_BASE;
 my $CGHUB_INFO_BY_TCGA_NAME;
+
 
 class Genome::Model::Tools::Tcga::Sdrf {
     has => [
@@ -204,9 +206,10 @@ sub resolve_cghub_id {
         $CGHUB_INFO = $self->load_cghub_info("BAM_path");
     }
 
-    my $id_by_bam_base;
-    while (my($bam_path, $cghub_id) = each %$CGHUB_INFO) {
-        $id_by_bam_base->{basename $bam_path} = $cghub_id;
+    unless (defined $CGHUB_INFO_BY_BAM_BASE) {
+        while (my($bam_path, $cghub_id) = each %$CGHUB_INFO) {
+            $CGHUB_INFO_BY_BAM_BASE->{basename $bam_path} = $cghub_id;
+        }
     }
 
     unless (defined $CGHUB_INFO_BY_TCGA_NAME) {
@@ -218,7 +221,7 @@ sub resolve_cghub_id {
     unless (defined $id) {
         $id = $CGHUB_INFO_BY_TCGA_NAME->{$build->subject->name_in_vcf};
         unless (defined $id) {
-            $id = $id_by_bam_base->{basename $merged_bam};
+            $id = $CGHUB_INFO_BY_BAM_BASE->{basename $merged_bam};
             unless (defined $id) {
                 $self->fatal_message("CGHub id could not be resolved for build %s with bam file: %s", $build->id, $merged_bam);
             }
