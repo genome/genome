@@ -28,13 +28,13 @@ subtest "one alt allele  - multiple samples" => sub {
 
     my %expected = (
         G => {
-            S1_vaf => 341/365*100,
+            S1_vaf => 99.1279069767442,
             S1_ref_count => 3,
             S1_var_count => 341,
-            S2_vaf => 341/365*100,
+            S2_vaf => 99.1279069767442,
             S2_ref_count => 3,
             S2_var_count => 341,
-            S3_vaf => 341/365*100,
+            S3_vaf => 99.1279069767442,
             S3_ref_count => 3,
             S3_var_count => 341,
         }
@@ -44,8 +44,8 @@ subtest "one alt allele  - multiple samples" => sub {
     my %result = $interpreter->interpret_entry($entry, ['G']);
     is(keys %result, keys %expected, "First level keys as expected");
     is_deeply(\%result, \%expected, "Values are as expected");
-    cmp_ok($result{G}->{S1_vaf}, ">", 93, 'vaf is in the desired range');
-    cmp_ok($result{G}->{S1_vaf},  "<", 94, 'vaf is in the desired range');
+    cmp_ok($result{G}->{S1_vaf}, ">", 99, 'vaf is in the desired range');
+    cmp_ok($result{G}->{S1_vaf},  "<", 100, 'vaf is in the desired range');
     cmp_bag([$interpreter->available_fields], [keys %{$expected{G}}], 'Available fields as expected');
 };
 
@@ -55,7 +55,7 @@ subtest "one alt allele" => sub {
 
     my %expected = (
         G => {
-            S1_vaf => 341/365*100,
+            S1_vaf => 99.1279069767442,
             S1_ref_count => 3,
             S1_var_count => 341,
         }
@@ -72,7 +72,7 @@ subtest "insertion" => sub {
 
     my %expected = (
         AA => {
-            S4_vaf => 20/365*100,
+            S4_vaf => 5.81395348837209,
             S4_ref_count => 3,
             S4_var_count => 20,
         }
@@ -89,7 +89,7 @@ subtest "deletion" => sub {
 
     my %expected = (
         A => {
-            S1_vaf => 20/370*100,
+            S1_vaf => 5.81395348837209,
             S1_ref_count => 5,
             S1_var_count => 20,
         }

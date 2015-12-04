@@ -48,7 +48,7 @@ sub is_insertion {
 sub calculate_vaf {
     my ($bam_readcount_entry, $alt_allele, $ref) = @_;
     my $coverage = calculate_coverage_for_allele($bam_readcount_entry, $alt_allele, $ref);
-    my $depth = $bam_readcount_entry->calculated_depth;
+    my $depth = $bam_readcount_entry->depth;
     if ($depth == 0) {
         return 0;
     } else {

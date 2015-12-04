@@ -71,22 +71,6 @@ sub depth {
     return $self->{_depth};
 }
 
-sub calculated_depth {
-    my ($self) = @_;
-    my $depth = 0;
-    if($self->has_per_library) {
-        for my $lib (@{$self->{_libraries}}) {
-            $depth += $lib->depth;
-        }
-    }
-    else {
-        for my $metric (values %{$self->{_allele_metrics}}) {
-            $depth += $metric->count;
-        }
-    }
-    return $depth;
-}
-
 sub libraries {
     my ($self) = @_;
     if(defined $self->{_libraries}) {
