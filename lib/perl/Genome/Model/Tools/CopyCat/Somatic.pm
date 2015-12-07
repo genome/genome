@@ -16,13 +16,13 @@ class Genome::Model::Tools::CopyCat::Somatic{
             is => 'String',
             is_optional => 0,
             is_input => 1,
-            doc => 'normal window file to get reads from (output of gmt copy-number bam-window)',
+            doc => 'normal window file to get reads from (output of gmt bam-window)',
         },
         tumor_window_file => {
             is => 'String',
             is_optional => 0,
             is_input => 1,
-            doc => 'tumor window file to get reads from (output of gmt copy-number bam-window)',
+            doc => 'tumor window file to get reads from (output of gmt bam-window)',
         },
         output_directory => {
             is => 'String',
