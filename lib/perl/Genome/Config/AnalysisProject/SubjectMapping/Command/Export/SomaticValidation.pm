@@ -87,6 +87,7 @@ sub write_line {
     my $fh = shift;
     my @values = @_;
 
+    no warnings qw(uninitialized); #some values are optional, but a placeholder must still appear in the file
     $fh->say(join("\t", @values));
 }
 
