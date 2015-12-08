@@ -12,11 +12,6 @@ use Genome::Model::Tools::DetectVariants2::Utilities qw(
 class Genome::Model::SomaticValidation::Command::ManualResult {
     is => 'Command::V2',
     has_input => [
-        source_build => {
-            id_by => 'source_build_id',
-            is => 'Genome::Model::Build',
-            doc => 'The build on which these variants are based',
-        },
         variant_file => {
             is => 'FilePath',
             doc => 'Path to the file of variants',
@@ -32,6 +27,16 @@ class Genome::Model::SomaticValidation::Command::ManualResult {
         },
     ],
     has_optional_input => [
+        source_build => {
+            id_by => 'source_build_id',
+            is => 'Genome::Model::Build',
+            doc => 'The build containing the data on which these variant calls were based',
+        },
+        reference_sequence_build => {
+            id_by => 'reference_sequence_build_id',
+            is => 'Genome::Model::Build',
+            doc => 'The reference build used for these variants - only required if source_build is not given',
+        },
         format => {
             is => 'Text',
             doc => 'The format of the variant list (e.g. "bed", "samtools", "breakdancer")',
@@ -52,41 +57,54 @@ class Genome::Model::SomaticValidation::Command::ManualResult {
 
 };
 
+
 sub sub_command_category { 'analyst tools' }
 
 sub execute {
     my $self = shift;
 
-    my $source_build = $self->source_build;
-    my $previous_result = final_result_for_variant_type([$source_build->results], $self->variant_type . 's');
-
     $self->variant_file(Cwd::abs_path($self->variant_file));
+
+    if (!defined($self->source_build) && !defined($self->reference_sequence_build)){
+        die("Must supply either a source build or a reference build");
+    }
+
 
     my %params = (
         variant_type => $self->variant_type,
-        reference_build_id => $source_build->reference_sequence_build->id,
         original_file_path => $self->variant_file,
         description => $self->description,
-        format => $self->format,
-        previous_result_id => ($previous_result? $previous_result->id : undef),
         test_name => Genome::Config::get('software_result_test_name') || undef,
-        source_build_id => $source_build->id,
+        format => $self->format,
     );
 
-    # allow tumor only or normal only models.
-    if ($source_build->model->experimental_subject) {
-        $params{sample_id} = $source_build->model->experimental_subject->id;
-    }
-    if ($source_build->model->control_subject) {
-        $params{control_sample_id} = $source_build->model->control_subject->id;
+    my $manual_result;
+
+    if(defined($self->source_build)){
+        my $source_build = $self->source_build;
+        my $previous_result = final_result_for_variant_type([$source_build->results], $self->variant_type . 's');
+        $params{previous_result_id} = ($previous_result? $previous_result->id : undef);
+        $params{source_build_id} = $source_build->id;
+
+        # allow tumor only or normal only models.
+        if ($source_build->model->experimental_subject) {
+            $params{sample_id} = $source_build->model->experimental_subject->id;
+        }
+        if ($source_build->model->control_subject) {
+            $params{control_sample_id} = $source_build->model->control_subject->id;
+        }
+        $params{reference_build_id} = $source_build->reference_sequence_build->id;
+
+        $params{users} = {
+            requestor => $source_build,
+            sponsor   => ($self->analysis_project // Genome::Sys->current_user),
+        };
+        $manual_result = Genome::Model::Tools::DetectVariants2::Result::Manual->get_or_create(%params);
+    } else {
+        $params{reference_build_id} = $self->reference_sequence_build->id;
+        $manual_result = Genome::Model::Tools::DetectVariants2::Result::Manual->create(%params);
     }
 
-    $params{users} = {
-        requestor => $source_build,
-        sponsor   => ($self->analysis_project // Genome::Sys->current_user),
-    };
-
-    my $manual_result = Genome::Model::Tools::DetectVariants2::Result::Manual->get_or_create(%params);
 
     unless($manual_result) {
         die $self->error_message('Failed to generate new result for data.');
