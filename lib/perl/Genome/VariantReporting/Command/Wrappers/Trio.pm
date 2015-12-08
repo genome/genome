@@ -122,7 +122,8 @@ sub add_igv_xml_to_workflow {
     my $model_pairs = shift;
     my @roi_names = @_;
 
-    my %bams = map { $_->get_sample_and_bam_map } @$model_pairs;
+    # If we include the followup model pair then the labels will get assigned incorrectly
+    my %bams = map { $_->get_sample_and_bam_map } grep { $_->label eq 'germline' || $_->label eq 'discovery' } @$model_pairs;
     my @reference_sequence_builds = uniq map { $_->reference_sequence_build } @$model_pairs;
     unless (scalar(@reference_sequence_builds) == 1) {
         die $self->error_message("Found more than one reference sequence build:" .
