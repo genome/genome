@@ -173,7 +173,7 @@ sub execute {
     $idf->print_idf($idf_name);
     $sdrf->print_sdrf($magetab_archive_dir."/".$sdrf_name, @sdrf_rows);
 
-    $self->print_manifest($vcf_archive_dir);
+    $self->print_manifest($vcf_archive_dir) if $self->dump_vcfs;
     $self->print_manifest($magetab_archive_dir);
 
     if ($self->create_archive) {
