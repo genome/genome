@@ -275,7 +275,7 @@ sub resolve_capture_reagent {
         return (undef, undef, undef, undef, undef, undef);
     }
     unless ($build->model->target_region_set_name) {#WGS
-        return (undef, undef, undef, "NA", "NA", "NA");
+        return (undef, undef, undef, "WGS", "WGS", "WGS");
     }
 
     my %CAPTURE_REAGENTS = $self->capture_reagents;
@@ -667,7 +667,7 @@ sub capture_reagents {
             {
                 reagent_vendor => 'Nimblegen',
                 reagent_name   => 'hg18 nimblegen exome version 2',
-                catalog_number => 'NA',
+                catalog_number => 'Proprietary',
                 target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/hg18_nimblegen_exome_version_2/hg18_nimblegen_exome_version_2.bed',
             },
         ],
