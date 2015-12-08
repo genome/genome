@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome::File::BamReadcount::Entry;
+use Genome::File::Vcf::BamReadcountUtilities;
 use JSON qw(to_json from_json);
 use Scalar::Util qw(looks_like_number);
 
@@ -59,23 +60,16 @@ sub add_bam_readcount_entries {
 
 sub get_allele_offsets {
     my $vcf_entry = shift;
-    my $offsets;
-    for my $alt_allele (@{$vcf_entry->{alternate_alleles}}) {
-        if ($vcf_entry->is_deletion($alt_allele)) {
-            $offsets->{$alt_allele} = 1;
-        }
-        else {
-            $offsets->{$alt_allele} = 0;
-        }
-    }
-    return $offsets;
+    my %offsets;
+    @offsets{@{$vcf_entry->{alternate_alleles}}} = Genome::File::Vcf::BamReadcountUtilities::vcf_entry_to_allele_offsets($vcf_entry);
+    return \%offsets;
 }
 
 sub generate_readcount_string {
     my ($vcf_entry, $allele_offsets, $reader) = @_;
     my %allele_hash = %$allele_offsets;
     my $offsets = Set::Scalar->new(values %allele_hash);
-    for my $offset ($offsets->members) {
+    for my $offset (sort { $a <=> $b } $offsets->members) {
         my $bam_readcount_entry = $reader->get_entry($vcf_entry->{chrom},
             $vcf_entry->{position} + $offset);
         if (defined $bam_readcount_entry) {
