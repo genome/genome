@@ -101,6 +101,20 @@ subtest "sample with non-valid caller" => sub {
     run_test($sample_name, %expected_return_values);
 };
 
+subtest "sample with filtered callers" => sub {
+    my $sample_name = "S5";
+    my %expected_return_values = (
+        C => {
+            variant_callers => [qw/Sniper/],
+            variant_caller_count => 1,
+        },
+        G => {
+            variant_callers => [],
+            variant_caller_count => 0,
+        },
+    );
+    run_test($sample_name, %expected_return_values);
+};
 done_testing;
 
 sub run_test {
@@ -130,7 +144,7 @@ sub create_vcf_header {
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
 ##FORMAT=<ID=FT,Number=.,Type=String,Description="Filter">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S1-[VarscanSomatic]	S1-[Sniper]	S1-[Strelka]	S2	S2-[VarscanSomatic]	S2-[Sniper]	S2-[Strelka]	S3	S3-[VarscanSomatic]	S3-[Sniper]	S3-[Strelka]	S4	S4-[VarscanSomatic]	S4-[Sniper]	S4-[Strelka]	S4-[Samtools]
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S1-[VarscanSomatic]	S1-[Sniper]	S1-[Strelka]	S2	S2-[VarscanSomatic]	S2-[Sniper]	S2-[Strelka]	S3	S3-[VarscanSomatic]	S3-[Sniper]	S3-[Strelka]	S4	S4-[VarscanSomatic]	S4-[Sniper]	S4-[Strelka]	S4-[Samtools]	S5	S5-[VarscanSomatic]	S5-[Sniper]	S5-[Strelka]
 
 EOS
     my @lines = split("\n", $header_txt);
@@ -148,7 +162,7 @@ sub create_entry {
         '10.3',         # QUAL
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO
-        'GT:DP',     # FORMAT
+        'GT:DP:FT',     # FORMAT
         "0/1:12",   # FIRST_SAMPLE
         "0/0:12",   # FIRST_SAMPLE_Varscan
         "1/1:12",   # First_SAMPLE_Sniper
@@ -166,6 +180,10 @@ sub create_entry {
         "1/1:12",   # FOURTH_SAMPLE_Sniper
         "1/2:12",   # FOURTH_SAMPLE_Strelka
         "0/1:12",   # FOURTH_SAMPLE_Samtools
+        "0/1:12",   # FIFTH_SAMPLE
+        "0/0:12:.",   # FIFTH_SAMPLE_Varscan
+        "1/1:12:.",   # FIFTH_SAMPLE_Sniper
+        "1/2:12:BAD",   # FIFTH_SAMPLE_Strelka
     );
 
     my $entry_txt = join("\t", @fields);
