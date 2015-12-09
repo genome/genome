@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use Genome::Sys::LockProxy qw();
 use Carp;
+use Scope::Guard;
+use UR::Context::Transaction qw(TRANSACTION_STATE_OPEN);
 
 class Genome::Model {
     is => [ "Genome::Notable", "Genome::Searchable" ],
@@ -492,6 +494,9 @@ sub create {
         }
     }
 
+    my $tx = UR::Context::Transaction->begin(commit_validator => sub { 1 });
+    my $guard = Scope::Guard->new(sub { $tx->rollback });
+
     my $self = $class->SUPER::create($bx);
     unless ($self) {
         return;
@@ -503,7 +508,6 @@ sub create {
             $self->subject($subject);
         }
         else {
-            $self->delete;
             Carp::confess "Could not resolve subject for model";
         }
     }
@@ -529,7 +533,6 @@ sub create {
             return "Missing processing profile; unknown error!";
         };
 
-        $self->delete;
         Carp::confess $reason || $@;
     }
 
@@ -543,7 +546,6 @@ sub create {
             $self->name($name);
         }
         else {
-            $self->delete;
             Carp::confess "Could not resolve default name for model!";
         }
     }
@@ -565,6 +567,8 @@ sub create {
 
     # TODO: the column behind this should become the new primary key when we are fully in sync
     $self->_id($self->id);
+
+    $tx->commit() && $guard->dismiss();
 
     return $self;
 }
@@ -963,7 +967,6 @@ sub _verify_no_other_models_with_same_name_and_type_exist {
             Lingua::EN::Inflect::PL('model', scalar(@models)),
         );
 
-        $self->delete;
         Carp::croak $message;
     }
 
