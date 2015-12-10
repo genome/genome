@@ -58,7 +58,6 @@ sub genome_disk_group_names {
         Genome::Config::get('disk_group_references'),
         Genome::Config::get('disk_group_alignments'),
         Genome::Config::get('disk_group_models'),
-        Genome::Config::get('disk_group_trash'),
         Genome::Config::get('disk_group_research'),
     );
 }
