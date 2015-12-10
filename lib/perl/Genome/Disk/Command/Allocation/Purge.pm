@@ -24,7 +24,7 @@ class Genome::Disk::Command::Allocation::Purge {
 
 sub help_detail {
     return "PERMANENTLY DELETES the allocation's files. The files are "
-        . 'temporarily stored in a trash folder for short-term recovery. '
+        . 'immediately deleted and cannot be recovered. '
         . 'Database records of this allocation will be kept.';
 }
 
