@@ -21,6 +21,10 @@ class Genome::Model::Command::Services::ListBuildQueue {
             default => 50,
             is_optional => 1,
         },
+        running_max => {
+            doc => 'maximum number of running builds per user (assumes run_as will be used)',
+            default => 150,
+        },
     ],
 };
 
@@ -68,7 +72,10 @@ sub execute {
             next RUN_AS;
         }
 
-        my $max_running = ($run_as eq 'apipe-builder'? 650 : 150);
+        my $max_running = $self->running_max;
+        if($run_as eq 'apipe-builder') {
+            $max_running *= 5;
+        }
         my $running_count = $scheduled_count + builds_for($run_as, 'Running');
         if($running_count > $max_running) {
             Genome::Logger->infof(
