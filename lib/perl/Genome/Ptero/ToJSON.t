@@ -22,7 +22,8 @@ for my $test_directory (glob test_data_directory('*')) {
 
     my $json_filename = do {
         local %ENV; # otherwise the JSON contains the current user's environment.
-        $ENV{XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL} = 'http://example.com/v1';
+        Genome::Config::set_env(ptero_shell_command_service_url => 'http://example.com/v1');
+        Genome::Config::set_env(ptero_lsf_service_url => 'http://lsf.example.com/v1');
         my $ptero_builder = $workflow->get_ptero_builder();
 
         my $json_filename = Genome::Sys->create_temp_file_path();
@@ -41,6 +42,7 @@ for my $test_directory (glob test_data_directory('*')) {
         filters => [
             qr/^.*"workingDirectory" :.*$/,
             qr/^.*"user" :.*$/,
+            qr/^.*"cwd" :.*$/,
         ],
     );
 }

@@ -14,6 +14,7 @@ use Sub::Override;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Cwd qw(abs_path);
+use JSON qw(encode_json);
 
 my $pkg = 'Genome::Qc::Tool::Picard::CollectGcBiasMetrics';
 use_ok($pkg);
@@ -42,29 +43,30 @@ my $reference_fasta = abs_path(File::Spec->join($data_dir, 'reference.fasta'));
 my $temp_file = Genome::Sys->create_temp_file_path;
 my $temp_directory = Genome::Sys->create_temp_file_path;
 
-use Genome::Qc::Config;
-my $config_override = Sub::Override->new(
-    'Genome::Qc::Config::get_commands_for_alignment_result',
-    sub {
-        return {
-            picard_collect_gc_bias_metrics => {
-                class => 'Genome::Qc::Tool::Picard::CollectGcBiasMetrics',
-                params => {
-                    input_file => $bam_file,
-                    refseq_file => $reference_fasta,
-                    assume_sorted => 1,
-                    use_version => 1.123,
-                    output_file=> $temp_file,
-                    chart_output => $temp_file,
-                    temp_directory => $temp_directory,
-                },
-            },
+my $config = {
+    picard_collect_gc_bias_metrics => {
+        class => 'Genome::Qc::Tool::Picard::CollectGcBiasMetrics',
+        params => {
+            input_file => $bam_file,
+            refseq_file => $reference_fasta,
+            assume_sorted => 1,
+            use_version => 1.123,
+            output_file=> $temp_file,
+            chart_output => $temp_file,
+            temp_directory => $temp_directory,
         },
     },
+};
+
+my $qc_config_name = 'testing-qc-run';
+my $qc_config_item = Genome::Qc::Config->create(
+    name => $qc_config_name,
+    type => 'wgs',
+    config => encode_json($config),
 );
 
 my $command = Genome::Qc::Run->create(
-    config_name => 'testing-qc-run',
+    config_name => $qc_config_name,
     alignment_result => $alignment_result,
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );
@@ -80,7 +82,7 @@ my @expected_cmd_line =(
     '-Xmx4096m',
     '-XX:MaxPermSize=64m',
     '-cp',
-    '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CollectGcBiasMetrics.jar',
+    '/usr/share/java/ant.jar:/usr/share/java/picard-tools1.123/CollectGcBiasMetrics.jar',
     'picard.analysis.CollectGcBiasMetrics',
     'ASSUME_SORTED=true',
     sprintf('CHART_OUTPUT=%s', $temp_file),

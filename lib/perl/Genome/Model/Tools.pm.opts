@@ -2344,6 +2344,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'bam-readcount-version=s',
       undef,
+      'output-file=s',
+      'files',
       'snp-file=s',
       'files',
       'bam-file-1=s',
@@ -2356,7 +2358,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'model-id-2=s',
       'files',
-      'output-file=s',
+      'output-genotypes=s',
       'files',
       'reference-fasta=s',
       'files',
@@ -7647,6 +7649,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'debug!',
       undef,
+      'evs-maf-file=s',
+      'files',
       'fallback-to-latest-build!',
       undef,
       'filter-regions=s',
@@ -8105,6 +8109,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'create-archive!',
       undef,
       'bgzip-vcfs!',
+      undef,
+      'dump-vcfs!',
       undef,
       'cghub-id-file=s',
       'files',
@@ -9867,6 +9873,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'tmp-dir=s',
       'files',
+      'read-filters=s@',
+      'files',
       'input-bam=s@',
       'files',
       'version=s',
@@ -9889,6 +9897,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'gvcf-gq-bands=s@',
       undef,
+      'intervals=s@',
+      'files',
       'help!',
       undef
     ],
@@ -14715,6 +14725,29 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>new-pipeline',
+    [
+      'output-directory=s',
+      'files',
+      'build=s',
+      undef,
+      'alleles=s@',
+      'files',
+      'epitope-length=s',
+      'files',
+      'netmhc-version=s',
+      [
+        '3.0',
+        '3.4'
+      ],
+      'output-filter=s',
+      [
+        'top',
+        'all'
+      ],
+      'help!',
+      undef
+    ],
     '>parse-netmhcpan-key',
     [
       'netmhc-file=s',
@@ -14740,6 +14773,35 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'output-file=s',
       'files',
       'epitope-length=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>netmhc-pipeline',
+    [
+      'output-directory=s',
+      'files',
+      'input-fasta-file=s',
+      'files',
+      'alleles=s@',
+      'files',
+      'epitope-length=s',
+      'files',
+      'netmhc-version=s',
+      [
+        '3.0',
+        '3.4'
+      ],
+      'output-filter=s',
+      [
+        'top',
+        'all'
+      ],
+      'somatic-variation-build=s',
+      undef,
+      'sample-name=s',
+      'files',
+      'variant-type=s',
       'files',
       'help!',
       undef

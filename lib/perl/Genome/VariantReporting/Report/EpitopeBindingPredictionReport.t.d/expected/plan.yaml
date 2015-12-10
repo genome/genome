@@ -1,0 +1,8 @@
+---
+experts: {}
+needs_translation: 1
+reports:
+  epitope-binding-prediction:
+    filters: {}
+    interpreters:
+      epitope-variant-sequence: {}

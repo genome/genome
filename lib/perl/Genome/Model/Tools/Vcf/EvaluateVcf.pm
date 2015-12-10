@@ -136,41 +136,45 @@ sub execute {
     my $fp_roi_file = $output_dir->file("fp_in_roi.vcf")->stringify;
     my $compare_file = $output_dir->file("compare.txt")->stringify;
 
-    Genome::Sys->create_directory($variants_dir);
-    Genome::Sys->create_symlink($vcf, $orig_file);
-    Genome::Sys->create_symlink($roi, $output_dir->file("roi.bed")->stringify);
-    Genome::Sys->create_symlink($gold_vcf, $output_dir->file("gold.vcf")->stringify);
-
-    if ($tn_bed) {
-        $self->restrict($tn_bed, $roi, $final_tn_file);
+    if (-s $compare_file) {
+        $self->debug_message("Compare file exists, just parse stats");
     }
+    else {
+        Genome::Sys->create_directory($variants_dir);
+        Genome::Sys->create_symlink($vcf, $orig_file);
+        Genome::Sys->create_symlink($roi, $output_dir->file("roi.bed")->stringify);
+        Genome::Sys->create_symlink($gold_vcf, $output_dir->file("gold.vcf")->stringify);
+
+        if ($tn_bed) {
+            $self->restrict($tn_bed, $roi, $final_tn_file);
+        }
 
 
-    # input file processing
-    my $tmp = Genome::Sys->create_temp_file_path;
-    $self->_clean_vcf($orig_file, $tmp);
-    $self->_process_input_file($tmp, $final_input_file);
+        # input file processing
+        my $tmp = Genome::Sys->create_temp_file_path;
+        $self->_clean_vcf($orig_file, $tmp);
+        $self->_process_input_file($tmp, $final_input_file);
 
-    # Gold file processing
-    #  this should be cleaned here because, presumably, allelic primitives has already been run.
-    $self->restrict($gold_vcf, $roi, $tmp);
-    $self->_clean_vcf($tmp, $final_gold_file);
+        # Gold file processing
+        #  this should be cleaned here because, presumably, allelic primitives has already been run.
+        $self->restrict($gold_vcf, $roi, $tmp);
+        $self->_clean_vcf($tmp, $final_gold_file);
 
 
-    $self->compare_partial(
-        $final_input_file,
-        $variants_dir,
-        $final_gold_file,
-        $compare_file,
-        $gold_sample,
-        $old_sample,
-        $new_sample
+        $self->compare_partial(
+            $final_input_file,
+            $variants_dir,
+            $final_gold_file,
+            $compare_file,
+            $gold_sample,
+            $old_sample,
+            $new_sample
         );
-
+    }
     my $tn_bed_size = 'NA';
     if ($tn_bed) {
         $tn_bed_size = $self->true_negative_size
-      || $self->bed_size($final_tn_file);
+        || $self->bed_size($final_tn_file);
     }
 
     my $false_positives_in_roi = 'NA';

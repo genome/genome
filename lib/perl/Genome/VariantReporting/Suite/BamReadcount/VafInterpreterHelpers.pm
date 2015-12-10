@@ -3,6 +3,7 @@ package Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers;
 use strict;
 use warnings;
 use Genome;
+use Genome::Utility::Vcf qw(simplify_indel_allele);
 
 use Exporter 'import';
 
@@ -156,12 +157,11 @@ sub annotate_headers {
 
 sub translate_ref_allele {
     my ($ref, $alt) = @_;
-    if (Genome::VariantReporting::Suite::BamReadcount::VafCalculator::is_deletion($ref, $alt)) {
-        return substr($ref, 1, 1);
+    my ($trimmed_ref, $trimmed_alt, $right_shift) = Genome::Utility::Vcf::simplify_indel_allele($ref, $alt);
+    if ($right_shift < 0) {
+        die "Non-normalized VCF alleles ref=$ref, alt=$alt\n";
     }
-    else {
-        return substr($ref, 0, 1);
-    }
+    return substr($ref, Genome::File::Vcf::BamReadcountUtilities::adjusted_offset($ref, $alt, $right_shift), 1);
 }
 
 1;

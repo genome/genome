@@ -76,8 +76,10 @@ subtest 'optional parameters not specified' => sub {
 
     isa_ok($cmd, $pkg, 'created a dummy test command');
 
+    my $java_path = Genome::Model::Tools::Gatk::Base->__meta__->property(property_name => 'java_interpreter')->default_value;
+
     my @cmdline = $cmd->gatk_command;
-    is_deeply(\@cmdline,[qw(java -Xmx1g -Djava.io.tmpdir=/tmp/testing -jar), $cmd->gatk_path($gatk_version), qw(-et NO_ET -T Magic)], 'generated the expected command line');
+    is_deeply(\@cmdline,[$java_path, qw(-Xmx1g -Djava.io.tmpdir=/tmp/testing -jar), $cmd->gatk_path($gatk_version), qw(-et NO_ET -T Magic)], 'generated the expected command line');
 };
 
 done_testing();

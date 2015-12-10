@@ -33,7 +33,7 @@ class Genome::Model::Tools::Gatk::Base {
         java_interpreter => {
             is => 'Text',
             doc => 'The java interpreter to use',
-            default_value => 'java',
+            default_value => Genome::Sys->java_executable_path('1.7'),
         },
     ],
     has_optional => [

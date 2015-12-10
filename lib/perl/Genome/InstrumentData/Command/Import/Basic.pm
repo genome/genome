@@ -69,7 +69,7 @@ sub execute {
     my $self = shift;
 
     my $work_flow_inputs = $self->_resolve_work_flow_inputs;
-    my $run = Genome::InstrumentData::Command::Import::WorkFlow::Run->create(
+    my $run = Genome::InstrumentData::Command::Import::WorkFlow::ImportInstData->create(
         work_flow_inputs => $work_flow_inputs,
     );
     die $self->error_message(
@@ -87,12 +87,16 @@ sub execute {
 sub _resolve_work_flow_inputs {
     my $self = shift;
 
-    return Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
+    my $factory = Genome::InstrumentData::Command::Import::Inputs::Factory->create(
         analysis_project => $self->analysis_project,
-        library => $self->library,
-        source_files => [ $self->source_files ],
-        instrument_data_properties => $self->_resolve_instrument_data_properties,
     );
+    return $factory->from_params({
+            entity_params => {
+                library => { id => $self->library->id, },
+                instdata => $self->_resolve_instrument_data_properties,
+            },
+            source_paths => [ $self->source_files ],
+        });
 }
 
 sub _resolve_instrument_data_properties {

@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Genome::File::Vcf::Reader;
+use Genome::File::Vcf::BamReadcountUtilities;
 use Sys::Hostname;
 use IPC::Run qw(run);
 
@@ -87,13 +88,8 @@ sub make_region_file {
 sub fill_in_positions {
     my $entry = shift;
     my $positions = shift;
-    my $pos = $entry->{position};
-
-    if ($entry->has_insertion or $entry->has_substitution) {
+    for my $pos (Genome::File::Vcf::BamReadcountUtilities::vcf_entry_to_readcount_positions($entry)) {
         $positions->{$pos}++;
-    }
-    if ($entry->has_deletion) {
-        $positions->{$pos+1}++;
     }
     return;
 }

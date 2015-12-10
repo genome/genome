@@ -17,6 +17,7 @@ use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Sub::Override;
 use Cwd qw(abs_path);
+use JSON qw(encode_json);
 
 my $pkg = 'Genome::Qc::Tool::Picard::CalculateHsMetrics';
 use_ok($pkg);
@@ -56,28 +57,29 @@ my $bait_intervals = File::Spec->join($data_dir, 'bait.intervals');
 my $target_intervals = File::Spec->join($data_dir, 'target.intervals');
 my $temp_file = Genome::Sys->create_temp_file_path;
 
-use Genome::Qc::Config;
-my $override_config = Sub::Override->new(
-    'Genome::Qc::Config::get_commands_for_alignment_result',
-    sub {
-        return {
-            picard_calculate_hs_metrics => {
-                class => 'Genome::Qc::Tool::Picard::CalculateHsMetrics',
-                params => {
-                    input_file => $bam_file,
-                    bait_intervals => $bait_intervals, #region_of_interest_set
-                    target_intervals => $target_intervals, #target_region_set
-                    temp_directory => $temp_file,
-                    use_version => 1.123,
-                    metric_accumulation_level => ['SAMPLE'],
-                },
-            }
-        };
-    },
+my $config = {
+    picard_calculate_hs_metrics => {
+        class => 'Genome::Qc::Tool::Picard::CalculateHsMetrics',
+        params => {
+            input_file => $bam_file,
+            bait_intervals => $bait_intervals, #region_of_interest_set
+            target_intervals => $target_intervals, #target_region_set
+            temp_directory => $temp_file,
+            use_version => 1.123,
+            metric_accumulation_level => ['SAMPLE'],
+        },
+    }
+};
+
+my $qc_config_name = 'testing-qc-run';
+my $qc_config_item = Genome::Qc::Config->create(
+    name => $qc_config_name,
+    type => 'exome',
+    config => encode_json($config),
 );
 
 my $command = Genome::Qc::Run->create(
-    config_name => 'testing-qc-run',
+    config_name => $qc_config_name,
     alignment_result => $alignment_result,
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );
@@ -93,7 +95,7 @@ my @expected_cmd_line =(
     '-Xmx4096m',
     '-XX:MaxPermSize=64m',
     '-cp',
-    '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CalculateHsMetrics.jar',
+    '/usr/share/java/ant.jar:/usr/share/java/picard-tools1.123/CalculateHsMetrics.jar',
     'picard.analysis.directed.CalculateHsMetrics',
     sprintf('BAIT_INTERVALS=%s', $bait_intervals),
     sprintf('INPUT=%s', $bam_file),
@@ -208,6 +210,5 @@ compare_ok($tool->target_intervals, $target_intervals, 'target_intercals file as
 
 $override_file_path->restore;
 $override_seqdict->restore;
-$override_config->restore;
 
 done_testing;

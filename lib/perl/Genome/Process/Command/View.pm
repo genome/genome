@@ -171,8 +171,7 @@ EOS
     print $handle sprintf($format_str,
         $note->entry_date,
         $self->_color_pair('Header', $note->header_text),
-        $self->_color_pair('Body',
-            $self->_clean_up_timestamp($note->body_text)),
+        $self->_color_pair('Body', $note->body_text),
     );
 }
 

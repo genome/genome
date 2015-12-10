@@ -14,7 +14,7 @@ use Sub::Override;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Cwd qw(abs_path);
-
+use JSON qw(encode_json);
 
 my $pkg = 'Genome::Qc::Tool::Picard::CollectAlignmentSummaryMetrics';
 use_ok($pkg);
@@ -42,27 +42,28 @@ my $bam_file = File::Spec->join($data_dir, 'speedseq_merged.bam');
 my $reference_fasta = File::Spec->join($data_dir, 'reference.fasta');
 my $temp_directory = Genome::Sys->create_temp_file_path;
 
-use Genome::Qc::Config;
-my $config_override = Sub::Override->new(
-    'Genome::Qc::Config::get_commands_for_alignment_result',
-    sub {
-        return {
-            picard_collect_alignment_summary_metrics => {
-                class => 'Genome::Qc::Tool::Picard::CollectAlignmentSummaryMetrics',
-                params => {
-                    input_file => $bam_file,
-                    refseq_file => $reference_fasta,
-                    use_version => 1.123,
-                    metric_accumulation_level => ['SAMPLE', 'READ_GROUP'],
-                    temp_directory => $temp_directory,
-                }
-            },
-        },
+my $config = {
+    picard_collect_alignment_summary_metrics => {
+        class => 'Genome::Qc::Tool::Picard::CollectAlignmentSummaryMetrics',
+        params => {
+            input_file => $bam_file,
+            refseq_file => $reference_fasta,
+            use_version => 1.123,
+            metric_accumulation_level => ['SAMPLE', 'READ_GROUP'],
+            temp_directory => $temp_directory,
+        }
     },
+};
+
+my $qc_config_name = 'testing-qc-run';
+my $qc_config_item = Genome::Qc::Config->create(
+    name => $qc_config_name,
+    type => 'wgs',
+    config => encode_json($config),
 );
 
 my $command = Genome::Qc::Run->create(
-    config_name => 'testing-qc-run',
+    config_name => $qc_config_name,
     alignment_result => $alignment_result,
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );
@@ -78,7 +79,7 @@ my @expected_cmd_line = (
     '-Xmx4096m',
     '-XX:MaxPermSize=64m',
     '-cp',
-    '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CollectAlignmentSummaryMetrics.jar',
+    '/usr/share/java/ant.jar:/usr/share/java/picard-tools1.123/CollectAlignmentSummaryMetrics.jar',
     'picard.analysis.CollectAlignmentSummaryMetrics',
     'ASSUME_SORTED=true',
     sprintf('INPUT=%s', $bam_file),
@@ -322,7 +323,5 @@ my %expected_metrics = (
     'TEST-patient1-somval_tumor1	SECOND_OF_PAIR	TOTAL_READS' => '18',
 );
 is_deeply({$command->output_result->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
-
-$config_override->restore;
 
 done_testing;

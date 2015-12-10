@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow::Simple;
 
 class Genome::Model::Tools::EpitopePrediction::Pipeline {
     is => 'Command::V2',
@@ -89,8 +88,7 @@ sub execute {
     my $result = $workflow->execute(inputs => $inputs);
 
     unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
-        die $self->error_message("Workflow did not return correctly.");
+        $self->fatal_message("Workflow did not return correctly.");
     }
 
     return 1;
@@ -350,12 +348,12 @@ sub _validate_inputs {
     my $self = shift;
 
     if (!defined($self->somatic_variation_build) && !defined($self->input_tsv_file)) {
-        die $self->error_message("Either somatic variation build or input tsv file needs to be provided");
+        $self->fatal_message("Either somatic variation build or input tsv file needs to be provided");
     }
 
     if (defined($self->somatic_variation_build)) {
         if (defined($self->input_tsv_file)) {
-            die $self->error_message("Custom tsv file cannot be used in combination with somatic variation build");
+            $self->fatal_message("Custom tsv file cannot be used in combination with somatic variation build");
         }
         else {
             my $top_file = File::Spec->join(
@@ -373,14 +371,14 @@ sub _validate_inputs {
                 $tsv_file = $top_file;
             }
             else {
-                die $self->error_message("Somatic variation tsv files ($top_header_file) and ($top_file) don't exist.");
+                $self->fatal_message("Somatic variation tsv files ($top_header_file) and ($top_file) don't exist.");
             }
             $self->status_message("Somatic variation build given. Setting input_tsv_file to $tsv_file");
             $self->input_tsv_file($tsv_file);
         }
 
         if (defined($self->anno_db) || defined($self->anno_db_version)) {
-            die $self->error_message("Custom anno db name and version cannot be used in combination with somatic variation build");
+            $self->fatal_message("Custom anno db name and version cannot be used in combination with somatic variation build");
         }
         else {
             my $annotation_build = $self->somatic_variation_build->annotation_build;
@@ -402,30 +400,30 @@ sub _validate_inputs {
     }
     else {
         unless (defined($self->sample_name) && defined($self->input_tsv_file) && defined($self->anno_db) && defined($self->anno_db_version)) {
-            die $self->error_message("Sample name, input tsv file, anno db, and anno db version must be defined if no somatic variation build is given")
+            $self->fatal_message("Sample name, input tsv file, anno db, and anno db version must be defined if no somatic variation build is given")
         }
     }
 
     unless (-s $self->input_tsv_file) {
-        die $self->error_message("Input tsv file %s does not exist or has no size", $self->input_tsv_file);
+        $self->fatal_message("Input tsv file %s does not exist or has no size", $self->input_tsv_file);
     }
 
     unless (Genome::Sys->create_directory($self->output_directory)) {
-        die $self->error_message("Coult not create directory (%s)", $self->output_directory);
+        $self->fatal_message("Coult not create directory (%s)", $self->output_directory);
     }
 
     my $annotation_model = Genome::Model::Tools::Annotate::VariantProtein->get_model_for_anno_db($self->anno_db);
     unless ($annotation_model) {
-        die $self->error_message("Anno DB invalid: " . $self->anno_db);
+        $self->fatal_message("Anno DB invalid: " . $self->anno_db);
     }
 
     unless (Genome::Model::Tools::Annotate::VariantProtein->get_build_for_model_and_anno_db_version($annotation_model, $self->anno_db_version)) {
-        die $self->error_message("Anno DB version invalid: " . $self->anno_db_version);
+        $self->fatal_message("Anno DB version invalid: " . $self->anno_db_version);
     }
 
     for my $allele ($self->alleles) {
         unless (Genome::Model::Tools::EpitopePrediction::RunNetmhc->is_valid_allele_for_netmhc_version($allele, $self->netmhc_version)) {
-            die $self->error_message("Allele %s not valid for NetMHC version %s", $allele, $self->netmhc_version);
+            $self->fatal_message("Allele %s not valid for NetMHC version %s", $allele, $self->netmhc_version);
         }
     }
 

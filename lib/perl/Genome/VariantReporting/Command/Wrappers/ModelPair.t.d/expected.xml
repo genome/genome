@@ -90,6 +90,10 @@
       <outputproperty>output_result (full)</outputproperty>
       <outputproperty>output_result (simple)</outputproperty>
       <outputproperty>output_result (vcf)</outputproperty>
+      <outputproperty>report_path (bed)</outputproperty>
+      <outputproperty>report_path (full)</outputproperty>
+      <outputproperty>report_path (simple)</outputproperty>
+      <outputproperty>report_path (vcf)</outputproperty>
     </operationtype>
     <operation name="BamReadcount">
       <operationtype typeClass="Workflow::OperationType::Model">
@@ -151,6 +155,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -161,6 +166,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -171,6 +177,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -181,6 +188,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -264,9 +272,13 @@
     </operation>
     <link fromOperation="BamReadcount" fromProperty="output_vcf" toOperation="dbsnp" toProperty="input_vcf"/>
     <link fromOperation="Generate Report (bed)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (bed)"/>
+    <link fromOperation="Generate Report (bed)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (bed)"/>
     <link fromOperation="Generate Report (full)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (full)"/>
+    <link fromOperation="Generate Report (full)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (full)"/>
     <link fromOperation="Generate Report (simple)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (simple)"/>
+    <link fromOperation="Generate Report (simple)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (simple)"/>
     <link fromOperation="Generate Report (vcf)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (vcf)"/>
+    <link fromOperation="Generate Report (vcf)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (vcf)"/>
     <link fromOperation="dbsnp" fromProperty="output_vcf" toOperation="homopolymer" toProperty="input_vcf"/>
     <link fromOperation="homopolymer" fromProperty="output_vcf" toOperation="Generate Report (bed)" toProperty="input_vcf"/>
     <link fromOperation="homopolymer" fromProperty="output_vcf" toOperation="Generate Report (full)" toProperty="input_vcf"/>
@@ -325,6 +337,10 @@
       <outputproperty>output_result (full)</outputproperty>
       <outputproperty>output_result (simple)</outputproperty>
       <outputproperty>output_result (vcf)</outputproperty>
+      <outputproperty>report_path (bed)</outputproperty>
+      <outputproperty>report_path (full)</outputproperty>
+      <outputproperty>report_path (simple)</outputproperty>
+      <outputproperty>report_path (vcf)</outputproperty>
     </operationtype>
     <operation name="BamReadcount">
       <operationtype typeClass="Workflow::OperationType::Model">
@@ -386,6 +402,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -396,6 +413,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -406,6 +424,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -416,6 +435,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -473,9 +493,13 @@
     </operation>
     <link fromOperation="BamReadcount" fromProperty="output_vcf" toOperation="dbsnp" toProperty="input_vcf"/>
     <link fromOperation="Generate Report (bed)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (bed)"/>
+    <link fromOperation="Generate Report (bed)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (bed)"/>
     <link fromOperation="Generate Report (full)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (full)"/>
+    <link fromOperation="Generate Report (full)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (full)"/>
     <link fromOperation="Generate Report (simple)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (simple)"/>
+    <link fromOperation="Generate Report (simple)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (simple)"/>
     <link fromOperation="Generate Report (vcf)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (vcf)"/>
+    <link fromOperation="Generate Report (vcf)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (vcf)"/>
     <link fromOperation="dbsnp" fromProperty="output_vcf" toOperation="Generate Report (bed)" toProperty="input_vcf"/>
     <link fromOperation="dbsnp" fromProperty="output_vcf" toOperation="Generate Report (full)" toProperty="input_vcf"/>
     <link fromOperation="dbsnp" fromProperty="output_vcf" toOperation="Generate Report (simple)" toProperty="input_vcf"/>

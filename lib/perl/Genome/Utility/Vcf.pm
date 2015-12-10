@@ -22,6 +22,7 @@ our @EXPORT_OK = qw(open_vcf_file
                     convert_file_with_alpha_gt_values_to_numeric
                     convert_line_with_alpha_gt_values_to_numeric
                     convert_indel_gt_to_bed
+                    simplify_indel_allele
                     );
 
 sub convert_indel_gt_to_bed {
@@ -35,7 +36,7 @@ sub convert_indel_gt_to_bed {
     my @position_shifts;
     for my $allele (keys %alleles) {
         next if $allele eq $reference_allele;
-        my ($ref, $var, $right_shift) = _simplify_indel_allele($reference_allele, $allele);
+        my ($ref, $var, $right_shift) = simplify_indel_allele($reference_allele, $allele);
         unless($var eq q{} || $ref eq q{}) {
             warn "Complex indels cannot be converted to TGI bed. This indel ($ref, $var) will be skipped.\n";
             next;
@@ -48,7 +49,7 @@ sub convert_indel_gt_to_bed {
     return (\@bed_alleles, \@position_shifts);
 }
 
-sub _simplify_indel_allele {
+sub simplify_indel_allele {
     my ($ref, $var) = @_;
     #these could be padded e.g. G, GT for a T insertion or GCC G for a 2bp deletion
     #they could also be complex e.g. GCCCGT, GCGT for a 2bp deletion

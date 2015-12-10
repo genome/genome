@@ -28,6 +28,7 @@ class Genome::VariantReporting::Suite::Vep::RunResult {
         },
         feature_list_ids => {
             is => 'Text',
+            is_optional => 1,
             doc => 'A json-encoded hash keyed on INFO TAG with values of FeatureList IDs',
         },
         species => {

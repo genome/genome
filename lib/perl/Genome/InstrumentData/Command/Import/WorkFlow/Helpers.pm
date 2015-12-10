@@ -11,6 +11,7 @@ require File::Copy;
 require Filesys::Df;
 require List::MoreUtils;
 require LWP::Simple;
+use Params::Validate ':types';
 use Regexp::Common;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Helpers { 
@@ -68,8 +69,8 @@ sub run_flagstat {
     my $flagstat_path = $bam_path.'.flagstat';
     $self->debug_message("Bam path: $bam_path");
     $self->debug_message("Flagstat path: $flagstat_path");
-    my $cmd = "samtools flagstat $bam_path > $flagstat_path";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    my @cmd = (qw(samtools flagstat), $bam_path);
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => \@cmd, redirect_stdout => $flagstat_path); };
     if ( not $rv or not -s $flagstat_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run flagstat!');
@@ -203,28 +204,28 @@ sub load_headers_from_bam {
     return $headers;
 }
  
-sub read_groups_from_headers {
-    my ($self, $rg_headers) = @_;
+sub read_groups_and_tags_from_headers {
+    my ($self, $rg_headers) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => ARRAYREF});
     $self->debug_message('Read groups from headers...');
 
     Carp::confess('No read group headers given to read groups from headers!') if not $rg_headers;
     Carp::confess('Invalid read group headers given to read groups from headers! '.Data::Dumper::Dumper($rg_headers)) unless ref($rg_headers) eq 'ARRAY';
 
-    my %read_groups_from_headers;
-    return \%read_groups_from_headers if not @$rg_headers;
+    my %read_groups_and_tags;
+    return \%read_groups_and_tags if not @$rg_headers;
 
     for my $rg_header ( @$rg_headers ) {
         my %tags = map { split(':', $_, 2) } split(/\t/, $rg_header);
-        my $rg_id = delete $tags{ID};
+        my $rg_id = $tags{ID};
         if ( not defined $rg_id ) {
             $self->error_message("No ID tag in read group header! \@RG\t$rg_header");
             return;
         }
-        $read_groups_from_headers{ $rg_id } = join("\t", map { $_.':'.$tags{$_} } sort keys %tags);
+        $read_groups_and_tags{ $rg_id } = \%tags;
     }
 
     $self->debug_message('Read groups from headers...done');
-    return \%read_groups_from_headers;
+    return \%read_groups_and_tags;
 }
 
 sub load_read_groups_from_bam {
@@ -234,11 +235,11 @@ sub load_read_groups_from_bam {
     my $headers = $self->load_headers_from_bam($bam_path);
     return if not $headers;
 
-    my $read_groups_from_headers = $self->read_groups_from_headers($headers->{'@RG'} || []);
-    return if not $read_groups_from_headers;
+    my $read_groups_and_tags = $self->read_groups_and_tags_from_headers($headers->{'@RG'} || []);
+    return if not $read_groups_and_tags;
 
     $self->debug_message('Load read groups from bam...done');
-    return [ sort keys %$read_groups_from_headers ];
+    return [ sort keys %$read_groups_and_tags ];
 }
 
 sub headers_to_string {
@@ -316,30 +317,6 @@ sub load_read_count_from_line_count_path {
 }
 #<>#
 
-#<KEY VALUE PAIRS TO HASH>#
-sub key_value_pairs_to_hash {
-    my ($self, @key_value_pairs) = @_;
-
-    my %properties;
-    for my $key_value_pair ( @key_value_pairs ) {
-        my ($label, $value) = split('=', $key_value_pair);
-        if ( not defined $value or $value eq '' ) {
-            $self->error_message('Failed to parse with instrument data property label/value! '.$key_value_pair);
-            return;
-        }
-        if ( exists $properties{$label} and $value ne $properties{$label} ) {
-            $self->error_message(
-                "Multiple values for instrument data property! $label => ".join(', ', sort $value, $properties{$label})
-            );
-            return;
-        }
-        $properties{$label} = $value;
-    }
-
-    return \%properties;
-}
-#<>#
-
 #<MD5>#
 sub run_md5 {
     my ($self, $path, $md5_path) = @_;
@@ -352,8 +329,8 @@ sub run_md5 {
     $self->debug_message("Path: $path");
     $self->debug_message("MD5 path: $md5_path");
     die $self->error_message('Refusing to run MD5, the destination path exists! %s', $md5_path) if -s $md5_path;
-    my $cmd = "md5sum $path > $md5_path";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    my @cmd = ('md5sum', $path);
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => \@cmd, redirect_stdout => $md5_path); };
     if ( not $rv or not -s $md5_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run md5!');
@@ -611,6 +588,26 @@ sub determine_read_length_in_bam {
     return $read_length;
 }
 #<>#
+
+my $autogenerate_new_object_id_uuid_sub = UR::Object::Type->can('autogenerate_new_object_id_uuid');
+sub overload_uuid_generator_for_class {
+    my ($self, $class) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
+
+    my $n = 0;
+    Sub::Install::reinstall_sub({ # to set the RG ID in the bam
+            into => 'UR::Object::Type',
+            as => 'autogenerate_new_object_id_uuid',
+            code => sub{
+                my @caller = caller;
+                if ( $caller[0] eq $class ) {
+                    return ++$n x 32;
+                }
+                else {
+                    return $autogenerate_new_object_id_uuid_sub->();
+            }
+        },
+    });
+}
 
 1;
 

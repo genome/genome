@@ -150,6 +150,7 @@ sub _get_heading_lines {
         ["ID", $ap->id, "Name", $ap->name],
         ["Run as", $ap->run_as, "Created", $ap->created_at ],
         ["Updated", $ap->updated_at, "Created by", $ap->created_by],
+        ["Status", $ap->status],
     );
 }
 

@@ -129,6 +129,7 @@ sub _resolve_solr_xml_view {
 
     return if (!$subject_class_name->isa('UR::Object'));
     return if $subject_class_name->isa('UR::Object::Ghost');
+    local $@;
     return eval {
         UR::Object::View->_resolve_view_class_for_params(
             subject_class_name => $subject_class_name,

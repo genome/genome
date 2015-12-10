@@ -1,0 +1,17 @@
+[4mOVERVIEW[0m
+Filter out variants whose transcript consequences don't match any of the ones in the given consequences list
+
+[4mPROPERTIES[0m
+  [1mconsequences[0m   Text
+    A list of transcript consequences
+
+[4mREQUIRED EXPERTS[0m
+vep
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Transcript consequence is one of: consequences
+
+[4mFILTER DESCRIPTION[0m
+Transcript consequence is one of: consequences
+

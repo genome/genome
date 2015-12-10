@@ -9,46 +9,73 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More;
+use Test::More tests => 5;
+
+use constant SUCCESSFUL_JOB => 'DONE';
+use constant FAILED_JOB => 'EXIT';
 
 use_ok('Genome::Sys') or die;
 
-# Submit job that should work
-my @job_ids;
-my $cmd = 'ls ~';
-my $job_id = Genome::Sys->bsub(
-    queue => Genome::Config::get('lsf_queue_short'),
-    cmd => $cmd,
-);
-ok($job_id, "bsubbed $cmd, got job id back");
-push @job_ids, $job_id;
 
-# Submit job that should fail
-$cmd = 'exit 1';
-$job_id = Genome::Sys->bsub(
-    queue => Genome::Config::get('lsf_queue_short'),
-    cmd => $cmd
-);
-ok($job_id, "bsubbed $cmd, got job id back");
-push @job_ids, $job_id;
-my $job_that_should_fail = $job_id;
+my %expected_job_statuses;
 
-# Wait for jobs to come back
-my %job_statuses = Genome::Sys->wait_for_lsf_jobs(@job_ids);
-ok(%job_statuses, 'got job status hash back from wait_for_lsf_jobs method');
+subtest 'submit job' => sub {
+    plan tests => 1;
 
-my @keys = keys %job_statuses;
-ok(@keys == @job_ids, 'job status hash has same number of keys as submitted jobs');
+    my $cmd = 'ls ~';
+    my $job_id = Genome::Sys->bsub(
+        queue => Genome::Config::get('lsf_queue_short'),
+        cmd => $cmd,
+    );
+    ok($job_id, "bsubbed $cmd, got job id back");
+    $expected_job_statuses{$job_id} = SUCCESSFUL_JOB;
+};
 
-for my $job_id (@job_ids) {
-    my $status = $job_statuses{$job_id};
-    ok($status, "got status for job $job_id, $status");
-    if ($job_id eq $job_that_should_fail) {
-        is($status, 'EXIT', "job $job_id failed as expected");
+subtest 'submit failing job' => sub {
+    plan tests => 1;
+
+    my $cmd = 'exit 1';
+    my $job_id = Genome::Sys->bsub(
+        queue => Genome::Config::get('lsf_queue_short'),
+        cmd => $cmd
+    );
+    ok($job_id, "bsubbed $cmd, got job id back");
+    $expected_job_statuses{$job_id} = FAILED_JOB;
+};
+
+subtest 'get job statuses' => sub {
+    plan tests => 3;
+
+    my %job_statuses = Genome::Sys->wait_for_lsf_jobs(keys %expected_job_statuses);
+    ok(%job_statuses, 'got job status hash back from wait_for_lsf_jobs method');
+
+    is(scalar(keys %job_statuses),
+       scalar(keys %expected_job_statuses),
+       'job status hash has same number of keys as submitted jobs');
+
+    is_deeply(\%job_statuses, \%expected_job_statuses, 'Job statuses are as expected');
+};
+
+subtest 'bsub_and_wait_for_completion' => sub {
+    plan tests => 7;
+
+    my @cmds = (['ls', '~'],
+                'exit 1',
+                { cmd => ['cat', '/dev/null'] },
+               );
+    my(%submitted, %completed);
+    my @statuses = Genome::Sys->bsub_and_wait_for_completion(
+                        queue => Genome::Config::get('lsf_queue_short'),
+                        cmds => \@cmds,
+                        on_submit => sub { my($idx, $job_id) = @_; $submitted{$idx} = $job_id },
+                        on_complete => sub { my($idx, $job_id) = @_; $completed{$idx} = $job_id },
+                    );
+    is_deeply(\@statuses,
+              [SUCCESSFUL_JOB, FAILED_JOB, SUCCESSFUL_JOB],
+              'statuses are correct');
+
+    for (my $i = 0; $i < @cmds; $i++) {
+        ok($submitted{$i}, "on_submit callback fired for command $i");
+        ok($completed{$i}, "on_complete callback fired for command $i");
     }
-    else {
-        is($status, 'DONE', "job $job_id succeeded as expected");
-    }
-}
-
-done_testing;
+};

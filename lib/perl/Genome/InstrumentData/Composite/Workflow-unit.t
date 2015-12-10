@@ -73,31 +73,30 @@ for my $ver (Genome::InstrumentData::Composite::Workflow::Generator->available_a
         }
 
         subtest "verify workflow" => sub {
-            my @ops = $wf->operations;
-            ok(@ops, "got some workflow operations");
+            my $ops = $wf->operations;
+            ok(@$ops, "got some workflow operations");
 
-            my @links = $wf->links;
-            ok(@links, "got some workflow links");
+            my $links = $wf->links;
+            ok(@$links, "got some workflow links");
 
             my $id = $idata->id;
-            my @dispatch_ops = grep {$_->name eq "Alignment Dispatcher for $id"} @ops;
+            my @dispatch_ops = grep {$_->name eq "Alignment Dispatcher for $id"} @$ops;
             is(scalar @dispatch_ops, 1, "Found main dispatch workflow operation");
             my $dispatch_op = $dispatch_ops[0];
-            isa_ok($dispatch_op, "Workflow::Model", "Alignment dispatcher operation");
+            isa_ok($dispatch_op, "Genome::WorkflowBuilder::DAG", "Alignment dispatcher operation");
 
             my @bedtools_links = grep {
-                $_->left_workflow_operation_id eq $wf->input_connector->id &&
-                $_->right_workflow_operation_id eq $dispatch_op->id &&
-                $_->left_property =~ /bedtools_version/
-                } @links;
+                $_->destination eq $dispatch_op &&
+                $_->source_property =~ /bedtools_version/
+            } @$links;
             is(scalar @bedtools_links, 1, "found bedtools link to main dispatch op");
 
             @bedtools_links = grep {
-                $_->left_property =~ /bedtools_version/
-                } $dispatch_op->links;
+                $_->source_property =~ /bedtools_version/
+            } @{ $dispatch_op->links };
 
             is(scalar @bedtools_links, 1, "found bedtools link from main dispatch op");
-            like($bedtools_links[0]->right_operation->workflow_operationtype_id, qr/AlignReads/,
+            like($bedtools_links[0]->destination->command, qr/AlignReads/,
                 "bedtools version passed to AlignReads");
         };
     };
@@ -117,7 +116,7 @@ sub workflow_and_inputs_for_strategy {
     ok($tree, "strategy parsed");
 
     my ($wf, $wf_inputs) = $obj->_generate_workflow($tree);
-    isa_ok($wf, "Workflow::Model", "workflow model");
+    isa_ok($wf, "Genome::WorkflowBuilder::DAG", "workflow model");
     isa_ok($wf_inputs, "ARRAY", "workflow inputs");
 
     my %inputs = @$wf_inputs;

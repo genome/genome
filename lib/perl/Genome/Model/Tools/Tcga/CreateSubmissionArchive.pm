@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::Reader;
+use Set::Scalar;
 
 my $IDF_FILE_EXTENSION = "idf";
 my $SDRF_FILE_EXTENSION = "sdrf";
@@ -44,6 +45,11 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
             default_value => 1,
             doc => "Gzip vcf files. This happens before archiving if create_archive is also set.",
         },
+        dump_vcfs => {
+            is => "Boolean",
+            default_value => 1,
+            doc => "Dump vcf files.",
+        },
         cghub_id_file => {
             is => "Text",
             doc => "A tab-delimited file that maps bam files (column header: BAM_path) to CGHub ids (column header: CGHub_ID).",
@@ -72,9 +78,11 @@ sub execute {
         $idf->add_refalign_pp_protocols($somatic_model->last_succeeded_build->tumor_build->processing_profile);
     }
 
-    my $sdrf = Genome::Model::Tools::Tcga::Sdrf->create(idf => $idf, 
-                                                        cghub_id_file => $self->cghub_id_file,
-                                                        archive_name => $self->complete_archive_name("Level_2"));
+    my $sdrf = Genome::Model::Tools::Tcga::Sdrf->create(
+        idf           => $idf, 
+        cghub_id_file => $self->cghub_id_file,
+        archive_name  => $self->complete_archive_name("Level_2"),
+    );
 
     my $vcf_archive_dir = $self->output_dir."/".$self->complete_archive_name("Level_2");
     Genome::Sys->create_directory($vcf_archive_dir);
@@ -88,43 +96,46 @@ sub execute {
             return;
         }
         my $normal_build = $somatic_build->normal_build;
-        my $tumor_build = $somatic_build->tumor_build;
+        my $tumor_build  = $somatic_build->tumor_build;
 
         my $patient_id = $self->resolve_patient_id($somatic_build);
 
         # Default to the somatic build id if no suffix was provided
         my $vcf_suffix = $self->vcf_suffix // $somatic_build->id;
-        my $snvs_vcf = $self->construct_vcf_name("snv", $patient_id, $vcf_suffix);
+        my $snvs_vcf   = $self->construct_vcf_name("snv", $patient_id, $vcf_suffix);
         my $indels_vcf = $self->construct_vcf_name("indel", $patient_id, $vcf_suffix);
 
         # Grab the TCGA vcfs from the build dir and sanitize them
-        for my $variant_type (qw(snv indel)) {
-            my $local_file = $somatic_build->data_directory."/variants/".$variant_type."s_tcga/".$variant_type."s_tcga.vcf";
-            die "Tcga compliant $variant_type vcf not found for build ".$somatic_build->id unless(-s $local_file);
-            my $tcga_vcf_file = "$vcf_archive_dir/".$self->construct_vcf_name($variant_type, $patient_id, $vcf_suffix);
+        if ($self->dump_vcfs) {
+            for my $variant_type (qw(snv indel)) {
+                my $local_file = $somatic_build->data_directory."/variants/".$variant_type."s_tcga/".$variant_type."s_tcga.vcf";
+                die "Tcga compliant $variant_type vcf not found for build ".$somatic_build->id unless(-s $local_file);
+                my $tcga_vcf_file = "$vcf_archive_dir/".$self->construct_vcf_name($variant_type, $patient_id, $vcf_suffix);
 
-            #Some snv vcf lines have null ALT column as '.', it should be 'N' to pass the validator
-            if ($variant_type eq 'indel') {
-                Genome::Sys->copy_file($local_file, $tcga_vcf_file);
-            }
-            elsif ($variant_type eq 'snv') {
-                my $fixvcf = Genome::Model::Tools::Tcga::FixSnvVcfNullAlt->create(
-                    input_file  => $local_file,
-                    output_file => $tcga_vcf_file,
-                );
-                unless ($fixvcf->execute) {
-                    die $self->error_message('Failed to run FixSnvVcfNullAlt');
+                #Some snv vcf lines have null ALT column as '.', it should be 'N' to pass the validator
+                if ($variant_type eq 'indel') {
+                    Genome::Sys->copy_file($local_file, $tcga_vcf_file);
+                }
+                elsif ($variant_type eq 'snv') {
+                    my $fixvcf = Genome::Model::Tools::Tcga::FixSnvVcfNullAlt->create(
+                        input_file  => $local_file,
+                        output_file => $tcga_vcf_file,
+                    );
+                    unless ($fixvcf->execute) {
+                        die $self->error_message('Failed to run FixSnvVcfNullAlt');
+                    }
                 }
             }
         }
 
-        my $vcf_sample_info = $self->get_sample_info_from_vcf("$vcf_archive_dir/$snvs_vcf");
+        my $vcf_with_sample_info = $somatic_build->data_directory.'/variants/snvs_tcga/snvs_tcga.vcf';
+        my $vcf_sample_info = $self->get_sample_info_from_vcf($vcf_with_sample_info);
         unless (defined $vcf_sample_info) {
-            die $self->error_message("No SAMPLE vcf header in $snvs_vcf for build ".$somatic_build->id);
+            $self->fatal_message("No SAMPLE vcf header in %s for build %s", $vcf_with_sample_info, $somatic_build->id);
         }
 
         for my $build(($normal_build, $tumor_build)) {
-            my $sample_info = $self->get_info_for_sample($build->subject->extraction_label, $vcf_sample_info);
+            my $sample_info = $self->get_info_for_sample($build->subject, $vcf_sample_info);
 
             for my $vcf($snvs_vcf, $indels_vcf) {
                 if ($self->bgzip_vcfs) {
@@ -138,15 +149,17 @@ sub execute {
                 my $maf_accessor = $maf_type."_maf_file";
                 if ($self->$maf_accessor) {
                     my $maf_name = $self->complete_archive_name.".$maf_type.maf";
-                    unless(-s $vcf_archive_dir."/".$maf_name) {
-                        Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/".$maf_name);
+                    if ($self->dump_vcfs) {
+                        unless(-s $vcf_archive_dir."/".$maf_name) {
+                            Genome::Sys->copy_file($self->$maf_accessor, $vcf_archive_dir."/".$maf_name);
+                        }
                     }
                     push @sdrf_rows, $sdrf->create_maf_row($build, $somatic_build, $maf_name, $sample_info);
                 }
             }
         }
 
-        if ($self->bgzip_vcfs) {
+        if ($self->dump_vcfs and $self->bgzip_vcfs) {
             for my $vcf(File::Spec->join($vcf_archive_dir, $snvs_vcf), File::Spec->join($vcf_archive_dir, $indels_vcf)) {
                 Genome::Sys->gzip_file($vcf, "$vcf.gz");
                 unlink $vcf;
@@ -160,11 +173,11 @@ sub execute {
     $idf->print_idf($idf_name);
     $sdrf->print_sdrf($magetab_archive_dir."/".$sdrf_name, @sdrf_rows);
 
-    $self->print_manifest($vcf_archive_dir);
+    $self->print_manifest($vcf_archive_dir) if $self->dump_vcfs;
     $self->print_manifest($magetab_archive_dir);
 
     if ($self->create_archive) {
-        $self->tar_and_md5_dir($vcf_archive_dir);
+        $self->tar_and_md5_dir($vcf_archive_dir) if $self->dump_vcfs;
         $self->tar_and_md5_dir($magetab_archive_dir);
     }
 
@@ -195,15 +208,18 @@ sub print_manifest {
 }
 
 sub get_info_for_sample {
-    my $self = shift;
-    my $desired_sample = shift;
-    my $sample_info_collection = shift;
+    my ($self, $desired_sample, $sample_info_collection) = @_;
+    my $tcga_names = Set::Scalar->new($desired_sample->extraction_label, $desired_sample->get_tcga_names);
+    my $found_sample;
+    
     for my $sample (@$sample_info_collection) {
-        if ($sample->{"ID"}->{content} eq $desired_sample) {
-            return $sample;
+        if ($tcga_names->has($sample->{"ID"}->{content})) {
+            $found_sample = $sample;
+            last;
         }
     }
-    die "Info for sample $desired_sample was not available";
+    $self->fatal_message('Info for sample '.$desired_sample->name.' was not available') unless $found_sample;
+    return $found_sample;
 }
 
 sub get_sample_info_from_vcf {
@@ -227,10 +243,13 @@ sub tar_and_md5_dir {
 }
 
 sub resolve_patient_id {
-    my $self = shift;
-    my $build = shift;
+    my ($self, $build) = @_;
     my $patient_id = $build->subject->source->upn;
-    die "Could not resolve patient_id for build ".$build->id unless (defined $patient_id);
+    unless ($patient_id =~ /^TCGA\-/) {
+        $patient_id = $build->subject->resolve_tcga_patient_id;
+    }
+    $self->fatal_message('Could not resolve TCGA patient_id for build '.$build->id)
+        unless defined $patient_id and $patient_id =~ /^TCGA\-/;
     return $patient_id;
 }
 

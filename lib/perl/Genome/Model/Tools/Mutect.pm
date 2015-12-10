@@ -165,6 +165,7 @@ sub execute {
     $cmd .= " --only_passing_calls" if $self->only_passing_calls;
     $cmd .= " --vcf " . $self->vcf if $self->vcf;
     $cmd .= " --coverage_file " . $self->coverage_file if $self->coverage_file;
+    $cmd .= " --disable_auto_index_creation_and_locking_when_reading_rods"; #prevent lock contention when run in parallel
 
     my @intervals = $self->intervals;
     s/'/'\\''/g for @intervals; # escape strings for shell

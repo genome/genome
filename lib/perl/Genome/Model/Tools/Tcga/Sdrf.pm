@@ -3,6 +3,7 @@ package Genome::Model::Tools::Tcga::Sdrf;
 use strict;
 use warnings;
 use Genome;
+use File::Basename;
 
 my $NULL_CHARACTER = "->";
 
@@ -46,7 +47,9 @@ my @HEADERS = (
 );
 
 my $CGHUB_INFO;
+my $CGHUB_INFO_BY_BAM_BASE;
 my $CGHUB_INFO_BY_TCGA_NAME;
+
 
 class Genome::Model::Tools::Tcga::Sdrf {
     has => [
@@ -161,16 +164,17 @@ sub fill_in_common_fields {
     }
     #remaining required fields:
     my $sample_common_name = $build->subject->common_name;
+    my ($code) = $sample->{"ID"}->{content} =~ /^TCGA\-\w{2}\-\w{4}\-(\d)/;
     my $is_tumor;
-    if ($sample_common_name eq "normal") {
+
+    if ($sample_common_name eq "normal" or $sample_common_name eq "adjacent normal" or $code == 1) {
         $is_tumor = "no";
     }
-    elsif ($sample_common_name eq "tumor" or $sample_common_name eq "recurrent") {
+    elsif ($sample_common_name eq "tumor" or $sample_common_name eq "recurrent" or $code == 0) {
         $is_tumor = "yes";
     }
     else {
-        die $self->error_message("Unrecognized sample common name ".$sample_common_name.
-            " for build ".$build->id);
+        $self->fatal_message("Unrecognized sample common name: %s or sample type code: %s for build %s", $sample_common_name, $code, $build->id);
     }
     $row{"Material Comment [is tumor]"} = $is_tumor;
     $row{"Material Material Type"} = "DNA";
@@ -196,21 +200,31 @@ sub fill_in_common_fields {
 }
 
 sub resolve_cghub_id {
-    my $self = shift;
-    my $build = shift;
+    my ($self, $build) = @_;
 
     unless (defined $CGHUB_INFO) {
         $CGHUB_INFO = $self->load_cghub_info("BAM_path");
     }
 
+    unless (defined $CGHUB_INFO_BY_BAM_BASE) {
+        while (my($bam_path, $cghub_id) = each %$CGHUB_INFO) {
+            $CGHUB_INFO_BY_BAM_BASE->{basename $bam_path} = $cghub_id;
+        }
+    }
+
     unless (defined $CGHUB_INFO_BY_TCGA_NAME) {
         $CGHUB_INFO_BY_TCGA_NAME = $self->load_cghub_info("TCGA_Name");
     }
-    my $id = $CGHUB_INFO->{$build->whole_rmdup_bam_file};
+
+    my $merged_bam = $build->whole_rmdup_bam_file;
+    my $id = $CGHUB_INFO->{$merged_bam};
     unless (defined $id) {
-        $id = $CGHUB_INFO_BY_TCGA_NAME->{$build->subject->extraction_label};
+        $id = $CGHUB_INFO_BY_TCGA_NAME->{$build->subject->name_in_vcf};
         unless (defined $id) {
-            die("CGHub id could not be resolved for build ".$build->id." with bam file ".$build->whole_rmdup_bam_file);
+            $id = $CGHUB_INFO_BY_BAM_BASE->{basename $merged_bam};
+            unless (defined $id) {
+                $self->fatal_message("CGHub id could not be resolved for build %s with bam file: %s", $build->id, $merged_bam);
+            }
         }
     }
     return $id;
@@ -261,7 +275,7 @@ sub resolve_capture_reagent {
         return (undef, undef, undef, undef, undef, undef);
     }
     unless ($build->model->target_region_set_name) {#WGS
-        return (undef, undef, undef, "NA", "NA", "NA");
+        return (undef, undef, undef, "WGS", "WGS", "WGS");
     }
 
     my %CAPTURE_REAGENTS = $self->capture_reagents;
@@ -641,11 +655,19 @@ sub capture_reagents {
                 target_file    => 'https://earray.chem.agilent.com/earray/',
             },
         ],
+        'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'SureSelect Human All Exon 38 Mb v2',
+                catalog_number => 'S0293689',
+                target_file    => 'https://earray.chem.agilent.com/earray/',
+            },
+        ],
         'hg18 nimblegen exome version 2' => [
             {
                 reagent_vendor => 'Nimblegen',
                 reagent_name   => 'hg18 nimblegen exome version 2',
-                catalog_number => 'NA',
+                catalog_number => 'Proprietary',
                 target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/hg18_nimblegen_exome_version_2/hg18_nimblegen_exome_version_2.bed',
             },
         ],

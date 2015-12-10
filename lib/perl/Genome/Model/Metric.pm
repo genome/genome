@@ -26,6 +26,8 @@ class Genome::Model::Metric {
         model_id => { via => 'build' },
         model_name => { via => 'model', to => 'name' },
         data_directory => { via => 'build' },
+        metric_name => { via => '__self__', to => 'name' },
+        metric_value => { via => '__self__', to => 'value' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',

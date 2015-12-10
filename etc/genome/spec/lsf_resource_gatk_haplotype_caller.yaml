@@ -1,0 +1,3 @@
+---
+default_value: "-R 'select[mem>4000 && gtmp>1] rusage[mem=4000,gtmp=1]'"
+env: XGENOME_LSF_RESOURCE_GATK_HAPLOTYPE_CALLER

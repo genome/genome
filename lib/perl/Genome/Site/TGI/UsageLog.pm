@@ -27,7 +27,7 @@ sub import {
             record_usage(
                 recorded_at  => 'now',
                 hostname     => $hostname,
-                username     => (getpwuid($<))[0],
+                username     => $<,
                 genome_path  => genome_path(),
                 perl_path    => abs_path($^X),
                 command      => $command,

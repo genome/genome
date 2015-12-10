@@ -41,6 +41,13 @@ class Genome::VariantReporting::Framework::GenerateReport {
             id_by => 'process_id',
         },
     ],
+    has_output => [
+        report_path => {
+            is => 'Text',
+            calculate_from => [qw(output_result)],
+            calculate => q/$output_result->report_path/,
+        }
+    ],
     has_param => [
         lsf_resource => {
             value => q{-R 'select[mem>16000] rusage[mem=16000]' -M 16000000},

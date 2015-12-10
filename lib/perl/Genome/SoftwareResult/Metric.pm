@@ -20,6 +20,8 @@ class Genome::SoftwareResult::Metric {
             id_by => 'software_result_id',
             constraint_name => 'SRM_SR_FK',
         },
+        name => { via => '__self__', to => 'metric_name' },
+        value => { via => '__self__', to => 'metric_value' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',

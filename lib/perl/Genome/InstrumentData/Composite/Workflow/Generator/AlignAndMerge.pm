@@ -3,8 +3,6 @@ package Genome::InstrumentData::Composite::Workflow::Generator::AlignAndMerge;
 use strict;
 use warnings;
 use Genome;
-use POSIX qw(ceil);
-use List::Util qw(sum);
 
 class Genome::InstrumentData::Composite::Workflow::Generator::AlignAndMerge {
     is => 'Genome::InstrumentData::Composite::Workflow::Generator::Base',
@@ -12,6 +10,8 @@ class Genome::InstrumentData::Composite::Workflow::Generator::AlignAndMerge {
 
 sub generate {
     my $class = shift;
+    my $master_workflow = shift;
+    my $block_operation = shift;
     my $tree = shift;
     my $input_data = shift;
     my $alignment_objects = shift;
@@ -21,101 +21,102 @@ sub generate {
     #Make a workflow with its input and output connectors
     my $input_properties = ['instrument_data', 'reference_sequence_build', $class->_general_workflow_input_properties];
     my $tree_properties = ['name', 'params', 'version'];
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $aligner_name,
-        input_properties => [@$input_properties, @$tree_properties],
-        optional_input_properties => $input_properties,
-        output_properties => ['result_id'],
     );
     my $workflows = {};
     map { $workflows->{$_} = $workflow } @$alignment_objects;
 
+    my $command_class = 'Genome::InstrumentData::Command::AlignAndMerge';
+
     #Make a align_and_merge operation
-    my $operation = $workflow->add_operation(
+    my $operation = Genome::WorkflowBuilder::Command->create(
         name => "$aligner_name operation",
-        operation_type => Workflow::OperationType::Command->create(
-            command_class_name => 'Genome::InstrumentData::Command::AlignAndMerge',
-        ),
+        command => $command_class,
     );
+    $workflow->add_operation($operation);
 
     my $instrument_data = $input_data->{instrument_data};
-    my $lsf_resource_string = $class->_get_lsf_resource_string_for_aligner_and_instrument_data(
+    my $lsf_resource_string = $command_class->lsf_resource_string_for_aligner_and_instrument_data(
         $aligner_name,
         @$instrument_data
     );
 
-    $operation->operation_type->lsf_resource($lsf_resource_string);
+    $operation->lsf_resource($lsf_resource_string);
 
     #Connect input connectors to the operation
     my $inputs = [];
     for my $input_property (@$input_properties) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $input_property,
-            right_operation => $operation,
-            right_property => $input_property,
+        $workflow->connect_input(
+            input_property => $input_property,
+            destination => $operation,
+            destination_property => $input_property,
+            is_optional => 1,
         );
         push @$inputs, ( 'm_' . $input_property => $input_data->{$input_property} );
     }
     for my $input_property (@$tree_properties) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $input_property,
-            right_operation => $operation,
-            right_property => $input_property,
+        $workflow->connect_input(
+            input_property => $input_property,
+            destination => $operation,
+            destination_property => $input_property,
+            is_optional => 1,
         );
         push @$inputs, ( 'm_' . $input_property => $tree->{'action'}->[0]->{$input_property} );
     }
 
     #Connect output connectors to the operation
-    $workflow->add_link(
-        left_operation => $operation,
-        left_property => 'result_id',
-        right_operation => $workflow->get_output_connector,
-        right_property => 'result_id',
+    $workflow->connect_output(
+        source => $operation,
+        source_property => 'result_id',
+        output_property => 'result_id',
     );
 
     if (exists $tree->{'action'}->[0]->{decoration}) {
-        push @$inputs, Genome::InstrumentData::Composite::Decorator->decorate($operation, $tree->{'action'}->[0]->{decoration});
+        push @$inputs, Genome::InstrumentData::Composite::Decorator->decorate($operation, $workflow, $tree->{'action'}->[0]->{decoration});
     }
+
+    $class->_wire_object_workflow_to_master_workflow($master_workflow, $block_operation, $workflow);
 
     return $workflows, $inputs;
 }
 
-sub _get_lsf_resource_string_for_aligner_and_instrument_data {
+sub _wire_object_workflow_to_master_workflow {
     my $class = shift;
-    my $aligner_name = shift;
-    my @instrument_data = @_;
+    my $master_workflow = shift;
+    my $block_operation = shift;
+    my $workflow = shift;
 
-    my $merged_result_class = Genome::InstrumentData::Command::AlignAndMerge->merged_result_class($aligner_name);
-    my $estimated_gtmp_bytes = sum(map { $merged_result_class->estimated_gtmp_for_instrument_data($_) } @instrument_data);
-    return $class->_format_lsf_resource_string($estimated_gtmp_bytes);
+    $master_workflow->add_operation($workflow);
+
+    #wire up the master to the inner workflows (just pass along the inputs and outputs)
+    for my $property ($workflow->input_properties) {
+        if($property eq 'force_fragment'){
+            $master_workflow->create_link(
+                source => $block_operation,
+                source_property => $property,
+                destination => $workflow,
+                destination_property => $property,
+            );
+        }else {
+            $master_workflow->connect_input(
+                input_property => 'm_' . $property,
+                destination => $workflow,
+                destination_property => $property,
+                is_optional => 1,
+            );
+        }
+    }
+
+    for my $property ($workflow->output_properties) {
+            $master_workflow->connect_output(
+            source => $workflow,
+            source_property => $property,
+            output_property => 'm_' . $property,
+        );
+    }
+
+    return 1;
 }
-
-sub _format_lsf_resource_string {
-    my $class = shift;
-    my $gtmp_bytes = shift;
-
-    my $cpus = 8;
-    my $mem_gb = 60;
-    my $queue = Genome::Config::get('lsf_queue_alignment_prod');
-
-    my $gtmp_kb = ceil($gtmp_bytes / 1024);
-    my $gtmp_mb = ceil($gtmp_kb / 1024);
-    my $gtmp_gb = ceil($gtmp_mb / 1024);
-
-    my $mem_mb = $mem_gb * 1024;
-    my $mem_kb = $mem_mb * 1024;
-
-    my $select  = "select[ncpus >= $cpus && mem >= $mem_mb && gtmp >= $gtmp_gb] span[hosts=1]";
-    my $rusage  = "rusage[mem=$mem_mb, gtmp=$gtmp_gb]";
-    my $options = "-M $mem_kb -n $cpus -q $queue";
-
-    my $required_usage = "-R \'$select $rusage\' $options";
-
-    return $required_usage;
-}
-
-# sub _workflow_
 
 1;

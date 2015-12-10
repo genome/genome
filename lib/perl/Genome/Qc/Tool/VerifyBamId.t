@@ -13,7 +13,9 @@ use Test::More;
 use Sub::Override;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
+use Genome::Test::Factory::SoftwareResult::ImportedFile;
 use Cwd qw(abs_path);
+use JSON qw(encode_json);
 
 my $pkg = 'Genome::Qc::Tool::VerifyBamId';
 use_ok($pkg);
@@ -36,33 +38,45 @@ my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_objec
 my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
     instrument_data => $instrument_data,
 );
-
-my $vcf_file = File::Spec->join($data_dir, 'Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.chrY.vcf');
+my $vcf_file = Genome::Test::Factory::SoftwareResult::ImportedFile->setup_object();
+my $default_vcf_file = Genome::Test::Factory::SoftwareResult::ImportedFile->setup_object();
+use Genome::SoftwareResult::StageableSimple::SingleFile;
+my $vcf_file_path_overwrite = Sub::Override->new(
+    'Genome::SoftwareResult::StageableSimple::SingleFile::file_path',
+    sub {
+        return File::Spec->join($data_dir, 'Omni25_genotypes_1525_samples_v2.b37.PASS.ALL.sites.chrY.vcf');
+    }
+);
 my $bam_file = abs_path(File::Spec->join($data_dir, 'speedseq_merged.bam'));
 
-use Genome::Qc::Config;
-my $config_override = Sub::Override->new(
-    'Genome::Qc::Config::get_commands_for_alignment_result',
-    sub {
-        return {
-            verify_bam_id => {
-                class => 'Genome::Qc::Tool::VerifyBamId',
-                params => {
-                    vcf => $vcf_file,
-                    bam => $bam_file,
-                    max_depth => '150',
-                    precise => '1',
-                    version => '20120620',
-                    ignore_read_group => 0,
-                },
-            }
-        };
-    },
+my $config = {
+    verify_bam_id => {
+        class => 'Genome::Qc::Tool::VerifyBamId',
+        params => {
+            vcf => 'genotype_vcf_file',
+            bam => $bam_file,
+            max_depth => '150',
+            precise => '1',
+            version => '20120620',
+            ignore_read_group => 0,
+        },
+        additional_params => {
+            default_genotype_vcf_file_id => $default_vcf_file->id,
+        },
+    }
+};
+
+my $qc_config_name = 'testing-qc-run';
+my $qc_config_item = Genome::Qc::Config->create(
+    name => $qc_config_name,
+    type => 'wgs',
+    config => encode_json($config),
 );
 
 my $command = Genome::Qc::Run->create(
-    config_name => 'testing-qc-run',
+    config_name => $qc_config_name,
     alignment_result => $alignment_result,
+    qc_genotype_vcf_file => $vcf_file,
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );
 ok($command->execute, "Command executes ok");
@@ -75,7 +89,7 @@ my $output = $tool->qc_metrics_file;
 my @expected_cmd_line = (
     '/usr/bin/verifyBamID20120620',
     '--vcf',
-    $vcf_file,
+    $vcf_file->file_path,
     '--bam',
     $bam_file,
     '--out',
@@ -85,6 +99,13 @@ my @expected_cmd_line = (
     '--precise',
 );
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
+
+my $command_without_qc_genotype_vcf_file = Genome::Qc::Run->create(
+    config_name => $qc_config_name,
+    alignment_result => $alignment_result,
+    %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
+);
+ok($command_without_qc_genotype_vcf_file->execute, "Command without qc_genotype_vcf_file executes ok");
 
 my %expected_metrics = (
     '2883581792-2883255521	#READS' => 0,

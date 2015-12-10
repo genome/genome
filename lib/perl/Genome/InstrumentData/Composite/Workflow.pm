@@ -54,14 +54,10 @@ sub execute {
     $self->_workflow($workflow);
 
     if($self->log_directory) {
-        $workflow->log_dir($self->log_directory);
+        $workflow->recursively_set_log_dir($self->log_directory);
     }
 
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message($_) for @errors;
-        die 'Errors validating workflow';
-    }
+    $workflow->validate;
 
     my @results = $self->_run_workflow($workflow, $inputs);
     $self->_result_ids(\@results);
@@ -110,9 +106,8 @@ sub _run_workflow {
     Genome::Sys->disconnect_default_handles;
 
     $self->debug_message('Running workflow...');
-    my $dag = Genome::WorkflowBuilder::DAG->from_xml($workflow->save_to_xml());
     my %inputs_hash = (@$inputs); # For some reason $inputs is an array-ref
-    my $outputs = $dag->execute(inputs => \%inputs_hash);
+    my $outputs = $workflow->execute(inputs => \%inputs_hash);
 
     my @result_ids;
     for my $key (keys %$outputs) {

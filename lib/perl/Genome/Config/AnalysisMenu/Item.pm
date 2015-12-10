@@ -24,6 +24,11 @@ class Genome::Config::AnalysisMenu::Item {
         description => {
             is => 'Text',
         },
+        status => {
+            is => 'Text',
+            valid_values => ['active', 'inactive'],
+            default_value => 'active',
+        },
     ],
     has_many => [
         config_items => {

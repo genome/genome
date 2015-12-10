@@ -1,0 +1,34 @@
+##fileformat=VCFv4.1
+##source=Samtools
+##reference=ftp://ftp.ncbi.nih.gov/genbank/genomes/Eukaryotes/vertebrates_mammals/Homo_sapiens/GRCh37/special_requests/GRCh37-lite.fa.gz
+##phasing=none
+##center=genome.wustl.edu
+##FILTER=<ID=PASS,Description="Passed all filters">
+##FILTER=<ID=SnpFilter,Description="Filter description">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth at this position in the sample">
+##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Depth of reads supporting alleles 0/1/2/3...">
+##FORMAT=<ID=DP4,Number=4,Type=Integer,Description="Number of high-quality ref-forward, ref-reverse, alt-forward and alt-reverse bases">
+##FORMAT=<ID=BQ,Number=.,Type=Integer,Description="Average base quality for reads supporting alleles">
+##FORMAT=<ID=SS,Number=1,Type=Integer,Description="Variant status relative to non-adjacent Normal,0=wildtype,1=germline,2=somatic,3=LOH,4=post-transcriptional modification,5=unknown">
+##FORMAT=<ID=GQ,Number=.,Type=Integer,Description="Conditional Phred-scaled genotype quality">
+##FORMAT=<ID=MQ,Number=1,Type=Integer,Description="Phred style probability score that the variant is novel with respect to the genome's ancestor">
+##FORMAT=<ID=FA,Number=1,Type=Float,Description="Fraction of reads supporting ALT">
+##FORMAT=<ID=VAQ,Number=1,Type=Integer,Description="Variant allele quality">
+##FORMAT=<ID=FT,Number=1,Type=String,Description="Sample genotype filter">
+##source=Sniper
+##FILTER=<ID=FalsePositive,Description="Filter description">
+##FILTER=<ID=SomaticScoreMappingQuality,Description="Filter description">
+##FORMAT=<ID=AMQ,Number=.,Type=Integer,Description="Average mapping quality for each allele present in the genotype">
+##FORMAT=<ID=IGT,Number=1,Type=String,Description="Genotype when called independently (only filled if called in joint prior mode)">
+##FORMAT=<ID=BCOUNT,Number=4,Type=Integer,Description="Occurrence count for each base at this site (A,C,G,T)">
+##FORMAT=<ID=JGQ,Number=1,Type=Integer,Description="Joint genotype quality (only filled if called in join prior mode)">
+##FORMAT=<ID=SSC,Number=1,Type=Integer,Description="Somatic score between 0 and 255">
+##FILTER=<ID=IntersectionFailure,Description="Variant callers do not agree on this position">
+##source=VarscanSomatic
+##FILTER=<ID=VarscanHighConfidence,Description="Filter description">
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence type as predicted by VEP. Format: Allele|Gene|Feature|Feature_type|Consequence|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|DISTANCE|STRAND|CANONICAL|SYMBOL|SYMBOL_SOURCE|SIFT|PolyPhen|HGVSc|HGVSp|DownstreamProtein|ProteinLengthChange|WildtypeProtein|Condel">
+##fileDate=20151001
+##FILTER=<ID=MERGE_REJECT,Description="Rejected by vcf-merge (duplicate locus in same source file)">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	H_OU-GBMPt001-1404628	H_OU-GBMPt001-1404628-[Samtools]	H_OU-GBMPt001-1404627	H_OU-GBMPt001-1404627-[Sniper]	H_OU-GBMPt001-1404628-[Sniper]	H_OU-GBMPt001-1404627-[VarscanSomatic]	H_OU-GBMPt001-1404628-[VarscanSomatic]
+1	26131645	.	C	T	.	.	CSQ=T|ENSG00000162430|ENST00000361547|Transcript|missense_variant|471|416|139|A/V|gCg/gTg|||||||1|YES|SEPN1|HGNC|tolerated(0.35)|benign(0.011)|ENST00000361547.2:c.416C>T|ENSP00000355141.2:p.Ala139Val|||MGRARPGQRGPPSPGPAAQPPAPPRRRARSLALLGALLAAAAAAAVRVCARHAEAQAAARQELALKTLGTDGLFLFSSLDTDGDMYISPEEFKPIAEKLTGSCSVTQTGVQWCSHSSLQPQLPWLN|neutral(0.021)	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:AD:FA	1/1:1/1:2:0,0,2,0:0,0,0,2:3:.:30:0,32:60:60:2:29:IntersectionFailure;SnpFilter:0,2:1	1/1:.:2:.:.:3:.:30:0,32:60:.:.:.:IntersectionFailure;SnpFilter:0,2:1	0/0:0/0:57:39,18,0,0:0,57,0,0:199:.:0:36:59:59:0:.:FalsePositive;IntersectionFailure:.:.	0/0:0/0:57:39,18,0,0:0,57,0,0:199:.:0:36:59:59:0:.:FalsePositive;IntersectionFailure:.:.	1/1:1/1:2:0,0,2,0:0,0,0,2:33:.:33:32:60:60:2:29:FalsePositive;IntersectionFailure:.:.	.	.

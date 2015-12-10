@@ -68,6 +68,9 @@
       <outputproperty>output_result (bed)</outputproperty>
       <outputproperty>output_result (simple)</outputproperty>
       <outputproperty>output_result (vcf)</outputproperty>
+      <outputproperty>report_path (bed)</outputproperty>
+      <outputproperty>report_path (simple)</outputproperty>
+      <outputproperty>report_path (vcf)</outputproperty>
     </operationtype>
     <operation name="Generate Report (bed)">
       <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -76,6 +79,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -86,6 +90,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -96,6 +101,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -126,8 +132,11 @@
       <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
     </operation>
     <link fromOperation="Generate Report (bed)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (bed)"/>
+    <link fromOperation="Generate Report (bed)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (bed)"/>
     <link fromOperation="Generate Report (simple)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (simple)"/>
+    <link fromOperation="Generate Report (simple)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (simple)"/>
     <link fromOperation="Generate Report (vcf)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (vcf)"/>
+    <link fromOperation="Generate Report (vcf)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (vcf)"/>
     <link fromOperation="input connector" fromProperty="Generate Report (bed).label" toOperation="Generate Report (bed)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Generate Report (bed).report_name" toOperation="Generate Report (bed)" toProperty="report_name"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (bed)" toProperty="plan_json"/>
@@ -166,6 +175,9 @@
       <outputproperty>output_result (bed)</outputproperty>
       <outputproperty>output_result (simple)</outputproperty>
       <outputproperty>output_result (vcf)</outputproperty>
+      <outputproperty>report_path (bed)</outputproperty>
+      <outputproperty>report_path (simple)</outputproperty>
+      <outputproperty>report_path (vcf)</outputproperty>
     </operationtype>
     <operation name="Generate Report (bed)">
       <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -174,6 +186,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -184,6 +197,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -194,6 +208,7 @@
         <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
+        <outputproperty>report_path</outputproperty>
         <outputproperty>result</outputproperty>
       </operationtype>
     </operation>
@@ -224,8 +239,11 @@
       <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
     </operation>
     <link fromOperation="Generate Report (bed)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (bed)"/>
+    <link fromOperation="Generate Report (bed)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (bed)"/>
     <link fromOperation="Generate Report (simple)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (simple)"/>
+    <link fromOperation="Generate Report (simple)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (simple)"/>
     <link fromOperation="Generate Report (vcf)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (vcf)"/>
+    <link fromOperation="Generate Report (vcf)" fromProperty="report_path" toOperation="output connector" toProperty="report_path (vcf)"/>
     <link fromOperation="input connector" fromProperty="Generate Report (bed).label" toOperation="Generate Report (bed)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Generate Report (bed).report_name" toOperation="Generate Report (bed)" toProperty="report_name"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (bed)" toProperty="plan_json"/>

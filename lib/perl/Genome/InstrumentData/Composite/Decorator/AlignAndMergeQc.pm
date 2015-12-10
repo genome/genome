@@ -24,12 +24,11 @@ sub add_alignment_link {
     my $operation = shift;
     my $qc_runner_op = shift;
 
-    Genome::InstrumentData::Composite::Workflow::Generator::Base->_add_link_to_workflow(
-        $workflow,
-        left_workflow_operation_id => $operation->id,
-        left_property => 'per_lane_alignment_results',
-        right_workflow_operation_id => $qc_runner_op->id,
-        right_property => 'alignment_result',
+    $workflow->create_link(
+        source => $operation,
+        source_property => 'per_lane_alignment_results',
+        destination => $qc_runner_op,
+        destination_property => 'alignment_result',
     );
 }
 

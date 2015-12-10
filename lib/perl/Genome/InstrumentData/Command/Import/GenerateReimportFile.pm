@@ -121,7 +121,7 @@ sub execute {
     $self->status_message('Found '.@reimports.' instrument data...');
     
     my $file = $self->file;
-    my $sep_char = Genome::InstrumentData::Command::Import::CsvParser->resolve_sep_char_from_file_extension($file);
+    my $sep_char = Genome::InstrumentData::Command::Import::Inputs::Factory->resolve_sep_char_from_file_extension($file);
     my $writer = Text::CSV->new({
             sep_char => $sep_char,
             empty_is_undef => 1,

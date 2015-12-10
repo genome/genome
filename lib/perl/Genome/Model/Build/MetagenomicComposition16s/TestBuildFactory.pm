@@ -68,7 +68,8 @@ sub build_with_example_build {
         name => '__TEST_MC16S_MODEL__',
         processing_profile => $pp,
         subject_name => $sample->name,
-        subject_type => 'sample_name'
+        subject_type => 'sample_name',
+        run_as => Genome::Sys->username,
     );
     die 'Failed to create MC16s model!' if not $model;
 

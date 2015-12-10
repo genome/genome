@@ -14,10 +14,12 @@ use Test::More;
 use above "Genome";
 
 use Genome::Utility::Test;
+use Genome::Test::Factory::InstrumentData::AlignmentResult::Merged::Speedseq;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::SoftwareResult::User;
+use JSON qw(encode_json);
 
 my $TEST_DATA_VERSION = 2;
 
@@ -124,19 +126,15 @@ subtest 'simple alignments' => sub {
 
 subtest 'simple alignments with qc decoration' => sub {
     initialize_test_tool();
-    use Genome::Qc::Config;
-    my $override = Sub::Override->new(
-        'Genome::Qc::Config::get_commands_for_alignment_result',
-        sub {
-            return {test1 => {class => "TestTool1", params => {param1 => 1}}};
-        },
+    my $config_name = 'qc for Workflow test';
+    my $config = {test1 => {class => "TestTool1", params => {param1 => 1}}};
+    my $config_item = Genome::Qc::Config->__define__(
+        name => $config_name,
+        config => encode_json($config),
     );
+    isa_ok($config_item, 'Genome::Qc::Config', 'test configuration exists') or die('cannot continue');
 
     my $log_directory = Genome::Sys->create_temp_directory();
-    my $qc_for_testing = Genome::Qc::Config->get(name => 'qc for Workflow test');
-    isa_ok($qc_for_testing, 'Genome::Qc::Config', 'test configuration exists') or die('cannot continue');
-
-    my $config_name = 'qc for Workflow test';
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@two_instrument_data,
@@ -164,8 +162,6 @@ subtest 'simple alignments with qc decoration' => sub {
     for my $qc_result (@qc_results) {
         is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
     }
-
-    $override->restore;
 };
 
 subtest 'simple align_and_merge strategy' => sub {
@@ -199,12 +195,11 @@ subtest 'simple align_and_merge strategy' => sub {
 
 subtest 'simple align_and_merge strategy with qc decoration' => sub {
     initialize_test_tool();
-    use Genome::Qc::Config;
-    my $override = Sub::Override->new(
-        'Genome::Qc::Config::get_commands_for_alignment_result',
-        sub {
-            return {test1 => {class => "TestTool1", params => {param1 => 1}}};
-        },
+    my $config_name = 'qc2 for Workflow test';
+    my $config = {test1 => {class => "TestTool1", params => {param1 => 1}}};
+    my $config_item = Genome::Qc::Config->__define__(
+        name => $config_name,
+        config => encode_json($config),
     );
     use Genome::InstrumentData::AlignmentResult::Merged::Speedseq;
     my $gtmp_override = Sub::Override->new(
@@ -212,7 +207,6 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
         sub { return 1; },
     );
 
-    my $config_name = 'qc2 for Workflow test';
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             instrument_data => \@two_instrument_data,
@@ -240,18 +234,15 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
         ok($qc_result, sprintf('Qc result for instrument_data (%s) was created successfully', $instrument_data->id));
         is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
     }
-
-    $override->restore;
 };
 
 subtest 'simple align_and_merge strategy with qc decoration for merged result' => sub {
     initialize_test_tool();
-    use Genome::Qc::Config;
-    my $override = Sub::Override->new(
-        'Genome::Qc::Config::get_commands_for_alignment_result',
-        sub {
-            return {test1 => {class => "TestTool1", params => {param1 => 1}}};
-        },
+    my $config_name = 'qc3 for Workflow test';
+    my $config = {test1 => {class => "TestTool1", params => {param1 => 1}}};
+    my $config_item = Genome::Qc::Config->__define__(
+        name => $config_name,
+        config => encode_json($config),
     );
     use Genome::InstrumentData::AlignmentResult::Merged::Speedseq;
     my $gtmp_override = Sub::Override->new(
@@ -259,7 +250,6 @@ subtest 'simple align_and_merge strategy with qc decoration for merged result' =
         sub { return 1; },
     );
 
-    my $config_name = 'qc3 for Workflow test';
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             instrument_data => \@two_instrument_data,
@@ -284,8 +274,6 @@ subtest 'simple align_and_merge strategy with qc decoration for merged result' =
     my ($qc_result) = Genome::Qc::Result->get(alignment_result => $speedseq_result, config_name => $config_name);
     ok($qc_result, sprintf('Qc result was created successfully'));
     is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
-
-    $override->restore;
 };
 
 
@@ -699,42 +687,17 @@ sub construct_speedseq_result {
     my $reference = shift;
     my @instrument_data = @_;
 
-    my $speedseq_result = Genome::InstrumentData::AlignmentResult::Merged::Speedseq->__define__(
+    return Genome::Test::Factory::InstrumentData::AlignmentResult::Merged::Speedseq->setup_object(
         reference_build => $reference,
         aligner_name => 'speedseq',
         aligner_version => '0.0.3a-gms',
         aligner_params => 'sort_memory => 8',
-    );
-    for my $i (0..$#instrument_data) {
-        $speedseq_result->add_input(
-            name => 'instrument_data-' . $i,
-            value_id => $instrument_data[$i]->id,
-        );
-    }
-    $speedseq_result->add_param(
-        name => 'instrument_data_count',
-        value_id=> scalar(@instrument_data),
-    );
-    $speedseq_result->add_param(
-        name => 'instrument_data_md5',
-        value_id => Genome::Sys->md5sum_data(join(':', sort(map($_->id, @instrument_data))))
-    );
-    $speedseq_result->lookup_hash($speedseq_result->calculate_lookup_hash());
-
-    for my $instrument_data (@instrument_data) {
-        my $per_lane_speedseq_result = Genome::InstrumentData::AlignmentResult::Speedseq->__define__(
-            instrument_data => $instrument_data,
-            reference_build => $reference,
-            aligner_name => 'speedseq',
-            aligner_version => '0.0.3a-gms',
-            aligner_params => 'sort_memory => 8',
-            samtools_version => 'r599',
+        instrument_data => \@instrument_data,
+        __per_lane_params => {
             picard_version => '1.29',
-        );
-        $per_lane_speedseq_result->lookup_hash($per_lane_speedseq_result->calculate_lookup_hash());
-    }
-
-    return $speedseq_result;
+            samtools_version => 'r599',
+        },
+    );
 }
 
 sub check_result_bam {

@@ -1677,7 +1677,7 @@ sub construct_groups_file {
     $self->debug_message("PG: $pg_tag");
 
     my $fh = IO::File->new($output_file, "a")
-        || die "failed opening groups file for writing";
+        || die "failed opening groups file for writing: $!";
 
     $fh->printf("%s\n", $rg_tag);
     $fh->printf("%s\n", $pg_tag);

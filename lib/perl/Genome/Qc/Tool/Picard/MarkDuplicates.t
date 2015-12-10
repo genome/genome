@@ -14,7 +14,7 @@ use Sub::Override;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Cwd qw(abs_path);
-
+use JSON qw(encode_json);
 
 my $pkg = 'Genome::Qc::Tool::Picard::MarkDuplicates';
 use_ok($pkg);
@@ -43,23 +43,25 @@ my $reference_fasta = File::Spec->join($data_dir, 'reference.fasta');
 my $temp_file = Genome::Sys->create_temp_file_path;
 my $temp_directory = Genome::Sys->create_temp_file_path;
 
-use Genome::Qc::Config;
-my $config_override = Sub::Override->new(
-    'Genome::Qc::Config::get_commands_for_alignment_result',
-    sub {
-        return {
-            picard_mark_duplicates => {
-                class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
-                params => {
-                    output_file => $temp_file,
-                    input_file => $bam_file,
-                    use_version => 1.123,
-                    temp_directory => $temp_directory,
-                },
-            },
+my $config = {
+    picard_mark_duplicates => {
+        class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
+        params => {
+            output_file => $temp_file,
+            input_file => $bam_file,
+            use_version => 1.123,
+            temp_directory => $temp_directory,
         },
     },
+};
+
+my $qc_config_name = 'testing-qc-run';
+my $qc_config_item = Genome::Qc::Config->create(
+    name => $qc_config_name,
+    type => 'wgs',
+    config => encode_json($config),
 );
+
 
 # Value is different between workstations and blades
 use Genome::Model::Tools::Picard::MarkDuplicates;
@@ -71,7 +73,7 @@ my $max_fh_override = Sub::Override->new(
 );
 
 my $command = Genome::Qc::Run->create(
-    config_name => 'testing-qc-run',
+    config_name => $qc_config_name,
     alignment_result => $alignment_result,
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );
@@ -87,7 +89,7 @@ my @expected_cmd_line = (
     '-Xmx4096m',
     '-XX:MaxPermSize=64m',
     '-cp',
-    '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/MarkDuplicates.jar',
+    '/usr/share/java/ant.jar:/usr/share/java/picard-tools1.123/MarkDuplicates.jar',
     'picard.sam.markduplicates.MarkDuplicates',
     'ASSUME_SORTED=true',
     sprintf('INPUT=%s', $bam_file),
@@ -116,6 +118,5 @@ my %expected_metrics = (
 is_deeply({$command->output_result->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
 
 $max_fh_override->restore;
-$config_override->restore;
 
 done_testing;

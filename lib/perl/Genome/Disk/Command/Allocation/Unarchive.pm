@@ -6,17 +6,12 @@ use Genome;
 
 class Genome::Disk::Command::Allocation::Unarchive {
     is => 'Genome::Disk::Command::Allocation::UnarchiveBase',
-    has_optional => [
+    has => [
         allocations => {
             is => 'Genome::Disk::Allocation',
             is_many => 1,
             shell_args_position => 1,
             doc => 'allocations to be unarchived',
-        },
-        paths => {
-            is => 'Text',
-            is_many => 1,
-            doc => 'pass a path instead of allocations and allocation will be looked up'
         },
     ],
     doc => 'unarchives the given allocations',
@@ -33,27 +28,11 @@ sub help_brief {
 sub _execute {
     my $self = shift;
 
-    if (!$self->allocations) {
-        if ($self->paths) {
-            my @allocs;
-            for my $path ($self->paths) {
-                my $alloc = Genome::Disk::Allocation->get_allocation_for_path($path);
-                if ($alloc) { push @allocs, $alloc; }
-            }
-            $self->allocations(\@allocs);
-        }
-
-        if ($self->allocations) {
-            $self->status_message('found allocation(s): ' . join("\n",map {$_->id} $self->allocations));
-        } else {
-            die 'You must provide either allocation id or the path you are trying to unarchive.';
-        }
-    }
-
     $self->status_message("Starting unarchive command...");
 
     for my $allocation ($self->allocations) {
         $self->status_message("Unarchiving allocation " . $allocation->id);
+        $self->_link_allocation_to_analysis_project($allocation);
         my $rv = $allocation->unarchive(reason => $self->reason);
         unless ($rv) {
             Carp::confess "Could not unarchive alloation " . $allocation->id;
@@ -62,6 +41,28 @@ sub _execute {
     }
 
     $self->status_message("Done unarchiving, exiting...");
+    return 1;
+}
+
+sub _link_allocation_to_analysis_project {
+    my $self = shift;
+    my $allocation = shift;
+
+    my $owner = $allocation->owner;
+    unless ($owner) {
+        $self->fatal_message('This allocation appears to be orphaned: %s', $allocation->id);
+    }
+
+    if($owner->isa('Genome::SoftwareResult')) {
+        $owner->add_user(label => 'sponsor', user => $self->analysis_project);
+    } elsif ($owner->isa('Genome::Model::Build')) {
+        unless($owner->model->analysis_project) {
+            $self->fatal_message('No analysis project set on model for build %s.  Please use `genome analysis-project add-model` to correct this.', $owner->__display_name__);
+        }
+    } else {
+        $self->fatal_message('Setting the analysis project of %s is currently not handled.  Please open a support request to unarchive this allocation.', $owner->__display_name__);
+    }
+
     return 1;
 }
 

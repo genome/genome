@@ -8,6 +8,8 @@ use Sys::Hostname;
 require File::Temp;
 use Test::More;
 
+use Sub::Install qw(reinstall_sub);
+
 Genome::Report::Email->silent();
 
 # use
@@ -41,6 +43,14 @@ my $model_id = $m->id;
 # tmpdir
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'Created temp dir');
+
+reinstall_sub({
+    into => 'Genome::Model::Command::Services::Build::Run',
+    as => 'execute',
+    code => sub {
+        return 1;
+    },
+});
 
 # ok
 my $rv = eval { 
