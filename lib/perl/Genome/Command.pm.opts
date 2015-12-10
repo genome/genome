@@ -1491,6 +1491,22 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>export',
+      [
+        '>somatic-validation',
+        [
+          'include-header!',
+          undef,
+          'analysis-project=s',
+          undef,
+          'file-path=s',
+          'files',
+          'help!',
+          undef
+        ],
+        'help!',
+        undef
+      ],
       '>import',
       [
         '>somatic-validation',
@@ -19574,6 +19590,8 @@ $Genome::Command::OPTS_SPEC = [
         'create-archive!',
         undef,
         'bgzip-vcfs!',
+        undef,
+        'dump-vcfs!',
         undef,
         'cghub-id-file=s',
         'files',
@@ -38977,6 +38995,22 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'analysis-project=s',
           undef,
+          'help!',
+          undef
+        ],
+        '>export',
+        [
+          '>somatic-validation',
+          [
+            'include-header!',
+            undef,
+            'analysis-project=s',
+            undef,
+            'file-path=s',
+            'files',
+            'help!',
+            undef
+          ],
           'help!',
           undef
         ],
