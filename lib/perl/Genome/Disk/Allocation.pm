@@ -1074,10 +1074,4 @@ sub _default_archive_after_time {
     DateTime->now(time_zone => 'local')->add(seconds => SECONDS_IN_ONE_YEAR)->strftime('%F 00:00:00');
 }
 
-sub _get_trash_folder {
-    my $self = shift;
-
-    return File::Spec->join($self->volume->get_trash_folder(), $self->id);
-}
-
 1;

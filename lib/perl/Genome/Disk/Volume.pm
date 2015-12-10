@@ -374,28 +374,4 @@ sub is_near_soft_limit {
     return (($self->soft_limit_kb - $kb) < $threshold );
 }
 
-sub get_trash_folder {
-    my $self = shift;
-
-    my $aggr = _extract_aggr($self->physical_path);
-
-    my $trash_volume = Genome::Disk::Volume->get(
-        disk_group_names => Genome::Config::get('disk_group_trash'),
-        'physical_path like' => "/vol/$aggr/%",
-    );
-
-    unless ($trash_volume) {
-        die $self->error_message(
-            "Unable to get trash volume for volume (%s) via aggr (%s)",
-            $self->mount_path, $aggr);
-    }
-
-    return File::Spec->join($trash_volume->mount_path, '.trash');
-}
-
-sub _extract_aggr {
-    return (shift =~ m!/(aggr\d+)/!)[0];
-}
-
-
 1;
