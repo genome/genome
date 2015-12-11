@@ -289,23 +289,25 @@ sub name_in_vcf {
 
 sub get_tcga_names {
     my $self = shift;
-    my @sample_attributes = $self->attributes(attribute_label => 'external_name');
-    my @tcga_names;
+    
+    my %tcga_names;
+    my $extraction_label = $self->extraction_label;
+    if ($extraction_label and $extraction_label =~ /^TCGA\-/) {
+        $tcga_names{$extraction_label}++;
+    }
 
+    my @sample_attributes = $self->attributes(attribute_label => 'external_name');
     if (@sample_attributes) {
         for my $attr (@sample_attributes) {
             my $sample_tcga_name = $attr->attribute_value;
 
             if ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
-                push @tcga_names, $sample_tcga_name;
+                $tcga_names{$sample_tcga_name}++;
             }
         }
     }
-    else {
-        $self->debug_message("No sample attribute with attribute_label as external_name found for sample: %s", $self->name);
-    }
-    $self->debug_message("No TCGA name found from sample attributes for sample: %s", $self->name) unless @tcga_names;
-    return @tcga_names;
+
+    return sort keys %tcga_names;
 }
 
 sub resolve_tcga_patient_id {

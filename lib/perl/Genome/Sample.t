@@ -23,7 +23,7 @@ ok($source, 'define source');
 my %sample_params = (
     name             => 'full_name.test',
     common_name      => 'common',
-    extraction_label => 'TCGA-1234-232-12',
+    extraction_label => 'TCGA-12-1234-232-12',
     extraction_type  => 'genomic dna',
     extraction_desc  => 'This is a test',
     source           => $source,
@@ -49,10 +49,11 @@ for my $tcga_name (@tcga_names) {
     );
 }
 
+push @tcga_names, 'TCGA-12-1234-232-12';
 
 isa_ok($sample, 'Genome::Sample');
 
-is($sample->name_in_vcf, "TCGA-1234-232-12", 'sample TCGA name');
+is($sample->name_in_vcf, "TCGA-12-1234-232-12", 'sample TCGA name');
 is($sample_special->name_in_vcf, 'TCGA-AB-3012-03A-01D-0741-05', 'special sample TCGA name');
 is($sample->resolve_tcga_patient_id, 'TCGA-12-1234', 'resolve_tcga_patient_id');
 
