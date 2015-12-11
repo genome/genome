@@ -28,8 +28,8 @@ sub execute {
     unless ($self->requestor) {
         $self->requestor(Genome::Sys->current_user);
     }
-    $self->status_message(sprintf("Unarchiving allocation(s) for Analysis Project %s at the request of %s.",
-            $self->analysis_project, $self->requestor->name));
+    $self->status_message("Unarchiving allocation(s) for Analysis Project %s at the request of %s.",
+            $self->analysis_project->__display_name__, $self->requestor->name);
 
     return $self->_execute();
 }
