@@ -7,9 +7,9 @@ use JSON qw(decode_json);
 use Set::Scalar;
 
 class Genome::Qc::Config {
-    is => [
-        'Genome::Utility::ObjectWithTimestamps',
-        'Genome::Utility::ObjectWithCreatedBy',
+    roles => [
+        'Genome::Role::ObjectWithTimestamps',
+        'Genome::Role::ObjectWithCreatedBy',
     ],
     table_name => 'config.qc',
     id_by => [
