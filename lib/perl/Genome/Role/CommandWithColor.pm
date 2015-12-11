@@ -23,7 +23,6 @@ sub _color {
     my $self = shift;
     my $string = shift;
 
-$DB::single=1;
     if($self->_is_running_in_terminal() and $self->color and @_) {
         return Term::ANSIColor::colored($string, @_);
     } else {
