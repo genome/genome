@@ -24,6 +24,14 @@ class Genome::Model::Build::Command::DiffBlessed {
     ],
 };
 
+sub help_brief : Overrides(Genome::Role::Comparable::Command::Diff) {
+    &Genome::Role::Comparable::Command::Diff::help_brief;
+}
+
+sub help_detail : Overrides(Genome::Role::Comparable::Command::Diff) {
+    &Genome::Role::Comparable::Command::Diff::help_detail;
+}
+
 sub diffs_message : Overrides(Genome::Role::Comparable::Command::Diff) {
     my $self = shift;
     my $diff_string = $self->Genome::Role::Comparable::Command::Diff::diffs_message(@_);

@@ -16,10 +16,17 @@ class Genome::NotableTest {
     roles => 'Genome::Role::Notable',
 };
 
-class Genome::Notable::Test::Command::ViewNotes {
-    is => 'Command::V2',
-    roles => [Genome::Role::Notable::Command::ViewNotes->create(notable_type => 'Genome::NotableTest')],
-};
+{
+    package Genome::Notable::Test::Command::ViewNotes;
+    use Genome; # to get the Overrides attribute imported
+    class Genome::Notable::Test::Command::ViewNotes {
+        is => 'Command::V2',
+        roles => [Genome::Role::Notable::Command::ViewNotes->create(notable_type => 'Genome::NotableTest')],
+    };
+    sub help_detail : Overrides(Genome::Role::Notable::Command::ViewNotes) {
+        &Genome::Role::Notable::Command::ViewNotes::help_detail;
+    }
+}
 
 my $meta = Genome::NotableTest->__meta__;
 ok($meta, 'Got meta object for test class Genome::NotableTest') or die;

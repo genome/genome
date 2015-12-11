@@ -40,6 +40,11 @@ class Genome::Sys::Command::Search::Index {
     ],
 };
 
+sub debug : Overrides(Genome::Role::Logger) {
+    &Genome::Role::Logger::debug;
+}
+
+
 sub execute {
     my $self = shift;
 

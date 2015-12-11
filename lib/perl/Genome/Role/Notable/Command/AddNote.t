@@ -15,10 +15,17 @@ class Genome::Notable::Test {
     roles => 'Genome::Role::Notable',
 };
 
-class Genome::Notable::Test::Command::AddNote {
-    is => 'Command::V2',
-    roles => [Genome::Role::Notable::Command::AddNote->create(notable_type => 'Genome::Notable::Test')],
-};
+{
+    package Genome::Notable::Test::Command::AddNote;
+    use Genome; # To get the Overrides attribute imported
+    class Genome::Notable::Test::Command::AddNote {
+        is => 'Command::V2',
+        roles => [Genome::Role::Notable::Command::AddNote->create(notable_type => 'Genome::Notable::Test')],
+    };
+    sub help_detail : Overrides(Genome::Role::Notable::Command::AddNote) {
+        &Genome::Role::Notable::Command::AddNote::help_detail;
+    }
+}
 
 my $notable = Genome::Notable::Test->create();
 ok($notable, 'created test notable object');
