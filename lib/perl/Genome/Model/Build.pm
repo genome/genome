@@ -2006,7 +2006,7 @@ sub add_from_build { # rename "add an underlying build" or something...
     return $bridge;
 }
 
-sub delete : Overrides(Genome::Role::ObjectWithAllocations) {
+sub delete {
     my $self = shift;
 
     # Abandon events
@@ -2029,7 +2029,6 @@ sub delete : Overrides(Genome::Role::ObjectWithAllocations) {
     $self->status_message("Unregistering software results associated with build");
     $self->_unregister_software_results;
 
-    $self->Genome::Role::ObjectWithAllocations::_delete();
     return $self->SUPER::delete;
 }
 

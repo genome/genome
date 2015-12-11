@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-use UR::Role;
+use UR::Role qw(around);
 
 require List::MoreUtils;
 
@@ -19,19 +19,13 @@ role Genome::Role::ObjectWithAllocations {
 };
 
 my %observers_created_for_class;
-my %super_delete;
-sub delete {
-    my $self = shift;
-    _delete($self);
-
-    my $super_delete = $super_delete{$self->class} ||= $self->super_can('delete');
-    return $self->$super_delete;
-}
-
-sub _delete {
+around delete => sub {
+    my $orig_delete = shift;
     my $self = shift;
     $self->_create_deallocate_disk_allocations_observer unless ($observers_created_for_class{$self->class}++);
-}
+
+    return $self->$orig_delete(@_);
+};
 
 sub _create_deallocate_disk_allocations_observer {
     my $self = shift;
@@ -46,6 +40,7 @@ sub _create_deallocate_disk_allocations_observer {
         UR::Context->cancel_change_subscription(
             'commit', $deallocator
         );
+        delete $observers_created_for_class{$class};
     };
     UR::Context->add_observer(
         aspect => 'commit',

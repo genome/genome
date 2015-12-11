@@ -275,7 +275,7 @@ sub create {
     return $self;
 }
 
-sub delete : Overrides(Genome::Role::ObjectWithAllocations) {
+sub delete {
     my $self = shift;
 
     my ($expunge_status) = $self->_expunge_assignments;
@@ -289,7 +289,6 @@ sub delete : Overrides(Genome::Role::ObjectWithAllocations) {
         $bridge->delete;
     }
 
-    $self->Genome::Role::ObjectWithAllocations::_delete();
     return $self->SUPER::delete;
 }
 
