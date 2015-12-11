@@ -209,7 +209,7 @@ sub print_manifest {
 
 sub get_info_for_sample {
     my ($self, $desired_sample, $sample_info_collection) = @_;
-    my $tcga_names = Set::Scalar->new($desired_sample->extraction_label, $desired_sample->get_tcga_names);
+    my $tcga_names = Set::Scalar->new($desired_sample->get_tcga_names);
     my $found_sample;
     
     for my $sample (@$sample_info_collection) {
