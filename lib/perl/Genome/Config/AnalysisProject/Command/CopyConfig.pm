@@ -25,6 +25,11 @@ class Genome::Config::AnalysisProject::Command::CopyConfig {
             doc                 => 'copy tags (if any) that are attached to the configs',
             default_value       => 0,
         },
+        include_disabled => {
+            is                  => 'Boolean',
+            doc                 => 'also copy disabled config items',
+            default_value       => 0,
+        },
     ],
 };
 
@@ -51,6 +56,10 @@ sub execute {
     my $to_project = $self->to_project;
 
     my @configs_to_copy = grep { $_->status ne 'disabled' } $from_project->config_items;
+    if($self->include_disabled){
+        @configs_to_copy = $from_project->config_items;
+    }
+    
     $self->_copy_config_profile_items_to_project($to_project, @configs_to_copy);
 
     return 1;
