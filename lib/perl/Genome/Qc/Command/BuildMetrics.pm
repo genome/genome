@@ -49,7 +49,7 @@ sub execute {
         die($self->error_message);
     }
 
-    DumpFile($self->output_file,@metrics);
+    DumpFile($self->output_file,\@metrics);
 
     return 1;
 }
