@@ -43,9 +43,6 @@ sub execute {
     my $self = shift;
     $self->debug_message('Fastqs to bam...');
 
-    my $unarchive_if_necessary = $self->_unarchive_fastqs_if_necessary;
-    return if not $unarchive_if_necessary;
-
     my $fastq_to_bam_ok = $self->_fastqs_to_bam;
     return if not $fastq_to_bam_ok;
 
@@ -56,45 +53,6 @@ sub execute {
     return if not $cleanup_ok;
 
     $self->debug_message('Fastqs to bam...done');
-    return 1;
-}
-
-sub _unarchive_fastqs_if_necessary {
-    my $self = shift;
-    $self->debug_message('Unarchive fastqs if necessary...');
-
-    my @new_fastq_paths;
-    for my $fastq_path ( $self->fastq_paths ) {
-        if ( $fastq_path !~ /\.gz$/ ) {
-            $self->debug_message('Unarchive not necessary for '.$fastq_path);
-            push @new_fastq_paths, $fastq_path;
-            next;
-        }
-        $self->debug_message('Unarchiving: '.$fastq_path);
-        
-        my $success = try {
-            Genome::Sys->shellcmd(cmd => [ 'gunzip', $fastq_path ]);
-        }
-        catch {
-            $self->error_message($_) if $_;
-            $self->error_message('Failed to gunzip fastq!');
-            return;
-        };
-        return if not $success;
-
-        my $unarchived_fastq_path = $fastq_path;
-        $unarchived_fastq_path =~ s/\.gz$//;
-        $self->debug_message("Unarchived fastq: $unarchived_fastq_path");
-        if ( not -s $unarchived_fastq_path ) {
-            $self->error_message('Unarchived fastq does not exist!');
-            return;
-        }
-        push @new_fastq_paths, $unarchived_fastq_path;
-        unlink $fastq_path;
-    }
-    $self->fastq_paths(\@new_fastq_paths);
-
-    $self->debug_message('Unarchive fastqs if necessary...');
     return 1;
 }
 
