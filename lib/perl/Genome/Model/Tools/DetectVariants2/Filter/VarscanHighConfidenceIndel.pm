@@ -14,9 +14,6 @@ class Genome::Model::Tools::DetectVariants2::Filter::VarscanHighConfidenceIndel{
         min_tumor_freq  => { is => 'Number', doc => "Minimum tumor freq for HC Somatic", is_input => 1, default_value => '10'},
     ],
     has_param => [
-         lsf_queue => {
-             default_value => Genome::Config::get('lsf_queue_dv2_workflow'),
-         },
          lsf_resource => {
              default_value => Genome::Config::get('lsf_resource_dv2_filter_varscan_high_confidence_indel'),
          },
