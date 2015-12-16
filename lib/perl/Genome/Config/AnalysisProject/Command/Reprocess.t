@@ -65,14 +65,16 @@ subtest 'reprocess some instdata' => sub{
     # only reprocess instdata of last bridge
     my $cmd = $command_class->execute(
         analysis_project => $analysis_project,
-        instrument_data => $bridges[$#bridges]->instrument_data,
+        instrument_data => [ map { $_->instrument_data } @bridges[2..3] ],
     );
     ok($cmd->result, 'executed command');
 
     # check statuses
-    is($bridges[$#bridges]->status, 'new', 'correct bridge scheduled');
-    for my $bridge ( @bridges[0..($#bridges - 1)] ) {
+    for my $bridge ( @bridges[0..1] ) {
         is($bridge->status, 'processed', 'other bridges not scheduled');
+    }
+    for my $bridge ( @bridges[2..3] ) {
+        is($bridge->status, 'new', 'correct bridges scheduled');
     }
 
 };
