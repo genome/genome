@@ -7,7 +7,7 @@ BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
 };
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 use above 'Genome';
 
@@ -51,3 +51,26 @@ subtest 'all bridges are rescheduled' => sub {
         is($bridge->status, 'new', 'bridge is rescheduled');
     }
 };
+
+subtest 'reprocess some instdata' => sub{
+    plan tests => 5;
+
+    # reset statuses
+    map { $_->status('processed') } @bridges;
+
+    # only reprocess instdata of last bridge
+    my $cmd = $command_class->execute(
+        analysis_project => $analysis_project,
+        instrument_data => $bridges[$#bridges]->instrument_data,
+    );
+    ok($cmd->result, 'executed command');
+
+    # check statuses
+    is($bridges[$#bridges]->status, 'new', 'correct bridge scheduled');
+    for my $bridge ( @bridges[0..($#bridges - 1)] ) {
+        is($bridge->status, 'processed', 'other bridges not scheduled');
+    }
+
+};
+
+done_testing;
