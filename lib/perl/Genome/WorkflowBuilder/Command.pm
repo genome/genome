@@ -68,7 +68,8 @@ sub _get_ptero_shortcut_method {
 
     my $self = shift;
     my $log_dir = shift;
-    return Ptero::Builder::Job->new(
+
+    my %job_args = (
         name => 'shortcut',
         service_url => Genome::Config::get('ptero_shell_command_service_url'),
         parameters => {
@@ -83,6 +84,17 @@ sub _get_ptero_shortcut_method {
             workingDirectory => Cwd::getcwd,
         },
     );
+
+    my $retry_exit_code = Genome::Config::get('sys_lock_exit_code');
+    if ($retry_exit_code ne ' ') {
+        $job_args{parameters}{retrySettings} = {
+            exitCode => $retry_exit_code + 0,
+            initialInterval => 10,
+            maxInterval => 60,
+            attempts => 60 * 24 * 30 # ~30 days of attempts
+        };
+    }
+    return Ptero::Builder::Job->new(%job_args);
 }
 
 sub _get_ptero_execute_method {

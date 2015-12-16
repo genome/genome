@@ -73,7 +73,7 @@ sub lock {
 
         #If symlink no longer exists
         if ($! == ENOENT || !$target) {
-            sleep $block_sleep;
+            $self->_block_sleep($resource_lock, $block_sleep);
             next;
         }
 
@@ -116,7 +116,8 @@ sub lock {
                 $self->unlock(resource_lock => $resource_lock, force => 1);
             }
         }
-        sleep $block_sleep;
+
+        $self->_block_sleep($resource_lock, $block_sleep);
         $lock_attempts += 1;
     }
     $self->owned_resources->{$resource_lock} = $$;
@@ -140,6 +141,22 @@ sub lock {
     }
 
     return $resource_lock;
+}
+
+sub _block_sleep {
+    my $self = shift;
+    my $resource_lock = shift;
+    my $block_sleep = shift;
+
+    my $exit_code = Genome::Config::get("sys_lock_exit_code");
+    if ($exit_code ne ' ') {
+        Genome::Logger->notice(sprintf("Could not obtain lock (%s)... exiting " .
+            "with exit-code (%s) instead of sleeping.", $resource_lock,
+            $exit_code));
+        exit $exit_code;
+    } else {
+        sleep $block_sleep;
+    }
 }
 
 sub unlock {
