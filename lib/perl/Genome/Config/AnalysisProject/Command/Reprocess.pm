@@ -56,8 +56,9 @@ sub _resolve_analysis_project_bridges {
 
     return Genome::Config::AnalysisProject::InstrumentDataBridge->get(
         analysis_project => $self->analysis_project,
-        instrument_data => [ $self->instrument_data ],
+        'instrument_data.id' => [ map { $_->id}  $self->instrument_data ],
     );
 }
 
-1
+1;
+
