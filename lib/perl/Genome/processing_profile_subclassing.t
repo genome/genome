@@ -4,7 +4,7 @@ use Test::More;
 
 UR::DBI->no_commit(1);
 
-plan tests => 31;
+plan tests => 25;
 
 # Some Processing Profiles are abstract and require further info to subclass properly
 # Genome::ProcessingProfile, G::PP::ReferenceAlignment and G::PP::RnaSeq
@@ -27,16 +27,6 @@ like($@, qr/Genome::ProcessingProfile::NonExistent is not a subclass of Genome::
 
 my @pps = Genome::ProcessingProfile->is_loaded();
 ok(! scalar(@pps), 'After failed ProcessingProfile create()s, no PPs exist');
-
-$pp = Genome::ProcessingProfile->create(name => 'test alignment 1', type_name => 'simple alignment', reference_sequence_name => 'foo');
-ok($pp, 'Created a Processing Profile with type_name => simple alignment');
-isa_ok($pp, 'Genome::ProcessingProfile::SimpleAlignment');
-isa_ok($pp, 'Genome::ProcessingProfile');
-
-$pp = Genome::ProcessingProfile::SimpleAlignment->create(name => 'test alignment 2', reference_sequence_name => 'foo2');
-ok($pp, 'Created a Genome::ProcessingProfile::SimpleAlignment');
-isa_ok($pp, 'Genome::ProcessingProfile::SimpleAlignment');
-isa_ok($pp, 'Genome::ProcessingProfile');
 
 
 

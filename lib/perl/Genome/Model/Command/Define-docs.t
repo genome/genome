@@ -37,7 +37,6 @@ my @sub_commands_expected = qw/
   reference-alignment
   reference-sequence
   rna-seq
-  simple-alignment
   single-sample-genotype
   small-rna
   somatic
