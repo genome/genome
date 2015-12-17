@@ -27,49 +27,6 @@ class Genome::ModelGroup::View::Solr::Xml {
                 return join ('?id=', '/view/genome/model-group/status.html',$_[0]->id()); 
             },
         },
-        display_label1 => {
-            is  => 'Text',
-            default => 'convergence model',
-        },
-        display_url1 => {
-            is  => 'Text',
-            calculate_from => ['subject'],
-            calculate => sub {
-                my $cmodel = $_[0]->convergence_model();
-                return if !$cmodel;
-                return join ('?id=', '/view/genome/model/convergence/status.html',$cmodel->id());
-            },
-        },
-        display_label2 => {
-            is  => 'Text',
-            default => 'last build',
-        },
-        display_url2 => {
-            is  => 'Text',
-            calculate_from => ['subject'],
-            calculate => sub {
-                my $cmodel = $_[0]->convergence_model() || return 'none';
-                my $build  = $cmodel->last_succeeded_build() || return 'none';
-                return join ('?id=', '/view/genome/model/build/convergence/status.html',$build->id());
-            },
-        },
-        display_label3 => {
-            is => 'Text',
-            default => 'summary report',
-        },
-        display_url3 => {
-            is  => 'Text',
-            calculate_from => ['subject'],
-            calculate => sub {
-                my $cmodel = $_[0]->convergence_model() || return 'none';
-                my $build  = $cmodel->last_succeeded_build() || return 'none';
-                my $data_dir = $build->data_directory() || return 'none';
-                my $url = join( '/',
-                    Genome::Config::get('sys_services_files_url'),
-                    $data_dir, 'reports', 'Summary', 'report.html' );
-                return $url;
-            },
-        },
         default_aspects => {
             is => 'ARRAY',
             default => [

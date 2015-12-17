@@ -44,13 +44,6 @@ class Genome::ModelGroup {
             via => 'models',
             doc => 'Instrument data assigned to models of this group.',
         },
-        convergence_model => {
-            is => 'Genome::Model::Convergence',
-            reverse_as => 'group',
-            is_optional => 1,
-            is_many => 1, # We really should only have 1 here, however reverse_as requires this
-            doc => 'The auto-generated Convergence Model summarizing knowledge about this model group',
-        },
         project => {
             is => 'Genome::Project',
             id_by => 'uuid',
@@ -84,12 +77,7 @@ sub unload {
 sub create {
     my $class = shift;
 
-    # Strip out convergence model params
     my ($bx,%params) = $class->define_boolexpr(@_);
-    my %convergence_model_params = ();
-    if(exists $params{convergence_model_params}) {
-        %convergence_model_params = %{ delete $params{convergence_model_params} };
-    }
 
     # Check for name uniqueness
     my $name = $bx->value_for('name');
@@ -122,12 +110,6 @@ sub rename {
     my $old_name = $self->name;
     $self->name($new_name);
     $self->status_message("Renamed model group from '$old_name' to '$new_name'");
-
-    if ( my $convergence_model = $self->convergence_model ) {
-        my $old_model_name = $convergence_model->name;
-        $convergence_model->name( $self->name . '_convergence' );
-        $convergence_model->status_message("Renamed convergence model from '$old_model_name' to '".$convergence_model->name."'.");
-    }
 
     return 1;
 }
@@ -271,20 +253,6 @@ sub delete {
     if (@models) {
         $self->status_message("Unassigning " . @models . " models from " . $self->__display_name__ . ".");
         $self->unassign_models(@models);
-    }
-
-    # delete convergence model (and indirectly its builds)
-    my $convergence_model = $self->convergence_model;
-    if ($convergence_model) {
-        my $deleted_model = eval {
-            $convergence_model->delete;
-        };
-        if ($deleted_model) {
-            $self->status_message("Removed convergence model.");
-        }
-        else {
-            $self->error_message("Failed to remove convergence model (" . $convergence_model->__display_name__ . "), please investigate and remove manually.");
-        }
     }
 
     # delete self

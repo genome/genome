@@ -19,11 +19,6 @@
       <div class="container">
         <div id="objects" class="span-24 last">
           <xsl:call-template name="genome_modelgroup_attributes_box"/>
-
-          <xsl:for-each select="aspect[@name='convergence_model']/object">
-            <xsl:call-template name="genome_model_convergence_box"/>
-          </xsl:for-each>
-
         </div>
 
         <xsl:for-each select="aspect[@name='models']/object[./types[./isa[@type='Genome::Model']]]">

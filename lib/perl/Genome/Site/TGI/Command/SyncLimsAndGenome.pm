@@ -96,7 +96,6 @@ sub _suppress_status_messages {
     no strict 'refs';
 
     for my $class (qw/ 
-        Genome::Model::Command::Define::Convergence
         Genome::Model::Command::Input::Update
         Genome::Model::Command::List
         Genome::ModelGroup 
