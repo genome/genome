@@ -87,20 +87,15 @@ sub _purge_unarchived {
     my $allocation_object = shift;
 
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        my $destination_directory = $allocation_object->_get_trash_folder();
-        Genome::Sys->create_directory($destination_directory);
-
-        $self->status_message('Moving allocation path \''.
-            $allocation_object->absolute_path .'\' to temporary path \''.
-            $destination_directory .'\'');
-
-        unless (dirmove($allocation_object->absolute_path,
-                    $destination_directory)) {
-            $self->error_message('Failed to move allocation path \''.
-                $allocation_object->absolute_path .'\' to destination path \''.
-                $destination_directory .'\': '. $!);
+        my $absolute_path = $allocation_object->absolute_path;
+        $self->status_message(q{Removing allocation path '%s'}, $absolute_path);
+        unless (Genome::Sys->remove_directory_tree($absolute_path)) {
+            $self->error_message(
+                'Error removing directory for allocation %s',
+                $allocation_object->id
+            );
             return;
-        };
+        }
     }
 
     $self->_finalize_purge($allocation_object);
