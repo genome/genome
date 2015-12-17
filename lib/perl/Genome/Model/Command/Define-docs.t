@@ -18,7 +18,6 @@ chomp @sub_commands;
 my @sub_commands_expected = qw/
   amplicon-assembly
   clin-seq
-  comparison
   convergence
   de-novo-assembly
   differential-expression
