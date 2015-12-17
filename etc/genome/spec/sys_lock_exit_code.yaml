@@ -1,3 +1,0 @@
----
-env: XGENOME_SYS_LOCK_EXIT_CODE
-default_value: ' '

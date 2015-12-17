@@ -1,0 +1,5 @@
+---
+env: XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING
+default_value: 0
+validators:
+  - Numeric

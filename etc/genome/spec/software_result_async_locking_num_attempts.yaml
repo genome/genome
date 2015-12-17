@@ -1,0 +1,7 @@
+---
+env: XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING_MAX_ATTEMPTS
+# with software_result_async_locking_max_interval set to 3600 seconds
+# 750 is approximately 1 month worth of attempts.
+default_value: 750
+validators:
+  - Numeric

@@ -1,0 +1,7 @@
+---
+env: XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING_EXIT_CODE
+# default value chosen based on /usr/include/sysexits.h:
+# >>> define EX_TEMPFAIL     75      /* temp failure; user is invited to retry */
+default_value: 75
+validators:
+  - Numeric

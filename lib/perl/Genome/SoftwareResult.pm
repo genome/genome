@@ -820,16 +820,25 @@ sub _lock {
         max_try => 2,
     );
     if (!$lock && $wait) {
-        $class->debug_message("This data set is still being processed by its creator.  Waiting for existing data lock...");
-        $lock = Genome::Sys::LockProxy->new(
-            resource => $resource_lock_name,
-            scope => 'site',
-        )->lock(
-            wait_announce_interval => 600,
-        );
-        unless ($lock) {
-            $class->error_message("Failed to get existing data lock!");
-            die($class->error_message);
+        if (Genome::Config::get("software_result_async_locking")) {
+            my $exit_code = Genome::Config::get(
+                "software_result_async_locking_exit_code");
+            $class->status_message("SoftwareResult asynchronous locking " .
+                "is enabled... exiting now with exit_code (%s).", $exit_code);
+            exit $exit_code;
+        } else {
+            $class->debug_message("This data set is still being processed by " .
+                "its creator.  Waiting for existing data lock...");
+            $lock = Genome::Sys::LockProxy->new(
+                resource => $resource_lock_name,
+                scope => 'site',
+            )->lock(
+                wait_announce_interval => 600,
+            );
+            unless ($lock) {
+                $class->error_message("Failed to get existing data lock!");
+                die($class->error_message);
+            }
         }
     }
 

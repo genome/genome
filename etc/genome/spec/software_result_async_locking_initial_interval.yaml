@@ -1,0 +1,5 @@
+---
+env: XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING_INITIAL_INTERVAL
+default_value: 60
+validators:
+  - Numeric
