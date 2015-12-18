@@ -1699,19 +1699,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>comparison',
-      [
-        'name=s',
-        'files',
-        'aspects=s@',
-        'files',
-        'based-on=s',
-        undef,
-        'describe!',
-        undef,
-        'help!',
-        undef
-      ],
       '>de-novo-assembly',
       [
         'name=s',
@@ -2716,31 +2703,6 @@ $Genome::Command::OPTS_SPEC = [
         undef
       ],
       '>imported-variation-list',
-      [
-        'show=s',
-        'files',
-        'style=s',
-        [
-          'text',
-          'csv',
-          'tsv',
-          'pretty',
-          'html',
-          'xml',
-          'newtext'
-        ],
-        'csv-delimiter=s',
-        'files',
-        'noheaders!',
-        undef,
-        'order-by=s',
-        'files',
-        'filter=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>comparison',
       [
         'show=s',
         'files',
@@ -8829,21 +8791,6 @@ $Genome::Command::OPTS_SPEC = [
         'model-name=s',
         'files',
         'run-as=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>comparison',
-      [
-        'from-models=s@',
-        undef,
-        'changes=s@',
-        'files',
-        'processing-profile=s',
-        undef,
-        'add-to-projects=s@',
-        undef,
-        'name=s',
         'files',
         'help!',
         undef
