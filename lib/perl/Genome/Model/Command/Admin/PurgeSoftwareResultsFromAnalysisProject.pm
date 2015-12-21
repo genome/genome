@@ -184,3 +184,44 @@ sub _do_expunge {
         UR::Context->commit() || die "commit() failed while expunging software result ".$sr->id;
     }
 }
+
+
+package Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject::PurgeReport;
+use List::Util qw(reduce);
+
+sub new {
+    my($class, $purger) = @_;
+    my $self = {
+        purger => $purger,
+        data => {},
+    };
+    return bless($self, $class);
+}
+
+sub purger { shift->{purger} }
+sub data { shift->{data} }
+
+sub add {
+    my($self, $software_result, $kb_requested) = @_;
+    $self->data->{ $software_result->class }->{ $software_result->id } ||= $kb_requested;
+}
+
+sub print {
+    my $self = shift;
+
+    foreach my $type ( sort keys %{ $self->data } ) {
+        my $this_class_data = $self->data->{$type};
+        my $total_size = reduce { $a + $b } values %$this_class_data;
+        my $count = %$this_class_data + 0;
+        $self->purger->status_message('%s: %d GB in %s software results',
+                                        $type,
+                                        int($total_size / Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject::KB_IN_ONE_GB),
+                                        $count);
+        foreach my $id ( keys %$this_class_data ) {
+            $self->purger->status_message("\t%s => %0.3f GB",
+                                            $id,
+                                            $total_size / Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject::KB_IN_ONE_GB);
+        }
+    }
+    $self->{data} = {};
+}
