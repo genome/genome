@@ -110,7 +110,7 @@ sub load_converters {
     for my $from (@reference_ids) {
         for my $to (@reference_ids) {
             if($from != $to) {
-                my @converters = Genome::Model::Build::ReferenceSequence::Converter->get( source_reference_build_id => $from, destination_reference_build_id => $to );
+                my @converters = Genome::Model::Build::ReferenceSequence::Converter->get( source_reference_build_id => $from, destination_reference_build_id => $to, test_name => undef );
                 die "More than one converter found from: $from to: $to!\n" if (@converters > 1);
 
                 load_software_results($converters[0]) if @converters;
