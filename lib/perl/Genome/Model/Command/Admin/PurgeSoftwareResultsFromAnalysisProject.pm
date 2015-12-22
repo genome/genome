@@ -8,8 +8,6 @@ use Scope::Guard;
 use Genome;
 use Genome::Sys::LockProxy;
 
-use constant KB_IN_ONE_GB => 1048576;
-
 class Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject {
     is => 'Command::V2',
     has => [
@@ -150,7 +148,7 @@ sub purge_one_analysis_project {
     my $unlock_and_print_report = Scope::Guard->new(sub {
         $unlocker->();
         $self->status_message('Removed %d GB from %d software results',
-                                int($total_kb_purged / KB_IN_ONE_GB),
+                                $self->_report_obj->_format_disk_size($total_kb_purged),
                                 $software_result_count);
     });
 
@@ -218,16 +216,30 @@ sub print {
     foreach my $type ( sort keys %{ $self->data } ) {
         my $this_class_data = $self->data->{$type};
         my $total_size = reduce { $a + $b } values %$this_class_data;
-        my $count = %$this_class_data + 0;
-        $self->purger->status_message('%s: %d GB in %s software results',
+        my $count = scalar keys %$this_class_data;
+        $self->purger->status_message('%s: %s in %s software results',
                                         $type,
-                                        int($total_size / Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject::KB_IN_ONE_GB),
+                                        $self->_format_disk_size($total_size),
                                         $count);
         foreach my $id ( keys %$this_class_data ) {
-            $self->purger->status_message("\t%s => %0.3f GB",
+            $self->purger->status_message("\t%s => %s",
                                             $id,
-                                            $total_size / Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject::KB_IN_ONE_GB);
+                                            $self->_format_disk_size($total_size));
         }
     }
     $self->{data} = {};
 }
+
+sub _format_disk_size {
+    my($self, $kb) = @_;
+
+    if ($kb < 1024) {
+        "$kb KB";
+    } elsif ($kb < 1024 * 1024) {
+        sprintf('%0.3f MB', $kb / 1024);
+    } else {
+        sprintf('%0.3f GB', $kb / 1024 / 1024);
+    }
+}
+
+1;
