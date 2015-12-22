@@ -28,12 +28,18 @@ subtest 'changes delete' => sub {
     plan tests => 2;
 
     my %ldap_users = map { $_ => 1 } $apipe_users->members;
-    my $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
-    is_deeply($changes, {}, 'no changes needed');
+    is_deeply(
+        [ Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users) ],
+        [ [], [], ],
+        'no changes needed',
+    );
 
     delete $ldap_users{ $apipe_db_users[0]->email };
-    $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
-    is_deeply($changes, { delete => [ @apipe_db_users[0] ] }, 'need to delete '.$apipe_db_users[0]->email);
+    is_deeply(
+        [ Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users) ],
+        [ [], [ $apipe_db_users[0] ] ], 
+        'need to delete '.$apipe_db_users[0]->email,
+    );
 
 };
 
@@ -42,11 +48,17 @@ subtest 'changes create' => sub {
 
     my $cnt = 0; # this is the ldap user 'object', just use a number for simplicity
     my %ldap_users = map { $_ => ++$cnt } $apipe_users->members;
-    my $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
-    is_deeply($changes, {}, 'no create changes needed');
+    is_deeply(
+        [ Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users) ],
+        [ [], [], ], 
+        'no create changes needed',
+    );
 
-    $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, [ @apipe_db_users[0..1] ]);
-    is_deeply($changes, { create => [ 3 ] }, 'need to create '.$apipe_db_users[$#apipe_db_users]->email);
+    is_deeply(
+        [ Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, [ @apipe_db_users[0..1] ]) ],
+        [ [ 3 ], [], ],
+        'need to create '.$apipe_db_users[$#apipe_db_users]->email,
+    );
 
 };
 
