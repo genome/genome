@@ -10,10 +10,10 @@ use Net::LDAP;
 class Genome::Site::TGI::Command::SyncSysUserWithLdap{
     is => 'Command::V2',
     has => {
-        force => {
-            is => 'Boolean',
-            default_value => 0,
-            doc => 'If more than 10 changes (creates + deletes) are required, this flag is necessary to process.',
+        max_changes_allowed => {
+            is => 'Integer',
+            default_value => 10,
+            doc => 'The maximum number fo changes allowed to process the creates and deletes.',
         },
     },
     doc => 'Sync Genome sys users from LDAP users',
@@ -27,14 +27,16 @@ sub execute {
 
     my ($creates, $deletes) = get_changes($ldap_users,\@db_users);
     my $changes_count = @$creates + @$deletes;
-    my $changes_msg = sprintf( '%s creates, %s deletes, %s total', scalar(@$creates), scalar(@$deletes), $changes_count);
+    $self->status_message("Creates: %s", scalar(@$creates));
+    $self->status_message("Deletes: %s", scalar(@$deletes));
+    $self->status_message("Total: %s", $changes_count);
+    $self->status_message('Max changes allowed: %s', $self->max_changes_allowed);
     if ($changes_count < 1) {
         $self->status_message("No differences found between database and ldap.");
         return 1;
     }
-
-    if ($changes_count > 10 and not $self->force) {
-        $self->status_message( "Too many changes (%s). Use --force option to process if this is OK.", $changes_msg);
+    elsif ($changes_count > $self->max_changes_allowed) {
+        $self->status_message( "The number of changes exceeds the max number allowed. If this is expected, increase the --max-changes-allowed option to be higher than the number of changes to process.");
         return;
     }
 
@@ -53,7 +55,7 @@ sub execute {
         $u->delete();
     }
 
-    $self->status_message('done - %s', $changes_msg);
+    $self->status_message('Done');
 }
 
 sub get_ldap_users {
