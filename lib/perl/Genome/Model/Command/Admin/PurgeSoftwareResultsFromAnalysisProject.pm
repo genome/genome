@@ -169,6 +169,12 @@ sub purge_one_analysis_project {
     }
 }
 
+my $report_obj;
+sub _report_obj {
+    my $self = shift;
+    $report_obj ||= Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject::PurgeReport->new($self);
+}
+
 sub _do_expunge {
     my($self, $sr, $reason) = @_;
 
