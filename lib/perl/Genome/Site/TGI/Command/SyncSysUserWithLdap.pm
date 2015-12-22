@@ -13,7 +13,7 @@ class Genome::Site::TGI::Command::SyncSysUserWithLdap{
         max_changes_allowed => {
             is => 'Integer',
             default_value => 10,
-            doc => 'The maximum number fo changes allowed to process the creates and deletes.',
+            doc => 'The maximum number of changes allowed to process the creates and deletes.',
         },
     },
     doc => 'Sync Genome sys users from LDAP users',
