@@ -39,7 +39,10 @@ sub execute {
     }
 
     if ($changes_count > 10 and not $self->force) {
-        print "Too many changes ($create_count creates, $delete_count deletes, $changes_count total). Use --force option if this is OK.\n";
+        $self->status_message(
+            "Too many changes (%s creates, %s deletes, %s total). Use --force option to process if this is OK.",
+            $create_count, $delete_count, $changes_count,
+        );
         return;
     }
 
