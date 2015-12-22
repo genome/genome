@@ -52,6 +52,7 @@ sub execute {
     }
 
     $self->status_message("done- $create_count creates, $delete_count deletes, $changes_count total\n");
+    return 1;
 }
 
 sub get_ldap_users {
