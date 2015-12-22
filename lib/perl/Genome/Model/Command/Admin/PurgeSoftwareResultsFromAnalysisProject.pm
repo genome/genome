@@ -23,10 +23,10 @@ class Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject {
             require_user_verify => 1,
             doc => 'List of AnalysisProjects to purge',
         },
-        dry_run => {
+        report => {
             is => 'Boolean',
             default_value => 0,
-            doc => 'Do not actually purge anything',
+            doc => 'Print a report of what would be purged, but do not actually purge any data',
         },
     ],
 };
@@ -112,7 +112,11 @@ sub _get_lock_for_analysis_project {
     my($self, $anp) = @_;
 
     my $unlocker;
-    if ($ENV{UR_DBI_NO_COMMIT}) {
+
+    if ($self->report) {
+        $unlocker = sub { $self->_report_obj->print() };
+
+    } elsif ($ENV{UR_DBI_NO_COMMIT}) {
         $unlocker = sub {};
 
     } else {
@@ -149,9 +153,12 @@ sub purge_one_analysis_project {
 
     my $unlock_and_print_report = Scope::Guard->new(sub {
         $unlocker->();
-        $self->status_message('Removed %d GB from %d software results',
-                                $self->_report_obj->_format_disk_size($total_kb_purged),
-                                $software_result_count);
+        my $format = $self->report
+                      ? '%s in %d software results'
+                      : 'Removed %s from %d software results';
+        $self->status_message($format,
+                              $self->_report_obj->_format_disk_size($total_kb_purged),
+                              $software_result_count);
     });
 
     $sth->execute($anp->id);
@@ -165,7 +172,11 @@ sub purge_one_analysis_project {
         $software_result_count++;
         $total_kb_purged += $data->{kilobytes_requested};
 
-        $self->_do_expunge($sr, $reason);
+        if ($self->report) {
+            $self->_add_to_report($sr, $data->{kilobytes_requested});
+        } else {
+            $self->_do_expunge($sr, $reason);
+        }
     }
 }
 
@@ -175,22 +186,20 @@ sub _report_obj {
     $report_obj ||= Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject::PurgeReport->new($self);
 }
 
+sub _add_to_report {
+    my($self, $software_result, $kb_requested) = @_;
+
+    $self->_report_obj->add($software_result, $kb_requested);
+}
+
 sub _do_expunge {
     my($self, $sr, $reason) = @_;
 
-    my $action_message = $self->dry_run
-                            ? 'Dry run, would remove'
-                            : 'Removing';
-
-    $self->status_message('%s software result %s',
-                            $action_message,
+    $self->status_message('Removing software result %s',
                             $sr->id);
-    unless ($self->dry_run) {
-        $sr->expunge($reason);
-        UR::Context->commit() || die "commit() failed while expunging software result ".$sr->id;
-    }
+    $sr->expunge($reason);
+    UR::Context->commit() || die "commit() failed while expunging software result ".$sr->id;
 }
-
 
 package Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject::PurgeReport;
 use List::Util qw(reduce);
