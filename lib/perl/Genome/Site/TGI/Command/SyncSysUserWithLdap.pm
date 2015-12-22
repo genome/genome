@@ -50,6 +50,7 @@ sub execute {
     }
 
     $self->status_message('Done');
+    return 1;
 }
 
 sub get_ldap_users {
