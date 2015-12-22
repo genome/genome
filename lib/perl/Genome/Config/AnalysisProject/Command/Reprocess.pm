@@ -7,6 +7,13 @@ use Genome;
 
 class Genome::Config::AnalysisProject::Command::Reprocess {
     is => 'Genome::Config::AnalysisProject::Command::Base',
+    has_optional => {
+        instrument_data => {
+            is => 'Genome::InstrumentData',
+            is_many => 1,
+            doc => 'Only reprocess these instrument data.',
+        },
+    },
 };
 
 sub help_brief {
@@ -35,12 +42,23 @@ sub valid_statuses {
 sub execute {
     my $self = shift;
 
-    my $analysis_project = $self->analysis_project;
-    for my $bridge ($analysis_project->analysis_project_bridges) {
+    for my $bridge ( $self->_resolve_analysis_project_bridges ) {
         $bridge->reschedule;
     }
 
     return 1;
 }
 
+sub _resolve_analysis_project_bridges {
+    my $self = shift;
+
+    return $self->analysis_project->analysis_project_bridges if not $self->instrument_data;
+
+    return Genome::Config::AnalysisProject::InstrumentDataBridge->get(
+        analysis_project => $self->analysis_project,
+        instrument_data_id => [ map { $_->id}  $self->instrument_data ],
+    );
+}
+
 1;
+
