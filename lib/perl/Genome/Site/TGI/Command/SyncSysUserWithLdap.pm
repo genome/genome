@@ -26,11 +26,8 @@ sub execute {
     my @db_users = Genome::Sys::User->fix_params_and_get();
 
     my ($creates, $deletes) = get_changes($ldap_users,\@db_users);
+    $self->_display_changes($creates, $deletes);
     my $changes_count = @$creates + @$deletes;
-    $self->status_message("Creates: %s", scalar(@$creates));
-    $self->status_message("Deletes: %s", scalar(@$deletes));
-    $self->status_message("Total: %s", $changes_count);
-    $self->status_message('Max changes allowed: %s', $self->max_changes_allowed);
     if ($changes_count < 1) {
         $self->status_message("No differences found between database and ldap.");
         return 1;
@@ -41,17 +38,14 @@ sub execute {
     }
 
     for my $u (@$creates) {
-        my $email = $u->get_value('mail');
-        $self->status_message("CREATE: $email\n");
         Genome::Sys::User->create(
-            email => $email,
+            email => $u->get_value('mail'),
             name => $u->get_value('cn'),
             username => $u->get_value('uid'),
         );
     }
 
     for my $u (@$deletes) {
-        $self->status_message("DELETE: " . $u->email . "\n");
         $u->delete();
     }
 
@@ -115,6 +109,21 @@ sub get_changes {
     }
 
     return ( \@creates, \@deletes );
+}
+
+sub _display_changes {
+    my ($self, $creates, $deletes) = @_;
+
+    my $changes_count = @$creates + @$deletes;
+    $self->status_message("Creates: %s", scalar(@$creates));
+    if ( @$creates ) {
+        $self->status_message( join("\n", map { "CREATE: $_" } map { $_->get_value('mail') } @$creates) );
+    }
+    if ( @$deletes ) {
+        $self->status_message( join("\n", map { "DELETE: ".$_->email } @$deletes) );
+    }
+    $self->status_message("Total: %s", $changes_count);
+    $self->status_message('Max changes allowed: %s', $self->max_changes_allowed);
 }
 
 1;
