@@ -71,6 +71,8 @@ sub execute {
     foreach my $anp ( $self->analysis_projects ) {
         $self->purge_one_analysis_project($anp, $sth);
     }
+
+    1;
 }
 
 sub _prepare_sql_statement {
