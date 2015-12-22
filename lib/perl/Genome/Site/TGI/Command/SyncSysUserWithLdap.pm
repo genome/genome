@@ -9,6 +9,13 @@ use Net::LDAP;
 
 class Genome::Site::TGI::Command::SyncSysUserWithLdap{
     is => 'Command::V2',
+    has => {
+        force => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'If more than 10 changes (creates + deletes) are required, this flag is necessary to process.',
+        },
+    },
     doc => 'Sync Genome sys users from LDAP users',
 };
 
@@ -31,8 +38,8 @@ sub execute {
         return 1;
     }
 
-    if ($changes_count > 10) {
-        print "Too many changes ($create_count creates, $delete_count deletes, $changes_count total). Sync manually if this is OK.\n";
+    if ($changes_count > 10 and not $self->force) {
+        print "Too many changes ($create_count creates, $delete_count deletes, $changes_count total). Use --force option if this is OK.\n";
         return;
     }
 
