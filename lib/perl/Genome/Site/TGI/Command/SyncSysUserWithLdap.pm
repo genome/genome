@@ -25,10 +25,7 @@ sub execute {
     my $ldap_users = get_ldap_users();
     my @db_users = Genome::Sys::User->fix_params_and_get();
 
-    my $changes = get_changes($ldap_users,\@db_users);
-    my $creates = $changes->{'create'};
-    my $deletes = $changes->{'delete'};
-
+    my ($creates, $deletes) = get_changes($ldap_users,\@db_users);
     my $create_count = $creates ? scalar(@$creates) : 0;
     my $delete_count = $deletes ? scalar(@$deletes) : 0;
     my $changes_count = $create_count + $delete_count;
@@ -46,7 +43,7 @@ sub execute {
         return;
     }
 
-    for my $u (@{ $changes->{'create'} }) {
+    for my $u (@$creates) {
         my $email = $u->get_value('mail');
         $self->status_message("CREATE: $email\n");
         Genome::Sys::User->create(
@@ -56,7 +53,7 @@ sub execute {
         );
     }
 
-    for my $u (@{ $changes->{'delete'} }) {
+    for my $u (@$deletes) {
         $self->status_message("DELETE: " . $u->email . "\n");
         $u->delete();
     }
@@ -97,15 +94,15 @@ sub get_changes {
     my ($ldap_users, $db_users) = @_;
     my @db_users = @$db_users;
     # email is called email in db, mail in ldap
-    my $changes = {};
     my $db_user = {};
+    my (@creates, @deletes);
 
     # look for people in db but not ldap
     for my $u (@db_users) {
 
         my $email = $u->email();
         if (!$ldap_users->{$email}) {
-            push @{$changes->{'delete'}}, $u;
+            push @deletes, $u;
         } else {
             $db_user->{$email} = $u;
         }
@@ -116,11 +113,11 @@ sub get_changes {
         my $u = $ldap_users->{$mail};
 
         if (!$db_user->{$mail}) {
-            push @{$changes->{'create'}}, $u;
+            push @creates, $u;
         }
     }
 
-    return $changes;
+    return ( \@creates, \@deletes );
 }
 
 1;
