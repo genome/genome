@@ -26,20 +26,15 @@ sub execute {
     my @db_users = Genome::Sys::User->fix_params_and_get();
 
     my ($creates, $deletes) = get_changes($ldap_users,\@db_users);
-    my $create_count = $creates ? scalar(@$creates) : 0;
-    my $delete_count = $deletes ? scalar(@$deletes) : 0;
-    my $changes_count = $create_count + $delete_count;
-
+    my $changes_count = @$creates + @$deletes;
+    my $changes_msg = sprintf( '%s creates, %s deletes, %s total', scalar(@$creates), scalar(@$deletes), $changes_count);
     if ($changes_count < 1) {
         $self->status_message("No differences found between database and ldap...exiting.\n");
         return 1;
     }
 
     if ($changes_count > 10 and not $self->force) {
-        $self->status_message(
-            "Too many changes (%s creates, %s deletes, %s total). Use --force option to process if this is OK.",
-            $create_count, $delete_count, $changes_count,
-        );
+        $self->status_message( "Too many changes (%s). Use --force option to process if this is OK.", $changes_msg);
         return;
     }
 
@@ -58,7 +53,7 @@ sub execute {
         $u->delete();
     }
 
-    $self->status_message("done- $create_count creates, $delete_count deletes, $changes_count total\n");
+    $self->status_message('done - %s', $changes_msg);
 }
 
 sub get_ldap_users {
