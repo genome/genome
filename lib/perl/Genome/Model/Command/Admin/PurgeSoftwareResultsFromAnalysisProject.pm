@@ -224,7 +224,7 @@ sub print {
         foreach my $id ( keys %$this_class_data ) {
             $self->purger->status_message("\t%s => %s",
                                             $id,
-                                            $self->_format_disk_size($total_size));
+                                            $self->_format_disk_size($this_class_data->{$id}));
         }
     }
     $self->{data} = {};
