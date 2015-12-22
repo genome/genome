@@ -29,7 +29,7 @@ sub execute {
     my $changes_count = @$creates + @$deletes;
     my $changes_msg = sprintf( '%s creates, %s deletes, %s total', scalar(@$creates), scalar(@$deletes), $changes_count);
     if ($changes_count < 1) {
-        $self->status_message("No differences found between database and ldap...exiting.\n");
+        $self->status_message("No differences found between database and ldap.");
         return 1;
     }
 
