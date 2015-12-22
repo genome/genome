@@ -93,7 +93,14 @@
                                  "environment" : {
                                     "FOO" : "bar",
                                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
-                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
+                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1",
+                                    "XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING" : "1"
+                                 },
+                                 "retrySettings" : {
+                                    "attempts" : 750,
+                                    "exitCode" : 75,
+                                    "initialInterval" : 60,
+                                    "maxInterval" : 3600
                                  },
                                  "user" : "dmorton",
                                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
@@ -192,7 +199,14 @@
                                                                "environment" : {
                                                                   "FOO" : "bar",
                                                                   "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
-                                                                  "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
+                                                                  "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1",
+                                                                  "XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING" : "1"
+                                                               },
+                                                               "retrySettings" : {
+                                                                  "attempts" : 750,
+                                                                  "exitCode" : 75,
+                                                                  "initialInterval" : 60,
+                                                                  "maxInterval" : 3600
                                                                },
                                                                "user" : "dmorton",
                                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"

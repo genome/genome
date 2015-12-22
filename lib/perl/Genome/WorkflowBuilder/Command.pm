@@ -68,7 +68,24 @@ sub _get_ptero_shortcut_method {
 
     my $self = shift;
     my $log_dir = shift;
-    return Ptero::Builder::Job->new(
+
+    my $retry_exit_code = Genome::Config::get('software_result_async_locking_exit_code');
+    my $initial_interval = Genome::Config::get('software_result_async_locking_initial_interval');
+    my $max_interval = Genome::Config::get('software_result_async_locking_max_interval');
+    my $num_attempts = Genome::Config::get('software_result_async_locking_num_attempts');
+    my $retry_settings = {
+        exitCode => $retry_exit_code + 0,
+        initialInterval => $initial_interval + 0,
+        maxInterval => $max_interval + 0,
+        attempts => $num_attempts + 0,
+    };
+
+    # Set env variable to allow genome to exit instead of wait while
+    # attempting shortcutting
+    my $scope_guard = Genome::Config::set_env("software_result_async_locking", 1);
+    my $env = $self->_get_sanitized_env();
+
+    my %job_args = (
         name => 'shortcut',
         service_url => Genome::Config::get('ptero_shell_command_service_url'),
         parameters => {
@@ -78,11 +95,15 @@ sub _get_ptero_shortcut_method {
                 '--method', 'shortcut',
                 '--log-directory', $log_dir,
             ],
-            environment => $self->_get_sanitized_env(),
+            environment => $env,
+            retrySettings => $retry_settings,
             user => Genome::Sys->username,
             workingDirectory => Cwd::getcwd,
         },
     );
+
+
+    return Ptero::Builder::Job->new(%job_args);
 }
 
 sub _get_ptero_execute_method {

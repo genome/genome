@@ -1,0 +1,5 @@
+---
+env: XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING_MAX_INTERVAL
+default_value: 3600
+validators:
+  - Numeric

@@ -116,6 +116,7 @@ sub lock {
                 $self->unlock(resource_lock => $resource_lock, force => 1);
             }
         }
+
         sleep $block_sleep;
         $lock_attempts += 1;
     }

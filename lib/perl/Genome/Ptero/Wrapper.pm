@@ -122,9 +122,9 @@ sub _setup_logging {
     open(SAVED_STDERR, ">&STDERR") || die "Can't save STDERR\n";
 
     # redirect stdout/stderr through the annotate-log filter
-    open OUTPUT, '|-',  'annotate-log cat > ' .
+    open OUTPUT, '|-',  'annotate-log cat >> ' .
         $self->_stdout_log_path or die $!;
-    open ERROR, '|-',  'annotate-log cat > ' .
+    open ERROR, '|-',  'annotate-log cat >> ' .
         $self->_stderr_log_path or die $!;
 
     STDOUT->fdopen(\*OUTPUT, 'w') or die $!;
