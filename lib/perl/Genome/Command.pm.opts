@@ -2483,19 +2483,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>simple-alignment',
-      [
-        'name=s',
-        'files',
-        'reference-sequence-name=s',
-        'files',
-        'based-on=s',
-        undef,
-        'describe!',
-        undef,
-        'help!',
-        undef
-      ],
       '>clin-seq',
       [
         'name=s',
@@ -3283,31 +3270,6 @@ $Genome::Command::OPTS_SPEC = [
         undef
       ],
       '>mutational-significance',
-      [
-        'show=s',
-        'files',
-        'style=s',
-        [
-          'text',
-          'csv',
-          'tsv',
-          'pretty',
-          'html',
-          'xml',
-          'newtext'
-        ],
-        'csv-delimiter=s',
-        'files',
-        'noheaders!',
-        undef,
-        'order-by=s',
-        'files',
-        'filter=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>simple-alignment',
       [
         'show=s',
         'files',
@@ -9600,29 +9562,6 @@ $Genome::Command::OPTS_SPEC = [
         'additional-sv-lists=s@',
         undef,
         'pathway-file=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>simple-alignment',
-      [
-        'auto-assign-inst-data!',
-        undef,
-        'auto-build-alignments!',
-        undef,
-        'processing-profile=s',
-        undef,
-        'add-to-projects=s@',
-        undef,
-        'instrument-data=s@',
-        undef,
-        'subject=s',
-        undef,
-        'groups=s@',
-        undef,
-        'model-name=s',
-        'files',
-        'run-as=s',
         'files',
         'help!',
         undef
