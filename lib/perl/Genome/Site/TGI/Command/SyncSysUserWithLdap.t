@@ -33,7 +33,7 @@ subtest 'changes delete' => sub {
 
     delete $ldap_users{ $apipe_db_users[0]->email };
     $changes = Genome::Site::TGI::Command::SyncSysUserWithLdap::get_changes(\%ldap_users, \@apipe_db_users);
-    is_deeply($changes, { delete => [ @apipe_db_users[0] ] }, 'need to delete '.$apipe_db_users[0]->email);
+    is_deeply($changes, { delete => [ $apipe_db_users[0] ] }, 'need to delete '.$apipe_db_users[0]->email);
 
 };
 
