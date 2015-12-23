@@ -43,7 +43,6 @@ my @sub_commands_expected = qw/
   somatic-capture
   somatic-validation
   somatic-variation
-  test-pipeline
 /;
 
 plan tests => ((scalar(@sub_commands_expected)*5)+1);
