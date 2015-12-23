@@ -36,7 +36,7 @@ class Genome::Model::ImportedAssembly {
     ],
 };
 
-sub is_deprecated { 1 }
+sub do_not_create_define_command { 1 }
 
 sub _execute_build {
     my ($self, $build) = @_;

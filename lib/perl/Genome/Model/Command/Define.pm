@@ -24,7 +24,7 @@ sub _build_sub_command {
 
     my $model_subclass_name = $class_name;
     $model_subclass_name =~ s/::Command::Define::/::/;
-    return if eval{ $model_subclass_name->is_deprecated; };
+    return if eval{ $model_subclass_name->do_not_create_define_command; };
 
     # Instead of having everything which does not use ::Helper be fully hand-implemented,
     # let it figure out the base class to use dynamically.
