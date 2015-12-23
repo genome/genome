@@ -1588,6 +1588,8 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>reprocess',
     [
+      'instrument-data=s@',
+      undef,
       'analysis-project=s',
       undef,
       'help!',
@@ -38981,6 +38983,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>reprocess',
       [
+        'instrument-data=s@',
+        undef,
         'analysis-project=s',
         undef,
         'help!',
