@@ -9,6 +9,13 @@ use Net::LDAP;
 
 class Genome::Site::TGI::Command::SyncSysUserWithLdap{
     is => 'Command::V2',
+    has => {
+        max_changes_allowed => {
+            is => 'Integer',
+            default_value => 10,
+            doc => 'The maximum number of changes allowed to process the creates and deletes.',
+        },
+    },
     doc => 'Sync Genome sys users from LDAP users',
 };
 
@@ -18,40 +25,32 @@ sub execute {
     my $ldap_users = get_ldap_users();
     my @db_users = Genome::Sys::User->fix_params_and_get();
 
-    my $changes = get_changes($ldap_users,\@db_users);
-    my $creates = $changes->{'create'};
-    my $deletes = $changes->{'delete'};
-
-    my $create_count = $creates ? scalar(@$creates) : 0;
-    my $delete_count = $deletes ? scalar(@$deletes) : 0;
-    my $changes_count = $create_count + $delete_count;
-
+    my ($creates, $deletes) = get_changes($ldap_users,\@db_users);
+    $self->_display_changes($creates, $deletes);
+    my $changes_count = @$creates + @$deletes;
     if ($changes_count < 1) {
-        $self->status_message("No differences found between database and ldap...exiting.\n");
+        $self->status_message("No differences found between database and ldap.");
         return 1;
     }
-
-    if ($changes_count > 10) {
-        print "Too many changes ($create_count creates, $delete_count deletes, $changes_count total). Sync manually if this is OK.\n";
+    elsif ($changes_count > $self->max_changes_allowed) {
+        $self->status_message( "The number of changes exceeds the max number allowed. If this is expected, increase the --max-changes-allowed option to be higher than the number of changes to process.");
         return;
     }
 
-    for my $u (@{ $changes->{'create'} }) {
-        my $email = $u->get_value('mail');
-        $self->status_message("CREATE: $email\n");
+    for my $u (@$creates) {
         Genome::Sys::User->create(
-            email => $email,
+            email => $u->get_value('mail'),
             name => $u->get_value('cn'),
             username => $u->get_value('uid'),
         );
     }
 
-    for my $u (@{ $changes->{'delete'} }) {
-        $self->status_message("DELETE: " . $u->email . "\n");
+    for my $u (@$deletes) {
         $u->delete();
     }
 
-    $self->status_message("done- $create_count creates, $delete_count deletes, $changes_count total\n");
+    $self->status_message('Done');
+    return 1;
 }
 
 sub get_ldap_users {
@@ -87,15 +86,15 @@ sub get_changes {
     my ($ldap_users, $db_users) = @_;
     my @db_users = @$db_users;
     # email is called email in db, mail in ldap
-    my $changes = {};
     my $db_user = {};
+    my (@creates, @deletes);
 
     # look for people in db but not ldap
     for my $u (@db_users) {
 
         my $email = $u->email();
         if (!$ldap_users->{$email}) {
-            push @{$changes->{'delete'}}, $u;
+            push @deletes, $u;
         } else {
             $db_user->{$email} = $u;
         }
@@ -106,11 +105,26 @@ sub get_changes {
         my $u = $ldap_users->{$mail};
 
         if (!$db_user->{$mail}) {
-            push @{$changes->{'create'}}, $u;
+            push @creates, $u;
         }
     }
 
-    return $changes;
+    return ( \@creates, \@deletes );
+}
+
+sub _display_changes {
+    my ($self, $creates, $deletes) = @_;
+
+    my $changes_count = @$creates + @$deletes;
+    $self->status_message("Creates: %s", scalar(@$creates));
+    if ( @$creates ) {
+        $self->status_message( join("\n", map { "CREATE: $_" } map { $_->get_value('mail') } @$creates) );
+    }
+    if ( @$deletes ) {
+        $self->status_message( join("\n", map { "DELETE: ".$_->email } @$deletes) );
+    }
+    $self->status_message("Total: %s", $changes_count);
+    $self->status_message('Max changes allowed: %s', $self->max_changes_allowed);
 }
 
 1;
