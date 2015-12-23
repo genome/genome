@@ -21,6 +21,8 @@ sub create {
     die __PACKAGE__ . ' is deprecated.';
 }
 
+sub is_deprecated { 1 }
+
 sub build_subclass_name {
     return 'amplicon-assembly';
 }
