@@ -1,3 +1,5 @@
+package Genome::Model::ImportedAssembly;
+
 use strict;
 use warnings;
 use Genome;
