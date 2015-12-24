@@ -10,7 +10,7 @@ class Genome::Config::AnalysisProject::Command::Complete {
     has_input => [
        analysis_projects  => {
             is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis projects to release for processing',
+            doc                 => 'the analysis projects to complete',
             is_many             => 1,
             shell_args_position => 1,
         }
