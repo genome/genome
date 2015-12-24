@@ -8539,8 +8539,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>list-build-queue',
       [
-        'debug!',
-        undef,
+        'running-max=s',
+        'files',
         'delimiter=s',
         'files',
         'max=s',
