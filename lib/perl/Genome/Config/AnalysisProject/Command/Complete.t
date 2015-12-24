@@ -23,6 +23,6 @@ my $cmd = $class->execute(analysis_projects => [$ap]);
 ok($cmd->result, 'execute cmd');
 my $expected_status = 'Completed';
 is($ap->status, $expected_status, "AnP status set to '$expected_status'");
-is($cmd->status_message, 'Completed: '.$ap->__display_name__, 'Status message about releasing');
+is($cmd->status_message, 'Completed: '.$ap->__display_name__, 'Status message about completing');
 
 done_testing();
