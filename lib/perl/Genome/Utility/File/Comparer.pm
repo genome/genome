@@ -3,7 +3,7 @@ package Genome::Utility::File::Comparer;
 use strict;
 use warnings;
 use Genome;
-use File::Compare;
+use File::Compare ();
 
 class Genome::Utility::File::Comparer {
     has => [
