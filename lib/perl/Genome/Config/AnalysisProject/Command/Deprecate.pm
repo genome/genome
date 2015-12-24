@@ -24,7 +24,7 @@ EOS
 }
 
 sub valid_statuses {
-    return ("Pending", "Hold", "In Progress", "Template");
+    return ("Pending", "Hold", "In Progress", "Template", "Completed");
 }
 
 sub execute {
@@ -42,6 +42,7 @@ sub execute {
         }
     }
     $anp->status('Deprecated');
+    $self->status_message("Deprecated: %s", $anp->__display_name__);
 
     return 1;
 }
