@@ -12,7 +12,8 @@ use JSON qw(from_json);
 use Data::Dump qw(pp);
 
 class Genome::Test::Command::RunPteroIntegrationTests {
-    is => 'Genome::Command::WithColor',
+    is => 'Command::V2',
+    roles => 'Genome::Role::CommandWithColor',
     doc => "Run tests that submit small workflows to PTero",
     has_input => [
         test_pattern => {

@@ -7,7 +7,11 @@ use Genome;
 use Genome::Utility::List;
 
 class Genome::Library {
-    is => [ "Genome::Notable", "Genome::Searchable", "Genome::Utility::ObjectWithLockedConstruction" ],
+    roles => [qw(
+        Genome::Role::ObjectWithLockedConstruction
+        Genome::Role::Notable
+        Genome::Role::Searchable
+    )],
     table_name => 'instrument.fragment_library',
     id_generator => '-uuid',
     id_by => [

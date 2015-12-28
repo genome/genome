@@ -14,7 +14,8 @@ use Carp;
 # __myProperties
 
 class Genome::Wiki::Document {
-    is  => ['UR::Value','Genome::Searchable'],
+    is  => 'UR::Value',
+    roles  => 'Genome::Role::Searchable',
     id_by => [
         title => { is => 'Text' },
     ],

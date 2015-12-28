@@ -10,7 +10,8 @@ use Genome::Utility::Text "justify";
 
 
 class Genome::Model::Command::Input::Show {
-    is => ['Genome::Command::Viewer', 'Genome::Command::WithColor'],
+    is => ['Genome::Command::Viewer'],
+    roles => ['Genome::Role::CommandWithColor'],
     has => [
         model => {
             is => 'Genome::Model',
@@ -147,7 +148,7 @@ sub _format_is_many {
     return join('', $pre, $mid, $post);
 }
 
-sub _color {
+sub _color : Overrides(Genome::Role::CommandWithColor) {
     my ($self, $value, $color, $flag) = @_;
     if($flag) {
         return Term::ANSIColor::colored($value, $color);

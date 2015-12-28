@@ -11,22 +11,22 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-use_ok('Genome::Notable::Command::ViewNotes') or die "Class not found!";
-
 # Set up test objects, classes, and all that jazz.
 class Genome::NotableTest {
-    is => 'Genome::Notable',
+    roles => 'Genome::Role::Notable',
 };
 
-class Genome::Notable::Test::Command::ViewNotes {
-    is => 'Genome::Notable::Command::ViewNotes',
-    has => [
-        notables => {
-            is => 'Genome::NotableTest',
-            is_many => 1,
-        }
-    ],
-};
+{
+    package Genome::Notable::Test::Command::ViewNotes;
+    use Genome; # to get the Overrides attribute imported
+    class Genome::Notable::Test::Command::ViewNotes {
+        is => 'Command::V2',
+        roles => [Genome::Role::Notable::Command::ViewNotes->create(notable_type => 'Genome::NotableTest')],
+    };
+    sub help_detail : Overrides(Genome::Role::Notable::Command::ViewNotes) {
+        &Genome::Role::Notable::Command::ViewNotes::help_detail;
+    }
+}
 
 my $meta = Genome::NotableTest->__meta__;
 ok($meta, 'Got meta object for test class Genome::NotableTest') or die;

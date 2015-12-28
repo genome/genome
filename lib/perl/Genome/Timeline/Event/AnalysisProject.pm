@@ -7,6 +7,7 @@ use Genome;
 
 class Genome::Timeline::Event::AnalysisProject {
     is => 'Genome::Timeline::Event',
+    roles => ['Genome::Role::ObjectWithCreatedBy', 'Genome::Role::ObjectWithTimestamps'],
     table_name => 'timeline.analysis_project',
     has => [
         object_class_name => {

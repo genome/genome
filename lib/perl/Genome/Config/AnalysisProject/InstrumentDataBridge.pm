@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::InstrumentDataBridge {
-    is => 'Genome::Utility::ObjectWithTimestamps',
+    roles => 'Genome::Role::ObjectWithTimestamps',
     table_name => 'config.instrument_data_analysis_project_bridge',
     id_by => [
         id => { is => 'Text', len => 64 },

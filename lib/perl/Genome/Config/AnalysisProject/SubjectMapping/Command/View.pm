@@ -7,10 +7,8 @@ use Genome;
 use Genome::Utility::Text qw(justify);
 
 class Genome::Config::AnalysisProject::SubjectMapping::Command::View {
-    is => [
-        'Genome::Command::Viewer',
-        'Genome::Command::WithColor',
-    ],
+    is => [ 'Genome::Command::Viewer' ],
+    roles => ['Genome::Role::CommandWithColor'],
     has_input => [
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',

@@ -4,7 +4,7 @@ use warnings;
 use Genome;
 
 class Genome::WorkOrder {
-    is => 'Genome::Searchable',
+    roles => 'Genome::Role::Searchable',
     table_name => '(SELECT swo.*, 
                            s.*, 
                            s.setup_name as name,

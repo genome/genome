@@ -1,10 +1,10 @@
-package Genome::Notable;
+package Genome::Role::Notable;
 use strict;
 use warnings;
 use Genome;
+use UR::Role;
 
-class Genome::Notable {
-    is_abstract => 1,
+role Genome::Role::Notable {
     has => [
         notes => {
             is => 'Genome::MiscNote',

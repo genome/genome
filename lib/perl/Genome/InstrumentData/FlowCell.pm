@@ -9,7 +9,7 @@ use Text::Diff;
 use Digest::MD5 qw(md5 md5_hex md5_base64);
 
 class Genome::InstrumentData::FlowCell {
-    is => 'Genome::Searchable',
+    roles => 'Genome::Role::Searchable',
     type_name  => 'system flowcell',
         table_name => 'flow_cell_illumina',
             id_by      => [ flow_cell_id => { is => 'VARCHAR2', len => 15 }, ],

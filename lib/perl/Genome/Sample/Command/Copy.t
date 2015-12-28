@@ -4,7 +4,7 @@ use warnings;
 use Genome::Test::Factory::Sample qw();
 use Genome::Test::Factory::Model::ReferenceAlignment qw();
 
-use Test::More tests => 6;
+use Test::More tests => 7;
 
 my $common_name_prop = Genome::Sample->__meta__->properties(property_name => 'common_name');
 is($common_name_prop->via, 'attributes', 'common_name is via attributes');
@@ -21,8 +21,10 @@ my $model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
 
 is_deeply([$sample->models], [$model], 'associated model with sample');
 
-my $copy = $sample->copy();
+my $new_name = 'wirwrlgewrg';
+my $copy = $sample->copy(name => $new_name);
 
 is($copy->common_name, 'foo', 'copy has same common_name');
+is($copy->name, $new_name, 'copy has the new name');
 isnt($sample->id, $copy->id, 'copy has a different id');
 is(scalar(() = $copy->models), 0, 'copy has no models associted with it');

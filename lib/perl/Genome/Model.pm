@@ -10,7 +10,7 @@ use Scope::Guard;
 use UR::Context::Transaction qw(TRANSACTION_STATE_OPEN);
 
 class Genome::Model {
-    is => [ "Genome::Notable", "Genome::Searchable" ],
+    roles => ['Genome::Role::Notable','Genome::Role::Searchable'],
     table_name => 'model.model',
     is_abstract => 1,
     attributes_have => [

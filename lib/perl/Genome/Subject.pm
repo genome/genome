@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Subject {
-    is => 'Genome::Notable',
+    roles => 'Genome::Role::Notable',
     table_name => 'subject.subject',
     is_abstract => 1,
     subclassify_by => 'subclass_name',
@@ -135,6 +135,12 @@ sub create {
     my $self = $class->SUPER::create($bx);
     return if not $self;
 
+    return $self->_attach_attributes_during_create(%extra);
+}
+
+sub _attach_attributes_during_create {
+    my($self, %extra) = @_;
+
     my $nomenclature = $self->nomenclature;
     $nomenclature = 'WUGC' if not defined $nomenclature;
     for my $label (sort keys %extra) {
@@ -172,7 +178,7 @@ sub delete {
 
 sub copy {
     my $self = shift;
-    my $copy = $self->SUPER::copy();
+    my $copy = $self->SUPER::copy(@_);
     for my $attribute ($self->attributes) {
         $copy->add_attribute(
             attribute_label => $attribute->attribute_label,

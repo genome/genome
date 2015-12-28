@@ -5,17 +5,11 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::AddNote {
-    is => 'Genome::Notable::Command::AddNote',
-    has => [
-        notable => {
-            is => 'Genome::Model::Build',
-            shell_args_position => 1,
-            doc => 'build to which a note will be added'
-        },
-    ],
+    is => 'Command::V2',
+    roles => [Genome::Role::Notable::Command::AddNote->create(notable_type => 'Genome::Model::Build')],
 };
 
-sub help_detail {
+sub help_detail : Overrides(Genome::Role::Notable::Command::AddNote) {
     return <<EOS
 This command adds a note to the specified build
 EOS

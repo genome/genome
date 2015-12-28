@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::ModelBridge {
-    is => [ "Genome::Utility::ObjectWithTimestamps", "Genome::Utility::ObjectWithCreatedBy" ],
+    roles => ['Genome::Role::ObjectWithTimestamps', 'Genome::Role::ObjectWithCreatedBy'],
     table_name => 'config.analysis_project_model_bridge',
     id_by => [
         id => { is => 'Text', len => 64 },

@@ -51,7 +51,7 @@ sub test_build {
     my $reference = Genome::Model::Build::ReferenceSequence->get_by_name('GRCh37-lite-build37');
 
     my $sample = Genome::Sample->create(
-        name => 'test_sample_for_manual_result',
+        name => 'test_sample_for_manual_result_' . $test_mode,
     );
 
     my $bed_result = Genome::Model::Tools::DetectVariants2::Result::Manual->create(

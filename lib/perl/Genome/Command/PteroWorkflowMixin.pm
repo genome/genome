@@ -18,7 +18,8 @@ use Genome::Ptero::Utils qw(ptero_proxy ptero_workflow_url);
 my $INDENTATION_STR = '. ';
 
 class Genome::Command::PteroWorkflowMixin {
-    is => ['Genome::Command::WithColor'],
+    is => ['Command::V2'],
+    roles => ['Genome::Role::CommandWithColor'],
     has => [
         summary_threshold => {
             is => 'Int',

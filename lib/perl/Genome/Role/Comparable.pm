@@ -1,16 +1,13 @@
-package Genome::Interfaces::Comparable;
+package Genome::Role::Comparable;
 
 use strict;
 use warnings;
 use Genome;
+use UR::Role;
 
-class Genome::Interfaces::Comparable {
-    is_abstract => 1,
+role Genome::Role::Comparable {
+    requires => ['compare_output'],
 };
-
-sub compare_output {
-    die "Subclass of Genome::Interfaces::Comparable must implement compare_output";
-}
 
 sub special_compare_functions {
     return ();

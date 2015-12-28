@@ -12,7 +12,7 @@ subtest 'non-color screen' => sub {
     plan tests => 1;
 
     no warnings 'redefine';
-    local *Genome::Logger::should_color_screen = sub { 0 };
+    local *Genome::Role::Logger::_should_color_screen = sub { 0 };
     Genome::Logger->clear_logger();
 
     my $logger = Genome::Logger->logger();
@@ -23,7 +23,7 @@ subtest 'color screen' => sub {
     plan tests => 2;
 
     no warnings 'redefine';
-    local *Genome::Logger::should_color_screen = sub { 1 };
+    local *Genome::Role::Logger::_should_color_screen = sub { 1 };
     Genome::Logger->clear_logger();
 
     ok(Genome::Logger->has_color_screen_package, 'has_color_screen_package');

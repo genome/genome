@@ -11,11 +11,8 @@ use YAML::Syck qw();
 use List::MoreUtils qw(uniq);
 
 class Genome::Config::AnalysisProject::Command::View {
-    is => [
-        'Genome::Command::Viewer',
-        'Genome::Command::WithColor',
-    ],
-
+    is => ['Genome::Command::Viewer' ],
+    roles => [ 'Genome::Role::CommandWithColor' ],
     has_input => [
        analysis_project  => {
             is                  => 'Genome::Config::AnalysisProject',

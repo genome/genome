@@ -2,7 +2,7 @@ package Genome::UpdateHistory;
 
 
 class Genome::UpdateHistory {
-    is => ['Genome::Notable'],
+    roles => ['Genome::Role::Notable'],
     table_name => 'MG.GENOME_UPDATE_HISTORY',
     id_by => [
          subject_table_name => { is => 'VARCHAR2', len => 255, column_name => 'SUBJECT_TABLE_NAME'},

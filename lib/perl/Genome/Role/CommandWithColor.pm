@@ -1,19 +1,21 @@
-package Genome::Utility::ColorMixin;
+package Genome::Role::CommandWithColor;
 
 use strict;
 use warnings;
 
 use Genome;
-use Genome::Utility::Text qw(justify);
+use Genome::Utility::Text qw();
+use Term::ANSIColor qw();
 
-class Genome::Utility::ColorMixin {
+role Genome::Role::CommandWithColor {
     has => [
         color => {
             is => 'Boolean',
             is_optional => 1,
+            is_param => 1,
             default_value => 1,
-            doc => 'Use color in display.'
-        },
+            doc => 'Use color in display',
+        }
     ],
 };
 
@@ -21,12 +23,17 @@ sub _color {
     my $self = shift;
     my $string = shift;
 
-    if(-t STDOUT and -t STDERR and $self->color and @_) {
+    if($self->_is_running_in_terminal() and $self->color and @_) {
         return Term::ANSIColor::colored($string, @_);
     } else {
         return $string;
     }
 }
+
+sub _is_running_in_terminal {
+    return( -t STDOUT and -t STDERR );
+}
+
 
 our %STATUS_COLORS = (
     new => "white",
@@ -49,11 +56,6 @@ sub _status_colors {
     my $self = shift;
     my $status = shift;
     return $STATUS_COLORS{$status};
-}
-
-sub _status_color {
-    my ($self, $text) = @_;
-    return $self->_colorize_text_by_map($text, $text, %STATUS_COLORS);
 }
 
 sub _colorize_text_by_map {
@@ -101,7 +103,7 @@ sub _write_pairs_line {
     my ($self, $handle, $l_label, $l_value, $r_label, $r_value) = @_;
 
     if ($r_label and $r_value) {
-        print $handle justify($self->_color_pair($l_label, $l_value), 'left',
+        print $handle Genome::Utility::Text::justify($self->_color_pair($l_label, $l_value), 'left',
             $self->_column_width), " ", $self->_color_pair($r_label, $r_value), "\n";
 
     } else {
@@ -110,3 +112,4 @@ sub _write_pairs_line {
 }
 
 1;
+

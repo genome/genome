@@ -1,12 +1,11 @@
-package Genome::Interfaces::Comparable::Command::Diff;
+package Genome::Role::Comparable::Command::Diff;
 
 use strict;
 use warnings;
 use Genome;
+use UR::Role;
 
-class Genome::Interfaces::Comparable::Command::Diff {
-    is => 'Command::V2',
-    is_abstract => 1,
+role Genome::Role::Comparable::Command::Diff {
     has => [
         _diffs => {
             is => 'HASH',
@@ -14,6 +13,7 @@ class Genome::Interfaces::Comparable::Command::Diff {
             is_optional => 1,
         },
     ],
+    requires => ['blessed_object', 'new_object'],
 };
 
 sub help_brief {
@@ -24,14 +24,6 @@ sub help_detail {
     return <<EOS
     This tool will use the compare_output method of the comparable objects.
 EOS
-}
-
-sub blessed_object {
-    die "Must implement blessed_object";
-}
-
-sub new_object {
-    die "Must implement new_object";
 }
 
 sub execute {

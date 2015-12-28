@@ -8,12 +8,12 @@ use Genome;
 use List::MoreUtils qw(any);
 
 class Genome::Config::AnalysisProject {
-    is => [
-        "Genome::Utility::ObjectWithTimestamps",
-        "Genome::Utility::ObjectWithCreatedBy",
-        "Genome::Searchable",
-        "Genome::SoftwareResult::Sponsor",
-    ],
+    roles => [qw(
+        Genome::Role::ObjectWithTimestamps
+        Genome::Role::ObjectWithCreatedBy
+        Genome::Role::SoftwareResultSponsor
+        Genome::Role::Searchable
+    )],
     table_name => 'config.analysis_project',
     id_by => [
         id => { is => 'Text', len => 64 },

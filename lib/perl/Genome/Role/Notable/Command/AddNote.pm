@@ -1,18 +1,15 @@
-package Genome::Notable::Command::AddNote;
+package Genome::Role::Notable::Command::AddNote;
 
 use strict;
 use warnings;
 use Genome;
+use UR::Role;
 
-class Genome::Notable::Command::AddNote {
-    is => 'Command::V2',
-    is_abstract => 1,
+our $notable_type : RoleParam(notable_type);
+role Genome::Role::Notable::Command::AddNote {
     has => [
         notable => {
-            # This class won't work with command-line object resolution, but
-            # other commands that inherit from this can override this property
-            # and use a more specific class that will work (eg, Genome::Sample)
-            is => 'Genome::Notable',
+            is => $notable_type,
             shell_args_position => 1,
             doc => 'notable object to which a note will be added',
         },
@@ -31,7 +28,7 @@ class Genome::Notable::Command::AddNote {
 
 sub help_detail {
     return <<EOS
-This command can be used to add notes to Genome::Notable objects
+This command can be used to add notes to notable objects
 EOS
 }
 

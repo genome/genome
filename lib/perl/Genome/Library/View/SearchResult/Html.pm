@@ -1,4 +1,4 @@
-package Genome::Lbirary::View::SearchResult::Html;
+package Genome::Library::View::SearchResult::Html;
 
 use strict;
 use warnings;

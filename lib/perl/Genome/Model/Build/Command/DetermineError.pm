@@ -58,7 +58,8 @@ our $EXCEPTION_FINDING_REGEX = qr{
 our $PTERO_HOST_FINDING_REGEX = qr{Starting log annotation on host:\s(.*)};
 
 class Genome::Model::Build::Command::DetermineError {
-    is => 'Genome::Command::WithColor',
+    is => 'Command::V2',
+    roles => 'Genome::Role::CommandWithColor',
     has => [
         build => {
             is => 'Genome::Model::Build',

@@ -17,12 +17,12 @@ use File::DirCompare;
 use Genome::Ptero::Utils qw(ptero_proxy);
 
 class Genome::Process {
-    is => [
-        "Genome::Notable",
-        "Genome::Utility::ObjectWithCreatedBy",
-        "Genome::SoftwareResult::Requestor",
-        "Genome::Interfaces::Comparable",
-    ],
+    roles => [qw(
+        Genome::Role::ObjectWithCreatedBy
+        Genome::Role::Notable
+        Genome::Role::SoftwareResultRequestor
+        Genome::Role::Comparable
+    )],
     is_abstract => 1,
     table_name => 'process.process',
     schema_name => 'GMSchema',

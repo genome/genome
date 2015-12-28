@@ -40,7 +40,7 @@ class Genome::Model::Build::Test {
         metric1 => { is_metric => 1, },
    ],
 };
-isa_ok('Genome::Model::Build::Test', 'Genome::Utility::ObjectWithAllocations');
+ok(Genome::Model::Build::Test->does('Genome::Role::ObjectWithAllocations'), 'Test build class does ObjectWithAllocations');
 
 my $build_meta = Genome::Model::Build::Test->__meta__;
 ok($build_meta, 'build meta') or die;

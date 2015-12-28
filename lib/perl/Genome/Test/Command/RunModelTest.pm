@@ -7,7 +7,8 @@ use Data::Dump qw(pp);
 use Genome;
 
 class Genome::Test::Command::RunModelTest {
-    is => 'Genome::Command::WithColor',
+    is => 'Command::V2',
+    roles => 'Genome::Command::WithColor',
     doc => "Run a single model test",
     has => [
         model => {

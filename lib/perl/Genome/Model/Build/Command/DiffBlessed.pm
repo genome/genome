@@ -8,7 +8,10 @@ use File::Spec;
 use YAML;
 
 class Genome::Model::Build::Command::DiffBlessed {
-    is => 'Genome::Interfaces::Comparable::Command::DiffBlessed',
+    is => 'Command::V2',
+    roles => [ 'Genome::Role::Comparable::Command::Diff',
+               'Genome::Role::Comparable::Command::DiffBlessed',
+            ],
     has => [
         new_build => {
             is => 'Genome::Model::Build',
@@ -20,6 +23,21 @@ class Genome::Model::Build::Command::DiffBlessed {
         },
     ],
 };
+
+sub help_brief : Overrides(Genome::Role::Comparable::Command::Diff) {
+    &Genome::Role::Comparable::Command::Diff::help_brief;
+}
+
+sub help_detail : Overrides(Genome::Role::Comparable::Command::Diff) {
+    &Genome::Role::Comparable::Command::Diff::help_detail;
+}
+
+sub diffs_message : Overrides(Genome::Role::Comparable::Command::Diff) {
+    my $self = shift;
+    my $diff_string = $self->Genome::Role::Comparable::Command::Diff::diffs_message(@_);
+    my $bless_msg = $self->Genome::Role::Comparable::Command::DiffBlessed::bless_message(@_);
+    return join("\n", $diff_string, $bless_msg);
+}
 
 sub blessed_object {
     my $self = shift;

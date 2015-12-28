@@ -14,14 +14,14 @@ require List::Util;
 require Sub::Install;
 use Test::More;
 
-use_ok('Genome::Utility::ObjectWithAllocations') or die;
-
 my $meta = UR::Object::Type->define(
     class_name => 'GenomeTest::HasAllocations',
-    is => [qw/ Genome::Utility::ObjectWithAllocations /],
+    roles => [qw/ Genome::Role::ObjectWithAllocations /],
     #has => { dummy_val => { is => 'Text' }, },
 );
 ok($meta, 'defined has allocations test class');
+ok(GenomeTest::HasAllocations->does('Genome::Role::ObjectWithAllocations'),
+    'allocations test class does ObjectWithAllocations role');
 
 my $obj = GenomeTest::HasAllocations->create();
 ok($obj, 'create');

@@ -6,19 +6,12 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::ViewNotes {
-    is => 'Genome::Notable::Command::ViewNotes',
-    has => [
-        notables => {
-            is => 'Genome::Model::Build',
-            is_many => 1,
-            shell_args_position => 1,
-            doc => 'notable objects on which to view the notes',
-        },
-    ],
+    is => 'Command::V2',
+    roles => [Genome::Role::Notable::Command::ViewNotes->create(notable_type => 'Genome::Model::Build')],
     doc => 'view notes that have been set on builds',
 };
 
-sub help_detail {
+sub help_detail : Overrides(Genome::Role::Notable::Command::ViewNotes) {
     return <<EOS
 This command can be used to view the notes that have been added to a build.
 

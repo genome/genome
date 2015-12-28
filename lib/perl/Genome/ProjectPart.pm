@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::ProjectPart {
-    is => 'Genome::Notable',
+    roles => 'Genome::Role::Notable',
     table_name => 'subject.project_part',
     id_by => [
         id => {
