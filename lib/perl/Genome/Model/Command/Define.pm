@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use Genome::Model::Command::Define::Helper;
 
+use Try::Tiny;
+
 class Genome::Model::Command::Define {
     is => 'Command::SubCommandFactory',
 };
