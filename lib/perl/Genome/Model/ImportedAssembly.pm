@@ -1,3 +1,5 @@
+package Genome::Model::ImportedAssembly;
+
 use strict;
 use warnings;
 use Genome;
@@ -33,6 +35,8 @@ class Genome::Model::ImportedAssembly {
         },
     ],
 };
+
+sub do_not_create_define_command { 1 }
 
 sub _execute_build {
     my ($self, $build) = @_;

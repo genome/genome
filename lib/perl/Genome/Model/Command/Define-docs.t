@@ -16,7 +16,6 @@ for (@sub_commands) { s/[^\w\-]//g; s/\b31m//; s/0m\b//; }
 chomp @sub_commands;
 
 my @sub_commands_expected = qw/
-  amplicon-assembly
   clin-seq
   convergence
   de-novo-assembly
@@ -25,7 +24,6 @@ my @sub_commands_expected = qw/
   genotype-microarray
   germline
   imported-annotation
-  imported-assembly
   imported-reference-sequence
   imported-variation-list
   metagenomic-composition-shotgun
