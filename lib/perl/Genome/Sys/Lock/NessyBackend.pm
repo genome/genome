@@ -7,9 +7,8 @@ use Carp qw(carp croak);
 use POSIX qw(strftime);
 use Sys::Hostname qw(hostname);
 
-use Genome::Logger;
-
 require Genome::Model::Build;
+require Genome::Logger;
 
 use Mouse;
 with qw(Genome::Sys::Lock::Backend);

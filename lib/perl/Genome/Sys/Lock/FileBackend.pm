@@ -12,7 +12,7 @@ use Path::Class qw();
 use Sys::Hostname qw(hostname);
 use Time::HiRes;
 
-use Genome::Logger;
+require Genome::Logger;
 use Genome::Utility::Instrumentation;
 
 use Mouse;
