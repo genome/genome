@@ -9,6 +9,8 @@ class Genome::Model::MetagenomicShotgun {
     is => 'Genome::ModelDeprecated',
 };
 
+sub do_not_create_define_command { 1 }
+
 sub create {
     die __PACKAGE__ . ' is deprecated.';
 }
