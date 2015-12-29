@@ -43,7 +43,7 @@ my $run = Genome::Model::Command::Services::Build::Run->execute(
     build_id => $build->id,
     inline => 1,
 );
-ok($run->result, 'run - excute');
+ok($run->result, 'run - execute');
 is($build->status, 'Succeeded', 'build is succeeded');
 
 done_testing();
