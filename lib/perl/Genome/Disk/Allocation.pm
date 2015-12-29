@@ -298,6 +298,16 @@ sub is_archived {
     return $self->status eq 'archived';
 }
 
+sub is_active {
+    my $self = shift;
+    return $self->status eq 'active';
+}
+
+sub is_purged {
+    my $self = shift;
+    return $self->status eq 'purged';
+}
+
 sub archive_path {
     my $self = shift;
     my $mount_path = $self->volume->is_archive
