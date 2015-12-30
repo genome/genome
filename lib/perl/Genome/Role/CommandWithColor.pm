@@ -58,6 +58,11 @@ sub _status_colors {
     return $STATUS_COLORS{$status};
 }
 
+sub _status_color {
+    my ($self, $text) = @_;
+    return $self->_colorize_text_by_map($text, $text, %STATUS_COLORS);
+}
+
 sub _colorize_text_by_map {
     my ($self, $text, $color_key, %color_map) = @_;
 
