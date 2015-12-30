@@ -1,48 +1,34 @@
 #!/usr/bin/env genome-perl
 
+BEGIN {
+    $ENV{UR_DBI_NO_COMMIT} = 1;
+}
+
 use strict;
 use warnings;
+
 use above 'Genome';
 use Test::More tests => 14;
 
-BEGIN {
-    use_ok('Genome::Model::Command::Remove');
-}
+use_ok('Genome::Model::Command::Remove') or die;
 
-my $data_dir = File::Temp::tempdir(CLEANUP => 1);
-my $template = 'Genome-Model-Command-Remove-'. Genome::Sys->username .'-XXXX';
-my $hostname = Sys::Hostname::hostname;
-
-#
-# make the test data 
-#
+class Genome::Model::Tester { is => 'Genome::ModelDeprecated', };
 
 my $s = Genome::Sample->create(id => -888, name => 'TEST-' . __FILE__ . "-$$");
 ok($s, "made a test sample");
 
-my $p = Genome::ProcessingProfile::TestPipeline->create(
-    id => -999, 
-    name => "test " . __FILE__ . " on host $hostname process $$", 
-    some_command_name => 'ls',
+my $p = Genome::ProcessingProfile::Tester->create(
+    name => "Tester PP for Testing", 
 );
 ok($p, "made a test processing profile");
 
-my $mname = "test-$$-$hostname";
-my $m = Genome::Model::TestPipeline->create(
-    id => -1, 
-    name => $mname,
-    processing_profile_id => -999,
-    subject_class_name => ref($s),
-    subject_id => $s->id,
+my $m = Genome::Model::Tester->create(
+    name => 'Testy McTesterson',
+    processing_profile_id => $p->id,
+    subject => $s,
 );
 ok($m, "made a test model");
 
-#my $b1 = $m->add_build();
-#ok($b1, "made test build 1");
-
-# run the command, and capture the exit code
-# this way invokes the command right in this process, with an array of command-line arguments
-# to test that we parse correctly
 sub ok_run {
     note("running with params @_");
     my $exit_code1 = eval { Genome::Model::Command::Remove->_execute_with_shell_params_and_return_exit_code(@_); };
@@ -98,6 +84,7 @@ ok($remove_cmd->execute,'delete model did work');
 *Genome::Model::delete = $old_delete;
 
 # delete the model made above using the command-line pattern match interface
-ok_run($mname,'--force-delete');
+ok_run($m->name,'--force-delete');
 isa_ok($m,"UR::DeletedRef", "model object is deleted");
-#isa_ok($b1,"UR::DeletedRef", "build object is deleted");
+
+done_testing();
