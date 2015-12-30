@@ -14,6 +14,7 @@ use File::Find;
 use File::Find::Rule;
 use Cwd;
 use DateTime;
+use Sub::Install;
 
 require File::Spec;
 
@@ -293,9 +294,13 @@ sub unarchive {
     return $class->_execute_system_command('_unarchive', %params);
 }
 
-sub is_archived {
-    my $self = shift;
-    return $self->status eq 'archived';
+my $statuses = Genome::Disk::Allocation->__meta__->property_meta_for_name('status')->valid_values;
+for my $status (@$statuses) {
+    Sub::Install::install_sub({
+        into => __PACKAGE__,
+        as => "is_$status",
+        code => sub { return shift->status eq $status; }
+    });
 }
 
 sub archive_path {
