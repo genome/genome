@@ -1612,6 +1612,13 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>complete',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
     'help!',
     undef
   ],
@@ -4593,7 +4600,7 @@ $Genome::Command::OPTS_SPEC = [
       [
         'days-to-retain=s',
         undef,
-        'dry-run!',
+        'report!',
         undef,
         'analysis-projects=s@',
         undef,
@@ -38958,6 +38965,13 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>update',
       [
+        'help!',
+        undef
+      ],
+      '>complete',
+      [
+        'analysis-projects=s@',
+        undef,
         'help!',
         undef
       ],
