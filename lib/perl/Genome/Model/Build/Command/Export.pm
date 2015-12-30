@@ -22,6 +22,8 @@ class Genome::Model::Build::Command::Export {
 sub execute {
     my $self = shift;
 
+    $self->validate_export_directory;
+
     my $build = $self->build;
     my $allocation = Genome::Disk::Allocation->get_allocation_for_path($build->data_directory);
     #This will not give us the full space needed but it's a start
@@ -97,6 +99,16 @@ sub execute {
     #symlinked in the build's data directory
 
     return 1;
+}
+
+sub validate_export_directory {
+    my $self = shift;
+    if (Genome::Disk::Allocation->get_allocation_for_path($self->target_export_directory)) {
+        $self->fatal_message(
+            "Target export directory (%s) is a path in the apipe allocation system. Please specify an external directory.",
+            $self->target_export_directory
+        );
+    }
 }
 
 sub check_available_space {
