@@ -2276,21 +2276,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>test-pipeline',
-      [
-        'name=s',
-        'files',
-        'some-args=s',
-        'files',
-        'based-on=s',
-        undef,
-        'some-command-name=s',
-        'files',
-        'describe!',
-        undef,
-        'help!',
-        undef
-      ],
       '>single-sample-genotype',
       [
         'name=s',
@@ -3153,31 +3138,6 @@ $Genome::Command::OPTS_SPEC = [
         undef
       ],
       '>imported-reference-sequence',
-      [
-        'show=s',
-        'files',
-        'style=s',
-        [
-          'text',
-          'csv',
-          'tsv',
-          'pretty',
-          'html',
-          'xml',
-          'newtext'
-        ],
-        'csv-delimiter=s',
-        'files',
-        'noheaders!',
-        undef,
-        'order-by=s',
-        'files',
-        'filter=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>test-pipeline',
       [
         'show=s',
         'files',
@@ -9386,29 +9346,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>test-pipeline',
-      [
-        'auto-assign-inst-data!',
-        undef,
-        'auto-build-alignments!',
-        undef,
-        'processing-profile=s',
-        undef,
-        'add-to-projects=s@',
-        undef,
-        'instrument-data=s@',
-        undef,
-        'subject=s',
-        undef,
-        'groups=s@',
-        undef,
-        'model-name=s',
-        'files',
-        'run-as=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>single-sample-genotype',
       [
         'auto-assign-inst-data!',
@@ -9703,6 +9640,15 @@ $Genome::Command::OPTS_SPEC = [
           '5.8',
           '5.10'
         ],
+        'help!',
+        undef
+      ],
+      '>export',
+      [
+        'build=s',
+        undef,
+        'target-export-directory=s',
+        'files',
         'help!',
         undef
       ],
