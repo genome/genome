@@ -66,6 +66,12 @@ class Genome::Model::Tools::Sam::Readcount {
             doc => "do not include reads containing insertions after the current position in per-base counts. This is the -i parameter in version 0.5.",
         },
     ],
+    has_param => [
+        lsf_queue => {
+            is => 'Text',
+            default_value => Genome::Config::get('lsf_queue_build_worker'),
+        },
+    ],
     doc => "Tool to get readcount information from a bam",
 };
 
