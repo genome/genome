@@ -44,6 +44,11 @@ sub execute {
     )->build_workflow;
     return if not $dag;
 
+    my $process = $self->work_flow_inputs->process;
+    if ( $process ) {
+        $dag->log_dir( $process->log_directory );
+    }
+
     my $inputs = $self->work_flow_inputs->as_hashref;
     return if not $inputs;
     $inputs->{working_directory} = $self->_working_directory;
