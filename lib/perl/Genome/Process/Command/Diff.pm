@@ -20,14 +20,6 @@ class Genome::Process::Command::Diff {
     ],
 };
 
-sub help_brief : Overrides(Genome::Role::Comparable::Command::Diff) {
-    &Genome::Role::Comparable::Command::Diff::help_brief;
-}
-
-sub help_detail : Overrides(Genome::Role::Comparable::Command::Diff) {
-    &Genome::Role::Comparable::Command::Diff::help_detail;
-}
-
 sub blessed_object {
     my $self = shift;
     return $self->blessed_process;
