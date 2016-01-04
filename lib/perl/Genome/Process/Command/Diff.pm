@@ -6,8 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Process::Command::Diff {
-    is => 'Command::V2',
-    roles => 'Genome::Role::Comparable::Command::Diff',
+    is => 'Genome::Interfaces::Comparable::Command::Diff',
     has => [
         new_process => {
             is => 'Genome::Process',

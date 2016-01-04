@@ -78,7 +78,7 @@ print $fh $yaml;
 $fh->close;
 
 Sub::Install::reinstall_sub({
-    into => 'Genome::Model::Build::Command::DiffBlessed',
+    into => 'Genome::Interfaces::Comparable::Command::DiffBlessed',
     as => 'db_file',
     code => sub {return $fh->filename},
 });
