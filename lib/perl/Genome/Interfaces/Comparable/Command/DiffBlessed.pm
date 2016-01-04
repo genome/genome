@@ -11,6 +11,15 @@ class Genome::Interfaces::Comparable::Command::DiffBlessed {
     is_abstract => 1,
 };
 
+sub help_brief {
+    'compare an object to the blessed version'
+}
+
+sub help_detail {
+    "This command will compare an object to the blessed version using the objects' compare_output method. Any differences found will be displayed."
+
+}
+
 sub bless_message {
     my $self = shift;
     my $rel_db_file = $self->rel_db_file();

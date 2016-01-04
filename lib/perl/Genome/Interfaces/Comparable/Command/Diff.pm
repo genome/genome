@@ -17,13 +17,11 @@ class Genome::Interfaces::Comparable::Command::Diff {
 };
 
 sub help_brief {
-    return 'Determine if there are differences in the outputs of two comparable objects.';
+    'compare two objects'
 }
 
 sub help_detail {
-    return <<EOS
-    This tool will use the compare_output method of the comparable objects.
-EOS
+    "This command will compare the outputs of 2 objects using the objects' compare_output method. Any differences found will be displayed."
 }
 
 sub blessed_object {
