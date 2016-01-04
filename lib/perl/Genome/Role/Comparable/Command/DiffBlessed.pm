@@ -11,6 +11,14 @@ role Genome::Role::Comparable::Command::DiffBlessed {
     requires => ['new_object'],
 };
 
+sub help_brief : Overrides(Genome::Role::Comparable::Command::Diff) {
+    'compare a process with the blessed one'
+}
+
+sub help_detail : Overrides(Genome::Role::Comparable::Command::Diff) {
+    'Compare a process against the blessed version using the compare_output method on the process class.'
+}
+
 sub bless_message {
     my $self = shift;
     my $rel_db_file = $self->rel_db_file();

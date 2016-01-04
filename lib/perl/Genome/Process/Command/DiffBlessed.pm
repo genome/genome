@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::Process::Command::DiffBlessed {
     is => 'Command::V2',
-    roles => 'Genome::Role::Comparable::Command::DiffBlessed',
+    roles => [qw/ Genome::Role::Comparable::Command::Diff Genome::Role::Comparable::Command::DiffBlessed /],
     has => [
         new_process => {
             is => 'Genome::Process',
@@ -18,6 +18,14 @@ class Genome::Process::Command::DiffBlessed {
         },
     ],
 };
+
+sub help_brief : Overrides(Genome::Role::Comparable::Command::Diff, Genome::Role::Comparable::Command::DiffBlessed) {
+    &Genome::Role::Comparable::Command::DiffBlessed::help_brief;
+}
+
+sub help_detail : Overrides(Genome::Role::Comparable::Command::Diff, Genome::Role::Comparable::Command::DiffBlessed) {
+    &Genome::Role::Comparable::Command::DiffBlessed::help_detail;
+}
 
 sub new_object {
     my $self = shift;
