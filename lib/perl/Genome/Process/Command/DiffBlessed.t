@@ -71,6 +71,7 @@ YAML
 like(Genome::Process::Command::DiffBlessed->db_file, qr(Genome/Process/Command/DiffBlessed.pm.YAML$),
     "yaml file is found correctly");
 ok(-s Genome::Process::Command::DiffBlessed->db_file, "Yaml file exists");
+can_ok($pkg, 'has_diffs');
 
 my $fh = File::Temp->new();
 ok($fh, 'Created temp file') or die;
@@ -78,7 +79,7 @@ print $fh $yaml;
 $fh->close;
 
 Sub::Install::reinstall_sub({
-    into => 'Genome::Model::Build::Command::DiffBlessed',
+    into => $pkg,
     as => 'db_file',
     code => sub {return $fh->filename},
 });
