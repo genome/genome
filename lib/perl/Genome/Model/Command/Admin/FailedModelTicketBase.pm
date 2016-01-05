@@ -24,7 +24,7 @@ sub _find_open_tickets {
     try {
         @ticket_ids = $rt->search(
             type => 'ticket',
-            query => "Queue = 'apipe-support' AND ( Status = 'new' OR Status = 'open' )",
+            query => "Queue = 'apipe-support' AND ( Status = 'new' OR Status = 'open' OR Status = 'stalled' )",
 
         );
     }
@@ -37,7 +37,7 @@ sub _find_open_tickets {
             die $msg->message;
         }
     };
-    $self->status_message($self->_color('Tickets (new or open): ', 'bold').scalar(@ticket_ids));
+    $self->status_message($self->_color('Tickets (new/open/stalled): ', 'bold').scalar(@ticket_ids));
 
     return @ticket_ids;
 }
