@@ -557,6 +557,7 @@ sub workflow_name {
 sub ptero_workflow_proxy {
     my $self = shift;
 
+    return unless $self->process;
     return $self->process->ptero_workflow_proxy;
 }
 
