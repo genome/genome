@@ -267,6 +267,13 @@ sub _generate_operation {
         ),
     );
 
+    my $aligner_class = join('::', 'Genome::InstrumentData::AlignmentResult', Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner_name));
+    my $lsf_resource = $aligner_class->required_rusage(
+        instrument_data => $instrument_data,
+        aligner_params => $action->{params},
+    );
+    $operation->lsf_resource($lsf_resource);
+
     $action->{$key} = $operation;
 
     return $operation;

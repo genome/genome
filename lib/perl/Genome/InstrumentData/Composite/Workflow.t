@@ -38,6 +38,8 @@ my $instrument_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_obj
     subset_name => '1',
     run_name => 'example',
     id => '-23',
+    read_length => '100',
+    clusters => 1000,
 );
 my $instrument_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
     library_id => $instrument_data_1->library_id,
@@ -46,6 +48,8 @@ my $instrument_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_obj
     subset_name => '2',
     run_name => 'example',
     id => '-24',
+    read_length => '100',
+    clusters => 2000,
 );
 
 my $sample_2 = Genome::Sample->create(
@@ -60,6 +64,8 @@ my $instrument_data_3 = Genome::InstrumentData::Solexa->__define__(
     run_name => 'example',
     id => '-28',
     sample => $sample_2,
+    read_length => '100',
+    clusters => 3000,
 );
 
 my @one_instrument_data = ($instrument_data_3);
