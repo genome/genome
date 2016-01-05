@@ -22,7 +22,6 @@ my @sub_commands_expected = qw/
   differential-expression
   gene-prediction
   genotype-microarray
-  germline
   imported-annotation
   imported-reference-sequence
   imported-variation-list
