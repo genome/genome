@@ -23335,6 +23335,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     [
       'bam-file=s',
       'files',
+      'lsf-queue=s',
+      'files',
       'output-file=s',
       'files',
       'reference-fasta=s',
