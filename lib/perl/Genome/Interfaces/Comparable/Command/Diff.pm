@@ -1,11 +1,12 @@
-package Genome::Role::Comparable::Command::Diff;
+package Genome::Interfaces::Comparable::Command::Diff;
 
 use strict;
 use warnings;
 use Genome;
-use UR::Role;
 
-role Genome::Role::Comparable::Command::Diff {
+class Genome::Interfaces::Comparable::Command::Diff {
+    is => 'Command::V2',
+    is_abstract => 1,
     has => [
         _diffs => {
             is => 'HASH',
@@ -13,17 +14,22 @@ role Genome::Role::Comparable::Command::Diff {
             is_optional => 1,
         },
     ],
-    requires => ['blessed_object', 'new_object'],
 };
 
 sub help_brief {
-    return 'Determine if there are differences in the outputs of two comparable objects.';
+    'compare two objects'
 }
 
 sub help_detail {
-    return <<EOS
-    This tool will use the compare_output method of the comparable objects.
-EOS
+    "This command will compare the outputs of 2 objects using the objects' compare_output method. Any differences found will be displayed."
+}
+
+sub blessed_object {
+    die "Must implement blessed_object";
+}
+
+sub new_object {
+    die "Must implement new_object";
 }
 
 sub execute {
