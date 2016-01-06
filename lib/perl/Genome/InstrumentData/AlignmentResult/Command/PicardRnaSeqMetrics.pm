@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Sys::Hostname;
 use File::Path;
+use Params::Validate ':types';
 
 class Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics {
     is => ['Command::V2'],
@@ -78,8 +79,37 @@ sub chart_output_filename {
     return Genome::Model::Build::RnaSeq->default_chart_output_filename;
 }
 
+sub required_files_from_annotation_build {
+    (qw/ rRNA_MT_file annotation_file /);
+}
+
+sub does_annotation_build_have_required_files {
+    my ($self, $annotation_build, $reference_build) = Params::Validate::validate_pos(
+        @_, {isa => __PACKAGE__}, {type => OBJECT}, {type => OBJECT},
+    );
+
+    my @missing_files;
+    for my $file_method ( required_files_from_annotation_build() ) {
+        my $file = $annotation_build->$file_method('gtf', $reference_build->id ,0);
+        if ( not -s $file ) {
+            $file = $annotation_build->$file_method('gtf', undef, 0);
+            if ( not -s $file ) {
+                push @missing_files, $file_method;
+            }
+        }
+    }
+
+    if ( @missing_files ) {
+        die $self->error_message("Cannot proceed! Missing required files from annotation build: @missing_files",);
+    }
+
+    return 1;
+}
+
 sub execute {
     my $self = shift;
+
+    $self->do_input_builds_have_required_files($self->annotation_build, $self->reference_build);
     
     my $metrics_directory = $self->metrics_directory;
     unless (-d $metrics_directory) {
