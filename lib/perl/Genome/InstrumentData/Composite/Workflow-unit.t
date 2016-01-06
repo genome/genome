@@ -24,6 +24,8 @@ my $idata = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
     subset_name => '1',
     run_name => 'workflow-unit-test',
     id => '-42',
+    read_length => 150,
+    clusters => 500,
 );
 
 my $ref = Genome::Model::Build::ReferenceSequence->get_by_name('GRCh37-lite-build37');
