@@ -60,6 +60,12 @@ sub shortcut {
             return $self->link_result_to_build($result);
         }
     }
+
+    unless ( $build->annotation_build ) {
+        $self->debug_message('Skipping PicardRnaSeqMetrics since annotation_build is not defined');
+        return 1;
+    }
+
     return;
 }
 
@@ -67,11 +73,6 @@ sub execute {
     my $self = shift;
 
     my $build = $self->build;
-    my $annotation_build = $build->annotation_build;
-    unless ($annotation_build) {
-        $self->debug_message('Skipping PicardRnaSeqMetrics since annotation_build is not defined');
-        return 1;
-    }
     my $alignment_result = $build->alignment_result;
     if ($alignment_result->isa('Genome::InstrumentData::AlignmentResult::Merged')) {
         my %params = (
