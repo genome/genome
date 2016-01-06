@@ -51,7 +51,7 @@ sub generate {
 
     my $block_operation = Genome::InstrumentData::Composite::Workflow::Generator::AlignerIndex->generate($master_workflow, $tree, $input_data);
 
-    my @inputs;
+    my %inputs;
 
     my $objects_by_group = $class->_alignment_objects($tree, $input_data, $merge_group);
     for my $group (keys %$objects_by_group) {
@@ -59,17 +59,17 @@ sub generate {
 
         my $alignment_generator = 'Genome::InstrumentData::Composite::Workflow::Generator::' . string_to_camel_case($tree->{action}->[0]->{type});
         my ($next_object_workflows, $next_object_inputs) = $alignment_generator->generate($master_workflow, $block_operation, $tree, $input_data, $alignment_objects);
-        push @inputs, @$next_object_inputs;
+        %inputs = (%inputs, @$next_object_inputs);
 
         my ($next_merge_operation, $next_merge_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Merge->generate($master_workflow, $tree, $group, $alignment_objects);
         if($next_merge_operation) {
-            push @inputs, @$next_merge_inputs;
+            %inputs = (%inputs, @$next_merge_inputs);
 
             $class->_wire_object_workflows_to_merge_operations($master_workflow, $next_object_workflows, $next_merge_operation, $alignment_objects, $group);
 
             my ($next_refinement_operations, $next_refinement_inputs, $next_refiners) = Genome::InstrumentData::Composite::Workflow::Generator::Refine->generate($master_workflow, $tree, $input_data, $group, $alignment_objects);
             if(@$next_refinement_operations) {
-                push @inputs, @$next_refinement_inputs;
+                %inputs = (%inputs, @$next_refinement_inputs);
 
                 $class->_wire_merge_to_refinement_operation($master_workflow, $next_merge_operation, $next_refinement_operations->[0]);
             } else {
@@ -78,7 +78,7 @@ sub generate {
         }
     }
 
-    return ($master_workflow, $class->_resolve_inputs({@inputs}, $tree->{api_version}, $input_data));
+    return ($master_workflow, $class->_resolve_inputs(\%inputs, $tree->{api_version}, $input_data));
 }
 
 sub _alignment_objects {
