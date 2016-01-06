@@ -8,7 +8,6 @@ use Data::Dumper;
 use JSON;
 use Genome;
 use Workflow;
-use Workflow::Simple;
 use File::Basename;
 
 class Genome::Model::Tools::DetectVariants2::Dispatcher {
@@ -251,11 +250,6 @@ sub _detect_variants {
     $self->debug_message("Now launching the dispatcher workflow.");
     ## Worklow launches here
     my $result = $workflow->execute(inputs => $input);
-
-    unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
-        die $self->error_message("Workflow did not return correctly.");
-    }
     $self->_workflow_result($result);
 
     return 1;
