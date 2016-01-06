@@ -60,34 +60,8 @@ sub work_flow_operation_class_for_name {
         . join('', map { ucfirst } split(' ', $name));
 }
 
-sub _add_retrieve_source_path_op_to_workflow {
-    my ($self, $previous_op) = @_;
-
-    my $name = 'retrieve source path from '.$self->work_flow_inputs->source_files->retrieval_method;
-    my $retrieve_source_path_op = Genome::WorkflowBuilder::Command->create(
-        name => $name,
-        command => $self->work_flow_operation_class_for_name($name),
-    );
-    $self->_dag->add_operation($retrieve_source_path_op);
-    $self->_dag->connect_input(
-        input_property => 'working_directory',
-        destination => $retrieve_source_path_op,
-        destination_property => 'working_directory',
-    );
-    $self->_dag->connect_input(
-        input_property => 'source_paths',
-        destination => $retrieve_source_path_op,
-        destination_property => 'source_path',
-    );
-    $retrieve_source_path_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
-
-    return $retrieve_source_path_op;
-}
-
 sub _add_verify_not_imported_op_to_workflow {
-    my ($self, $retrieve_source_path_op) = @_;
-
-    die 'No retrieve source files operation given!' if not $retrieve_source_path_op;
+    my $self = shift;
 
     my $name = 'verify not imported';
     my $verify_not_imported_op = Genome::WorkflowBuilder::Command->create(
@@ -100,13 +74,11 @@ sub _add_verify_not_imported_op_to_workflow {
         destination => $verify_not_imported_op,
         destination_property => 'working_directory',
     );
-    $self->_dag->create_link(
-        source => $retrieve_source_path_op,
-        source_property => 'destination_path',
+    $self->_dag->connect_input(
+        input_property => 'source_paths',
         destination => $verify_not_imported_op,
         destination_property => 'source_path',
     );
-    $verify_not_imported_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
 
     return $verify_not_imported_op;
 }

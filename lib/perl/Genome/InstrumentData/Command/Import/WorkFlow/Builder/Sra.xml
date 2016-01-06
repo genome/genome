@@ -19,15 +19,6 @@
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
-  <operation name="retrieve source path from local disk">
-    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePathFromLocalDisk">
-      <inputproperty>source_path</inputproperty>
-      <inputproperty>working_directory</inputproperty>
-      <outputproperty>destination_original_md5_path</outputproperty>
-      <outputproperty>destination_path</outputproperty>
-      <outputproperty>result</outputproperty>
-    </operationtype>
-  </operation>
   <operation name="sanitize bam">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam">
       <inputproperty>bam_path</inputproperty>
@@ -71,11 +62,9 @@
   <link fromOperation="input connector" fromProperty="analysis_project" toOperation="create instrument data" toProperty="analysis_project"/>
   <link fromOperation="input connector" fromProperty="instrument_data_properties" toOperation="create instrument data" toProperty="instrument_data_properties"/>
   <link fromOperation="input connector" fromProperty="library" toOperation="create instrument data" toProperty="library"/>
-  <link fromOperation="input connector" fromProperty="source_paths" toOperation="retrieve source path from local disk" toProperty="source_path"/>
-  <link fromOperation="input connector" fromProperty="working_directory" toOperation="retrieve source path from local disk" toProperty="working_directory"/>
   <link fromOperation="input connector" fromProperty="working_directory" toOperation="sra to bam" toProperty="working_directory"/>
+  <link fromOperation="input connector" fromProperty="source_paths" toOperation="verify not imported" toProperty="source_path"/>
   <link fromOperation="input connector" fromProperty="working_directory" toOperation="verify not imported" toProperty="working_directory"/>
-  <link fromOperation="retrieve source path from local disk" fromProperty="destination_path" toOperation="verify not imported" toProperty="source_path"/>
   <link fromOperation="sanitize bam" fromProperty="output_bam_path" toOperation="split bam by read group" toProperty="bam_path"/>
   <link fromOperation="sort bam" fromProperty="output_bam_path" toOperation="sanitize bam" toProperty="bam_path"/>
   <link fromOperation="split bam by read group" fromProperty="output_bam_paths" toOperation="create instrument data" toProperty="bam_paths"/>

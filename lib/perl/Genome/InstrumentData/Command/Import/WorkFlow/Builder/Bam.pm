@@ -14,7 +14,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Builder::Bam {
 sub _steps_to_build_workflow {
     my $self = shift;
 
-    my @steps = ( 'retrieve source path', 'verify not imported', 'sort bam', 'sanitize bam', );
+    my @steps = ( 'verify not imported', 'sort bam', 'sanitize bam', );
     push @steps, 'downsample bam' if $self->work_flow_inputs->instrument_data_properties->{downsample_ratio};
     push @steps, 'split bam by rg', 'create instrument data';
 

@@ -13,7 +13,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Builder::Sra {
 
 sub _steps_to_build_workflow {
     return (
-        'retrieve source path', 'verify not imported', 'sra to bam', 'sort bam',
+        'verify not imported', 'sra to bam', 'sort bam',
         'sanitize bam', 'split bam by rg', 'create instrument data',
     );
 }
