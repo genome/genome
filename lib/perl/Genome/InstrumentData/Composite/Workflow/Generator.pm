@@ -78,7 +78,7 @@ sub generate {
         }
     }
 
-    return ($master_workflow, $class->_resolve_inputs(\@inputs, $tree->{api_version}, $input_data));
+    return ($master_workflow, $class->_resolve_inputs({@inputs}, $tree->{api_version}, $input_data));
 }
 
 sub _alignment_objects {
@@ -172,8 +172,7 @@ sub _resolve_inputs {
     my $api_inputs = $class->inputs_for_api_version($api_version);
     my %inputs = (%$api_inputs, %$input_data);
     for my $input ($class->_general_workflow_input_properties) {
-        push @$inputs,
-            'm_' . $input => $inputs{$input};
+            $inputs->{'m_' . $input} = $inputs{$input};
     }
 
     return $inputs;

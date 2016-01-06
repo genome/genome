@@ -106,8 +106,7 @@ sub _run_workflow {
     Genome::Sys->disconnect_default_handles;
 
     $self->debug_message('Running workflow...');
-    my %inputs_hash = (@$inputs); # For some reason $inputs is an array-ref
-    my $outputs = $workflow->execute(inputs => \%inputs_hash);
+    my $outputs = $workflow->execute(inputs => $inputs);
 
     my @result_ids;
     for my $key (keys %$outputs) {
