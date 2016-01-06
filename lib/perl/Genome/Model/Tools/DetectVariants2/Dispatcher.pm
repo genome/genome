@@ -234,8 +234,6 @@ sub _detect_variants {
     my $workflow_inputs = $self->_workflow_inputs;
     map { $input->{$_} = $workflow_inputs->{$_}->{value}} keys(%{$workflow_inputs});
     $input->{reference_build_id} = $self->reference_build_id;
-    $input->{output_directory} = $self->_temp_staging_directory;
-    
     $input->{aligned_reads_input}= $self->aligned_reads_input;
     $input->{control_aligned_reads_input} = $self->control_aligned_reads_input;
     $input->{aligned_reads_sample} = $self->aligned_reads_sample;
@@ -471,7 +469,6 @@ sub generate_workflow {
             'control_alignment_results',
             'aligned_reads_sample',
             'control_aligned_reads_sample',
-            'output_directory',
             'pedigree_file_path',
             'result_users',
         ],
