@@ -5,9 +5,6 @@ use warnings;
 
 use Genome;
 
-use Workflow;
-use Workflow::Simple qw(run_workflow_lsf);
-
 class Genome::InstrumentData::Composite::Workflow {
     is => 'Command',
     has => [
@@ -28,7 +25,7 @@ class Genome::InstrumentData::Composite::Workflow {
     ],
     has_transient_optional => [
         _workflow => {
-            is => 'Workflow::Model',
+            is => 'Genome::WorkflowBuilder::DAG',
             doc => 'The underlying workflow to run the alignment/merge',
             is_output => 1,
         },
