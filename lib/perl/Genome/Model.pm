@@ -425,7 +425,6 @@ sub _resolve_workflow_for_build {
 
 # Override in subclasses to compose processing profile parameters and build inputs
 sub map_workflow_inputs {
-    # Construct the input to Workflow::Simple::run_workflow_lsf
     my $self = shift;
     if($self->processing_profile->can('map_workflow_inputs')) {
         return $self->processing_profile->map_workflow_inputs(@_);
