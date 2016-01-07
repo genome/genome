@@ -3,7 +3,6 @@ package Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow;
 use warnings;
 use strict;
 
-use Cwd;
 use Genome;
 use Workflow::Simple;
 
