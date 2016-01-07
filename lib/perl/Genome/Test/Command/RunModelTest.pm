@@ -8,7 +8,7 @@ use Genome;
 
 class Genome::Test::Command::RunModelTest {
     is => 'Command::V2',
-    roles => 'Genome::Command::WithColor',
+    roles => 'Genome::Role::CommandWithColor',
     doc => "Run a single model test",
     has => [
         model => {
