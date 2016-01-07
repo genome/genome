@@ -92,9 +92,7 @@ sub _dump_workflow {
     my $workflow = shift;
     my $xml = $workflow->get_xml;
     my $xml_location = $self->output_directory."/workflow.xml";
-    my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
-    print $xml_file $xml;
-    $xml_file->close;
+    Genome::Sys->write_file($xml_location, $xml);
 }
 
 sub _promote_staged_data {
