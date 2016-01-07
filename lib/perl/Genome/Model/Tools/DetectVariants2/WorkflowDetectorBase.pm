@@ -90,7 +90,7 @@ sub chromosome_sort {
 sub _dump_workflow {
     my $self = shift;
     my $workflow = shift;
-    my $xml = $workflow->save_to_xml;
+    my $xml = $workflow->get_xml;
     my $xml_location = $self->output_directory."/workflow.xml";
     my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
     print $xml_file $xml;
