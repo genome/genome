@@ -262,18 +262,19 @@ sub run_breakdancer {
 sub _parallelize_by_chromosome {
     my $self = shift;
 
-    require Workflow::Simple;
-
-    my $op = Workflow::Operation->create(
-        name => sprintf('%s by chromosome', $self->class_name),
-        operation_type => Workflow::OperationType::Command->get(
-            $self->class),
+    my $dag = Genome::WorkflowBuilder::DAG->create(
+        name => sprintf('%s parallel workflow', $self->class_name),
     );
+    my $op = Genome::WorkflowBuilder::Command->create(
+        name => sprintf('%s by chromosome', $self->class_name),
+        command => $self->class,
+        parallel_by => 'chromosome',
+    );
+    $dag->add_operation($op);
 
-    $op->parallel_by('chromosome');
-
+    require Workflow::Model;
     if(Workflow::Model->parent_workflow_log_dir) {
-        $op->log_dir(Workflow::Model->parent_workflow_log_dir);
+        $dag->recursively_set_log_dir(Workflow::Model->parent_workflow_log_dir);
     } elsif ($self->workflow_log_dir) {
         unless (-d $self->workflow_log_dir) {
             unless (Genome::Sys->create_directory($self->workflow_log_dir)) {
@@ -281,7 +282,7 @@ sub _parallelize_by_chromosome {
                 die;
             }
         }
-        $op->log_dir($self->workflow_log_dir);
+        $dag->recursively_set_log_dir($self->workflow_log_dir);
     }
 
     my $cfg_file = $self->config_file;
@@ -311,16 +312,23 @@ sub _parallelize_by_chromosome {
     $params{control_aligned_reads_input} = $self->control_aligned_reads_input
         if $self->control_aligned_reads_input;
 
-    Genome::Sys->disconnect_default_handles;
-    my $output = Workflow::Simple::run_workflow_lsf($op, %params);
+    for my $param (keys %params) {
+        $dag->connect_input(
+            input_property => $param,
+            destination => $op,
+            destination_property => $param,
+        );
+    }
 
+    $dag->connect_output(
+        source => $op,
+        source_property => 'result',
+        output_property => 'result',
+    );
+
+    my $output = $dag->execute(inputs => \%params);
     unless (defined $output) {
-        my @error;
-        for (@Workflow::Simple::ERROR) {
-            push @error, $_->error;
-        }
-        $self->error_message(join("\n", @error));
-        die $self->error_message;
+        die 'no output returned from workflow execution';
     }
 
     my $merge_obj = Genome::Model::Tools::Breakdancer::MergeFiles->create(
