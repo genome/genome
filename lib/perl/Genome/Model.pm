@@ -378,43 +378,34 @@ sub _resolve_workflow_for_build {
 
     if ($self->can('_execute_build') or $self->processing_profile->can('_execute_build')) {
         #TODO remove pp._execute_builds
+
         # Create a one-step workflow if '_execute_build' is defined.
-        my $operation_type = Workflow::OperationType::Command->get('Genome::Model::Build::ExecuteBuildWrapper');
-        my $resource_requirements = $self->_resolve_resource_requirements_for_build($build);
-        $operation_type->lsf_resource($resource_requirements);
-
-        my %opts = (
+        my $workflow = Genome::WorkflowBuilder::DAG->create(
             name => $build->workflow_name,
-            input_properties => [ 'build_id' ],
-            output_properties => [ 'result' ]
         );
 
-        my $logdir = $build->log_directory;
-        $opts{log_dir} = $logdir;
-
-        my $workflow = Workflow::Model->create(%opts);
-
-        my $operation = $workflow->add_operation(
+        my $operation = Genome::WorkflowBuilder::Command->create(
             name => '_execute_build (' . $self->type_name . ')',
-            operation_type => $operation_type,
+            command => 'Genome::Model::Build::ExecuteBuildWrapper',
+        );
+        my $resource_requirements = $self->_resolve_resource_requirements_for_build($build);
+        $operation->lsf_resource($resource_requirements);
+
+        $workflow->add_operation($operation);
+        $workflow->connect_input(
+            input_property => 'build_id',
+            destination => $operation,
+            destination_property => 'build_id'
         );
 
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'build_id',
-            right_operation => $operation,
-            right_property => 'build_id'
+        $workflow->connect_output(
+            source => $operation,
+            source_property => 'result',
+            output_property => 'result'
         );
 
-        $workflow->add_link(
-            left_operation => $operation,
-            left_property => 'result',
-            right_operation => $workflow->get_output_connector,
-            right_property => 'result'
-        );
-
-        my @e = $workflow->validate;
-        die @e unless $workflow->is_valid;
+        my $log_dir = $build->log_directory;
+        $workflow->recursively_set_log_dir($log_dir);
 
         return $workflow;
     }
