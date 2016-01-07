@@ -23,7 +23,7 @@ sub prepare_reference_sequence_index {
 
     Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary('sam'), File::Spec->join($staging_dir, 'all_sequences.dict'));
 
-    if (-e File::Spec->join($staging_dir, 'all_sequences.fa.alt')) {
+    if (-e $refindex->reference_build->full_consensus_path('fa.alt')) {
         # An alt file exists so BWA-mem post 0.7.11 can perform alt-aware mapping
         Genome::Sys->create_symlink($refindex->reference_build->full_consensus_path('fa.alt'), File::Spec->join($staging_dir, 'all_sequences.fa.alt'));
     }
