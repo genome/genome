@@ -3,6 +3,8 @@ package Genome::Model::RnaSeq::Command::PicardRnaSeqMetrics;
 use strict;
 use warnings;
 
+use Try::Tiny;
+
 use Genome;
 
 my $DEFAULT_LSF_RESOURCE = "-R 'select[mem>=8000] rusage[mem=8000]' -M 8000000";
@@ -61,10 +63,23 @@ sub shortcut {
         }
     }
 
+    # Skip if no annotation build
     unless ( $build->annotation_build ) {
-        $self->debug_message('Skipping PicardRnaSeqMetrics since annotation_build is not defined');
+        $self->debug_message('Skipping PicardRnaSeqMetrics since annotation build is not defined');
         return 1;
     }
+
+    # Skip if annotation build does not have required files
+    try {
+        Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->does_annotation_build_have_required_files(
+            $build->annotation_build, $build->reference_build,
+        );
+    }
+    catch {
+        $self->debug_message($_);
+        $self->debug_message('Skipping PicardRnaSeqMetrics since annotation build is missing required files');
+        return 1;
+    };
 
     return;
 }
