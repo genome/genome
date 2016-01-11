@@ -108,6 +108,8 @@ sub _stderr_log_path {
 sub _setup_logging {
     my $self = shift;
 
+    Genome::Config::set_env('ptero_log_directory', $self->log_directory);
+
     $self->debug_message(
         "Preparing to redirect stderr to (%s) and stdout to (%s)",
         $self->_stderr_log_path, $self->_stdout_log_path
