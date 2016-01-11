@@ -112,6 +112,9 @@ class Genome::InstrumentData::Command::AlignReads {
             },
             default_value => &_fallback_lsf_resource, # workflow doesn't support varying this per instance
         },
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_alignment_default'),
+        },
     ]
 };
 
