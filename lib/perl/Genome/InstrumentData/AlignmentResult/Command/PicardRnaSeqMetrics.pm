@@ -119,7 +119,7 @@ sub file_from_annotation_build {
 sub execute {
     my $self = shift;
 
-    $self->do_input_builds_have_required_files($self->annotation_build, $self->reference_build);
+    $self->verify_annotation_build_has_required_files($self->annotation_build, $self->reference_build);
 
     my $metrics_directory = $self->metrics_directory;
     unless (-d $metrics_directory) {
