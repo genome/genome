@@ -4,8 +4,6 @@ use warnings;
 use strict;
 
 use Genome;
-use Workflow;
-use Workflow::Simple;
 use Data::Dumper;
 
 my $DEFAULT_VERSION = 'test';
@@ -63,17 +61,21 @@ sub _detect_variants {
         my $reference = Genome::File::Fasta->create(id => $self->reference_sequence_input) or die "Unable to create Genome::File::Fasta object for chunking of jobs\n";
         my @chunks = $reference->divide_into_chunks($self->number_of_chunks);
 
-        my $op = Workflow::Operation->create(
+        my $dag = Genome::WorkflowBuilder::DAG->create(
+            name => 'Mutect Parallel Workflow ' . $self->id,
+        );
+        my $op = Genome::WorkflowBuilder::Command->create(
             name => 'Mutect x' . scalar(@chunks),
-            operation_type => Workflow::OperationType::Command->get('Genome::Model::Tools::Mutect::ParallelWrapper'),
+            command => 'Genome::Model::Tools::Mutect::ParallelWrapper',
         );
         $op->parallel_by('chunk_num');
+        $dag->add_operation($op);
 
         my $log_dir = $self->output_directory ."/mutect_by_chunk/";
-        if(Workflow::Model->parent_workflow_log_dir) {
-            $log_dir = Workflow::Model->parent_workflow_log_dir;
+        if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+            $log_dir = $parent_dir;
         }
-        $op->log_dir($log_dir);
+        $dag->recursively_set_log_dir($log_dir);
 
         $mutect_params{chunk_num} = [1..scalar(@chunks)];
         $mutect_params{total_chunks} = $self->number_of_chunks;
@@ -82,15 +84,24 @@ sub _detect_variants {
         delete $mutect_params{output_file};
         delete $mutect_params{vcf};
         delete $mutect_params{coverage_file};
-        my $output = Workflow::Simple::run_workflow_lsf($op, %mutect_params);
-        unless (defined $output) {
-            my @error;
-            for (@Workflow::Simple::ERROR) {
-                push @error, $_->error;
-            }
-            $self->error_message(join("\n", @error));
-            die $self->error_message;
+
+        for my $param (keys %mutect_params) {
+            $dag->connect_input(
+                input_property => $param,
+                destination => $op,
+                destination_property => $param,
+            );
         }
+
+        for my $param (qw( vcf output_file result )) {
+            $dag->connect_output(
+                source => $op,
+                source_property => $param,
+                output_property => $param,
+            );
+        }
+
+        my $output = $dag->execute(inputs => \%mutect_params);
         print Dumper $output,"\n";
         my $merger = Genome::Model::Tools::Mutect::MergeOutputFiles->create(mutect_output_files => $output->{output_file}, merged_file => $self->_snv_staging_output);
         unless($merger->execute()) {
