@@ -12,9 +12,15 @@ use above 'Genome';
 my $class = 'Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics';
 use_ok($class) or die;
 
+my $existing_file = Genome::Sys->write_file(Genome::Sys->create_temp_file_path('existing'), 1);
+my $existing_file_sub = sub{ $existing_file; };
+my $existing_file_no_ref_build = Genome::Sys->write_file(Genome::Sys->create_temp_file_path('no-ref-build'), 1);
+my $existing_file_with_no_ref_build_sub = sub{ return "/dev/null" if defined $_[1]; $existing_file_no_ref_build; };
+my $non_existing_file_sub = sub{ "/dev/null"; };
+
 my $annotation_build = Test::MockObject->new;
-$annotation_build->set_always('rRNA_MT_file', 'foo');
-$annotation_build->set_always('annotation_file', 'foo');
+$annotation_build->mock('rRNA_MT_file', $non_existing_file_sub);
+$annotation_build->mock('annotation_file', $non_existing_file_sub);
 
 my $reference_build =  Test::MockObject->new;
 $reference_build->set_always('id', '1');
@@ -27,6 +33,9 @@ subtest 'does_annotation_build_have_required_files' => sub{
         qr/but 3 were expected/,
         'does_annotation_build_have_required_files fails w/o params',
     );
+
+    $annotation_build->mock('rRNA_MT_file', $non_existing_file_sub);
+    $annotation_build->mock('annotation_file', $non_existing_file_sub);
     throws_ok(
         sub{ $class->does_annotation_build_have_required_files($annotation_build, $reference_build); },
         qr/Cannot proceed\! Missing required files from annotation build: rRNA_MT_file annotation_file/,
@@ -34,17 +43,17 @@ subtest 'does_annotation_build_have_required_files' => sub{
     );
 
     for my $file_method ( $class->required_files_from_annotation_build ) {
-        $annotation_build->set_always($file_method, $0);
+        $annotation_build->mock($file_method, $existing_file_sub);
         throws_ok(
             sub{ $class->does_annotation_build_have_required_files($annotation_build, $reference_build); },
             qr/Cannot proceed\! Missing required files from annotation build: /,
             "does_annotation_build_have_required_files fails when annotation build does not have $file_method",
         );
-        $annotation_build->set_always($file_method, 'foo');
+        $annotation_build->mock($file_method, $non_existing_file_sub);
     }
 
-    map { $annotation_build->set_always($_, $0) } $class->required_files_from_annotation_build;
-    $annotation_build->set_always('annotation_file', $0);
+    $annotation_build->mock('rRNA_MT_file', $existing_file_sub);
+    $annotation_build->mock('annotation_file', $existing_file_sub);
     lives_ok(
         sub{$class->does_annotation_build_have_required_files($annotation_build, $reference_build);},
         'does_annotation_build_have_required_files succeeds with annotation files',
