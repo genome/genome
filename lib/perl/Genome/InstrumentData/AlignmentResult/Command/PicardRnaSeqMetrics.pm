@@ -90,13 +90,9 @@ sub does_annotation_build_have_required_files {
 
     my @missing_files;
     for my $file_method ( required_files_from_annotation_build() ) {
-        my $file = $annotation_build->$file_method('gtf', $reference_build->id ,0);
-        if ( not -s $file ) {
-            $file = $annotation_build->$file_method('gtf', undef, 0);
-            if ( not -s $file ) {
-                push @missing_files, $file_method;
-            }
-        }
+        push @missing_files, $file_method if not $self->file_from_annotation_build(
+            $annotation_build, $reference_build, $file_method,
+        );
     }
 
     if ( @missing_files ) {
@@ -106,23 +102,37 @@ sub does_annotation_build_have_required_files {
     return 1;
 }
 
+sub file_from_annotation_build {
+    my ($self, $annotation_build, $reference_build, $file_method) = Params::Validate::validate_pos(
+        @_, {isa => __PACKAGE__}, {type => OBJECT}, {type => OBJECT}, {type => SCALAR},
+    );
+
+    my $file = $annotation_build->$file_method('gtf', $reference_build->id ,0);
+    return $file if $file and -s $file;
+
+    $file = $annotation_build->$file_method('gtf', undef, 0);
+    return $file if $file and -s $file;
+
+    return;
+}
+
 sub execute {
     my $self = shift;
 
     $self->do_input_builds_have_required_files($self->annotation_build, $self->reference_build);
-    
+
     my $metrics_directory = $self->metrics_directory;
     unless (-d $metrics_directory) {
         Genome::Sys->create_directory($metrics_directory);
     }
-    
+
     my $annotation_build = $self->annotation_build;
     my $reference_build = $self->reference_build;
     my $alignment_result = $self->alignment_result;
     my $picard_version = $self->picard_version;
-    
+
     my $bam_file = $alignment_result->get_bam_file;
-    
+
     my $reference_fasta_file = $reference_build->full_consensus_path('fa');
     unless (-s $reference_fasta_file) {
         $self->error_message("Reference FASTA File ($reference_fasta_file) is missing");
@@ -137,10 +147,7 @@ sub execute {
     my $chart_output_file = $metrics_directory .'/'. $self->chart_output_filename;
     
     # Get all MT and rRNA annotation in intervals format
-    my $rRNA_MT_gtf_file = $annotation_build->rRNA_MT_file('gtf',$reference_build->id,0);
-    unless (-s $rRNA_MT_gtf_file) {
-        $rRNA_MT_gtf_file = $annotation_build->rRNA_MT_file('gtf',undef,0);
-    }
+    my $rRNA_MT_gtf_file = $self->file_from_annotation_build($annotation_build, $reference_build, 'rRNA_MT_file');
     my $seqdict_file = $reference_build->get_sequence_dictionary('sam',$reference_build->species_name,$picard_version);
     my $to_intervals_cmd = Genome::Model::Tools::Gtf::ToIntervals->execute(
         gtf_file => $rRNA_MT_gtf_file,
@@ -153,10 +160,7 @@ sub execute {
     }
 
     # Get all mRNA annotation in RefFlat format
-    my $mRNA_gtf_file = $annotation_build->annotation_file('gtf',$reference_build->id,0);
-    unless (-s $mRNA_gtf_file) {
-        $mRNA_gtf_file = $annotation_build->annotation_file('gtf',undef,0);
-    }
+    my $mRNA_gtf_file = $self->file_from_annotation_build($annotation_build, $reference_build, 'annotation_file');
     my $to_ref_flat_cmd = Genome::Model::Tools::Gtf::ToRefFlat->execute(
         input_gtf_file => $mRNA_gtf_file,
         output_file => $mRNA_ref_flat,
