@@ -12,15 +12,15 @@ use above 'Genome';
 my $class = 'Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics';
 use_ok($class) or die;
 
+my $annotation_build = Test::MockObject->new;
+$annotation_build->set_always('rRNA_MT_file', 'foo');
+$annotation_build->set_always('annotation_file', 'foo');
+
+my $reference_build =  Test::MockObject->new;
+$reference_build->set_always('id', '1');
+
 subtest 'does_annotation_build_have_required_files' => sub{
     plan tests => 5;
-
-    my $annotation_build = Test::MockObject->new;
-    $annotation_build->set_always('rRNA_MT_file', 'foo');
-    $annotation_build->set_always('annotation_file', 'foo');
-
-    my $reference_build =  Test::MockObject->new;
-    $reference_build->set_always('id', '1');
 
     throws_ok(
         sub{ $class->does_annotation_build_have_required_files(); },
