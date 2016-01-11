@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow::Simple;
 
 my $DEFAULT_MINIMUM_DEPTHS = '1,5,10,15,20';
 my $DEFAULT_WINGSPAN_VALUES = '0,200,500';
@@ -85,7 +84,7 @@ sub execute {
     $xml_path =~ s/\.pm/\.xml/;
     my @wingspans = split(',',$self->wingspan_values);
 
-    my $workflow = Workflow::Operation->create_from_xml($xml_path);
+    my $workflow = Genome::WorkflowBuilder::DAG->from_xml_filename($xml_path);
 
     if($self->log_directory) {
         unless (-d $self->log_directory) {
@@ -94,26 +93,19 @@ sub execute {
             }
         }
 
-        $workflow->log_dir($self->log_directory);
+        $workflow->recursively_set_log_dir($self->log_directory);
     }
 
-    my $output = run_workflow_lsf($workflow,
-                                  bed_file => $self->bed_file,
-                                  bam_file => $self->bam_file,
-                                  wingspan => \@wingspans,
-                                  minimum_depth => $self->minimum_depths,
-                                  output_directory => $self->output_directory,
-                                  minimum_base_quality => $self->minimum_base_quality,
-                                  minimum_mapping_quality => $self->minimum_mapping_quality,
-                              );
-    unless (defined $output) {
-        my @error;
-        for (@Workflow::Simple::ERROR) {
-            push @error, $_->error;
-        }
-        $self->error_message(join("\n",@error));
-        die($self->error_message);
-    }
+    my $output = $workflow->execute(inputs => {
+        bed_file => $self->bed_file,
+        bam_file => $self->bam_file,
+        wingspan => \@wingspans,
+        minimum_depth => $self->minimum_depths,
+        output_directory => $self->output_directory,
+        minimum_base_quality => $self->minimum_base_quality,
+        minimum_mapping_quality => $self->minimum_mapping_quality,
+    });
+
     my $alignment_summaries = $output->{alignment_summaries};
     unless (scalar(@$alignment_summaries) == scalar(@wingspans)) {
         die('Incorrect number of alignment summaries!');
