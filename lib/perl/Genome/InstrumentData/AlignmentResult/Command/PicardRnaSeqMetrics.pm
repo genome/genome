@@ -83,7 +83,7 @@ sub required_files_from_annotation_build {
     (qw/ rRNA_MT_file annotation_file /);
 }
 
-sub does_annotation_build_have_required_files {
+sub verify_annotation_build_has_required_files {
     my ($self, $annotation_build, $reference_build) = Params::Validate::validate_pos(
         @_, {isa => __PACKAGE__}, {type => OBJECT}, {type => OBJECT},
     );

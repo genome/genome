@@ -71,7 +71,7 @@ sub shortcut {
 
     # Skip if annotation build does not have required files
     try {
-        Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->does_annotation_build_have_required_files(
+        Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->verify_annotation_build_has_required_files(
             $build->annotation_build, $build->reference_build,
         );
     }

@@ -31,7 +31,7 @@ subtest 'file_from_annotation_build' => sub{
     throws_ok(
         sub{ $class->file_from_annotation_build(); },
         qr/but 4 were expected/,
-        'does_annotation_build_have_required_files fails w/o params',
+        'verify_annotation_build_has_required_files fails w/o params',
     );
 
     $annotation_build->mock('rRNA_MT_file', $existing_file_sub);
@@ -50,29 +50,29 @@ subtest 'file_from_annotation_build' => sub{
 
 };
 
-subtest 'does_annotation_build_have_required_files' => sub{
+subtest 'verify_annotation_build_has_required_files' => sub{
     plan tests => 5;
 
     throws_ok(
-        sub{ $class->does_annotation_build_have_required_files(); },
+        sub{ $class->verify_annotation_build_has_required_files(); },
         qr/but 3 were expected/,
-        'does_annotation_build_have_required_files fails w/o params',
+        'verify_annotation_build_has_required_files fails w/o params',
     );
 
     $annotation_build->mock('rRNA_MT_file', $non_existing_file_sub);
     $annotation_build->mock('annotation_file', $non_existing_file_sub);
     throws_ok(
-        sub{ $class->does_annotation_build_have_required_files($annotation_build, $reference_build); },
+        sub{ $class->verify_annotation_build_has_required_files($annotation_build, $reference_build); },
         qr/Cannot proceed\! Missing required files from annotation build: rRNA_MT_file annotation_file/,
-        'does_annotation_build_have_required_files fails when annotation build does not have required files',
+        'verify_annotation_build_has_required_files fails when annotation build does not have required files',
     );
 
     for my $file_method ( $class->required_files_from_annotation_build ) {
         $annotation_build->mock($file_method, $existing_file_sub);
         throws_ok(
-            sub{ $class->does_annotation_build_have_required_files($annotation_build, $reference_build); },
+            sub{ $class->verify_annotation_build_has_required_files($annotation_build, $reference_build); },
             qr/Cannot proceed\! Missing required files from annotation build: /,
-            "does_annotation_build_have_required_files fails when annotation build does not have $file_method",
+            "verify_annotation_build_has_required_files fails when annotation build does not have $file_method",
         );
         $annotation_build->mock($file_method, $non_existing_file_sub);
     }
@@ -80,8 +80,8 @@ subtest 'does_annotation_build_have_required_files' => sub{
     $annotation_build->mock('rRNA_MT_file', $existing_file_sub);
     $annotation_build->mock('annotation_file', $existing_file_sub);
     lives_ok(
-        sub{$class->does_annotation_build_have_required_files($annotation_build, $reference_build);},
-        'does_annotation_build_have_required_files succeeds with annotation files',
+        sub{$class->verify_annotation_build_has_required_files($annotation_build, $reference_build);},
+        'verify_annotation_build_has_required_files succeeds with annotation files',
     );
 
 };
