@@ -86,11 +86,8 @@ sub execute {
     my $output_directory = $self->output_directory;
     my $wingspan = $self->wingspan;
     if ($output_directory) {
-        # TODO: Old CoverageStats required running RefCov with multiple Wingspan valude
-        # In reality, this create redundancy across the ROI.
-
-        # Moving forward CoverageStatsV2 will create multiple BED files.
-        # What do we do with this auto-generated subdirectory....
+        # TODO: CoverageStats requires running RefCov with multiple Wingspan valude
+        # In reality, this creates redundancy across the ROI.
         if (defined($wingspan)) {
             $output_directory .= '/wingspan_'. $wingspan;
         }
