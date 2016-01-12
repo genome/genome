@@ -86,7 +86,7 @@ sub execute {
     my $output_directory = $self->output_directory;
     my $wingspan = $self->wingspan;
     if ($output_directory) {
-        # TODO: CoverageStats requires running RefCov with multiple Wingspan valude
+        # TODO: CoverageStats requires running RefCov with multiple Wingspan values
         # In reality, this creates redundancy across the ROI.
         if (defined($wingspan)) {
             $output_directory .= '/wingspan_'. $wingspan;
