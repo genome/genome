@@ -272,9 +272,8 @@ sub _parallelize_by_chromosome {
     );
     $dag->add_operation($op);
 
-    require Workflow::Model;
-    if(Workflow::Model->parent_workflow_log_dir) {
-        $dag->recursively_set_log_dir(Workflow::Model->parent_workflow_log_dir);
+    if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+        $dag->recursively_set_log_dir($parent_dir);
     } elsif ($self->workflow_log_dir) {
         unless (-d $self->workflow_log_dir) {
             unless (Genome::Sys->create_directory($self->workflow_log_dir)) {
