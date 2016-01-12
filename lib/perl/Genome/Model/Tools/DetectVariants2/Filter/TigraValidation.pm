@@ -383,15 +383,18 @@ sub _filter_variants {
         $self->debug_message("Creating workflow to parallelize by chromosome");
 
         # Create and execute workflow
-        require Workflow::Simple;
-        my $op = Workflow::Operation->create(
+        my $workflow = Genome::WorkflowBuilder::DAG->create(
+            name => 'Tigra workflow ' . $self->id,
+        );
+        my $op = Genome::WorkflowBuilder::Command->create(
             name => 'Tigra by chromosome',
-            operation_type => Workflow::OperationType::Command->get(ref($self)),
+            command => ref($self),
         );
         $op->parallel_by('specify_chr');
+        $workflow->add_operation($op);
 
-        if(Workflow::Model->parent_workflow_log_dir) {
-            $op->log_dir(Workflow::Model->parent_workflow_log_dir);
+        if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+            $op->recursively_set_log_dir($parent_dir);
         } elsif ($self->workflow_log_directory) {
             unless (-d $self->workflow_log_directory) {
                 unless (Genome::Sys->create_directory($self->workflow_log_directory)) {
@@ -399,7 +402,7 @@ sub _filter_variants {
                     die;
                 }
             }
-            $op->log_dir($self->workflow_log_directory);
+            $op->recursively_set_log_dir($self->workflow_log_directory);
         }
 
         $self->debug_message("Running workflow");
@@ -414,16 +417,7 @@ sub _filter_variants {
 
         $options{skip_libraries} = $skip_libs if $skip_libs;
 
-        my $output = Workflow::Simple::run_workflow_lsf($op, %options);
-
-        unless (defined $output) {
-            my @error;
-            for (@Workflow::Simple::ERROR) {
-                push @error, $_->error;
-            }
-            $self->error_message(join("\n", @error));
-            die $self->error_message;
-        }
+        my $output = $workflow->execute(inputs => \%options);
 
         # Now merge together all the pass/fail files produced for each chromosome
         $self->debug_message("Merging output files together");
