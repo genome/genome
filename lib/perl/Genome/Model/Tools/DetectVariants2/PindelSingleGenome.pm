@@ -4,9 +4,7 @@ use warnings;
 use strict;
 
 use Genome;
-use Workflow;
 use File::Copy;
-use Workflow::Simple;
 use Cwd;
 use Genome::Utility::Text;
 

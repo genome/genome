@@ -90,12 +90,9 @@ sub chromosome_sort {
 sub _dump_workflow {
     my $self = shift;
     my $workflow = shift;
-    my $xml = $workflow->save_to_xml;
+    my $xml = $workflow->get_xml;
     my $xml_location = $self->output_directory."/workflow.xml";
-    my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
-    print $xml_file $xml;
-    $xml_file->close;
-    #$workflow->as_png($self->output_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
+    Genome::Sys->write_file($xml_location, $xml);
 }
 
 sub _promote_staged_data {
@@ -137,14 +134,7 @@ sub _detect_variants {
     $self->set_output;
 
     # Define a workflow from the static XML at the bottom of this module
-    my $workflow = Workflow::Operation->create_from_xml($self->workflow_xml);
-
-    # Validate the workflow
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
-    }
+    my $workflow = Genome::WorkflowBuilder::DAG->from_xml_file($self->workflow_xml);
 
     my %input;
     $input{chromosome_list} = $self->chromosome_list;
@@ -157,16 +147,12 @@ sub _detect_variants {
     $self->_dump_workflow($workflow);
 
     my $log_dir = $self->output_directory;
-    if(Workflow::Model->parent_workflow_log_dir) {
-        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+        $log_dir = $parent_dir;
     }
-    $workflow->log_dir($log_dir);
+    $workflow->recursively_set_log_dir($log_dir);
 
-    Genome::Sys->disconnect_default_handles;
-
-    # Launch workflow
-    $self->debug_message("Launching workflow now.");
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %input);
+    my $result = $workflow->execute(inputs => \%input);
 
     # Collect and analyze results
     unless($result){

@@ -4,9 +4,7 @@ use warnings;
 use strict;
 
 use Genome;
-use Workflow;
 use File::Copy;
-use Workflow::Simple;
 use Cwd;
 
 my $DEFAULT_VERSION = '2.6';
