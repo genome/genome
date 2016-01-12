@@ -4,12 +4,8 @@ use warnings;
 use strict;
 
 use Genome;
-use Workflow;
-use Workflow::Simple;
-use Carp;
-use Data::Dumper;
 use Genome::File::Vcf::Reader;
-use Genome::Utility::Vcf ('open_vcf_file', 'parse_vcf_line', 'deparse_vcf_line', 'get_vcf_header', 'get_samples_from_header');
+use Genome::Utility::Vcf ('open_vcf_file');
 
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcf {
     is => 'Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfBase',
