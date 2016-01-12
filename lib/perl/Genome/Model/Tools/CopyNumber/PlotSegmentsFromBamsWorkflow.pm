@@ -4,7 +4,6 @@ use warnings;
 use strict;
 use Genome;
 use File::Basename;
-use Workflow::Simple;
 
 class Genome::Model::Tools::CopyNumber::PlotSegmentsFromBamsWorkflow {
     is => 'Command',
@@ -126,23 +125,16 @@ sub execute {
 
     $self->_resolve_gaps_and_centromere_files;
 
-    my $workflow = Workflow::Operation->create_from_xml(\*DATA);
-
-    # Validate the workflow
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
-    }
+    my $workflow = Genome::WorkflowBuilder::DAG->from_xml_file(\*DATA);
 
     my %input;    
 
     my $log_dir = $self->output_directory;
-    if(Workflow::Model->parent_workflow_log_dir) {
-        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+        $log_dir = $parent_dir;
     }
 
-    $workflow->log_dir($log_dir);
+    $workflow->recursively_set_log_dir($log_dir);
 
     $input{normal_bam} =  $self->normal_bam;
     $input{normal_bamtocn} = $output_dir."/".$normal_bam_name.".bamtocn";
@@ -166,7 +158,7 @@ sub execute {
     $input{centromere_file} = $self->centromere_file;
     $input{gaps_file} = $self->gaps_file;
 
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %input);
+    my $result = $workflow->execute(inputs => \%input);
 
     # Collect and analyze results
     unless($result){
