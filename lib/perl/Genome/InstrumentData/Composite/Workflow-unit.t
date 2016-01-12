@@ -119,8 +119,7 @@ sub workflow_and_inputs_for_strategy {
 
     my ($wf, $wf_inputs) = $obj->_generate_workflow($tree);
     isa_ok($wf, "Genome::WorkflowBuilder::DAG", "workflow model");
-    isa_ok($wf_inputs, "ARRAY", "workflow inputs");
+    isa_ok($wf_inputs, "HASH", "workflow inputs");
 
-    my %inputs = @$wf_inputs;
-    return ($wf, \%inputs);
+    return ($wf, $wf_inputs);
 }
