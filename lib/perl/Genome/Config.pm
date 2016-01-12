@@ -132,7 +132,7 @@ sub config_subpath { Path::Class::File->new('genome', 'config.yaml') }
 
 sub project_dir {
     my $dir = $ENV{XGENOME_CONFIG_PROJECT_DIR};
-    return $dir if $dir;
+    return Path::Class::Dir->new($dir) if $dir;
     return;
 }
 
@@ -150,7 +150,7 @@ sub snapshot_dir {
     my @chop = ('lib', 'perl', split('::', __PACKAGE__));
     my @chopped = splice(@path, -1 * @chop);
     my @base_dir = @path;
-    return File::Spec->join(@base_dir, 'etc');
+    return Path::Class::Dir->new(File::Spec->join(@base_dir, 'etc'));
 }
 
 sub global_dirs {
