@@ -10,6 +10,7 @@ use JSON;
 use List::MoreUtils qw();
 use Genome::Utility::Inputs qw(encode decode);
 use Data::Dump qw(pp);
+use File::Spec;
 
 
 class Genome::WorkflowBuilder::DAG {
@@ -55,6 +56,24 @@ sub recursively_set_log_dir {
         }
     }
     return;
+}
+
+sub parent_log_dir {
+    my $class = shift;
+
+    my $backend = Genome::Config::get('workflow_builder_backend');
+    if ($backend eq 'ptero') {
+        use Try::Tiny qw(try catch);
+        try {
+            return Genome::Config::get('ptero_log_directory');
+        } catch {
+            return;
+        }
+    } elsif ($backend eq 'workflow') {
+        return Workflow::Model->parent_workflow_log_dir();
+    } else {
+        die sprintf("Unknown backend specified: %s", $backend);
+    }
 }
 
 sub add_operation {
