@@ -7,7 +7,6 @@ use Clone qw/clone/;
 use Data::Dumper;
 use JSON;
 use Genome;
-use Workflow;
 use File::Basename;
 
 class Genome::Model::Tools::DetectVariants2::Dispatcher {
@@ -488,8 +487,8 @@ sub generate_workflow {
     }
 
     my $log_dir = $self->output_directory;
-    if(Workflow::Model->parent_workflow_log_dir) {
-        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+        $log_dir = $parent_dir;
     }
     $workflow_model->recursively_set_log_dir($log_dir);
 
