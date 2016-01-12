@@ -14,6 +14,7 @@ class Genome::Config::AnalysisProject {
         Genome::Role::ObjectWithCreatedBy
         Genome::Role::SoftwareResultSponsor
         Genome::Role::Searchable
+        Genome::Role::ObjectWithAllocations
     )],
     table_name => 'config.analysis_project',
     id_by => [
@@ -144,7 +145,7 @@ sub is_current {
 sub environment_config_dir {
     my $self = shift;
 
-    my $allocation = Genome::Disk::Allocation->get(owner => $self);
+    my $allocation = $self->disk_allocations;
     if ($allocation) {
         my $config_path = File::Spec->join($allocation->absolute_path, Genome::Config::config_subpath);
         return $allocation->absolute_path if -e $config_path;

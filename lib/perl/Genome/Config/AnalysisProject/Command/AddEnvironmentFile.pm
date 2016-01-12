@@ -43,7 +43,7 @@ sub execute {
         $self->fatal_message('Project %s already has an existing environment file.', $analysis_project->__display_name__);
     }
 
-    my $allocation = Genome::Disk::Allocation->get(owner => $analysis_project);
+    my $allocation = $analysis_project->disk_allocations;
     unless ($allocation) {
         $allocation = Genome::Disk::Allocation->create(
             owner_id => $analysis_project->id,
