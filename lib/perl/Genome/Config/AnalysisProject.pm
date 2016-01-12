@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use List::MoreUtils qw(any);
+use File::Spec;
 
 class Genome::Config::AnalysisProject {
     roles => [qw(
@@ -138,6 +139,18 @@ sub is_current {
     return if any { $_ eq $status } (qw(Completed Archived Template Deprecated));
 
     return 1;
+}
+
+sub environment_config_dir {
+    my $self = shift;
+
+    my $allocation = Genome::Disk::Allocation->get(owner => $self);
+    if ($allocation) {
+        my $config_path = File::Spec->join($allocation->absolute_path, Genome::Config::config_subpath);
+        return $allocation->absolute_path if -e $config_path;
+    }
+
+    return;
 }
 
 1;
