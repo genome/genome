@@ -75,7 +75,8 @@ class Genome::Model::Build {
         subject => { is => 'Genome::Subject', via => 'model' },
         processing_profile => { is => 'Genome::ProcessingProfile', via => 'model' },
         run_by => { is => 'Text', doc => 'the user whose build is run' },
-        status => { is => 'Text', doc => 'the current status of the build' },
+        status => { is => 'Text', doc => 'the current status of the build',
+                    valid_values => [qw(Abandoned Crashed Failed New Preserved Running Succeeded Unknown Unstartable)] },
         date_scheduled => {
             is => 'DateTime',
             is_optional => 1,
