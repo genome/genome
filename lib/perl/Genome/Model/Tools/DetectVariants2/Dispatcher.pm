@@ -7,8 +7,6 @@ use Clone qw/clone/;
 use Data::Dumper;
 use JSON;
 use Genome;
-use Workflow;
-use Workflow::Simple;
 use File::Basename;
 
 class Genome::Model::Tools::DetectVariants2::Dispatcher {
@@ -234,8 +232,6 @@ sub _detect_variants {
     my $workflow_inputs = $self->_workflow_inputs;
     map { $input->{$_} = $workflow_inputs->{$_}->{value}} keys(%{$workflow_inputs});
     $input->{reference_build_id} = $self->reference_build_id;
-    $input->{output_directory} = $self->_temp_staging_directory;
-    
     $input->{aligned_reads_input}= $self->aligned_reads_input;
     $input->{control_aligned_reads_input} = $self->control_aligned_reads_input;
     $input->{aligned_reads_sample} = $self->aligned_reads_sample;
@@ -252,12 +248,7 @@ sub _detect_variants {
 
     $self->debug_message("Now launching the dispatcher workflow.");
     ## Worklow launches here
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %{$input});
-
-    unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
-        die $self->error_message("Workflow did not return correctly.");
-    }
+    my $result = $workflow->execute(inputs => $input);
     $self->_workflow_result($result);
 
     return 1;
@@ -267,7 +258,7 @@ sub _detect_variants {
 sub _dump_workflow {
     my $self = shift;
     my $workflow = shift;
-    my $xml = $workflow->save_to_xml;
+    my $xml = $workflow->get_xml();
     my $xml_location = $self->output_directory."/workflow.xml";
     $self->_rotate_old_files($xml_location); #clean up any previous runs
     my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
@@ -451,41 +442,11 @@ sub walk_tree {
 sub generate_workflow {
     my $self = shift;
     my ($trees, $plan) = @_;
-    my @output_properties;
 
-    # add the output properties based on which detection strategies are used
-    for my $type ('snv', 'indel', 'sv', 'cnv') {
-        my $detection_strategy = $type . '_detection_strategy';
-        if (defined $self->$detection_strategy) {
-            my @new_output_properties = map { $type . '_' . $_ } ('output_directory', 'result_id', 'result_class');
-            push @output_properties, @new_output_properties;
-        }
-    }
-    my $workflow_model = Workflow::Model->create(
+    my $workflow_model = Genome::WorkflowBuilder::DAG->create(
         name => 'DetectVariants2 Dispatcher',
-        input_properties => [
-            'reference_build_id',
-            'aligned_reads_input',
-            'control_aligned_reads_input',
-            'alignment_results',
-            'control_alignment_results',
-            'aligned_reads_sample',
-            'control_aligned_reads_sample',
-            'output_directory',
-            'pedigree_file_path',
-            'result_users',
-        ],
-        output_properties => [
-            @output_properties
-        ],
     );
 
-    my $log_dir = $self->output_directory;
-    if(Workflow::Model->parent_workflow_log_dir) {
-        $log_dir = Workflow::Model->parent_workflow_log_dir;
-    }
-
-    $workflow_model->log_dir($log_dir);
     for my $detector (keys %$plan) {
         # Get the hashref that contains all versions to be run for a detector
         my $detector_hash = $plan->{$detector};
@@ -507,26 +468,30 @@ sub generate_workflow {
         # this links in the very last operation in workflow, as determined by link_operations,
         # and connects it to the proper output connector.
         my $last_operation_name = $workflow_links->{$end_result."_output_directory"}->{last_operation};
-        my $last_operation = $workflow_links->{$last_operation_name."_output_directory"}->{right_operation};
-        $workflow_model->add_link(
-            left_operation => $last_operation,
-            left_property => "output_directory",
-            right_operation => $workflow_model->get_output_connector,
-            right_property => $variant_type."_output_directory",
+        my $last_operation = $workflow_links->{$last_operation_name."_output_directory"}->{destination_operation};
+        $workflow_model->connect_output(
+            source => $last_operation,
+            source_property => "output_directory",
+            output_property => $variant_type."_output_directory",
         );
-        $workflow_model->add_link(
-            left_operation => $last_operation,
-            left_property => '_result_id',
-            right_operation => $workflow_model->get_output_connector,
-            right_property => $variant_type."_result_id",
+        $workflow_model->connect_output(
+            source => $last_operation,
+            source_property => '_result_id',
+            output_property => $variant_type."_result_id",
         );
-        $workflow_model->add_link(
-            left_operation => $last_operation,
-            left_property => '_result_class',
-            right_operation => $workflow_model->get_output_connector,
-            right_property => $variant_type."_result_class",
+        $workflow_model->connect_output(
+            source => $last_operation,
+            source_property => '_result_class',
+            output_property => $variant_type."_result_class",
         );
     }
+
+    my $log_dir = $self->output_directory;
+    if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+        $log_dir = $parent_dir;
+    }
+    $workflow_model->recursively_set_log_dir($log_dir);
+
     return $workflow_model;
 }
 
@@ -653,54 +618,47 @@ sub create_combine_operation {
     $unique_combine_name =  Genome::Utility::Text::sanitize_string_for_filesystem($unique_combine_name);
     my $combine_directory = $self->_temp_staging_directory."/".$variant_type."/".$unique_combine_name;
 
-    my $combine_operation = $workflow_model->add_operation(
+    my $combine_operation = Genome::WorkflowBuilder::Command->create(
         name => join(" ",($operation_type, $alink, $blink)),
-        operation_type => Workflow::OperationType::Command->get($class),
+        command => $class,
     );
+    $workflow_model->add_operation($combine_operation);
 
-    my $left_operation = $workflow_links->{$input_a_last_op_name."_output_directory"}->{right_operation};
-    $workflow_model->add_link(
-        left_operation => $left_operation,
-        left_property => "_result_id",
-        right_operation => $combine_operation,
-        right_property => "input_a_id",
+    my $source_operation = $workflow_links->{$input_a_last_op_name."_output_directory"}->{destination_operation};
+    $workflow_model->create_link(
+        source => $source_operation,
+        source_property => "_result_id",
+        destination => $combine_operation,
+        destination_property => "input_a_id",
     );
-    $left_operation = $workflow_links->{$input_b_last_op_name."_output_directory"}->{right_operation};
-    $workflow_model->add_link(
-        left_operation => $left_operation,
-        left_property => "_result_id",
-        right_operation => $combine_operation,
-        right_property => "input_b_id",
+    $source_operation = $workflow_links->{$input_b_last_op_name."_output_directory"}->{destination_operation};
+    $workflow_model->create_link(
+        source => $source_operation,
+        source_property => "_result_id",
+        destination => $combine_operation,
+        destination_property => "input_b_id",
     );
 
     $workflow_links->{$unique_combine_name."_output_directory"}->{value} = $combine_directory;
-    $workflow_links->{$unique_combine_name."_output_directory"}->{right_property_name} = 'output_directory';
-    $workflow_links->{$unique_combine_name."_output_directory"}->{right_operation} = $combine_operation;
+    $workflow_links->{$unique_combine_name."_output_directory"}->{destination_property_name} = 'output_directory';
+    $workflow_links->{$unique_combine_name."_output_directory"}->{destination_operation} = $combine_operation;
     $workflow_links->{$unique_combine_name."_output_directory"}->{last_operation} = $unique_combine_name;
 
     for my $input_key ('aligned_reads_sample', 'control_aligned_reads_sample', 'result_users') {
-        $workflow_model->add_link(
-            left_operation => $workflow_model->get_input_connector,
-            left_property => $input_key,
-            right_operation => $combine_operation,
-            right_property => $input_key,
+        $workflow_model->connect_input(
+            input_property => $input_key,
+            destination => $combine_operation,
+            destination_property => $input_key,
         );
     }
 
     # Add this output directory to the list of expected directories so we can compile all LQ variants later
     push @{$self->{_expected_output_directories}->{$variant_type}}, $combine_directory;
 
-    my @new_input_connector_properties = ($unique_combine_name."_output_directory");
-    my $input_connector = $workflow_model->get_input_connector;
-    my $input_connector_properties = $input_connector->operation_type->output_properties;
-    push @{$input_connector_properties}, @new_input_connector_properties;
-    $input_connector->operation_type->output_properties($input_connector_properties);
-
-    $workflow_model->add_link(
-            left_operation => $workflow_model->get_input_connector,
-            left_property => $unique_combine_name."_output_directory",
-            right_operation => $combine_operation,
-            right_property => "output_directory",
+    $workflow_model->connect_input(
+            input_property => $unique_combine_name."_output_directory",
+            destination => $combine_operation,
+            destination_property => "output_directory",
     );
 
     $self->_workflow_inputs($workflow_links);
@@ -745,13 +703,14 @@ sub add_detectors_and_filters {
                 my @filters = @{$instance->{filters}};
 
                 # Make the operation
-                my $detector_operation = $workflow_model->add_operation(
+                my $detector_operation = Genome::WorkflowBuilder::Command->create(
                     name => "$variant_type $name $version " . $self->params_to_index($params),
-                    operation_type => Workflow::OperationType::Command->get($class),
+                    command => $class,
                 );
                 unless($detector_operation){
                     die $self->error_message("Failed to generate a workflow operation object for ".$class);
                 }
+                $workflow_model->add_operation($detector_operation);
 
                 my $other_detector_operation;
                 OTHER_VARIANT_TYPE: for my $other_variant_type (grep($_ ne $variant_type, keys(%$version_hash))) {
@@ -769,11 +728,11 @@ sub add_detectors_and_filters {
 
                 if($other_detector_operation) {
                     #prevent both copies of the same process from running concurrently (theoretically the second one will then shortcut)
-                    $workflow_model->add_link(
-                        left_operation => $other_detector_operation,
-                        left_property => 'output_directory',
-                        right_operation => $detector_operation,
-                        right_property => '_previous_output_directory',
+                    $workflow_model->create_link(
+                        source => $other_detector_operation,
+                        source_property => 'output_directory',
+                        destination => $detector_operation,
+                        destination_property => '_previous_output_directory',
                     );
                     #$self->debug_message('Blocker found for ' . $detector_operation->name);
                 } else {
@@ -784,13 +743,14 @@ sub add_detectors_and_filters {
 
                 # create filter operations
                 for my $filter (@filters){
-                    my $foperation = $workflow_model->add_operation(
+                    my $foperation = Genome::WorkflowBuilder::Command->create(
                         name => join(" ",($unique_detector_base_name,$filter->{name},$filter->{version}, $self->params_to_index($filter->{params}) )),
-                        operation_type => Workflow::OperationType::Command->get($filter->{class})
+                        command => $filter->{class},
                     );
                     unless($foperation){
                         die $self->error_message("Failed to generate a workflow operation object for ".$filter->{class});
                     }
+                    $workflow_model->add_operation($foperation);
                     $filter->{operation} = $foperation;
                 }
 
@@ -812,11 +772,10 @@ sub add_detectors_and_filters {
                     @properties_to_each_filter
                 );
                 for my $property ( @properties_to_each_detector) {
-                    $workflow_model->add_link(
-                        left_operation => $workflow_model->get_input_connector,
-                        left_property => $property,
-                        right_operation => $detector_operation,
-                        right_property => $property,
+                    $workflow_model->connect_input(
+                        input_property => $property,
+                        destination => $detector_operation,
+                        destination_property => $property,
                     );
                 }
 
@@ -827,16 +786,16 @@ sub add_detectors_and_filters {
 
                 my $inputs_to_store;
                 $inputs_to_store->{$unique_detector_base_name."_version"}->{value} = $version;
-                $inputs_to_store->{$unique_detector_base_name."_version"}->{right_property_name} = 'version';
-                $inputs_to_store->{$unique_detector_base_name."_version"}->{right_operation} = $detector_operation;
+                $inputs_to_store->{$unique_detector_base_name."_version"}->{destination_property_name} = 'version';
+                $inputs_to_store->{$unique_detector_base_name."_version"}->{destination_operation} = $detector_operation;
 
                 $inputs_to_store->{$unique_detector_base_name."_params"}->{value} = $params;
-                $inputs_to_store->{$unique_detector_base_name."_params"}->{right_property_name} = 'params';
-                $inputs_to_store->{$unique_detector_base_name."_params"}->{right_operation} = $detector_operation;
+                $inputs_to_store->{$unique_detector_base_name."_params"}->{destination_property_name} = 'params';
+                $inputs_to_store->{$unique_detector_base_name."_params"}->{destination_operation} = $detector_operation;
 
                 $inputs_to_store->{$unique_detector_base_name."_output_directory"}->{value} = $detector_output_directory;
-                $inputs_to_store->{$unique_detector_base_name."_output_directory"}->{right_property_name} = 'output_directory';
-                $inputs_to_store->{$unique_detector_base_name."_output_directory"}->{right_operation} = $detector_operation;
+                $inputs_to_store->{$unique_detector_base_name."_output_directory"}->{destination_property_name} = 'output_directory';
+                $inputs_to_store->{$unique_detector_base_name."_output_directory"}->{destination_operation} = $detector_operation;
                 $inputs_to_store->{$unique_detector_base_name."_output_directory"}->{last_operation} = $unique_detector_base_name;
 
                 # Add this output directory to the list of expected directories so we can compile all LQ variants later
@@ -852,16 +811,16 @@ sub add_detectors_and_filters {
                     my $filter_output_directory = $self->calculate_operation_output_directory($previous_output_directory, $fname, $fversion, $fparams);
                     $previous_output_directory = $filter_output_directory;
                     $inputs_to_store->{$unique_filter_name."_params"}->{value} = $filter->{params};
-                    $inputs_to_store->{$unique_filter_name."_params"}->{right_property_name} = 'params';
-                    $inputs_to_store->{$unique_filter_name."_params"}->{right_operation} = $filter->{operation};
+                    $inputs_to_store->{$unique_filter_name."_params"}->{destination_property_name} = 'params';
+                    $inputs_to_store->{$unique_filter_name."_params"}->{destination_operation} = $filter->{operation};
 
                     $inputs_to_store->{$unique_filter_name."_version"}->{value} = $filter->{version};
-                    $inputs_to_store->{$unique_filter_name."_version"}->{right_property_name} = 'version';
-                    $inputs_to_store->{$unique_filter_name."_version"}->{right_operation} = $filter->{operation};
+                    $inputs_to_store->{$unique_filter_name."_version"}->{destination_property_name} = 'version';
+                    $inputs_to_store->{$unique_filter_name."_version"}->{destination_operation} = $filter->{operation};
 
                     $inputs_to_store->{$unique_filter_name."_output_directory"}->{value} = $filter_output_directory;
-                    $inputs_to_store->{$unique_filter_name."_output_directory"}->{right_property_name} = 'output_directory';
-                    $inputs_to_store->{$unique_filter_name."_output_directory"}->{right_operation} = $filter->{operation};
+                    $inputs_to_store->{$unique_filter_name."_output_directory"}->{destination_property_name} = 'output_directory';
+                    $inputs_to_store->{$unique_filter_name."_output_directory"}->{destination_operation} = $filter->{operation};
 
                     # Add this output directory to the list of expected directories so we can compile all LQ variants later
                     push @{$self->{_expected_output_directories}->{$variant_type}}, $filter_output_directory;
@@ -869,31 +828,22 @@ sub add_detectors_and_filters {
                     $inputs_to_store->{$unique_detector_base_name."_output_directory"}->{last_operation} = $unique_filter_name;
 
                     for my $property (@properties_to_each_filter) {
-                        $workflow_model->add_link(
-                            left_operation => $workflow_model->get_input_connector,
-                            left_property => $property,
-                            right_operation => $filter->{operation},
-                            right_property => $property,
+                        $workflow_model->connect_input(
+                            input_property => $property,
+                            destination => $filter->{operation},
+                            destination_property => $property,
                         );
                     }
                 }
 
                 # use the hash keys, which are input_connector property names, to add the links to the workflow
                 for my $property (keys %$inputs_to_store) {
-                    $workflow_model->add_link(
-                        left_operation => $workflow_model->get_input_connector,
-                        left_property => $property,
-                        right_operation => $inputs_to_store->{$property}->{right_operation},
-                        right_property => $inputs_to_store->{$property}->{right_property_name},
+                    $workflow_model->connect_input(
+                        input_property => $property,
+                        destination => $inputs_to_store->{$property}->{destination_operation},
+                        destination_property => $inputs_to_store->{$property}->{destination_property_name},
                     );
                 }
-
-                # add the properties this variant detector and filters need (version, params,output dir) to the input connector
-                my @new_input_connector_properties = (keys %$inputs_to_store);
-                my $input_connector = $workflow_model->get_input_connector;
-                my $input_connector_properties = $input_connector->operation_type->output_properties;
-                push @{$input_connector_properties}, @new_input_connector_properties;
-                $input_connector->operation_type->output_properties($input_connector_properties);
 
                 # merge the current detector's inputs to those generated for previous detectors, if any
                 my %workflow_inputs;
@@ -907,19 +857,19 @@ sub add_detectors_and_filters {
 
                 # connect the output to the input between all operations in this detector's branch
                 for my $index (0..(scalar(@filters)-1)){
-                    my ($right_op,$left_op);
+                    my ($destination_op,$source_op);
                     if($index == 0){
-                        $left_op = $detector_operation;
+                        $source_op = $detector_operation;
                     }
                     else {
-                        $left_op = $filters[$index-1]->{operation};
+                        $source_op = $filters[$index-1]->{operation};
                     }
-                    $right_op = $filters[$index]->{operation};
-                    $workflow_model->add_link(
-                        left_operation => $left_op,
-                        left_property => '_result_id',
-                        right_operation => $right_op,
-                        right_property => 'previous_result_id',
+                    $destination_op = $filters[$index]->{operation};
+                    $workflow_model->create_link(
+                        source => $source_op,
+                        source_property => '_result_id',
+                        destination => $destination_op,
+                        destination_property => 'previous_result_id',
                     );
 
                 }
