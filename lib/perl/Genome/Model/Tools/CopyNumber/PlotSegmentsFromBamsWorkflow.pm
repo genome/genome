@@ -127,7 +127,7 @@ sub execute {
 
     my $workflow = Genome::WorkflowBuilder::DAG->from_xml_file(\*DATA);
 
-    my %input;    
+    my %input;
 
     my $log_dir = $self->output_directory;
     if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
