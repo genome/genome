@@ -3,9 +3,7 @@ package Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow;
 use warnings;
 use strict;
 
-use Cwd;
 use Genome;
-use Workflow::Simple;
 
 my $DEFAULT_VERSION = '0.1';
 
@@ -89,14 +87,7 @@ sub _detect_variants {
     my %input;
 
     # Define a workflow from the static XML at the bottom of this module
-    my $workflow = Workflow::Operation->create_from_xml(\*DATA);
-
-    # Validate the workflow
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
-    }
+    my $workflow = Genome::WorkflowBuilder::DAG->from_xml_file(\*DATA);
 
     # Collect and set input parameters
     #for bam-window
@@ -135,20 +126,17 @@ sub _detect_variants {
     $input{annotation_data_id} = $annotation_sr->id;
 
     my $log_dir = $self->output_directory;
-    if(Workflow::Model->parent_workflow_log_dir) {
-        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+        $log_dir = $parent_dir;
     }
-    $workflow->log_dir($log_dir);
+    $workflow->recursively_set_log_dir($log_dir);
 
     # Launch workflow
     $self->debug_message("Launching workflow now.");
-    my $result = Workflow::Simple::run_workflow_lsf($workflow, %input);
+    my $result = $workflow->execute(inputs => \%input);
 
     # Collect and analyze results
     unless($result){
-        if (@Workflow::Simple::ERROR){
-            print Data::Dumper->Dumper(@Workflow::Simple::ERROR), "\n";
-        }
         die $self->error_message("Workflow did not return correctly");
     }
 
