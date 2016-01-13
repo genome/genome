@@ -9,6 +9,7 @@ use Test::MockObject;
 use Test::More tests => 3;
 
 use above 'Genome';
+use Genome::Test::Factory::Model::ImportedAnnotation;
 
 my $class = 'Genome::Model::RnaSeq::Command::PicardRnaSeqMetrics';
 use_ok($class) or die;
@@ -29,10 +30,8 @@ subtest "setup" => sub{
     $reference_build->set_always('id', '1');
     $build->set_always('reference_build', $reference_build);
 
-    $annotation_build = Test::MockObject->new;
+    $annotation_build = Genome::Test::Factory::Model::ImportedAnnotation->create_mock_build;
     ok($annotation_build, 'create mock annotation build');
-    $annotation_build->set_always('rRNA_MT_file', '/dev/null');
-    $annotation_build->set_always('annotation_file', '/dev/null');
     $build->set_always('annotation_build', $annotation_build);
 
     my $alignment_result = Test::MockObject->new;
@@ -61,6 +60,8 @@ subtest 'shortcut' => sub{
 
     # shortcut w/o required annotation files
     $build->set_always('annotation_build', $annotation_build);
+    $annotation_build->rRNA_MT_file_does_not_exist;
+    $annotation_build->annotation_file_does_not_exist;
     lives_ok(sub{ $cmd->shortcut; }, 'shortcut w/o required annotation files');
     like($cmd->debug_message, qr/Skipping PicardRnaSeqMetrics since annotation build is missing required files/, 'correct message');
 
