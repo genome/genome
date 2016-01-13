@@ -6,7 +6,7 @@ use warnings;
 use Sub::Install;
 use Test::Exception;
 use Test::MockObject;
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 use above 'Genome';
 use Genome::Test::Factory::Model::ImportedAnnotation;
@@ -43,6 +43,33 @@ subtest "setup" => sub{
             as => 'build',
             code => sub{ $build },
         });
+};
+
+subtest 'should_skip' => sub{
+    plan tests => 5;
+
+    my $cmd = $class->create(
+        build_id => $build->id,
+        build => $build,
+    );
+
+    # should skip w/o annotation build
+    $build->set_always('annotation_build', undef);
+    ok($cmd->should_skip, 'should_skip w/o annotation build');
+    like($cmd->debug_message, qr/Skipping PicardRnaSeqMetrics since annotation build is not defined/, 'correct message');
+
+    # should skip w/o required annotation files
+    $annotation_build->rRNA_MT_file_does_not_exist;
+    $annotation_build->annotation_file_does_not_exist;
+    $build->set_always('annotation_build', $annotation_build);
+    ok($cmd->should_skip, 'should_skip w/o required annotation files');
+    like($cmd->debug_message, qr/Skipping PicardRnaSeqMetrics since annotation build is missing required files/, 'correct message');
+
+    # should not skip
+    $annotation_build->rRNA_MT_file_exists;
+    $annotation_build->annotation_file_exists;
+    ok(!$cmd->should_skip, 'should not skip w/ annotation build and required files');
+
 };
 
 subtest 'shortcut' => sub{
