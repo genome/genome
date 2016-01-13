@@ -143,6 +143,9 @@ sub create_and_start_build {
 
     my $outer_transaction = UR::Context::Transaction->begin();
     $model->build_requested(0);
+    my $anp = $model->analysis_project;
+    my $config_dir = $anp? $anp->environment_config_dir : undef;
+    local $ENV{XGENOME_CONFIG_PROJECT_DIR} = $config_dir;
 
     my $create_transaction = UR::Context::Transaction->begin();
     my $build = try {

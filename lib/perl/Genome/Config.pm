@@ -130,6 +130,12 @@ sub all_keys {
 
 sub config_subpath { Path::Class::File->new('genome', 'config.yaml') }
 
+sub project_dir {
+    my $dir = $ENV{XGENOME_CONFIG_PROJECT_DIR};
+    return Path::Class::Dir->new($dir) if $dir;
+    return;
+}
+
 sub home_dir {
     my $path = ( $ENV{XGENOME_CONFIG_HOME} || File::Spec->join($ENV{HOME}, '.config') );
     return Path::Class::Dir->new($path);
@@ -144,7 +150,7 @@ sub snapshot_dir {
     my @chop = ('lib', 'perl', split('::', __PACKAGE__));
     my @chopped = splice(@path, -1 * @chop);
     my @base_dir = @path;
-    return File::Spec->join(@base_dir, 'etc');
+    return Path::Class::Dir->new(File::Spec->join(@base_dir, 'etc'));
 }
 
 sub global_dirs {
@@ -193,7 +199,7 @@ sub _lookup_value {
     if ($spec->has_env && exists $ENV{$spec->env}) {
         return $ENV{$spec->env};
     }
-    my @files = _lookup_files($config_subpath, home_dir());
+    my @files = _lookup_files($config_subpath, project_dir(), home_dir());
     my $value = _lookup_value_from_files($spec, @files);
     if (defined $value) {
         return $value;
