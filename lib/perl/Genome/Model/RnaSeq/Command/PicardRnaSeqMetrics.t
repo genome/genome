@@ -72,32 +72,30 @@ subtest 'should_skip' => sub{
 
 };
 
-subtest 'shortcut' => sub{
-    plan tests => 5;
+subtest 'shortcut and execute should call should_skip' => sub{
+    plan tests => 1;
+
+    my $should_skip_sub = $class->can('shortcut');
+    my $should_skip_cnt = 0;
+    Sub::Install::reinstall_sub({
+            into => $class,
+            as => 'should_skip',
+            code => sub{ $should_skip_cnt++; return 1; },
+        });
 
     my $cmd = $class->create(
         build_id => $build->id,
         build => $build,
     );
+    $cmd->shortcut;
+    $cmd->execute;
+    is($should_skip_cnt, 2, 'should_skip called twice');
 
-    # shortcut w/o annotation build
-    $build->set_always('annotation_build', undef);
-    ok($cmd->shortcut, 'shortcut w/o annotation build');
-    like($cmd->debug_message, qr/Skipping PicardRnaSeqMetrics since annotation build is not defined/, 'correct message');
-
-    # shortcut w/o required annotation files
-    $build->set_always('annotation_build', $annotation_build);
-    $annotation_build->rRNA_MT_file_does_not_exist;
-    $annotation_build->annotation_file_does_not_exist;
-    ok($cmd->shortcut, 'shortcut w/o required annotation files');
-    like($cmd->debug_message, qr/Skipping PicardRnaSeqMetrics since annotation build is missing required files/, 'correct message');
-
-    # do not shortcut w/ annotation build and required files
-    $build->set_always('annotation_build', $annotation_build);
-    $annotation_build->rRNA_MT_file_exists;
-    $annotation_build->annotation_file_exists;
-    ok(!$cmd->shortcut, 'do not shortcut w/ annotation build and required files');
-
+    Sub::Install::reinstall_sub({
+            into => $class,
+            as => 'should_skip',
+            code => $should_skip_sub,
+        });
 };
 
 done_testing();
