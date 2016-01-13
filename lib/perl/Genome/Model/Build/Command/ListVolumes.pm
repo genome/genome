@@ -31,6 +31,13 @@ HELP
 sub execute {
     my $self = shift;
 
+    print join("\n", $self->unique_volume_names),"\n";
+    1;
+}
+
+sub unique_volume_names {
+    my $self = shift;
+
     my %filters= $self->_build_filters_for_builds;
     unless (%filters) {
         $self->fatal_message('Refusing to run with no filters');
@@ -38,8 +45,24 @@ sub execute {
 
     my $iter = Genome::Model::Build->create_iterator(%filters, -hints => ['disk_allocations', 'results.disk_allocations', 'instrument_data.disk_allocations']);
 
-    $self->_print_volumes_for_builds($iter);
-    1;
+    my %seen_vols;
+    while( my $guard = UR::Context::AutoUnloadPool->create()
+             and
+           my $build = $iter->next
+    ) {
+        foreach my $alloc ( $build->disk_allocations ) {
+            $seen_vols{$alloc->mount_path} = undef;
+        }
+
+        foreach my $sr ( $build->results ) {
+            $seen_vols{$_->mount_path} = undef foreach $sr->disk_allocations;
+        }
+
+        foreach my $instr_data ( $build->instrument_data ) {
+            $seen_vols{$_->mount_path} = undef foreach $instr_data->disk_allocations;
+        }
+    }
+    return keys %seen_vols;
 }
 
 sub _build_filters_for_builds {
@@ -55,38 +78,6 @@ sub _build_filters_for_builds {
     }
 
     return %filters;
-}
-
-sub _print_volumes_for_builds {
-    my($self, $iter) = @_;
-
-    my %seen_vols;
-    my $print_new_vols = sub {
-        my $path = shift;
-        unless (exists $seen_vols{$path}) {
-            $seen_vols{$path} = undef;
-            print $path,"\n";
-        }
-    };
-
-    BUILD:
-    while(1) {
-        my $guard = UR::Context::AutoUnloadPool->create();
-        my $build = $iter->next();
-        last BUILD unless $build;
-
-        foreach my $alloc ( $build->disk_allocations ) {
-            $print_new_vols->($alloc->mount_path);
-        }
-
-        foreach my $sr ( $build->results ) {
-            $print_new_vols->($_->mount_path) foreach $sr->disk_allocations;
-        }
-
-        foreach my $instr_data ( $build->instrument_data ) {
-            $print_new_vols->($_->mount_path) foreach $instr_data->disk_allocations;
-        }
-    }
 }
 
 1;
