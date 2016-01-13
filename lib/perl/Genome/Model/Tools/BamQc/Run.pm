@@ -4,8 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow;
-use Workflow::Simple;
 use File::Basename qw(basename);
 
 my $DEFAULT_PICARD_VERSION    = Genome::Model::Tools::Picard->default_picard_version;
@@ -220,7 +218,6 @@ sub execute {
     );
 
     $workflow_params{picard_gc_assume_sorted} = 1 if $picard_gc_assume_sorted;
-    my @output_properties = qw(picard_metrics_result fastqc_result);
 
     my $flagstat_path = $file_basename .'.bam.flagstat';
     unless (-e $flagstat_path) {
@@ -234,18 +231,15 @@ sub execute {
             $workflow_params{samtools_version}        = $self->samtools_version;
             $workflow_params{samtools_maximum_memory} = $self->samtools_maximum_memory;
             $workflow_params{samtools_flagstat_path}  = $flagstat_path;
-            push @output_properties, 'flagstat_result';
         }
     }
 
     if ($self->reference_sequence) {
         $workflow_params{reference_sequence} = $self->reference_sequence;
-        push @output_properties, 'picard_gc_bias_result';
     }
 
     if ($self->samstat) {
         $workflow_params{samstat_version} = $self->samstat_version;
-        push @output_properties, 'samstat_result';
     }
 
     if ($self->error_rate) {
@@ -255,14 +249,12 @@ sub execute {
         }
         $workflow_params{error_rate_file}    = $error_rate_file;
         $workflow_params{error_rate_version} = $self->error_rate_version;
-        push @output_properties, 'error_rate_result';
     }
 
     if ($self->read_length) {
         $workflow_params{read_length_summary}        = $file_basename .'-ReadLengthSummary.tsv';
         $workflow_params{read_length_histogram}      = $file_basename .'-ReadLengthDistribution.tsv';
         $workflow_params{alignment_length_histogram} = $file_basename .'-AlignmentLengthDistribution.tsv';
-        push @output_properties, 'read_length_result';
     }
 
     if ($self->roi_file_path && $self->reference_sequence) {
@@ -272,19 +264,13 @@ sub execute {
         $workflow_params{refcov_stats_file} = $refcov_stats_file;
         $workflow_params{refcov_print_headers} = 1;
         $workflow_params{refcov_print_min_max} = 1;
-
-        push @output_properties, 'refcov_result';
     }
 
-    my @input_properties = keys %workflow_params;
 
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => 'BamQc',
-        input_properties  => \@input_properties,
-        output_properties => \@output_properties,
     );
 
-    $workflow->log_dir($log_directory);
 
     # Samtools flagstat
     if ($workflow_params{samtools_flagstat_path}) {
@@ -326,7 +312,7 @@ sub execute {
     }
     my $picard_metrics_operation = $self->setup_workflow_operation(%picard_metrics_operation_params);
     my $max_memory = $self->picard_maximum_memory + 2;
-    $picard_metrics_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
+    $picard_metrics_operation->lsf_resource('-M '. $max_memory .'000000 -R \'select[tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
 
     # PicardGcBias
     if ($workflow_params{reference_sequence}) {
@@ -353,7 +339,7 @@ sub execute {
             if $picard_gc_assume_sorted;
 
         my $picard_gc_bias_operation = $self->setup_workflow_operation(%picard_gc_bias_operation_params);
-        $picard_gc_bias_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
+        $picard_gc_bias_operation->lsf_resource('-M '. $max_memory .'000000 -R \'select[tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
     }
 
     # SamStat
@@ -405,7 +391,7 @@ sub execute {
             },
         );
         my $error_rate_operation = $self->setup_workflow_operation(%error_rate_operation_params);
-        $error_rate_operation->operation_type->lsf_resource('-M 8000000 -R \'select[tmp>1000 && mem>8000] rusage[tmp=1000, mem=8000]\'');
+        $error_rate_operation->lsf_resource('-M 8000000 -R \'select[tmp>1000 && mem>8000] rusage[tmp=1000, mem=8000]\'');
     }
 
     # Read Length
@@ -450,13 +436,8 @@ sub execute {
         $self->setup_workflow_operation(%refcov_operation_params);
     }
 
-    my @validation_errors = $workflow->validate;
-    unless ($workflow->is_valid) {
-        die('Errors encountered while validating workflow: '. join("\n", @validation_errors));
-    }
-
-    my $dag = Genome::WorkflowBuilder::DAG->from_xml($workflow->save_to_xml());
-    $dag->execute(inputs => \%workflow_params);
+    $workflow->recursively_set_log_dir($log_directory);
+    $workflow->execute(inputs => \%workflow_params);
 
     # SUMMARY
     # TODO: Eventually create and xls spreadsheet or consolidated PDF report
@@ -542,32 +523,26 @@ sub setup_workflow_operation {
     my $input_properties  = delete($params{'input_properties'});
     my $output_properties = delete($params{'output_properties'});
 
-    my $input_connector  = $workflow->get_input_connector;
-    my $output_connector = $workflow->get_output_connector;
-
-    my $operation = $workflow->add_operation(
+    my $operation = Genome::WorkflowBuilder::Command->create(
         name => $name,
-        operation_type => Workflow::OperationType::Command->create(
-            command_class_name => $class_name,
-        )
+        command => $class_name,
     );
+    $workflow->add_operation($operation);
 
     for my $left_property (keys %{$input_properties}) {
         my $right_property = $input_properties->{$left_property};
-        $workflow->add_link(
-            left_operation  => $input_connector,
-            left_property   => $left_property,
-            right_operation => $operation,
-            right_property  => $right_property,
+        $workflow->connect_input(
+            input_property       => $left_property,
+            destination          => $operation,
+            destination_property => $right_property,
         );
     }
     for my $left_property (keys %{$output_properties}) {
         my $right_property = $output_properties->{$left_property};
-        $workflow->add_link(
-            left_operation  => $operation,
-            left_property   => $left_property,
-            right_operation => $output_connector,
-            right_property  => $right_property,
+        $workflow->connect_output(
+            source          => $operation,
+            source_property => $left_property,
+            output_property => $right_property,
         );
     }
     return $operation;
