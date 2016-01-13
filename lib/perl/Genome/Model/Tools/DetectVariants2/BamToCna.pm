@@ -30,6 +30,8 @@ class Genome::Model::Tools::DetectVariants2::BamToCna{
             doc => 'enable this flag to normalize by the whole genome median.',
         },
         params => { #calculated for SoftwareResult for now--in the future should support this fully
+            is_input => 1,
+            is_output => 1,
             is_optional => 1,
             calculate_from => ['ratio', 'window_size', 'normalize_by_genome'],
             calculate => q{
