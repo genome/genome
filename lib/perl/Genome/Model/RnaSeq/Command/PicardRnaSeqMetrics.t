@@ -46,7 +46,7 @@ subtest "setup" => sub{
 };
 
 subtest 'shortcut' => sub{
-    plan tests => 4;
+    plan tests => 5;
 
     my $cmd = $class->create(
         build_id => $build->id,
@@ -55,15 +55,21 @@ subtest 'shortcut' => sub{
 
     # shortcut w/o annotation build
     $build->set_always('annotation_build', undef);
-    lives_ok(sub{ $cmd->shortcut; }, 'shortcut w/o annotation build');
+    ok($cmd->shortcut, 'shortcut w/o annotation build');
     like($cmd->debug_message, qr/Skipping PicardRnaSeqMetrics since annotation build is not defined/, 'correct message');
 
     # shortcut w/o required annotation files
     $build->set_always('annotation_build', $annotation_build);
     $annotation_build->rRNA_MT_file_does_not_exist;
     $annotation_build->annotation_file_does_not_exist;
-    lives_ok(sub{ $cmd->shortcut; }, 'shortcut w/o required annotation files');
+    ok($cmd->shortcut, 'shortcut w/o required annotation files');
     like($cmd->debug_message, qr/Skipping PicardRnaSeqMetrics since annotation build is missing required files/, 'correct message');
+
+    # do not shortcut w/ annotation build and required files
+    $build->set_always('annotation_build', $annotation_build);
+    $annotation_build->rRNA_MT_file_exists;
+    $annotation_build->annotation_file_exists;
+    ok(!$cmd->shortcut, 'do not shortcut w/ annotation build and required files');
 
 };
 
