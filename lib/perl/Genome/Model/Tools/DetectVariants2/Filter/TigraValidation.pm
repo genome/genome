@@ -394,7 +394,7 @@ sub _filter_variants {
         $workflow->add_operation($op);
 
         if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
-            $op->recursively_set_log_dir($parent_dir);
+            $workflow->recursively_set_log_dir($parent_dir);
         } elsif ($self->workflow_log_directory) {
             unless (-d $self->workflow_log_directory) {
                 unless (Genome::Sys->create_directory($self->workflow_log_directory)) {
@@ -402,7 +402,7 @@ sub _filter_variants {
                     die;
                 }
             }
-            $op->recursively_set_log_dir($self->workflow_log_directory);
+            $workflow->recursively_set_log_dir($self->workflow_log_directory);
         }
 
         $self->debug_message("Running workflow");
