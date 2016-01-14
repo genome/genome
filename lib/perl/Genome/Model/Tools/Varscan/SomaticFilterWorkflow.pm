@@ -169,11 +169,13 @@ sub run_format_workflow {
     $w->parallel_by('variants_file');
     $self->set_lsf_queue($w);
 
-    my $result = $self->execute_workflow_for_operation($w, 'format', {
+    my $inputs = {
         'variants_file' => $input->{variants_file},
         'outdir' => $self->outdir,
         'append_line' => 1,
-    });
+    };
+
+    my $result = $self->execute_workflow_for_operation($w, 'format', $inputs);
 
     $self->check_result($result);
 }
@@ -189,9 +191,11 @@ sub run_process_workflow {
     $w->parallel_by('status_file');
     $self->set_lsf_queue($w);
 
-    my $result = $self->execute_workflow_for_operation($w, 'process', {
+    my $inputs = {
         'status_file' => $input->{format_output},
-    });
+    };
+
+    my $result = $self->execute_workflow_for_operation($w, 'process', $inputs);
 
     $self->check_result($result);
 }
@@ -208,13 +212,15 @@ sub run_filter_workflow {
     $w->parallel_by('variant_file');
     $self->set_lsf_queue($w);
 
-    my $result = $self->execute_workflow_for_operation($w, 'filter', {
+    my $inputs = {
         'variant_file' => $processed_input,
         'bam_file' => $bam,
         'outdir' => $self->outdir,
         'reference' => $self->reference,
         'bam_readcount_version' => $self->bamrc_version,
-    });
+    };
+
+    my $result = $self->execute_workflow_for_operation($w, 'filter', $inputs);
 
     $self->check_result($result);
 }
