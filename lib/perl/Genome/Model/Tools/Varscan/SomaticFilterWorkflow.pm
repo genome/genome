@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow::Simple;
 use File::Basename;
 
 class Genome::Model::Tools::Varscan::SomaticFilterWorkflow {
@@ -116,52 +115,67 @@ sub check_result {
     my $self = shift;
     my $result = shift;
     unless($result){
-        foreach my $error (@Workflow::Simple::ERROR){
-            print STDERR $error->error ."\n";
-        }
         die $self->error_message("Workflow did not return correctly.");
     }
 }
 
-sub validate_workflow {
+sub execute_workflow_for_operation {
     my $self = shift;
-    my $w = shift;
-    my @errors = $w->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
+    my $op = shift;
+    my $op_shortname = shift;
+    my $inputs = shift;
+
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
+        name => $op_shortname . ' workflow',
+    );
+    $workflow->add_operation($op);
+
+    for my $input (keys %$inputs) {
+        $workflow->connect_input(
+            input_property => $input,
+            destination => $op,
+            destination_property => $input,
+        );
     }
+
+    $workflow->connect_output(
+        source => $op,
+        source_property => 'result',
+        output_property => 'result',
+    );
+
+    $workflow->recursively_set_log_dir($self->outdir);
+
+    $self->status_message("Launching %s workflow now.", $op_shortname);
+    my $result = $workflow->execute(inputs => $inputs);
+    return $result;
 }
 
 sub set_lsf_queue {
     my $self = shift;
     my $w = shift;
     my $lsf_queue = Genome::Config::get('lsf_queue_build_worker_alt');
-    $w->operation_type->lsf_queue($lsf_queue);
+    $w->lsf_queue($lsf_queue);
 }
 
 sub run_format_workflow {
     my $self = shift;
     my $input = shift;
 
-    my $w = Workflow::Operation->create(
+    my $w = Genome::WorkflowBuilder::Command->create(
         name => "Format Varscan SNVs",
-        operation_type => Workflow::OperationType::Command->get(
-            'Genome::Model::Tools::Capture::FormatSnvs')
+        command => 'Genome::Model::Tools::Capture::FormatSnvs',
     );
     $w->parallel_by('variants_file');
     $self->set_lsf_queue($w);
-    $w->log_dir($self->outdir);
-    $self->validate_workflow($w);
 
-    # Launch workflow
-    $self->status_message("Launching format workflow now.");
-    my $result = Workflow::Simple::run_workflow_lsf(
-        $w,
+    my $inputs = {
         'variants_file' => $input->{variants_file},
         'outdir' => $self->outdir,
         'append_line' => 1,
-    );
+    };
+
+    my $result = $self->execute_workflow_for_operation($w, 'format', $inputs);
 
     $self->check_result($result);
 }
@@ -170,22 +184,18 @@ sub run_process_workflow {
     my $self = shift;
     my $input = shift;
 
-    my $w = Workflow::Operation->create(
+    my $w = Genome::WorkflowBuilder::Command->create(
         name => "Process Varscan SNVs",
-        operation_type => Workflow::OperationType::Command->get(
-            'Genome::Model::Tools::Varscan::ProcessSomatic')
+        command => 'Genome::Model::Tools::Varscan::ProcessSomatic',
     );
     $w->parallel_by('status_file');
     $self->set_lsf_queue($w);
-    $w->log_dir($self->outdir);
-    $self->validate_workflow($w);
 
-    # Launch workflow
-    $self->status_message("Launching process workflow now.");
-    my $result = Workflow::Simple::run_workflow_lsf(
-        $w,
+    my $inputs = {
         'status_file' => $input->{format_output},
-    );
+    };
+
+    my $result = $self->execute_workflow_for_operation($w, 'process', $inputs);
 
     $self->check_result($result);
 }
@@ -195,26 +205,22 @@ sub run_filter_workflow {
     my $processed_input = shift;
     my $bam = shift;
 
-    my $w = Workflow::Operation->create(
+    my $w = Genome::WorkflowBuilder::Command->create(
         name => "Filter Varscan SNVs",
-        operation_type => Workflow::OperationType::Command->get(
-            'Genome::Model::Tools::Somatic::FilterFalsePositives')
+        command => 'Genome::Model::Tools::Somatic::FilterFalsePositives',
     );
     $w->parallel_by('variant_file');
     $self->set_lsf_queue($w);
-    $w->log_dir($self->outdir);
-    $self->validate_workflow($w);
 
-    # Launch workflow
-    $self->status_message("Launching filter workflow now.");
-    my $result = Workflow::Simple::run_workflow_lsf(
-        $w,
+    my $inputs = {
         'variant_file' => $processed_input,
         'bam_file' => $bam,
         'outdir' => $self->outdir,
         'reference' => $self->reference,
         'bam_readcount_version' => $self->bamrc_version,
-    );
+    };
+
+    my $result = $self->execute_workflow_for_operation($w, 'filter', $inputs);
 
     $self->check_result($result);
 }
