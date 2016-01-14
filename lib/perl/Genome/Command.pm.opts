@@ -1611,6 +1611,15 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>add-environment-file',
+    [
+      'analysis-project=s',
+      undef,
+      'environment-file=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>config-for-instrument-data',
     [
       'color!',
@@ -37756,6 +37765,8 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>align-reads',
     [
+      'lsf-queue=s',
+      'files',
       'name=s',
       'files',
       'version=s',
@@ -38911,6 +38922,15 @@ $Genome::Command::OPTS_SPEC = [
         'tag=s',
         undef,
         'profile-items=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>add-environment-file',
+      [
+        'analysis-project=s',
+        undef,
+        'environment-file=s',
         undef,
         'help!',
         undef
