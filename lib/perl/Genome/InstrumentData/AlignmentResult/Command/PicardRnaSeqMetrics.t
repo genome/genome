@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 
+use Sub::Install;
 use Test::Exception;
 use Test::MockObject;
 use Test::More tests => 3;
@@ -42,11 +43,23 @@ subtest 'file_from_annotation_build' => sub{
 
 };
 
-subtest 'verify_annotation_build_has_required_files' => sub{
+subtest 'missing and verify required files from annotation build' => sub{
     plan tests => 5;
 
+    my $cmd = $class->create;
+    Sub::Install::reinstall_sub({
+            into => $class,
+            as => 'annotation_build',
+            code => sub{ $annotation_build; },
+        });
+    Sub::Install::reinstall_sub({
+            into => $class,
+            as => 'reference_build',
+            code => sub{ $reference_build; },
+        });
+
     throws_ok(
-        sub{ $class->verify_annotation_build_has_required_files(); },
+        sub{ $cmd->missing_files_for_annotation_build(); },
         qr/but 3 were expected/,
         'verify_annotation_build_has_required_files fails w/o params',
     );
@@ -54,7 +67,7 @@ subtest 'verify_annotation_build_has_required_files' => sub{
     $annotation_build->rRNA_MT_file_does_not_exist;
     $annotation_build->annotation_file_does_not_exist;
     throws_ok(
-        sub{ $class->verify_annotation_build_has_required_files($annotation_build, $reference_build); },
+        sub{ $cmd->verify_annotation_build_has_required_files; },
         qr/Cannot proceed\! Missing required files from annotation build: rRNA_MT_file annotation_file/,
         'verify_annotation_build_has_required_files fails when annotation build does not have required files',
     );
@@ -63,7 +76,7 @@ subtest 'verify_annotation_build_has_required_files' => sub{
         my $exists_method = $file_method.'_exists';
         $annotation_build->$exists_method;
         throws_ok(
-            sub{ $class->verify_annotation_build_has_required_files($annotation_build, $reference_build); },
+            sub{ $cmd->verify_annotation_build_has_required_files; },
             qr/Cannot proceed\! Missing required files from annotation build: /,
             "verify_annotation_build_has_required_files fails when annotation build does not have $file_method",
         );
@@ -74,7 +87,7 @@ subtest 'verify_annotation_build_has_required_files' => sub{
     $annotation_build->rRNA_MT_file_exists;
     $annotation_build->annotation_file_exists;
     lives_ok(
-        sub{$class->verify_annotation_build_has_required_files($annotation_build, $reference_build);},
+        sub{$cmd->verify_annotation_build_has_required_files($annotation_build, $reference_build);},
         'verify_annotation_build_has_required_files succeeds with annotation files',
     );
 

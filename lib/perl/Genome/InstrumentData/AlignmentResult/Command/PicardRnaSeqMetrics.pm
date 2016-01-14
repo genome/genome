@@ -84,6 +84,19 @@ sub required_files_from_annotation_build {
 }
 
 sub verify_annotation_build_has_required_files {
+    my $self = shift;
+
+    my @missing_files = $self->missing_files_for_annotation_build(
+        $self->annotation_build, $self->reference_build
+    );
+    if ( @missing_files ) {
+        die $self->error_message("Cannot proceed! Missing required files from annotation build: @missing_files");
+    }
+
+    return 1;
+}
+
+sub missing_files_for_annotation_build {
     my ($self, $annotation_build, $reference_build) = Params::Validate::validate_pos(
         @_, {isa => __PACKAGE__}, {type => OBJECT}, {type => OBJECT},
     );
@@ -95,11 +108,7 @@ sub verify_annotation_build_has_required_files {
         );
     }
 
-    if ( @missing_files ) {
-        die $self->error_message("Cannot proceed! Missing required files from annotation build: @missing_files",);
-    }
-
-    return 1;
+    return @missing_files;
 }
 
 sub file_from_annotation_build {
@@ -119,7 +128,7 @@ sub file_from_annotation_build {
 sub execute {
     my $self = shift;
 
-    $self->verify_annotation_build_has_required_files($self->annotation_build, $self->reference_build);
+    $self->verify_annotation_build_has_required_files;
 
     my $metrics_directory = $self->metrics_directory;
     unless (-d $metrics_directory) {
