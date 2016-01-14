@@ -142,6 +142,7 @@ sub execute {
     my $self = shift;
 
     # Make sure that if output paths arent set that the somatic variation build is, and set good defaults
+    my $base_dir;
     if ($self->somatic_validation_build) {
         my $build = Genome::Model::Build->get($self->somatic_validation_build);
         die $self->error_message("Could not get a build for id " . $self->somatic_validation_build) unless ($build);
@@ -156,7 +157,7 @@ sub execute {
             return 1;
         }
 
-        my $base_dir = $build->data_directory . "/validation/small_indel";
+        $base_dir = $build->data_directory . "/validation/small_indel";
         Genome::Sys->create_directory($base_dir);
         unless ($self->final_output_file) {
             $self->final_output_file($base_dir."/final_output");
@@ -202,6 +203,7 @@ sub execute {
             }
         }
         die $self->error_message("All of the above properties must be set unless somatic_validation_build is set.") if $fail;
+        $base_dir = dirname($self->final_output_file);
     }
 
     my $project_name = $self->project_name;
@@ -432,6 +434,7 @@ sub execute {
             tumor_bam => $tumor_bam,
             normal_bam => $normal_bam,
             reference_fasta => $reference,
+            output_dir => $base_dir,
         );
         unless ($cmd->execute) {
             die $self->error_message("Failed to execute Genome::Model::SomaticValidation::Command::ValidateSmallIndels");

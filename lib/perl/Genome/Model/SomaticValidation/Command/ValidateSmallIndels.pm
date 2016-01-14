@@ -7,7 +7,6 @@ use Genome;
 
 use File::Spec qw();
 use File::Basename;
-use Workflow::Simple;
 
 class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
     is => 'Command::V2',
@@ -113,13 +112,7 @@ sub _run_workflow {
     my $self = shift;
 
     # Define a workflow from the static XML at the bottom of this module
-    my $workflow = Workflow::Operation->create_from_xml(\*DATA);
-    # Validate the workflow
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
-    }
+    my $workflow = Genome::WorkflowBuilder::DAG->from_xml_file(\*DATA);
 
     # Collect and set input parameters
     # TODO stop hardcoding stuff
@@ -148,15 +141,15 @@ sub _run_workflow {
     $input{final_output_file} = $self->final_output_file;
 
     my $log_dir = $self->output_dir;
-    if(Workflow::Model->parent_workflow_log_dir) {
-        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+        $log_dir = $parent_dir;
     }
 
-    $workflow->log_dir($log_dir);
+    $workflow->recursively_set_log_dir($log_dir);
 
     # Launch workflow
     $self->status_message("Launching workflow now.");
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %input);
+    my $result = $workflow->execute(inputs => \%input);
 
     # Collect and analyze results
     unless($result){
