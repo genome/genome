@@ -4,10 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow;
-use Workflow::Simple;
-use Switch;
-use List::MoreUtils "each_array";
 use File::Basename qw/fileparse/;
 use File::Spec;
 
