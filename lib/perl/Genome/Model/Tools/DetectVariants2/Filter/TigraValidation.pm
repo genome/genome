@@ -67,14 +67,14 @@ class Genome::Model::Tools::DetectVariants2::Filter::TigraValidation {
             calculate_from => '_temp_staging_directory',
             calculate => q{ return $_temp_staging_directory . '/svs.lq'; },
         },
-        sv_output_name => { 
+        sv_output_name => {
             is => 'Text',
             default_value => 'svs.out',
         },
         tigra_version => {
             type => 'String',
             doc  => 'tigra_sv version to use in this process',
-            default_value => '0.1', 
+            default_value => '0.1',
             valid_values  => [Genome::Model::Tools::TigraSv->available_tigrasv_versions],
         },
         tigra_path => {
@@ -184,7 +184,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::TigraValidation {
         skip_libraries => {
             type => 'String',
             doc  => 'Ingore calls supported by libraries that contains (comma separated)',
-            is_input => 1,  #for now maybe the skip_libs stuff should be moved into params 
+            is_input => 1,  #for now maybe the skip_libs stuff should be moved into params
         },
         skip_call => {
             type => 'Integer',
@@ -253,7 +253,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::TigraValidation {
     ],
     has_param => [
         lsf_resource => {
-            default_value => Genome::Config::get('lsf_resource_dv2_filter_tigra_validation'), 
+            default_value => Genome::Config::get('lsf_resource_dv2_filter_tigra_validation'),
         },
     ],
 };
@@ -361,8 +361,8 @@ sub _filter_variants {
         $self->debug_message("Splitting breakdancer input file by chromosome");
 
         # Split up breakdancer file by chromosome so tigra can be run in parallel
-        my $split_obj = $self->_get_split_object; 
-        
+        my $split_obj = $self->_get_split_object;
+
         my $rv = $split_obj->execute;
         Carp::confess 'Could not execute breakdancer split file command!' unless defined $rv and $rv == 1;
 
@@ -376,22 +376,25 @@ sub _filter_variants {
             `touch @output_files`;
             return 1;
         }
-        
-        
+
+
         my $skip_libs    = $self->skip_libraries || $self->_get_skip_libs;
 
         $self->debug_message("Creating workflow to parallelize by chromosome");
 
         # Create and execute workflow
-        require Workflow::Simple;
-        my $op = Workflow::Operation->create(
+        my $workflow = Genome::WorkflowBuilder::DAG->create(
+            name => 'Tigra workflow ' . $self->id,
+        );
+        my $op = Genome::WorkflowBuilder::Command->create(
             name => 'Tigra by chromosome',
-            operation_type => Workflow::OperationType::Command->get(ref($self)),
+            command => ref($self),
         );
         $op->parallel_by('specify_chr');
+        $workflow->add_operation($op);
 
-        if(Workflow::Model->parent_workflow_log_dir) {
-            $op->log_dir(Workflow::Model->parent_workflow_log_dir);
+        if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+            $op->recursively_set_log_dir($parent_dir);
         } elsif ($self->workflow_log_directory) {
             unless (-d $self->workflow_log_directory) {
                 unless (Genome::Sys->create_directory($self->workflow_log_directory)) {
@@ -399,7 +402,7 @@ sub _filter_variants {
                     die;
                 }
             }
-            $op->log_dir($self->workflow_log_directory);
+            $op->recursively_set_log_dir($self->workflow_log_directory);
         }
 
         $self->debug_message("Running workflow");
@@ -414,16 +417,7 @@ sub _filter_variants {
 
         $options{skip_libraries} = $skip_libs if $skip_libs;
 
-        my $output = Workflow::Simple::run_workflow_lsf($op, %options);
-
-        unless (defined $output) {
-            my @error;
-            for (@Workflow::Simple::ERROR) {
-                push @error, $_->error;
-            }
-            $self->error_message(join("\n", @error));
-            die $self->error_message;
-        }
+        my $output = $workflow->execute(inputs => \%options);
 
         # Now merge together all the pass/fail files produced for each chromosome
         $self->debug_message("Merging output files together");
@@ -432,7 +426,7 @@ sub _filter_variants {
         my $sr_dirs = $self->_get_sr_dirs(@use_chr_list);
         my @sr_dirs;
         map{push @sr_dirs, $sr_dirs->{$_}}@use_chr_list; # make the same order as before
-                
+
         for my $file ($self->pass_output, $self->fail_output) {
             my $merge_obj = Genome::Model::Tools::Breakdancer::MergeFiles->create(
                 input_files => join(',', map { $_ . '/' . basename($file) } @sr_dirs),
@@ -444,7 +438,7 @@ sub _filter_variants {
 
         $self->debug_message("Running MergeCallSet");
 
-        my ($merge_index, $merge_file, $merge_annot, $merge_out, $merge_fa) = 
+        my ($merge_index, $merge_file, $merge_annot, $merge_out, $merge_fa) =
             map{$self->_temp_staging_directory .'/'.$self->_variant_type.'.merge.'.$_}qw(index file file.annot out fasta);
 
         my $idx_fh = IO::File->new(">$merge_index") or die "Failed to open $merge_index for writing\n";
@@ -487,8 +481,8 @@ sub _filter_variants {
             $annot_params{repeat_mask} = 1 if $ref_build_id eq '36';
 
             my $annot = Genome::Model::Tools::Sv::SvAnnot->create(%annot_params);
-            my $rv = $annot->execute;    
-            $self->warning_message("SvAnnot probably did not finished ok") unless $rv == 1;     
+            my $rv = $annot->execute;
+            $self->warning_message("SvAnnot probably did not finished ok") unless $rv == 1;
         }
         else {
             $self->warning_message('No ref_build_id available. Skip SvAnnot');
@@ -523,7 +517,7 @@ sub _filter_variants {
         my $bam_file = $bam_files{$type};
 
         my $tmp_tigra_dir = File::Temp::tempdir('tigra_sv_out_'.$sanitized_chr.'_'.$type.'_XXXXXX', DIR => '/tmp', CLEANUP => 1);
-        $self->_tigra_data_dir($tmp_tigra_dir); 
+        $self->_tigra_data_dir($tmp_tigra_dir);
 
         # Construct tigra command and execute
         $self->debug_message("Making tigra command and executing");
@@ -562,44 +556,44 @@ sub _filter_variants {
 
         my @tigra_sv_fas = glob($tmp_tigra_dir . "/*.fa.contigs.fa"); #get tigra homo ctg list
         @tigra_sv_fas = sort{(basename ($a)=~/^\S+?\.(\d+)\./)[0]<=> (basename ($b)=~/^\S+?\.(\d+)\./)[0]}@tigra_sv_fas; #sort ctg file by chr pos
-    
+
         # open output file for the following resume
         my $out_fh = IO::File->new(">>". $sv_output) or die "Failed to open $sv_output for writing";
-    
+
         for my $tigra_sv_fa (@tigra_sv_fas) {
             my ($tigra_sv_name) = basename $tigra_sv_fa =~ /^(\S+)\.fa\.contigs\.fa/;
-            my ($chr1,$start,$chr2,$end,$type,$size,$ori,undef) = split /\./, $tigra_sv_name; # you get the $size from $prefix        
-            next if($chr2 ne $self->specify_chr && defined $self->specify_chr); 
+            my ($chr1,$start,$chr2,$end,$type,$size,$ori,undef) = split /\./, $tigra_sv_name; # you get the $size from $prefix
+            next if($chr2 ne $self->specify_chr && defined $self->specify_chr);
             my $prefix = join('.',$chr1,$start,$chr2,$end,$type,$size,$ori);
 
             $self->_N50size(_ComputeTigraN50($tigra_sv_fa));
             $self->_WeightAvgSize(_ComputeTigraWeightedAvgSize($tigra_sv_fa));
-        
+
             #test homo, het contigs
             for my $ctg_type ('homo', 'het') {
                 $self->_cross_match_validation($ctg_type, $tigra_sv_name);
             }
-        
+
             my $maxSV = $self->_maxSV;
 
             # The if statement from hell
             if (defined $maxSV && ($type eq 'CTX' && $maxSV->{type} eq $type ||
-	            $type eq 'INV' && $maxSV->{type} eq $type ||
-		        (($type eq $maxSV->{type} && $type eq 'DEL') ||
-		        ($type eq 'ITX' && ($maxSV->{type} eq 'ITX' || $maxSV->{type} eq 'INS')) ||
-		        ($type eq 'INS' && ($maxSV->{type} eq 'ITX' || $maxSV->{type} eq 'INS'))) &&
+                $type eq 'INV' && $maxSV->{type} eq $type ||
+                (($type eq $maxSV->{type} && $type eq 'DEL') ||
+                ($type eq 'ITX' && ($maxSV->{type} eq 'ITX' || $maxSV->{type} eq 'INS')) ||
+                ($type eq 'INS' && ($maxSV->{type} eq 'ITX' || $maxSV->{type} eq 'INS'))) &&
                 $size >= $self->min_size_of_confirm_asm_sv && (!defined $self->invalid_indel_range || abs($maxSV->{size}-$size)<=$self->invalid_indel_range))) {
 
                 my $scarstr = $maxSV->{scarsize}>0 ? substr($maxSV->{contig},$maxSV->{bkstart}-1,$maxSV->{bkend}-$maxSV->{bkstart}+1) : '-';
 
                 $out_fh->printf("%s\t%d(%d)\t%s\t%d(%d)\t%s\t%d(%d)\t%s(%s)\t%s\t%d\t%d\t%d\%\t%d\t%d\t%d\t%d\t%d\t%s\t%s\ta%d.b%d\t%s\t%s\t%s\n",$maxSV->{chr1},$maxSV->{start1},$start,$maxSV->{chr2},$maxSV->{start2},$end,$maxSV->{ori},$maxSV->{size},$size,$maxSV->{type},$type,$maxSV->{het},$maxSV->{weightedsize},$maxSV->{read_len},$maxSV->{fraction_aligned}*100,$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{microhomology},$scarstr,$prefix,50,100, 'NA', 'NA', 'NA');
-        
+
                 if ($bp_io) {  #save breakpoint sequence
                     my $coord = join(".",$maxSV->{chr1},$maxSV->{start1},$maxSV->{chr2},$maxSV->{start2},$maxSV->{type},$maxSV->{size},$maxSV->{ori});
                     my $contigsize = $maxSV->{contiglens};
-                    my $seqobj = Bio::Seq->new( 
+                    my $seqobj = Bio::Seq->new(
                         -display_id => "ID:$prefix,Var:$coord,Ins:$maxSV->{bkstart}\-$maxSV->{bkend},Length:$contigsize,KmerCoverage:$maxSV->{contigcovs},Strand:$maxSV->{strand},Assembly_Score:$maxSV->{weightedsize},PercNonRefKmerUtil:$maxSV->{kmerutil},Ref_start:$maxSV->{refpos1},Ref_end:$maxSV->{refpos2},Contig_start:$maxSV->{rpos1},Contig_end:$maxSV->{rpos2},TIGRA",
-                        -seq => $maxSV->{contig}, 
+                        -seq => $maxSV->{contig},
                     );
                     $bp_io->write_seq($seqobj);
                 }
@@ -607,7 +601,7 @@ sub _filter_variants {
                 if ($cm_aln_fh) {
                     $cm_aln_fh->printf("%s\t%d(%d)\t%s\t%d(%d)\t%s\t%d(%d)\t%s(%s)\t%s\t%d\t%d\t%d\%\t%d\t%d\t%d\t%d\t%d\t%s\t%s\ta%d.b%d\n",$maxSV->{chr1},$maxSV->{start1},$start,$maxSV->{chr2},$maxSV->{start2},$end,$maxSV->{ori},$maxSV->{size},$size,$maxSV->{type},$type,$maxSV->{het},$maxSV->{weightedsize},$maxSV->{read_len},$maxSV->{fraction_aligned}*100,$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{microhomology},$scarstr,$prefix,'50','100');
                     for my $aln (split /\,/, $maxSV->{alnstrs}) {
-	                    $cm_aln_fh->printf("%s\n", join("\t", split /\|/, $aln));
+                        $cm_aln_fh->printf("%s\n", join("\t", split /\|/, $aln));
                     }
                     $cm_aln_fh->print("\n");
                 }
@@ -642,7 +636,7 @@ sub _filter_variants {
     );
     my $adaptor_rv = $tigra_adaptor_obj->execute;
     confess 'Could not produce filtered breakdancer files from tigra output!' unless defined $adaptor_rv and $adaptor_rv == 1;
-    
+
     $self->debug_message('TigraValidation finished ok.');
     return 1;
 }
@@ -674,7 +668,7 @@ sub _breakdancer_input {
         $self->error_message('Failed to find breakdancer input file from input directory: '. $self->input_directory);
         die;
     }
-    
+
     $self->debug_message("Find breakdancer input: $bd_input");
     return $bd_input;
 }
@@ -829,7 +823,7 @@ sub _get_skip_libs {
     $self->debug_message("Find breakdancer config: $bd_cfg to get skip libraries");
 
     my $normal_bam = $self->control_aligned_reads_input;
-    
+
     if ($normal_bam) {
         my %libs = ();
         my $fh = Genome::Sys->open_file_for_reading($bd_cfg) or die "Failed to open $bd_cfg\n";
@@ -895,9 +889,9 @@ sub _get_ref_build_id {
         102671028 => 37,  #g1k-human-build37
         101947881 => 36,  #NCBI-human-build36
         109104543 => 36,  #fdu_human36_chr16_17_for_novo_test-build for Jenkins apipe test build
-        107494762 => 'mouse_37',  #UCSC-mouse build37, mouse ref seq used in production 
+        107494762 => 'mouse_37',  #UCSC-mouse build37, mouse ref seq used in production
     );
-    
+
     if ($refs{$ref_id}) {
         return $refs{$ref_id};
     }
@@ -929,7 +923,7 @@ sub _cross_match_validation {
     my $head   = join '.', $chr1, $start, $chr2, $end, $type, $size, $ori;
 
     my $datadir = $self->_tigra_data_dir;
-    my $ref_fa  = $datadir . "/$head.ref.fa"; 
+    my $ref_fa  = $datadir . "/$head.ref.fa";
     my ($tigra_sv_fa, $cm_out);
 
     if ($ctg_type eq 'homo') {
@@ -944,7 +938,7 @@ sub _cross_match_validation {
         $self->error_message("Wrong type: $ctg_type");
         die $self->error_message;
     }
-    
+
     unless (-s $tigra_sv_fa) {
         $self->warning_message("tigra sv fasta: $tigra_sv_fa is not valid. Skip this $ctg_type cross_match run");
         return;
@@ -956,13 +950,13 @@ sub _cross_match_validation {
         cmd           => $cm_cmd,
         input_files   => [$tigra_sv_fa, $ref_fa],
     );
-    
+
     unless ($rv) {
         $self->error_message("Running cross_match for $tigra_sv_name homo failed.\nCommand: $cm_cmd");
         die $self->error_message;
     }
     $self->debug_message("Cross_match for $type contigs: $tigra_sv_name Done");
-        
+
     my $makeup_size      = 0; # by default they are zero
     my $concatenated_pos = 0; # by default they are zero
 
@@ -989,9 +983,9 @@ sub _cross_match_validation {
     $cm_indel = undef;
 
     if ($result && $result =~ /\S+/) {
-	    $self->_UpdateSVs($result,$makeup_size,$regionsize,$tigra_sv_fa,$ctg_type, $cm_out);
+        $self->_UpdateSVs($result,$makeup_size,$regionsize,$tigra_sv_fa,$ctg_type, $cm_out);
     }
-    
+
     return 1;
 }
 
@@ -1010,16 +1004,16 @@ sub _UpdateSVs{
         if (defined $pre_size && defined $pre_start1 && defined $pre_start2) {
             my ($contigseq,$contiglens,$contigcovs,$kmerutil) = _GetContig($tigra_sv_fa, $pre_contigid);
             my ($refpos1, $refpos2, $rpos1, $rpos2) = _GetRefPos($cm_out, $pre_contigid,$pre_size,$pre_type);
-            $alnscore = int($alnscore*100/$regionsize); 
+            $alnscore = int($alnscore*100/$regionsize);
             $alnscore = $alnscore>100 ? 100 : $alnscore;
             if (!defined $maxSV || $maxSV->{size}<$pre_size || $maxSV->{alnscore} < $alnscore) {
-	            my $N50score = int($N50size*100/$regionsize); 
+                my $N50score = int($N50size*100/$regionsize);
                 $N50score = $N50score>100 ? 100 : $N50score;
-	            ($maxSV->{chr1},$maxSV->{start1},$maxSV->{chr2},$maxSV->{start2},$maxSV->{bkstart},$maxSV->{bkend},$maxSV->{size},$maxSV->{type},$maxSV->{contigid},$maxSV->{contig},$maxSV->{contiglens},$maxSV->{contigcovs},$maxSV->{kmerutil},$maxSV->{N50},$maxSV->{weightedsize},$maxSV->{alnscore},$maxSV->{scarsize},$maxSV->{a},$maxSV->{b},$maxSV->{read_len},$maxSV->{fraction_aligned},$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{strand},$maxSV->{microhomology},$maxSV->{refpos1},$maxSV->{refpos2},$maxSV->{rpos1},$maxSV->{rpos2}) = ($pre_chr1,$pre_start1,$pre_chr2,$pre_start2,$pre_bkstart,$pre_bkend,$pre_size,$pre_type,$pre_contigid,$contigseq,$contiglens,$contigcovs,$kmerutil,$N50score,$depthWeightedAvgSize,$alnscore,$scar_size,'50','100',$read_len,$fraction_aligned,$n_seg,$n_sub,$n_indel,$nbp_indel,$strand,$microhomology,$refpos1,$refpos2,$rpos1,$rpos2);
+                ($maxSV->{chr1},$maxSV->{start1},$maxSV->{chr2},$maxSV->{start2},$maxSV->{bkstart},$maxSV->{bkend},$maxSV->{size},$maxSV->{type},$maxSV->{contigid},$maxSV->{contig},$maxSV->{contiglens},$maxSV->{contigcovs},$maxSV->{kmerutil},$maxSV->{N50},$maxSV->{weightedsize},$maxSV->{alnscore},$maxSV->{scarsize},$maxSV->{a},$maxSV->{b},$maxSV->{read_len},$maxSV->{fraction_aligned},$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{strand},$maxSV->{microhomology},$maxSV->{refpos1},$maxSV->{refpos2},$maxSV->{rpos1},$maxSV->{rpos2}) = ($pre_chr1,$pre_start1,$pre_chr2,$pre_start2,$pre_bkstart,$pre_bkend,$pre_size,$pre_type,$pre_contigid,$contigseq,$contiglens,$contigcovs,$kmerutil,$N50score,$depthWeightedAvgSize,$alnscore,$scar_size,'50','100',$read_len,$fraction_aligned,$n_seg,$n_sub,$n_indel,$nbp_indel,$strand,$microhomology,$refpos1,$refpos2,$rpos1,$rpos2);
                 print STDERR "\n\nWeightedsize: $maxSV->{weightedsize}\n";
-	            $maxSV->{het}     = $type;
-	            $maxSV->{ori}     = $ori;
-	            $maxSV->{alnstrs} = $alnstrs;
+                $maxSV->{het}     = $type;
+                $maxSV->{ori}     = $ori;
+                $maxSV->{alnstrs} = $alnstrs;
 
                     # add according to Ken's requirement, now cut and add it in CrossMatchIndel.pm for only INDEL
 #                    if($maxSV->{strand} =~ /-/ && $maxSV->{type} =~ /DEL/i){
@@ -1075,7 +1069,7 @@ sub _GetRefPos{
             else{
                 ($r1, $r2, $r3, $str, $g1, $g2, $g3) = ($a[$#a - 6], $a[$#a - 5], $a[$#a - 4], $a[$#a - 3], $a[$#a - 2], $a[$#a - 1], $a[$#a]);
             }
-            
+
             ($chr, $ref_1, $ref_2) = ($str =~ /(\S+):(\d+)-(\d+)/);
             $check = 1;
         }
