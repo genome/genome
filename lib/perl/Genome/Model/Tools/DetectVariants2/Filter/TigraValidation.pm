@@ -417,6 +417,20 @@ sub _filter_variants {
 
         $options{skip_libraries} = $skip_libs if $skip_libs;
 
+        for my $input (keys %options) {
+            $workflow->connect_input(
+                input_property => $input,
+                destination => $op,
+                destination_property => $input,
+            );
+        }
+
+        $workflow->connect_output(
+            source => $op,
+            source_property => 'result',
+            output_property => 'result',
+        );
+
         my $output = $workflow->execute(inputs => \%options);
 
         # Now merge together all the pass/fail files produced for each chromosome
