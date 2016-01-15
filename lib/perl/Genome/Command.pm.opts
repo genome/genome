@@ -2284,19 +2284,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>germline',
-      [
-        'name=s',
-        'files',
-        'regions-file=s',
-        'files',
-        'based-on=s',
-        undef,
-        'describe!',
-        undef,
-        'help!',
-        undef
-      ],
       '>convergence',
       [
         'name=s',
@@ -3119,31 +3106,6 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
-        'help!',
-        undef
-      ],
-      '>germline',
-      [
-        'show=s',
-        'files',
-        'style=s',
-        [
-          'text',
-          'csv',
-          'tsv',
-          'pretty',
-          'html',
-          'xml',
-          'newtext'
-        ],
-        'csv-delimiter=s',
-        'files',
-        'noheaders!',
-        undef,
-        'order-by=s',
-        'files',
-        'filter=s',
-        'files',
         'help!',
         undef
       ],
@@ -9245,29 +9207,6 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
-        'help!',
-        undef
-      ],
-      '>germline',
-      [
-        'auto-assign-inst-data!',
-        undef,
-        'auto-build-alignments!',
-        undef,
-        'processing-profile=s',
-        undef,
-        'add-to-projects=s@',
-        undef,
-        'instrument-data=s@',
-        undef,
-        'subject=s',
-        undef,
-        'groups=s@',
-        undef,
-        'model-name=s',
-        'files',
-        'run-as=s',
-        'files',
         'help!',
         undef
       ],
