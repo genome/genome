@@ -13,14 +13,16 @@ class Genome::Config::AnalysisProject::Command::ReplaceModel {
     has_input => {
        model => {
             is => 'Genome::Model',
+            shell_args_position => 1,
             doc => 'Model to replace on the analysis project.',
        },
        new_profile_item => {
             is => 'Genome::Config::Profile::Item',
+            shell_args_position => 2,
             doc => 'The configuration to use to copy the model.',
        },
    },
-   has_transient => {
+   has_optional_transient => {
        analysis_project => { via => 'new_profile_item', to => 'analysis_project', },
        new_model => { is => 'Genome::Model', },
    },
@@ -54,6 +56,7 @@ sub execute {
     $self->_copy_model($overrides);
 
     $self->status_message('NEW model:  %s', $self->new_model->__display_name__);
+    $self->status_message('Please abandon builds for old model!');
     return 1;
 }
 
@@ -83,7 +86,7 @@ sub _overrides_for_model {
     my %overrides;
     for my $key ( keys %$config_for_model ) {
         next if ref $config_for_model->{$key};
-        next if defined $config_for_new_model->{$key} and $config_for_model->{$key} == $config_for_new_model->{$key};
+        next if defined $config_for_new_model->{$key} and $config_for_model->{$key} eq $config_for_new_model->{$key};
         my $key_no_id = $key;
         $key_no_id =~ s/_id//;
         $overrides{$key_no_id} = $config_for_new_model->{$key};
