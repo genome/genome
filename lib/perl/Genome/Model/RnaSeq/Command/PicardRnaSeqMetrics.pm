@@ -3,6 +3,8 @@ package Genome::Model::RnaSeq::Command::PicardRnaSeqMetrics;
 use strict;
 use warnings;
 
+use Try::Tiny;
+
 use Genome;
 
 my $DEFAULT_LSF_RESOURCE = "-R 'select[mem>=8000] rusage[mem=8000]' -M 8000000";
@@ -47,8 +49,31 @@ sub sub_command_category { 'pipeline steps' }
 
 sub sub_command_sort_position { 9 }
 
+sub should_skip {
+    my $self = shift;
+
+    my $build = $self->build;
+
+    # Skip if no annotation build
+    unless ( $build->annotation_build ) {
+        $self->debug_message('Skipping PicardRnaSeqMetrics since annotation build is not defined');
+        return 1;
+    }
+
+    # Skip if annotation build does not have required files
+    my @missing_files = Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->missing_files_for_annotation_build($build->annotation_build, $build->reference_build);
+    if ( @missing_files ) {
+        $self->debug_message('Skipping PicardRnaSeqMetrics since annotation build is missing required files');
+        return 1;
+    }
+
+    return;
+}
+
 sub shortcut {
     my $self = shift;
+
+    return 1 if $self->should_skip;
 
     my $build = $self->build;
     my $alignment_result = $build->alignment_result;
@@ -60,18 +85,16 @@ sub shortcut {
             return $self->link_result_to_build($result);
         }
     }
+
     return;
 }
 
 sub execute {
     my $self = shift;
 
+    return 1 if $self->should_skip;
+
     my $build = $self->build;
-    my $annotation_build = $build->annotation_build;
-    unless ($annotation_build) {
-        $self->debug_message('Skipping PicardRnaSeqMetrics since annotation_build is not defined');
-        return 1;
-    }
     my $alignment_result = $build->alignment_result;
     if ($alignment_result->isa('Genome::InstrumentData::AlignmentResult::Merged')) {
         my %params = (

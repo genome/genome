@@ -8,13 +8,30 @@ BEGIN {
 use strict;
 use warnings;
 
-use above "Genome";
-use Test::More;
+use Test::More tests => 11;
 
-use_ok("Genome::Test::Factory::Model::ImportedAnnotation");
+use above "Genome";
+use Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics;
+
+my $class = "Genome::Test::Factory::Model::ImportedAnnotation";
+use_ok($class) or die;
 
 my $m = Genome::Test::Factory::Model::ImportedAnnotation->setup_object();
 ok($m->isa("Genome::Model::ImportedAnnotation"), "Generated an annotation model");
+my $b = $class->create_mock_build($m);
+ok($b, 'create mock build');
+
+for my $file_method ( Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->required_files_from_annotation_build) {
+    my $set_method = $file_method.'_exists';
+    $b->$set_method;
+    ok(-s $b->$file_method, "$file_method exists");
+    $set_method = $file_method.'_does_not_exist',
+    $b->$set_method;
+    ok(!-s $b->$file_method, "$file_method does not exist");
+    $set_method = $file_method.'_exists_without_reference_build',
+    $b->$set_method;
+    ok(!-s $b->$file_method(1,1,1), "$file_method does not exist with reference build");
+    ok(-s $b->$file_method(1,undef,1), "$file_method does exists without reference build");
+}
 
 done_testing;
-
