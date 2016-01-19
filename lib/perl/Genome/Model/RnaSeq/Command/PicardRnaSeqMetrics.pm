@@ -61,7 +61,7 @@ sub should_skip {
     }
 
     # Skip if annotation build does not have required files
-    my @missing_files = Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->missing_files_for_annotation_build($build->annotation_build, $build->reference_build);
+    my @missing_files = Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->missing_files_for_annotation_build($build->annotation_build, $build->reference_sequence_build);
     if ( @missing_files ) {
         $self->debug_message('Skipping PicardRnaSeqMetrics since annotation build is missing required files');
         return 1;

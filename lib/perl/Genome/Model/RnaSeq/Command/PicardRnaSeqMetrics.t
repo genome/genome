@@ -28,7 +28,7 @@ subtest "setup" => sub{
     $reference_build =  Test::MockObject->new;
     ok($reference_build, 'create mock reference build');
     $reference_build->set_always('id', '1');
-    $build->set_always('reference_build', $reference_build);
+    $build->set_always('reference_sequence_build', $reference_build);
 
     $annotation_build = Genome::Test::Factory::Model::ImportedAnnotation->create_mock_build;
     ok($annotation_build, 'create mock annotation build');
