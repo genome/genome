@@ -9,7 +9,7 @@ use Genome;
 
 my $DEFAULT_LSF_RESOURCE = Genome::Config::get('testing')
     ? "-R 'span[hosts=1]' -n 4"
-    : Genome::Config::get('lsf_resource_rnaseq_cufflink');
+    : Genome::Config::get('lsf_resource_rnaseq_cufflinks');
 
 class Genome::Model::RnaSeq::Command::Expression::Cufflinks {
     is => ['Command::V2'],
