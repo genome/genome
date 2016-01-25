@@ -1406,10 +1406,7 @@ sub _launch {
     local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
-    # we don't use 'local' because we want this to persist through
-    # spawned workflows, and since the build is launched in a commit
-    # observer the 'local' designations ensure the ENV isn't still around then
-    Genome::Config::set_env('lsf_project_name', sprintf("build/%s", $self->id));
+    my $project_guard = Genome::Config::set_env('lsf_project_name', sprintf("build/%s", $self->id));
 
     my $build_id_guard = set_build_id($self->id);
 
