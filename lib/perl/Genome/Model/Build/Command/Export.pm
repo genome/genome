@@ -46,12 +46,7 @@ sub execute {
         my $path = $File::Find::name;
         if (-l $path) {
             my $symlink_target = $File::Find::fullname;
-            my $allocation = Genome::Disk::Allocation->get_allocation_for_path($symlink_target);
-            if (defined($allocation) && $allocation->is_active) {
-                unlink $path;
-                $allocation->copy(output_dir => $path);
-            }
-            elsif (-e $symlink_target) {
+            if (-e $symlink_target) {
                 #Only do this if symlink doesn't point to somewhere within
                 #this directory structure
                 unless (index($symlink_target, $export_directory) == 0) {
