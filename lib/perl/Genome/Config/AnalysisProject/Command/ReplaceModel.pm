@@ -34,7 +34,7 @@ sub help_brief {
 
 sub help_detail {
     return <<EOS
-This command takes a model and new config profile item and copies the model, replacing the different items in the new profile config as compared to the model's existing config. The model is queued for building. Additionally, the builds forthe old model shold be abandoned. That way they do not appear in a failed state.
+This command takes a model and new config profile item and copies the model, replacing the different items in the new profile config as compared to the model's existing config. The model is queued for building. Additionally, the builds for the old model should be abandoned. That way they do not appear in a failed state.
 
 Use this command when a model needs to replaced on a current analysis project. This is usually due to a need to switch a model parameter because the current configuration fails to produce a successful build. If a different config is needed for most or all instrument data, a new config should be added and the instrument data reprocessed.
 
