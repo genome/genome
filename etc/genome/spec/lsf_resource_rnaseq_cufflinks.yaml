@@ -1,0 +1,4 @@
+# This spec controls the LSF resource for cufflinks run in RnaSeq expression
+---
+default_value: "-R 'select[mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4"
+env: XGENOME_LSF_RESOURCE_RNASEQ_CUFFLINKS
