@@ -106,8 +106,11 @@ sub submit {
     my $inputs = $self->get_workflow_inputs;
     $self->status_message("Submitting workflow with inputs: %s", pp($inputs));
 
+    my %env_copy = %ENV;
+
     my $commit_observer = Genome::Sys::CommitAction->create(
         on_commit => sub {
+            local %ENV = %env_copy;
             my $wf_proxy = $dag->submit(inputs => $inputs, process => $self->process);
             $self->status_message("Successfully launched process (%s) and ".
                 "submitted PTero workflow (%s)", $self->process->id, $wf_proxy->url);
