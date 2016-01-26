@@ -64,13 +64,13 @@ sub _verify_new_config {
     my $self = shift;
 
     if ( $self->new_profile_item->status ne 'inactive') {
-        die $self->error_message(
+        $self->fatal_message(
             "Config profile (%s) status (%s) must be 'inactive'.", $self->new_profile_item->id, $self->new_profile_item->status
         );
     }
 
     if ( not $self->analysis_project->is_current ) {
-        die $self->error_message(
+        $self->fatal_message(
             "Analysis project (%s) status (%s) is not a 'current' status.", $self->analysis_project->id, $self->analysis_project->status
         );
     }
@@ -93,7 +93,7 @@ sub _overrides_for_model {
     }
 
     if ( not %overrides ) {
-        die $self->error_message("No overrides found for model! %s\nConfig: %s\nNew Config: %s\n",
+        $self->fatal_message("No overrides found for model! %s\nConfig: %s\nNew Config: %s\n",
             $self->model->__display_name__, Data::Dumper::Dumper($config_for_model), Data::Dumper::Dumper($config_for_new_model),
         );
     }
@@ -106,17 +106,17 @@ sub _load_model_config_from_file {
 
     Genome::Sys->validate_file_for_reading($file);
     my $config = YAML::LoadFile($file);
-    die $self->error_message('Failed to load config from file! %s', $file) if not $config;
+    $self->fatal_message('Failed to load config from file! %s', $file) if not $config;
 
     my $models_config = $config->{models};
-    die $self->error_message('No models key in config: %s', Data::Dumper::Dumper($config)) if not $models_config;
+    $self->fatal_message('No models key in config: %s', Data::Dumper::Dumper($config)) if not $models_config;
 
     my $config_for_model;
     for my $key ( keys %{$config->{models}} ) {
         next if not $self->model->class->isa($key);
         $config_for_model = $config->{models}->{$key};
         if ( ref $config->{models}->{$key} eq 'ARRAY' ) { # not currently supporting multiple models for type in config
-            die $self->error_message('Model type (%s) config is an array! %s', $key, Data::Dumper::Dumper($config));
+            $self->fatal_message('Model type (%s) config is an array! %s', $key, Data::Dumper::Dumper($config));
         }
         last;
     }
@@ -131,9 +131,9 @@ sub _copy_model {
         model => $self->model,
         overrides => [ map { join('=', $_, $overrides->{$_}) } keys %$overrides ],
     );
-    die $self->error_message("Failed to copy model: %s", $self->model->__display_name__) if not $copy->result;
+    $self->fatal_message("Failed to copy model: %s", $self->model->__display_name__) if not $copy->result;
     my $new_model = $copy->_new_model;
-    die $self->error_message("Failed to get new model from copy command!") if not $new_model;
+    $self->fatal_message("Failed to get new model from copy command!") if not $new_model;
     $self->analysis_project->add_model_bridge(model => $new_model, config_profile_item => $self->new_profile_item);
     $new_model->build_requested(1);
     $self->new_model($new_model);
