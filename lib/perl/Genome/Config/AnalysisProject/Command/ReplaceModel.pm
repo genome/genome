@@ -88,7 +88,7 @@ sub _overrides_for_model {
         next if ref $config_for_model->{$key};
         next if defined $config_for_new_model->{$key} and $config_for_model->{$key} eq $config_for_new_model->{$key};
         my $key_no_id = $key;
-        $key_no_id =~ s/_id//;
+        $key_no_id =~ s/_id$//;
         $overrides{$key_no_id} = $config_for_new_model->{$key};
     }
 
