@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Info::IUB;
-use Workflow;
-use Workflow::Simple;
 use File::Basename;
 
 class Genome::Model::Tools::Vcf::Convert::Indel::Pindel {
@@ -86,44 +84,35 @@ sub execute {
 
     $self->debug_message("VCF conversion output will be at: ".$output);
     
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => 'Multi-Vcf Merge',
-        input_properties  => \@prop_names,        
-        output_properties => ['output'],
     );
-    $workflow->log_dir($output_directory);
 
-    my $pindel2vcf = $workflow->add_operation(
+    my $pindel2vcf = Genome::WorkflowBuilder::Command->create(
         name => "Pindel2Vcf",
-        operation_type => Workflow::OperationType::Command->get("Genome::Model::Tools::Pindel::RunPindel2Vcf"),
+        command => "Genome::Model::Tools::Pindel::RunPindel2Vcf",
     );
+    $workflow->add_operation($pindel2vcf);
+    $workflow->recursively_set_log_dir($output_directory);
 
     for my $prop_name (@prop_names) {
-        $workflow->add_link(
-            left_operation  => $workflow->get_input_connector,
-            left_property   => $prop_name,
-            right_operation => $pindel2vcf,
-            right_property  => $prop_name,
+        $workflow->connect_input(
+            input_property   => $prop_name,
+            destination => $pindel2vcf,
+            destination_property  => $prop_name,
         );
     }
 
-    $workflow->add_link(
-        left_operation  => $pindel2vcf,
-        left_property   => "output_file",
-        right_operation => $workflow->get_output_connector,
-        right_property  => "output",
+    $workflow->connect_output(
+        source  => $pindel2vcf,
+        source_property   => "output_file",
+        output_property  => "output",
     );
 
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
-    }
     $self->debug_message("Now launching the vcf-merge workflow.");
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
+    my $result = $workflow->execute(inputs => \%inputs);
 
     unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         die $self->error_message("Workflow did not return correctly.");
     }
     my $unzipped_output = Genome::Sys->create_temp_file_path;
