@@ -86,8 +86,7 @@ sub create {
     unless(-s $annotation_gtf_file) {
         $annotation_gtf_file = $annotation_build->annotation_file('gtf');
     }
-    my $annotation_file_basename = $annotation_build->name;
-    $annotation_file_basename =~ s/\//-/g;
+    my $annotation_file_basename = Genome::Utility::Text::sanitize_string_for_filesystem($annotation_build->name);
 
     # Alignment inputs
     my @alignments = $self->alignment_result->collect_individual_alignments($self->_user_data_for_nested_results);
