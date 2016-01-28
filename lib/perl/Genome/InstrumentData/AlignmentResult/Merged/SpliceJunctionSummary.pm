@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Utility::Text;
 use Sys::Hostname;
 use File::Path;
 
