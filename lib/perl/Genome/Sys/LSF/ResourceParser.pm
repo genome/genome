@@ -5,10 +5,38 @@ use warnings FATAL => qw(all);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(parse_lsf_params);
+our @EXPORT_OK = qw(parse_lsf_params parse_resource_requirements);
 
 use Getopt::Long qw(GetOptionsFromString);
 use IO::String;
+
+sub parse_resource_requirements {
+    my ($res_req) = @_;
+    $res_req = '' unless defined $res_req;
+
+    # Platform LSF Admin Guide
+    # About resource requirement strings
+
+    # Simple syntax
+    # select[selection_string] order[order_string] rusage[usage_string [, usage_string]
+    # [|| usage_string] ...] span[span_string] same[same_string] cu[cu_string] affinity[affinity_string]
+    my $simple_string = qr/
+        \s*
+            \w+\[ [^\]]+ \]
+        (\s+\w+\[ [^\]]+ \])*
+        \s*
+    /xms;
+
+    # Compound syntax
+    # num1*{simple_string1} + num2*{simple_string2} + ...
+    my $compound_string = qr/
+        \d+\*{$simple_string}
+        (\s*\+\s*\d+\*{$simple_string})*
+    /xms;
+
+    my $admissable_res_req = qr/^( | $simple_string | $compound_string )$/xms;
+    return $res_req =~ $admissable_res_req;
+}
 
 sub parse_lsf_params {
     my ($lsf_param_string) = @_;

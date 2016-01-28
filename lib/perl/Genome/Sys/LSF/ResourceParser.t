@@ -5,7 +5,7 @@ use Data::Dumper;
 use above "Genome";
 
 BEGIN {
-    use_ok('Genome::Sys::LSF::ResourceParser', 'parse_lsf_params')
+    use_ok('Genome::Sys::LSF::ResourceParser', 'parse_lsf_params', 'parse_resource_requirements')
 }
 
 sub parse_ok {
@@ -15,6 +15,71 @@ sub parse_ok {
         got => $parsed, expected => $lsf_params }));
 }
 
+ok(parse_resource_requirements(
+        'rusage[mem=16384] select[mem > 16384] span[hosts=1]'));
+ok(!parse_resource_requirements(
+        '-M 16777216 rusage[mem=16384] select[mem > 16384] span[hosts=1]'),
+        'leading -M flag');
+ok(!parse_resource_requirements(
+        '-q long rusage[tmp=100]'),
+        'leading -q flag');
+
+ok(parse_resource_requirements(
+        '2*{select[type==X86_64] rusage[licA=1] span[hosts=1]} + 8*{select[type==any]}'));
+ok(!parse_resource_requirements(
+        '2*{select[type==X86_64] rusage[licA=1] span[hosts=1]} 8*{select[type==any]}'),
+        'missing plus sign between simple strings');
+ok(!parse_resource_requirements(
+        '*{select[type==X86_64] rusage[licA=1] span[hosts=1]} + 8*{select[type==any]}'),
+        'missing number multiplier');
+
+ok(parse_resource_requirements('rusage[mem=4000] span[hosts=1]'));
+ok(parse_resource_requirements('rusage[tmp=100]'));
+ok(parse_resource_requirements('span[hosts=1] rusage[mem=1000]'));
+ok(parse_resource_requirements('span[hosts=1] rusage[mem=1000]'));
+ok(parse_resource_requirements('select[tmp>1000] rusage[tmp=1000]'));
+ok(parse_resource_requirements('select[mem>6000] rusage[mem=6000]'));
+ok(parse_resource_requirements('rusage[mem=2000] select[mem > 2000] span[hosts=1]'));
+ok(parse_resource_requirements('select[mem>16000] rusage[mem=16000]'));
+ok(parse_resource_requirements('select[mem>16000] rusage[mem=16000]'));
+ok(parse_resource_requirements('select[mem>1024] rusage[mem=1024]'));
+ok(parse_resource_requirements('rusage[mem=4000,tmp=1000] select[tmp>1000] span[hosts=1]'));
+ok(parse_resource_requirements('rusage[mem=2000]'));
+ok(parse_resource_requirements('select[mem>16000] rusage[mem=16000]'));
+ok(parse_resource_requirements('rusage[mem=16384] select[mem > 16384] span[hosts=1]'));
+ok(parse_resource_requirements('select[mem>32000 && gtmp>200] rusage[mem=32000:gtmp=200] span[hosts=1]'));
+ok(parse_resource_requirements('select[mem>30000] rusage[mem=30000] span[hosts=1]'));
+ok(parse_resource_requirements('select[gtmp>20 && mem>4000] span[hosts=1] rusage[gtmp=20,mem=4000]'));
+ok(parse_resource_requirements('select[mem>8000] rusage[mem=8000]'));
+ok(parse_resource_requirements('select[mem>16000] rusage[mem=16000]'));
+ok(parse_resource_requirements('select[mem>12000] rusage[mem=12000]'));
+ok(parse_resource_requirements('select[mem>32000] rusage[mem=32000]'));
+ok(parse_resource_requirements('select[mem>12000] rusage[mem=12000]'));
+ok(parse_resource_requirements('select[mem>4096] rusage[mem=4096]'));
+ok(parse_resource_requirements('rusage[tmp=2000] select[tmp>2000]'));
+ok(parse_resource_requirements('rusage[mem=8000, tmp=2000] select[mem > 8000 && tmp > 2000] span[hosts=1]'));
+ok(parse_resource_requirements('rusage[mem=6000,tmp=10000] select[mem>6000 && tmp>10000] span[hosts=1]'));
+ok(parse_resource_requirements('select[mem>8192] rusage[mem=8192,tmp=100]'));
+ok(parse_resource_requirements('select[mem>32000] rusage[mem=32000]'));
+ok(parse_resource_requirements('rusage[tmp=100]'));
+ok(parse_resource_requirements('span[hosts=1] rusage[mem=8000]'));
+ok(parse_resource_requirements('select[tmp>2000] rusage[tmp=2000]'));
+ok(parse_resource_requirements('select[tmp>1000 && mem>16000] span[hosts=1] rusage[tmp=1000:mem=16000]'));
+ok(parse_resource_requirements('select[mem>=16000] rusage[mem=16000] span[hosts=1]'));
+ok(parse_resource_requirements('select[mem>32000] span[hosts=1] rusage[mem=32000]'));
+ok(parse_resource_requirements('select[mem>32000 && tmp>50000] span[hosts=1] rusage[mem=32000,tmp=50000]'));
+ok(parse_resource_requirements('select[mem>16000 && tmp>150000] span[hosts=1] rusage[tmp=150000, mem=16000]'));
+ok(parse_resource_requirements('select[mem>12000] rusage[mem=12000]'));
+ok(parse_resource_requirements('select[mem=8192] rusage[mem=8192,tmp=1024]'));
+ok(parse_resource_requirements('select[gtmp>1] span[hosts=1] rusage[gtmp=1]'));
+ok(parse_resource_requirements('select[gtmp>1000] rusage[gtmp=1000] span[hosts=1]'));
+ok(parse_resource_requirements('select[mem>7000 && tmp>10240] rusage[mem=7000]'));
+ok(parse_resource_requirements('select[mem>4500 && tmp>20000] rusage[mem=4500]'));
+ok(parse_resource_requirements('select[mem>4000] rusage[mem=4000]'));
+ok(parse_resource_requirements('select[mem>25000] rusage[mem=25000]'));
+ok(parse_resource_requirements('select[mem>20000] rusage[mem=20000]'));
+ok(parse_resource_requirements('rusage[mem=200:gtmp=5]'));
+ok(parse_resource_requirements('select[mem>14000] rusage[mem=14000]'));
 
 parse_ok('', { 'options' => {}, 'rLimits' => {} });
 parse_ok('rusage[mem=4000] span[hosts=1]', {
