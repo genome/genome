@@ -64,7 +64,7 @@ sub execute {
         if ( defined($model_metrics{$label}) ) {
             die('Multiple models with '. $model_identifier_method .' value: '. $label);
         }
-        my @model_builds = reverse($model->sorted_builds);
+        my @model_builds = $model->builds;
         my $build;
         my $junctions_directory;
         my $junctions_file;

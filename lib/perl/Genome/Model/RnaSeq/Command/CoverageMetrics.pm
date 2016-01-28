@@ -56,7 +56,7 @@ sub execute {
         if ( defined($model_coverage{$model->name}) ) {
             die('Multiple models with name: '. $model->name);
         }
-        my @model_builds = reverse($model->sorted_builds);
+        my @model_builds = $model->builds;
         my $build;
         my $coverage_directory;
         my $coverage_file;

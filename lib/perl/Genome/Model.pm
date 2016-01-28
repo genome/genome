@@ -605,12 +605,6 @@ sub from_models {
     return map { $_->value } @inputs;
 }
 
-# Returns a list of builds (all statuses) sorted from oldest to newest
-# TODO: see why this is needed as builds are already sorted by default with get()
-sub sorted_builds {
-    return shift->builds(-order_by => 'created_at');
-}
-
 # Returns a list of succeeded builds sorted from oldest to newest
 sub succeeded_builds { return $_[0]->completed_builds; }
 
