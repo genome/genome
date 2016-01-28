@@ -638,16 +638,6 @@ sub resolve_last_complete_build {
     return $build
 }
 
-# Returns a list of builds with the specified status sorted from oldest to newest
-# TODO: replace this with $model->builds(status => $whatever), since sorting is implicit
-sub builds_with_status {
-    my ($self, $status) = @_;
-    return grep {
-        $_->status and
-        $_->status eq $status
-    } $self->sorted_builds;
-}
-
 # Overriding build_requested to add a note to the model with information about who requested a build
 sub build_requested {
     my ($self, $value, $reason) = @_;
