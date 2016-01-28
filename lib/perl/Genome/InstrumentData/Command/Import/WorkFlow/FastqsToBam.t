@@ -44,7 +44,7 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam->execut
     library => $library,
 );
 ok($cmd->result, 'execute');
-my $output_bam_path = $cmd->output_bam_path;
+my $output_bam_path = $cmd->output_path;
 is($output_bam_path, $tmp_dir.'/__TEST_SAMPLE__.bam', 'bam path named correctly');
 ok(-s $output_bam_path, 'bam path exists');
 my $expected_bam = File::Spec->join($test_dir, 'fastqs-to-bam.bam');

@@ -30,7 +30,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
         },
     ],
     has_output => [ 
-        output_bam_path => {
+        output_path => {
             is => 'Text',
             calculate_from => [qw/ working_directory library /],
             calculate => q| return File::Spec->join($working_directory, Genome::Utility::Text::sanitize_string_for_filesystem($library->sample->name).'.bam'); |,
@@ -62,7 +62,7 @@ sub _fastqs_to_bam {
 
     my @fastqs = $self->fastq_paths;
     $self->debug_message("Fastq 1: $fastqs[0]");
-    my $output_bam_path = $self->output_bam_path;
+    my $output_bam_path = $self->output_path;
     my %fastq_to_sam_params = (
         fastq => $fastqs[0],
         output => $output_bam_path,
@@ -108,7 +108,7 @@ sub _verify_bam {
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
-    my $flagstat = $helpers->validate_bam($self->output_bam_path);
+    my $flagstat = $helpers->validate_bam($self->output_path);
     return if not $flagstat;
 
     $self->debug_message('Bam read count: '.$flagstat->{total_reads});
