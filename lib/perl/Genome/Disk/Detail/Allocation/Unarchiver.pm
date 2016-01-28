@@ -165,7 +165,7 @@ sub _do_unarchive_cmd {
 
         my $status = Genome::Sys->wait_for_lsf_job($job_id);
         unless ($status eq 'DONE') {
-            confess('Could not execute command '. join(' ',@{$cmd_array_ref}) .'via LSF job '. $job_id .' received status '. $status);
+            confess('Could not execute command '. join(' ',@{$cmd_array_ref}) .' via LSF job '. $job_id .' received status '. $status);
         }
     }
     return 1;
