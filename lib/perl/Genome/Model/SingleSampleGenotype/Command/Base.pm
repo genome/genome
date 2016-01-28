@@ -10,7 +10,7 @@ class Genome::Model::SingleSampleGenotype::Command::Base {
     has_input => [
         build => {
             is => 'Genome::Model::Build::SingleSampleGenotype',
-            doc => 'build for which to run the command',
+            doc => 'single-sample-genotype build for which to run the command',
             is_output => 1,
             shell_args_position => 1,
         },
