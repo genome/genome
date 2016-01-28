@@ -10,11 +10,8 @@ require Genome::InstrumentData::Command::Import::Inputs::SourceFile;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported { 
     is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithDownsampleRatio /],
+    roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
     has_input => {
-        working_directory => {
-            is => 'Text',
-            doc => 'Detination directory for source path.',
-        },
         source_paths => {
             is => 'Text',
             is_many => 1,

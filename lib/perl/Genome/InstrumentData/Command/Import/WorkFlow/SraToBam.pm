@@ -11,11 +11,8 @@ use Try::Tiny;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SraToBam { 
     is => 'Command::V2',
+    roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
     has_input => [
-        working_directory => {
-            is => 'Text',
-            doc => 'Destination directory for bam.',
-        },
         sra_path => {
             is => 'Text',
             doc => 'Path of the SRA.',
