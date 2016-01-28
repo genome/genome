@@ -22,23 +22,27 @@ my $source_path = File::Spec->join($tempdir1, $source_file_basename);
 symlink(File::Spec->join($test_dir, $source_file_basename),  $source_path);
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->create(
     working_directory => $tempdir1,
-    source_path => $source_path,
+    source_paths => [$source_path],
 );
-isa_ok($cmd->source_file, 'Genome::InstrumentData::Command::Import::Inputs::SourceFile', 'source_file');
-isa_ok($cmd->output_file, 'Genome::InstrumentData::Command::Import::Inputs::SourceFile', 'output_file');
-ok(!$cmd->output_file->md5_path_size, 'MD5 path does not exist');
+is_deeply([$cmd->output_path], [$cmd->output_paths], 'output_path and output_paths');
+my $source_file = $cmd->source_file_for_path($source_path);
+is($source_file->path, $source_path, 'source_file');
+my $output_file = $cmd->output_file_for_path($source_path);
+is($output_file->path, File::Spec->join($tempdir1, File::Basename::basename($source_path)), 'output_file');
+ok(!$output_file->md5_path_size, 'MD5 path does not exist');
 ok($cmd->execute, 'execute');
-ok($cmd->output_file->md5_path_size, 'MD5 path exists');
+ok($output_file->md5_path_size, 'MD5 path exists');
 
 # Copy the MD5 that was created above
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->create(
     working_directory => $tempdir2,
-    source_path => $source_path,
+    source_paths => [$source_path],
 );
-ok(!$cmd->output_file->md5_path_size, 'MD5 path does not exist');
+$output_file = $cmd->output_file_for_path($source_path);
+ok(!$output_file->md5_path_size, 'MD5 path does not exist');
 ok($cmd->execute, 'execute');
-ok($cmd->output_file->md5_path_size, 'MD5 path exists');
-unlink $cmd->output_file->md5_path; # remove since we are using the same directory below
+ok($output_file->md5_path_size, 'MD5 path exists');
+unlink $output_file->md5_path; # remove since we are using the same directory below
 
 # Previously Imported MD5
 my $instdata = Genome::InstrumentData::Imported->__define__(id => -11);
@@ -51,20 +55,22 @@ my $md5_attr = Genome::InstrumentDataAttribute->__define__(
 ok($md5_attr, 'create md5 inst data attr');
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->execute(
     working_directory => $tempdir2,
-    source_path => $source_path,
+    source_paths => [$source_path],
 );
 ok(!$cmd->result, 'execute');
 is(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, 'Instrument data was previously imported! Found existing instrument data: -11', 'correct error');
-unlink $cmd->output_file->md5_path;
+$output_file = $cmd->output_file_for_path($source_path);
+unlink $output_file->md5_path;
 
 # With downsampling
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->execute(
     working_directory => $tempdir2,
-    source_path => $source_path,
+    source_paths => [$source_path],
     downsample_ratio => 0.25,
 );
 ok($cmd->result, 'execute');
-unlink $cmd->output_file->md5_path;
+$output_file = $cmd->output_file_for_path($source_path);
+unlink $output_file->md5_path;
 
 # previously imported...
 my $downsample_ratio_attr = Genome::InstrumentDataAttribute->__define__(
@@ -76,7 +82,7 @@ my $downsample_ratio_attr = Genome::InstrumentDataAttribute->__define__(
 ok($downsample_ratio_attr, '__define__ downsample_ratio_attr');
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->execute(
     working_directory => $tempdir2,
-    source_path => $source_path,
+    source_paths => [$source_path],
     downsample_ratio => .25,
 );
 ok(!$cmd->result, 'execute');

@@ -77,7 +77,7 @@ sub _add_verify_not_imported_op_to_workflow {
     $self->_dag->connect_input(
         input_property => 'source_paths',
         destination => $verify_not_imported_op,
-        destination_property => 'source_path',
+        destination_property => 'source_paths',
     );
 
     return $verify_not_imported_op;
@@ -117,9 +117,7 @@ sub _add_sort_bam_op_to_workflow {
     $self->_dag->add_operation($sort_bam_op);
     $self->_dag->create_link(
         source => $previous_op,
-        source_property => ( $previous_op->command->can('output_bam_path') )
-        ? 'output_bam_path'
-        : 'source_path',
+        source_property => 'output_path',
         destination => $sort_bam_op,
         destination_property => 'bam_path',
     );
@@ -205,7 +203,7 @@ sub _add_create_instrument_data_op_to_workflow {
     );
     $self->_dag->create_link(
         source => $self->_work_flow_op_for('verify not imported'),
-        source_property => 'source_md5',
+        source_property => 'source_md5s',
         destination => $create_instdata_op,
         destination_property => 'source_md5s',
     );
