@@ -50,7 +50,7 @@ class PAP::Command::BlastP {
         },
     ],
     has_param => [
-        lsf_resource => { default_value => '-q long rusage[tmp=100]', },
+        lsf_resource => { default_value => "-q long -R 'rusage[tmp=100]'", },
     ],
 };
 
