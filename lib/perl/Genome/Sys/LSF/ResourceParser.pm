@@ -62,14 +62,23 @@ sub _parse_lsf_params {
         _create_getopt_specs($lsf_params{options}, _valid_options()),
         _create_getopt_specs($lsf_params{rLimits}, _valid_rlimits()));
 
-    return ($parse_ok, \%lsf_params, $message);
+    my $res_req = exists($lsf_params{options}{resReq})
+        ? $lsf_params{options}{resReq} : '';
+
+    if ($parse_ok && !parse_resource_requirements($res_req)) {
+        return (0, \%lsf_params, 'Invalid resource requirements specification');
+    }
+    else {
+        return ($parse_ok, \%lsf_params, $message);
+    }
 }
 
 sub _get_options_from_string {
     my $getopt_fh = IO::String->new;
     local *STDERR = $getopt_fh;
-    my $ret = GetOptionsFromString(@_);
-    return ($ret, ${$getopt_fh->string_ref});
+    my ($ret, $args) = GetOptionsFromString(@_);
+    my $parse_ok = $ret && (scalar @$args == 0);
+    return ($parse_ok, ${$getopt_fh->string_ref});
 }
 
 sub _create_getopt_specs {

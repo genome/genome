@@ -1,6 +1,7 @@
 use strict;
 use warnings FATAL => qw(all);
 use Test::More;
+use Test::Exception;
 use Data::Dumper;
 use above "Genome";
 
@@ -13,6 +14,16 @@ sub parse_ok {
     my $parsed = parse_lsf_params($lsf_param_string);
     is_deeply($parsed, $lsf_params, "Parse: $lsf_param_string") or diag(Dumper({
         got => $parsed, expected => $lsf_params }));
+}
+
+sub parse_throws {
+    my ($lsf_param_string, $exception) = @_;
+    $exception = qr/^Failed to parse lsf options/ unless defined $exception;
+
+    my $parsed;
+    throws_ok(
+        sub { $parsed = parse_lsf_params($lsf_param_string) }, $exception
+    ) or diag(Dumper({ got => $parsed, expected_exception => $exception }));
 }
 
 ok(parse_resource_requirements(
@@ -172,12 +183,13 @@ parse_ok('-R \'select[mem>16000] rusage[mem=16000]\' -M 16000000 ', {
             'RSS' => '16000000'
         }
     });
-parse_ok('-M 16777216 rusage[mem=16384] select[mem > 16384] span[hosts=1]', {
+parse_ok("-M 16777216 -R 'rusage[mem=16384] select[mem > 16384] span[hosts=1]'", {
         'options' => {
-            'resReq' => '-M 16777216 rusage[mem=16384] select[mem > 16384] span[hosts=1]'
+            'resReq' => 'rusage[mem=16384] select[mem > 16384] span[hosts=1]'
         },
-        'rLimits' => {}
-
+        'rLimits' => {
+            'RSS' => '16777216'
+        }
     });
 parse_ok("-R 'select[mem>32000 && gtmp>200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000", {
         'options' => {
@@ -256,12 +268,14 @@ parse_ok('rusage[tmp=2000] select[tmp>2000]', {
         'rLimits' => {}
 
     });
-parse_ok('rusage[mem=8000, tmp=2000] select[mem > 8000 && tmp > 2000] span[hosts=1] -M 8000000', {
+parse_ok("-R 'rusage[mem=8000, tmp=2000] select[mem > 8000 && tmp > 2000] span[hosts=1]' -M 8000000", {
 
         'options' => {
-            'resReq' => 'rusage[mem=8000, tmp=2000] select[mem > 8000 && tmp > 2000] span[hosts=1] -M 8000000'
+            'resReq' => 'rusage[mem=8000, tmp=2000] select[mem > 8000 && tmp > 2000] span[hosts=1]'
         },
-        'rLimits' => {}
+        'rLimits' => {
+            'RSS' => '8000000'
+        }
 
     });
 parse_ok('rusage[mem=6000,tmp=10000] select[mem>6000 && tmp>10000] span[hosts=1]', {
@@ -310,9 +324,10 @@ parse_ok("-q short -R 'rusage[tmp=100]'", {
         'rLimits' => {}
 
     });
-parse_ok("-q long rusage[tmp=100]", {
+parse_ok("-q long -R 'rusage[tmp=100]'", {
         'options' => {
-            'resReq' => '-q long rusage[tmp=100]'
+            'queue' => 'long',
+            'resReq' => 'rusage[tmp=100]'
         },
         'rLimits' => {}
     });
@@ -472,5 +487,11 @@ parse_ok("-M 14000000 -R 'select[mem>14000] rusage[mem=14000]'", {
             'RSS' => '14000000'
         }
     });
+
+parse_throws(
+    "-M 16777216 rusage[mem=16384] select[mem > 16384] span[hosts=1]");
+parse_throws(
+    'rusage[mem=8000, tmp=2000] select[mem > 8000 && tmp > 2000] span[hosts=1] -M 8000000');
+parse_throws("-q long rusage[tmp=100]");
 
 done_testing();
