@@ -1595,6 +1595,15 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>replace-model',
+    [
+      'model=s',
+      undef,
+      'new-profile-item=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>release',
     [
       'analysis-projects=s@',
@@ -37618,6 +37627,15 @@ $Genome::Command::OPTS_SPEC = [
         'instrument-data=s@',
         undef,
         'analysis-project=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>replace-model',
+      [
+        'model=s',
+        undef,
+        'new-profile-item=s',
         undef,
         'help!',
         undef
