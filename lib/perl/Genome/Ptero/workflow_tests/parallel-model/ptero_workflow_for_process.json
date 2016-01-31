@@ -124,7 +124,11 @@
                                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                 },
                                                 "options" : {
+                                                   "errFile" : "/tmp/ptero-lsf-logfile-36eb3984-6a0a-4fd1-bc73-bf44742636ad.err",
                                                    "numProcessors" : 1,
+                                                   "outFile" : "/tmp/ptero-lsf-logfile-36eb3984-6a0a-4fd1-bc73-bf44742636ad.out",
+                                                   "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-36eb3984-6a0a-4fd1-bc73-bf44742636ad.err --stdout /tmp/ptero-lsf-logfile-36eb3984-6a0a-4fd1-bc73-bf44742636ad.out",
+                                                   "preExecCmd" : "ptero-lsf-pre-exec",
                                                    "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                                                 },
                                                 "pollingInterval" : 300,

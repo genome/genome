@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Cwd qw();
 use Genome::Sys::LSF::ResourceParser qw(parse_lsf_params);
+use Data::UUID;
 
 
 class Genome::WorkflowBuilder::Command {
@@ -150,7 +151,24 @@ sub _get_ptero_lsf_parameters {
     $set_lsf_option->('queue', $attributes{lsfQueue});
     $set_lsf_option->('projectName', $attributes{lsfProject});
 
+    $lsf_params->{options}->{preExecCmd} = "ptero-lsf-pre-exec";
+
+    my ($stderr, $stdout) = _get_stderr_stdout_paths();
+    $lsf_params->{options}->{errFile} = $stderr;
+    $lsf_params->{options}->{outFile} = $stdout;
+    $lsf_params->{options}->{postExecCmd} = "ptero-lsf-post-exec ".
+        "--stderr $stderr --stdout $stdout";
+
     return $lsf_params;
+}
+
+sub _get_stderr_stdout_paths {
+    my $ug = Data::UUID->new();
+    my $uuid = $ug->create();
+    my $uuid_str = $ug->to_string($uuid);
+
+    my $base = sprintf("/tmp/ptero-lsf-logfile-%s", $uuid_str);
+    return ($base . '.err', $base . '.out');
 }
 
 
