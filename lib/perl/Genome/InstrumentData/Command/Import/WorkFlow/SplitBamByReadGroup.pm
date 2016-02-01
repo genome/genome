@@ -11,6 +11,7 @@ use Params::Validate ':types';
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup { 
     is => 'Command::V2',
+    roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
     has_input => [
         bam_path => {
             is => 'Text',
@@ -215,9 +216,10 @@ sub _update_read_group_for_sam_tokens_based_on_paired_endness {
 sub _open_fh_for_read_group_and_pairedness {
     my ($self, $read_group_id, $pairedness) = @_;
 
-    my $read_group_bam_path = $self->bam_path;
-    $read_group_bam_path =~ s/\.bam$//;
-    $read_group_bam_path = join('.', $read_group_bam_path, $read_group_id, $pairedness, 'bam');
+    my $read_group_bam_path = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->insert_extension_into_bam_path(
+        File::Spec->join($self->working_directory, File::Basename::basename($self->bam_path)),
+        join('.', $read_group_id, $pairedness),
+    );
     my $samtools_cmd = "| samtools view -S -b -o $read_group_bam_path -";
     $self->debug_message("Opening fh for $read_group_bam_path $pairedness with:\n$samtools_cmd");
     my $fh = IO::File->new($samtools_cmd);

@@ -23,7 +23,10 @@ my $multi_rg_base_name = 'input.rg-multi.bam';
 my $multi_rg_bam_path = File::Spec->join($tmp_dir, $multi_rg_base_name);
 Genome::Sys->create_symlink(File::Spec->join($test_dir, $multi_rg_base_name), $multi_rg_bam_path);
 ok(-s $multi_rg_bam_path, 'linked two read groups bam');
-my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup->execute(bam_path => $multi_rg_bam_path);
+my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup->execute(
+    working_directory => $tmp_dir,
+    bam_path => $multi_rg_bam_path,
+);
 ok($cmd->result, 'execute');
 
 my @output_bam_paths = $cmd->output_bam_paths;
