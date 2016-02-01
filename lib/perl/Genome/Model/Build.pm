@@ -1831,9 +1831,9 @@ sub _resolve_subclass_name {
     my $class = shift;
 
     my $type_name;
-	if ( ref($_[0]) and $_[0]->isa(__PACKAGE__) ) {
-		$type_name = $_[0]->model->type_name;
-	}
+    if ( ref($_[0]) and $_[0]->isa(__PACKAGE__) ) {
+        $type_name = $_[0]->model->type_name;
+    }
     else {
         my ($bx,@extra) = $class->define_boolexpr(@_);
         my %params = ($bx->params_list, @extra);
