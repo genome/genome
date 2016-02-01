@@ -373,9 +373,7 @@ sub _resolve_disk_group_name_for_build {
 sub _resolve_workflow_for_build {
     my ($self, $build, $optional_lsf_queue) = @_;
 
-    if ($self->can('_execute_build') or $self->processing_profile->can('_execute_build')) {
-        #TODO remove pp._execute_builds
-
+    if ($self->can('_execute_build')) {
         # Create a one-step workflow if '_execute_build' is defined.
         my $workflow = Genome::WorkflowBuilder::DAG->create(
             name => $build->workflow_name,

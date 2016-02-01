@@ -38,14 +38,10 @@ sub execute {
     my $method_name = $self->method_name;
 
     my $model = $build->model;
-    my $pp = $build->processing_profile; #TODO remove after '_execute_build's are all moved to model subclasses.
 
     my $rv;
     if ($model->can($method_name)) {
         $rv = $model->$method_name($build);
-    }
-    elsif ($pp->can($method_name)) {
-        $rv = $pp->$method_name($build);
     }
 
     die $method_name . ' returned undef' if !defined $rv;
