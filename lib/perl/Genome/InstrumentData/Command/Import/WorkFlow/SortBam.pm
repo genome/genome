@@ -3,10 +3,13 @@ package Genome::InstrumentData::Command::Import::WorkFlow::SortBam;
 use strict;
 use warnings;
 
+require File::Basename;
+
 use Genome;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SortBam { 
     is => 'Command::V2',
+    roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
     has_input => [
         bam_path => {
             is => 'Text',
@@ -17,22 +20,28 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SortBam {
         output_bam_path => {
             is => 'Text',
             calculate_from => [qw/ sorted_bam_prefix /],
-            calculate => q( return $sorted_bam_prefix.'.bam'; ),
+            calculate => q| return join('.', $sorted_bam_prefix, 'bam'); |,
             doc => 'The path of the sorted bam.',
         },
     ],
-    has_optional_calculated => [
-        sorted_bam_prefix => {
+    has_optional_calculated => {
+        sorted_bam_prefix_basename => {
             is => 'Text',
             calculate_from => [qw/ bam_path /],
-            calculate => q(
-                my $sorted_bam_prefix = $bam_path;
-                $sorted_bam_prefix =~ s/\.bam$/.sorted/;
-                return $sorted_bam_prefix;
-            ),
+            calculate => q|
+                my $sorted_bam_prefix_basename = File::Basename::basename($bam_path);
+                $sorted_bam_prefix_basename =~ s/\.bam$/.sorted/;
+                return $sorted_bam_prefix_basename;
+            |,
+            doc => 'The prefix basename of the sorted bam.',
+        },
+        sorted_bam_prefix => {
+            is => 'Text',
+            calculate_from => [qw/ working_directory sorted_bam_prefix_basename /],
+            calculate => q| File::Spec->join($working_directory, $sorted_bam_prefix_basename); |,
             doc => 'The prefix of the sorted bam.',
         },
-    ],
+    },
 };
 
 sub execute {

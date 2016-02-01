@@ -3,6 +3,7 @@
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
     $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+    $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
 }
 
 use strict;
@@ -27,6 +28,7 @@ Genome::Sys->create_symlink($test_dir.'/'.$unsorted_bam_base_name.'.flagstat', $
 ok(-s $bam_path.'.flagstat', 'linked unsorted bam flagstat path');
 
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SortBam->execute(
+    working_directory => $tmp_dir,
     bam_path => $bam_path,
 );
 ok($cmd->result, 'execute');
