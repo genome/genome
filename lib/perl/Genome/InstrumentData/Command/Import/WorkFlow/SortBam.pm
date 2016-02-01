@@ -19,26 +19,19 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SortBam {
     has_output => [ 
         output_bam_path => {
             is => 'Text',
-            calculate_from => [qw/ sorted_bam_prefix /],
-            calculate => q| return join('.', $sorted_bam_prefix, 'bam'); |,
+            calculate_from => [qw/ bam_path /],
+            calculate => q| return $self->get_working_bam_path_with_new_extension($bam_path, 'sorted'); |,
             doc => 'The path of the sorted bam.',
         },
     ],
     has_optional_calculated => {
-        sorted_bam_prefix_basename => {
-            is => 'Text',
-            calculate_from => [qw/ bam_path /],
-            calculate => q|
-                my $sorted_bam_prefix_basename = File::Basename::basename($bam_path);
-                $sorted_bam_prefix_basename =~ s/\.bam$/.sorted/;
-                return $sorted_bam_prefix_basename;
-            |,
-            doc => 'The prefix basename of the sorted bam.',
-        },
         sorted_bam_prefix => {
             is => 'Text',
-            calculate_from => [qw/ working_directory sorted_bam_prefix_basename /],
-            calculate => q| File::Spec->join($working_directory, $sorted_bam_prefix_basename); |,
+            calculate_from => [qw/ output_bam_path /],
+            calculate => q|
+                $output_bam_path =~ s/\.bam$//;
+                return $output_bam_path;
+            |,
             doc => 'The prefix of the sorted bam.',
         },
     },

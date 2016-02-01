@@ -17,15 +17,8 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam {
     has_output => {
         output_bam_path => {
             is => 'Text',
-            calculate_from => [qw/ working_directory bam_path /],
-            calculate => q|
-                return File::Spec->join(
-                    $working_directory,
-                    Genome::InstrumentData::Command::Import::WorkFlow::Helpers->insert_extension_into_bam_path(
-                        File::Basename::basename($bam_path), 'clean'
-                    ),
-                );
-            |,
+            calculate_from => [qw/ bam_path /],
+            calculate => q| $self->get_working_bam_path_with_new_extension($bam_path, 'clean'); |,
             doc => 'The path of the clean bam.',
         },
     },
