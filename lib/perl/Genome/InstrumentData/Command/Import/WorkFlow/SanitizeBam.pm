@@ -7,6 +7,7 @@ use Genome;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam { 
     is => 'Command::V2',
+    roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
     has_input => {
         bam_path => {
             is => 'Text',
@@ -16,11 +17,15 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam {
     has_output => {
         output_bam_path => {
             is => 'Text',
-            calculate_from => [qw/ bam_path /],
-            calculate => q{
-                $bam_path =~ s/(\.bam)$/.clean$1/;
-                return $bam_path;
-            },
+            calculate_from => [qw/ working_directory bam_path /],
+            calculate => q|
+                return File::Spec->join(
+                    $working_directory,
+                    Genome::InstrumentData::Command::Import::WorkFlow::Helpers->insert_extension_into_bam_path(
+                        File::Basename::basename($bam_path), 'clean'
+                    ),
+                );
+            |,
             doc => 'The path of the clean bam.',
         },
     },
