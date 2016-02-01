@@ -138,9 +138,6 @@ class Genome::Model {
             doc => 'username to run builds as',
         },
         creation_date => {
-            # TODO: this is redundant with the model creation event.
-            # Rails standard is created_at and updated_at.
-            # Switching from timestamp in Oracle simplifies querying.  Not sure about postgres.
             is => 'DateTime',
             doc => 'the time at which the model was defined',
         },
