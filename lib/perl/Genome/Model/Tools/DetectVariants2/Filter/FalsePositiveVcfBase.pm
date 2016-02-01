@@ -4,8 +4,6 @@ use warnings;
 use strict;
 
 use Genome;
-use Workflow;
-use Workflow::Simple;
 use Carp;
 use Data::Dumper;
 use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line', 'get_samples_from_header');
@@ -621,81 +619,50 @@ sub generate_and_run_readcounts_in_parallel {
     my ($sample_names) = $self->get_all_sample_names_and_bam_paths;
     %inputs = $self->add_per_bam_params_to_input(%inputs);
 
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name=> "FalsePositiveVcf parallel readcount file creation",
-        input_properties => [
-        keys %inputs
-        ],
-        output_properties => [
-        'output',
-        ],
     );
+
     for my $sample (@$sample_names) {
-        my $op = $workflow->add_operation(
+        my $op = Genome::WorkflowBuilder::Command->create(
             name=>"readcount creation for $sample",
-            operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Sam::Readcount"),
+            command => "Genome::Model::Tools::Sam::Readcount",
         );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"reference_fasta",
-            right_operation=>$op,
-            right_property=>"reference_fasta",
+        $workflow->add_operation($op);
+        for my $property (qw(reference_fasta region_list use_version minimum_base_quality)) {
+            $workflow->connect_input(
+                input_property => $property,
+                destination => $op,
+                destination_property => $property,
+            );
+        }
+
+        $workflow->connect_input(
+            input_property => "bam_$sample",
+            destination => $op,
+            destination_property => "bam_file",
         );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"region_list",
-            right_operation=>$op,
-            right_property=>"region_list",
+        $workflow->connect_input(
+            input_property => "readcounts_$sample",
+            destination => $op,
+            destination_property => "output_file",
         );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"use_version",
-            right_operation=>$op,
-            right_property=>"use_version",
-        );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"minimum_base_quality",
-            right_operation=>$op,
-            right_property=>"minimum_base_quality",
-        );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"bam_$sample",
-            right_operation=>$op,
-            right_property=>"bam_file",
-        );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"readcounts_$sample",
-            right_operation=>$op,
-            right_property=>"output_file",
-        );
-        $workflow->add_link(
-            left_operation=>$op,
-            left_property=>"output_file",
-            right_operation=>$workflow->get_output_connector,
-            right_property=>"output",
+        $workflow->connect_output(
+            source => $op,
+            source_property => "output_file",
+            output_property => "output_$sample",
         );
     }
 
     my $log_dir = $self->output_directory;
-    if(Workflow::Model->parent_workflow_log_dir) {
-        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
+        $log_dir = $parent_dir;
     }
-    $workflow->log_dir($log_dir);
+    $workflow->recursively_set_log_dir($log_dir);
 
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
-    }
-
-    Genome::Sys->disconnect_default_handles;
     $self->debug_message("Now launching readcount generation jobs");
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
+    my $result = $workflow->execute(inputs => \%inputs);
     unless($result) {
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         die $self->error_message("parallel readcount generation workflow did not return correctly.");
     }
 
