@@ -113,9 +113,12 @@ sub execute {
             last; 
         }
         $self->_total_command_count($self->_total_command_count + 1);
-        if (!$self->force && ($model->builds_with_status('Running') or $model->builds_with_status('Scheduled'))) {
-            $self->append_error($model->__display_name__, "Model already has running or scheduled builds. Use the '--force' option to override this and start a new build.");
-            next;
+        if(!$self->force) {
+            my @existing_builds = $model->builds(status => ['Running', 'Scheduled']);
+            if (@existing_builds) {
+                $self->append_error($model->__display_name__, "Model already has running or scheduled builds. Use the '--force' option to override this and start a new build.");
+                next;
+            }
         }
         if ($self->skip_succeeded and $model->status eq 'Succeeded') {
             my $msg = 'Skipping succeeded model ' . $model->__display_name__;

@@ -305,29 +305,29 @@ sub last_complete_build_id {
 
 sub abandoned_builds {
     my $self = shift;
-    my @abandoned_builds = $self->builds_with_status('Abandoned');
+    my @abandoned_builds = $self->builds(status => 'Abandoned');
     return @abandoned_builds;
 }
 sub failed_builds {
     my $self = shift;
-    my @failed_builds = $self->builds_with_status('Failed');
+    my @failed_builds = $self->builds(status => 'Failed');
     return @failed_builds;
 }
 sub running_builds {
     my $self = shift;
-    my @running_builds = $self->builds_with_status('Running');
+    my @running_builds = $self->builds(status => 'Running');
     return @running_builds;
 }
 sub scheduled_builds {
     my $self = shift;
-    my @scheduled_builds = $self->builds_with_status('Scheduled');
+    my @scheduled_builds = $self->builds(status => 'Scheduled');
     return @scheduled_builds;
 }
 
 sub current_running_build {
     my $self = shift;
     my @running_builds = $self->running_builds;
-    my $current_running_build = pop(@running_builds);
+    my $current_running_build = shift(@running_builds);
     return $current_running_build;
 }
 
