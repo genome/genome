@@ -5,10 +5,38 @@ use warnings FATAL => qw(all);
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(parse_lsf_params);
+our @EXPORT_OK = qw(parse_lsf_params parse_resource_requirements);
 
 use Getopt::Long qw(GetOptionsFromString);
 use IO::String;
+
+sub parse_resource_requirements {
+    my ($res_req) = @_;
+    $res_req = '' unless defined $res_req;
+
+    # Platform LSF Admin Guide
+    # About resource requirement strings
+
+    # Simple syntax
+    # select[selection_string] order[order_string] rusage[usage_string [, usage_string]
+    # [|| usage_string] ...] span[span_string] same[same_string] cu[cu_string] affinity[affinity_string]
+    my $simple_string = qr/
+        \s*
+            \w+\[ [^\]]+ \]
+        (\s+\w+\[ [^\]]+ \])*
+        \s*
+    /xms;
+
+    # Compound syntax
+    # num1*{simple_string1} + num2*{simple_string2} + ...
+    my $compound_string = qr/
+        \d+\*{$simple_string}
+        (\s*\+\s*\d+\*{$simple_string})*
+    /xms;
+
+    my $admissable_res_req = qr/^( | $simple_string | $compound_string )$/xms;
+    return $res_req =~ $admissable_res_req;
+}
 
 sub parse_lsf_params {
     my ($lsf_param_string) = @_;
@@ -34,14 +62,23 @@ sub _parse_lsf_params {
         _create_getopt_specs($lsf_params{options}, _valid_options()),
         _create_getopt_specs($lsf_params{rLimits}, _valid_rlimits()));
 
-    return ($parse_ok, \%lsf_params, $message);
+    my $res_req = exists($lsf_params{options}{resReq})
+        ? $lsf_params{options}{resReq} : '';
+
+    if ($parse_ok && !parse_resource_requirements($res_req)) {
+        return (0, \%lsf_params, 'Invalid resource requirements specification');
+    }
+    else {
+        return ($parse_ok, \%lsf_params, $message);
+    }
 }
 
 sub _get_options_from_string {
     my $getopt_fh = IO::String->new;
     local *STDERR = $getopt_fh;
-    my $ret = GetOptionsFromString(@_);
-    return ($ret, ${$getopt_fh->string_ref});
+    my ($ret, $args) = GetOptionsFromString(@_);
+    my $parse_ok = $ret && (scalar @$args == 0);
+    return ($parse_ok, ${$getopt_fh->string_ref});
 }
 
 sub _create_getopt_specs {
