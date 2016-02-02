@@ -26,7 +26,7 @@ sub _jar_name {
 # full path to jar file, should not typically be overridden
 sub _jar_path {
     my $self = shift;
-    return $self->picard_path if $self->version_newer_than('1.123');
+    return $self->picard_path if $self->version_uses_single_jar;
     return File::Spec->catfile($self->picard_path, $self->_jar_name);
 }
 
@@ -44,7 +44,7 @@ sub _java_class_name {
     }
     # Only one JAR file exists for version older than 1.124
     # Instead of the class name, only the sub-command name is necessary
-    if ($self->version_newer_than('1.123')) {
+    if ($self->version_uses_single_jar) {
         my @last_class = split(/\./,$class[-1]);
         #The last class in the array or . delimited string is the subcommand name
         return $last_class[-1];
@@ -161,7 +161,7 @@ sub build_cmdline_list {
         sprintf('-XX:MaxPermSize=%dm', $self->maximum_permgen_memory),
         split(' ', $jvm_options),
     );
-    if ($self->version_newer_than('1.123')) {
+    if ($self->version_uses_single_jar) {
         push @cmdline, (
             '-jar',
             $self->_jar_path,
@@ -172,7 +172,6 @@ sub build_cmdline_list {
             sprintf('/usr/share/java/ant.jar:%s', $self->_jar_path),
         );
     }
-    unless ($self->_java_class_name) {die;}
     push @cmdline, (
         $self->_java_class_name,
         $self->_cmdline_args,
