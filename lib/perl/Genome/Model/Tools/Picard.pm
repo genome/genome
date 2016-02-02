@@ -268,20 +268,28 @@ sub path_for_picard_version {
     $path = '/usr/share/java/picard-tools' . $version;
     return $path if(-d $path);
 
+    if ($class->version_newer_than('1.123')) {
+        return '/usr/share/java/';
+    }
+
     die 'No path found for picard version: '.$version;
 }
 
 sub installed_picard_versions {
-    my @files = glob('/usr/share/java/picard-tools*');
+    my @files = glob('/usr/share/java/picard*');
 
     my @versions;
     for my $f (@files) {
         if($f =~ /picard-tools([\d\.]+)\/?$/) {
             push @versions, $1;
         }
+        # Version 1.124 and later has a single JAR file
+        if ($f =~ /picard-([\d\.]+)\.jar$/) {
+            push @versions, $1;
+        }
     }
 
-    return sort { __PACKAGE__->version_compare($b, $a) } @versions;
+    return sort { __PACKAGE__->version_compare($b, $a) } uniq @versions;
 }
 
 sub default_picard_version {
