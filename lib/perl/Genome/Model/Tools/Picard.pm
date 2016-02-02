@@ -266,10 +266,13 @@ sub path_for_picard_version {
 
     #Try the standard location
     $path = '/usr/share/java/picard-tools' . $version;
-    return $path if(-d $path);
+    return $path if (-d $path);
 
-    if ($class->version_newer_than('1.123')) {
-        return '/usr/share/java/';
+    # Newer versions install a single JAR file
+    # return it instead of directory
+    if ($class->version_compare($version, '1.123') > 0) {
+        $path = '/usr/share/java/picard-'. $version .'.jar';
+        return $path if (-f $path);
     }
 
     die 'No path found for picard version: '.$version;
