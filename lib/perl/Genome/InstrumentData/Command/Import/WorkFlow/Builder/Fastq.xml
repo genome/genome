@@ -31,6 +31,7 @@
   <operation name="sort bam">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::InstrumentData::Command::Import::WorkFlow::SortBam">
       <inputproperty>bam_path</inputproperty>
+      <inputproperty>working_directory</inputproperty>
       <outputproperty>output_bam_path</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
@@ -52,6 +53,7 @@
   <link fromOperation="input connector" fromProperty="library" toOperation="create instrument data" toProperty="library"/>
   <link fromOperation="input connector" fromProperty="library" toOperation="fastqs to bam" toProperty="library"/>
   <link fromOperation="input connector" fromProperty="working_directory" toOperation="fastqs to bam" toProperty="working_directory"/>
+  <link fromOperation="input connector" fromProperty="working_directory" toOperation="sort bam" toProperty="working_directory"/>
   <link fromOperation="input connector" fromProperty="source_paths" toOperation="verify not imported" toProperty="source_paths"/>
   <link fromOperation="input connector" fromProperty="working_directory" toOperation="verify not imported" toProperty="working_directory"/>
   <link fromOperation="sort bam" fromProperty="output_bam_path" toOperation="create instrument data" toProperty="bam_paths"/>

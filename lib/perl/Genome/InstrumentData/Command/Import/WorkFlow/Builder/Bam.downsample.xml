@@ -24,6 +24,7 @@
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam">
       <inputproperty>bam_path</inputproperty>
       <inputproperty>downsample_ratio</inputproperty>
+      <inputproperty>working_directory</inputproperty>
       <outputproperty>output_bam_path</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
@@ -31,6 +32,7 @@
   <operation name="sanitize bam">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam">
       <inputproperty>bam_path</inputproperty>
+      <inputproperty>working_directory</inputproperty>
       <outputproperty>output_bam_path</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
@@ -38,6 +40,7 @@
   <operation name="sort bam">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::InstrumentData::Command::Import::WorkFlow::SortBam">
       <inputproperty>bam_path</inputproperty>
+      <inputproperty>working_directory</inputproperty>
       <outputproperty>output_bam_path</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
@@ -45,6 +48,7 @@
   <operation name="split bam by read group">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup">
       <inputproperty>bam_path</inputproperty>
+      <inputproperty>working_directory</inputproperty>
       <outputproperty>output_bam_paths</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
@@ -65,6 +69,10 @@
   <link fromOperation="input connector" fromProperty="instrument_data_properties" toOperation="create instrument data" toProperty="instrument_data_properties"/>
   <link fromOperation="input connector" fromProperty="library" toOperation="create instrument data" toProperty="library"/>
   <link fromOperation="input connector" fromProperty="downsample_ratio" toOperation="downsample bam" toProperty="downsample_ratio"/>
+  <link fromOperation="input connector" fromProperty="working_directory" toOperation="downsample bam" toProperty="working_directory"/>
+  <link fromOperation="input connector" fromProperty="working_directory" toOperation="sanitize bam" toProperty="working_directory"/>
+  <link fromOperation="input connector" fromProperty="working_directory" toOperation="sort bam" toProperty="working_directory"/>
+  <link fromOperation="input connector" fromProperty="working_directory" toOperation="split bam by read group" toProperty="working_directory"/>
   <link fromOperation="input connector" fromProperty="source_paths" toOperation="verify not imported" toProperty="source_paths"/>
   <link fromOperation="input connector" fromProperty="working_directory" toOperation="verify not imported" toProperty="working_directory"/>
   <link fromOperation="sanitize bam" fromProperty="output_bam_path" toOperation="downsample bam" toProperty="bam_path"/>

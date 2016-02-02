@@ -94,6 +94,11 @@ sub _add_sanitize_bam_op_to_workflow {
         command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($sanitize_bam_op);
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $sanitize_bam_op,
+        destination_property => 'working_directory',
+    );
     $self->_dag->create_link(
         source => $previous_op,
         source_property => 'output_bam_path',
@@ -115,6 +120,11 @@ sub _add_sort_bam_op_to_workflow {
         command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($sort_bam_op);
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $sort_bam_op,
+        destination_property => 'working_directory',
+    );
     $self->_dag->create_link(
         source => $previous_op,
         source_property => 'output_path',
@@ -137,6 +147,11 @@ sub _add_downsample_bam_op_to_workflow {
     );
     $self->_dag->add_operation($downsample_bam_op);
 
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $downsample_bam_op,
+        destination_property => 'working_directory',
+    );
     $self->_dag->connect_input(
         input_property => 'downsample_ratio',
         destination => $downsample_bam_op,
@@ -163,6 +178,11 @@ sub _add_split_bam_by_rg_op_to_workflow {
         command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($split_bam_by_rg_op);
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $split_bam_by_rg_op,
+        destination_property => 'working_directory',
+    );
     $self->_dag->create_link(
         source => $previous_op,
         source_property => 'output_bam_path',
