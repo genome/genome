@@ -7,10 +7,13 @@ use Genome;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam { 
     is => 'Command::V2',
-    roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
+    roles => [qw/
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::RemovesInputFiles
+    /],
     has_input => {
         bam_path => {
-            is => 'Text',
+            is => 'File',
             doc => 'The path of the dirty bam to clean.',
         }
     },
@@ -37,8 +40,6 @@ sub execute {
     my $verify_read_count_ok = $self->_verify_read_count;
     return if not $verify_read_count_ok;
 
-    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->bam_path);
-    return if not $cleanup_ok;
 
     $self->debug_message('Sanitize bam...done');
     return 1;

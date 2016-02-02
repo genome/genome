@@ -427,21 +427,6 @@ sub were_original_path_md5s_previously_imported {
     );
     return 1;
 }
-#<>#
-
-sub remove_paths_and_auxiliary_files {
-    my ($self, @paths) = @_;
-
-    Carp::confess('No source paths to remove!') if not @paths;
-
-    for my $path ( @paths ) {
-        for my $path_to_rm ( glob($path.'*') ) {
-            unlink $path_to_rm;
-        }
-    }
-
-    return 1;
-}
 
 sub work_flow_operation_class_from_name {
     my ($self, $name) = @_;

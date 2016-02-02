@@ -11,11 +11,14 @@ use Genome::InstrumentData::Command::Import::WorkFlow::Helpers;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam {
     is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithRequiredDownsampleRatio /],
-    roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
+    roles => [qw/
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::RemovesInputFiles
+    /],
     has_input => {
         bam_path => {
-            is => 'Genome::InstrumentData',
-            doc => 'Instrument data to use to create file to reimport.',
+            is => 'File',
+            doc => 'Bam to downsample.',
         },
     },
     has_output => {
@@ -37,9 +40,6 @@ sub execute {
 
     my $verify_read_count_ok = $self->_verify_read_count;
     return if not $verify_read_count_ok;
-
-    #my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->bam_path);
-    #return if not $cleanup_ok;
 
     $self->debug_message('Downsample bam...done');
     return 1;

@@ -148,13 +148,6 @@ ok(# c w/ downsample_ratio of 0.25 should be found
 );
 is($helpers->error_message, 'Instrument data was previously downsampled by a ratio of 0.25 and imported! Found existing instrument data: -9', 'correct error message');
 
-# rm source files
-ok(!eval{$helpers->remove_path_and_auxiliary_files();}, 'failed to remove source paths and md5s w/o source paths');
-Genome::Sys->create_symlink($test_dir.'/bam/v1/'.$bam_basename.'.md5-orig', $bam_path.'.md5-orig');
-Genome::Sys->create_symlink($test_dir.'/bam/v1/'.$bam_basename.'.md5-orig', $bam_path.'.random');
-ok($helpers->remove_paths_and_auxiliary_files($bam_path), 'remove source paths and md5s w/o source paths');
-ok(!glob($bam_path.'*'), 'removed path and auxillary files');
-
 # validators
 throws_ok(sub{ $helpers->is_downsample_ratio_invalid(); }, qr/No downsample ratio to check!/, 'is_downsample_ratio_invalid fails w/o downsample_ratio');
 
