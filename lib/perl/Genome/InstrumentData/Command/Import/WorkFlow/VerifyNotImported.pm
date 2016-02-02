@@ -21,12 +21,14 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
     has_output => {
         output_path => {
             is => 'Text',
-            calculate => q| my @source_paths = $self->source_paths; return $source_paths[0]; |,
+            calculate_from => [qw/ _output_paths /],
+            calculate => q| return $_output_paths->[0]; |,
         },
         output_paths => {
             is => 'Text',
             is_many => 1,
-            calculate => q| my @source_paths = $self->source_paths; return @source_paths; |,
+            calculate_from => [qw/ _output_paths /],
+            calculate => q| return @$_output_paths; |,
         },
         source_md5s => {
             is => 'Text',
@@ -38,6 +40,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
         helpers => {
             calculate => q( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get; ),
         },
+    },
+    has_optional_transient => {
+        _output_paths => { is => 'ARRAY', },
     },
 };
 
@@ -56,10 +61,14 @@ sub output_file_for_path {
 sub execute {
     my $self = shift;
 
-    my @md5s;
+    my (@output_paths, @md5s);
     for my $source_path ( $self->source_paths ) {
         my $source_file = $self->source_file_for_path($source_path);
         my $output_file = $self->output_file_for_path($source_path);
+
+        # Link source path to working_directory
+        Genome::Sys->create_symlink($source_path, $output_file->path) if not -e $output_file->path;
+        push @output_paths, $output_file->path;
 
         # Copy MD5 path for source file to working directory, if exists
         my $md5_path = $output_file->md5_path;
@@ -68,7 +77,7 @@ sub execute {
         }
         # Otherwise run it, saving to working directory
         else {
-            $self->helpers->run_md5($source_path, $md5_path);
+            $self->helpers->run_md5($output_file->path, $md5_path);
         }
         return if not -s $md5_path;
 
@@ -86,6 +95,7 @@ sub execute {
         return if $previously_imported;
     }
 
+    $self->_output_paths(\@output_paths);
     $self->source_md5s(\@md5s);
     return 1;
 }

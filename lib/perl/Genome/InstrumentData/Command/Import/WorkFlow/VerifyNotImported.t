@@ -18,19 +18,20 @@ my $tempdir1 = File::Temp::tempdir(CLEANUP => 1);
 my $tempdir2 = File::Temp::tempdir(CLEANUP => 1);
 
 # Run MD5
-my $source_path = File::Spec->join($tempdir1, $source_file_basename);
-symlink(File::Spec->join($test_dir, $source_file_basename),  $source_path);
+my $source_path = File::Spec->join($test_dir, $source_file_basename);
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->create(
     working_directory => $tempdir1,
     source_paths => [$source_path],
 );
-is_deeply([$cmd->output_path], [$cmd->output_paths], 'output_path and output_paths');
 my $source_file = $cmd->source_file_for_path($source_path);
 is($source_file->path, $source_path, 'source_file');
 my $output_file = $cmd->output_file_for_path($source_path);
 is($output_file->path, File::Spec->join($tempdir1, File::Basename::basename($source_path)), 'output_file');
+ok(!-e $output_file->path, 'output path does not exist');
 ok(!$output_file->md5_path_size, 'MD5 path does not exist');
 ok($cmd->execute, 'execute');
+is_deeply([$cmd->output_path], [$cmd->output_paths], 'output_path and output_paths');
+ok(-l $output_file->path, 'linked output path');
 ok($output_file->md5_path_size, 'MD5 path exists');
 
 # Copy the MD5 that was created above
@@ -39,8 +40,10 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->cre
     source_paths => [$source_path],
 );
 $output_file = $cmd->output_file_for_path($source_path);
+ok(!-e $output_file->path, 'output path does not exist');
 ok(!$output_file->md5_path_size, 'MD5 path does not exist');
 ok($cmd->execute, 'execute');
+ok(-l $output_file->path, 'linked output path');
 ok($output_file->md5_path_size, 'MD5 path exists');
 unlink $output_file->md5_path; # remove since we are using the same directory below
 
