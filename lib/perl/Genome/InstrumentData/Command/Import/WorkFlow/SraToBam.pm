@@ -19,7 +19,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SraToBam {
         },
     ],
     has_output => {
-        output_bam_path => {
+        output_path => {
             calculate_from => [qw/ working_directory sra_basename /],
             calculate => q| return File::Spec->join($working_directory, $sra_basename.'.bam'); |,
             doc => 'The path of the bam dumped from the SRA path.',
@@ -43,7 +43,7 @@ sub execute {
     return if not $dump_ok;
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $flagstat = $helpers->validate_bam($self->output_bam_path);
+    my $flagstat = $helpers->validate_bam($self->output_path);
     unless ($flagstat) {
         $self->error_message('Failed to validate bam.');
         return;
@@ -77,18 +77,18 @@ sub _dump_bam_from_sra {
 
     my $sra_path = $self->sra_path;
     $self->debug_message("SRA path: $sra_path");
-    my $output_bam_path = $self->output_bam_path;
-    $self->debug_message("Output bam path: $output_bam_path");
+    my $output_path = $self->output_path;
+    $self->debug_message("Output bam path: $output_path");
 
     # Capturing stderr of command in case the command fails so that an
     # informative error message can be recorded.  Using a temp file instead of
     # a temp var to protect against a potentially large output.
-    my $stderr = $output_bam_path.'.err';
+    my $stderr = $output_path.'.err';
 
     try {
         Genome::Sys->shellcmd(
             cmd             => "/usr/bin/sam-dump --primary --unaligned $sra_path | samtools view -h -b -S -",
-            redirect_stdout => $output_bam_path,
+            redirect_stdout => $output_path,
             redirect_stderr => $stderr,
         );
     }

@@ -41,8 +41,8 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SraToBam->execute(
 ok($cmd->result, "execute sra to bam");
 
 is($cmd->sra_basename, $sra_basename, 'sra_basename');
-my $bam_path = $cmd->output_bam_path;
-ok(-s $bam_path, 'output_bam_path exists');
+my $bam_path = $cmd->output_path;
+ok(-s $bam_path, 'output_path exists');
 is($bam_path, File::Spec->join($tempdir, $sra_basename.'.bam'), 'output_bam_path correctly named');
 Genome::Utility::Test::compare_ok($bam_path.'.flagstat', $expected_bam_path.'.flagstat', 'flagstats match');
 
