@@ -46,7 +46,7 @@ sub execute {
 
     my $process = $self->work_flow_inputs->process;
     if ( $process ) {
-        $dag->log_dir( $process->log_directory );
+        $dag->recursively_set_log_dir( $process->log_directory );
     }
 
     my $inputs = $self->work_flow_inputs->as_hashref;
