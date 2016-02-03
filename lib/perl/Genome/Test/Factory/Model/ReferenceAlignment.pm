@@ -7,7 +7,7 @@ use warnings;
 
 use Genome;
 use Genome::Test::Factory::ProcessingProfile::ReferenceAlignment;
-use Genome::Test::Factory::Model::ReferenceSequence;
+use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Sample;
 
@@ -26,7 +26,7 @@ sub create_processing_profile_id {
 }
 
 sub create_reference_sequence_build {
-    my $m = Genome::Test::Factory::Model::ReferenceSequence->setup_object;
+    my $m = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object;
     my $b = Genome::Test::Factory::Build->setup_object(model_id => $m->id);
     return $b;
 }
