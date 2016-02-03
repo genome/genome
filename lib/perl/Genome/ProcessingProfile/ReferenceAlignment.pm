@@ -489,11 +489,6 @@ sub variant_detection_job_classes {
 sub merge_and_deduplication_job_classes {
     my $self = shift;
 
-    # this is hackish, but maq is a special case right now and hopefully it won't be here long
-    if ($self->read_aligner_name eq 'maq') {
-        return ('Genome::Model::Event::Build::ReferenceAlignment::DeduplicateLibraries');
-    }
-
     my @steps = (
         'Genome::Model::Event::Build::ReferenceAlignment::MergeAlignments',
     );
