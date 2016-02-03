@@ -172,7 +172,7 @@
                                     "numProcessors" : 4,
                                     "outFile" : "/tmp/ptero-lsf-logfile-b9246da9-c08d-43da-b470-adf0b7a37527.out",
                                     "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-b9246da9-c08d-43da-b470-adf0b7a37527.err --stdout /tmp/ptero-lsf-logfile-b9246da9-c08d-43da-b470-adf0b7a37527.out",
-                                    "preExecCmd" : "ptero-lsf-pre-exec",
+                                    "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
                                     "queue" : "short",
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
@@ -236,7 +236,7 @@
                                     "numProcessors" : 4,
                                     "outFile" : "/tmp/ptero-lsf-logfile-efb38deb-8d8c-4e07-94f6-afd17530b76d.out",
                                     "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-efb38deb-8d8c-4e07-94f6-afd17530b76d.err --stdout /tmp/ptero-lsf-logfile-efb38deb-8d8c-4e07-94f6-afd17530b76d.out",
-                                    "preExecCmd" : "ptero-lsf-pre-exec",
+                                    "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
                                     "queue" : "short",
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
@@ -300,7 +300,7 @@
                                     "numProcessors" : 4,
                                     "outFile" : "/tmp/ptero-lsf-logfile-983a1277-9aae-4993-8d8e-6d323b22c4b9.out",
                                     "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-983a1277-9aae-4993-8d8e-6d323b22c4b9.err --stdout /tmp/ptero-lsf-logfile-983a1277-9aae-4993-8d8e-6d323b22c4b9.out",
-                                    "preExecCmd" : "ptero-lsf-pre-exec",
+                                    "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
                                     "queue" : "short",
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
@@ -364,7 +364,7 @@
                                     "numProcessors" : 4,
                                     "outFile" : "/tmp/ptero-lsf-logfile-92ab40c7-370f-4084-a250-b3265b0f9319.out",
                                     "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-92ab40c7-370f-4084-a250-b3265b0f9319.err --stdout /tmp/ptero-lsf-logfile-92ab40c7-370f-4084-a250-b3265b0f9319.out",
-                                    "preExecCmd" : "ptero-lsf-pre-exec",
+                                    "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
                                     "queue" : "short",
                                     "resReq" : "rusage[mem=200:gtmp=5]"
                                  },
