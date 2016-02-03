@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Cwd qw();
 use Genome::Sys::LSF::ResourceParser qw(parse_lsf_params);
+use Data::UUID;
 
 
 class Genome::WorkflowBuilder::Command {
@@ -150,7 +151,33 @@ sub _get_ptero_lsf_parameters {
     $set_lsf_option->('queue', $attributes{lsfQueue});
     $set_lsf_option->('projectName', $attributes{lsfProject});
 
+    my ($stderr, $stdout, $postexec) = _get_lsf_log_paths();
+    $lsf_params->{options}->{errFile} = $stderr;
+    $lsf_params->{options}->{outFile} = $stdout;
+
+    # Redirect stdout/err of post-exec command to file for debugging.
+    # Clean up that file if post-exec exits normally.
+    $lsf_params->{options}->{postExecCmd} = sprintf(
+        "bash -c '%s' > %s 2>&1 && rm -f %s",
+        "ptero-lsf-post-exec --stderr $stderr --stdout $stdout",
+        $postexec, $postexec
+    );
+
+    # Unlike post-exec, stdout/err of pre-exec command gets written to
+    # errFile or outFile by lsf.  We want to exit 0 no matter what so
+    # that the job doesn't get caught in a PEND->RUN->PEND loop.
+    $lsf_params->{options}->{preExecCmd} = "ptero-lsf-pre-exec; exit 0;";
+
     return $lsf_params;
+}
+
+sub _get_lsf_log_paths {
+    my $ug = Data::UUID->new();
+    my $uuid = $ug->create();
+    my $uuid_str = $ug->to_string($uuid);
+
+    my $base = sprintf("/tmp/ptero-lsf-logfile-%s", $uuid_str);
+    return ($base . '.err', $base . '.out', $base . "-postexec.log");
 }
 
 
