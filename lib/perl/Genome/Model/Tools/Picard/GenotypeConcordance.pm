@@ -96,7 +96,9 @@ EOS
 
 sub minimum_version_required { return 1.122; }
 sub _jar_name { 'GenotypeConcordance.jar'; }
-sub _java_class { 'picard.vcf.GenotypeConcordance'; }
+sub _java_class {
+    return qw(picard vcf GenotypeConcordance);
+}
 
 sub _shellcmd_extra_params {
     my $self = shift;

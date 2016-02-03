@@ -60,7 +60,9 @@ EOS
 
 sub minimum_version_required { '1.77'; }
 sub _jar_name { 'FilterSamReads.jar'; }
-sub _java_class { 'net.sf.picard.sam.FilterSamReads'; }
+sub _java_class {
+    return qw(picard sam FilterSamReads);
+}
 
 sub _shellcmd_extra_params {
     my $self = shift;
