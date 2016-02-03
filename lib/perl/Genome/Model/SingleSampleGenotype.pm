@@ -67,10 +67,6 @@ class Genome::Model::SingleSampleGenotype {
             via => 'target_region_set',
             to => 'name',
         },
-        reference_sequence_build_id => {
-            via => 'reference_sequence_build',
-            to => 'id'
-        },
     ],
     has_classwide => [
         aligner_name => {
@@ -129,13 +125,6 @@ sub add_region_of_interest_set {
 
     my $rois = Genome::FeatureList->get(@_) or die 'Failed to get FeatureList';
     $self->region_of_interest_set($rois);
-}
-
-sub add_reference_sequence_build {
-    my $self = shift;
-
-    my $build = Genome::Model::Build->get(@_);
-    $self->reference_sequence_build($build);
 }
 
 sub add_qc_genotype_vcf_file {
