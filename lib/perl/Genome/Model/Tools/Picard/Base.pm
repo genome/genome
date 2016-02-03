@@ -26,6 +26,7 @@ sub _jar_name {
 # full path to jar file, should not typically be overridden
 sub _jar_path {
     my $self = shift;
+    return $self->picard_path if $self->version_uses_single_jar;
     return File::Spec->catfile($self->picard_path, $self->_jar_name);
 }
 
@@ -40,6 +41,13 @@ sub _java_class_name {
     my @class = $self->_java_class;
     if ($self->version_older_than('1.114')) {
         unshift @class, qw(net sf);
+    }
+    # Only one JAR file exists for version older than 1.124
+    # Instead of the class name, only the sub-command name is necessary
+    if ($self->version_uses_single_jar) {
+        my @last_class = split(/\./,$class[-1]);
+        #The last class in the array or . delimited string is the subcommand name
+        return $last_class[-1];
     }
     return join '.', @class;
 }
@@ -147,17 +155,28 @@ sub _redirects {
 sub build_cmdline_list {
     my $self = shift;
     my $jvm_options = $self->additional_jvm_options || '';
-
-    return (
+    my @cmdline = (
         $self->java_interpreter,
         sprintf('-Xmx%dm', int(1024 * $self->maximum_memory)),
         sprintf('-XX:MaxPermSize=%dm', $self->maximum_permgen_memory),
         split(' ', $jvm_options),
-        '-cp',
-        sprintf('/usr/share/java/ant.jar:%s', $self->_jar_path),
-        $self->_java_class_name,
-        $self->_cmdline_args
     );
+    if ($self->version_uses_single_jar) {
+        push @cmdline, (
+            '-jar',
+            $self->_jar_path,
+        );
+    } else {
+        push @cmdline, (
+            '-cp',
+            sprintf('/usr/share/java/ant.jar:%s', $self->_jar_path),
+        );
+    }
+    push @cmdline, (
+        $self->_java_class_name,
+        $self->_cmdline_args,
+    );
+    return @cmdline;
 }
 
 sub build_cmdline_string {

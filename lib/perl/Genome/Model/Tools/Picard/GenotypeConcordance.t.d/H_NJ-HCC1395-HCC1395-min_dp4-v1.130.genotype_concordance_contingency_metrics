@@ -1,0 +1,11 @@
+## htsjdk.samtools.metrics.StringHeader
+# picard.vcf.GenotypeConcordance TRUTH_VCF=GenotypeConcordance.t.d/H_NJ-HCC1395-HCC1395-microarray-0.01.vcf CALL_VCF=GenotypeConcordance.t.d/H_NJ-HCC1395-HCC1395-calls_x_microarray-0.01.vcf OUTPUT=/gscuser/jwalker/git/genome/lib/perl/Genome/Model/Tools/Picard/GenotypeConcordance.t.d/test-H_NJ-HCC1395-HCC1395-1.130 TRUTH_SAMPLE=H_NJ-HCC1395-HCC1395 CALL_SAMPLE=H_NJ-HCC1395-HCC1395 INTERSECT_INTERVALS=true MIN_GQ=0 MIN_DP=4 OUTPUT_ALL_ROWS=false USE_VCF_INDEX=false TMP_DIR=[/tmp/gm-genome_sys-2016-02-02_14_39_59--gELT/Picard-GlHz] VALIDATION_STRINGENCY=SILENT MAX_RECORDS_IN_RAM=500000    VERBOSITY=INFO QUIET=false COMPRESSION_LEVEL=5 CREATE_INDEX=false CREATE_MD5_FILE=false
+## htsjdk.samtools.metrics.StringHeader
+# Started on: Tue Feb 02 14:40:00 CST 2016
+
+## METRICS CLASS	picard.vcf.GenotypeConcordanceContingencyMetrics
+VARIANT_TYPE	TRUTH_SAMPLE	CALL_SAMPLE	TP_COUNT	TN_COUNT	FP_COUNT	FN_COUNT	EMPTY_COUNT
+SNP	H_NJ-HCC1395-HCC1395	H_NJ-HCC1395-HCC1395	2526	617	13	165	175
+INDEL	H_NJ-HCC1395-HCC1395	H_NJ-HCC1395-HCC1395	0	0	0	0	0
+
+

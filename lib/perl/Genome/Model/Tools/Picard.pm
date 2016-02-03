@@ -243,6 +243,20 @@ sub enforce_minimum_version_required {
     return 1;
 }
 
+sub _version_uses_single_jar {
+    my $class = shift;
+    my $version = shift;
+    if ($class->version_compare($version, '1.123') > 0) {
+        return 1;
+    }
+    return;
+}
+
+sub version_uses_single_jar {
+    my $self = shift;
+    return $self->_version_uses_single_jar($self->use_version);
+}
+
 # in decreasing order of recency
 sub available_picard_versions {
     my $self = shift;
@@ -266,22 +280,33 @@ sub path_for_picard_version {
 
     #Try the standard location
     $path = '/usr/share/java/picard-tools' . $version;
-    return $path if(-d $path);
+    return $path if (-d $path);
+
+    # Newer versions install a single JAR file
+    # return it instead of directory
+    if ( $class->_version_uses_single_jar($version) ) {
+        $path = '/usr/share/java/picard-'. $version .'.jar';
+        return $path if (-f $path);
+    }
 
     die 'No path found for picard version: '.$version;
 }
 
 sub installed_picard_versions {
-    my @files = glob('/usr/share/java/picard-tools*');
+    my @files = glob('/usr/share/java/picard*');
 
     my @versions;
     for my $f (@files) {
         if($f =~ /picard-tools([\d\.]+)\/?$/) {
             push @versions, $1;
         }
+        # Version 1.124 and later has a single JAR file
+        if ($f =~ /picard-([\d\.]+)\.jar$/) {
+            push @versions, $1;
+        }
     }
 
-    return sort { __PACKAGE__->version_compare($b, $a) } @versions;
+    return sort { __PACKAGE__->version_compare($b, $a) } uniq @versions;
 }
 
 sub default_picard_version {
@@ -315,6 +340,9 @@ sub _java_cmdline {
     # hack to workaround premature release of 1.123 with altered classnames
     if ($java_vm_cmd =~ /picard-tools.?1\.123/) {
         $java_vm_cmd =~ s/net\.sf\.picard\./picard./;
+    }
+    if ($self->version_uses_single_jar) {
+        die('The picard/java command line interface for version '. $self->use_version .' has changed.  Running the java vm directly with command '. $cmd .' is no longer supported.  Please consider updating the Genome command to use the picard GMT base class implementation to support the new interface.');
     }
 
     return $java_vm_cmd;
