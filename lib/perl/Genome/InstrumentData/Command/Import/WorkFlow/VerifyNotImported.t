@@ -45,7 +45,9 @@ ok(!$output_file->md5_path_size, 'MD5 path does not exist');
 ok($cmd->execute, 'execute');
 ok(-l $output_file->path, 'linked output path');
 ok($output_file->md5_path_size, 'MD5 path exists');
-unlink $output_file->md5_path; # remove since we are using the same directory below
+# remove since we are using the same directory below
+unlink $output_file->path;
+unlink $output_file->md5_path;
 
 # Previously Imported MD5
 my $instdata = Genome::InstrumentData::Imported->__define__(id => -11);
@@ -60,9 +62,11 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->exe
     working_directory => $tempdir2,
     source_paths => [$source_path],
 );
-ok(!$cmd->result, 'execute');
+ok(!$cmd->result, 'execute fails b/c instrument data was previously imported');
 is(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, 'Instrument data was previously imported! Found existing instrument data: -11', 'correct error');
 $output_file = $cmd->output_file_for_path($source_path);
+# remove since we are using the same directory below
+unlink $output_file->path;
 unlink $output_file->md5_path;
 
 # With downsampling
@@ -71,8 +75,10 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->exe
     source_paths => [$source_path],
     downsample_ratio => 0.25,
 );
-ok($cmd->result, 'execute');
+ok($cmd->result, 'execute succeeds when downsampling previously imported instrument data');
 $output_file = $cmd->output_file_for_path($source_path);
+# remove since we are using the same directory below
+unlink $output_file->path;
 unlink $output_file->md5_path;
 
 # previously imported...

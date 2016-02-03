@@ -67,6 +67,7 @@ sub execute {
         my $output_file = $self->output_file_for_path($source_path);
 
         # Link source path to working_directory
+        $self->fatal_message('Output file path exists! Cannot symlink to it! Are the source files in the working directory?') if -e $output_file->path;
         Genome::Sys->create_symlink($source_path, $output_file->path) if not -e $output_file->path;
         push @output_paths, $output_file->path;
 
