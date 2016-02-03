@@ -56,6 +56,11 @@ sub _run {
             $self->fatal_message('Could not %s for interval %s.', $mode, $interval);
         }
 
+        unless($ENV{UR_DBI_NO_COMMIT}) {
+            #save our progress after creating a new result
+            UR::Context->commit() or $self->fatal_message('Failed to commit after %s for interval %s.', $mode, $interval);
+        }
+
         $self->debug_message('Successfully %s for interval %s.', $mode, $interval);
     }
 
