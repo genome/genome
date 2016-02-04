@@ -7,19 +7,6 @@ use Genome;
 
 class Genome::ProcessingProfile::ReferenceAlignment {
     is => 'Genome::ProcessingProfile::Staged',
-    is_abstract => 1,
-    subclassify_by => 'subclass_name',
-    has => [
-        subclass_name => { is_mutable => 0,
-                           calculate_from => ['sequencing_platform'],
-                           calculate => sub {
-                                            my($sequencing_platform) = @_;
-                                            Carp::confess "No sequencing platform given to resolve subclass name" unless $sequencing_platform;
-                                            return 'Genome::ProcessingProfile::ReferenceAlignment::'.Genome::Utility::Text::string_to_camel_case($sequencing_platform);
-                                          }
-                         },
-    ],
-
     has_param => [
         sequencing_platform => {
             doc => 'The sequencing platform from whence the model data was generated',
