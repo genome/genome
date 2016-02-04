@@ -5,9 +5,8 @@ use warnings;
 
 require File::Basename;
 
-use UR::Role 'after';
-
 use Genome;
+use UR::Role 'after';
 
 role Genome::InstrumentData::Command::Import::WorkFlow::Role::RemovesInputFiles {
     has => {
