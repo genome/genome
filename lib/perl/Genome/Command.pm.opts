@@ -4810,6 +4810,8 @@ $Genome::Command::OPTS_SPEC = [
         ],
         'picard-version=s',
         [
+          '1.130',
+          '1.124',
           '1.123',
           '1.122'
         ],
