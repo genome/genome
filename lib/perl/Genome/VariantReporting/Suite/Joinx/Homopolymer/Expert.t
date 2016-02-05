@@ -5,13 +5,12 @@ use warnings FATAL => 'all';
 
 use Test::More;
 use above 'Genome';
-use Genome::Utility::Test qw(compare_ok);
+use Genome::Utility::Test qw(compare_ok get_test_dir);
 use Genome::VariantReporting::Framework::TestHelpers qw(
     get_translation_provider
     get_reference_build
     test_dag_xml
     test_dag_execute
-    get_test_dir
 );
 use Genome::VariantReporting::Framework::Plan::TestHelpers qw(
     set_what_interpreter_x_requires

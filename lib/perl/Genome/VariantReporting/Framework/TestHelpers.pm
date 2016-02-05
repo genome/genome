@@ -27,7 +27,6 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
     test_cmd_and_result_are_in_sync
-    get_test_dir
     get_translation_provider
     get_plan_object
     get_reference_build
@@ -68,7 +67,7 @@ sub get_reference_build {
     my %p = validate(@_, {
         version => {type => SCALAR},
     });
-    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
+    my $test_dir = Genome::Utility::Test->get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
 
     my $fasta_file = readlink(File::Spec->join($test_dir, 'reference.fasta'));
     return Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build($fasta_file);
@@ -78,7 +77,7 @@ sub get_translation_provider {
     my %p = validate(@_, {
         version => {type => SCALAR},
     });
-    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
+    my $test_dir = Genome::Utility::Test->get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
     my $fasta_file = readlink(File::Spec->join($test_dir, 'reference.fasta'));
     my @bam_results = setup_bam_results(
         File::Spec->join($test_dir, 'bam1.bam'),
@@ -206,16 +205,4 @@ sub test_dag_execute {
     my $diff = $differ->diff;
     is($diff, undef, "Found No differences between $vcf_path and (expected) $expected_vcf") ||
         diag $diff->to_string;
-}
-
-sub get_test_dir {
-    my ($pkg, $VERSION) = validate_pos(@_, 1, 1);
-
-    my $test_dir = Genome::Utility::Test->data_dir($pkg, "v$VERSION");
-    if (-d $test_dir) {
-        note "Found test directory ($test_dir)";
-    } else {
-        die "Failed to find test directory ($test_dir)";
-    }
-    return $test_dir;
 }
