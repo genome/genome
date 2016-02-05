@@ -17,6 +17,7 @@ our @EXPORT_OK = qw(
     is_equal_set
     run_ok
     strip_ansi
+    validate_using_test_db
 );
 
 use Test::More;
@@ -467,6 +468,18 @@ sub _command_execute_ok_builder {
         as => $subname,
         code => $sub,
     });
+}
+
+sub validate_using_test_db {
+    my $testdbserver_url = $ENV{TESTDBSERVER_URL}
+        or die "TESTDBSERVER_URL must be set to run this test.";
+
+    my $db_server = Genome::DataSource::GMSchema->server;
+    my ($db_host) = $db_server =~ m/host=([^;]+)/;
+
+    unless ($testdbserver_url =~ m/$db_host/) {
+        die "The Genome::DataSource::GMSchema->server must match the TESTDBSERVER_URL to run this test.";
+    }
 }
 
 
