@@ -6,8 +6,17 @@ use base 'Test::Builder::Module';
 
 use Exporter 'import';
 
-our @EXPORT_OK = qw(compare_ok run_ok capture_ok abort strip_ansi
-    command_execute_ok command_execute_fail_ok is_equal_set compare_dirs);
+our @EXPORT_OK = qw(
+    abort
+    capture_ok
+    command_execute_fail_ok
+    command_execute_ok
+    compare_dirs
+    compare_ok
+    is_equal_set
+    run_ok
+    strip_ansi
+);
 
 use Test::More;
 
