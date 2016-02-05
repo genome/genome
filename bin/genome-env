@@ -494,7 +494,7 @@ function setup_test_db {
 # from the test database, then deletes the test database
 function cleanup_test_db {
     echo "=> Removing disk allocations created during $THIS..."
-    genome model admin remove-disk-allocations-from-testdb
+    UR_DBI_NO_COMMIT=0 genome model admin remove-disk-allocations-from-testdb
     test-db delete database $TESTDBSERVER_DB_NAME > /dev/null
 }
 
