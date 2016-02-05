@@ -21,14 +21,14 @@ my $test_dir = __FILE__.'.d';
 my $picard_version = '1.130';
 
 # Inputs
-my $input_bam_file = $test_dir .'/cf651d3d8af5484a80bbe2f1498aab9b_chr22_1k.bam';
-my $read_list_file = $test_dir .'/chr22_unique_reads_100.txt';
+my $input_bam_file = File::Spec->join($test_dir, 'cf651d3d8af5484a80bbe2f1498aab9b_chr22_1k.bam');
+my $read_list_file = File::Spec->join($test_dir, 'chr22_unique_reads_100.txt');
 
 # Expected Outputs
-my $expected_bam_file = $test_dir .'/cf651d3d8af5484a80bbe2f1498aab9b_chr22_100-v'. $picard_version .'.bam';
+my $expected_bam_file = File::Spec->join($test_dir,'cf651d3d8af5484a80bbe2f1498aab9b_chr22_100-v'.$picard_version .'.bam');
 
 # Test Outputs
-my $output_bam_file = Genome::Sys->create_temp_file_path('cf651d3d8af5484a80bbe2f1498aab9b_chr22_100-v'.$picard_version .'.bam');
+my $output_bam_file = Genome::Sys->create_temp_file_path('cf651d3d8af5484a80bbe2f1498aab9b_chr22_100-v'. $picard_version .'.bam');
 
 my $cmd = $pkg->create(
    input_file => $input_bam_file,
