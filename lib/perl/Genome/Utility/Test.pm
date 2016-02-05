@@ -470,7 +470,7 @@ sub _command_execute_ok_builder {
     });
 }
 
-sub validate_using_test_db {
+sub assert_using_test_db {
     my $testdbserver_url = $ENV{TESTDBSERVER_URL}
         or die "TESTDBSERVER_URL must be set to run this test.";
 
