@@ -18,9 +18,8 @@ use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Test::Factory::Process;
 use Genome::File::Vcf::Differ;
-use Genome::Utility::Test;
 use File::Slurp qw(write_file);
-use Genome::Utility::Test qw(compare_ok);
+use Genome::Utility::Test qw(compare_ok get_test_dir);
 use File::Copy qw();
 
 use Exporter 'import';
@@ -67,7 +66,7 @@ sub get_reference_build {
     my %p = validate(@_, {
         version => {type => SCALAR},
     });
-    my $test_dir = Genome::Utility::Test->get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
+    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
 
     my $fasta_file = readlink(File::Spec->join($test_dir, 'reference.fasta'));
     return Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build($fasta_file);
@@ -77,7 +76,7 @@ sub get_translation_provider {
     my %p = validate(@_, {
         version => {type => SCALAR},
     });
-    my $test_dir = Genome::Utility::Test->get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
+    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
     my $fasta_file = readlink(File::Spec->join($test_dir, 'reference.fasta'));
     my @bam_results = setup_bam_results(
         File::Spec->join($test_dir, 'bam1.bam'),
