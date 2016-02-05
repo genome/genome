@@ -7,9 +7,9 @@ BEGIN { delete $ENV{UR_DBI_NO_COMMIT} }
 
 use above 'Genome';
 use Test::More;
-use Genome::Utility::Test qw(get_test_dir validate_using_test_db);
+use Genome::Utility::Test qw(get_test_dir assert_using_test_db);
 
-validate_using_test_db();
+assert_using_test_db();
 
 Genome::Report::Email->silent();
 

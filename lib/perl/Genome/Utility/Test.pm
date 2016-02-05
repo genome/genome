@@ -8,6 +8,7 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
     abort
+    assert_using_test_db
     capture_ok
     command_execute_fail_ok
     command_execute_ok
@@ -17,7 +18,6 @@ our @EXPORT_OK = qw(
     is_equal_set
     run_ok
     strip_ansi
-    validate_using_test_db
 );
 
 use Test::More;
