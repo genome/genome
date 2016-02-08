@@ -17,13 +17,13 @@ class Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam {
     /],
     has_input => {
         bam_path => {
-            is => 'File',
+            is => 'FilePath',
             doc => 'Bam to downsample.',
         },
     },
     has_output => {
         output_bam_path => {
-            is => 'Text',
+            is => 'FilePath',
             calculate_from => [qw/ bam_path /],
             calculate => q| $self->get_working_bam_path_with_new_extension($bam_path, 'downsampled'); |,
             doc => 'The path of the downsampled bam.',

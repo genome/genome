@@ -13,19 +13,19 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
     roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
     has_input => {
         source_paths => {
-            is => 'Text',
+            is => 'FilePath',
             is_many => 1,
             doc => 'Source path of sequences to get.',
         },
     },
     has_output => {
         output_path => {
-            is => 'Text',
+            is => 'FilePath',
             calculate_from => [qw/ _output_paths /],
             calculate => q| return $_output_paths->[0]; |,
         },
         output_paths => {
-            is => 'Text',
+            is => 'FilePath',
             is_many => 1,
             calculate_from => [qw/ _output_paths /],
             calculate => q| return @$_output_paths; |,

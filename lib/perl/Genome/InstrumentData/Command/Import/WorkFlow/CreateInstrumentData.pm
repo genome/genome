@@ -12,7 +12,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentData {
     is => 'Command::V2',
     has_input => [
         bam_paths => {
-            is => 'Text',
+            is => 'FilePath',
             is_many => 1,
             doc => 'The paths of the bams to verify and move.',
         },

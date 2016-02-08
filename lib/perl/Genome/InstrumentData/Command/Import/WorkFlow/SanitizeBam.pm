@@ -13,13 +13,13 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam {
     /],
     has_input => {
         bam_path => {
-            is => 'File',
+            is => 'FilePath',
             doc => 'The path of the dirty bam to clean.',
         }
     },
     has_output => {
         output_bam_path => {
-            is => 'Text',
+            is => 'FilePath',
             calculate_from => [qw/ bam_path /],
             calculate => q| $self->get_working_bam_path_with_new_extension($bam_path, 'clean'); |,
             doc => 'The path of the clean bam.',

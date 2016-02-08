@@ -14,12 +14,13 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SraToBam {
     roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
     has_input => [
         sra_path => {
-            is => 'Text',
+            is => 'FilePath',
             doc => 'Path of the SRA.',
         },
     ],
     has_output => {
         output_path => {
+            is => 'FilePath',
             calculate_from => [qw/ working_directory sra_basename /],
             calculate => q| return File::Spec->join($working_directory, $sra_basename.'.bam'); |,
             doc => 'The path of the bam dumped from the SRA path.',

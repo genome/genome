@@ -17,7 +17,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
     roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
     has_input => [
         fastq_paths => { 
-            is => 'Text',
+            is => 'FilePath',
             is_many => 1,
             doc => 'Paths of the fastq[s] to convert to a bam.',
         },
@@ -28,7 +28,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
     ],
     has_output => [ 
         output_path => {
-            is => 'Text',
+            is => 'FilePath',
             calculate_from => [qw/ working_directory library /],
             calculate => q| return File::Spec->join($working_directory, Genome::Utility::Text::sanitize_string_for_filesystem($library->sample->name).'.bam'); |,
             doc => 'The path of the bam.',

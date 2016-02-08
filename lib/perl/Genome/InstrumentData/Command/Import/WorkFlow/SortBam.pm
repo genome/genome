@@ -15,13 +15,13 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SortBam {
     /],
     has_input => [
         bam_path => {
-            is => 'File',
+            is => 'FilePath',
             doc => 'The path of the unsorted bam to sort.',
         }
     ],
     has_output => [ 
         output_bam_path => {
-            is => 'Text',
+            is => 'FilePath',
             calculate_from => [qw/ bam_path /],
             calculate => q| return $self->get_working_bam_path_with_new_extension($bam_path, 'sorted'); |,
             doc => 'The path of the sorted bam.',

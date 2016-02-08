@@ -11,7 +11,7 @@ use Genome;
 role Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory {
     has => [
         working_directory => {
-            is => 'Text',
+            is => 'DirectoryPath',
             is_optional => 0,
             is_input => 1,
             doc => 'Working directory to put output files.',

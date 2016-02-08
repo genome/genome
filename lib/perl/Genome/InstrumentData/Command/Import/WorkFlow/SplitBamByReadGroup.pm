@@ -14,13 +14,13 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
     roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
     has_input => [
         bam_path => {
-            is => 'Text',
+            is => 'FilePath',
             doc => 'The path of the unsorted bam to sort.',
         }
     ],
     has_output => [ 
         output_bam_paths => {
-            is => 'Text',
+            is => 'FilePath',
             is_many => 1,
             doc => 'The paths of the read group bams.',
         },

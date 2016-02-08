@@ -32,7 +32,7 @@ after 'execute' => sub{
 };
 
 sub input_file_property_names {
-    map { $_->property_name } $_[0]->__meta__->properties(is_input => 1, data_type => 'File');
+    map { $_->property_name } $_[0]->__meta__->properties(is_input => 1, data_type => 'FilePath');
 }
 
 sub input_files_to_remove {
