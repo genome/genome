@@ -11,7 +11,10 @@ use Params::Validate ':types';
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup { 
     is => 'Command::V2',
-    roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
+    roles => [qw/
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::RemovesInputFiles
+    /],
     has_input => [
         bam_path => {
             is => 'FilePath',
