@@ -15,10 +15,10 @@ class Thing::RemovesInputFiles {
         Genome::InstrumentData::Command::Import::WorkFlow::Role::RemovesInputFiles
     /],
     has => {
-        property_is_input_file => { is => 'File', is_input => 1, },
-        property_is_input_file2 => { is => 'File', is_input => 1, is_optional => 1, },
+        property_is_input_file => { is => 'FilePath', is_input => 1, },
+        property_is_input_file2 => { is => 'FilePath', is_input => 1, is_optional => 1, },
         property_is_input_not_file => { is => 'Boolean', is_input => 1, },
-        property_not_input_is_file => { is => 'File', },
+        property_not_input_is_file => { is => 'FilePath', },
     },
 };
 sub Thing::RemovesInputFiles::execute { return 1; }
