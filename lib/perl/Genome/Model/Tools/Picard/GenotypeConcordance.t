@@ -32,7 +32,6 @@ my $size = '0.01';
 my $truth_vcf = $test_dir .'/'. $sample_name .'-microarray-'. $size .'.vcf';
 my $call_vcf = $test_dir .'/'. $sample_name .'-calls_x_microarray-'. $size .'.vcf';
 
-# Outputs
 
 for my $picard_version (@picard_versions) {
     # Expected Outputs
@@ -40,8 +39,8 @@ for my $picard_version (@picard_versions) {
     my $expected_detailed_metrics = $expected_basename .'.genotype_concordance_detail_metrics';
     my $expected_summary_metrics = $expected_basename .'.genotype_concordance_summary_metrics';
 
-    my $output = Genome::Sys->create_temp_file_path($sample_name.'-'.$picard_version);    
-    #my $output = '/gscuser/jwalker/git/genome/lib/perl/Genome/Model/Tools/Picard/GenotypeConcordance.t.d/test-'.$sample_name.'-'.$picard_version;
+    # Outputs
+    my $output = Genome::Sys->create_temp_file_path($sample_name.'-'.$picard_version);
     
     # Create test command
     my $cmd = Genome::Model::Tools::Picard::GenotypeConcordance->create(
@@ -53,7 +52,7 @@ for my $picard_version (@picard_versions) {
        min_dp => $min_dp,
        use_version => $picard_version,
     );
-    ok($cmd,'create GenotypeConcorndance command');
+    ok($cmd,'create GenotypeConcordance command');
 
     # Execute test command
     ok($cmd->execute,'execute '. $sample_name .' GenotypeConcordance');

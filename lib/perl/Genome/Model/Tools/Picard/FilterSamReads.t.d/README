@@ -1,0 +1,3 @@
+Please see https://jira.gsc.wustl.edu/browse/APIPE-3388 for more information about how this test data set was made/selected.  The data is publicly available data for NA12878.
+
+For testing only the first 1000 reads were used to make the small test BAM (2,077 alignments including suplementary).  The test runs subsetting the first 100 reads(201 alignments).  
