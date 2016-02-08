@@ -7,7 +7,7 @@ use above 'Genome';
 use Test::More;
 use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::Model::ImportedAnnotation;
-use Genome::Test::Factory::Model::ReferenceSequence;
+use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Test::Factory::Build;
 use File::Spec;
@@ -57,7 +57,7 @@ sub create_test_objects {
     ok(-s $normal_build->whole_rmdup_bam_file, "Normal bam path correct");
     ok($normal_build->isa("Genome::Model::Build::ReferenceAlignment"), "Generated a normal build");
 
-    my $tumor_reference_model = Genome::Test::Factory::Model::ReferenceSequence->setup_object();
+    my $tumor_reference_model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
     my $tumor_reference_build = Genome::Test::Factory::Build->setup_object(
         model_id => $tumor_reference_model->id,
         data_directory => $main_dir,

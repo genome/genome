@@ -60,33 +60,8 @@ ok($pp, 'created ReferenceAlignment processing profile');
 my $cmd = Genome::Model::Command::Define::ReferenceAlignment->create();
 ok($cmd && $cmd->__errors__, 'insufficient parameters generate errors');
 
-# specify reference sequence by id
-my %params = (
-    subject_name => $sample->name,
-    processing_profile_name => $pp->name,
-    reference_sequence_build => $rbuild->id,
-);
-
-for my $model (create_direct_and_cmdline(%params)) {
-    is($model->reference_sequence_build->id, $rbuild->id, 'reference sequence id correct');
-    ok(!$model->annotation_reference_build, 'annotation build is not defined');
-    ok($model->delete, 'deleted model');
-}
-
-# specify reference sequence by name
-%params = (
-    subject_name => $sample->name,
-    processing_profile => $pp,
-    reference_sequence_build => $rbuild->name,
-);
-for my $model (create_direct_and_cmdline(%params)) {
-    is($model->reference_sequence_build->id, $rbuild->id, 'reference sequence id correct');
-    ok(!$model->annotation_reference_build, 'annotation build is not defined');
-    ok($model->delete, 'deleted model');
-}
-
 # specify reference sequence by object
-%params = (
+my %params = (
     subject_name => $sample->name,
     processing_profile_name => $pp->name,
     reference_sequence_build => $rbuild,
@@ -97,37 +72,11 @@ for my $model (create_direct_and_cmdline(%params)) {
     ok($model->delete, 'deleted model');
 }
 
-# specify annotation build by id
-%params = (
-    subject_name => $sample->name,
-    processing_profile => $pp,
-    reference_sequence_build => $rbuild->name,
-    annotation_reference_build => $abuild->id,
-);
-for my $model (create_direct_and_cmdline(%params)) {
-    ok($model->annotation_reference_build, 'annotation build is defined');
-    is($model->annotation_reference_build->id, $abuild->id, 'annotation build id correct');
-    ok($model->delete, 'deleted model');
-}
-
-# specify annotation build by name
-%params = (
-    subject_name => $sample->name,
-    processing_profile => $pp,
-    reference_sequence_build => $rbuild->name,
-    annotation_reference_build => $abuild->name,
-);
-for my $model (create_direct_and_cmdline(%params)) {
-    ok($model->annotation_reference_build, 'annotation build is defined');
-    is($model->annotation_reference_build->id, $abuild->id, 'annotation build id correct');
-    ok($model->delete, 'deleted model');
-}
-
 # specify annotation build by object
 %params = (
     subject_name => $sample->name,
     processing_profile => $pp,
-    reference_sequence_build => $rbuild->name,
+    reference_sequence_build => $rbuild,
     annotation_reference_build => $abuild,
 );
 for my $model (create_direct_and_cmdline(%params)) {
@@ -136,24 +85,11 @@ for my $model (create_direct_and_cmdline(%params)) {
     ok($model->delete, 'deleted model');
 }
 
-# specify dbsnp build by id
-%params = (
-    subject_name => $sample->name,
-    processing_profile => $pp,
-    reference_sequence_build => $rbuild->name,
-    dbsnp_build => $dbsnp_build->id,
-);
-for my $model (create_direct_and_cmdline(%params)) {
-    ok($model->dbsnp_build, 'dbsnp build is defined');
-    is($model->dbsnp_build->id, $dbsnp_build->id, 'dbsnp build id correct');
-    ok($model->delete, 'deleted model');
-}
-
 # specify dbsnp build by object
 %params = (
     subject_name => $sample->name,
     processing_profile => $pp,
-    reference_sequence_build => $rbuild->name,
+    reference_sequence_build => $rbuild,
     dbsnp_build => $dbsnp_build,
 );
 for my $model (create_direct_and_cmdline(%params)) {
@@ -162,12 +98,12 @@ for my $model (create_direct_and_cmdline(%params)) {
     ok($model->delete, 'deleted model');
 }
 
-# specify dbsnp build by model name, expect last_complete_build
+# specify dbsnp build by model, expect last_complete_build
 %params = (
     subject_name => $sample->name,
     processing_profile => $pp,
-    reference_sequence_build => $rbuild->name,
-    dbsnp_model => $dbsnp_model->name,
+    reference_sequence_build => $rbuild,
+    dbsnp_model => $dbsnp_model,
 );
 for my $model (create_direct_and_cmdline(%params)) {
     ok($model->dbsnp_build, 'dbsnp build is defined');
@@ -179,8 +115,8 @@ for my $model (create_direct_and_cmdline(%params)) {
 %params = (
     subject_name => $sample->name,
     processing_profile => $pp,
-    reference_sequence_build => $rbuild->name,
-    dbsnp_model => $dbsnp_model2->name,
+    reference_sequence_build => $rbuild,
+    dbsnp_model => $dbsnp_model2,
 );
 $cmd = Genome::Model::Command::Define::ReferenceAlignment->create(%params);
 ok($cmd, "created command with bad dbsnp model name");
@@ -192,8 +128,8 @@ ok($@, "command failed to execute with bad dbsnp data");
 my $model = create_direct(
     subject_name => $sample->name,
     processing_profile => $pp,
-    reference_sequence_build => $rbuild->id,
-    annotation_reference_build => $abuild->id,
+    reference_sequence_build => $rbuild,
+    annotation_reference_build => $abuild,
 );
 ok($model, 'created model with reference sequence id from processing profile');
 is($model->reference_sequence_build->id, $rbuild->id, 'reference sequence id correct');

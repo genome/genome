@@ -32,14 +32,28 @@ my %DEPENDENT_PROPERTIES = (
 
 class Genome::Model::ReferenceAlignment {
     is => 'Genome::ModelDeprecated',
-    has_input => [
-        # TODO: move things up from below and delete where possible
-        genotype_microarray         => { is => 'Genome::Model::GenotypeMicroarray',
-                                        is_optional => 1,
-                                        doc => 'Genotype Microarray model used for QC and Gold SNP Concordance report', 
-                                        # this is redundant with genotype_microarray_model, which has the correct
-                                        # method name, but uses "genotype_microarray" in the db layer (fix that)
-                                    },
+    has_mutable_input => [
+        genotype_microarray => {
+            is => 'Genome::Model::GenotypeMicroarray',
+            is_optional => 1,
+            doc => 'Genotype Microarray model used for QC and Gold SNP Concordance report', 
+            # this is redundant with genotype_microarray_model, which has the correct
+            # method name, but uses "genotype_microarray" in the db layer (fix that)
+        },
+        reference_sequence_build => {
+            is => 'Genome::Model::Build::ImportedReferenceSequence',
+            doc => 'reference sequence to align against',
+        },
+        dbsnp_build => {
+            is => 'Genome::Model::Build::ImportedVariationList',
+            doc => 'dbsnp build to compare against',
+            is_optional => 1,
+        },
+        annotation_reference_build => {
+            is => 'Genome::Model::Build::ImportedAnnotation',
+            doc => 'The reference build used for variant annotation',
+            is_optional => 1,
+        },
     ],
     has => [
         subject                     => { is => 'Genome::Sample', id_by => 'subject_id', doc => 'the subject of alignment and variant detection is a single sample' },
@@ -80,39 +94,10 @@ class Genome::Model::ReferenceAlignment {
         force_fragment               => { via => 'processing_profile'},
         read_calibrator_name         => { via => 'processing_profile'},
         read_calibrator_params       => { via => 'processing_profile'},
-        reference_sequence_build_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'reference_sequence_build', value_class_name => 'Genome::Model::Build::ImportedReferenceSequence' ],
-            is_many => 0,
-            is_mutable => 1, # TODO: make this non-optional once backfilling is complete and reference placeholder is deleted
-            is_optional => 1,
-            example_values => [101947881],
-            doc => 'reference sequence to align against'
-        },
-        reference_sequence_build => {
-            is => 'Genome::Model::Build::ImportedReferenceSequence',
-            id_by => 'reference_sequence_build_id',
-            example_values => [101947881],
-        },
-        dbsnp_build_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'dbsnp_build', value_class_name => 'Genome::Model::Build::ImportedVariationList' ],
-            is_many => 0,
-            is_mutable => 1,
-            is_optional => 1,
-            doc => 'dbsnp build to compare against'
-        },
-        dbsnp_build => {
-            is => 'Genome::Model::Build::ImportedVariationList',
-            id_by => 'dbsnp_build_id',
-        },
         dbsnp_model => {
             via => 'dbsnp_build',
             to => 'model',
+            is_mutable => 1,
         },
 
         # TODO: these are the right accessors, but the underlying input name is wrong :(
@@ -131,21 +116,6 @@ class Genome::Model::ReferenceAlignment {
             id_by => 'genotype_microarray_model_id',
         },
 
-
-        annotation_reference_build_id => {
-            is => 'Text',
-            via => 'inputs',
-            to => 'value_id',
-            where => [ name => 'annotation_reference_build', 'value_class_name' => 'Genome::Model::Build::ImportedAnnotation' ],
-            is_many => 0,
-            is_mutable => 1,
-            is_optional => 1,
-            doc => 'The reference build used for variant annotation',
-        },
-        annotation_reference_build => {
-            is => 'Genome::Model::Build::ImportedAnnotation',
-            id_by => 'annotation_reference_build_id',
-        },
         reference_sequence_name      => { via => 'reference_sequence_build', to => 'name' },
         annotation_reference_name    => { via => 'annotation_reference_build', to => 'name' },
         coverage_stats_params        => { via => 'processing_profile'},
