@@ -111,7 +111,7 @@ subtest 'setup' => sub{
 
 };
 
-subtest 'unarchive allocation filas without correct owner' => sub{
+subtest 'unarchive allocation fails with unsupported owner' => sub{
     plan tests => 5;
 
     my $allocation = _create_an_archived_allocation(UR::Value->get('test'));
@@ -124,7 +124,7 @@ subtest 'unarchive allocation filas without correct owner' => sub{
 
 };
 
-subtest 'unarchive allocation programatically' => sub{
+subtest 'unarchive allocation programmatically' => sub{
     plan tests => 7;
 
     my $sr = Genome::InstrumentData::AlignmentResult::Speedseq->__define__(test_name => 'testing Unarchive.t');
