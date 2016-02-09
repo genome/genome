@@ -12,6 +12,7 @@ use above "Genome";
 use Test::More; #skip_all => 'unarchiving not fully implemented yet';
 use File::Temp 'tempdir';
 use Filesys::Df qw();
+require Sub::Install;
 use Test::Exception;
 
 use Genome::Test::Factory::Model::SingleSampleGenotype;
@@ -92,10 +93,17 @@ ok($archive_assignment, 'added archive volume to test group successfully');
 Genome::Sys->create_directory(join('/', $archive_volume->mount_path, $group->subdirectory));
 
 # Override these methods so archive/active volume linking works for our test volumes
-no warnings qw(redefine once);
-*Genome::Disk::Volume::archive_volume_prefix = sub { return $archive_volume->mount_path };
-*Genome::Disk::Volume::active_volume_prefix = sub { return $volume->mount_path };
-use warnings;
+Sub::Install::reinstall_sub({
+        code => sub { return $archive_volume->mount_path },
+        into => 'Genome::Disk::Volume',
+        as => 'archive_volume_prefix',
+    });
+
+Sub::Install::reinstall_sub({
+        code => sub { return $volume->mount_path },
+        into => 'Genome::Disk::Volume',
+        as => 'active_volume_prefix',
+    });
 
 my $analysis_project = Genome::Config::AnalysisProject->__define__(name => 'test AnP for Unarchive.t');
 my $model = Genome::Test::Factory::Model::SingleSampleGenotype->setup_object(name => 'test model for Unarchive.t');
