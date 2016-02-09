@@ -16,7 +16,6 @@ Genome::Command::Crud->init_sub_commands(
     target_name => 'instrument_data',
     target_name_pl => 'instrument data',
     create => {do_not_init => 1},
-    delete => {do_not_init => 1},
     list => {do_not_init => 1},
     update => {exclude => [qw/ 
         full_path import_format import_source_name 
@@ -24,4 +23,8 @@ Genome::Command::Crud->init_sub_commands(
         /]},
 );
 
+# Only delete imported instrument data by changing the the data type
+Genome::InstrumentData::Command::Delete->__meta__->properties(property_name => 'instrument_data')->data_type('Genome::InstrumentData::Imported');
+
 1;
+

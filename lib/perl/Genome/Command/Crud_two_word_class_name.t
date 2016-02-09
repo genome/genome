@@ -115,7 +115,7 @@ ok($delete_success->execute, "DELETE execute");
 @status_messages = $delete_success->status_messages();
 is_deeply(\@status_messages,
     [   q(Delete super heroes...),
-        q(Spidey: delete),
+        q(DELETE Spidey),
         q(Delete complete. Commiting...) ],
     'Expected status messages');
 @error_messages = $delete_success->error_messages();

@@ -39,7 +39,7 @@ sub execute {
         my $display_name = $self->_display_name_for_value($obj);
         my $deleted = eval{ $obj->delete };
         if ($deleted and $transaction->commit) {
-            $self->status_message("$display_name: delete");
+            $self->status_message("DELETE $display_name");
         }
         else {
             $self->append_error($display_name, "Failed to delete $display_name");

@@ -573,7 +573,7 @@ ok($delete_success->execute, "DELETE execute");
 @status_messages = $delete_success->status_messages();
 is_deeply(\@status_messages,
     [   q(Delete people...),
-        q(George HW Bush: delete),
+        q(DELETE George HW Bush),
         q(Delete complete. Commiting...), ],
     'Expected status_messages');
 @error_messages = $delete_success->error_messages();
