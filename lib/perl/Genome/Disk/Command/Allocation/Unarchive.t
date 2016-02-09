@@ -135,6 +135,25 @@ my $rv = Genome::Disk::Command::Allocation::Unarchive->_execute_with_shell_param
 ok($rv == 0, 'successfully executed command using simulated command line arguments');
 is($allocation->volume->id, $volume->id, 'allocation updated as expected after archive');
 
+subtest 'unarchive allocation owned by imported instrument data' => sub{
+    plan tests => 7;
+
+    my $imported = Genome::InstrumentData::Imported->create();
+    ok($imported, 'create imported instrument data');
+    my $allocation = _create_an_archived_allocation($imported);
+    ok(
+        Genome::Disk::Command::Allocation::Unarchive->execute(
+            allocations => [$allocation],
+            analysis_project => $analysis_project,
+        ),
+        'unarchive imported instrument data',
+    );
+    my $bridge = $analysis_project->analysis_project_bridges(instrument_data => $imported);
+    ok($bridge, 'added imported instrument data to analysis project');
+    is($bridge->status, 'skipped', 'bridge status is skipped');
+
+};
+
 done_testing();
 
 sub _create_an_archived_allocation {
