@@ -13277,6 +13277,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'log-file=s',
       'files',
+      'lsf-queue=s',
+      'files',
       'max-records-in-ram=s',
       'files',
       'maximum-memory=s',
@@ -13301,11 +13303,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'STRICT',
         'LENIENT'
       ],
-      'write-reads-file=s',
-      [
-        'true',
-        'false'
-      ],
+      'write-reads-files!',
+      undef,
       'help!',
       undef
     ],
