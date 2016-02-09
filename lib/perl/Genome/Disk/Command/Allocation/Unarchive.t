@@ -103,33 +103,7 @@ Genome::Config::AnalysisProject::ModelBridge->create(analysis_project => $analys
 my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 my $sr = Genome::InstrumentData::AlignmentResult::Speedseq->__define__(test_name => 'testing Unarchive.t');
 
-# Make test allocation
-my $allocation_path = tempdir(
-    "allocation_test_1_XXXXXX",
-    CLEANUP => 1,
-    UNLINK => 1,
-    DIR => $test_dir,
-);
-my $allocation = Genome::Disk::Allocation->create(
-    disk_group_name => $group->disk_group_name,
-    allocation_path => $allocation_path,
-    kilobytes_requested => 100,
-    owner_class_name => 'UR::Value',
-    owner_id => 'test',
-    mount_path => $archive_volume->mount_path,
-);
-ok($allocation, 'created test allocation');
-$allocation->status('archived');
-ok($allocation->is_archived, 'allocation is archived prior to running command, as expected');
-
-# Create a test tarball
-system("touch " . $allocation->absolute_path . "/a.out");
-Genome::Sys->tar(
-    tar_path => $allocation->absolute_path . "/archive.tar",
-    input_directory => $allocation->absolute_path,
-);
-ok(-e join('/', $allocation->absolute_path, 'archive.tar'), 'archive tarball successfully created');
-unlink join('/', $allocation->absolute_path, 'a.out');
+my $allocation = _create_an_archived_allocation();
 
 # Create command object and execute it
 my $cmd = Genome::Disk::Command::Allocation::Unarchive->create(
@@ -153,31 +127,7 @@ my @users = $sr->users;
 is($users[0]->user, $analysis_project, 'analysis project linked to SR whose allocation was unarchived');
 
 # Make another allocation
-$allocation_path = tempdir(
-    "allocation_test_1_XXXXXX",
-    CLEANUP => 1,
-    UNLINK => 1,
-);
-$allocation = Genome::Disk::Allocation->create(
-    disk_group_name => $group->disk_group_name,
-    allocation_path => $allocation_path,
-    kilobytes_requested => 100,
-    owner_class_name => $build->class,
-    owner_id => $build->id,
-    mount_path => $archive_volume->mount_path,
-);
-ok($allocation, 'created test allocation');
-$allocation->status('archived');
-ok($allocation->is_archived, 'allocation is archived before running command, as expected');
-
-# Create a test tarball
-system("touch " . $allocation->absolute_path . "/a.out");
-Genome::Sys->tar(
-    tar_path => $allocation->absolute_path . "/archive.tar",
-    input_directory => $allocation->absolute_path,
-);
-ok(-e join('/', $allocation->absolute_path, 'archive.tar'), 'archive tarball successfully created');
-unlink join('/', $allocation->absolute_path, 'a.out');
+$allocation = _create_an_archived_allocation($build);
 
 # Now simulate the command being run from the CLI
 my @args = ($allocation->id, '--analysis-project', $analysis_project->id);
@@ -187,5 +137,38 @@ is($allocation->volume->id, $volume->id, 'allocation updated as expected after a
 
 done_testing();
 
+sub _create_an_archived_allocation {
+    my ($owner) = @_;
+    $owner //= UR::Value->get('test');
 
-1;
+    # Make test allocation
+    my $allocation_path = tempdir(
+        "allocation_test_1_XXXXXX",
+        CLEANUP => 1,
+        UNLINK => 1,
+        DIR => $test_dir,
+    );
+    my $allocation = Genome::Disk::Allocation->create(
+        disk_group_name => $group->disk_group_name,
+        allocation_path => $allocation_path,
+        kilobytes_requested => 100,
+        owner_class_name => $owner->class,
+        owner_id => $owner->id,
+        mount_path => $archive_volume->mount_path,
+    );
+    ok($allocation, 'created test allocation');
+    $allocation->status('archived');
+    ok($allocation->is_archived, 'allocation is archived prior to running command, as expected');
+
+    # Create a test tarball
+    system("touch " . $allocation->absolute_path . "/a.out");
+    Genome::Sys->tar(
+        tar_path => $allocation->absolute_path . "/archive.tar",
+        input_directory => $allocation->absolute_path,
+    );
+    ok(-e join('/', $allocation->absolute_path, 'archive.tar'), 'archive tarball successfully created');
+    unlink join('/', $allocation->absolute_path, 'a.out');
+
+    return $allocation;
+}
+
