@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 
 use Data::Dumper 'Dumper';
+use Archive::Extract
+$Archive::Extract::PREFER_BIN = 1;
 require File::Basename;
 require File::Spec;
 require Genome::Utility::Text;
@@ -64,21 +66,18 @@ sub _unarchive_fastqs_if_necessary {
             push @new_fastq_paths, $fastq_path;
             next;
         }
-        $self->debug_message('Unarchiving: '.$fastq_path);
-        
-        my $success = try {
-            Genome::Sys->shellcmd(cmd => [ 'gunzip', $fastq_path ]);
-        }
-        catch {
-            $self->error_message($_) if $_;
-            $self->error_message('Failed to gunzip fastq!');
-            return;
-        };
-        return if not $success;
 
-        my $unarchived_fastq_path = $fastq_path;
-        $unarchived_fastq_path =~ s/\.gz$//;
-        $self->debug_message("Unarchived fastq: $unarchived_fastq_path");
+        $self->debug_message('Unarchiving: %s', $fastq_path);
+        my $unarchived_fastq_path = $self->get_working_path_for_file_path($fastq_path);
+        $unarchived_fastq_path =~ s/\.gz//;
+        $self->debug_message('To: %s', $unarchived_fastq_path);
+        my $extractor = Archive::Extract->new(archive => $fastq_path);
+        if ( not $extractor->extract(to => $unarchived_fastq_path) ) {
+            $self->error_message( $extractor->error ) if $extractor->error;
+            $self->error_message('Archive::Extract failed!');
+            return;
+        }
+
         if ( not -s $unarchived_fastq_path ) {
             $self->error_message('Unarchived fastq does not exist!');
             return;
