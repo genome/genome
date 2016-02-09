@@ -60,34 +60,8 @@ sub work_flow_operation_class_for_name {
         . join('', map { ucfirst } split(' ', $name));
 }
 
-sub _add_retrieve_source_path_op_to_workflow {
-    my ($self, $previous_op) = @_;
-
-    my $name = 'retrieve source path from '.$self->work_flow_inputs->source_files->retrieval_method;
-    my $retrieve_source_path_op = Genome::WorkflowBuilder::Command->create(
-        name => $name,
-        command => $self->work_flow_operation_class_for_name($name),
-    );
-    $self->_dag->add_operation($retrieve_source_path_op);
-    $self->_dag->connect_input(
-        input_property => 'working_directory',
-        destination => $retrieve_source_path_op,
-        destination_property => 'working_directory',
-    );
-    $self->_dag->connect_input(
-        input_property => 'source_paths',
-        destination => $retrieve_source_path_op,
-        destination_property => 'source_path',
-    );
-    $retrieve_source_path_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
-
-    return $retrieve_source_path_op;
-}
-
 sub _add_verify_not_imported_op_to_workflow {
-    my ($self, $retrieve_source_path_op) = @_;
-
-    die 'No retrieve source files operation given!' if not $retrieve_source_path_op;
+    my $self = shift;
 
     my $name = 'verify not imported';
     my $verify_not_imported_op = Genome::WorkflowBuilder::Command->create(
@@ -100,13 +74,11 @@ sub _add_verify_not_imported_op_to_workflow {
         destination => $verify_not_imported_op,
         destination_property => 'working_directory',
     );
-    $self->_dag->create_link(
-        source => $retrieve_source_path_op,
-        source_property => 'destination_path',
+    $self->_dag->connect_input(
+        input_property => 'source_paths',
         destination => $verify_not_imported_op,
-        destination_property => 'source_path',
+        destination_property => 'source_paths',
     );
-    $verify_not_imported_op->parallel_by('source_path') if $self->work_flow_inputs->source_files->paths > 1;
 
     return $verify_not_imported_op;
 }
@@ -122,6 +94,11 @@ sub _add_sanitize_bam_op_to_workflow {
         command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($sanitize_bam_op);
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $sanitize_bam_op,
+        destination_property => 'working_directory',
+    );
     $self->_dag->create_link(
         source => $previous_op,
         source_property => 'output_bam_path',
@@ -143,11 +120,14 @@ sub _add_sort_bam_op_to_workflow {
         command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($sort_bam_op);
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $sort_bam_op,
+        destination_property => 'working_directory',
+    );
     $self->_dag->create_link(
         source => $previous_op,
-        source_property => ( $previous_op->command->can('output_bam_path') )
-        ? 'output_bam_path'
-        : 'source_path',
+        source_property => 'output_path',
         destination => $sort_bam_op,
         destination_property => 'bam_path',
     );
@@ -167,6 +147,11 @@ sub _add_downsample_bam_op_to_workflow {
     );
     $self->_dag->add_operation($downsample_bam_op);
 
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $downsample_bam_op,
+        destination_property => 'working_directory',
+    );
     $self->_dag->connect_input(
         input_property => 'downsample_ratio',
         destination => $downsample_bam_op,
@@ -193,6 +178,11 @@ sub _add_split_bam_by_rg_op_to_workflow {
         command => $self->work_flow_operation_class_for_name($name),
     );
     $self->_dag->add_operation($split_bam_by_rg_op);
+    $self->_dag->connect_input(
+        input_property => 'working_directory',
+        destination => $split_bam_by_rg_op,
+        destination_property => 'working_directory',
+    );
     $self->_dag->create_link(
         source => $previous_op,
         source_property => 'output_bam_path',
@@ -233,7 +223,7 @@ sub _add_create_instrument_data_op_to_workflow {
     );
     $self->_dag->create_link(
         source => $self->_work_flow_op_for('verify not imported'),
-        source_property => 'source_md5',
+        source_property => 'source_md5s',
         destination => $create_instdata_op,
         destination_property => 'source_md5s',
     );

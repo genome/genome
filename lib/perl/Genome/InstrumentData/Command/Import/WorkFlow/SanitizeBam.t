@@ -26,6 +26,7 @@ Genome::Sys->create_symlink( File::Spec->catfile($test_dir, $dirty_flagstat_base
 ok(-s $dirty_flagstat_path, 'linked dirty bam flagstat path');
 
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam->execute(
+    working_directory => $tmp_dir,
     bam_path => $dirty_bam_path,
 );
 ok($cmd->result, 'execute');

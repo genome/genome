@@ -131,13 +131,5 @@ sub md5_path_size {
     return $_[0]->_file_size($_[0]->md5_path);
 }
 
-sub original_md5_path {
-    return $_[0]->path.'.md5-orig';
-}
-
-sub original_md5_path_size {
-    return $_[0]->_file_size($_[0]->original_md5_path);
-}
-
 1;
 

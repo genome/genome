@@ -14,13 +14,10 @@ use Try::Tiny;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam { 
     is => 'Command::V2',
+    roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
     has_input => [
-        working_directory => {
-            is => 'Text',
-            doc => 'Destination directory for fastqs.',
-        },
         fastq_paths => { 
-            is => 'Text',
+            is => 'FilePath',
             is_many => 1,
             doc => 'Paths of the fastq[s] to convert to a bam.',
         },
@@ -30,8 +27,8 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
         },
     ],
     has_output => [ 
-        output_bam_path => {
-            is => 'Text',
+        output_path => {
+            is => 'FilePath',
             calculate_from => [qw/ working_directory library /],
             calculate => q| return File::Spec->join($working_directory, Genome::Utility::Text::sanitize_string_for_filesystem($library->sample->name).'.bam'); |,
             doc => 'The path of the bam.',
@@ -49,9 +46,6 @@ sub execute {
     my $verify_bam_ok = $self->_verify_bam;
     return if not $verify_bam_ok;
 
-    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->fastq_paths);
-    return if not $cleanup_ok;
-
     $self->debug_message('Fastqs to bam...done');
     return 1;
 }
@@ -62,7 +56,7 @@ sub _fastqs_to_bam {
 
     my @fastqs = $self->fastq_paths;
     $self->debug_message("Fastq 1: $fastqs[0]");
-    my $output_bam_path = $self->output_bam_path;
+    my $output_bam_path = $self->output_path;
     my %fastq_to_sam_params = (
         fastq => $fastqs[0],
         output => $output_bam_path,
@@ -108,7 +102,7 @@ sub _verify_bam {
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
-    my $flagstat = $helpers->validate_bam($self->output_bam_path);
+    my $flagstat = $helpers->validate_bam($self->output_path);
     return if not $flagstat;
 
     $self->debug_message('Bam read count: '.$flagstat->{total_reads});

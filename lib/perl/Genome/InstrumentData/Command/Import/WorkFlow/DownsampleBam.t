@@ -29,6 +29,7 @@ ok(-s $bam_path.'.flagstat', 'linked bam flagstat path');
 
 # Check downsample_ratio is required
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam->create(
+    working_directory => $tmp_dir,
     bam_path => $bam_path,
 );
 ok($cmd, 'create');
@@ -38,6 +39,7 @@ is($errors[0]->desc, 'No value specified for required property', 'correct error 
 
 # Check that the downsample_ratio errors is called
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam->create(
+    working_directory => $tmp_dir,
     bam_path => $bam_path,
     downsample_ratio => 'NA',
 );
@@ -48,6 +50,7 @@ is($errors[0]->desc, 'Invalid Float value.', 'correct error desc for downsample_
 
 # Success
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam->create(
+    working_directory => $tmp_dir,
     bam_path => $bam_path,
     downsample_ratio => .25,
 );

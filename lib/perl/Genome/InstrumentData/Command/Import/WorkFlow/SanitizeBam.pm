@@ -7,20 +7,21 @@ use Genome;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam { 
     is => 'Command::V2',
+    roles => [qw/
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::RemovesInputFiles
+    /],
     has_input => {
         bam_path => {
-            is => 'Text',
+            is => 'FilePath',
             doc => 'The path of the dirty bam to clean.',
         }
     },
     has_output => {
         output_bam_path => {
-            is => 'Text',
+            is => 'FilePath',
             calculate_from => [qw/ bam_path /],
-            calculate => q{
-                $bam_path =~ s/(\.bam)$/.clean$1/;
-                return $bam_path;
-            },
+            calculate => q| $self->get_working_bam_path_with_new_extension($bam_path, 'clean'); |,
             doc => 'The path of the clean bam.',
         },
     },
@@ -39,8 +40,6 @@ sub execute {
     my $verify_read_count_ok = $self->_verify_read_count;
     return if not $verify_read_count_ok;
 
-    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->bam_path);
-    return if not $cleanup_ok;
 
     $self->debug_message('Sanitize bam...done');
     return 1;

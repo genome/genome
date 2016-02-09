@@ -12,7 +12,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Builder::Fastq {
 };
 
 sub _steps_to_build_workflow {
-    return ( 'retrieve source path', 'verify not imported', 'fastqs to bam', 'sort bam', 'create instrument data' );
+    return ( 'verify not imported', 'fastqs to bam', 'sort bam', 'create instrument data' );
 }
 
 sub _add_fastqs_to_bam_op_to_workflow {
@@ -37,7 +37,7 @@ sub _add_fastqs_to_bam_op_to_workflow {
 
     $self->_dag->create_link(
         source => $previous_op,
-        source_property => 'source_path',
+        source_property => 'output_paths',
         destination => $fastqs_to_bam_op,
         destination_property => 'fastq_paths',
     );

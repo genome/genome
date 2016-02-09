@@ -29,7 +29,6 @@ for my $format (qw/ bam fastq sra /) {
     is($sf->format, $format, 'format');
     is($sf->retrieval_method, 'local disk', 'retrieval_method');
     is($sf->md5_path, $source_file.'.md5', 'md5_path');
-    is($sf->original_md5_path, $source_file.'.md5-orig', 'original_data_path_md5');
 }
 
 # Remote bam

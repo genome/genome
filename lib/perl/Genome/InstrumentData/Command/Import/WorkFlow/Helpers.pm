@@ -427,21 +427,6 @@ sub were_original_path_md5s_previously_imported {
     );
     return 1;
 }
-#<>#
-
-sub remove_paths_and_auxiliary_files {
-    my ($self, @paths) = @_;
-
-    Carp::confess('No source paths to remove!') if not @paths;
-
-    for my $path ( @paths ) {
-        for my $path_to_rm ( glob($path.'*') ) {
-            unlink $path_to_rm;
-        }
-    }
-
-    return 1;
-}
 
 sub work_flow_operation_class_from_name {
     my ($self, $name) = @_;
@@ -480,19 +465,6 @@ sub add_operation_to_workflow_by_name {
     die 'No name given to add operation to work flow!' if not $name;
 
     return $self->add_operation_to_workflow_by_class( $wf, $self->work_flow_operation_class_from_name($name) );
-}
-
-sub insert_extension_into_bam_path {
-    my ($self, $bam_path, $ext) = @_;
-
-    die 'No bam path given to insert extension to bam path!' if not $bam_path;
-    die 'No extension given to insert extension to bam path!' if not $ext;
-
-    if ( not $bam_path =~ s/\.bam$// ) {
-        die 'Failed to insert extension into bam path! Bam path does not end in .bam! '.$bam_path;
-    }
-
-    return join('.', $bam_path, $ext, 'bam');
 }
 
 #<VALIDATORS>#

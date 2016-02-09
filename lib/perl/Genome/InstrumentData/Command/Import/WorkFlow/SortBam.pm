@@ -3,36 +3,41 @@ package Genome::InstrumentData::Command::Import::WorkFlow::SortBam;
 use strict;
 use warnings;
 
+require File::Basename;
+
 use Genome;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SortBam { 
     is => 'Command::V2',
+    roles => [qw/
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::RemovesInputFiles
+    /],
     has_input => [
         bam_path => {
-            is => 'Text',
+            is => 'FilePath',
             doc => 'The path of the unsorted bam to sort.',
         }
     ],
     has_output => [ 
         output_bam_path => {
-            is => 'Text',
-            calculate_from => [qw/ sorted_bam_prefix /],
-            calculate => q( return $sorted_bam_prefix.'.bam'; ),
+            is => 'FilePath',
+            calculate_from => [qw/ bam_path /],
+            calculate => q| return $self->get_working_bam_path_with_new_extension($bam_path, 'sorted'); |,
             doc => 'The path of the sorted bam.',
         },
     ],
-    has_optional_calculated => [
+    has_optional_calculated => {
         sorted_bam_prefix => {
             is => 'Text',
-            calculate_from => [qw/ bam_path /],
-            calculate => q(
-                my $sorted_bam_prefix = $bam_path;
-                $sorted_bam_prefix =~ s/\.bam$/.sorted/;
-                return $sorted_bam_prefix;
-            ),
+            calculate_from => [qw/ output_bam_path /],
+            calculate => q|
+                $output_bam_path =~ s/\.bam$//;
+                return $output_bam_path;
+            |,
             doc => 'The prefix of the sorted bam.',
         },
-    ],
+    },
 };
 
 sub execute {
@@ -44,9 +49,6 @@ sub execute {
 
     my $verify_read_count_ok = $self->_verify_read_count;
     return if not $verify_read_count_ok;
-
-    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->bam_path);
-    return if not $cleanup_ok;
 
     $self->debug_message('Sort bams...done');
     return 1;

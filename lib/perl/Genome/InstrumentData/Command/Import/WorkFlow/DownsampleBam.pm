@@ -3,23 +3,29 @@ package Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam;
 use strict;
 use warnings;
 
-use Genome;
+require File::Spec;
+require File::Basename;
 
+use Genome;
 use Genome::InstrumentData::Command::Import::WorkFlow::Helpers;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam {
     is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithRequiredDownsampleRatio /],
+    roles => [qw/
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::RemovesInputFiles
+    /],
     has_input => {
         bam_path => {
-            is => 'Genome::InstrumentData',
-            doc => 'Instrument data to use to create file to reimport.',
+            is => 'FilePath',
+            doc => 'Bam to downsample.',
         },
     },
     has_output => {
         output_bam_path => {
-            is => 'Text',
+            is => 'FilePath',
             calculate_from => [qw/ bam_path /],
-            calculate => q| return Genome::InstrumentData::Command::Import::WorkFlow::Helpers->insert_extension_into_bam_path($bam_path, 'downsampled') |,
+            calculate => q| $self->get_working_bam_path_with_new_extension($bam_path, 'downsampled'); |,
             doc => 'The path of the downsampled bam.',
         },
     },
@@ -34,9 +40,6 @@ sub execute {
 
     my $verify_read_count_ok = $self->_verify_read_count;
     return if not $verify_read_count_ok;
-
-    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->bam_path);
-    return if not $cleanup_ok;
 
     $self->debug_message('Downsample bam...done');
     return 1;
