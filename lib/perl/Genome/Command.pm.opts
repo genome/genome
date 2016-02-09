@@ -24463,6 +24463,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'log-file=s',
         'files',
+        'lsf-queue=s',
+        'files',
         'max-records-in-ram=s',
         'files',
         'maximum-memory=s',
@@ -24487,11 +24489,8 @@ $Genome::Command::OPTS_SPEC = [
           'STRICT',
           'LENIENT'
         ],
-        'write-reads-file=s',
-        [
-          'true',
-          'false'
-        ],
+        'write-reads-files!',
+        undef,
         'help!',
         undef
       ],
