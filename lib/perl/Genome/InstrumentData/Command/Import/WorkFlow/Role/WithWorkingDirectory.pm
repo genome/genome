@@ -24,7 +24,7 @@ sub get_working_bam_path_with_new_extension {
 
     my $bam_basename = File::Basename::basename($bam_path);
     if ( not $bam_basename =~ s/\.bam$// ) {
-        $self->fatal_message('Cannot insert new extension into bam path because it does not end .bam! %', $bam_path);
+        $self->fatal_message('Cannot insert new extension into bam path because it does not end with .bam! %', $bam_path);
     }
 
     return File::Spec->join( $self->working_directory, join('.', $bam_basename, @ext, 'bam') );

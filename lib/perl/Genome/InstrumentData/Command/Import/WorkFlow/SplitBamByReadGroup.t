@@ -39,7 +39,7 @@ for my $basename ( @bam_basenames ) {
     my $expected_bam_path = File::Spec->join($test_dir, 'split-by-rg.'.$basename.'.bam');
     is(File::Compare::compare($output_bam_path, $expected_bam_path), 0, "expected $basename bam path matches");
 }
-ok(!glob($multi_rg_bam_path.'*'), 'removed bam path and auxillary files after spliting');
+ok(!glob($multi_rg_bam_path.'*'), 'removed bam path and auxiliary files after spliting');
 
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
