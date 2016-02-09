@@ -1,5 +1,9 @@
 #!/usr/bin/env genome-perl
 
+BEGIN {
+    $ENV{UR_DBI_NO_COMMIT} = 1;
+};
+
 use strict;
 use warnings;
 
