@@ -1,0 +1,6 @@
+sample_name_1	1,Y	/test/1/output.g.vcf.gz
+sample_name_1	2	/test/2/2.g.vcf.gz
+sample_name_1	3	/test/3/3.g.vcf.gz
+sample_name_1	4	/test/4/4.g.vcf.gz
+sample_name_1	5	/test/5/5.g.vcf.gz
+sample_name_1	GL000207.1	/test/GL000207.1/GL000207.1.g.vcf.gz
