@@ -152,10 +152,6 @@ class Genome::ProcessingProfile::ReferenceAlignment {
             is_optional => 1,
             is_deprecated => 1,
         },
-        align_dist_threshold => {
-            doc => '',
-            is_optional => 1,
-        },
     ],
 };
 
