@@ -112,6 +112,11 @@ sub check_available_space {
 
     my $total_directory_size = Genome::Sys->directory_size_recursive($allocation->absolute_path);
     my $retirement_path = $self->target_export_directory;
+
+    unless(-d $retirement_path) {
+        $self->fatal_message('Did not find directory at <%s>.', $retirement_path);
+    }
+
     my $disk_info = df($retirement_path, 1);
     if (!defined($disk_info) || $disk_info->{bavail} <= $total_directory_size) {
         $self->fatal_message("Not enough space available on target path (%s)", $retirement_path);
