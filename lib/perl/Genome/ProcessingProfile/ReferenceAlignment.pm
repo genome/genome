@@ -163,21 +163,6 @@ class Genome::ProcessingProfile::ReferenceAlignment {
     ],
 };
 
-#TODO Once old snapshots stop subclassifying by sequencing platform, remove this!
-sub get {
-    my $class = shift;
-
-    if(ref $class) {
-        return $class->SUPER::get(@_);
-    }
-
-    my $bx = UR::BoolExpr->resolve_normalized('Genome::ProcessingProfile::ReferenceAlignment', @_);
-    #until the database is updated, need to check all possible class names
-    $bx = $bx->add_filter(subclass_name => ['Genome::ProcessingProfile::ReferenceAlignment', 'Genome::ProcessingProfile::ReferenceAlignment::Solexa', 'Genome::ProcessingProfile::ReferenceAlignment::454'],);
-
-    return Genome::ProcessingProfile->get($bx);
-}
-
 sub _resolve_type_name_for_class {
     return 'reference alignment';
 }
