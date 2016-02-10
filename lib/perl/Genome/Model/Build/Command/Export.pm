@@ -38,7 +38,6 @@ sub execute {
         find({
             wanted => $resolve_symlinks,
             follow => 0,
-            dangling_symlinks => $resolve_dangling_symlinks,
         }, shift)
     };
 
@@ -61,12 +60,14 @@ sub execute {
                     }
                 }
             }
+            else {
+                $resolve_dangling_symlinks->($path, $symlink_target);
+            }
         }
     };
 
     $resolve_dangling_symlinks = sub {
-        my $path = File::Spec->join($_[1], $_[0]);
-        my $symlink_target = abs_path($path);
+        my ($path, $symlink_target) = @_;
         my $allocation = Genome::Disk::Allocation->get_allocation_for_path($symlink_target);
         unlink $path;
         if (defined($allocation)) {
