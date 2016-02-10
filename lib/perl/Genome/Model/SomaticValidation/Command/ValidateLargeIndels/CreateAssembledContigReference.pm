@@ -133,7 +133,6 @@ sub execute {
         version => '500bp_assembled_contigs',
         fasta_file => $contigs_file,
         prefix => $sample_id,
-        server_dispatch => 'inline',
         is_rederivable => 1,
     );
     if ($self->build->model->analysis_project) {

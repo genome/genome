@@ -83,14 +83,6 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             default_value => 'prompt',
             doc => 'The action to take when emitting a warning.'
         },
-        job_dispatch => {
-            default_value => 'inline',
-            doc => 'dispatch specification: an LSF queue or "inline"'
-        },
-        server_dispatch => {
-            default_value => 'inline',
-            doc => 'dispatch specification: an LSF queue or "inline"'
-        },
         is_rederivable => {
             is => 'Boolean',
             default_value => 0,
@@ -359,28 +351,16 @@ sub _create_build {
         return;
     }
 
-    my @dispatch_parameters;
-    if(defined($self->server_dispatch)) {
-        push @dispatch_parameters,
-            server_dispatch => $self->server_dispatch;
-    }
-
-    if(defined($self->job_dispatch)) {
-        push @dispatch_parameters,
-            job_dispatch => $self->job_dispatch;
-    }
-
     $self->status_message('Starting build.');
-    if($build->start(@dispatch_parameters)) {
-        if($self->server_dispatch eq 'inline') {
-            $self->status_message('Reference imported. ID: <' . $build->id . '>, data_directory: <' . $build->data_directory . '>.');
-        } else {
-            $self->status_message('Started build.');
-        }
+    if($build->start) {
+        UR::Context->commit or die "Failed to commit.";
+        $self->status_message('Started build.');
     } else {
         $self->error_message("Failed to start build " . $build->build_id . " for model " . $model->genome_model_id . ".");
         return;
     }
+
+    $build->wait;
 
     return $build;
 }
