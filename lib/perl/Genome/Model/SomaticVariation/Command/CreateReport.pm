@@ -554,19 +554,19 @@ sub annotation_build {
 sub reference_sequence_build {
     my $self = shift;
 
-    return $self->somatic_variation_build->tumor_build->reference_sequence_build;
+    return $self->somatic_variation_build->reference_sequence_build;
 }
 
 sub tumor_bam {
     my $self = shift;
 
-    return $self->somatic_variation_build->tumor_build->whole_rmdup_bam_file;
+    return $self->somatic_variation_build->tumor_bam;
 }
 
 sub normal_bam {
     my $self = shift;
 
-    return $self->somatic_variation_build->normal_build->whole_rmdup_bam_file;
+    return $self->somatic_variation_build->normal_bam;
 }
 
 sub ref_seq_fasta {
