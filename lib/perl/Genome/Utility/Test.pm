@@ -46,6 +46,18 @@ sub abort {
     die;
 }
 
+sub assert_using_test_db {
+    my $testdbserver_url = $ENV{TESTDBSERVER_URL}
+        or die "TESTDBSERVER_URL must be set to run this test.";
+
+    my $db_server = Genome::DataSource::GMSchema->server;
+    my ($db_host) = $db_server =~ m/host=([^;]+)/;
+
+    unless ($testdbserver_url =~ m/$db_host/) {
+        die "The Genome::DataSource::GMSchema->server must match the TESTDBSERVER_URL to run this test.";
+    }
+}
+
 sub _compare_ok_parse_args {
     # First two args are always the files.
     # Then accept one scalar argument, the name.
@@ -468,18 +480,6 @@ sub _command_execute_ok_builder {
         as => $subname,
         code => $sub,
     });
-}
-
-sub assert_using_test_db {
-    my $testdbserver_url = $ENV{TESTDBSERVER_URL}
-        or die "TESTDBSERVER_URL must be set to run this test.";
-
-    my $db_server = Genome::DataSource::GMSchema->server;
-    my ($db_host) = $db_server =~ m/host=([^;]+)/;
-
-    unless ($testdbserver_url =~ m/$db_host/) {
-        die "The Genome::DataSource::GMSchema->server must match the TESTDBSERVER_URL to run this test.";
-    }
 }
 
 
