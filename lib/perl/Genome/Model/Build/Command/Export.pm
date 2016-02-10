@@ -37,7 +37,7 @@ sub execute {
     my $find = sub {
         find({
             wanted => $resolve_symlinks,
-            follow => 1,
+            follow => 0,
             dangling_symlinks => $resolve_dangling_symlinks,
         }, shift)
     };
