@@ -49,7 +49,12 @@ sub execute {
                 #Only do this if symlink doesn't point to somewhere within
                 #this directory structure
                 unless (index($symlink_target, $export_directory) == 0) {
-                    unlink $path;
+                    if (index($path, $export_directory) == 0) {
+                        unlink $path;
+                    }
+                    else {
+                        Genome::Carp::confessf('Path %s escaped from export directory', $path);
+                    }
                     if (-f $symlink_target) {
                         Genome::Sys->copy_file($symlink_target, $path);
                     }
