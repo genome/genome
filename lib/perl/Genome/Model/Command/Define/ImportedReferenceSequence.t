@@ -7,7 +7,7 @@ BEGIN { delete $ENV{UR_DBI_NO_COMMIT} }
 
 use above 'Genome';
 use Test::More;
-use Genome::Utility::Test qw(get_test_dir assert_using_test_db);
+use Genome::Utility::Test qw(assert_using_test_db);
 
 assert_using_test_db();
 
@@ -21,7 +21,7 @@ my $version = 1;
 my $cmd_class = 'Genome::Model::Command::Define::ImportedReferenceSequence';
 use_ok($cmd_class);
 
-my $data_dir = get_test_dir($cmd_class, $version);
+my $data_dir = __FILE__.'.d';
 my $pp = Genome::ProcessingProfile::ImportedReferenceSequence->create(name => 'test_ref_pp');
 my $taxon = Genome::Taxon->get(name => 'human');
 my $patient = Genome::Individual->create(name => "test-patient", common_name => 'testpat', taxon => $taxon);
