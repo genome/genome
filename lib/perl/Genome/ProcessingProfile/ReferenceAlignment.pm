@@ -131,14 +131,6 @@ class Genome::ProcessingProfile::ReferenceAlignment {
             doc => 'command line args for the trimmer',
             is_optional => 1,
         },
-        read_calibrator_name => {
-            doc => '',
-            is_optional => 1,
-        },
-        read_calibrator_params => {
-            doc => '',
-            is_optional => 1,
-        },
         coverage_stats_params => {
             doc => 'parameters necessary for generating reference coverage in the form of two comma delimited lists split by a colon like 1,5,10,15,20:0,200,500',
             is_optional => 1,
