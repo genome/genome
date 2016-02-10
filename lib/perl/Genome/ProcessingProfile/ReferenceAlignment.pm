@@ -143,11 +143,6 @@ class Genome::ProcessingProfile::ReferenceAlignment {
             doc => 'parameters necessary for generating reference coverage in the form of two comma delimited lists split by a colon like 1,5,10,15,20:0,200,500',
             is_optional => 1,
         },
-        capture_set_name => {
-            doc => 'The name of the capture set to evaluate coverage and limit variant calls to within the defined target regions',
-            is_optional => 1,
-            is_deprecated => 1,
-        },
     ],
 };
 
