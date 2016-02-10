@@ -4,7 +4,7 @@ use Test::More;
 
 UR::DBI->no_commit(1);
 
-plan tests => 25;
+plan tests => 23;
 
 # Some Processing Profiles are abstract and require further info to subclass properly
 # Genome::ProcessingProfile, G::PP::ReferenceAlignment and G::PP::RnaSeq
@@ -35,7 +35,6 @@ $pp = Genome::ProcessingProfile::ReferenceAlignment->create(name => 'test refali
                                                             dna_type => 'genomic dna',
                                                             read_aligner_name => 'foo');
 ok($pp, 'Created an ReferenceAlignment PP');
-isa_ok($pp, 'Genome::ProcessingProfile::ReferenceAlignment::454');
 isa_ok($pp, 'Genome::ProcessingProfile::ReferenceAlignment');
 isa_ok($pp, 'Genome::ProcessingProfile');
 
@@ -45,7 +44,6 @@ $pp = Genome::ProcessingProfile->create(name => 'test refalign 2',
                                         dna_type => 'genomic dna',
                                         read_aligner_name => 'foo2');
 ok($pp, 'Created a Processing Profile with type_name => reference alignment');
-isa_ok($pp, 'Genome::ProcessingProfile::ReferenceAlignment::454');
 isa_ok($pp, 'Genome::ProcessingProfile::ReferenceAlignment');
 isa_ok($pp, 'Genome::ProcessingProfile');
 

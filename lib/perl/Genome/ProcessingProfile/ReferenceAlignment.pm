@@ -7,19 +7,6 @@ use Genome;
 
 class Genome::ProcessingProfile::ReferenceAlignment {
     is => 'Genome::ProcessingProfile::Staged',
-    is_abstract => 1,
-    subclassify_by => 'subclass_name',
-    has => [
-        subclass_name => { is_mutable => 0,
-                           calculate_from => ['sequencing_platform'],
-                           calculate => sub {
-                                            my($sequencing_platform) = @_;
-                                            Carp::confess "No sequencing platform given to resolve subclass name" unless $sequencing_platform;
-                                            return 'Genome::ProcessingProfile::ReferenceAlignment::'.Genome::Utility::Text::string_to_camel_case($sequencing_platform);
-                                          }
-                         },
-    ],
-
     has_param => [
         sequencing_platform => {
             doc => 'The sequencing platform from whence the model data was generated',
@@ -175,6 +162,21 @@ class Genome::ProcessingProfile::ReferenceAlignment {
         },
     ],
 };
+
+#TODO Once old snapshots stop subclassifying by sequencing platform, remove this!
+sub get {
+    my $class = shift;
+
+    if(ref $class) {
+        return $class->SUPER::get(@_);
+    }
+
+    my $bx = UR::BoolExpr->resolve_normalized('Genome::ProcessingProfile::ReferenceAlignment', @_);
+    #until the database is updated, need to check all possible class names
+    $bx = $bx->add_filter(subclass_name => ['Genome::ProcessingProfile::ReferenceAlignment', 'Genome::ProcessingProfile::ReferenceAlignment::Solexa', 'Genome::ProcessingProfile::ReferenceAlignment::454'],);
+
+    return Genome::ProcessingProfile->get($bx);
+}
 
 sub _resolve_type_name_for_class {
     return 'reference alignment';
