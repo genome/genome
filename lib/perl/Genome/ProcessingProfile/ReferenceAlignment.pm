@@ -64,10 +64,6 @@ class Genome::ProcessingProfile::ReferenceAlignment {
             is_optional =>1,
             doc => "Strategy to be used to detect cnvs.",
         },
-        multi_read_fragment_strategy => {
-            doc => '',
-            is_optional => 1,
-        },
         picard_version => {
             doc => 'picard version for MarkDuplicates, MergeSamfiles, CreateSequenceDictionary...',
             is_optional => 1,

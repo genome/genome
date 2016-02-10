@@ -74,7 +74,6 @@ class Genome::Model::ReferenceAlignment {
         transcript_variant_annotator_version => { via => 'processing_profile' },
         transcript_variant_annotator_filter => { via => 'processing_profile' },
         transcript_variant_annotator_accept_reference_IUB_codes => {via => 'processing_profile'},
-        multi_read_fragment_strategy => { via => 'processing_profile'},
         prior_ref_seq                => { via => 'processing_profile'},
         read_aligner_name => {
             calculate_from => 'processing_profile',
@@ -260,17 +259,6 @@ sub accumulated_alignments_directory {
     my $last_complete_build = $self->last_complete_build;
     return if not $last_complete_build;
     return File::Spec->join($last_complete_build->data_directory, 'alignments');
-}
-
-sub is_eliminate_all_duplicates {
-    my $self = shift;
-
-    if ($self->multi_read_fragment_strategy and
-        $self->multi_read_fragment_strategy eq 'EliminateAllDuplicates') {
-        1;
-    } else {
-        0;
-    }
 }
 
 sub is_capture {
