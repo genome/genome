@@ -36,6 +36,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
             doc => 'The path of the bam.',
         },
     ],
+    has_optional_transient => {
+        read_count => { is => 'Number', },
+    },
 };
 
 sub execute {
@@ -44,6 +47,9 @@ sub execute {
 
     my $unarchive_if_necessary = $self->_unarchive_fastqs_if_necessary;
     return if not $unarchive_if_necessary;
+
+    my $get_fastq_read_counts = $self->_get_fastq_read_counts;
+    return if not $get_fastq_read_counts;
 
     my $fastq_to_bam_ok = $self->_fastqs_to_bam;
     return if not $fastq_to_bam_ok;
@@ -89,6 +95,30 @@ sub _unarchive_fastqs_if_necessary {
 
     $self->debug_message('Unarchive fastqs if necessary...');
     return 1;
+}
+
+sub _get_fastq_read_counts {
+    my $self = shift;
+    $self->status_message('Getting fastq read count...');
+
+    my @line_counts;
+    for my $fastq_path ( $self->fastq_paths ) {
+        $self->status_message('Fastq: %s', $fastq_path);
+        open(my $FILE, $fastq_path);
+        1 while <$FILE>;
+        my $line_count = $.;
+        $self->fatal_message('Fastq does not have any lines! %s', $fastq_path) if not $line_count > 0;
+        $self->fatal_message('Fastq does not have correct number of lines! %s', $fastq_path) if $line_count % 4 != 0;
+        $self->status_message('Fastq line count: %s', $line_count);
+        push @line_counts, $line_count;
+        close $FILE;
+    }
+
+    $self->fatal_message('Fastqs do not have the same line counts!') if List::MoreUtils::uniq(@line_counts) != 1;
+    my $read_count = List::Util::sum(@line_counts) / 4;
+    $self->status_message("Fastq read count: $read_count");
+
+    return $self->read_count($read_count);
 }
 
 sub _fastqs_to_bam {
@@ -146,7 +176,9 @@ sub _verify_bam {
     my $flagstat = $helpers->validate_bam($self->output_path);
     return if not $flagstat;
 
-    $self->debug_message('Bam read count: '.$flagstat->{total_reads});
+    $self->status_message('Bam read count:  %s', $flagstat->{total_reads});
+    $self->status_message('Fastq read count: %s', $self->read_count);
+    $self->fatal_message('Lost converting fastq to bam!') if $flagstat->{total_reads} != $self->read_count;
 
     $self->debug_message('Verify bam...done');
     return 1;
