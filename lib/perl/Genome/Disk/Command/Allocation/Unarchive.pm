@@ -60,10 +60,12 @@ sub _link_allocation_to_analysis_project {
             $self->fatal_message('No analysis project set on model for build %s.  Please use `genome analysis-project add-model` to correct this.', $owner->__display_name__);
         }
     } elsif ( $owner->isa('Genome::InstrumentData::Imported') ) {
-        $self->analysis_project->add_analysis_project_bridge(
-            instrument_data => $owner,
-            status => 'skipped',
-        );
+        if ( not $self->analysis_project->analysis_project_bridges(instrument_data => $owner) ) {
+            $self->analysis_project->add_analysis_project_bridge(
+                instrument_data => $owner,
+                status => 'skipped',
+            );
+        }
     } else {
         $self->fatal_message('Setting the analysis project of %s is currently not handled.  Please open a support request to unarchive this allocation.', $owner->__display_name__);
     }
