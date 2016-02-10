@@ -366,27 +366,6 @@ sub params_for_merged_alignment {
     return @param_set;
 }
 
-# TODO: remove
-sub prior {
-    my $self = shift;
-    warn("For now prior has been replaced with the actual column name prior_ref_seq");
-    if (@_) {
-        die("Method prior() is read-only since it's deprecated");
-    }
-    return $self->prior_ref_seq();
-}
-
-# TODO: remove
-sub filter_ruleset_name {
-    #TODO: move into the db so it's not constant
-    'basic'
-}
-
-# TODO: remove
-sub filter_ruleset_params {
-    ''
-}
-
 
 #### IMPLEMENTATION #####
 

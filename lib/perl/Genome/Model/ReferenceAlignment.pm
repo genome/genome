@@ -140,8 +140,6 @@ class Genome::Model::ReferenceAlignment {
                 return $latest_build_event;
             |,
         },
-        filter_ruleset_name   => { via => 'processing_profile' },
-        filter_ruleset_params => { via => 'processing_profile' },
         target_region_set_name => {
             is_many => 1, is_mutable => 1, is => 'Text', via => 'inputs', to => 'value_id', 
             where => [ name => 'target_region_set_name', value_class_name => 'UR::Value' ],
