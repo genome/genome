@@ -16,6 +16,7 @@ use List::MoreUtils qw(uniq);
 use Regexp::Common;
 use Workflow;
 use Date::Manip;
+use Params::Validate qw(validate_pos);
 
 use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
@@ -2819,6 +2820,40 @@ sub has_imported_instrument_data {
     my $self = shift;
     my @instrument_data = $self->instrument_data('subclass_name isa' => 'Genome::InstrumentData::Imported');
     return scalar(@instrument_data)? 1 : 0;
+}
+
+sub wait {
+    my $self = shift;
+    my ($polling_interval, $timeout) = validate_pos(@_, {default => 30}, 0);
+
+    my $start_time = time();
+    while ($self->is_running_or_scheduled) {
+        my $elapsed_time = time() - $start_time;
+        if (defined($timeout) and ($elapsed_time > $timeout)) {
+            die sprintf("Build (%s) timed out after %s seconds",
+                $self->id, $timeout);
+        }
+
+        sleep($polling_interval);
+    }
+}
+
+sub is_running_or_scheduled {
+    my $self = shift;
+    my $current_status = $self->current_status;
+    return 1 if ($current_status eq 'Running') or ($current_status eq 'Scheduled');
+}
+
+sub current_status {
+    my $self = shift;
+    my $event = $self->the_master_event;
+    unless ($event) {
+        die "Could not get the build's master event!";
+    }
+
+    UR::Context->current->reload($event);
+    UR::Context->current->reload($self);
+    return $event->event_status;
 }
 
 1;

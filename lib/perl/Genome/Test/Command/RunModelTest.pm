@@ -146,30 +146,12 @@ sub wait_for_build_to_complete {
     my $self = shift;
     my $build = shift;
 
-    my $start_time = time();
-    my $timeout_seconds = $self->timeout * 60.0;
-
-    my $event = $build->the_master_event;
-    unless ($event) {
-        die "Could not get the build's master event!";
-    }
-
     printf "Monitoring build (%s) until it completes or timeout "
         . "of %s minutes is reached.", $build->id, $self->timeout;
 
-    while (!grep { $event->event_status eq $_ } ('Succeeded',
-            'Failed', 'Crashed')) {
-        UR::Context->current->reload($event);
-        UR::Context->current->reload($build);
-        my $elapsed_time = time() - $start_time;
-        if ($elapsed_time > $timeout_seconds) {
-            die sprintf("Build (%s) timed out after %s minutes",
-                $build->id, $self->timeout);
-        }
+    my $timeout_seconds = $self->timeout * 60.0;
+    $build->wait($self->polling_inteval, $timeout_seconds);
 
-        print '.';
-        sleep($self->polling_interval);
-    }
     print "\n";
 }
 
