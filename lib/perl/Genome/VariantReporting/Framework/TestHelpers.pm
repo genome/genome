@@ -18,14 +18,16 @@ use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Test::Factory::Process;
 use Genome::File::Vcf::Differ;
+use Genome::Utility::Test;
 use File::Slurp qw(write_file);
-use Genome::Utility::Test qw(compare_ok get_test_dir);
+use Genome::Utility::Test qw(compare_ok);
 use File::Copy qw();
 
 use Exporter 'import';
 
 our @EXPORT_OK = qw(
     test_cmd_and_result_are_in_sync
+    get_test_dir
     get_translation_provider
     get_plan_object
     get_reference_build
@@ -204,4 +206,16 @@ sub test_dag_execute {
     my $diff = $differ->diff;
     is($diff, undef, "Found No differences between $vcf_path and (expected) $expected_vcf") ||
         diag $diff->to_string;
+}
+
+sub get_test_dir {
+    my ($pkg, $VERSION) = validate_pos(@_, 1, 1);
+
+    my $test_dir = Genome::Utility::Test->data_dir($pkg, "v$VERSION");
+    if (-d $test_dir) {
+        note "Found test directory ($test_dir)";
+    } else {
+        die "Failed to find test directory ($test_dir)";
+    }
+    return $test_dir;
 }

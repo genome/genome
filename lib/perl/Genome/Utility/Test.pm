@@ -15,7 +15,6 @@ our @EXPORT_OK = qw(
     command_execute_ok
     compare_dirs
     compare_ok
-    get_test_dir
     is_equal_set
     run_ok
     strip_ansi
@@ -344,27 +343,10 @@ sub data_dir_ok {
     return $data_dir;
 }
 
-sub get_test_dir {
-    my ($pkg, $VERSION) = Params::Validate::validate_pos(@_, 1, 1);
-
-    my $test_dir = _data_dir($pkg, "v$VERSION");
-    if (-d $test_dir) {
-        note "Found test directory ($test_dir)";
-    } else {
-        die "Failed to find test directory ($test_dir)";
-    }
-    return $test_dir;
-}
-
 sub data_dir {
     my ($class, $package, $test_version) = Params::Validate::validate_pos(
         @_, {isa => __PACKAGE__}, {can => 'class'}, {type => SCALAR, optional => 1},
     );
-    return _data_dir($package, $test_version);
-}
-
-sub _data_dir {
-    my ($package, $test_version) = @_;
 
     # "validate" package
     $package->class;
