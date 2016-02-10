@@ -45,7 +45,7 @@ sub execute {
     $resolve_symlinks = sub {
         my $path = $File::Find::name;
         if (-l $path) {
-            my $symlink_target = $File::Find::fullname;
+            my $symlink_target = abs_path($path);
             if (-e $symlink_target) {
                 #Only do this if symlink doesn't point to somewhere within
                 #this directory structure
