@@ -75,16 +75,7 @@ class Genome::Model::ReferenceAlignment {
         transcript_variant_annotator_filter => { via => 'processing_profile' },
         transcript_variant_annotator_accept_reference_IUB_codes => {via => 'processing_profile'},
         prior_ref_seq                => { via => 'processing_profile'},
-        read_aligner_name => {
-            calculate_from => 'processing_profile',
-            calculate => q|
-                my $read_aligner_name = $processing_profile->read_aligner_name;
-                if ($read_aligner_name =~ /^maq/) {
-                    return 'maq';
-                }
-                return $read_aligner_name;
-            |,
-        },
+        read_aligner_name            => { via => 'processing_profile'},
         read_aligner_version         => { via => 'processing_profile'},
         read_aligner_params          => { via => 'processing_profile'},
         read_trimmer_name            => { via => 'processing_profile'},
