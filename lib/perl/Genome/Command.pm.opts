@@ -36121,13 +36121,6 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>instrument-data',
   [
-    '>remove',
-    [
-      'instrument-data=s@',
-      undef,
-      'help!',
-      undef
-    ],
     '>solexa',
     [
       '>generate-summary-report',
@@ -36237,27 +36230,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>refine-reads',
-    [
-      'lsf-resource=s',
-      'files',
-      'refiner-name=s',
-      'files',
-      'refiner-version=s',
-      'files',
-      'refiner-params=s',
-      'files',
-      'result-users=s',
-      undef,
-      'result-id=s',
-      'files',
-      'input-result=s',
-      undef,
-      'refiner-known-sites-ids=s@',
-      'files',
-      'help!',
-      undef
-    ],
     '>list',
     [
       'style=s',
@@ -36289,6 +36261,27 @@ $Genome::Command::OPTS_SPEC = [
         'any'
       ],
       'filter=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>refine-reads',
+    [
+      'lsf-resource=s',
+      'files',
+      'refiner-name=s',
+      'files',
+      'refiner-version=s',
+      'files',
+      'refiner-params=s',
+      'files',
+      'result-users=s',
+      undef,
+      'result-id=s',
+      'files',
+      'input-result=s',
+      undef,
+      'refiner-known-sites-ids=s@',
       'files',
       'help!',
       undef
@@ -36528,8 +36521,22 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>delete',
+    [
+      'instrument-data=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>update',
     [
+      'help!',
+      undef
+    ],
+    '>calculate-read-count',
+    [
+      'instrument-data=s',
+      undef,
       'help!',
       undef
     ],
@@ -36565,13 +36572,6 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'trimmer-version=s',
       'files',
-      'help!',
-      undef
-    ],
-    '>calculate-read-count',
-    [
-      'instrument-data=s',
-      undef,
       'help!',
       undef
     ],
