@@ -39,8 +39,8 @@ sub interpretations {
         'epitope-variant-sequence' => {
             T => {
                 variant_sequences => {
-                    '>WT.PRAMEF4.R195H' => 'KKLKILGMPFRNIRSILKMVN',
-                    '>MT.PRAMEF4.R195H' => 'KKLKILGMPFHNIRSILKMVN',
+                    '>WT.PRAMEF4_ENST00000235349.R195H' => 'KKLKILGMPFRNIRSILKMVN',
+                    '>MT.PRAMEF4_ENST00000235349.R195H' => 'KKLKILGMPFHNIRSILKMVN',
                 }
             }
         },
