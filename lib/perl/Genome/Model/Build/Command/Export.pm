@@ -56,10 +56,11 @@ sub execute {
                     }
                     elsif (-d $symlink_target) {
                         Genome::Sys->rsync_directory(source_directory => $symlink_target, target_directory => $path);
+
+                        $find->($path);
                     }
                 }
             }
-            $find->($path);
         }
     };
 
