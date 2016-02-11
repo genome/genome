@@ -846,19 +846,6 @@ sub accumulated_alignments_directory {
     return $self->data_directory . '/alignments';
 }
 
-sub accumulated_alignments_disk_allocation {
-    my $self = shift;
-
-    my $dedup_event = Genome::Model::Event::Build::ReferenceAlignment::DeduplicateLibraries->get(model_id=>$self->model->id,
-                                                                                                   build_id=>$self->build_id);
-
-    return if (!$dedup_event);
-    
-    my $disk_allocation = Genome::Disk::Allocation->get(owner_class_name=>ref($dedup_event), owner_id=>$dedup_event->id);
-    
-    return $disk_allocation;
-}
-
 sub delete {
     my $self = shift;
     
