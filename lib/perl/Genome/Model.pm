@@ -438,13 +438,10 @@ sub _resolve_resource_requirements_for_build {
     return "-R 'rusage[tmp=10000:mem=1000]' -M 1000000";
 }
 
+# Override in subclasses for actions that should be taken at build creation time
 sub _initialize_build {
-    # TODO remove call to processing_profile method after moving pp._initialize_builds to the respective model subclasses.
     my ($self, $build) = @_;
-    my $pp = $self->processing_profile;
-    if ($pp->can('_initialize_build')) {
-        return $pp->_initialize_build($build);
-    }
+
     return 1;
 }
 
