@@ -45,12 +45,7 @@ sub _interpret_entry {
         my @transcripts = $vep_parser->transcripts($entry, $variant_allele);
 
         TRANSCRIPT: for my $transcript (@transcripts) {
-            if (defined($transcript_count{$transcript->{feature}})) {
-                $transcript_count{$transcript->{feature}} += 1;
-            }
-            else {
-                $transcript_count{$transcript->{feature}} = 1;
-            }
+            $transcript_count{$transcript->{feature}}++;
             my @consequences = uniq map {split /\&/, lc($_)} grep {defined($_)} $transcript->{consequence};
             my ($wildtype_amino_acid, $mutant_amino_acid) = split('/', $transcript->{amino_acids});
             my $full_wildtype_sequence = $transcript->{wildtypeprotein};
