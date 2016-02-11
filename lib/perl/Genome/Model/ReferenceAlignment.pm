@@ -333,11 +333,6 @@ sub default_genotype_model {
     return $chosen_genotype_model;
 }
 
-sub build_subclass_name {
-    # TODO: remove, seemingly ununsed
-    return 'reference alignment';
-}
-
 sub dependent_properties {
     my ($self, $property_name) = @_;
     return @{$DEPENDENT_PROPERTIES{$property_name}} if exists $DEPENDENT_PROPERTIES{$property_name};
