@@ -130,7 +130,7 @@ sub add_reports_to_workflow {
             netmhc_version => $self->netmhc_version,
             output_filter => $self->output_filter,
             sample_name =>  $self->build->subject_name,
-            alleles => $self->alleles,
+            alleles => [$self->alleles],
             variant_type => $variant_type,
         );
         my $netmhc = Genome::Model::Tools::EpitopePrediction::NetmhcPipeline->create(%netmhc_params);
