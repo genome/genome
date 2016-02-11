@@ -516,4 +516,33 @@ sub control_subject {
     return; #reference alignment has no control subject
 }
 
+sub _initialize_build {
+    my($self,$build) = @_;
+
+    # Check that the annotator version param is sane before doing the build
+    my $annotator_version;
+    my $worked = eval {
+        my $model = $build->model;
+        my $pp = $model->processing_profile;
+        $annotator_version = $pp->transcript_variant_annotator_version;
+        # When all processing profiles have a param for this, remove this unless block so
+        # they'll fail if it's missing
+        unless (defined $annotator_version) {
+            $annotator_version = Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version;
+        }
+
+        my %available_versions = map { $_ => 1 } Genome::Model::Tools::Annotate::TranscriptVariants->available_versions;
+        unless ($available_versions{$annotator_version}) {
+            die "Requested annotator version ($annotator_version) is not in the list of available versions: "
+                . join(', ',keys(%available_versions));
+        }
+        1;
+    };
+    unless ($worked) {
+        $self->error_message("Could not determine which version of the Transcript Variants annotator to use: $@");
+        return;
+    }
+    return 1;
+}
+
 1;
