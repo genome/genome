@@ -215,34 +215,6 @@ sub create {
     return $self;
 }
 
-sub libraries {
-    my $self = shift;
-    my %libraries = map {$_->library_name => 1} $self->instrument_data;
-    my @distinct_libraries = keys %libraries;
-    if ($self->name =~ /v0b/) {
-        warn "removing any *d libraries from v0b models.  temp hack for AML v0b models.";
-        @distinct_libraries = grep { $_ !~ /d$/ } @distinct_libraries;
-    }
-    return @distinct_libraries;
-}
-
-sub _calculate_library_count {
-    my $self = shift;
-    return scalar($self->libraries);
-}
-
-sub run_names {
-    my $self = shift;
-    my %distinct_run_names = map { $_->run_name => 1}  $self->instrument_data;
-    my @distinct_run_names = keys %distinct_run_names;
-    return @distinct_run_names;
-}
-
-sub _calculate_run_count {
-    my $self = shift;
-    return scalar($self->run_names);
-}
-
 sub region_of_interest_set {
     my $self = shift;
 
