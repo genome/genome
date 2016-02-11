@@ -636,16 +636,6 @@ sub mark_duplicates_library_metrics_hash_ref {
     return \%library_metrics;
 }
 
-sub whole_map_file {
-    my $self = shift;
-    return $self->accumulated_alignments_directory .'/whole.map';
-}
-
-sub whole_rmdup_map_file {
-    my $self = shift;
-    return $self->accumulated_alignments_directory .'/whole_rmdup.map';
-}
-
 sub whole_rmdup_bam_file {
     my $self = shift;
 
