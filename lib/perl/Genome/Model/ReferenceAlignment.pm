@@ -57,7 +57,6 @@ class Genome::Model::ReferenceAlignment {
     ],
     has => [
         subject                     => { is => 'Genome::Sample', id_by => 'subject_id', doc => 'the subject of alignment and variant detection is a single sample' },
-        align_dist_threshold         => { via => 'processing_profile'},
         dna_type                     => { via => 'processing_profile'},
         picard_version               => { via => 'processing_profile'},
         samtools_version             => { via => 'processing_profile'},
@@ -74,26 +73,13 @@ class Genome::Model::ReferenceAlignment {
         transcript_variant_annotator_version => { via => 'processing_profile' },
         transcript_variant_annotator_filter => { via => 'processing_profile' },
         transcript_variant_annotator_accept_reference_IUB_codes => {via => 'processing_profile'},
-        multi_read_fragment_strategy => { via => 'processing_profile'},
-        prior_ref_seq                => { via => 'processing_profile'},
-        read_aligner_name => {
-            calculate_from => 'processing_profile',
-            calculate => q|
-                my $read_aligner_name = $processing_profile->read_aligner_name;
-                if ($read_aligner_name =~ /^maq/) {
-                    return 'maq';
-                }
-                return $read_aligner_name;
-            |,
-        },
+        read_aligner_name            => { via => 'processing_profile'},
         read_aligner_version         => { via => 'processing_profile'},
         read_aligner_params          => { via => 'processing_profile'},
         read_trimmer_name            => { via => 'processing_profile'},
         read_trimmer_version         => { via => 'processing_profile'},
         read_trimmer_params          => { via => 'processing_profile'},
         force_fragment               => { via => 'processing_profile'},
-        read_calibrator_name         => { via => 'processing_profile'},
-        read_calibrator_params       => { via => 'processing_profile'},
         dbsnp_model => {
             via => 'dbsnp_build',
             to => 'model',
@@ -151,8 +137,6 @@ class Genome::Model::ReferenceAlignment {
                 return $latest_build_event;
             |,
         },
-        filter_ruleset_name   => { via => 'processing_profile' },
-        filter_ruleset_params => { via => 'processing_profile' },
         target_region_set_name => {
             is_many => 1, is_mutable => 1, is => 'Text', via => 'inputs', to => 'value_id', 
             where => [ name => 'target_region_set_name', value_class_name => 'UR::Value' ],
@@ -260,17 +244,6 @@ sub accumulated_alignments_directory {
     my $last_complete_build = $self->last_complete_build;
     return if not $last_complete_build;
     return File::Spec->join($last_complete_build->data_directory, 'alignments');
-}
-
-sub is_eliminate_all_duplicates {
-    my $self = shift;
-
-    if ($self->multi_read_fragment_strategy and
-        $self->multi_read_fragment_strategy eq 'EliminateAllDuplicates') {
-        1;
-    } else {
-        0;
-    }
 }
 
 sub is_capture {

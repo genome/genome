@@ -64,10 +64,6 @@ class Genome::ProcessingProfile::ReferenceAlignment {
             is_optional =>1,
             doc => "Strategy to be used to detect cnvs.",
         },
-        multi_read_fragment_strategy => {
-            doc => '',
-            is_optional => 1,
-        },
         picard_version => {
             doc => 'picard version for MarkDuplicates, MergeSamfiles, CreateSequenceDictionary...',
             is_optional => 1,
@@ -135,29 +131,8 @@ class Genome::ProcessingProfile::ReferenceAlignment {
             doc => 'command line args for the trimmer',
             is_optional => 1,
         },
-        read_calibrator_name => {
-            doc => '',
-            is_optional => 1,
-        },
-        read_calibrator_params => {
-            doc => '',
-            is_optional => 1,
-        },
         coverage_stats_params => {
             doc => 'parameters necessary for generating reference coverage in the form of two comma delimited lists split by a colon like 1,5,10,15,20:0,200,500',
-            is_optional => 1,
-        },
-        prior_ref_seq => {
-            doc => '',
-            is_optional => 1,
-        },
-        capture_set_name => {
-            doc => 'The name of the capture set to evaluate coverage and limit variant calls to within the defined target regions',
-            is_optional => 1,
-            is_deprecated => 1,
-        },
-        align_dist_threshold => {
-            doc => '',
             is_optional => 1,
         },
     ],
@@ -372,27 +347,6 @@ sub params_for_merged_alignment {
 
     my @param_set = (\%params);
     return @param_set;
-}
-
-# TODO: remove
-sub prior {
-    my $self = shift;
-    warn("For now prior has been replaced with the actual column name prior_ref_seq");
-    if (@_) {
-        die("Method prior() is read-only since it's deprecated");
-    }
-    return $self->prior_ref_seq();
-}
-
-# TODO: remove
-sub filter_ruleset_name {
-    #TODO: move into the db so it's not constant
-    'basic'
-}
-
-# TODO: remove
-sub filter_ruleset_params {
-    ''
 }
 
 
