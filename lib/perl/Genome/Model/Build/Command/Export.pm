@@ -37,35 +37,42 @@ sub execute {
     my $find = sub {
         find({
             wanted => $resolve_symlinks,
-            follow => 1,
-            dangling_symlinks => $resolve_dangling_symlinks,
+            follow => 0,
         }, shift)
     };
 
     $resolve_symlinks = sub {
         my $path = $File::Find::name;
         if (-l $path) {
-            my $symlink_target = $File::Find::fullname;
+            my $symlink_target = abs_path($path);
             if (-e $symlink_target) {
                 #Only do this if symlink doesn't point to somewhere within
                 #this directory structure
                 unless (index($symlink_target, $export_directory) == 0) {
-                    unlink $path;
+                    if (index($path, $export_directory) == 0) {
+                        unlink $path;
+                    }
+                    else {
+                        Genome::Carp::confessf('Path %s escaped from export directory', $path);
+                    }
                     if (-f $symlink_target) {
                         Genome::Sys->copy_file($symlink_target, $path);
                     }
                     elsif (-d $symlink_target) {
                         Genome::Sys->rsync_directory(source_directory => $symlink_target, target_directory => $path);
+
+                        $find->($path);
                     }
                 }
             }
-            $find->($path);
+            else {
+                $resolve_dangling_symlinks->($path, $symlink_target);
+            }
         }
     };
 
     $resolve_dangling_symlinks = sub {
-        my $path = File::Spec->join($_[1], $_[0]);
-        my $symlink_target = abs_path($path);
+        my ($path, $symlink_target) = @_;
         my $allocation = Genome::Disk::Allocation->get_allocation_for_path($symlink_target);
         unlink $path;
         if (defined($allocation)) {
@@ -112,6 +119,11 @@ sub check_available_space {
 
     my $total_directory_size = Genome::Sys->directory_size_recursive($allocation->absolute_path);
     my $retirement_path = $self->target_export_directory;
+
+    unless(-d $retirement_path) {
+        $self->fatal_message('Did not find directory at <%s>.', $retirement_path);
+    }
+
     my $disk_info = df($retirement_path, 1);
     if (!defined($disk_info) || $disk_info->{bavail} <= $total_directory_size) {
         $self->fatal_message("Not enough space available on target path (%s)", $retirement_path);
