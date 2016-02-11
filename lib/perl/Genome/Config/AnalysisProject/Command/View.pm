@@ -108,6 +108,7 @@ sub write_report {
     $self->_write_instrument_data_summary($handle);
     $self->_write_model_summary($handle);
     $self->_write_config_items($handle);
+    $self->_write_environment_config($handle);
 
     $self->_write_timeline($handle);
 
@@ -371,6 +372,35 @@ sub _color_status {
     return $self->_colorize_text_by_map($text, $text, %STATUS_COLORS);
 }
 
+sub _write_environment_config {
+    my ($self, $handle) = @_;
+
+    return if $self->config eq 'quiet';
+
+    my $environment_config = $self->analysis_project->environment_config_dir;
+    if ($environment_config) {
+        $self->_write_pairs_line($handle, 'Environment config', $environment_config);
+
+        if ($self->config eq 'verbose' or $self->config eq 'parsed') {
+            $self->_write_environment_config_contents($handle, $environment_config);
+        }
+
+        print $handle "\n";
+    }
+}
+
+sub _write_environment_config_contents {
+    my ($self, $handle, $environment_config) = @_;
+
+    my $f = File::Spec->join($environment_config, Genome::Config::config_subpath);
+    unless (-r $f) {
+        $self->warning_message('Could not read environment config <%s>.', $f);
+    } else {
+        my $content = Genome::Sys->read_file($f);
+        $content =~ s/^/    /gm;
+        print $handle $content;
+    }
+}
 
 sub _write_config_items {
     my ($self, $handle) = @_;
