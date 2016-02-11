@@ -12,6 +12,7 @@ use above "Genome";
 use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Reader;
+use Set::Scalar;
 
 my $pkg = "Genome::VariantReporting::Suite::Vep::EpitopeVariantSequenceInterpreter";
 use_ok($pkg);
@@ -28,8 +29,8 @@ subtest 'input file with length 17' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.PRAMEF4.R195H' => 'LKILGMPFRNIRSILKM',
-                '>MT.PRAMEF4.R195H' => 'LKILGMPFHNIRSILKM',
+                '>WT.PRAMEF4_ENST00000235349_1.R195H' => 'LKILGMPFRNIRSILKM',
+                '>MT.PRAMEF4_ENST00000235349_1.R195H' => 'LKILGMPFHNIRSILKM',
             }
         }
     );
@@ -48,8 +49,8 @@ subtest 'input file with length 21' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.PRAMEF4.R195H' => 'KKLKILGMPFRNIRSILKMVN',
-                '>MT.PRAMEF4.R195H' => 'KKLKILGMPFHNIRSILKMVN',
+                '>WT.PRAMEF4_ENST00000235349_1.R195H' => 'KKLKILGMPFRNIRSILKMVN',
+                '>MT.PRAMEF4_ENST00000235349_1.R195H' => 'KKLKILGMPFHNIRSILKMVN',
             }
         }
     );
@@ -68,8 +69,8 @@ subtest 'input file with length 31' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.PRAMEF4.R195H' => 'LHLCCKKLKILGMPFRNIRSILKMVNLDCIQ',
-                '>MT.PRAMEF4.R195H' => 'LHLCCKKLKILGMPFHNIRSILKMVNLDCIQ',
+                '>WT.PRAMEF4_ENST00000235349_1.R195H' => 'LHLCCKKLKILGMPFRNIRSILKMVNLDCIQ',
+                '>MT.PRAMEF4_ENST00000235349_1.R195H' => 'LHLCCKKLKILGMPFHNIRSILKMVNLDCIQ',
             }
         }
     );
@@ -88,8 +89,8 @@ subtest 'input file with mutations at relative end of full sequence' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.PRSS55.S343F' => 'SPRSWLLLCPLSHVLFRAILY',
-                '>MT.PRSS55.S343F' => 'SPRSWLLLCPLFHVLFRAILY',
+                '>WT.PRSS55_ENST00000328655_1.S343F' => 'SPRSWLLLCPLSHVLFRAILY',
+                '>MT.PRSS55_ENST00000328655_1.S343F' => 'SPRSWLLLCPLFHVLFRAILY',
             }
         }
     );
@@ -108,8 +109,8 @@ subtest 'input file with mutations at relative beginning of full sequence' => su
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.IGHV3-53.V8I' => 'MEFWLSWVFLVAILKGVQCEV',
-                '>MT.IGHV3-53.V8I' => 'MEFWLSWIFLVAILKGVQCEV',
+                '>WT.IGHV3-53_ENST00000390627_1.V8I' => 'MEFWLSWVFLVAILKGVQCEV',
+                '>MT.IGHV3-53_ENST00000390627_1.V8I' => 'MEFWLSWIFLVAILKGVQCEV',
             }
         }
     );
@@ -128,8 +129,8 @@ subtest 'input file with wildtype sequence shorter than desired peptite sequence
     my %expected_return_values = (
         C => {
             variant_sequences => {
-                '>WT.IGHJ5.F3L' => 'NWFDPWGQGTLVTVSS',
-                '>MT.IGHJ5.F3L' => 'NWLDPWGQGTLVTVSS',
+                '>WT.IGHJ5_ENST00000488476_1.F3L' => 'NWFDPWGQGTLVTVSS',
+                '>MT.IGHJ5_ENST00000488476_1.F3L' => 'NWLDPWGQGTLVTVSS',
             }
         }
     );
@@ -148,8 +149,8 @@ subtest 'input file with inframe insertion - amino acid replacement' => sub {
     my %expected_return_values = (
         GTGC => {
             variant_sequences => {
-                '>WT.CNDP1.V15VL' => 'LGRMAASLLAVLLLLLERGMF',
-                '>MT.CNDP1.V15VL' => 'LGRMAASLLAVLLLLLLERGMF',
+                '>WT.CNDP1_ENST00000358821_1.V15VL' => 'LGRMAASLLAVLLLLLERGMF',
+                '>MT.CNDP1_ENST00000358821_1.V15VL' => 'LGRMAASLLAVLLLLLLERGMF',
             }
         }
     );
@@ -168,8 +169,8 @@ subtest 'input file with inframe deletion - amino acid replacement' => sub {
     my %expected_return_values = (
         A => {
             variant_sequences => {
-                '>WT.OR14A16.SL163-164L' => 'IAVMHTAGTFSLSYCGSNMVHQ',
-                '>MT.OR14A16.SL163-164L' => 'IAVMHTAGTFLSYCGSNMVHQ',
+                '>WT.OR14A16_ENST00000357627_1.SL163-164L' => 'IAVMHTAGTFSLSYCGSNMVHQ',
+                '>MT.OR14A16_ENST00000357627_1.SL163-164L' => 'IAVMHTAGTFLSYCGSNMVHQ',
             }
         }
     );
@@ -188,8 +189,8 @@ subtest 'input file with inframe insertion - amino acid insertion' => sub {
     my %expected_return_values = (
         TAGC => {
             variant_sequences => {
-                '>WT.OXA1L.-478-479S' => 'PGKDNPPNIPSSSSKPKSKY',
-                '>MT.OXA1L.-478-479S' => 'PGKDNPPNIPSSSSSKPKSKY',
+                '>WT.OXA1L_ENST00000285848_1.-478-479S' => 'PGKDNPPNIPSSSSKPKSKY',
+                '>MT.OXA1L_ENST00000285848_1.-478-479S' => 'PGKDNPPNIPSSSSSKPKSKY',
             }
         }
     );
@@ -208,8 +209,8 @@ subtest 'input file with inframe deletion - amino acid deletion' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.LRRC17.E214-' => 'RQIKSEQLCNEEEKEQLDPKP',
-                '>MT.LRRC17.E214-' => 'RQIKSEQLCNEEKEQLDPKP',
+                '>WT.LRRC17_ENST00000339431_1.E214-' => 'RQIKSEQLCNEEEKEQLDPKP',
+                '>MT.LRRC17_ENST00000339431_1.E214-' => 'RQIKSEQLCNEEKEQLDPKP',
             }
         }
     );
@@ -228,8 +229,8 @@ subtest 'input file with framshift variant feature truncation' => sub {
     my %expected_return_values = (
         T => {
             variant_sequences => {
-                '>WT.NECAP2.FS.209' => 'LIPPPGEQLAVGGSLVQPAV',
-                '>MT.NECAP2.FS.209' => 'LIPPPGEQLAGGSLVQPAVAPSSDQLPARPSQAQAGSSSDLSTVFPHVTSGKALPHLGQRKEDEALLSWPVFGAWGDPSSSQQLLPVQINFQPDPARHRLGPVLT',
+                '>WT.NECAP2_ENST00000443980_1.FS.209' => 'LIPPPGEQLAVGGSLVQPAV',
+                '>MT.NECAP2_ENST00000443980_1.FS.209' => 'LIPPPGEQLAGGSLVQPAVAPSSDQLPARPSQAQAGSSSDLSTVFPHVTSGKALPHLGQRKEDEALLSWPVFGAWGDPSSSQQLLPVQINFQPDPARHRLGPVLT',
             }
         }
     );
@@ -248,8 +249,8 @@ subtest 'input file with framshift variant feature elongation' => sub {
     my %expected_return_values = (
         CG => {
             variant_sequences => {
-                '>WT.HSPG2.FS.322' => 'DGSDELDCGPPPPCEPNEFP',
-                '>MT.HSPG2.FS.322' => 'DGSDELDCGPPATL',
+                '>WT.HSPG2_ENST00000374695_1.FS.322' => 'DGSDELDCGPPPPCEPNEFP',
+                '>MT.HSPG2_ENST00000374695_1.FS.322' => 'DGSDELDCGPPATL',
             }
         }
     );
@@ -259,6 +260,20 @@ subtest 'input file with framshift variant feature elongation' => sub {
     my $entry = $reader->next();
 
     is_deeply({$interpreter->interpret_entry($entry, ['CG'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest 'input file with multiple transcripts' => sub {
+    my $interpreter = $pkg->create(peptide_sequence_length => 21);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my $input_file = File::Spec->join($test_dir, 'input_multiple_transcripts.vcf');
+    my $reader = Genome::File::Vcf::Reader->new($input_file);
+    my $entry = $reader->next();
+    my %return_values = $interpreter->interpret_entry($entry, ['T', 'TGCTGCTGCTGCT']);
+    my $headers1 = Set::Scalar->new(keys %{$return_values{'T'}{'variant_sequences'}});
+    my $headers2 = Set::Scalar->new(keys %{$return_values{'TGCTGCTGCTGCT'}{'variant_sequences'}});
+
+    ok($headers1->is_disjoint($headers2), 'Headers from transcript 1 are different than headers from transcript 2');
 };
 
 subtest 'position out of bounds' => sub {

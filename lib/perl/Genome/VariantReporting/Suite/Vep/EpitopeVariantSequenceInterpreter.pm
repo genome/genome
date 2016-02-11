@@ -40,6 +40,7 @@ sub _interpret_entry {
     my $vep_parser = new Genome::File::Vcf::VepConsequenceParser($entry->{header});
 
     my %return_values;
+    my %transcript_count;
     ALLELE: for my $variant_allele (@$passed_alt_alleles) {
         my @transcripts = $vep_parser->transcripts($entry, $variant_allele);
 
@@ -78,18 +79,20 @@ sub _interpret_entry {
 
             next TRANSCRIPT if position_out_of_bounds($position, $full_wildtype_sequence);
 
+            $transcript_count{$transcript->{feature}}++;
+
             my ($wildtype_subsequence, $mutant_subsequence, $variant_id);
             if (grep {$_ eq 'frameshift_variant'} @consequences) {
                 ($wildtype_subsequence, $mutant_subsequence) = $self->get_frameshift_subsequences($position, $full_wildtype_sequence, $entry);
                 $mutant_subsequence .= $transcript->{downstreamprotein};
-                $variant_id = $transcript->{symbol} . '.FS.' . $transcript->{protein_position};
+                $variant_id = $transcript->{symbol} . '_' . $transcript->{feature} . '_' . $transcript_count{$transcript->{feature}} . '.FS.' . $transcript->{protein_position};
             }
             else {
                 my $mutation_position;
                 ($mutation_position, $wildtype_subsequence) = $self->get_wildtype_subsequence($position, $full_wildtype_sequence, $entry, $wildtype_amino_acid_length);
                 $mutant_subsequence = $wildtype_subsequence;
                 substr($mutant_subsequence, $mutation_position, $wildtype_amino_acid_length) = $mutant_amino_acid;
-                $variant_id = $transcript->{symbol} . '.' . $wildtype_amino_acid . $transcript->{protein_position} . ($mutant_amino_acid || '-');
+                $variant_id = $transcript->{symbol} . '_' . $transcript->{feature} . '_' . $transcript_count{$transcript->{feature}} . '.' . $wildtype_amino_acid . $transcript->{protein_position} . ($mutant_amino_acid || '-');
             }
             my @designations = qw(WT MT);
             my @subsequences = ($wildtype_subsequence, $mutant_subsequence);
