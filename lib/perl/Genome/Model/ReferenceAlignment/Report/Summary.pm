@@ -7,6 +7,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Model::Tools::Joinx::SnvConcordanceByQuality;
 
 use IO::String;
 use Template;
