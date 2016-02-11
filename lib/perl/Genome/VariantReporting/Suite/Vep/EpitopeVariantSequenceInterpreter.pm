@@ -45,7 +45,6 @@ sub _interpret_entry {
         my @transcripts = $vep_parser->transcripts($entry, $variant_allele);
 
         TRANSCRIPT: for my $transcript (@transcripts) {
-            $transcript_count{$transcript->{feature}}++;
             my @consequences = uniq map {split /\&/, lc($_)} grep {defined($_)} $transcript->{consequence};
             my ($wildtype_amino_acid, $mutant_amino_acid) = split('/', $transcript->{amino_acids});
             my $full_wildtype_sequence = $transcript->{wildtypeprotein};
@@ -79,6 +78,8 @@ sub _interpret_entry {
             }
 
             next TRANSCRIPT if position_out_of_bounds($position, $full_wildtype_sequence);
+
+            $transcript_count{$transcript->{feature}}++;
 
             my ($wildtype_subsequence, $mutant_subsequence, $variant_id);
             if (grep {$_ eq 'frameshift_variant'} @consequences) {
