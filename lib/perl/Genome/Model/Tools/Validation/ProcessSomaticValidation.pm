@@ -164,7 +164,7 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
       statuses_to_review => {
           is => 'String',
           is_optional => 1,
-          doc => "comma-separated list of statuses to include in review. Accepted values: [validated,newcall,nonvalidated]",
+          doc => "comma-separated list of statuses to include in review. Accepted values: [validated,newcall,notvalidated]",
           default => "validated,newcall",
       },
 
@@ -557,8 +557,8 @@ sub execute {
   #check statuses
   my @statuses = split(",",$self->statuses_to_review);
   foreach my $i (@statuses){
-      unless($i =~ /^newcall$|^validated$|^nonvalidated$/){
-	  die $self->error_message("status $i is not a valid status to review. Status must be one of [validated,nonvalidated,newcall]");
+      unless($i =~ /^newcall$|^validated$|^notvalidated$/){
+	  die $self->error_message("status $i is not a valid status to review. Status must be one of [validated,notvalidated,newcall]");
       }
   }
 
