@@ -107,14 +107,11 @@ sub _get_fastq_read_counts {
     my @line_counts;
     for my $fastq_path ( $self->fastq_paths ) {
         $self->debug_message('Fastq: %s', $fastq_path);
-        open(my $FILE, $fastq_path);
-        1 while <$FILE>;
-        my $line_count = $.;
+        my $line_count = Genome::Sys->line_count($fastq_path);
         $self->fatal_message('Fastq does not have any lines! %s', $fastq_path) if not $line_count > 0;
         $self->fatal_message('Fastq does not have correct number of lines! %s', $fastq_path) if $line_count % 4 != 0;
         $self->debug_message('Fastq line count: %s', $line_count);
         push @line_counts, $line_count;
-        close $FILE;
     }
 
     $self->fatal_message('Fastqs do not have the same line counts!') if List::MoreUtils::uniq(@line_counts) != 1;
