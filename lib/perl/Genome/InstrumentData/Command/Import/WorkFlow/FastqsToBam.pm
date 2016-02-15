@@ -96,7 +96,7 @@ sub _unarchive_fastqs_if_necessary {
     }
     $self->fastq_paths(\@new_fastq_paths);
 
-    $self->debug_message('Unarchive fastqs if necessary...');
+    $self->debug_message('Unarchive fastqs if necessary...done');
     return 1;
 }
 
