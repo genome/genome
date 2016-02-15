@@ -121,21 +121,6 @@ sub picard_rna_seq_pie_chart {
     return $self->metrics_directory .'/'. $self->picard_rna_seq_pie_chart;
 }
 
-sub accumulated_alignments_disk_allocation {
-    my $self = shift;
-
-    my $align_event = Genome::Model::Event::Build::RnaSeq::AlignReads->get(
-        model_id=>$self->model->id,
-        build_id=>$self->build_id
-    );
-
-    return if (!$align_event);
-
-    my $disk_allocation = Genome::Disk::Allocation->get(owner_class_name=>ref($align_event), owner_id=>$align_event->id);
-
-    return $disk_allocation;
-}
-
 sub accumulated_fastq_directory {
     my $self = shift;
     return $self->data_directory . '/fastq';

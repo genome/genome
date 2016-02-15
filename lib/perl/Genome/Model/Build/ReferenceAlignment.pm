@@ -636,16 +636,6 @@ sub mark_duplicates_library_metrics_hash_ref {
     return \%library_metrics;
 }
 
-sub whole_map_file {
-    my $self = shift;
-    return $self->accumulated_alignments_directory .'/whole.map';
-}
-
-sub whole_rmdup_map_file {
-    my $self = shift;
-    return $self->accumulated_alignments_directory .'/whole_rmdup.map';
-}
-
 sub whole_rmdup_bam_file {
     my $self = shift;
 
@@ -844,19 +834,6 @@ sub accumulated_alignments_directory {
     my $self = shift;
     return unless ($self->data_directory);
     return $self->data_directory . '/alignments';
-}
-
-sub accumulated_alignments_disk_allocation {
-    my $self = shift;
-
-    my $dedup_event = Genome::Model::Event::Build::ReferenceAlignment::DeduplicateLibraries->get(model_id=>$self->model->id,
-                                                                                                   build_id=>$self->build_id);
-
-    return if (!$dedup_event);
-    
-    my $disk_allocation = Genome::Disk::Allocation->get(owner_class_name=>ref($dedup_event), owner_id=>$dedup_event->id);
-    
-    return $disk_allocation;
 }
 
 sub delete {
