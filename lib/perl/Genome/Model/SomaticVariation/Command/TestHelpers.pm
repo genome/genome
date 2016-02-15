@@ -28,12 +28,21 @@ sub create_test_objects {
     my $annotation_build_data_dir = File::Spec->join($main_dir, "annotation_build_data");
     my $instrument_data_dir = File::Spec->join($main_dir, "instrument_data");
 
+    my $reference_model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
+    my $reference_build = Genome::Test::Factory::Build->setup_object(
+        model_id => $reference_model->id,
+        data_directory => $main_dir,
+    );
+    $reference_build->name('GRCh37-lite-build37');
+
     my $normal_merged_alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
         output_dir => $instrument_data_dir,
         id => '138572668_normal'
     );
 
-    my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+    my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
+        reference_sequence_build => $reference_build,
+    );
     ok($normal_model->isa("Genome::Model::ReferenceAlignment"), "Generated a reference alignment model for normal");
     my $normal_build = Genome::Test::Factory::Build->setup_object(
         model_id         => $normal_model->id,
@@ -57,12 +66,7 @@ sub create_test_objects {
     ok(-s $normal_build->whole_rmdup_bam_file, "Normal bam path correct");
     ok($normal_build->isa("Genome::Model::Build::ReferenceAlignment"), "Generated a normal build");
 
-    my $tumor_reference_model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object();
-    my $tumor_reference_build = Genome::Test::Factory::Build->setup_object(
-        model_id => $tumor_reference_model->id,
-        data_directory => $main_dir,
-    );
-    $tumor_reference_build->name('GRCh37-lite-build37');
+
 
     my $tumor_merged_alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
         output_dir => $instrument_data_dir,
@@ -71,7 +75,7 @@ sub create_test_objects {
     my $tumor_model  = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
         subject_id            => $normal_model->subject_id,
         processing_profile_id => $normal_model->processing_profile->id,
-        reference_sequence_build => $tumor_reference_build,
+        reference_sequence_build => $reference_build,
     );
     ok($tumor_model->isa("Genome::Model::ReferenceAlignment"), "Generated a reference alignment model for tumor");
     my $tumor_build = Genome::Test::Factory::Build->setup_object(
