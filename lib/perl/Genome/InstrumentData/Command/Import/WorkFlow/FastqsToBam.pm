@@ -46,7 +46,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Fastqs to bam...');
+    $self->debug_message('Fastqs to bam...');
 
     my $unarchive_if_necessary = $self->_unarchive_fastqs_if_necessary;
     return if not $unarchive_if_necessary;
@@ -60,26 +60,26 @@ sub execute {
     my $verify_bam_ok = $self->_verify_bam;
     return if not $verify_bam_ok;
 
-    $self->status_message('Fastqs to bam...done');
+    $self->debug_message('Fastqs to bam...done');
     return 1;
 }
 
 sub _unarchive_fastqs_if_necessary {
     my $self = shift;
-    $self->status_message('Unarchive fastqs if necessary...');
+    $self->debug_message('Unarchive fastqs if necessary...');
 
     my @new_fastq_paths;
     for my $fastq_path ( $self->fastq_paths ) {
         if ( $fastq_path !~ /\.gz$/ ) {
-            $self->status_message('Unarchive not necessary for '.$fastq_path);
+            $self->debug_message('Unarchive not necessary for '.$fastq_path);
             push @new_fastq_paths, $fastq_path;
             next;
         }
 
-        $self->status_message('Unarchiving: %s', $fastq_path);
+        $self->debug_message('Unarchiving: %s', $fastq_path);
         my $unarchived_fastq_path = $self->get_working_path_for_file_path($fastq_path);
         $unarchived_fastq_path =~ s/\.gz//;
-        $self->status_message('To: %s', $unarchived_fastq_path);
+        $self->debug_message('To: %s', $unarchived_fastq_path);
         my $extractor = Archive::Extract->new(archive => $fastq_path);
         if ( not $extractor->extract(to => $unarchived_fastq_path) ) {
             $self->error_message( $extractor->error ) if $extractor->error;
@@ -96,40 +96,40 @@ sub _unarchive_fastqs_if_necessary {
     }
     $self->fastq_paths(\@new_fastq_paths);
 
-    $self->status_message('Unarchive fastqs if necessary...');
+    $self->debug_message('Unarchive fastqs if necessary...');
     return 1;
 }
 
 sub _get_fastq_read_counts {
     my $self = shift;
-    $self->status_message('Getting fastq read count...');
+    $self->debug_message('Getting fastq read count...');
 
     my @line_counts;
     for my $fastq_path ( $self->fastq_paths ) {
-        $self->status_message('Fastq: %s', $fastq_path);
+        $self->debug_message('Fastq: %s', $fastq_path);
         open(my $FILE, $fastq_path);
         1 while <$FILE>;
         my $line_count = $.;
         $self->fatal_message('Fastq does not have any lines! %s', $fastq_path) if not $line_count > 0;
         $self->fatal_message('Fastq does not have correct number of lines! %s', $fastq_path) if $line_count % 4 != 0;
-        $self->status_message('Fastq line count: %s', $line_count);
+        $self->debug_message('Fastq line count: %s', $line_count);
         push @line_counts, $line_count;
         close $FILE;
     }
 
     $self->fatal_message('Fastqs do not have the same line counts!') if List::MoreUtils::uniq(@line_counts) != 1;
     my $read_count = List::Util::sum(@line_counts) / 4;
-    $self->status_message("Fastq read count: $read_count");
+    $self->debug_message("Fastq read count: $read_count");
 
     return $self->read_count($read_count);
 }
 
 sub _fastqs_to_bam {
     my $self = shift;
-    $self->status_message('Run picard fastq to sam...');
+    $self->debug_message('Run picard fastq to sam...');
 
     my @fastqs = $self->fastq_paths;
-    $self->status_message("Fastq 1: $fastqs[0]");
+    $self->debug_message("Fastq 1: $fastqs[0]");
     my $output_bam_path = $self->output_path;
     my %fastq_to_sam_params = (
         fastq => $fastqs[0],
@@ -141,10 +141,10 @@ sub _fastqs_to_bam {
         use_version => '1.113',
     );
     if ( $fastqs[1] ) {
-        $self->status_message("Fastq 2: $fastqs[1]");
+        $self->debug_message("Fastq 2: $fastqs[1]");
         $fastq_to_sam_params{fastq2} = $fastqs[1];
     }
-    $self->status_message("Bam path: $output_bam_path");
+    $self->debug_message("Bam path: $output_bam_path");
 
     my $cmd = Genome::Model::Tools::Picard::FastqToSam->create(%fastq_to_sam_params);
     if ( not $cmd ) {
@@ -166,24 +166,24 @@ sub _fastqs_to_bam {
         return;
     }
 
-    $self->status_message('Run picard fastq to sam...done');
+    $self->debug_message('Run picard fastq to sam...done');
     return 1;
 }
 
 sub _verify_bam {
     my $self = shift;
-    $self->status_message('Verify bam...');
+    $self->debug_message('Verify bam...');
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
     my $flagstat = $helpers->validate_bam($self->output_path);
     return if not $flagstat;
 
-    $self->status_message('Bam read count:  %s', $flagstat->{total_reads});
-    $self->status_message('Fastq read count: %s', $self->read_count);
+    $self->debug_message('Bam read count:  %s', $flagstat->{total_reads});
+    $self->debug_message('Fastq read count: %s', $self->read_count);
     $self->fatal_message('Lost converting fastq to bam!') if $flagstat->{total_reads} != $self->read_count;
 
-    $self->status_message('Verify bam...done');
+    $self->debug_message('Verify bam...done');
     return 1;
 }
 
