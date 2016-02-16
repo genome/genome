@@ -33,7 +33,6 @@ class Genome::Model::SomaticValidation::Command::DefineModels {
         },
         processing_profile => {
             is => 'Genome::ProcessingProfile',
-            is_optional => 1,
             doc => 'A processing profile to use for all models defined (the current default will be used otherwise)',
         },
         variant_file_list => {
@@ -80,6 +79,10 @@ sub execute {
     for my $param ('processing_profile', 'region_of_interest_set', 'target', 'design') {
         push @params, $param => $self->$param
             if $self->$param;
+    }
+
+    if( $self->processing_profile) {
+        push @params, single_sample_processing_profile => $self->processing_profile;
     }
 
     if(!$self->region_of_interest_set and $self->target) {

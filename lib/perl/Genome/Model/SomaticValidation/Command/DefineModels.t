@@ -12,6 +12,7 @@ use above 'Genome';
 use Test::More tests => 19;
 
 use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::ProcessingProfile::SomaticValidation;
 use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
 
 my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', CLEANUP => 1, TMPDIR => 1);
@@ -75,6 +76,8 @@ my $model_group = Genome::ModelGroup->create(
     name => 'test_model_for_DefineModels.t',
 );
 
+my $pp = Genome::Test::Factory::ProcessingProfile::SomaticValidation->setup_object();
+
 my $cmd = Genome::Model::SomaticValidation::Command::DefineModels->create(
     variant_file_list => $listing_file,
     models => \@somvar_models,
@@ -82,6 +85,7 @@ my $cmd = Genome::Model::SomaticValidation::Command::DefineModels->create(
     design => $test_targets,
     region_of_interest_set => $test_targets,
     new_model_group => $model_group,
+    processing_profile => $pp,
 );
 isa_ok($cmd, 'Genome::Model::SomaticValidation::Command::DefineModels', 'created importer command');
 
@@ -106,6 +110,7 @@ my $cmd2 = Genome::Model::SomaticValidation::Command::DefineModels->create(
     design => $test_targets,
     region_of_interest_set => $test_targets,
     generate_variant_lists => 1,
+    processing_profile => $pp,
 );
 isa_ok($cmd2, 'Genome::Model::SomaticValidation::Command::DefineModels', 'created importer command');
 
