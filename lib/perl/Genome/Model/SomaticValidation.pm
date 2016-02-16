@@ -184,6 +184,10 @@ class Genome::Model::SomaticValidation {
             via => 'target_region_set',
             to => 'name',
         },
+        known_sites_id => {
+            via => 'known_sites',
+            to => 'id',
+        },
     ],
     has_transient_constant_optional => {
         sequencing_platform => {
@@ -381,6 +385,22 @@ sub default_model_name {
     }
 
     return $self->_get_incremented_name(join('.', @parts), '');
+}
+
+sub _add_known_site {
+    my $self = shift;
+
+    my @builds = Genome::Model::Build->get(@_);
+    map $self->add_input(name => 'known_sites', value => $_), @builds;
+}
+
+sub known_sites_id {
+    my $self = shift;
+    if(@_) {
+        $self->_add_known_site(id => $_[0]);
+    }
+
+    return $self->__known_sites_id;
 }
 
 1;
