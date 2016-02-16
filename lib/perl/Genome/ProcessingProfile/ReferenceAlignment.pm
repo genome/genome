@@ -551,15 +551,4 @@ sub transcript_annotation_objects {
     return 'all_sequences';
 }
 
-sub default_profile_id {
-    return 2635769;
-    #This should be updated everytime when new autocron ref-aling default pp is in place
-    #The current default is Nov 2011 Default Reference Alignment
-}
-
-sub default_profile {
-    return __PACKAGE__->get(shift->default_profile_id);
-}
-
-
 1;

@@ -1253,10 +1253,9 @@ sub get_default_alignment_results {
 
     unless(@alignment_results) {
         # Get alignment results for this inst data and the default aligner name
-        my $pp = Genome::ProcessingProfile::ReferenceAlignment->default_profile;
         @alignment_results = Genome::InstrumentData::AlignmentResult->get(
             instrument_data_id => $self->id,
-            aligner_name       => $pp->read_aligner_name,
+            aligner_name       => 'bwa',
         );
     }
 
