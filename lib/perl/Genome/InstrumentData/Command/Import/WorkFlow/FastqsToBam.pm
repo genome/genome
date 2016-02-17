@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 
 use Data::Dumper 'Dumper';
+use Archive::Extract
+$Archive::Extract::PREFER_BIN = 1;
 require File::Basename;
 require File::Spec;
 require Genome::Utility::Text;
@@ -14,7 +16,10 @@ use Try::Tiny;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam { 
     is => 'Command::V2',
-    roles => [qw/ Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory /],
+    roles => [qw/ 
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory
+        Genome::InstrumentData::Command::Import::WorkFlow::Role::RemovesInputFiles
+    /],
     has_input => [
         fastq_paths => { 
             is => 'FilePath',
@@ -34,11 +39,20 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
             doc => 'The path of the bam.',
         },
     ],
+    has_optional_transient => {
+        read_count => { is => 'Number', },
+    },
 };
 
 sub execute {
     my $self = shift;
     $self->debug_message('Fastqs to bam...');
+
+    my $unarchive_if_necessary = $self->_unarchive_fastqs_if_necessary;
+    return if not $unarchive_if_necessary;
+
+    my $get_fastq_read_counts = $self->_get_fastq_read_counts;
+    return if not $get_fastq_read_counts;
 
     my $fastq_to_bam_ok = $self->_fastqs_to_bam;
     return if not $fastq_to_bam_ok;
@@ -48,6 +62,63 @@ sub execute {
 
     $self->debug_message('Fastqs to bam...done');
     return 1;
+}
+
+sub _unarchive_fastqs_if_necessary {
+    my $self = shift;
+    $self->debug_message('Unarchive fastqs if necessary...');
+
+    my @new_fastq_paths;
+    for my $fastq_path ( $self->fastq_paths ) {
+        if ( $fastq_path !~ /\.gz$/ ) {
+            $self->debug_message('Unarchive not necessary for '.$fastq_path);
+            push @new_fastq_paths, $fastq_path;
+            next;
+        }
+
+        $self->debug_message('Unarchiving: %s', $fastq_path);
+        my $unarchived_fastq_path = $self->get_working_path_for_file_path($fastq_path);
+        $unarchived_fastq_path =~ s/\.gz//;
+        $self->debug_message('To: %s', $unarchived_fastq_path);
+        my $extractor = Archive::Extract->new(archive => $fastq_path);
+        if ( not $extractor->extract(to => $unarchived_fastq_path) ) {
+            $self->error_message( $extractor->error ) if $extractor->error;
+            $self->error_message('Archive::Extract failed!');
+            return;
+        }
+
+        if ( not -s $unarchived_fastq_path ) {
+            $self->error_message('Unarchived fastq does not exist!');
+            return;
+        }
+        push @new_fastq_paths, $unarchived_fastq_path;
+        unlink $fastq_path;
+    }
+    $self->fastq_paths(\@new_fastq_paths);
+
+    $self->debug_message('Unarchive fastqs if necessary...done');
+    return 1;
+}
+
+sub _get_fastq_read_counts {
+    my $self = shift;
+    $self->debug_message('Getting fastq read count...');
+
+    my @line_counts;
+    for my $fastq_path ( $self->fastq_paths ) {
+        $self->debug_message('Fastq: %s', $fastq_path);
+        my $line_count = Genome::Sys->line_count($fastq_path);
+        $self->fatal_message('Fastq does not have any lines! %s', $fastq_path) if not $line_count > 0;
+        $self->fatal_message('Fastq does not have correct number of lines! %s', $fastq_path) if $line_count % 4 != 0;
+        $self->debug_message('Fastq line count: %s', $line_count);
+        push @line_counts, $line_count;
+    }
+
+    $self->fatal_message('Fastqs do not have the same line counts!') if List::MoreUtils::uniq(@line_counts) != 1;
+    my $read_count = List::Util::sum(@line_counts) / 4;
+    $self->debug_message("Fastq read count: $read_count");
+
+    return $self->read_count($read_count);
 }
 
 sub _fastqs_to_bam {
@@ -105,7 +176,9 @@ sub _verify_bam {
     my $flagstat = $helpers->validate_bam($self->output_path);
     return if not $flagstat;
 
-    $self->debug_message('Bam read count: '.$flagstat->{total_reads});
+    $self->debug_message('Bam read count:  %s', $flagstat->{total_reads});
+    $self->debug_message('Fastq read count: %s', $self->read_count);
+    $self->fatal_message('Lost converting fastq to bam!') if $flagstat->{total_reads} != $self->read_count;
 
     $self->debug_message('Verify bam...done');
     return 1;

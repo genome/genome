@@ -51,5 +51,7 @@ my $expected_bam = File::Spec->join($test_dir, 'fastqs-to-bam.bam');
 is(File::Compare::compare($output_bam_path, $expected_bam), 0, 'bam matches');
 is(File::Compare::compare($output_bam_path.'.flagstat', $expected_bam.'.flagstat'), 0, 'flagstat matches');
 
+is($cmd->_get_fastq_read_counts, 2000, 'fastq read counts');
+
 #print "$tmp_dir\n"; <STDIN>;
 done_testing();
