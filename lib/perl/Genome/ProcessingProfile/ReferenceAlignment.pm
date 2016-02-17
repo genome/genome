@@ -412,16 +412,6 @@ sub alignment_job_classes {
 sub reference_coverage_job_classes {
     my $self = shift;
     my $model = shift;
-    if ($self->dna_type eq 'cdna' || $self->dna_type eq 'rna') {
-        #TODO this needs to be changed to reference build
-        my $reference_sequence_build = $model->reference_sequence_build;
-        if ($reference_sequence_build->name =~ /^XStrans_adapt_smallRNA_ribo/i) {
-            my @steps = (
-                'Genome::Model::Event::Build::ReferenceAlignment::RefCov',
-            );
-            return @steps;
-        }
-    }
     my @steps = (
         'Genome::Model::Event::Build::ReferenceAlignment::CoverageStats',
     );
@@ -461,7 +451,6 @@ sub transcript_annotation_job_classes{
     my @steps = (
         'Genome::Model::Event::Build::ReferenceAlignment::AnnotateAdaptor',
         'Genome::Model::Event::Build::ReferenceAlignment::AnnotateTranscriptVariants',
-        #'Genome::Model::Event::Build::ReferenceAlignment::AnnotateTranscriptVariantsParallel',
     );
 
     if($self->snv_detection_strategy || $self->indel_detection_strategy) {
