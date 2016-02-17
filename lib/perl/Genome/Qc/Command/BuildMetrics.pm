@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use YAML::Syck qw(DumpFile);
+use List::MoreUtils qw (uniq);
 
 class Genome::Qc::Command::BuildMetrics {
     is => 'Command::V2',
@@ -60,7 +61,7 @@ sub metrics_for_build {
 
     my @metrics;
     my $build_instdata_set = Set::Scalar->new($build->instrument_data);
-    my @qc_results = grep {$_->isa('Genome::Qc::Result')} $build->results;
+    my @qc_results = uniq grep {$_->isa('Genome::Qc::Result')} $build->results;
     for my $qc_result (@qc_results) {
         my $as = $qc_result->alignment_result;
         my $result_instdata_set = Set::Scalar->new($as->instrument_data);
