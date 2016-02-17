@@ -225,7 +225,7 @@ class Genome::Model::Build {
         results => {
             # TODO rename to maybe outputs?
             is => 'Genome::SoftwareResult',
-            via => 'result_users',
+            via => 'result_associations',
             to => 'software_result',
         },
         result_associations => {
