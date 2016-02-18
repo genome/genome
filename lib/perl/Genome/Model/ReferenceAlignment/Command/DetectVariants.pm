@@ -1,24 +1,34 @@
-package Genome::Model::Event::Build::ReferenceAlignment::DetectVariants;
+package Genome::Model::ReferenceAlignment::Command::DetectVariants;
 
 use strict;
 use warnings;
 
+use File::Spec;
+
 use Genome;
 
-class Genome::Model::Event::Build::ReferenceAlignment::DetectVariants{
-    is => ['Genome::Model::Event'],
+class Genome::Model::ReferenceAlignment::Command::DetectVariants {
+    is => 'Genome::Model::ReferenceAlignment::Command::PipelineBase',
+    has_param => [
+        lsf_queue => {
+            default => Genome::Config::get('lsf_queue_build_worker'),
+        },
+        lsf_resource => {
+            default => Genome::Config::get('lsf_resource_dv2_dispatcher'),
+        },
+    ],
 };
 
-sub lsf_queue {
-    return Genome::Config::get('lsf_queue_build_worker');
-}
-
-sub bsub_rusage {
-    return Genome::Config::get('lsf_resource_dv2_dispatcher');
-}
-
-sub execute{
+sub shortcut {
     my $self = shift;
+
+    return $self->_should_skip_run;
+}
+
+sub execute {
+    my $self = shift;
+
+    return 1 if $self->_should_skip_run;
 
     $self->debug_message("Executing detect variants step");
     my $build = $self->build;
@@ -51,24 +61,30 @@ sub execute{
 
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
     unless ($command){
-        die $self->error_message("Couldn't create detect variants dispatcher from params:\n".Data::Dumper::Dumper \%params);
+        $self->fatal_message("Couldn't create detect variants dispatcher from params:\n".Data::Dumper::Dumper \%params);
     }
     my $rv = $command->execute;
     unless ($rv){
-        die $self->error_message("Failed to execute detect variants dispatcher with params:\n".Data::Dumper::Dumper \%params);
-    }
-    else {
-        my @results = $command->results;
-        my $test_name = Genome::Config::get('software_result_test_name') || '';
-        push @results, map { Genome::Model::Tools::DetectVariants2::Result::Vcf->get(input_id => $_->id, test_name => $test_name); } @results;
-        for my $result (@results) {
-            $result->add_user(user => $build, label => 'uses');
-        }
+        $self->fatal_message("Failed to execute detect variants dispatcher with params:\n".Data::Dumper::Dumper \%params);
     }
 
     $self->debug_message("detect variants command completed successfully");
 
     return 1;
+}
+
+sub _should_skip_run {
+    my $self = shift;
+    my $pp = $self->build->processing_profile;
+
+    if(defined $pp->snv_detection_strategy || defined $pp->indel_detection_strategy ||
+            defined $pp->sv_detection_strategy || defined $pp->cnv_detection_strategy) {
+        return;
+    }
+    else {
+        $self->debug_message('No strategies defined--decided to skip detect variants step.');
+        return 1;
+    }
 }
 
 1;
