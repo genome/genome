@@ -116,18 +116,6 @@ sub get_last_succeeded_coverage_stats_build_from_model {
         if(scalar @r) {
             return $build;
         }
-
-        #old way of storing coverage report
-        if($build->isa('Genome::Model::Build::ReferenceAlignment')){
-            my @events = $build->the_events;
-            my @coverage_stats_events = grep { $_->class eq 'Genome::Model::Event::Build::ReferenceAlignment::CoverageStats' } @events;
-            if (scalar(@coverage_stats_events) == 1) {
-                my $coverage_stats_event = $coverage_stats_events[0];
-                if ($coverage_stats_event->event_status eq 'Succeeded') {
-                    return $build;
-                }
-            }
-        }
     }
     return;
 }

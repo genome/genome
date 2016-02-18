@@ -1,19 +1,23 @@
-package Genome::Model::Event::Build::ReferenceAlignment::CoverageStats;
+package Genome::Model::ReferenceAlignment::Command::CoverageStats;
 
 use strict;
 use warnings;
 
-use File::Path qw(rmtree);
-
 use Genome;
 
-class Genome::Model::Event::Build::ReferenceAlignment::CoverageStats {
-    is => ['Genome::Model::Event'],
-    has => [ ],
+class Genome::Model::ReferenceAlignment::Command::CoverageStats {
+    is => 'Genome::Model::ReferenceAlignment::Command::PipelineBase',
+    has_param => [
+        lsf_queue => {
+            default => Genome::Config::get('lsf_queue_build_worker_alt'),
+        },
+    ],
 };
 
 sub shortcut {
     my $self = shift;
+
+    return 1 if $self->_should_skip_run;
 
     my %params = $self->params_for_result;
     my $result = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get_with_lock(%params);
@@ -29,6 +33,8 @@ sub shortcut {
 sub execute {
     my $self = shift;
     my $build = $self->build;
+
+    return 1 if $self->_should_skip_run;
 
     unless($self->_reference_sequence_matches) {
         die $self->error_message;
@@ -142,6 +148,18 @@ sub link_result_to_build {
     Genome::Sys->create_symlink($result->output_dir, $build->reference_coverage_directory);
 
     return 1;
+}
+
+sub _should_skip_run {
+    my $self = shift;
+    my $build = $self->build;
+
+    if ($build->region_of_interest_set_name) {
+        return;
+    } else {
+        $self->debug('Decided to skip coverage reporting step.');
+        return 1;
+    }
 }
 
 1;
