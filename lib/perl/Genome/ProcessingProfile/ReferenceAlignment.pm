@@ -138,7 +138,9 @@ class Genome::ProcessingProfile::ReferenceAlignment {
         append_event_steps => {
             doc => 'Event classes to append to event_stage_job_classes, e.g. "alignment => Genome::Model::Event::Build::ReferenceAlignment::QC::CopyNumber".',
             is_optional => 1,
+            is_deprecated => 1,
         },
+
     ],
 };
 

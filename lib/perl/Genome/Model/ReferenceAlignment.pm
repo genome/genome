@@ -437,6 +437,10 @@ sub _resolve_workflow_for_build {
     my $self = shift;
     my $build = shift;
 
+    if ($build->processing_profile->append_event_steps) {
+        $self->fatal_message('Appended events are no longer supported in this pipeline.');
+    }
+
     my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $build->workflow_name,
     );
