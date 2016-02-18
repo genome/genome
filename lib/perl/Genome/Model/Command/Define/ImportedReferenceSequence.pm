@@ -48,7 +48,7 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
         assembly_name => {
             is => 'Text',
             doc => 'Assembly name to store in the SAM header.  Autoderived if not specified.',
-            is_optional => 1, 
+            is_optional => 1,
         },
         derived_from => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
@@ -70,7 +70,7 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             doc => '$PREFIX-$SPECIES_NAME unless otherwise specified.'
         },
         subject_name => {
-            is_optional => 1,            
+            is_optional => 1,
             doc => 'Copied from species_name.'
         },
         skip_bases_files => {
@@ -82,14 +82,6 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             valid_values => ['prompt', 'exit', 'continue'],
             default_value => 'prompt',
             doc => 'The action to take when emitting a warning.'
-        },
-        job_dispatch => {
-            default_value => 'inline',
-            doc => 'dispatch specification: an LSF queue or "inline"'
-        },
-        server_dispatch => {
-            default_value => 'inline',
-            doc => 'dispatch specification: an LSF queue or "inline"'
         },
         is_rederivable => {
             is => 'Boolean',
@@ -143,7 +135,7 @@ sub _prompt_to_continue {
 sub execute {
     my $self = shift;
 
-    if ((!defined $self->sequence_uri && !$self->use_default_sequence_uri) || 
+    if ((!defined $self->sequence_uri && !$self->use_default_sequence_uri) ||
         (defined $self->sequence_uri && $self->use_default_sequence_uri)) {
         $self->error_message('Please specify one (and only one) of --sequence-uri or --use-default-sequence-uri.');
         return;
@@ -153,7 +145,7 @@ sub execute {
         $self->error_message('Input fasta file: '.$self->fasta_file.' is not valid.');
         return;
     }
-    
+
     if(defined($self->prefix) && $self->prefix =~ /\s/) {
         $self->error_message("The prefix argument value must not contain spaces.");
         return;
@@ -248,7 +240,7 @@ sub _check_existing_builds {
     if( scalar(@conflicting_builds) ) {
         my $prompt = 'One or more builds of this model already exist for this version identifier "' . ($self->version || '') . '": ' .
             join(', ', map({$_->build_id()} @conflicting_builds));
-        
+
         my $continue = $self->_prompt_to_continue($prompt);
         return unless $continue;
     }
@@ -290,11 +282,11 @@ sub _get_or_create_model {
     } elsif(scalar(@models) == 1) {
         # * We're going to want a new build for an existing model, but first we should see if there are already any builds
         #   of the same version for the existing model.  If so, we ask the user to confirm that they really want to make another.
-        
+
         $model = $self->_check_existing_builds($models[0], $taxon);
     } else {
         # * We need a new model
-        
+
         my $irs_pp = Genome::ProcessingProfile->get(name=>"chromosome-fastas");
         unless($irs_pp){
             $self->error_message("Could not locate ImportedReferenceSequence ProcessingProfile by name \"chromosome-fastas\"");
@@ -359,28 +351,16 @@ sub _create_build {
         return;
     }
 
-    my @dispatch_parameters;
-    if(defined($self->server_dispatch)) {
-        push @dispatch_parameters,
-            server_dispatch => $self->server_dispatch;
-    }
-
-    if(defined($self->job_dispatch)) {
-        push @dispatch_parameters,
-            job_dispatch => $self->job_dispatch;
-    }
-
     $self->status_message('Starting build.');
-    if($build->start(@dispatch_parameters)) {
-        if($self->server_dispatch eq 'inline') {
-            $self->status_message('Reference imported. ID: <' . $build->id . '>, data_directory: <' . $build->data_directory . '>.');
-        } else {
-            $self->status_message('Started build.');
-        }
+    if($build->start) {
+        UR::Context->commit or die "Failed to commit.";
+        $self->status_message('Started build.');
     } else {
         $self->error_message("Failed to start build " . $build->build_id . " for model " . $model->genome_model_id . ".");
         return;
     }
+
+    $build->wait;
 
     return $build;
 }

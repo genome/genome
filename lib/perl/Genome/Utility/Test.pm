@@ -6,8 +6,19 @@ use base 'Test::Builder::Module';
 
 use Exporter 'import';
 
-our @EXPORT_OK = qw(compare_ok run_ok capture_ok abort strip_ansi
-    command_execute_ok command_execute_fail_ok is_equal_set compare_dirs);
+our @EXPORT_OK = qw(
+    abort
+    assert
+    assert_using_test_db
+    capture_ok
+    command_execute_fail_ok
+    command_execute_ok
+    compare_dirs
+    compare_ok
+    is_equal_set
+    run_ok
+    strip_ansi
+);
 
 use Test::More;
 
@@ -33,6 +44,26 @@ sub ERRORS {
 sub abort {
     diag "  Aborted.";
     die;
+}
+
+sub assert {
+    my ($test, $msg) = @_;
+    if ($test) {
+        note $msg;
+    } else {
+        die $msg;
+    }
+}
+
+sub assert_using_test_db {
+    my $testdbserver_url = $ENV{TESTDBSERVER_URL}
+        or die "TESTDBSERVER_URL must be set to run this test.";
+
+    my $db_server = Genome::DataSource::GMSchema->server;
+    my ($db_host) = $db_server =~ m/host=([^;]+)/;
+
+    assert(($testdbserver_url =~ m/$db_host/),
+        "The Genome::DataSource::GMSchema->server must match the TESTDBSERVER_URL to run this test.");
 }
 
 sub _compare_ok_parse_args {

@@ -144,7 +144,7 @@ class Genome::Model {
         auto_build => {
             is => 'Boolean',
             doc => 'build automatically when input models rebuild',
-            # this is similar to auto_build_alignments, though that flag works on 
+            # this is similar to auto_build_alignments, though that flag works on
             # new instrument data instead of input models
         },
         _build_requested => {
@@ -799,7 +799,7 @@ sub copy {
             next if not $input->filter_desc;
             my $copy_input = $copy->inputs(
                 name => $name,
-                value_class_name => $input->value_class_name, 
+                value_class_name => $input->value_class_name,
                 value_id => $input->value_id,
             );
             next if not $copy_input;
