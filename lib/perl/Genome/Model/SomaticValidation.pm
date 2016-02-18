@@ -352,16 +352,6 @@ sub default_filenames{
     return %default_filenames;
 }
 
-sub default_profile {
-    return Genome::ProcessingProfile::SomaticValidation->get(
-        name => 'Feb 2013 default Somatic Validation Extension and Targeted Discovery');
-}
-
-sub default_single_bam_profile {
-    return Genome::ProcessingProfile::SomaticValidation->get(
-        name => 'Jun 2012 Single-Bam Validation (single-bam somatic)');
-}
-
 sub requires_subject_mapping { return 1; }
 
 sub default_model_name {

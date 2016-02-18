@@ -14,6 +14,7 @@ use Test::More tests => 37;
 use Genome::Model::Tools::DetectVariants2::Utilities qw(
     final_result_for_variant_type
 );
+use Genome::Test::Factory::ProcessingProfile::SomaticValidation;
 
 use Cwd;
 #use Carp::Always;
@@ -24,6 +25,14 @@ my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX',
 
 my $somatic_variation_build = &setup_somatic_variation_build(1);
 isa_ok($somatic_variation_build, 'Genome::Model::Build::SomaticVariation', 'setup test somatic variation build');
+
+#set up fake processing profiles
+my $processing_profile = Genome::Test::Factory::ProcessingProfile::SomaticValidation->setup_object(
+    name => 'somatic test profile for DefineValidationModel.t',
+);
+my $single_sample_processing_profile = Genome::Test::Factory::ProcessingProfile::SomaticValidation->setup_object(
+    name => 'single-sample test profile for DefineValidationModel.t',
+);
 
 #Set up a fake feature-list
 my $data = <<EOBED
@@ -52,6 +61,7 @@ my @params_for_define_1 = (
     target => $test_targets,
     variants => [$variants_1],
     groups => [$mg],
+    processing_profile => $processing_profile,
 );
 
 my $define_1 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(@params_for_define_1);
@@ -82,6 +92,7 @@ my @params_for_define_2 = (
     name => 'awesome second model',
     design => $test_targets,
     variants => [$variants_1, $result],
+    processing_profile => $processing_profile,
 );
 
 my $define_2 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(@params_for_define_2);
@@ -102,6 +113,7 @@ my @params_for_define_3 = (
     design => $test_targets,
     target => $test_targets,
     variants => [$variants_1, $variants_2],
+    processing_profile => $processing_profile,
 );
 
 my $define_3 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(@params_for_define_3);
@@ -119,6 +131,7 @@ my @params_for_define_4 = (
     target => $test_targets,
     tumor_sample => $somatic_variation_build2->tumor_model->subject,
     normal_sample => $somatic_variation_build2->normal_model->subject,
+    processing_profile => $processing_profile,
 );
 
 my $define_4 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(@params_for_define_4);
@@ -136,6 +149,7 @@ my @params_for_define_5 = (
     design => $test_targets,
     target => $test_targets,
     tumor_sample => $somatic_variation_build2->tumor_model->subject,
+    single_sample_processing_profile => $single_sample_processing_profile,
 );
 
 my $define_5 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(@params_for_define_5);
@@ -183,6 +197,8 @@ Genome::Sys->write_file($sample_list_file, join("\n",
 my $define_6 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(
     sample_list_file => $sample_list_file,
     target => $test_targets,
+    processing_profile => $processing_profile,
+    single_sample_processing_profile => $single_sample_processing_profile,
 );
 isa_ok($define_6, 'Genome::Model::SomaticValidation::Command::DefineValidationModel', 'sixth creation command');
 $define_6->dump_status_messages(1);

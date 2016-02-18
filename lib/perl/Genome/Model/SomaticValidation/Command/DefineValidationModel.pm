@@ -49,7 +49,11 @@ class Genome::Model::SomaticValidation::Command::DefineValidationModel {
         },
         processing_profile => {
             is => 'Genome::ProcessingProfile::SomaticValidation',
-            doc => 'Processing profile for the model',
+            doc => 'Processing profile for the model if it is paired',
+        },
+        single_sample_processing_profile => {
+            is => 'Genome::ProcessingProfile::SomaticValidation',
+            doc => 'Processing profile for the model if it has only one sample',
         },
         groups => {
             is => 'Genome::ModelGroup',
@@ -358,14 +362,22 @@ sub resolve_processing_profile {
     my $tumor_sample = shift;
     my $normal_sample = shift;
 
-    return $self->processing_profile if $self->processing_profile;
 
-    my $pp;
+    my $accessor;
     if($tumor_sample and not $normal_sample) {
-        $pp = Genome::Model::SomaticValidation->default_single_bam_profile();
+        $accessor = 'single_sample_processing_profile';
     } else {
-        #Nov 2011 default Somatic Validation
-        $pp = Genome::Model::SomaticValidation->default_profile();
+        $accessor = 'processing_profile';
+    }
+
+    my $pp = $self->$accessor;
+    unless($pp) {
+        my $display_accessor = $accessor;
+        $display_accessor =~ s/_/-/g;
+        $self->fatal_message(
+            'The --%s parameter is required in order to create the requested model.',
+            $display_accessor
+        );
     }
 
     return $pp;
