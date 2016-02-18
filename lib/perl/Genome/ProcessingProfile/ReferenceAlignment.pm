@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::ProcessingProfile::ReferenceAlignment {
-    is => 'Genome::ProcessingProfile::Staged',
+    is => 'Genome::ProcessingProfile',
     has_param => [
         sequencing_platform => {
             doc => 'The sequencing platform from whence the model data was generated',
@@ -133,6 +133,10 @@ class Genome::ProcessingProfile::ReferenceAlignment {
         },
         coverage_stats_params => {
             doc => 'parameters necessary for generating reference coverage in the form of two comma delimited lists split by a colon like 1,5,10,15,20:0,200,500',
+            is_optional => 1,
+        },
+        append_event_steps => {
+            doc => 'Event classes to append to event_stage_job_classes, e.g. "alignment => Genome::Model::Event::Build::ReferenceAlignment::QC::CopyNumber".',
             is_optional => 1,
         },
     ],
@@ -318,197 +322,6 @@ sub params_for_merged_alignment {
 
     my @param_set = (\%params);
     return @param_set;
-}
-
-
-#### IMPLEMENTATION #####
-
-sub stages {
-    my $self = shift;
-    my $build = shift;
-    ## second parameter of each pair is the required flag
-    ## if it is 1 and no job events are made at start time
-    ## a warning will be printed to the user
-    my @stages = (
-        reference_preparation   => 1,
-        alignment               => 1,
-        merge_and_deduplication => 1,
-    );
-
-    # Suppress warning for models that do not have reference_coverage_objects,
-    # e.g. a region_of_interest_set_name.
-    # It will take more work to ensure $build is passed in due to hack used to
-    # implement lane QC.
-    if (!$build || $self->reference_coverage_objects($build->model)) {
-        push @stages, 'reference_coverage' => 1;
-    }
-
-    push @stages, (
-        variant_detection       => 1,
-        transcript_annotation   => 0,
-        generate_reports        => 0,
-    );
-
-    my @filtered_stages;
-    for (my $i=0; $i < $#stages; $i += 2) {
-        my $method = $stages[$i] . '_job_classes';
-
-        push @filtered_stages, $stages[$i] if ($stages[$i+1] || $self->$method());
-    }
-
-    return @filtered_stages;
-}
-
-sub reference_preparation_job_classes {
-    my $self = shift;
-
-    my @sub_command_classes;
-
-    my $aligner_class = 'Genome::InstrumentData::AlignmentResult::' . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($self->read_aligner_name);
-
-    if ($aligner_class->can('prepare_reference_sequence_index')) {
-        push @sub_command_classes, 'Genome::Model::Event::Build::ReferenceAlignment::PrepareReferenceSequenceIndex'
-    }
-    return @sub_command_classes;
-}
-
-sub alignment_job_classes {
-    my @sub_command_classes= qw/
-        Genome::Model::Event::Build::ReferenceAlignment::AlignReads
-        Genome::Model::Event::Build::ReferenceAlignment::BamQc
-    /;
-    return @sub_command_classes;
-}
-
-sub reference_coverage_job_classes {
-    my $self = shift;
-    my $model = shift;
-    my @steps = (
-        'Genome::Model::Event::Build::ReferenceAlignment::CoverageStats',
-    );
-    return @steps;
-}
-
-sub variant_detection_job_classes {
-    my $self = shift;
-    my @steps = (
-        'Genome::Model::Event::Build::ReferenceAlignment::DetectVariants'
-    );
-    if(defined $self->snv_detection_strategy || defined $self->indel_detection_strategy ||
-            defined $self->sv_detection_strategy || defined $self->cnv_detection_strategy) {
-        return @steps;
-    }
-    else {
-        return;
-    }
-}
-
-sub merge_and_deduplication_job_classes {
-    my $self = shift;
-
-    my @steps = (
-        'Genome::Model::Event::Build::ReferenceAlignment::MergeAlignments',
-    );
-    if(defined $self->merger_name) {
-        return @steps;
-    }
-    else {
-        return;
-    }
-}
-
-sub transcript_annotation_job_classes{
-    my $self = shift;
-    my @steps = (
-        'Genome::Model::Event::Build::ReferenceAlignment::AnnotateAdaptor',
-        'Genome::Model::Event::Build::ReferenceAlignment::AnnotateTranscriptVariants',
-    );
-
-    if($self->snv_detection_strategy || $self->indel_detection_strategy) {
-        return @steps;
-    }
-    else {
-        return;
-    }
-}
-
-sub generate_reports_job_classes {
-    my $self = shift;
-    my @steps = (
-        'Genome::Model::Event::Build::ReferenceAlignment::RunReports'
-    );
-    if(defined $self->duplication_handler_name || defined $self->merger_name) {
-        return @steps;
-    }
-    else {
-        return;
-    }
-}
-
-sub reference_preparation_objects {
-    "all_sequences";
-}
-
-sub alignment_objects {
-    my ($self, $model) = @_;
-
-    my @instrument_data = $model->instrument_data;
-    my @instrument_data_output = grep {! $_->can('get_segments')} @instrument_data;
-    my @segmentable_data = grep {$_->can('get_segments')} @instrument_data;
-
-    for my $instr (@segmentable_data) {
-        my @segments = $instr->get_segments();
-
-        # take imported instrument data and split them by read group
-        if (@segments > 0 && $self->read_aligner_name ne 'imported' && $instr->isa('Genome::InstrumentData::Imported')) {
-            for my $seg (@segments) {
-                push @instrument_data_output, {object=>$instr, segment=>$seg};
-            }
-        } else {
-            push @instrument_data_output, $instr;
-        }
-    }
-
-    return @instrument_data_output;
-}
-
-sub reference_coverage_objects {
-    my $self = shift;
-    my $model = shift;
-
-    my $reference_sequence_build = $model->reference_sequence_build;
-    if ($reference_sequence_build->name =~ /^XStrans_adapt_smallRNA_ribo/i) {
-        return 'all_sequences';
-    }
-    my @inputs = Genome::Model::Input->get(model_id => $model->id, name => 'region_of_interest_set_name');
-    unless (@inputs) { return; }
-    return 'all_sequences';
-}
-
-
-sub variant_detection_objects {
-    my $self = shift;
-    my $model = shift;
-    return 'all_sequences';
-}
-
-sub merge_and_deduplication_objects {
-    my $self = shift;
-    my $model = shift;
-    return 'all_sequences';
-}
-
-sub generate_reports_objects {
-    my $self = shift;
-    my $model = shift;
-    return 'all_sequences';
-}
-
-sub transcript_annotation_objects {
-    my $self = shift;
-    my $model = shift;
-    return unless $model->annotation_reference_build;
-    return 'all_sequences';
 }
 
 1;
