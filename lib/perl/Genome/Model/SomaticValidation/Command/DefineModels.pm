@@ -81,9 +81,7 @@ sub execute {
             if $self->$param;
     }
 
-    if( $self->processing_profile) {
-        push @params, single_sample_processing_profile => $self->processing_profile;
-    }
+    push @params, single_sample_processing_profile => $self->processing_profile;
 
     if(!$self->region_of_interest_set and $self->target) {
         $self->region_of_interest_set($self->target);
