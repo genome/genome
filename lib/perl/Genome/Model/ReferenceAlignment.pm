@@ -105,38 +105,6 @@ class Genome::Model::ReferenceAlignment {
         reference_sequence_name      => { via => 'reference_sequence_build', to => 'name' },
         annotation_reference_name    => { via => 'annotation_reference_build', to => 'name' },
         coverage_stats_params        => { via => 'processing_profile'},
-        alignment_events => {
-            is => 'Genome::Model::Event::Build::ReferenceAlignment::AlignReads',
-            is_many => 1,
-            reverse_id_by => 'model',
-            doc => 'each case of a read set being aligned to the model\'s reference sequence(s), possibly including multiple actual aligner executions',
-        },
-        alignment_file_paths => { via => 'alignment_events' },
-        has_all_alignment_metrics => { via => 'alignment_events', to => 'has_all_metrics' },
-        build_events  => {
-            is => 'Genome::Model::Event::Build',
-            reverse_id_by => 'model',
-            is_many => 1,
-            where => [
-                parent_event_id => undef,
-            ]
-        },
-        latest_build_event => {
-            calculate_from => ['build_event_arrayref'],
-            calculate => q|
-                my @e = sort { $a->date_scheduled cmp $b->date_scheduled } @$build_event_arrayref;
-                my $e = $e[-1];
-                return $e;
-            |,
-        },
-        running_build_event => {
-            calculate_from => ['latest_build_event'],
-            calculate => q|
-                # TODO: we don't currently have this event complete when child events are done.
-                #return if $latest_build_event->event_status('Succeeded');
-                return $latest_build_event;
-            |,
-        },
         target_region_set_name => {
             is_many => 1, is_mutable => 1, is => 'Text', via => 'inputs', to => 'value_id', 
             where => [ name => 'target_region_set_name', value_class_name => 'UR::Value' ],
