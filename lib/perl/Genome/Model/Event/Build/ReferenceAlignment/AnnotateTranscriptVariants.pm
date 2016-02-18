@@ -50,7 +50,7 @@ sub execute {
         return 1;
     }
 
-    # This has been vetted by the processing profile's _initialize_build method already
+    # This has been vetted by the model's _initialize_build method already
     my $annotator_version;
     my $annotator_filter;
     my $accept_reference_IUB_codes;
