@@ -9,6 +9,7 @@ use Genome::Utility::Text qw(justify);
 use List::Util qw(max sum);
 use YAML::Syck qw();
 use List::MoreUtils qw(uniq);
+use Try::Tiny qw(try catch);
 
 class Genome::Config::AnalysisProject::Command::View {
     is => ['Genome::Command::Viewer' ],
@@ -393,12 +394,13 @@ sub _write_environment_config_contents {
     my ($self, $handle, $environment_config) = @_;
 
     my $f = File::Spec->join($environment_config, Genome::Config::config_subpath);
-    unless (-r $f) {
-        $self->warning_message('Could not read environment config <%s>.', $f);
-    } else {
+    try {
         my $content = Genome::Sys->read_file($f);
         $content =~ s/^/    /gm;
         print $handle $content;
+    } catch {
+        $self->debug_message('Caught error: %s', $_);
+        $self->warning_message('Could not read environment config <%s>.', $f);
     }
 }
 
