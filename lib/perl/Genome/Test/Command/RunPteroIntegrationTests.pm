@@ -2,13 +2,13 @@ package Genome::Test::Command::RunPteroIntegrationTests;
 
 use strict;
 use warnings FATAL => 'all';
-use Genome;
+use above "Genome";
 
 use File::Basename qw(basename);
 use File::Spec qw();
 use Test::Deep::NoTest qw(cmp_details deep_diag);
 use Data::Dump qw(pp);
-use Ptero::Utils qw(
+use Genome::Ptero::Utils qw(
     test_data_directory
     get_test_inputs
     get_test_outputs
