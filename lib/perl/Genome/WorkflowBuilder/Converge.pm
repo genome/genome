@@ -107,4 +107,25 @@ sub _get_ptero_converge_method {
     );
 }
 
+sub _execute_inline {
+    my ($self, $inputs) = @_;
+
+    my $output = [];
+    for my $input_name ($self->input_properties) {
+        my $input = $inputs->{$input_name};
+        if (ref($input) eq 'ARRAY') {
+            push @$output, @{$input};
+        } else {
+            push @$output, $input;
+        }
+    }
+
+    my ($output_name) = $self->output_properties;
+
+    return {
+        $output_name => $output,
+        result => 1,
+    };
+}
+
 1;

@@ -87,5 +87,10 @@ sub _add_property_xml_elements {
     return;
 }
 
+sub _execute_inline {
+    my ($self, $inputs) = @_;
+
+    return {result => 1};
+}
 
 1;
