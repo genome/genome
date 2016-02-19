@@ -4,10 +4,9 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-use File::Basename qw(dirname basename);
+use File::Basename qw(basename);
 use File::Spec qw();
 use Test::Deep::NoTest qw(cmp_details deep_diag);
-use Cwd qw(getcwd abs_path);
 use JSON qw(from_json);
 use Data::Dump qw(pp);
 
