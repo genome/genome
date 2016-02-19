@@ -7,8 +7,13 @@ use Genome;
 use File::Basename qw(basename);
 use File::Spec qw();
 use Test::Deep::NoTest qw(cmp_details deep_diag);
-use JSON qw(from_json);
 use Data::Dump qw(pp);
+use Ptero::Utils qw(
+    test_data_directory
+    get_test_inputs
+    get_test_outputs
+    get_test_xml_filename
+);
 
 class Genome::Test::Command::RunPteroIntegrationTests {
     is => 'Command::V2',
@@ -47,7 +52,7 @@ sub execute {
         $self->status_message("Reading in workflow from directory: %s",
             test_data_directory($test_name));
         my $workflow = Genome::WorkflowBuilder::DAG->from_xml_filename(
-            workflow_xml_file($test_name));
+            get_test_xml_filename($test_name));
 
         my $log_dir = File::Spec->join($self->log_directory, $test_name);
         $workflow->recursively_set_log_dir($log_dir);
@@ -68,35 +73,6 @@ sub execute {
         }
     }
     return $rv;
-}
-
-sub workflow_xml_file {
-    my $name = shift;
-
-    my $file = File::Spec->join(test_data_directory($name), 'workflow.xml');
-    die "Cannot locate workflow.xml for workflow_test: $name" unless -e $file;
-    return $file;
-}
-
-sub get_test_inputs {
-    my $name = shift;
-    my $file = File::Spec->join(test_data_directory($name), 'inputs.json');
-    die "Cannot locate test inputs for workflow_test: $name" unless -e $file;
-    return from_json(Genome::Sys->read_file($file));
-}
-
-sub get_test_outputs {
-    my $name = shift;
-    my $file = File::Spec->join(test_data_directory($name), 'outputs.json');
-    die "Cannot locate test outputs for workflow_test: $name" unless -e $file;
-    return from_json(Genome::Sys->read_file($file));
-}
-
-sub test_data_directory {
-    my $name = shift;
-    my $genome_dir = Genome->base_dir();
-
-    return File::Spec->join($genome_dir, 'Ptero', 'workflow_tests', $name);
 }
 
 1;
