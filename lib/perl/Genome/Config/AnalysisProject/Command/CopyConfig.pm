@@ -50,6 +50,11 @@ sub execute {
     my $from_project = $self->from_project;
     my $to_project = $self->to_project;
 
+    if($from_project->id eq $to_project->id){
+        $self->error_message("To and From projects cannot be the same");
+        return;
+    }
+
     my @configs_to_copy = grep { $_->status ne 'disabled' } $from_project->config_items;
     $self->_copy_config_profile_items_to_project($to_project, @configs_to_copy);
 
