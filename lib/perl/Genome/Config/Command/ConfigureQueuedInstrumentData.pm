@@ -69,9 +69,6 @@ sub execute {
             my $hashes = $config->prepare_configuration_hashes_for_instrument_data($current_inst_data);
             for my $model_type (keys %$hashes) {
                 my $model_hashes = $hashes->{$model_type};
-                if ($model_type->requires_subject_mapping) {
-                    $model_hashes = $config->process_mapped_samples($current_inst_data, $model_hashes);
-                }
                 $self->_process_models($analysis_project, $current_inst_data, $model_type, $model_hashes);
             }
         };

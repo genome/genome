@@ -112,11 +112,13 @@ sub prepare_configuration_hashes_for_instrument_data {
                 }
             }
         }
+
+        $config_hash->{$model_type} = $self->_process_mapped_samples($instrument_data, $config_hash->{$model_type}) if $model_type->requires_subject_mapping;
     }
     return $config_hash;
 }
 
-sub process_mapped_samples {
+sub _process_mapped_samples {
     my ($self, $instrument_data, $model_hashes) = @_;
     die('Must provide an analysis project, a piece of instrument data and a config hash!')
         unless($instrument_data && $model_hashes);
