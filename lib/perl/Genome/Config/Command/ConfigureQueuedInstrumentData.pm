@@ -70,7 +70,7 @@ sub execute {
             for my $model_type (keys %$hashes) {
                 my $model_hashes = $hashes->{$model_type};
                 if ($model_type->requires_subject_mapping) {
-                    $model_hashes = $self->_process_mapped_samples($analysis_project, $current_inst_data, $model_hashes);
+                    $model_hashes = $config->process_mapped_samples($current_inst_data, $model_hashes);
                 }
                 $self->_process_models($analysis_project, $current_inst_data, $model_type, $model_hashes);
             }
@@ -248,44 +248,6 @@ sub _get_model_for_config_hash {
     }
 
     return wantarray ? @model_info : $model_info[0];
-}
-
-sub _process_mapped_samples {
-    my ($self, $analysis_project, $instrument_data, $model_hashes) = @_;
-    die('Must provide an analysis project, a piece of instrument data and a config hash!')
-        unless($analysis_project && $instrument_data && $model_hashes);
-
-    my @subject_mappings = Genome::Config::AnalysisProject::SubjectMapping->get(
-        analysis_project => $analysis_project,
-        subjects => $instrument_data->sample
-    );
-
-    unless (@subject_mappings) {
-        die(sprintf('Found no mapping information for %s in project %s for a model type that requires mapping!',
-            $instrument_data->__display_name__,
-            $analysis_project->__display_name__));
-    }
-
-    return [ map {
-        my $mapping = $_;
-        my %tags = map { $_->id => 1 } $mapping->tags;
-        map { {
-          (map { $_->label => $_->subject } $mapping->subject_bridges),
-          (map { $_->key => $_->value } $mapping->inputs),
-          %$_
-        } } grep { $self->_model_hash_matches_tags($_, \%tags) } @$model_hashes
-    } @subject_mappings ];
-}
-
-sub _model_hash_matches_tags {
-    my ($self, $model_hash, $tag_hash) = @_;
-
-    my @model_hash_tags = $model_hash->{config_profile_item}->tags;
-    if(keys %$tag_hash) {
-        return List::MoreUtils::any { exists $tag_hash->{$_->id} } @model_hash_tags;
-    } else {
-        return !@model_hash_tags;
-    }
 }
 
 sub _get_items_to_process {
