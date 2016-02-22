@@ -66,7 +66,7 @@ sub execute {
         }
         eval {
             my $config = $analysis_project->get_configuration_profile();
-            my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
+            my $hashes = $config->prepare_configuration_hashes_for_instrument_data($current_inst_data);
             for my $model_type (keys %$hashes) {
                 my $model_hashes = $hashes->{$model_type};
                 if ($model_type->requires_subject_mapping) {
@@ -248,36 +248,6 @@ sub _get_model_for_config_hash {
     }
 
     return wantarray ? @model_info : $model_info[0];
-}
-
-sub _prepare_configuration_hashes_for_instrument_data {
-    my ($self, $instrument_data, $config_obj) = @_;
-
-    my $config_hash = $config_obj->get_config($instrument_data);
-
-    for my $model_type (keys %$config_hash) {
-        if (ref $config_hash->{$model_type} ne 'ARRAY') {
-            $config_hash->{$model_type} = [$config_hash->{$model_type}];
-        }
-
-        for my $model_instance (@{$config_hash->{$model_type}}) {
-            my $instrument_data_properties = delete $model_instance->{instrument_data_properties};
-            if($instrument_data_properties) {
-                while((my $model_property, my $instrument_data_property) = each %$instrument_data_properties) {
-                    if (ref $instrument_data_property eq 'ARRAY') {
-                        $model_instance->{$model_property} = [
-                            grep { defined($_) }
-                            map { $instrument_data->$_ }
-                            @$instrument_data_property
-                        ];
-                    } else {
-                        $model_instance->{$model_property} = $instrument_data->$instrument_data_property;
-                    }
-                }
-            }
-        }
-    }
-    return $config_hash;
 }
 
 sub _process_mapped_samples {
