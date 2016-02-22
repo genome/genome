@@ -1,9 +1,5 @@
 package Genome::Model::Event::Build::ReferenceAlignment::RunReports;
 
-#REVIEW fdu 11/18/2009
-#Missing ReferenceCoverage report for cDNA or RNA. Either ask jwalker
-#to implement it or drop those codes.
-
 use strict;
 use warnings;
 
@@ -40,11 +36,7 @@ sub execute {
         $self->debug_message("No valid gold_snp_path for the build, skip GoldSnpConcordance report");
         delete $REPORT_TYPES{GoldSnpConcordance};
     }
-    
-    unless ( ($model->dna_type eq 'cdna' || $model->dna_type eq 'rna') && $build->reference_sequence_name =~ /^XStrans_adapt_smallRNA_ribo/ ) {
-        delete $REPORT_TYPES{ReferenceCoverage};
-    }
-    
+
     unless ($self->create_directory($build->resolve_reports_directory) ) {
 	    die('Could not create reports directory at: '. $build->resolve_reports_directory);
     }
@@ -139,10 +131,6 @@ sub verify_successful_completion {
 
     delete $REPORT_TYPES{InputBaseCounts} if $model->read_aligner_name =~ /^Imported$/i;
 
-    unless ( ($model->dna_type eq 'cdna' || $model->dna_type eq 'rna') && $build->reference_sequence_name =~ /^XStrans_adapt_smallRNA_ribo/ ) {
-        delete $REPORT_TYPES{ReferenceCoverage};
-    }
-        
     my @sub_dirs = (values %REPORT_TYPES, 'Summary');  
    
     for my $sub_directory (@sub_dirs) {
