@@ -52,7 +52,7 @@ sub execute {
 
     if($from_project->id eq $to_project->id){
         $self->error_message("To and From projects cannot be the same");
-        return 0;
+        return;
     }
 
     my @configs_to_copy = grep { $_->status ne 'disabled' } $from_project->config_items;
