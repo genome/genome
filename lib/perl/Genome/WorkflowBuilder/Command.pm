@@ -351,22 +351,7 @@ sub _run_command {
         );
     }
 
-    $self->_commit();
-
     $self->status_message("Succeeded to execute command %s", $self->command);
-}
-
-sub _commit {
-    my $self = shift;
-    my $rv = try {
-        UR::Context->commit()
-    } catch {
-        Carp::confess "Failed to commit: $_";
-    };
-
-    unless ($rv) {
-        Carp::confess "Failed to commit: see previously logged errors";
-    }
 }
 
 sub _get_command_outputs {
