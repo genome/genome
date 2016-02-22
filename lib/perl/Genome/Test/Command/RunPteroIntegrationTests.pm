@@ -2,7 +2,7 @@ package Genome::Test::Command::RunPteroIntegrationTests;
 
 use strict;
 use warnings FATAL => 'all';
-use above "Genome";
+use Genome;
 
 use File::Basename qw(basename);
 use File::Spec qw();
