@@ -39,6 +39,15 @@ sub create_from_analysis_project {
     );
 }
 
+sub create_from_config_profile_item {
+    my ($class, $config_profile_item) = @_;
+
+    return $class->create(
+        config_rule_maps => [ Genome::Config::Translator->get_rule_model_map_from_config($config_profile_item) ],
+        analysis_project => $config_profile_item->analysis_project,
+    );
+}
+
 sub get_config {
     my $self = shift;
     my $inst_data = shift;
