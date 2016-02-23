@@ -4,18 +4,18 @@ use strict;
 use warnings;
 
 BEGIN {
+    $SIG{__DIE__} = sub{ Carp::confess(@_); };
     $ENV{UR_DBI_NO_COMMIT} = 1;
     $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
     $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
 };
 
-use Test::Exception;
-use Test::More tests => 4;
-
 use above 'Genome';
-#use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::DiskAllocation;
 use Genome::Test::Factory::InstrumentData::Solexa;
+
+use Test::Exception;
+use Test::More tests => 4;
 
 my $class = 'Genome::Config::AnalysisProject::Command::ReplaceModel';
 use_ok($class) or die;
@@ -65,6 +65,7 @@ EOFILE
 
     my $instdata = Genome::Test::Factory::InstrumentData::Solexa->setup_object;
     $model = $model_class->create(
+        run_as => Genome::Sys->username,
         subject => $instdata->sample,
         processing_profile_id => -11,
         auto_assign_inst_data => 1
@@ -85,6 +86,7 @@ subtest "fails" => sub{
     plan tests => 3;
 
     my $profile_item = Genome::Config::Profile::Item->get(-11);
+
     throws_ok(
         sub{
             $class->execute(
