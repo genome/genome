@@ -266,36 +266,13 @@ sub reference_being_replaced_for_input {
 sub alignment_results_for_instrument_data {
     my $self = shift;
     my $instrument_data = shift;
-    my $model = $self->model;
-    my $processing_profile = $model->processing_profile;
-    my $input = $model->input_for_instrument_data($instrument_data);
 
-    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($self);
+    my @results =
+        grep { $_->instrument_data eq $instrument_data }
+        grep { $_->isa('Genome::InstrumentData::AlignmentResult') }
+    $self->results();
 
-    if ($processing_profile->can('results_for_instrument_data_input')) {
-        my @results;
-        # TODO There's gotta be a better way to get segment info
-        my @align_reads_events = Genome::Model::Event::Build::ReferenceAlignment::AlignReads->get(
-            instrument_data_id => $instrument_data->id,
-            build_id => $self->id,
-        );
-
-        if (@align_reads_events) {
-            for my $align_reads_event (@align_reads_events) {
-                my %segment_info = ();
-                if ($align_reads_event->instrument_data_segment_type) {
-                    $segment_info{instrument_data_segment_type} = $align_reads_event->instrument_data_segment_type;
-                    $segment_info{instrument_data_segment_id} = $align_reads_event->instrument_data_segment_id;
-                };
-                push @results, $processing_profile->results_for_instrument_data_input($input, $result_users, %segment_info);
-            }
-            return @results;
-        } else {
-            return $processing_profile->results_for_instrument_data_input($input, $result_users);
-        }
-    }
-
-    return;
+    return @results;
 }
 
 sub alignment_directory_for_instrument_data {

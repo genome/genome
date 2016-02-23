@@ -11,6 +11,7 @@ use above 'Genome';
 
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::DiskAllocation;
+use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::ReferenceAlignment;
 
@@ -35,10 +36,8 @@ for my $i (1..NUM_INSTRUMENT_DATA) {
 my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 for my $input ($build->instrument_data_inputs) {
 
-    my ($params) = $model->processing_profile->params_for_alignment($input);
-
-    my $ar = Genome::InstrumentData::AlignmentResult::Bwa->__define__(
-        %$params,
+    my $ar = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
+        instrument_data_id => $input->value_id,
         output_dir => '/fake/' . $input->value_id,
 
     );
