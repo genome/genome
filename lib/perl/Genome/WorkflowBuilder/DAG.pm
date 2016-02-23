@@ -73,10 +73,10 @@ sub parent_log_dir {
     my $class = shift;
 
     my $backend = Genome::Config::get('workflow_builder_backend');
-    if ($backend eq 'ptero') {
+    if ($backend eq 'ptero' || $backend eq 'inline') {
         use Try::Tiny qw(try catch);
         try {
-            return Genome::Config::get('ptero_log_directory');
+            return Genome::Config::get('parent_workflow_log_directory');
         } catch {
             return;
         }
@@ -806,11 +806,25 @@ sub _execute_inline {
     my @ordered_operations = $self->_get_ordered_operations();
     for my $operation (@ordered_operations) {
         my $inputs = $self->_get_inputs_for_operation($operation->name);
-        my $outputs = $operation->execute_inline($inputs);
+
+        my $outputs = $self->_execute_operation($operation, $inputs);
+
         $self->_store_outputs_for_operation($outputs, $operation->name);
     }
 
     return $self->_get_inputs_for_operation("output connector");
+}
+
+sub _execute_operation {
+    my ($self, $operation, $inputs) = @_;
+
+    if (defined($self->log_dir)) {
+        Genome::Config::set_env('parent_workflow_log_directory', $self->log_dir);
+    } else {
+        $self->warning_message("No log directory set for DAG named (%s)", $self->name);
+    }
+
+    return $operation->execute_inline($inputs);
 }
 
 sub _construct_name_mapping_for_operations {
