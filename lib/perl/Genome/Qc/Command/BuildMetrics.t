@@ -99,6 +99,7 @@ $test_qc_result->add_user(
 my $cmd_with_out = Genome::Qc::Command::BuildMetrics->create(
    builds => $test_build,
    output_file => $test_output_file,
+   output_format => 'yaml'
 );
 isa_ok($cmd_with_out,'Genome::Qc::Command::BuildMetrics');       
 ok($cmd_with_out->execute,'execute build-metrics command with output file');
@@ -106,4 +107,6 @@ ok($cmd_with_out->execute,'execute build-metrics command with output file');
 compare_ok($test_output_file, $expected_output_file, replace => $replace, 
     name => "Build metrics printed correctly to output file");
 
+#TODO: Add tests for TSV output format (wgs and exome)
+    
 done_testing;
