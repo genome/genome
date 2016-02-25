@@ -1041,11 +1041,19 @@ sub _compute_alignment_metrics {
     $self->set_bam_size($bam); #store this for per lane bam recreation
 
     if ($self->_use_alignment_summary_cpp){
-        my $out = `bash -c "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/gsc/scripts/opt/genome_legacy_code/lib:/gsc/pkg/boost/boost_1_42_0/lib /gsc/scripts/opt/genome_legacy_code/bin/alignment-summary-v1.2.6 --bam=\"$bam\" --ignore-cigar-md-errors"`;
-        unless ($? == 0) {
+        my $out_file = Genome::Sys->create_temp_file_path();
+        my $alignment_summary_cmd = Genome::Model::Tools::AlignmentSummary::GenerateMetrics->create(
+            use_version => '1.2.6',
+            alignment_file_path => $bam,
+            verbosity => 'full',
+            ignore_cigar_md_errors => 1,
+            output_file => $out_file,
+        );
+        unless ($alignment_summary_cmd->execute) {
             $self->error_message("Failed to compute alignment metrics.");
             die $self->error_message;
         }
+        my $out = Genome::Sys->read_file($out_file);
         my $res = YAML::Load($out);
         unless (ref($res) eq "HASH") {
             $self->error_message("Failed to parse YAML hash from alignment_summary_cpp output.");
