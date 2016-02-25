@@ -17,7 +17,6 @@ my %command_map = (
     'config' => 'Genome::Config::Command',
     'db' => 'Genome::Db::Command',
     'disk' => 'Genome::Disk::Command',
-    'druggable-gene' => 'Genome::DruggableGene::Command',
     'feature-list' => 'Genome::FeatureList::Command',
     'individual' => 'Genome::Individual::Command',
     'instrument-data' => 'Genome::InstrumentData::Command',
