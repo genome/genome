@@ -7,6 +7,9 @@ use Genome;
 use Cwd qw();
 use Genome::Sys::LSF::ResourceParser qw(parse_lsf_params);
 use Data::UUID;
+use Carp qw();
+use Data::Dump qw(pp);
+use Try::Tiny;
 
 
 class Genome::WorkflowBuilder::Command {
@@ -301,6 +304,68 @@ sub _get_attribute_from_command {
     else {
         return;
     }
+}
+
+sub _execute_inline {
+    my ($self, $inputs) = @_;
+
+    my $cmd = $self->_instantiate_command($inputs);
+    $self->_run_command($cmd);
+    return _get_command_outputs($cmd, $self->command);
+}
+
+sub _instantiate_command {
+    my ($self, $inputs) = @_;
+
+    $self->status_message("Instantiating command %s", $self->command);
+
+    my $pkg = $self->command;
+    my $cmd = try {
+        eval "use $pkg";
+        $pkg->create(%$inputs)
+    } catch {
+        Carp::confess sprintf(
+            "Failed to instantiate class (%s) with inputs (%s): %s",
+            $pkg, pp($inputs), pp($_))
+    };
+
+    return $cmd;
+}
+
+sub _run_command {
+    my ($self, $cmd) = @_;
+
+    $self->status_message("Running command %s", $self->command);
+
+    my $ret = try {
+        $cmd->execute()
+    } catch {
+        Carp::confess sprintf(
+            "Crashed in execute for command %s: %s",
+            $self->command, $_,
+        );
+    };
+    unless ($ret) {
+        Carp::confess sprintf("Failed to execute for command %s.",
+            $self->command,
+        );
+    }
+
+    $self->status_message("Succeeded to execute command %s", $self->command);
+}
+
+sub _get_command_outputs {
+    my ($cmd, $pkg) = @_;
+
+    my %outputs;
+    my @output_properties = $pkg->__meta__->properties(is_output => 1);
+    for my $prop (@output_properties) {
+        my $prop_name = $prop->property_name;
+        my $value = $prop->is_many ? [$cmd->$prop_name] : $cmd->$prop_name;
+        $outputs{$prop_name} = $value;
+    }
+
+    return \%outputs;
 }
 
 

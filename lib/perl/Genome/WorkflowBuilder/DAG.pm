@@ -11,6 +11,7 @@ use List::MoreUtils qw();
 use Genome::Utility::Inputs qw(encode decode);
 use Data::Dump qw(pp);
 use File::Spec;
+use Graph::Directed qw();
 
 
 class Genome::WorkflowBuilder::DAG {
@@ -43,6 +44,16 @@ class Genome::WorkflowBuilder::DAG {
             is_optional => 1,
         },
     ],
+    has_transient => {
+        name_mapping_for_operation => {
+            is => 'HASH',
+            default => {},
+        },
+        outputs_for_operation => {
+            is => 'HASH',
+            default => {},
+        }
+    }
 };
 
 sub recursively_set_log_dir {
@@ -62,10 +73,10 @@ sub parent_log_dir {
     my $class = shift;
 
     my $backend = Genome::Config::get('workflow_builder_backend');
-    if ($backend eq 'ptero') {
+    if ($backend eq 'ptero' || $backend eq 'inline') {
         use Try::Tiny qw(try catch);
         try {
-            return Genome::Config::get('ptero_log_directory');
+            return Genome::Config::get('parent_workflow_log_directory');
         } catch {
             return;
         }
@@ -121,6 +132,9 @@ sub execute {
 
     } elsif ($backend eq 'workflow') {
         return $self->_execute_with_workflow($inputs);
+
+    } elsif ($backend eq 'inline') {
+        return $self->execute_inline($inputs);
 
     } else {
         die sprintf("Unknown backend specified: %s", $backend);
@@ -779,6 +793,104 @@ sub _validate_non_conflicting_inputs {
         }
         $encoded_inputs->insert($ei);
     }
+}
+
+sub _execute_inline {
+    my ($self, $inputs) = @_;
+
+    $self->outputs_for_operation({});
+
+    $self->_construct_name_mapping_for_operations();
+    $self->_store_outputs_for_operation($inputs, "input connector");
+
+    my @ordered_operations = $self->_get_ordered_operations();
+    for my $operation (@ordered_operations) {
+        my $inputs = $self->_get_inputs_for_operation($operation->name);
+
+        my $outputs = $self->_execute_operation($operation, $inputs);
+
+        $self->_store_outputs_for_operation($outputs, $operation->name);
+    }
+
+    return $self->_get_inputs_for_operation("output connector");
+}
+
+sub _execute_operation {
+    my ($self, $operation, $inputs) = @_;
+
+    if (defined($self->log_dir)) {
+        Genome::Config::set_env('parent_workflow_log_directory', $self->log_dir);
+    } else {
+        $self->warning_message("No log directory set for DAG named (%s)", $self->name);
+    }
+
+    return $operation->execute_inline($inputs);
+}
+
+sub _construct_name_mapping_for_operations {
+    my $self = shift;
+
+    for my $link (@{$self->links}) {
+        my $name_mapping = $self->name_mapping_for_operation;
+        my $value = [$link->source_operation_name, $link->source_property];
+        $name_mapping->{$link->destination_operation_name}->{$link->destination_property} = $value;
+    }
+    return;
+}
+
+sub _store_outputs_for_operation {
+    my ($self, $outputs, $name) = @_;
+
+    my $self_outputs = $self->outputs_for_operation;
+    $self_outputs->{$name} = $outputs;
+    return;
+}
+
+sub _get_ordered_operations {
+    my $self = shift;
+
+    my $g = Graph::Directed->new();
+    for my $link (@{$self->links}) {
+        $g->add_edge($link->source_operation_name, $link->destination_operation_name);
+    }
+
+    my @ordered_names;
+    my @task_names = sort $g->successors('input connector');
+    my $task_set = Set::Scalar->new(@task_names);
+    $g->delete_vertex('input connector');
+    while (scalar(@task_names) > 0) {
+        my $count = 0;
+        for my $name (@task_names) {
+            if ($g->in_degree($name) == 0) {
+                unless ($name eq 'output connector') {
+                    push @ordered_names, $name;
+                }
+                splice(@task_names, $count, 1);
+
+                my @new_successors = grep {!$task_set->contains($_)} $g->successors($name);
+                push @task_names, sort @new_successors;
+                $task_set->insert(@new_successors);
+
+                $g->delete_vertex($name);
+                last;
+            }
+            $count++;
+        }
+    }
+
+    return map {$self->operation_named($_)} @ordered_names;
+}
+
+sub _get_inputs_for_operation {
+    my ($self, $operation_name) = @_;
+
+    my $inputs = {};
+    my $name_mapping = $self->name_mapping_for_operation->{$operation_name};
+    my $self_outputs = $self->outputs_for_operation;
+    while (my ($input_name, $lookup_keys) = each(%{$name_mapping})) {
+        $inputs->{$input_name} = $self_outputs->{$lookup_keys->[0]}->{$lookup_keys->[1]};
+    }
+    return $inputs;
 }
 
 1;

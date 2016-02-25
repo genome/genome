@@ -11,6 +11,7 @@ use XML::LibXML qw();
 use Carp qw(confess);
 use Data::Dumper qw();
 use List::MoreUtils qw(firstval);
+use Params::Validate qw(validate_pos :types);
 
 
 class Genome::WorkflowBuilder::Detail::Operation {
@@ -37,6 +38,10 @@ class Genome::WorkflowBuilder::Detail::Operation {
             is => 'HASH',
             default => {},
         },
+        outputs => {
+            is => 'HASH',
+            default => {},
+        }
     }
 };
 
@@ -260,5 +265,45 @@ sub _get_value_from_xml_element {
     return $operation_type_element->getAttribute($name);
 }
 
+sub execute_inline {
+    my ($self, $inputs) = validate_pos(@_, {type => OBJECT}, {type => HASHREF});
+
+    $self->outputs({});
+
+    if (defined($self->parallel_by)) {
+        for my $parallel_input (@{$inputs->{$self->parallel_by}}) {
+            my %loop_inputs = %{$inputs};
+            $loop_inputs{$self->parallel_by} = $parallel_input;
+            my $loop_outputs = $self->_execute_inline(\%loop_inputs);
+            $self->_store_outputs($loop_outputs);
+        }
+    } else {
+        my $outputs = $self->_execute_inline($inputs);
+        $self->_store_outputs($outputs);
+    }
+
+    return $self->outputs;
+}
+
+sub _execute_inline {
+    my $self = shift;
+    my $inputs = shift;
+
+    die "Abstract";
+}
+
+sub _store_outputs {
+    my ($self, $outputs) = validate_pos(@_, {type => OBJECT}, {type => HASHREF});
+
+    if (defined($self->parallel_by)) {
+        my $self_outputs = $self->outputs;
+        while (my ($key, $value) = each %{$outputs}) {
+            push @{$self_outputs->{$key}}, $value;
+        }
+    } else {
+        $self->outputs($outputs);
+    }
+    return;
+}
 
 1;

@@ -111,5 +111,11 @@ sub operation_type_attributes {
     return %attributes;
 }
 
+sub _execute_inline {
+    my ($self, $inputs) = @_;
+
+    die "Events are not supported for inline execution.";
+}
+
 
 1;
