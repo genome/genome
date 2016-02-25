@@ -211,7 +211,7 @@ sub execute {                               # replace with real execution logic.
 	#					my $cmd = $self->command_line(" copynumber <\($mpileup\) $output_file --mpileup 1 $varscan_params");
 						my $cmd = "bash -c \"java -jar $varscan_path copynumber <\($mpileup\) $output_file --mpileup 1 --data-ratio $normal_tumor_ratio $varscan_params\"";
 		
-						system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" -oo $output_file.log $cmd");
+						system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>2000 && tmp>2000] rusage[mem=2000]\" -J vsCn -oo $output_file.log $cmd");
 						
 					}
 				}
