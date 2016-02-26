@@ -12,8 +12,11 @@ sub generate_obj {
 
     my $per_lane_params = delete $params{__per_lane_params} // {};
 
+    my $id = delete $params{id};
+
     my $speedseq_result = Genome::InstrumentData::AlignmentResult::Merged::Speedseq->__define__(
         %params,
+        id => $id,
     );
     for my $i (0..$#instrument_data) {
         $speedseq_result->add_input(
