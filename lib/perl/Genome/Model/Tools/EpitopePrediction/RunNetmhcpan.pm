@@ -21,7 +21,7 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhcpan {
             doc => 'Output file containing raw output from NetmhcPan epitope prediction',
         },
         epitope_length => {
-            is => 'Text',
+            is => 'Integer',
             doc => 'Length of subpeptides to predict',
         },
     ],
