@@ -1,5 +1,6 @@
 package Genome::Model::Build::Command::ListVolumes;
 
+use Genome;
 use strict;
 use warnings;
 
