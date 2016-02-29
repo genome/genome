@@ -243,7 +243,7 @@ sub _add_microarray_vbid_result_metrics_to_hash_ref {
 
     my $build = Genome::Model::Build->get($qc_metric_result->{build_id});
 
-    my $vbid = grep { $_->class eq 'Genome::InstrumentData::VerifyBamIdResult'} $build->results;
+    my ($vbid) = grep { $_->class eq 'Genome::InstrumentData::VerifyBamIdResult'} $build->results;
     if ($vbid) {
         $data->{'microarray_freemix'} = $vbid->freemix;
         $data->{'microarray_chipmix'} = $vbid->chipmix;
