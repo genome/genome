@@ -610,7 +610,17 @@ sub base_temp_directory {
     my $tmp_location = $ENV{'TMPDIR'} || File::Spec->tmpdir();
     if ($ENV{'LSB_JOBID'}) {
         my $lsf_possible_tempdir = sprintf("%s/%s.tmpdir", $tmp_location, $ENV{'LSB_JOBID'});
-        $tmp_location = $lsf_possible_tempdir if (-d $lsf_possible_tempdir);
+        if (-d $lsf_possible_tempdir) {
+            $tmp_location = $lsf_possible_tempdir;
+
+            #open up the temporary directory to those with data access for easier debugging
+            my $gid = gidgrnam(Genome::Config::get('sys_group'));
+            set_gid($gid, $tmp_location);
+            my $mode = mode($tmp_location);
+            $mode->add_group_readable;
+            $mode->add_group_executable;
+            $mode->rm_other_rwx;
+        }
     }
     # tempdir() thows its own exception if there's a problem
 
