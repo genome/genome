@@ -21,6 +21,7 @@ use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Genome::Test::Factory::Model::SomaticValidation;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Qc::Result;
+use Genome::Test::Factory::Qc::Config;
 
 use Sub::Install qw(reinstall_sub);
 
@@ -86,6 +87,11 @@ my $test_alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResu
    instrument_data => $test_inst_data_1,
    build => $test_build,
 );
+
+my $test_qc_config = Genome::Test::Factory::Qc::Config->setup_object(
+   name => 'test_qc_config',
+   type => 'wgs',
+); 
 
 my $test_qc_result = Genome::Test::Factory::Qc::Result->setup_object(
    alignment_result => $test_alignment_result,
