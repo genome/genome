@@ -26,7 +26,7 @@ class Genome::Qc::Command::BuildMetrics {
         },
     ],
     has_optional => [
-        tsv_output_qc_profile => {
+        _tsv_output_profile => {
             is => 'Text',
             doc => 'The output TSV profile used to determine metrics reported in file.',
             valid_values => ['wgs','exome'],
@@ -54,7 +54,7 @@ sub execute {
     my @metrics;
 
     for my $build ($self->builds) {
-        push @metrics, $self->metrics_for_build($build);
+        push @metrics, $self->calculate_qc_metrics_for_build($build);
     }
 
     unless (@metrics) {
@@ -71,7 +71,7 @@ sub execute {
     return 1;
 }
 
-sub metrics_for_build {
+sub calculate_qc_metrics_for_build {
     my $self = shift;
     my $build = shift;
 
@@ -79,7 +79,13 @@ sub metrics_for_build {
     my $build_instdata_set = Set::Scalar->new($build->instrument_data);
     my @qc_results = grep {$_->isa('Genome::Qc::Result')} $build->results;
     for my $qc_result (@qc_results) {
-        #TODO: move the wgs vs exome logic up here and base off the QC result type rather than a user input.
+        my $config_type = $qc_result->qc_config->type;
+        if (!defined($self->_tsv_output_profile)) {
+            $self->_tsv_output_profile($config_type);
+        } elsif ($self->_tsv_output_profile ne $config_type) {
+            $self->fatal_message('Unable to summarize QC metrics for builds with multiple qc config types!');
+        }
+        
         my $as = $qc_result->alignment_result;
         my $result_instdata_set = Set::Scalar->new($as->instrument_data);
         if ($build_instdata_set->is_equal($result_instdata_set)) {
@@ -96,9 +102,10 @@ sub metrics_for_build {
                     $self->error_message('Missing samtools reads_marked_duplicates!');
                     die($self->error_message);
                 }
-                # Calculate Haploid Coverage
-                # Should the haploid coverage take into consideration QC result type? wgs or exome?
-                $self->_calculate_haploid_coverage($build,\%result_metrics);
+                # Calculate Haploid Coverage for WGS
+                if ($qc_result->qc_config->type eq 'wgs') {
+                    $self->_calculate_haploid_coverage($build,\%result_metrics);
+                }
             } else {
                 $self->error_message('Missing CollectAlignmentSummaryMetrics PAIR category.');
                 die($self->error_message);
@@ -148,6 +155,7 @@ sub output_metrics_as_tsv {
                        instrument_data_count
                        instrument_data_ids
                        bam_path
+                       pf_reads
                        aligned_bases
                        alignment_rate
                        duplication_rate
@@ -160,7 +168,7 @@ sub output_metrics_as_tsv {
     # The results themselves have a type, eg. wgs or exome
     # Rather than relying on a user input profile, could use the result type instead
     my @data;
-    if ($self->tsv_output_qc_profile eq 'wgs') {
+    if ($self->_tsv_output_profile eq 'wgs') {
         #TODO: Add additional WGS specific metrics?
         push @headers, qw/
                              chipmix
@@ -175,7 +183,7 @@ sub output_metrics_as_tsv {
             $self->_add_microarray_vbid_result_metrics_to_hash_ref($qc_metric_result,$data);
             push @data, $data;
         }
-    } elsif ($self->tsv_output_qc_profile eq 'exome') {
+    } elsif ($self->_tsv_output_profile eq 'exome') {
         push @headers, qw/
                              mean_target_coverage
                              pct_usable_bases_on_target
@@ -217,6 +225,7 @@ sub _base_hash_ref_for_qc_metric_result {
         instrument_data_count => $qc_metric_result->{instrument_data_count},
         instrument_data_ids => $qc_metric_result->{instrument_data_ids},
         bam_path => $build->merged_alignment_result->bam_path,
+        pf_reads => $qc_metric_result->{PAIR}->{PF_READS},
         aligned_bases => $qc_metric_result->{PAIR}->{PF_ALIGNED_BASES},
         alignment_rate => ($qc_metric_result->{PAIR}->{PF_READS_ALIGNED} / $qc_metric_result->{PAIR}->{TOTAL_READS}),
         duplication_rate => $qc_metric_result->{DUPLICATION_RATE},
