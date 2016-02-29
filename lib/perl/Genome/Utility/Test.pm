@@ -4,6 +4,8 @@ use warnings;
 package Genome::Utility::Test;
 use base 'Test::Builder::Module';
 
+use feature qw(state);
+
 use Exporter 'import';
 
 our @EXPORT_OK = qw(compare_ok run_ok capture_ok abort strip_ansi
@@ -327,6 +329,36 @@ sub data_dir {
     }
     my $dirpath = File::Spec->join(@parts);
     return $dirpath;
+}
+
+sub test_data {
+    my ($class, $package, $data_path, $version) = Params::Validate::validate_pos(
+        @_, {isa => __PACKAGE__}, {can => 'class'}, {type => SCALAR}, {type => SCALAR, optional => 1},
+    );
+
+    my $test_dir = $class->data_dir($package, $version);
+    my $test_data = File::Spec->join($test_dir, $data_path);
+
+    if (-e $test_data) {
+        note "Found test data: ($test_data)";
+    } else {
+        die "Couldn't find test data: ($test_data)";
+    }
+
+    return $test_data;
+}
+
+sub shared_test_data {
+    my ($class, $data_path, $version) = Params::Validate::validate_pos(
+        @_, {isa => __PACKAGE__}, 1, 1
+    );
+
+    state $shared_data_class = UR::Object::Type->define(
+        class_name => 'Genome::Model::Tools::TestHelpers::Data',
+        is => 'UR::Singleton',
+    );
+
+    return $class->test_data($shared_data_class->class_name, $data_path, $version);
 }
 
 sub strip_ansi {

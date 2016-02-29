@@ -11,9 +11,6 @@ use Genome::Utility::Test;
 use Genome::Model::Tools::TestHelpers::General qw(
     compare_to_blessed_file
 );
-use Genome::Model::Tools::TestHelpers::Data qw(
-    get_shared_test_data
-);
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -23,7 +20,7 @@ my $class = 'Genome::Model::Tools::Varscan::Consensus';
 use_ok($class);
 
 my $VERSION = 'v2'; # Bump this each time test data changes
-my $SHARED_DATA_VERSION = 1;
+my $SHARED_DATA_VERSION = 'v1';
 
 my $ref_fasta = get_ref_fasta();
 
@@ -40,7 +37,7 @@ test_with_output_vcf();
 done_testing();
 
 sub get_ref_fasta {
-    return get_shared_test_data('human_reference_37.fa', $SHARED_DATA_VERSION);
+    return Genome::Utility::Test->shared_test_data('human_reference_37.fa', $SHARED_DATA_VERSION);
 }
 
 sub test_without_output_vcf {

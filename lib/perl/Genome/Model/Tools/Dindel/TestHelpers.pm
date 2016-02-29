@@ -3,13 +3,11 @@ package Genome::Model::Tools::Dindel::TestHelpers;
 use strict;
 use warnings;
 
+use Genome::Utility::Test;
 use Genome::Model::Tools::TestHelpers::General qw(
     get_test_dir
     ensure_file
     compare_to_blessed_file
-);
-use Genome::Model::Tools::TestHelpers::Data qw(
-    get_shared_test_data
 );
 use Test::More;
 
@@ -21,10 +19,10 @@ our @EXPORT_OK = qw(
     compare_output_to_test_data
 );
 
-my $SHARED_DATA_VERSION = 1;
+my $SHARED_DATA_VERSION = 'v1';
 
 sub get_ref_fasta {
-    return get_shared_test_data('human_reference_37.fa', $SHARED_DATA_VERSION);
+    return Genome::Utility::Test->shared_test_data('human_reference_37.fa', $SHARED_DATA_VERSION);
 }
 
 sub compare_output_to_test_data {
