@@ -7,8 +7,8 @@ use above 'Genome';
 use Test::More;
 use File::Spec;
 
+use Genome::Utility::Test;
 use Genome::Model::Tools::TestHelpers::General qw(
-    get_test_dir
     compare_to_blessed_file
 );
 use Genome::Model::Tools::TestHelpers::Data qw(
@@ -22,12 +22,12 @@ BEGIN {
 my $class = 'Genome::Model::Tools::Varscan::Consensus';
 use_ok($class);
 
-my $VERSION = 2; # Bump this each time test data changes
+my $VERSION = 'v2'; # Bump this each time test data changes
 my $SHARED_DATA_VERSION = 1;
 
 my $ref_fasta = get_ref_fasta();
 
-my $test_dir = get_test_dir($class, $VERSION);
+my $test_dir = Genome::Utility::Test->data_dir($class, $VERSION);
 my $input_bam = File::Spec->join($test_dir, '134053361-region-limited.bam');
 ok(-s $input_bam, "Found input Bam file");
 
