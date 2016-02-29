@@ -24,7 +24,7 @@ class Genome::Model::Tools::EpitopePrediction::RunNetmhc {
             doc => 'Location of the output',
         },
         epitope_length => {
-            is => 'Text',
+            is => 'Integer',
             doc => 'Length of subpeptides to predict',
         },
         netmhc_version => {

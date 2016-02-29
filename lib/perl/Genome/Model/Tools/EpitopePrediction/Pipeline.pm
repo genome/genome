@@ -45,7 +45,7 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
             is_many => 1,
         },
         epitope_length => {
-            is => 'Text',
+            is => 'Integer',
             doc => 'Length of subpeptides to predict with NetMHC',
         },
         netmhc_version => {
