@@ -4,9 +4,6 @@ use strict;
 use warnings;
 
 use Genome::Utility::Test;
-use Genome::Model::Tools::TestHelpers::General qw(
-    get_test_dir
-);
 use Test::More;
 
 require Exporter;
@@ -18,6 +15,12 @@ our @EXPORT_OK = qw(
 );
 
 my $SHARED_DATA_VERSION = 'v1';
+
+sub get_test_dir {
+    my ($package, $version) = @_;
+    return Genome::Utility::Test->data_dir($package, "v$version");
+}
+
 
 sub get_ref_fasta {
     return Genome::Utility::Test->shared_test_data('human_reference_37.fa', $SHARED_DATA_VERSION);
