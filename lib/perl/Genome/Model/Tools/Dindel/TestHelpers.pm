@@ -6,7 +6,6 @@ use warnings;
 use Genome::Utility::Test;
 use Genome::Model::Tools::TestHelpers::General qw(
     get_test_dir
-    ensure_file
     compare_to_blessed_file
 );
 use Test::More;
