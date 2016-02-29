@@ -59,6 +59,7 @@ class Genome::Model::Build::Command::ListVolumes {
 sub _resolve_boolexpr {
     my $self = shift;
 
+    no warnings 'redefine';
     # initially filter on Builds
     local *Genome::Model::Build::Command::ListVolumes::subject_class_name = \&filter_class_name;
     # no hints when getting these builds
@@ -69,6 +70,7 @@ sub _resolve_boolexpr {
 sub resolve_show_column_names {
     my $self = shift;
 
+    no warnings 'redefine';
     local *Genome::Model::Build::Command::ListVolumes::subject_class_name = \&show_class_name;
     $self->super_can('resolve_show_column_names')->($self);
 }
