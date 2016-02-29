@@ -6,7 +6,6 @@ use warnings;
 use Genome::Utility::Test;
 use Genome::Model::Tools::TestHelpers::General qw(
     get_test_dir
-    compare_to_blessed_file
 );
 use Test::More;
 
@@ -26,7 +25,7 @@ sub get_ref_fasta {
 
 sub compare_output_to_test_data {
     my ($output_path, $output_dir, $test_dir) = @_;
-    return compare_to_blessed_file(
+    Genome::Utility::Test->compare_to_blessed_file(
         output_path => $output_path,
         output_dir => $output_dir,
         test_dir => $test_dir,

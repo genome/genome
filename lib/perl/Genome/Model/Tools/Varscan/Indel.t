@@ -8,9 +8,6 @@ use Test::More;
 use File::Spec;
 
 use Genome::Utility::Test;
-use Genome::Model::Tools::TestHelpers::General qw(
-    compare_to_blessed_file
-);
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -48,7 +45,7 @@ sub test_without_output_vcf {
         output_file => $output_file,
     );
     ok($cmd->execute(), 'Successfully, ran command');
-    compare_to_blessed_file(
+    Genome::Utility::Test->compare_to_blessed_file(
         output_path => $cmd->output_file,
         output_dir => $output_directory,
         test_dir => $test_dir,
@@ -65,7 +62,7 @@ sub test_with_output_vcf {
         vcf_sample_name => 'vcf_sample_name',
     );
     ok($cmd->execute(), 'Successfully, ran command');
-    compare_to_blessed_file(
+    Genome::Utility::Test->compare_to_blessed_file(
         output_path => $cmd->output_file,
         output_dir => $output_directory,
         test_dir => $test_dir,
