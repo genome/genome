@@ -241,27 +241,24 @@ sub _add_microarray_vbid_result_metrics_to_hash_ref {
     my $qc_metric_result = shift;
     my $data = shift;
 
-    # Initialize as undefined
-    $data->{'microarray_chipmix'} = undef;
-    $data->{'microarray_freemix'} = undef;
-    
     my $build = Genome::Model::Build->get($qc_metric_result->{build_id});
 
-    my %build_vbid_results;
-    for my $vbid (grep { $_->class eq 'Genome::InstrumentData::VerifyBamIdResult'} $build->results) {
-        # Not sure why but the results are not unique.  Duplicates are returned from build.
-        if ($build_vbid_results{$vbid->id}) { next; }
-        $build_vbid_results{$vbid->id} = 1;
+    my $vbid = grep { $_->class eq 'Genome::InstrumentData::VerifyBamIdResult'} $build->results;
+    if ($vbid) {
         $data->{'microarray_freemix'} = $vbid->freemix;
         $data->{'microarray_chipmix'} = $vbid->chipmix;
+    } else {
+        $data->{'microarray_chipmix'} = undef;
+        $data->{'microarray_freemix'} = undef;
     }
     return 1;
 }
+
 sub _write_metrics_hash_refs_to_tsv_file {
     my $self = shift;
     my $headers = shift;
     my $data = shift;
-    
+
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
         headers => $headers,
         separator => "\t",
