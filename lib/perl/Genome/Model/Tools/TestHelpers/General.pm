@@ -64,7 +64,7 @@ sub get_blessed_file {
     my $output_path = $params{output_path};
     my $output_dir = $params{output_dir};
 
-    (my $blessed_path = $output_path) =~ s/$output_dir/$test_dir/;
+    (my $blessed_path = $output_path) =~ s/\Q$output_dir\E/$test_dir/;
 
     ensure_file($blessed_path);
     return $blessed_path;
