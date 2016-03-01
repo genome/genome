@@ -7019,7 +7019,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'alleles=s@',
       'files',
       'epitope-length=s',
-      'files',
+      undef,
       'netmhc-version=s',
       [
         '3.0',
@@ -7058,7 +7058,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'output-file=s',
       'files',
       'epitope-length=s',
-      'files',
+      undef,
       'help!',
       undef
     ],
@@ -7071,7 +7071,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'alleles=s@',
       'files',
       'epitope-length=s',
-      'files',
+      undef,
       'netmhc-version=s',
       [
         '3.0',
@@ -7109,7 +7109,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'output-directory=s',
       'files',
       'epitope-length=s',
-      'files',
+      undef,
       'sample-name=s',
       'files',
       'netmhc-version=s',
@@ -7210,7 +7210,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'alleles=s@',
       'files',
       'epitope-length=s',
-      'files',
+      undef,
       'netmhc-version=s',
       [
         '3.0',
@@ -7532,46 +7532,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
-  '>wiki',
-  [
-    '>document-classes',
-    [
-      'debug!',
-      undef,
-      'namespace-name=s',
-      'files',
-      'svn-revision=s',
-      undef,
-      'verbose!',
-      undef,
-      'classes-or-modules=s@',
-      'files',
-      'help!',
-      undef
-    ],
-    '>document-commands',
-    [
-      'debug!',
-      undef,
-      'svn-revision=s',
-      undef,
-      'base-modules=s@',
-      'files',
-      'help!',
-      undef
-    ],
-    '>update-solr',
-    [
-      'days-ago=s',
-      'files',
-      'debug!',
-      undef,
-      'help!',
-      undef
-    ],
-    'help!',
-    undef
-  ],
   '>cg-hub',
   [
     '>gene-torrent',
@@ -7704,39 +7664,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'read-2-fastq-list=s',
       'files',
       'use-version=s',
-      undef,
-      'help!',
-      undef
-    ],
-    'help!',
-    undef
-  ],
-  '>see-five',
-  [
-    '>rule',
-    [
-      'lift=s',
-      'files',
-      'lines=s',
-      'files',
-      'n=s',
-      'files',
-      'possible-items=s',
-      'files',
-      'trial-id=s',
-      undef,
-      'wrong-items=s',
-      'files',
-      'debug!',
-      undef,
-      'help!',
-      undef
-    ],
-    '>trial',
-    [
-      'n=s',
-      'files',
-      'debug!',
       undef,
       'help!',
       undef
@@ -8757,11 +8684,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     undef,
     'use-version=s',
     undef,
-    'help!',
-    undef
-  ],
-  '>text',
-  [
     'help!',
     undef
   ],
@@ -17817,53 +17739,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
-  '>complete-genomics',
-  [
-    '>map-to-sam',
-    [
-      'lsf-resource=s',
-      'files',
-      'map-file=s',
-      'files',
-      'reference-file=s',
-      'files',
-      'sort-output=s',
-      [
-        undef,
-        'coordinate',
-        'queryname'
-      ],
-      'bam-file=s',
-      'files',
-      'bam-directory=s',
-      'files',
-      'help!',
-      undef
-    ],
-    '>evidence-to-sam',
-    [
-      'lsf-resource=s',
-      'files',
-      'evidence-file=s',
-      'files',
-      'reference-file=s',
-      'files',
-      'sort-output=s',
-      [
-        undef,
-        'coordinate',
-        'queryname'
-      ],
-      'bam-file=s',
-      'files',
-      'bam-directory=s',
-      'files',
-      'help!',
-      undef
-    ],
-    'help!',
-    undef
-  ],
   '>verify-bam-id',
   [
     'vcf=s',
@@ -19458,32 +19333,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>onco-plot',
     [
-      'help!',
-      undef
-    ],
-    'help!',
-    undef
-  ],
-  '>sword',
-  [
-    '>sliding-window-pileup',
-    [
-      'bam-file-fof=s',
-      'files',
-      'scaling=s',
-      'files',
-      'threshold=s',
-      'files',
-      'region=s',
-      'files',
-      'output-file=s',
-      'files',
-      'window-size=s',
-      [
-        100,
-        1000,
-        10000
-      ],
       'help!',
       undef
     ],
@@ -21178,17 +21027,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'debug!',
     undef,
     'use-version=s',
-    undef,
-    'help!',
-    undef
-  ],
-  '>get-sub-directories',
-  [
-    'dir=s',
-    'files',
-    'debug!',
-    undef,
-    'sub-directories=s',
     undef,
     'help!',
     undef
