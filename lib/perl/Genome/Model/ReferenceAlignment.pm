@@ -56,7 +56,6 @@ class Genome::Model::ReferenceAlignment {
         },
     ],
     has => [
-        subject                     => { is => 'Genome::Sample', id_by => 'subject_id', doc => 'the subject of alignment and variant detection is a single sample' },
         dna_type                     => { via => 'processing_profile'},
         picard_version               => { via => 'processing_profile'},
         samtools_version             => { via => 'processing_profile'},
@@ -80,6 +79,11 @@ class Genome::Model::ReferenceAlignment {
         read_trimmer_version         => { via => 'processing_profile'},
         read_trimmer_params          => { via => 'processing_profile'},
         force_fragment               => { via => 'processing_profile'},
+        subject => {
+            is => 'Genome::Sample',
+            id_by => 'subject_id',
+            doc => 'the subject of alignment and variant detection is a single sample'
+        },
         dbsnp_model => {
             via => 'dbsnp_build',
             to => 'model',
