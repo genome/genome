@@ -1042,14 +1042,6 @@ sub native_qual_type {
     return $analysis_software_versions{$analysis_software_version} || 'sanger';
 }
 
-sub resolve_quality_converter {
-    my $self = shift;
-    if ($self->native_qual_type eq 'illumina') {
-        return "sol2sanger";
-    }
-    return "sol2phred";
-}
-
 sub resolve_import_format {
     my $self = shift;
     if ($self->bam_path) {
@@ -1069,12 +1061,7 @@ sub resolve_import_format {
     }
 }
 
-sub NEW_resolve_quality_converter {
-    # TODO: this is the correct logic but it breaks tests,
-    # implying our tests are wrong.  Investigate and fix.
-    # This mirrors the ::Imported module which does the work correctly.
-    # We almost never use this method in production because we use BAMs
-    # for reads which were always sanger format.
+sub resolve_quality_converter {
     my $self = shift;
     if ($self->native_qual_type eq 'solexa') {
         return "sol2sanger";
@@ -1334,5 +1321,4 @@ sub target_region_set {
 }
 
 1;
-
 
