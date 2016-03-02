@@ -128,7 +128,7 @@ sub create {
 
     $self->_prepare_staging_directory;
 
-    my $bed_file = $self->_dump_bed_file;
+    my $bed_file = $self->dump_bed_file;
     my $bam_file = $self->alignment_result->get_bam_file;
 
     die $self->error_message("Bed File ($bed_file) is missing") unless -s $bed_file;
@@ -182,8 +182,9 @@ sub create {
     return $self;
 }
 
-sub _dump_bed_file {
+sub dump_bed_file {
     my $self = shift;
+    my $bed_file_path = shift;
 
     my $roi_set = $self->region_of_interest_set;
     return unless $roi_set;
@@ -196,7 +197,9 @@ sub _dump_bed_file {
     my $merge_status = $self->merge_contiguous_regions;
     my $use_short_names = $self->use_short_roi_names;
 
-    my $bed_file_path = $self->temp_staging_directory .'/'. $roi_set->id .'.bed';
+    unless ($bed_file_path) {
+        $bed_file_path = $self->temp_staging_directory .'/'. $roi_set->id .'.bed';
+    }
     unless (-e $bed_file_path) {
         my %dump_params = (
             feature_list => $roi_set,
