@@ -1,33 +1,37 @@
-package Genome::Model::Event::Build::ReferenceAlignment::RunReports;
+package Genome::Model::ReferenceAlignment::Command::RunReports;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Event::Build::ReferenceAlignment::RunReports {
-    is => [ 'Genome::Model::Event' ],
+class Genome::Model::ReferenceAlignment::Command::RunReports {
+    is => 'Genome::Model::ReferenceAlignment::Command::PipelineBase',
+    has_param => [
+        lsf_queue => {
+            default => Genome::Config::get('lsf_queue_build_worker_alt'),
+        },
+    ],
 };
-
-my %REPORT_TYPES = (
-    Mapcheck           => 'Mapcheck',
-    DbSnpConcordance   => 'dbSNP_Concordance',
-    GoldSnpConcordance => 'Gold_SNP_Concordance',
-    InputBaseCounts    => 'Input_Base_Counts'
-);
-
 
 sub execute {
     my $self  = shift;
-    my $model = $self->model;
     my $build = $self->build;
+    my $pp = $build->processing_profile;
 
-    if ($model->read_aligner_name =~ /^Imported$/i) {
+    my %REPORT_TYPES = (
+        Mapcheck           => 'Mapcheck',
+        DbSnpConcordance   => 'dbSNP_Concordance',
+        GoldSnpConcordance => 'Gold_SNP_Concordance',
+        InputBaseCounts    => 'Input_Base_Counts'
+    );
+
+    if ($pp->read_aligner_name =~ /^Imported$/i) {
         $self->debug_message("This build uses Imported as alinger so skip InputBaseCounts");
         delete $REPORT_TYPES{InputBaseCounts};
     }
 
-    unless (defined $build->dbsnp_build && defined $model->snv_detection_strategy) {
+    unless (defined $build->dbsnp_build && defined $pp->snv_detection_strategy) {
         $self->debug_message("Either no dbsnp_build or snv detection for build; skipping dbsnp concordance report.");
         delete $REPORT_TYPES{DbSnpConcordance};
     }
@@ -37,8 +41,8 @@ sub execute {
         delete $REPORT_TYPES{GoldSnpConcordance};
     }
 
-    unless ($self->create_directory($build->resolve_reports_directory) ) {
-	    die('Could not create reports directory at: '. $build->resolve_reports_directory);
+    unless (Genome::Sys->create_directory($build->resolve_reports_directory) ) {
+        die('Could not create reports directory at: '. $build->resolve_reports_directory);
     }
 
     for my $report_type (keys %REPORT_TYPES) {
@@ -53,22 +57,20 @@ sub execute {
         }
         $report_name = $report_def->name;
         $self->debug_message("Defined report with name $report_name");
-        
+
         my $report = $report_def->generate_report;
         unless ($report) {
             $self->error_message("Error generating $report_name ($report_class)!: " . $report_class->error_message());
             $report_def->delete;
             die($self->error_message);
-        } 
-        else {
+        } else {
             $self->debug_message("Successfully generated report: $report_name");
         }
         $self->debug_message("About to add report: $report_name to build: ".$self->build->id);
-        
+
         if ($build->add_report($report)) {
             $self->debug_message('Saved report: '.$report);
-        } 
-        else {
+        } else {
             $self->error_message('Error saving '.$report.'. Error: '. $self->build->error_message);
             die($self->error_message);
         }
@@ -91,7 +93,7 @@ sub execute {
     }
     $self->debug_message('Report summary complete.');
 
-    return $self->verify_successful_completion;
+    return $self->verify_successful_completion(%REPORT_TYPES);
 }
 
 
@@ -106,43 +108,44 @@ sub validate_gold_snp_path {
 
     my $head    = `head -1 $gold_snp_path`;
     my @columns = split /\s+/, $head;
-    
+
     unless (@columns and @columns == 9) {
         $self->debug_message("Gold snp file: $gold_snp_path is not 9-column format");
         return;
     }
     return 1;
 }
-    
+
 
 sub verify_successful_completion {
     my $self = shift;
-    my $model = $self->model;
+    my %REPORT_TYPES = @_;
+
     my $build = $self->build;
     unless ($build) {
         $self->error_message('Failed verify_successful_completion of RunReports step. Build is undefined.');
         return;
     }
+    my $pp = $build->processing_profile;
 
     my $report_dir = $build->resolve_reports_directory;
-    
+
     my $gold_snp_path = $self->build->gold_snp_path;
     delete $REPORT_TYPES{GoldSnpConcordance} unless $gold_snp_path and -s $gold_snp_path;
 
-    delete $REPORT_TYPES{InputBaseCounts} if $model->read_aligner_name =~ /^Imported$/i;
+    delete $REPORT_TYPES{InputBaseCounts} if $pp->read_aligner_name =~ /^Imported$/i;
 
-    my @sub_dirs = (values %REPORT_TYPES, 'Summary');  
-   
+    my @sub_dirs = (values %REPORT_TYPES, 'Summary');
     for my $sub_directory (@sub_dirs) {
         unless (-d $report_dir .'/'. $sub_directory) {
             $self->error_message('Failed verify_successful_completeion of RunReports step.  Failed to find directory: '. $report_dir .'/'. $sub_directory);
             return;
         }
     }
+
     return 1;
 }
 
-1;
 
-#$HeadURL$
-#$Id$
+
+1;

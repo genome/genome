@@ -1,30 +1,33 @@
-package Genome::Model::Event::Build::ReferenceAlignment::BamQc;
+package Genome::Model::ReferenceAlignment::Command::BamQc;
 
 use strict;
 use warnings;
 
-use version 0.77;
 use Genome;
-use Set::Scalar;
 
-class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
-    is  => ['Genome::Model::Event'],
-    has_transient_optional => [
-        _alignment_result => {is => 'Genome::SoftwareResult'}
+class Genome::Model::ReferenceAlignment::Command::BamQc {
+    is => 'Genome::Model::ReferenceAlignment::Command::PipelineBase',
+    has_input => [
+        alignment_result => {
+            is => 'The per-lane alignment result for which to run post-alignment analysis',
+            is => 'Genome::InstrumentData::AlignedBamResult',
+        },
     ],
-    doc => 'runs BamQc on the bam(s) produced in the alignment step',
+    has_param => [
+        lsf_queue => {
+            default => Genome::Config::get('lsf_queue_build_worker_alt'),
+        },
+    ],
 };
-
-sub lsf_queue {
-    return Genome::Config::get('lsf_queue_build_worker');
-}
-
-sub bsub_rusage {
-    return '';
-}
 
 sub shortcut {
     my $self = shift;
+    my $build = $self->build;
+    my $pp    = $build->processing_profile;
+
+    if ($self->_should_skip_bam_qc($pp)) {
+        return 1;
+    }
 
     my %params = $self->params_for_result;
     my $result = Genome::InstrumentData::AlignmentResult::Merged::BamQc->get_with_lock(%params);
@@ -64,29 +67,10 @@ sub params_for_result {
     my $pp    = $build->processing_profile;
 
     my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
-
-    unless ($self->_alignment_result) {
-        my $instrument_data_input = $self->instrument_data_input;
-
-        my %segment_info;
-        if(defined $self->instrument_data_segment_id) {
-            for my $key (qw(instrument_data_segment_id instrument_data_segment_type)) {
-                $segment_info{$key} = $self->$key;
-            }
-        }
-
-        my ($align_result) = $pp->results_for_instrument_data_input($instrument_data_input, $result_users, %segment_info);
-
-        unless ($align_result) {
-            die $self->error_message('No alignment result found for build: '. $build->id);
-        }
-        $self->_alignment_result($align_result);
-    }
-
     my $picard_version = $self->_select_picard_version($pp->picard_version);
 
 
-    my $instr_data  = $self->instrument_data;
+    my $instr_data  = $build->instrument_data;
     #read length takes long time to run and seems not useful for illumina/solexa data
     my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
@@ -95,7 +79,7 @@ sub params_for_result {
     $result_users->{uses} = $build;
 
     return (
-        alignment_result_id => $self->_alignment_result->id,
+        alignment_result_id => $self->alignment_result->id,
         picard_version      => $picard_version,
         samtools_version    => $pp->samtools_version,
         fastqc_version      => Genome::Model::Tools::Fastqc->default_fastqc_version,
@@ -114,7 +98,7 @@ sub link_result {
     my $build = $self->build;
     $result->add_user(label => 'uses', user => $build);
 
-    my $align_result = $self->_alignment_result;
+    my $align_result = $self->alignment_result;
     my $link = join('/', $align_result->output_dir, 'bam-qc-'.$result->id);
 
     if (-l $link) {
@@ -187,6 +171,5 @@ sub _bwa_mem_version_object {
     }
     return version->parse($full_version);
 }
-
 
 1;

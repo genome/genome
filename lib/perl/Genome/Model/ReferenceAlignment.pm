@@ -433,4 +433,121 @@ sub _initialize_build {
     return 1;
 }
 
+sub _resolve_workflow_for_build {
+    my $self = shift;
+    my $build = shift;
+
+    if ($build->processing_profile->append_event_steps) {
+        $self->fatal_message('Appended events are no longer supported in this pipeline.');
+    }
+
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
+        name => $build->workflow_name,
+    );
+
+    my $alignment = Genome::WorkflowBuilder::Command->create(
+        name => 'alignment',
+        command => 'Genome::Model::ReferenceAlignment::Command::AlignReads',
+    );
+    $workflow->add_operation($alignment);
+    $workflow->connect_input(
+        input_property => 'build',
+        destination => $alignment,
+        destination_property => 'build',
+    );
+
+    my $coverage = Genome::WorkflowBuilder::Command->create(
+        name => 'coverage',
+        command => 'Genome::Model::ReferenceAlignment::Command::CoverageStats',
+    );
+    $workflow->add_operation($coverage);
+
+    my $bam_qc = Genome::WorkflowBuilder::Command->create(
+        name => 'bam-qc',
+        command => 'Genome::Model::ReferenceAlignment::Command::BamQc',
+        parallel_by => 'alignment_result',
+    );
+    $workflow->add_operation($bam_qc);
+    $workflow->create_link(
+        source => $alignment,
+        source_property => 'individual_alignment_results',
+        destination => $bam_qc,
+        destination_property => 'alignment_result',
+    );
+
+    my $detect_variants = Genome::WorkflowBuilder::Command->create(
+        name => 'detect-variants',
+        command => 'Genome::Model::ReferenceAlignment::Command::DetectVariants',
+    );
+    $workflow->add_operation($detect_variants);
+
+    for my $post_alignment_step ($coverage, $bam_qc, $detect_variants) {
+        $workflow->create_link(
+            source => $alignment,
+            source_property => 'build',
+            destination => $post_alignment_step,
+            destination_property => 'build',
+        );
+    }
+
+    my $annotation = Genome::WorkflowBuilder::Command->create(
+        name => 'annotation',
+        command => 'Genome::Model::ReferenceAlignment::Command::AnnotateVariants',
+    );
+    $workflow->add_operation($annotation);
+    $workflow->create_link(
+        source => $detect_variants,
+        source_property => 'build',
+        destination => $annotation,
+        destination_property => 'build',
+    );
+
+    my @block_inputs = ($annotation, $bam_qc, $coverage);
+    my $block = Genome::WorkflowBuilder::Block->create(
+        name => 'prepare-for-reports',
+        properties => ['build', (map { $_->name } @block_inputs)],
+    );
+    $workflow->add_operation($block);
+    $workflow->connect_input(
+        input_property => 'build',
+        destination => $block,
+        destination_property => 'build',
+    );
+    for my $block_input (@block_inputs) {
+        $workflow->create_link(
+            source => $block_input,
+            source_property => 'result',
+            destination => $block,
+            destination_property => $block_input->name,
+        );
+    }
+
+    my $reports = Genome::WorkflowBuilder::Command->create(
+        name => 'reports',
+        command => 'Genome::Model::ReferenceAlignment::Command::RunReports',
+    );
+    $workflow->add_operation($reports);
+    $workflow->create_link(
+        source => $block,
+        source_property => 'build',
+        destination => $reports,
+        destination_property => 'build',
+    );
+    $workflow->connect_output(
+        source => $reports,
+        source_property => 'result',
+        output_property => 'report_result',
+    );
+
+    $workflow->recursively_set_log_dir($build->log_directory);
+    return $workflow;
+}
+
+sub map_workflow_inputs {
+    my $self = shift;
+    my $build = shift;
+
+    return (build => $build);
+}
+
 1;

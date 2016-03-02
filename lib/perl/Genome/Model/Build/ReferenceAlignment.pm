@@ -667,32 +667,6 @@ sub merged_alignment_result {
     return $merged_alignment;
 }
 
-sub merged_alignment_result_with_lock {
-    my $self = shift;
-
-    return $self->_fetch_merged_alignment_result('get_with_lock');
-}
-
-sub generate_merged_alignment_result {
-    my $self = shift;
-
-    return $self->_fetch_merged_alignment_result('get_or_create');
-}
-
-sub _fetch_merged_alignment_result {
-    my $self = shift;
-    my $mode = shift;
-
-    my @instrument_data_inputs = $self->instrument_data_inputs;
-    my ($params) = $self->processing_profile->params_for_merged_alignment($self, @instrument_data_inputs);
-    my $alignment = Genome::InstrumentData::AlignmentResult::Merged->$mode(
-        %$params,
-        users => Genome::SoftwareResult::User->user_hash_for_build($self),
-    );
-
-    return $alignment;
-}
-
 sub whole_rmdup_bam_flagstat_file {
     my $self = shift;
 
