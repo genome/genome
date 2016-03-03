@@ -53,7 +53,7 @@ sub execute {
         push @datum, $sample->name;
         $stats{sample}++;
 
-        my ($model) = grep { $_->class =~ /MetagenomicComposition16s|AmpliconAssembly/ } $sample->models;
+        my ($model) = grep { $_->class =~ /MetagenomicComposition16s/ } $sample->models;
         if ( not $model ) {
             push @datum, "NO_MODEL";
             next;

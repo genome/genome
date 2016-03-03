@@ -62,9 +62,6 @@ sub help_detail {
 
     To just see the files, use --list. 
     Use --force to overwrite existing files.
-
-    This command is backward compatible for amplicon assembly builds. The oriented fastas are the same in MC16s and AA. The AA assembly fasta is the MC16s processed fasta. The classification files do not exist for amplicon assembly.
-
 HELP
 }
 
@@ -101,10 +98,6 @@ sub execute {
                 my $rv = $self->$method($amplicon_set, $file_method);
                 return if not $rv;
             }
-        }
-        elsif ( $build->type_name eq 'amplicon assembly' ) {
-            my $rv = $self->$method($build, $file_method);
-            return if not $rv;
         }
         else {
             die "Incompatible build type: ".$build->type_name;
