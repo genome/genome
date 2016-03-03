@@ -4613,6 +4613,35 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>align-reads',
+      [
+        'lsf-queue=s',
+        'files',
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>annotate-variants',
+      [
+        'lsf-queue=s',
+        'files',
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>bam-qc',
+      [
+        'lsf-queue=s',
+        'files',
+        'alignment-result=s',
+        undef,
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>bam-qc-metrics',
       [
         'output-directory=s',
@@ -4664,6 +4693,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>coverage-stats',
+      [
+        'lsf-queue=s',
+        'files',
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>create-metrics',
       [
         '>compare-snps',
@@ -4691,6 +4729,17 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        'help!',
+        undef
+      ],
+      '>detect-variants',
+      [
+        'lsf-queue=s',
+        'files',
+        'lsf-resource=s',
+        'files',
+        'build=s',
+        undef,
         'help!',
         undef
       ],
@@ -4910,6 +4959,15 @@ $Genome::Command::OPTS_SPEC = [
         'separator=s',
         'files',
         'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>run-reports',
+      [
+        'lsf-queue=s',
+        'files',
+        'build=s',
         undef,
         'help!',
         undef
@@ -12923,25 +12981,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'help!',
-      undef
-    ],
-    '>lift-over-multiple-columns',
-    [
-      'columns-to-lift=s',
-      'files',
-      'destination-file=s',
-      'files',
-      'source-file=s',
-      'files',
-      'chain-file=s',
-      'files',
-      'debug!',
-      undef,
-      'header-id-string=s',
-      'files',
-      'lift-direction=s',
-      'files',
       'help!',
       undef
     ],
