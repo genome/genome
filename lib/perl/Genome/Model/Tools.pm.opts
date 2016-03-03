@@ -1750,25 +1750,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
-  '>lift-over-multiple-columns',
-  [
-    'columns-to-lift=s',
-    'files',
-    'destination-file=s',
-    'files',
-    'source-file=s',
-    'files',
-    'chain-file=s',
-    'files',
-    'debug!',
-    undef,
-    'header-id-string=s',
-    'files',
-    'lift-direction=s',
-    'files',
-    'help!',
-    undef
-  ],
   '>beagle',
   [
     '>phase-vcf',
