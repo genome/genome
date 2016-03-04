@@ -66,6 +66,26 @@ Genome::Config::Tag::Profile::Item->create(profile_item => $profile_item_from_me
 Genome::Config::Tag::Profile::Item->create(profile_item => $profile_item_from_menu_item, tag => $tags[2]);
 cmp_bag([$profile_item_from_menu_item->tag_names], [map $_->name, @tags[0,2]], 'found assigned tag names for profile item');
 
+subtest 'is_current' => sub{
+    plan tests => 12;
+
+    is($analysis_project->status('Pending'), 'Pending', 'analysis project status is Pending');
+    ok($analysis_project->is_current, 'AnP is current');
+    is($profile_item_from_file->status, 'active', 'profile item status is active');
+    ok($profile_item_from_file->is_current, 'profile item is current');
+
+    is($profile_item_from_file->status('inactive'), 'inactive', 'profile item status is inactive');
+    ok($profile_item_from_file->is_current, 'profile item is current');
+
+    is($profile_item_from_file->status('disabled'), 'disabled', 'profile item status is disabled');
+    ok(!$profile_item_from_file->is_current, 'profile item is NOT current');
+
+    is($analysis_project->status('Completed'), 'Completed', 'analysis project status is Completed');
+    ok(!$analysis_project->is_current, 'AnP is NOT current');
+    is($profile_item_from_file->status('inactive'), 'inactive', 'profile item status is inactive');
+    ok(!$profile_item_from_file->is_current, 'profile item is current');
+
+};
 
 sub _create_file_with_contents {
     my $contents = shift;

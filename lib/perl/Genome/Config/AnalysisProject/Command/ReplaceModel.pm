@@ -3,6 +3,7 @@ package Genome::Config::AnalysisProject::Command::ReplaceModel;
 use strict;
 use warnings;
 
+use List::MoreUtils 'uniq';
 use Params::Validate ':types';
 use YAML;
 
@@ -52,9 +53,7 @@ sub execute {
     $self->_verify_new_config;
     $self->status_message('New config: %s', $self->new_profile_item->file_path);
     $self->status_message('Old model:  %s', $self->model->__display_name__);
-    my $overrides = $self->_overrides_for_model;
-    $self->_copy_model($overrides);
-
+    $self->_process_model;
     $self->status_message('NEW model:  %s', $self->new_model->__display_name__);
     $self->status_message('Please abandon builds for old model!');
     return 1;
@@ -78,67 +77,25 @@ sub _verify_new_config {
     return 1;
 }
 
-sub _overrides_for_model {
+sub _process_model {
     my $self = shift;
 
-    my $config_for_model = $self->_load_model_config_from_file( $self->model->config_profile_item->file_path );
-    my $config_for_new_model = $self->_load_model_config_from_file( $self->new_profile_item->file_path );
-    my %overrides;
-    for my $key ( keys %$config_for_model ) {
-        next if ref $config_for_model->{$key};
-        next if defined $config_for_new_model->{$key} and $config_for_model->{$key} eq $config_for_new_model->{$key};
-        my $key_no_id = $key;
-        $key_no_id =~ s/_id$//;
-        $overrides{$key_no_id} = $config_for_new_model->{$key};
+    my @found_models;
+    my $config_profile = Genome::Config::Profile->create_from_config_profile_item($self->new_profile_item);
+    for my $instrument_data ( $self->model->instrument_data ) {
+        push @found_models, $config_profile->process_models_for_instrument_data($instrument_data);
     }
 
-    if ( not %overrides ) {
-        $self->fatal_message("No overrides found for model! %s\nConfig: %s\nNew Config: %s\n",
-            $self->model->__display_name__, Data::Dumper::Dumper($config_for_model), Data::Dumper::Dumper($config_for_new_model),
-        );
+    # filter out duplicates and our orginal model
+    @found_models = grep { $_ ne $self->model } uniq @found_models;
+    if ( not @found_models ) {
+        $self->fatal_message('No model found or created!');
+    }
+    elsif ( @found_models > 1 ) {
+        $self->fatal_message('Found/created more than one model! %s', join(' ', map { $_->__display_name__ } @found_models))
     }
 
-    return \%overrides;
-}
-
-sub _load_model_config_from_file {
-    my ($self, $file) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
-
-    Genome::Sys->validate_file_for_reading($file);
-    my $config = YAML::LoadFile($file);
-    $self->fatal_message('Failed to load config from file! %s', $file) if not $config;
-
-    my $models_config = $config->{models};
-    $self->fatal_message('No models key in config: %s', Data::Dumper::Dumper($config)) if not $models_config;
-
-    my $config_for_model;
-    for my $key ( keys %{$config->{models}} ) {
-        next if not $self->model->class->isa($key);
-        $config_for_model = $config->{models}->{$key};
-        if ( ref $config->{models}->{$key} eq 'ARRAY' ) { # not currently supporting multiple models for type in config
-            $self->fatal_message('Model type (%s) config is an array! %s', $key, Data::Dumper::Dumper($config));
-        }
-        last;
-    }
-
-    return $config_for_model;
-}
-
-sub _copy_model {
-    my ($self, $overrides) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => HASHREF});
-
-    my $copy = Genome::Model::Command::Copy->execute(
-        model => $self->model,
-        overrides => [ map { join('=', $_, $overrides->{$_}) } keys %$overrides ],
-    );
-    $self->fatal_message("Failed to copy model: %s", $self->model->__display_name__) if not $copy->result;
-    my $new_model = $copy->_new_model;
-    $self->fatal_message("Failed to get new model from copy command!") if not $new_model;
-    $self->analysis_project->add_model_bridge(model => $new_model, config_profile_item => $self->new_profile_item);
-    $new_model->build_requested(1);
-    $self->new_model($new_model);
-
-    return 1;
+    return $self->new_model($found_models[0]);
 }
 
 1;

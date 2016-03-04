@@ -65,15 +65,7 @@ sub execute {
             next;
         }
         eval {
-            my $config = $analysis_project->get_configuration_profile();
-            my $hashes = $self->_prepare_configuration_hashes_for_instrument_data($current_inst_data, $config);
-            for my $model_type (keys %$hashes) {
-                my $model_hashes = $hashes->{$model_type};
-                if ($model_type->requires_subject_mapping) {
-                    $model_hashes = $self->_process_mapped_samples($analysis_project, $current_inst_data, $model_hashes);
-                }
-                $self->_process_models($analysis_project, $current_inst_data, $model_type, $model_hashes);
-            }
+            $analysis_project->get_configuration_profile->process_models_for_instrument_data($current_inst_data);
         };
 
         my $error = $@;
@@ -84,63 +76,6 @@ sub execute {
     $self->_update_models_for_associated_projects(@instrument_data_analysis_project_pairs);
 
     return 1;
-}
-
-sub _process_models {
-    my $self = shift;
-    my $analysis_project = shift;
-    my $instrument_data = shift;
-    my $model_type = shift;
-    my $model_list = shift;
-
-    for my $model_instance (@$model_list) {
-        my ($model, $created_new, $config_profile_item) = $self->_get_model_for_config_hash($model_type, $model_instance, $analysis_project);
-
-        $self->status_message(sprintf('Model: %s %s for instrument data: %s.',
-                $model->id, ($created_new ? 'created' : 'found'), $instrument_data->id ));
-
-        $self->_assign_model_to_analysis_project($analysis_project, $model, $config_profile_item, $created_new);
-        $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
-        $self->_update_model($model);
-        $self->_request_build_if_necessary($model, $created_new);
-    }
-}
-
-sub _assign_instrument_data_to_model {
-    my ($self, $model, $instrument_data, $newly_created) = @_;
-
-    #if a model is newly created, we want to assign all applicable instrument data to it
-    my %params_hash = (model => $model);
-    my $cmd = Genome::Model::Command::InstrumentData::Assign::ByExpression->create(
-            model => $model,
-            instrument_data => [$instrument_data],
-            force => 1, #trust the configuration to know what it's doing
-        );
-    my $executed_ok = eval{ $cmd->execute };
-
-    unless ($executed_ok) {
-        die(sprintf('Failed to assign %s to %s', $instrument_data->__display_name__,
-                $model->__display_name__));
-    }
-}
-
-sub _update_model {
-    my ($self, $model) = @_;
-    if ($model->can("check_for_updates")) {
-        unless ($model->check_for_updates) {
-            Carp::confess "Could not update model!";
-        }
-    }
-}
-
-sub _request_build_if_necessary {
-    my ($self, $model, $newly_created) = @_;
-
-    my $reason = $newly_created? 'created' : 'processed';
-
-    if($model->build_needed) {
-        $model->build_requested(1, "CQID $reason model");
-    }
 }
 
 sub _mark_sync_status {
@@ -212,112 +147,6 @@ sub _mark_pair_as_failed {
     return 1;
 }
 
-sub _get_model_for_config_hash {
-    my $self = shift;
-    my $class_name = shift;
-    my $config = shift;
-    my $analysis_project = shift;
-
-    my $config_profile_item = delete $config->{config_profile_item};
-    my %read_config = %$config;
-    for my $key (keys %read_config) {
-        my $value = $read_config{$key};
-        if(ref($value) eq 'ARRAY' and scalar(@$value) == 0) {
-            $read_config{$key} = undef;
-        }
-    }
-
-    my @extra_params = (auto_assign_inst_data => 1);
-
-    my @found_models = $class_name->get(@extra_params, %read_config, analysis_project => $analysis_project);
-    my @m = grep { $_->analysis_project_bridges->profile_item_id eq $config_profile_item->id } @found_models;
-
-    if (scalar(@m) > 1) {
-        die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
-    };
-
-    #return the model, plus a 'boolean' value indicating if we created a new model
-    my @model_info;
-    if ($m[0]) {
-       @model_info = ($m[0], 0, $config_profile_item);
-    } else {
-       for my $key (keys %$config) {
-            delete $config->{$key} unless defined $config->{$key};
-       }
-       @model_info = ($class_name->create(@extra_params, %$config), 1, $config_profile_item);
-    }
-
-    return wantarray ? @model_info : $model_info[0];
-}
-
-sub _prepare_configuration_hashes_for_instrument_data {
-    my ($self, $instrument_data, $config_obj) = @_;
-
-    my $config_hash = $config_obj->get_config($instrument_data);
-
-    for my $model_type (keys %$config_hash) {
-        if (ref $config_hash->{$model_type} ne 'ARRAY') {
-            $config_hash->{$model_type} = [$config_hash->{$model_type}];
-        }
-
-        for my $model_instance (@{$config_hash->{$model_type}}) {
-            my $instrument_data_properties = delete $model_instance->{instrument_data_properties};
-            if($instrument_data_properties) {
-                while((my $model_property, my $instrument_data_property) = each %$instrument_data_properties) {
-                    if (ref $instrument_data_property eq 'ARRAY') {
-                        $model_instance->{$model_property} = [
-                            grep { defined($_) }
-                            map { $instrument_data->$_ }
-                            @$instrument_data_property
-                        ];
-                    } else {
-                        $model_instance->{$model_property} = $instrument_data->$instrument_data_property;
-                    }
-                }
-            }
-        }
-    }
-    return $config_hash;
-}
-
-sub _process_mapped_samples {
-    my ($self, $analysis_project, $instrument_data, $model_hashes) = @_;
-    die('Must provide an analysis project, a piece of instrument data and a config hash!')
-        unless($analysis_project && $instrument_data && $model_hashes);
-
-    my @subject_mappings = Genome::Config::AnalysisProject::SubjectMapping->get(
-        analysis_project => $analysis_project,
-        subjects => $instrument_data->sample
-    );
-
-    unless (@subject_mappings) {
-        die(sprintf('Found no mapping information for %s in project %s for a model type that requires mapping!',
-            $instrument_data->__display_name__,
-            $analysis_project->__display_name__));
-    }
-
-    return [ map {
-        my $mapping = $_;
-        my %tags = map { $_->id => 1 } $mapping->tags;
-        map { {
-          (map { $_->label => $_->subject } $mapping->subject_bridges),
-          (map { $_->key => $_->value } $mapping->inputs),
-          %$_
-        } } grep { $self->_model_hash_matches_tags($_, \%tags) } @$model_hashes
-    } @subject_mappings ];
-}
-
-sub _model_hash_matches_tags {
-    my ($self, $model_hash, $tag_hash) = @_;
-
-    my @model_hash_tags = $model_hash->{config_profile_item}->tags;
-    if(keys %$tag_hash) {
-        return List::MoreUtils::any { exists $tag_hash->{$_->id} } @model_hash_tags;
-    } else {
-        return !@model_hash_tags;
-    }
-}
-
 sub _get_items_to_process {
     my $self = shift;
 
@@ -362,19 +191,6 @@ sub _ordered_sample_id_iterator {
         }
         return;
     };
-}
-
-sub _assign_model_to_analysis_project {
-    my $self = shift;
-    my $analysis_project = shift;
-    my $model = shift;
-    my $config_profile_item = shift;
-    my $created_new = shift;
-
-    die('Must specify an analysis project and a model!') unless $analysis_project && $model && $config_profile_item;
-
-    $analysis_project->add_model_bridge(model => $model, config_profile_item => $config_profile_item) if $created_new;
-    return 1;
 }
 
 sub _update_models_for_associated_projects {

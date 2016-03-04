@@ -4,26 +4,32 @@ use strict;
 use warnings;
 
 BEGIN {
+    $SIG{__DIE__} = sub{ Carp::confess(@_); };
     $ENV{UR_DBI_NO_COMMIT} = 1;
+    $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+    $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
 };
+
+use above 'Genome';
+use Genome::Test::Factory::DiskAllocation;
+use Genome::Test::Factory::InstrumentData::Solexa;
 
 use Test::Exception;
 use Test::More tests => 4;
-
-use above 'Genome';
-use Genome::Test::Factory::AnalysisProject;
-use Genome::Test::Factory::DiskAllocation;
 
 my $class = 'Genome::Config::AnalysisProject::Command::ReplaceModel';
 use_ok($class) or die;
 
 my $model_class = 'Genome::Model::Tester';
-my $analysis_project = Genome::Test::Factory::AnalysisProject->setup_object(status => 'Completed');
+my $analysis_project = Genome::Config::AnalysisProject->create(
+    run_as => Genome::Sys->username,
+    status => 'Completed',
+);
 class Genome::Model::Tester { is => 'Genome::Model', };
 my ($model);
 
 subtest "setup" => sub{
-    plan tests => 8;
+    plan tests => 9;
 
     # create a pp and profile item
     for my $id ( -11, -22 ) {
@@ -43,19 +49,29 @@ subtest "setup" => sub{
             mount_path => Genome::Sys->create_temp_file_path,
         );
     my $data = <<EOFILE
+rules:
+  sequencing_platform: solexa
+
 models:
-    "$model_class":
-        processing_profile_id: $id
+  "$model_class":
+    processing_profile_id: $id
+    instrument_data_properties:
+      subject: sample
 EOFILE
 ;
         Genome::Sys->write_file( File::Spec->join($profile_alloc->absolute_path, 'config.yml'), $data );
         ok(-s $profile_item->file_path, 'created profile item file path');
     }
 
+    my $instdata = Genome::Test::Factory::InstrumentData::Solexa->setup_object;
     $model = $model_class->create(
-        subject => Genome::Sample->create(name => '_SAMPLE_'),
+        run_as => Genome::Sys->username,
+        subject => $instdata->sample,
         processing_profile_id => -11,
+        auto_assign_inst_data => 1
     );
+    $model->add_instrument_data($instdata);
+    ok($model->instrument_data, 'added model instrument data');
 
     my $profile_item =  Genome::Config::Profile::Item->get(-11);
     $analysis_project->add_model_bridge(
@@ -70,6 +86,7 @@ subtest "fails" => sub{
     plan tests => 3;
 
     my $profile_item = Genome::Config::Profile::Item->get(-11);
+
     throws_ok(
         sub{
             $class->execute(
@@ -98,8 +115,8 @@ subtest "fails" => sub{
                 new_profile_item => $profile_item,
                 model => $model,
             ); },
-        qr/No overrides found/,
-        'fails when overrides not found',
+        qr/No model found or created/,
+        'fails when no model found/created',
     );
 
 };

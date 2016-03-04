@@ -3,8 +3,10 @@
 use strict;
 use warnings;
 
-use above 'Genome';
+use Test::Exception;
 use Test::More;
+
+use above 'Genome';
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -20,6 +22,37 @@ for my $rule_model_map ($profile->config_rule_maps){
     ok($rule_model_map->config->status ne 'disabled', 'Config::Profile::Item is not disabled')
 }
 
+subtest 'create_from_config_profile_item' => sub{
+    plan tests => 6;
+
+    my ($item) = Genome::Config::AnalysisMenu::Item->get(id => -1234)->config_items;
+    my $item11 = Genome::Config::Profile::Item->create(
+        analysis_project => $ap,
+        status => 'disabled',
+    );
+    ok($item, 'got config item');
+
+    is($item->status('disabled'), 'disabled', 'config item status is disabled');
+    throws_ok(
+        sub{ $class->create_from_config_profile_item($item); },
+        qr/Cannot use a non current config item to create profile/,
+        'failed to create profile with disabled config',
+    );
+    $item->status('inactive');
+    $ap->status('Completed');
+    throws_ok(
+        sub{ $class->create_from_config_profile_item($item); },
+        qr/Cannot use a non current config item to create profile/,
+        'failed to create profile with non current AnP',
+    );
+    $ap->status('Pending');
+
+    my $profile;
+    lives_ok(sub{ $profile = $class->create_from_config_profile_item($item); }, 'create profile from item');
+    isa_ok($profile, $class);
+
+};
+
 done_testing();
 
 sub _create_ap_infastructure {
@@ -27,6 +60,7 @@ sub _create_ap_infastructure {
     my $menu_item_contents = _get_menu_item_contents();
     my $menu_item_file = _create_file_with_contents($menu_item_contents);
     my $menu_item = Genome::Config::AnalysisMenu::Item->create(
+        id => -1234,
         file_path => $menu_item_file,
         name => 'test menu item',
     );
