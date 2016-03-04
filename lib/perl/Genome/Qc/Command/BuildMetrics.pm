@@ -164,17 +164,28 @@ sub output_metrics_as_tsv {
                        microarray_chipmix
                        microarray_freemix
                    /;
+    my @exome_headers = qw/
+                              mean_target_coverage
+                              pct_usable_bases_on_target
+                              pct_target_bases_20x
+                              pct_exc_off_target
+                              pct_exc_dupe
+                              pct_exc_overlap
+                              pct_exc_mapq
+                              pct_exc_baseq
+                          /;
+    my @wgs_headers = qw/
+                             chipmix
+                             freemix
+                             haploid_coverage
+                        /;
 
     # The results themselves have a type, eg. wgs or exome
     # Rather than relying on a user input profile, could use the result type instead
     my @data;
     if ($self->_tsv_output_profile eq 'wgs') {
         #TODO: Add additional WGS specific metrics?
-        push @headers, qw/
-                             chipmix
-                             freemix
-                             haploid_coverage
-                         /;
+        push @headers, @wgs_headers;
         for my $qc_metric_result (@$qc_metric_results) {
             my $data = $self->_base_hash_ref_for_qc_metric_result($qc_metric_result);
             $data->{'chipmix'} = $qc_metric_result->{ALL}->{CHIPMIX};
@@ -184,26 +195,12 @@ sub output_metrics_as_tsv {
             push @data, $data;
         }
     } elsif ($self->_tsv_output_profile eq 'exome') {
-        push @headers, qw/
-                             mean_target_coverage
-                             pct_usable_bases_on_target
-                             pct_target_bases_20x
-                             pct_exc_off_target
-                             pct_exc_dupe
-                             pct_exc_overlap
-                             pct_exc_mapq
-                             pct_exc_baseq
-                         /;
+        push @headers, @exome_headers;
         for my $qc_metric_result(@$qc_metric_results) {
             my $data = $self->_base_hash_ref_for_qc_metric_result($qc_metric_result);
-            $data->{'mean_target_coverage'} = $qc_metric_result->{MEAN_TARGET_COVERAGE};
-            $data->{'pct_usable_bases_on_target'} = $qc_metric_result->{PCT_USABLE_BASES_ON_TARGET};
-            $data->{'pct_target_bases_20x'} = $qc_metric_result->{PCT_TARGET_BASES_20X};
-            $data->{'pct_exc_off_target'} = $qc_metric_result->{PCT_EXC_OFF_TARGET};
-            $data->{'pct_exc_dupe'} = $qc_metric_result->{PCT_EXC_DUPE};
-            $data->{'pct_exc_overlap'} = $qc_metric_result->{PCT_EXC_OVERLAP};
-            $data->{'pct_exc_mapq'} = $qc_metric_result->{PCT_EXC_MAPQ};
-            $data->{'pct_exc_baseq'} = $qc_metric_result->{PCT_EXC_BASEQ};
+            for my $column (@exome_headers) {
+                $data->{$column} = $qc_metric_result->{uc $column};
+            }
             $self->_add_microarray_vbid_result_metrics_to_hash_ref($qc_metric_result,$data);
             push @data, $data;
         }
