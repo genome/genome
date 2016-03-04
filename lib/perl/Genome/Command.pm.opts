@@ -10588,16 +10588,6 @@ $Genome::Command::OPTS_SPEC = [
     'help!',
     undef
   ],
-  '>druggable-gene',
-  [
-    '>import',
-    [
-      'help!',
-      undef
-    ],
-    'help!',
-    undef
-  ],
   '>project-part',
   [
     '>create',
