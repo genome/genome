@@ -21,6 +21,7 @@ use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Genome::Test::Factory::Model::SomaticValidation;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Qc::Result;
+use Genome::Test::Factory::Qc::Config;
 
 use Sub::Install qw(reinstall_sub);
 
@@ -87,6 +88,11 @@ my $test_alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResu
    build => $test_build,
 );
 
+my $test_qc_config = Genome::Test::Factory::Qc::Config->setup_object(
+   name => 'test_qc_config',
+   type => 'wgs',
+); 
+
 my $test_qc_result = Genome::Test::Factory::Qc::Result->setup_object(
    alignment_result => $test_alignment_result,
    config_name => 'test_qc_config'
@@ -99,6 +105,7 @@ $test_qc_result->add_user(
 my $cmd_with_out = Genome::Qc::Command::BuildMetrics->create(
    builds => $test_build,
    output_file => $test_output_file,
+   output_format => 'yaml'
 );
 isa_ok($cmd_with_out,'Genome::Qc::Command::BuildMetrics');       
 ok($cmd_with_out->execute,'execute build-metrics command with output file');
@@ -106,4 +113,6 @@ ok($cmd_with_out->execute,'execute build-metrics command with output file');
 compare_ok($test_output_file, $expected_output_file, replace => $replace, 
     name => "Build metrics printed correctly to output file");
 
+#TODO: Add tests for TSV output format (wgs and exome)
+    
 done_testing;
