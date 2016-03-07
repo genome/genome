@@ -7,6 +7,19 @@ use Genome;
 
 class Genome::Model::SomaticValidation {
     is  => 'Genome::ModelDeprecated',
+    has => [
+        # These properties provide a common interface with SomaticVariation models
+        experimental_subject => {
+          is => 'Genome::Sample',
+          via => '__self__',
+          to => 'tumor_sample',
+        },
+        control_subject => {
+          is => 'Genome::Sample',
+          via => '__self__',
+          to => 'normal_sample',
+        },
+    ],
     has_param => [
         bam_readcount_version => {
             is => 'Text',
