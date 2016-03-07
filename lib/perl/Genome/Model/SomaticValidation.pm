@@ -368,7 +368,8 @@ sub default_model_name {
         push @parts, $self->subject->name;
     }
 
-    if($self->run_as && $self->run_as eq 'apipe-builder') {
+    my $run_as_user = Genome::Sys::User->get(username => $self->run_as);
+    if($run_as_user && $run_as_user->has_role_by_name('production')) {
         push @parts, 'prod-somatic_validation';
     } else {
         push @parts, 'somatic_validation';
