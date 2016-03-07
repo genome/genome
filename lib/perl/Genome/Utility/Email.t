@@ -21,7 +21,7 @@ use Genome::Utility::Email;
 }
 
 {
-    my $someone_else = Genome::Sys::User->create(
+    my $someone_else = Genome::Sys::User->__define__(
         username => join('-', 'fake', Genome::Sys->username, time()),
         email => join('@', 'fake-test-email', Genome::Config::get('email_domain')),
     );
