@@ -86,6 +86,11 @@ $Genome::Command::OPTS_SPEC = [
     [
       'output-file=s',
       'files',
+      'output-format=s',
+      [
+        'yaml',
+        'tsv'
+      ],
       'builds=s@',
       undef,
       'help!',
@@ -9693,6 +9698,31 @@ $Genome::Command::OPTS_SPEC = [
         'noheaders!',
         undef,
         'build-spec=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>list-volumes',
+      [
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'show=s',
+        'files',
+        'order-by=s',
+        'files',
+        'filter=s',
         'files',
         'help!',
         undef
