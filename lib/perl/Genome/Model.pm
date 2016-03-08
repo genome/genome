@@ -854,8 +854,7 @@ sub default_model_name {
 
     my $name = ($self->subject->name).'.';
 
-    my $run_as_user = Genome::Sys::User->get(username => $self->run_as);
-    $name .= 'prod-' if (($run_as_user && $run_as_user->has_role_by_name('production')) || $params{prod});
+    $name .= 'prod-' if (Genome::Sys->user_has_role($self->run_as, 'production') || $params{prod});
 
     my $type_name = $self->processing_profile->type_name;
     my %short_names = (

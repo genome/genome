@@ -73,8 +73,7 @@ sub execute {
         }
 
         my $max_running = $self->running_max;
-        my $run_as_user = Genome::Sys::User->get(username => $run_as);
-        if($run_as_user->has_role_by_name('production')) {
+        if(Genome::Sys->user_has_role($run_as, 'production')) {
             $max_running *= 5;
         }
         my $running_count = $scheduled_count + builds_for($run_as, 'Running');

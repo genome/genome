@@ -368,8 +368,7 @@ sub default_model_name {
         push @parts, $self->subject->name;
     }
 
-    my $run_as_user = Genome::Sys::User->get(username => $self->run_as);
-    if($run_as_user && $run_as_user->has_role_by_name('production')) {
+    if(Genome::Sys->user_has_role($self->run_as, 'production')) {
         push @parts, 'prod-somatic_validation';
     } else {
         push @parts, 'somatic_validation';

@@ -266,8 +266,7 @@ sub check_and_update_genotype_input {
     return 1 unless $default_genotype_model;
 
     if (defined $self->genotype_microarray_model_id and $self->genotype_microarray_model_id ne $default_genotype_model->id) {
-        my $run_as_user = Genome::Sys::User->get(username => $self->run_as);
-        if($run_as_user && $run_as_user->has_role_by_name('production')) {
+        if(Genome::Sys->user_has_role($self->run_as, 'production')) {
             $self->warning_message("Sample " . $self->subject_id . " points to genotype model " . $default_genotype_model->id .
                 ", which disagrees with the genotype model input of this model (" . $self->genotype_microarray_model_id .
                 "), overwriting!");
