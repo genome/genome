@@ -102,4 +102,19 @@ sub symlink_results {
     return $top_directory;
 }
 
+sub _compare_output_files {
+    my ($self, $other_build) = @_;
+
+    my $temp = Genome::Sys->create_temp_directory();
+    my $directory = $self->symlink_results($temp);
+    my $other_directory = $other_build->symlink_results($temp);
+
+    return $self->_compare_output_directories(
+        $directory,
+        $other_directory,
+        $self->id,
+        $other_build->id,
+    );
+}
+
 1;
