@@ -44,6 +44,7 @@ sub execute {
         strategy => $strategy,
         log_directory => $build->log_directory,
         result_users => Genome::SoftwareResult::User->user_hash_for_build($build),
+        merge_group => 'all', #RefAlign should always produce one BAM regardless of data assignment
     );
 
     my @bams = $composite->bam_paths;
