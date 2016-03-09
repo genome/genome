@@ -93,7 +93,7 @@ sub symlink_results {
 
     for my $hc_result ($self->haplotype_caller_result) {
         my $hc_basename = Genome::Utility::Text::sanitize_string_for_filesystem(
-            join('-', $hc_result->id, $hc_result->intervals)
+            join('-', $hc_result->intervals, $hc_result->id)
         );
         my $hc_dir = File::Spec->join($variant_dir, $hc_basename);
         Genome::Sys->create_symlink($hc_result->output_dir, $hc_dir);
