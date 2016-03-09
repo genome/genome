@@ -911,7 +911,7 @@ sub chromosomes_with_lengths {
     my $chr_data = $self->get_or_create_seqdict_hash_ref;
 
     for my $chr (keys %{$chr_data}) {
-        push @chr_lengths, [$chr, $chr_data->{$chr}->{length}];
+        push @chr_lengths, [$chr, $chr_data->{$chr}{length}];
     }
 
     return \@chr_lengths;
@@ -921,55 +921,74 @@ sub get_or_create_seqdict_hash_ref {
     my $self = shift;
 
     return $self->_seqdict if $self->_seqdict;
-    
+
     my $seqdict = $self->sequence_dictionary_path('sam');
-
     unless(-s $seqdict) {
-        die $self->error_message('No sequence dictionary found to create buckets');
+        $self->fatal_message('No sequence dictionary found!');
     }
-
+    my %seqdict_fields = (
+        'name' => {
+            key => 'SN',
+            position => 2,
+        },
+        'length' => {
+            key => 'LN',
+            position => 3,
+        },
+        'uri' => {
+            key => 'UR',
+            position => 4,
+        },
+        'assembly_name' => {
+            key => 'AS',
+            position => 5,
+        },
+        'md5' => {
+            key => 'M5',
+            position => 6,
+        },
+        species_name => {
+            key => 'SP',
+            position => 7,
+        },
+    );
+    my @field_names = sort {$seqdict_fields{$a}{position} <=> $seqdict_fields{$b}{position}} keys %seqdict_fields;
     my $parser = Genome::Utility::IO::SeparatedValueReader->create(
         separator => "\t",
         input => $seqdict,
-        headers => ['tag', 'name', 'length', 'uri', 'assembly_name', 'md5','species_name'],
+        headers => ['tag', @field_names],
         allow_extra_columns => 1,
         ignore_lines_starting_with => '(?!@SQ)',
     );
+
     my %seqdict;
     while (my $line = $parser->next) {
         unless ($line->{tag} eq '@SQ') {
             Carp::confess 'parser error';
         }
-
-        my ($sn, $chr) = split(':', $line->{name},2);
-        unless ($sn eq 'SN') {
-            die $self->error_message('Expected SN first in @SQ line but got %s', $sn);
+        my $chr;
+        for my $field_name (@field_names) {
+            my $value = $self->_parse_seqdict_field($seqdict_fields{$field_name}{key},$seqdict_fields{$field_name}{position},$line->{$field_name});
+            if ($field_name eq 'name') {
+                $chr = $value;
+            }
+            $seqdict{$chr}{$field_name} = $value;
         }
-
-        my ($ln, $length) = split(':', $line->{length},2);
-        unless ($ln eq 'LN') {
-            die $self->error_message('Expected LN second in @SQ line but got %s', $ln);
-        }
-
-        my ($ur, $uri) = split(':', $line->{uri},2);
-        unless ($ur eq 'UR') {
-            die $self->error_message('Expected UR third in @SQ line but got %s', $ur);
-        }
-
-        my ($m5, $md5) = split(':', $line->{md5},2);
-        unless ($m5 eq 'M5') {
-            die $self->error_message('Expected M5 fifth in @SQ line but got %s', $ln);
-        }
-        
-        $seqdict{$chr} = {
-            'length' => $length,
-            'uri' => $uri,
-            'md5' => $md5,
-        };
     }
-    $self->_seqdict(\%seqdict);
-    return $self->_seqdict;
 
+    $self->_seqdict(\%seqdict);
+
+    return $self->_seqdict;
+}
+
+sub _parse_seqdict_field {
+    my $self = shift;
+    my ($expected_key,$expected_pos,$field) = @_;
+    my ($observed_key,$value) = split(':',$field,2);
+    unless ($expected_key eq $observed_key) {
+        $self->fatal_message('Expected %s key as %s field but got %s',$expected_key,$expected_pos,$observed_key);
+    }
+    return $value;
 }
 
 sub is_superset_of {
