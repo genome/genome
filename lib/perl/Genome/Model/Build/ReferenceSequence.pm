@@ -114,6 +114,12 @@ class Genome::Model::Build::ReferenceSequence {
             doc => 'other references that can be converted to this reference',
         },
     ],
+    has_transient_optional => [
+        _seqdict => {
+            is => 'HASH',
+            doc => 'A hash ref version of the sequence dictionary', 
+        },
+    ],
 
     doc => 'a specific version of a reference sequence',
 };
@@ -900,6 +906,22 @@ sub get_or_create_genome_file {
 sub chromosomes_with_lengths {
     my $self = shift;
 
+    my @chr_lengths;
+
+    my $chr_data = $self->get_or_create_seqdict_hash_ref;
+
+    for my $chr (keys %{$chr_data}) {
+        push @chr_lengths, [$chr, $chr_data->{$chr}->{length}];
+    }
+
+    return \@chr_lengths;
+}
+
+sub get_or_create_seqdict_hash_ref {
+    my $self = shift;
+
+    return $self->_seqdict if $self->_seqdict;
+    
     my $seqdict = $self->sequence_dictionary_path('sam');
 
     unless(-s $seqdict) {
@@ -909,32 +931,45 @@ sub chromosomes_with_lengths {
     my $parser = Genome::Utility::IO::SeparatedValueReader->create(
         separator => "\t",
         input => $seqdict,
-        headers => ['tag', 'name', 'length'],
+        headers => ['tag', 'name', 'length', 'uri', 'assembly_name', 'md5','species_name'],
         allow_extra_columns => 1,
         ignore_lines_starting_with => '(?!@SQ)',
     );
-
-    my @chr_lengths;
-
+    my %seqdict;
     while (my $line = $parser->next) {
         unless ($line->{tag} eq '@SQ') {
             Carp::confess 'parser error';
         }
 
-        my ($sn, $chr) = split(':', $line->{name});
+        my ($sn, $chr) = split(':', $line->{name},2);
         unless ($sn eq 'SN') {
             die $self->error_message('Expected SN first in @SQ line but got %s', $sn);
         }
 
-        my ($ln, $length) = split(':', $line->{length});
-        unless($ln eq 'LN') {
+        my ($ln, $length) = split(':', $line->{length},2);
+        unless ($ln eq 'LN') {
             die $self->error_message('Expected LN second in @SQ line but got %s', $ln);
         }
 
-        push @chr_lengths, [$chr, $length];
-    }
+        my ($ur, $uri) = split(':', $line->{uri},2);
+        unless ($ur eq 'UR') {
+            die $self->error_message('Expected UR third in @SQ line but got %s', $ur);
+        }
 
-    return \@chr_lengths;
+        my ($m5, $md5) = split(':', $line->{md5},2);
+        unless ($m5 eq 'M5') {
+            die $self->error_message('Expected M5 fifth in @SQ line but got %s', $ln);
+        }
+        
+        $seqdict{$chr} = {
+            'length' => $length,
+            'uri' => $uri,
+            'md5' => $md5,
+        };
+    }
+    $self->_seqdict(\%seqdict);
+    return $self->_seqdict;
+
 }
 
 sub is_superset_of {
