@@ -93,17 +93,17 @@ sub _process_reads {
         }
 
         if($tokens[0] eq $previous_tokens->[0] and $previous_read_group_id eq $read_group_id) {
-            $self->_write_reads_based_on_read_group_and_pairedness(
+            $self->_write_reads_based_on_read_group_and_type(
                 rg_id => $read_group_id,
-                pairedness => 'paired',
+                type => 'paired',
                 reads => [ $previous_tokens, \@tokens ],
             );
             undef $previous_tokens;
             undef $previous_read_group_id;
         } else {
-            $self->_write_reads_based_on_read_group_and_pairedness(
+            $self->_write_reads_based_on_read_group_and_type(
                 rg_id => $previous_read_group_id,
-                pairedness => 'singleton',
+                type => ( $previous_tokens->[1] & 0x80 ? 'read2' : 'read1' ), # unlabeled reads in read1
                 reads => [ $previous_tokens, ],
             );
             $previous_tokens = \@tokens;
@@ -111,10 +111,10 @@ sub _process_reads {
         }
     }
 
-    if($previous_tokens) {
-        $self->_write_reads_based_on_read_group_and_pairedness(
+    if ($previous_tokens) {
+        $self->_write_reads_based_on_read_group_and_type(
             rg_id => $previous_read_group_id,
-            pairedness => 'singleton',
+            type => ( $previous_tokens->[1] & 0x80 ? 'read2' : 'read1' ), # unlabeled got to read1
             reads => [ $previous_tokens, ],
         );
     }
@@ -177,26 +177,26 @@ sub _verify_read_count {
     return 1;
 }
 
-sub _write_reads_based_on_read_group_and_pairedness {
+sub _write_reads_based_on_read_group_and_type {
     my ($self, %params) = @_;
 
     my $fhs = $self->_read_group_fhs;
-    my $key = join('*', $params{rg_id}, $params{pairedness});
+    my $key = join('*', $params{rg_id}, $params{type});
     unless(exists $fhs->{$key}) {
-        $fhs->{$key} = $self->_open_fh_for_read_group_and_pairedness($params{rg_id}, $params{pairedness});
+        $fhs->{$key} = $self->_open_fh_for_read_group_and_type($params{rg_id}, $params{type});
         $self->_read_group_fhs($fhs);
     }
 
     for my $read_tokens ( @{$params{reads}} ) {
-        $self->_update_read_group_for_sam_tokens_based_on_paired_endness($read_tokens, $params{pairedness});
+        $self->_update_read_group_for_sam_tokens_based_on_type($read_tokens, $params{type});
         $fhs->{$key}->print( join("\t", @$read_tokens)."\n" );
     }
 
     return 1;
 }
 
-sub _update_read_group_for_sam_tokens_based_on_paired_endness {
-    my ($self, $tokens, $pairedness) = @_;
+sub _update_read_group_for_sam_tokens_based_on_type {
+    my ($self, $tokens, $type) = @_;
 
     my $rg_tag_idx = List::MoreUtils::firstidx { $_ =~ m/^RG:/ } @$tokens;
     my $rg_tag;
@@ -209,25 +209,25 @@ sub _update_read_group_for_sam_tokens_based_on_paired_endness {
     }
 
     my $rg_id = (split(':', $rg_tag))[2];
-    my $new_rg_id = $self->old_and_new_read_group_ids->{$rg_id}->{$pairedness};
+    my $new_rg_id = $self->old_and_new_read_group_ids->{$rg_id}->{$type};
     $rg_tag = join(':', 'RG',  'Z', $new_rg_id);
     splice(@$tokens, $rg_tag_idx, 0, $rg_tag); # Add RG tag back
 
     return 1;
 }
 
-sub _open_fh_for_read_group_and_pairedness {
-    my ($self, $read_group_id, $pairedness) = @_;
+sub _open_fh_for_read_group_and_type {
+    my ($self, $read_group_id, $type) = @_;
 
-    my $read_group_bam_path = $self->get_working_bam_path_with_new_extension($self->bam_path, $read_group_id, $pairedness);
+    my $read_group_bam_path = $self->get_working_bam_path_with_new_extension($self->bam_path, $read_group_id, $type);
     my $samtools_cmd = "| samtools view -S -b -o $read_group_bam_path -";
-    $self->debug_message("Opening fh for $read_group_bam_path $pairedness with:\n$samtools_cmd");
+    $self->debug_message("Opening fh for $read_group_bam_path $type with:\n$samtools_cmd");
     my $fh = IO::File->new($samtools_cmd);
     if ( not $fh ) {
         die $self->error_message('Failed to open file handle to samtools command!');
     }
 
-    $self->_write_headers_for_read_group($fh, $read_group_id, $pairedness);
+    $self->_write_headers_for_read_group($fh, $read_group_id, $type);
 
     my @output_bam_paths = $self->output_bam_paths;
     push @output_bam_paths, $read_group_bam_path;
@@ -237,14 +237,15 @@ sub _open_fh_for_read_group_and_pairedness {
 }
 
 sub _write_headers_for_read_group {
-    my ($self, $fh, $rg_id, $pairedness) = @_;
+    my ($self, $fh, $rg_id, $type) = @_;
 
     # Add mapping for old RG id to new RG UUID
     my $old_and_new_read_group_ids = $self->old_and_new_read_group_ids;
     if ( not exists $old_and_new_read_group_ids->{$rg_id} ) {
         $old_and_new_read_group_ids->{$rg_id} = {
             paired => UR::Object::Type->autogenerate_new_object_id_uuid,
-            singleton => UR::Object::Type->autogenerate_new_object_id_uuid,
+            read1 => UR::Object::Type->autogenerate_new_object_id_uuid,
+            read2 => UR::Object::Type->autogenerate_new_object_id_uuid,
         };
     }
 
@@ -252,13 +253,13 @@ sub _write_headers_for_read_group {
     my $headers_as_string = $helpers->headers_to_string( $self->headers );
     return if not $headers_as_string;
     $fh->print( $headers_as_string );
-    $fh->print( $self->_header_for_read_group_and_pairedness($rg_id, $pairedness) );
+    $fh->print( $self->_header_for_read_group_and_type($rg_id, $type) );
 
     return 1;
 }
 
-sub _header_for_read_group_and_pairedness {
-    my ($self, $rg_id, $pairedness) = @_;
+sub _header_for_read_group_and_type {
+    my ($self, $rg_id, $type) = @_;
 
     my $read_groups_and_tags = $self->read_groups_and_tags;
     if ( not exists $read_groups_and_tags->{$rg_id} ) {
@@ -271,7 +272,7 @@ sub _header_for_read_group_and_pairedness {
 
     return join(
         "\t", '@RG',
-        'ID:'.$self->old_and_new_read_group_ids->{$rg_id}->{$pairedness},
+        'ID:'.$self->old_and_new_read_group_ids->{$rg_id}->{$type},
         map { join(':', $_, $rg_tags{$_}) } @tag_names
     )."\n";
 }

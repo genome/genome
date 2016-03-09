@@ -26,7 +26,7 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v2');
 my $source_bam = $test_dir.'/input.rg-multi.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
@@ -46,17 +46,19 @@ my @instdata_md5_attr = Genome::InstrumentDataAttribute->get(
     attribute_label => 'original_data_path_md5',
     attribute_value => $md5,
 );
-is(@instdata_md5_attr, 4, "got instrument data for md5 $md5");
+is(@instdata_md5_attr, 6, "got instrument data for md5 $md5");
 
 my %instrument_data = map { $_->attribute_value => $_->instrument_data } Genome::InstrumentDataAttribute->get(
     attribute_label => 'segment_id',
     instrument_data_id => [ map { $_->instrument_data_id } @instdata_md5_attr ],
 );
 my %expected_read_groups = (
-    '11111111111111111111111111111111' => [qw/ 2883581797 paired    34 /],
-    '22222222222222222222222222222222' => [qw/ 2883581797 singleton 94 /],
-    '33333333333333333333333333333333' => [qw/ 2883581798 paired    36 /],
-    '44444444444444444444444444444444' => [qw/ 2883581798 singleton 92 /],
+    '11111111111111111111111111111111' => [qw/ 2883581797 paired 34 /],
+    '22222222222222222222222222222222' => [qw/ 2883581797 read1  47 /],
+    '33333333333333333333333333333333' => [qw/ 2883581797 read2  47 /],
+    '44444444444444444444444444444444' => [qw/ 2883581798 paired 36 /],
+    '55555555555555555555555555555555' => [qw/ 2883581798 read1  46 /],
+    '66666666666666666666666666666666' => [qw/ 2883581798 read2  46 /],
 );
 is_deeply([sort keys %instrument_data], [sort keys %expected_read_groups], 'got instrument data for md5 and read groups');
 
@@ -64,8 +66,9 @@ for my $rg_id ( sort keys %expected_read_groups ) {
     my $instrument_data = $instrument_data{$rg_id};
     ok($instrument_data, "got instrument data for rg_id: $rg_id");
 
-    my $paired_key = $instrument_data->is_paired_end? 'paired' : 'singleton';
-    is($paired_key, $expected_read_groups{$rg_id}->[1], "$rg_id is $paired_key");
+    my $type = $expected_read_groups{$rg_id}->[1];
+    my $is_paired = $type eq 'paired' ? 1 : 0;
+    is($instrument_data->is_paired_end, $is_paired, "$rg_id correct is_paired_end");
 
     is($instrument_data->original_data_path, $source_bam, 'original_data_path correctly set');
     is($instrument_data->import_format, 'bam', 'import_format is bam');
@@ -78,7 +81,8 @@ for my $rg_id ( sort keys %expected_read_groups ) {
     ok(-s $bam_path, 'bam path exists');
     is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
     is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-    my $bam_basename = join('.', 'all_sequences', 'basic-multi-rg', $expected_read_groups{$rg_id}->[0], $paired_key, 'bam');
+    my $bam_basename = join('.', 'all_sequences', 'basic-multi-rg', $expected_read_groups{$rg_id}->[0], $type, 'bam');
+    print "gvimdiff $bam_path $test_dir/$bam_basename\n";
     is(File::Compare::compare($bam_path, $test_dir.'/'.$bam_basename), 0, 'bam matches');
     is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/'.$bam_basename.'.flagstat'), 0, 'flagstat matches');
 
@@ -86,7 +90,7 @@ for my $rg_id ( sort keys %expected_read_groups ) {
     ok($allocation, 'got allocation');
     ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 
-    #print join("\t", $rg_id, $paired_key, $instrument_data->bam_path), "\n"; <STDIN>;
 }
 
+#print join("\n", map { $_->bam_path } values %instrument_data)."\n"; <STDIN>;
 done_testing();

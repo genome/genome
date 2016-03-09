@@ -15,7 +15,7 @@ use Test::More;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup';
 use_ok($class) or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v2') or die;
 Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
@@ -30,8 +30,8 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup
 ok($cmd->result, 'execute');
 
 my @output_bam_paths = $cmd->output_bam_paths;
-my @bam_basenames = (qw/ 2883581797.paired 2883581797.singleton 2883581798.paired 2883581798.singleton /);
-is(@output_bam_paths, @bam_basenames, '4 read group bam paths');
+my @bam_basenames = (qw/ 2883581797.paired 2883581797.read1 2883581797.read2 2883581798.paired 2883581798.read1 2883581798.read2 /);
+is(@output_bam_paths, @bam_basenames, '6 read group bam paths');
 for my $basename ( @bam_basenames ) {
     my $output_bam_path = File::Spec::->join($tmp_dir, 'input.rg-multi.'.$basename.'.bam');
     ok((List::MoreUtils::any { $_ eq $output_bam_path } @output_bam_paths), 'expected bam in output bams');
