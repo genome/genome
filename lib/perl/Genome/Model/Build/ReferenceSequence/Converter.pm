@@ -5,6 +5,7 @@ use warnings;
 use strict;
 use Sys::Hostname;
 use List::Util qw( first );
+use List::MoreUtils qw( each_array );
 
 class Genome::Model::Build::ReferenceSequence::Converter {
     is => ['Genome::SoftwareResult'],
@@ -253,13 +254,12 @@ sub get_or_create_chr_map_hash_ref {
     my $source_seqdict = $self->source_reference_build->get_or_create_seqdict_hash_ref;
     my $destination_seqdict = $self->destination_reference_build->get_or_create_seqdict_hash_ref;
 
-    my @sorted_source_chrs = sort { $source_seqdict->{$a}->{md5} cmp $source_seqdict->{$b}->{md5}} keys %{$source_seqdict};
-    my @sorted_destination_chrs = sort { $destination_seqdict->{$a}->{md5} cmp $destination_seqdict->{$b}->{md5}} keys %{$destination_seqdict};
-    for (my $i = 0; $i < scalar(@sorted_source_chrs); $i++) {
-        my $source_chr = $sorted_source_chrs[$i];
-        my $destination_chr = $sorted_destination_chrs[$i];
-        my $source_md5 = $source_seqdict->{$source_chr}->{md5};
-        my $destination_md5 = $destination_seqdict->{$destination_chr}->{md5};
+    my @sorted_source_chrs = sort { $source_seqdict->{$a}{md5} cmp $source_seqdict->{$b}{md5}} keys %{$source_seqdict};
+    my @sorted_destination_chrs = sort { $destination_seqdict->{$a}{md5} cmp $destination_seqdict->{$b}{md5}} keys %{$destination_seqdict};
+    my $each_array = each_array(@sorted_source_chrs,@sorted_destination_chrs);
+    while ( my ($source_chr,$destination_chr) = $each_array->()) {
+        my $source_md5 = $source_seqdict->{$source_chr}{md5};
+        my $destination_md5 = $destination_seqdict->{$destination_chr}{md5};
         if ($source_md5 eq $destination_md5) {
             $chr_map{$source_chr} = $destination_chr;
         } else {
