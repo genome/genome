@@ -82,7 +82,6 @@ for my $rg_id ( sort keys %expected_read_groups ) {
     is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
     is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
     my $bam_basename = join('.', 'all_sequences', 'basic-multi-rg', $expected_read_groups{$rg_id}->[0], $type, 'bam');
-    print "gvimdiff $bam_path $test_dir/$bam_basename\n";
     is(File::Compare::compare($bam_path, $test_dir.'/'.$bam_basename), 0, 'bam matches');
     is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/'.$bam_basename.'.flagstat'), 0, 'flagstat matches');
 
@@ -92,5 +91,5 @@ for my $rg_id ( sort keys %expected_read_groups ) {
 
 }
 
-#print join("\n", map { $_->bam_path } values %instrument_data)."\n"; <STDIN>;
+#diag(join("\n", map { $_->bam_path } values %instrument_data)."\n"; <STDIN>;
 done_testing();
