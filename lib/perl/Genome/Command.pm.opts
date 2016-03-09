@@ -8626,6 +8626,61 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>single-sample-genotype',
+    [
+      '>prepare-reference-buckets',
+      [
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>align-reads',
+      [
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>prepare-aligner-index',
+      [
+        'lsf-resource=s',
+        'files',
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>haplotype-caller',
+      [
+        'intervals=s@',
+        'files',
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>list-output-files',
+      [
+        'builds=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>quality-control',
+      [
+        'lsf-queue=s',
+        'files',
+        'lsf-resource=s',
+        'files',
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>define',
     [
       '>reference-sequence',
