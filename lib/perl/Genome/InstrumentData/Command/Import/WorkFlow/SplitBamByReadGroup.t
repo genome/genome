@@ -11,12 +11,21 @@ require File::Spec;
 require File::Temp;
 require List::MoreUtils;
 require Sub::Install;
-use Test::More;
+use Test::More tests => 25;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup';
 use_ok($class) or die;
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v2') or die;
 Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
+
+subtest 'read1 or read2' => sub{
+    plan tests => 3;
+
+    is(Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup::_read1_or_read2(77), 'read1', 'flag marked as read 1 is read1');
+    is(Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup::_read1_or_read2(0), 'read1', 'unmarked flag is read1');
+    is(Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup::_read1_or_read2(141), 'read2', 'flag marked as read 2 is read2');
+
+};
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $multi_rg_base_name = 'input.rg-multi.bam';

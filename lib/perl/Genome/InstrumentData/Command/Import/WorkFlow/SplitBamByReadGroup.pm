@@ -103,7 +103,7 @@ sub _process_reads {
         } else {
             $self->_write_reads_based_on_read_group_and_type(
                 rg_id => $previous_read_group_id,
-                type => ( $previous_tokens->[1] & 0x80 ? 'read2' : 'read1' ), # unlabeled reads in read1
+                type => _read1_or_read2($previous_tokens->[1]),
                 reads => [ $previous_tokens, ],
             );
             $previous_tokens = \@tokens;
@@ -114,7 +114,7 @@ sub _process_reads {
     if ($previous_tokens) {
         $self->_write_reads_based_on_read_group_and_type(
             rg_id => $previous_read_group_id,
-            type => ( $previous_tokens->[1] & 0x80 ? 'read2' : 'read1' ), # unlabeled got to read1
+            type => _read1_or_read2($previous_tokens->[1]),
             reads => [ $previous_tokens, ],
         );
     }
@@ -138,6 +138,10 @@ sub _get_rg_id_from_sam_tokens {
     else {
         return 'unknown';
     }
+}
+
+sub _read1_or_read2 {
+    $_[0] & 0x80 ? 'read2' : 'read1'; # unlabeled reads will be read1
 }
 
 sub _verify_read_count {
