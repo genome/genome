@@ -65,12 +65,13 @@ sub params_for_result {
     my $self  = shift;
     my $build = $self->build;
     my $pp    = $build->processing_profile;
+    my $alignment_result = $self->alignment_result;
 
     my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
     my $picard_version = $self->_select_picard_version($pp->picard_version);
 
 
-    my $instr_data  = $build->instrument_data;
+    my $instr_data  = $alignment_result->instrument_data;
     #read length takes long time to run and seems not useful for illumina/solexa data
     my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
@@ -79,7 +80,7 @@ sub params_for_result {
     $result_users->{uses} = $build;
 
     return (
-        alignment_result_id => $self->alignment_result->id,
+        alignment_result_id => $alignment_result->id,
         picard_version      => $picard_version,
         samtools_version    => $pp->samtools_version,
         fastqc_version      => Genome::Model::Tools::Fastqc->default_fastqc_version,
