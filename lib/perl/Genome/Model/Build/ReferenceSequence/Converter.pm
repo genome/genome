@@ -31,13 +31,17 @@ class Genome::Model::Build::ReferenceSequence::Converter {
     has_metric => [
         algorithm => { # README - If adding an algorithm, please add to the list of valid algorithms
             is => 'Text',
-            valid_values => [qw/ convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op drop_extra_contigs/],
+            valid_values => [qw/ convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op drop_extra_contigs chr_length/],
             doc => 'method to use to convert from the source to the destination',
         },
         resource => {
             is => 'Text',
             doc => 'additional resource to facilitate conversion if the algorithm requires (e.g. lift_over chain file)',
             is_optional => 1,
+        },
+    ],
+    has_transient_optional => [
+        _chr_map_hash_ref => {
         },
     ],
 };
@@ -66,7 +70,7 @@ sub convert_bed {
         return;
     }
 
-    if($self->is_per_position_algorithm($self->algorithm)) {
+    if ($self->is_per_position_algorithm($self->algorithm)) {
         $self->parse_and_write_bed($source_bed, $destination_bed, $self->algorithm, undef);
     } else {
         #operate on the whole BED file at once
@@ -135,6 +139,15 @@ sub prepend_chr {
     }
 
     return ($chrom, $start, $stop);
+}
+
+sub chr_length {
+    my $self = shift;
+    my ($chrom, $start, $stop) = @_;
+
+    my $source_to_destination_chr = $self->get_chr_map_hash_ref();
+    my $new_chrom = $source_to_destination_chr->{$chrom};
+    return ($new_chrom, $start, $stop);
 }
 
 sub lift_over {
@@ -227,6 +240,34 @@ sub _coords_are_valid {
             and defined $stop and $stop ne q{}
             and $start <= $stop
     );
+}
+
+sub get_chr_map_hash_ref {
+    my $self = shift;
+
+    return $self->_chr_map_hash_ref if $self->_chr_map_hash_ref;
+    
+    my $source_chrs = $self->source_reference_build->chromosomes_with_lengths;
+    my $destination_chrs = $self->destination_reference_build->chromosomes_with_lengths;
+
+    my @sorted_source_chrs = sort { $a->[1] <=> $b->[1] } @$source_chrs;
+    my @sorted_destination_chrs = sort { $a->[1] <=> $b->[1] } @$destination_chrs;
+    unless (scalar(@sorted_source_chrs) == scalar(@sorted_destination_chrs)) {
+        $self->fatal_message('Failed to convert by chr_length due to inbalanced number of chromosomes!');
+    }
+    my %source_to_destination_chr;
+    for (my $i = 0; $i < scalar(@sorted_source_chrs); $i++) {
+        my $source = $sorted_source_chrs[$i];
+        my $destination = $sorted_destination_chrs[$i];
+        my ($source_chr, $source_length) = @$source;
+        my ($destination_chr, $destination_length) = @$destination;
+        if ($source_length eq $destination_length) {
+            $source_to_destination_chr{$source_chr} = $destination_chr;
+        } else {
+            $self->fatal_message('Unable to convert by chr_length due to unequal chromosome lengths: '. $source_length .' is not equal to '. $destination_length .' for chromosomes '. $source_chr .' and '. $destination_chr);
+        }
+    }
+    $self->_chr_map_hash_ref(\%source_to_destination_chr);
 }
 
 1;
