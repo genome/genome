@@ -76,6 +76,7 @@
                   },
                   "options" : {
                      "errFile" : "/tmp/ptero-lsf-logfile-4a3e43b5-7779-4d40-be86-dad0181826f1.err",
+                     "jobGroup" : "/genome/dmorton",
                      "numProcessors" : 1,
                      "outFile" : "/tmp/ptero-lsf-logfile-4a3e43b5-7779-4d40-be86-dad0181826f1.out",
                      "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-4a3e43b5-7779-4d40-be86-dad0181826f1.err --stdout /tmp/ptero-lsf-logfile-4a3e43b5-7779-4d40-be86-dad0181826f1.out",
@@ -184,6 +185,7 @@
                                                 },
                                                 "options" : {
                                                    "errFile" : "/tmp/ptero-lsf-logfile-ddfbc917-694a-480c-a077-33781b39e38f.err",
+                                                   "jobGroup" : "/genome/dmorton",
                                                    "numProcessors" : 1,
                                                    "outFile" : "/tmp/ptero-lsf-logfile-ddfbc917-694a-480c-a077-33781b39e38f.out",
                                                    "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-ddfbc917-694a-480c-a077-33781b39e38f.err --stdout /tmp/ptero-lsf-logfile-ddfbc917-694a-480c-a077-33781b39e38f.out",

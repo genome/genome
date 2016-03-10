@@ -123,6 +123,7 @@
                   },
                   "options" : {
                      "errFile" : "/tmp/ptero-lsf-logfile-7ea07b15-32a8-4dd2-8027-060d320021e1.err",
+                     "jobGroup" : "/genome/dmorton",
                      "numProcessors" : 4,
                      "outFile" : "/tmp/ptero-lsf-logfile-7ea07b15-32a8-4dd2-8027-060d320021e1.out",
                      "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-7ea07b15-32a8-4dd2-8027-060d320021e1.err --stdout /tmp/ptero-lsf-logfile-7ea07b15-32a8-4dd2-8027-060d320021e1.out",
@@ -185,6 +186,7 @@
                   },
                   "options" : {
                      "errFile" : "/tmp/ptero-lsf-logfile-8ebb99c5-fe3a-4111-9e4d-817d308db9ea.err",
+                     "jobGroup" : "/genome/dmorton",
                      "numProcessors" : 4,
                      "outFile" : "/tmp/ptero-lsf-logfile-8ebb99c5-fe3a-4111-9e4d-817d308db9ea.out",
                      "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-8ebb99c5-fe3a-4111-9e4d-817d308db9ea.err --stdout /tmp/ptero-lsf-logfile-8ebb99c5-fe3a-4111-9e4d-817d308db9ea.out",
@@ -247,6 +249,7 @@
                   },
                   "options" : {
                      "errFile" : "/tmp/ptero-lsf-logfile-f7c4af76-6819-4476-82e9-0913c49ca92d.err",
+                     "jobGroup" : "/genome/dmorton",
                      "numProcessors" : 4,
                      "outFile" : "/tmp/ptero-lsf-logfile-f7c4af76-6819-4476-82e9-0913c49ca92d.out",
                      "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-f7c4af76-6819-4476-82e9-0913c49ca92d.err --stdout /tmp/ptero-lsf-logfile-f7c4af76-6819-4476-82e9-0913c49ca92d.out",
@@ -309,6 +312,7 @@
                   },
                   "options" : {
                      "errFile" : "/tmp/ptero-lsf-logfile-0f7f699c-eed3-42de-bb92-df193cee8e08.err",
+                     "jobGroup" : "/genome/dmorton",
                      "numProcessors" : 4,
                      "outFile" : "/tmp/ptero-lsf-logfile-0f7f699c-eed3-42de-bb92-df193cee8e08.out",
                      "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-0f7f699c-eed3-42de-bb92-df193cee8e08.err --stdout /tmp/ptero-lsf-logfile-0f7f699c-eed3-42de-bb92-df193cee8e08.out",

@@ -148,6 +148,7 @@
                                                                },
                                                                "options" : {
                                                                   "errFile" : "/tmp/ptero-lsf-logfile-b9704d30-f4ca-48f8-bc8c-a8f9af610a73.err",
+                                                                  "jobGroup" : "/genome/dmorton",
                                                                   "outFile" : "/tmp/ptero-lsf-logfile-b9704d30-f4ca-48f8-bc8c-a8f9af610a73.out",
                                                                   "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-b9704d30-f4ca-48f8-bc8c-a8f9af610a73.err --stdout /tmp/ptero-lsf-logfile-b9704d30-f4ca-48f8-bc8c-a8f9af610a73.out",
                                                                   "preExecCmd" : "ptero-lsf-pre-exec; exit 0;"

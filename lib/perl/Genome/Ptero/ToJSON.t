@@ -46,6 +46,7 @@ for my $test_directory (glob test_data_directory('*')) {
             qr/^.*"postExecCmd" :.*$/,
             qr/^.*"outFile" :.*$/,
             qr/^.*"errFile" :.*$/,
+            qr/^.*"jobGroup" :.*$/,
         ],
     );
 }
