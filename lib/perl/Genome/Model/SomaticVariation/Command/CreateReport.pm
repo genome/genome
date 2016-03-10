@@ -747,19 +747,12 @@ sub annotated_snvs_vcf {
     return File::Spec->join($self->_build_dir, 'variants', 'snvs.annotated.vcf.gz');
 }
 
-sub annotated_indels_vcf {
-    my $self = shift;
-
-    return File::Spec->join($self->_build_dir, 'variants', 'indels.annotated.vcf.gz');
-}
-
 sub _add_dbsnp_and_gmaf {
     my $self = shift;
     my $var_file = shift;
     my $type = shift;
 
-    my $annotated_vcf_sub = 'annotated_'. $type .'s_vcf';
-    if (-s $self->$annotated_vcf_sub) {
+    if (-s $self->annotated_snvs_vcf) {
         my $add_to_type_sub = '_add_dbsnp_and_gmaf_to_'. $type;
         my $new_var_file = $self->$add_to_type_sub($var_file);
         return $new_var_file;
