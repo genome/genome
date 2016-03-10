@@ -27,8 +27,8 @@ my (undef, $seqdict_dir) = File::Basename::fileparse($seqdict_file);
 Genome::Sys->create_directory($seqdict_dir);
 Genome::Sys->write_file($seqdict_file, <<'EOFILE'
 @HD	VN:1.0	SO:unsorted
-@SQ	SN:1	LN:100	UR:file:///dev/null
-@SQ	SN:2	LN:90	UR:file:///dev/null
+@SQ	SN:1	LN:100	UR:file:///dev/null	AS:test1.0	M5:fakeuuid1	SP:test
+@SQ	SN:2	LN:90	UR:file:///dev/null	AS:test1.0	M5:fakeuuid1	SP:test
 EOFILE
 );
 
