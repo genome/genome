@@ -758,13 +758,14 @@ sub _add_dbsnp_and_gmaf {
     my $var_file = shift;
     my $type = shift;
 
-    my $annotated_vcf_sub = 'annotated_'.$type.'s_vcf';
+    my $annotated_vcf_sub = 'annotated_'. $type .'s_vcf';
     if (-s $self->$annotated_vcf_sub) {
-        my $new_var_file = $self->_add_dbsnp_and_gmaf_to_snv($var_file);
+        my $add_to_type_sub = '_add_dbsnp_and_gmaf_to_'. $type;
+        my $new_var_file = $self->$add_to_type_sub($var_file);
         return $new_var_file;
     }
     else {
-        $self->warning_message("Warning: couldn't find annotated SNV file in build, skipping dbsnp anno");
+        $self->warning_message("Warning: couldn't find annotated $type file in build, skipping dbsnp anno");
         return $var_file;
     }
 }
