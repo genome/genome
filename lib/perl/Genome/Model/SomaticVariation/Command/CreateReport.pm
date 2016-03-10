@@ -131,34 +131,36 @@ sub execute {
     $self->review_dir(get_or_create_directory(File::Spec->join($self->_output_dir, 'review')));
     $self->review_bed(File::Spec->join($self->review_dir, $self->sample_name . '.bed'));
     $self->review_xml(File::Spec->join($self->review_dir, $self->sample_name . '.xml'));
+    my %file_by_type;
+    for my $type ('snv','indel') {
+        my $stage_sub = 'stage_'. $type .'_file';
+        my $var_file   = $self->$stage_sub;
+        
+        my $dir_sub = $type .'s_dir';
+        my $dir = $self->$dir_sub;
 
-    my $snv_file   = $self->stage_snv_file();
-    my $indel_file = $self->stage_indel_file();
+        $var_file = $self->clean_file($var_file, $self->$dir_sub);
+        if (-s $var_file) {
+            if ($type eq 'snv') {
+                $var_file = $self->remove_unsupported_sites($var_file);
+            }
+            if ($self->restrict_to_target_regions) {
+                $var_file = $self->_filter_off_target_regions($var_file, $dir);
+            }
 
-    $snv_file = $self->clean_file($snv_file, $self->snvs_dir);
-    $indel_file = $self->clean_file($indel_file, $self->indels_dir);
+            $var_file   = $self->annotate($var_file, $dir);
 
-    $snv_file = $self->remove_unsupported_sites($snv_file);
+            $self->status_message("Adding tiers");
+            $var_file   = $self->add_tiers($var_file, $dir);
 
-    if ($self->restrict_to_target_regions) {
-        $snv_file = $self->_filter_off_target_regions($snv_file, $self->snvs_dir);
-        $indel_file = $self->_filter_off_target_regions($indel_file, $self->indels_dir);
+            $var_file = $self->_add_dbsnp_and_gmaf($var_file,$type);
+
+            $self->status_message("Getting read counts");
+            $var_file   = $self->add_read_counts($var_file, $dir);
+        }
+        $file_by_type{$type} = $var_file;
     }
-
-    $snv_file   = $self->annotate($snv_file, $self->snvs_dir);
-    $indel_file = $self->annotate($indel_file, $self->indels_dir);
-
-    $self->status_message("Adding tiers");
-    $snv_file   = $self->add_tiers($snv_file, $self->snvs_dir);
-    $indel_file = $self->add_tiers($indel_file, $self->indels_dir);
-
-    ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
-
-    $self->status_message("Getting read counts");
-    $snv_file   = $self->add_read_counts($snv_file, $self->snvs_dir);
-    $indel_file = $self->add_read_counts($indel_file, $self->indels_dir);
-
-    $self->_create_master_files($snv_file, $indel_file);
+    $self->_create_master_files($file_by_type{snv}, $file_by_type{indel});
 
     $self->_create_review_files();
 
@@ -276,6 +278,8 @@ sub add_suffix {
 sub clean_file {
     my ($self, $file, $directory) = @_;
 
+    return $file if !-s $file;
+    
     my %dups;
 
     my ($tempfile, $tempfile_path) = Genome::Sys->create_temp_file();
@@ -620,6 +624,7 @@ sub stage_snv_file {
     Genome::Sys->shellcmd(
         cmd => $cmd,
         output_files => [$snv_file],
+        allow_zero_size_output_files => 1
     );
 
     return $snv_file;
@@ -650,6 +655,7 @@ sub stage_indel_file {
     Genome::Sys->shellcmd(
         cmd => $cmd,
         output_files => [$indel_file],
+        allow_zero_size_output_files => 1
     );
 
     return $indel_file;
@@ -741,17 +747,25 @@ sub annotated_snvs_vcf {
     return File::Spec->join($self->_build_dir, 'variants', 'snvs.annotated.vcf.gz');
 }
 
-sub _add_dbsnp_and_gmaf {
-    my ($self, $snv_file, $indel_file) = @_;
+sub annotated_indels_vcf {
+    my $self = shift;
 
-    if (-s $self->annotated_snvs_vcf) {
-        my $new_snv_file = $self->_add_dbsnp_and_gmaf_to_snv($snv_file);
-        my $new_indel_file = $self->_add_dbsnp_and_gmaf_to_indel($indel_file);
-        return ($new_snv_file, $new_indel_file);
+    return File::Spec->join($self->_build_dir, 'variants', 'indels.annotated.vcf.gz');
+}
+
+sub _add_dbsnp_and_gmaf {
+    my $self = shift;
+    my $var_file = shift;
+    my $type = shift;
+
+    my $annotated_vcf_sub = 'annotated_'.$type.'s_vcf';
+    if (-s $self->$annotated_vcf_sub) {
+        my $new_var_file = $self->_add_dbsnp_and_gmaf_to_snv($var_file);
+        return $new_var_file;
     }
     else {
         $self->warning_message("Warning: couldn't find annotated SNV file in build, skipping dbsnp anno");
-        return ($snv_file, $indel_file);
+        return $var_file;
     }
 }
 
