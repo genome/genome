@@ -129,16 +129,10 @@ sub execute{
     my $clinseq_annotations_dir = $cancer_annotation_db->data_directory;
     my $annotation_data_dir=$annotation_build->data_directory;
     my $reference_sequence_build=$annotation_build->reference_sequence;
-    my $default_build37 = Genome::Model::Build->get(106942997);
-    my $default_build36 = Genome::Model::Build->get(101947881);
-    if ($reference_sequence_build->is_compatible_with($default_build37)){
-      $ideogram_file ||= $clinseq_annotations_dir . "/hg19/ideogram/ChrBandIdeogram.tsv";
-    }elsif ($reference_sequence_build->is_compatible_with($default_build36)){
-      $ideogram_file ||= $clinseq_annotations_dir . "/hg18/ideogram/ChrBandIdeogram.tsv";
-    }else {
-      $self->error_message("Specified reference build resolved from annotation build is not compatible with default build36 or build37");
-      return;
-    }
+    #my $ideogram_map = $self->create_ideogram_map($clinseq_annotations_dir);
+    $ideogram_file ||= $self->get_ideogram($reference_sequence_build,
+                                              $clinseq_annotations_dir);
+    $self->status_message($ideogram_file . "\n");
 
     #Check GTF file
     my $reference_id = $reference_sequence_build->id;
@@ -353,6 +347,26 @@ sub execute{
   return(1);
 }
 
+sub get_ideogram {
+  my $self = shift;
+  my $user_reference_build = shift;
+  my $clinseq_annotations_dir = shift;
+  my $default_build36 = Genome::Model::Build->get(101947881);
+  my $default_build37 = Genome::Model::Build->get(106942997);
+  my $default_build38 = Genome::Model::Build->get("4ec1c5bd1f6941b8a99f2e230217cb91");
+  my $ideogram_map = {
+    "36" => {"build" => $default_build36, "ideogram" => $clinseq_annotations_dir . "/hg18/ideogram/ChrBandIdeogram.tsv"},
+    "37" => {"build" => $default_build37, "ideogram" => $clinseq_annotations_dir . "/hg19/ideogram/ChrBandIdeogram.tsv"},
+    "38" => {"build" => $default_build38, "ideogram" => $clinseq_annotations_dir . "/hg19/ideogram/ChrBandIdeogram.tsv"}
+  };
+  while (my ($build, $properties) = each %$ideogram_map) {
+    if ($user_reference_build->is_compatible_with($properties->{"build"})) {
+      return $properties->{"ideogram"};
+    }
+  }
+  die $self->error_message("Specified reference build resolved from annotation " .
+    "build is not compatible with default build36 or build37");
+}
 
 #####################################################################################################################################################################
 #Load the gene targets of interest
