@@ -2090,35 +2090,18 @@ sub snv_variant_source_file {
 
 sub copy_fusion_files {
     my ($self, $build) = @_;
-    my $rnaseq_build_dir             = $build->tumor_rnaseq_build->data_directory;
-    my $tumor_unfiltered_fusion_file = $rnaseq_build_dir
-        . '/fusions/Genome_Model_RnaSeq_DetectFusionsResult_Chimerascan_VariableReadLength_Result/chimeras.bedpe';
-    my $tumor_filtered_fusion_file           = $rnaseq_build_dir . '/fusions/filtered_chimeras.bedpe';
-    my $tumor_filtered_annotated_fusion_file = $rnaseq_build_dir . '/fusions/filtered_chimeras.catanno.bedpe';
-    my $clinseq_tumor_unfiltered_fusion_file = $self->patient_dir($build) . '/rnaseq/tumor/fusions/chimeras.bedpe';
-    my $clinseq_tumor_filtered_fusion_file =
-        $self->patient_dir($build) . '/rnaseq/tumor/fusions/filtered_chimeras.bedpe';
-    my $clinseq_tumor_filtered_annotated_fusion_file =
-        $self->patient_dir($build) . '/rnaseq/tumor/fusions/filtered_chimeras.catanno.bedpe';
-
-    if (-e $tumor_unfiltered_fusion_file) {
-        unless (Genome::Sys->copy_file($tumor_unfiltered_fusion_file, $clinseq_tumor_unfiltered_fusion_file)) {
-            die "unable to copy $tumor_unfiltered_fusion_file";
+    my $origin_dir = File::Spec->join($build->tumor_rnaseq_build->data_directory, 'fusions');
+    my $target_dir = File::Spec->join($self->patient_dir($build), 'rnaseq', 'tumor', 'fusions');
+    for my $file_name (qw(chimeras.bedpe filtered_chimeras.bedpe filtered_chimeras.catanno.bedpe)) {
+        my $origin_file;
+        if ($file_name eq 'chimeras.bedpe') {
+            $origin_file = File::Spec->join($origin_dir, 'Genome_Model_RnaSeq_DetectFusionsResult_Chimerascan_VariableReadLength_Result', $file_name);
         }
-    }
-    if (-e $tumor_filtered_fusion_file) {
-        unless (Genome::Sys->copy_file($tumor_filtered_fusion_file, $clinseq_tumor_filtered_fusion_file)) {
-            die "unable to copy $tumor_filtered_fusion_file";
+        else {
+            $origin_file = File::Spec->join($origin_dir, $file_name);
         }
-    }
-    if (-e $tumor_filtered_annotated_fusion_file) {
-        unless (
-            Genome::Sys->copy_file(
-                $tumor_filtered_annotated_fusion_file, $clinseq_tumor_filtered_annotated_fusion_file
-            )
-            )
-        {
-            die "unable to copy $tumor_filtered_annotated_fusion_file";
+        if (-e $origin_file) {
+            Genome::Sys->copy_file($origin_file, File::Spec->join($target_dir, $file_name));
         }
     }
 }
