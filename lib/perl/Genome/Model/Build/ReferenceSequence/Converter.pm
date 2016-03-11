@@ -5,6 +5,7 @@ use warnings;
 use strict;
 use Sys::Hostname;
 use List::Util qw( first );
+use List::MoreUtils qw( each_array );
 
 class Genome::Model::Build::ReferenceSequence::Converter {
     is => ['Genome::SoftwareResult'],
@@ -31,13 +32,19 @@ class Genome::Model::Build::ReferenceSequence::Converter {
     has_metric => [
         algorithm => { # README - If adding an algorithm, please add to the list of valid algorithms
             is => 'Text',
-            valid_values => [qw/ convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op drop_extra_contigs/],
+            valid_values => [qw/ convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op drop_extra_contigs chr_md5/],
             doc => 'method to use to convert from the source to the destination',
         },
         resource => {
             is => 'Text',
             doc => 'additional resource to facilitate conversion if the algorithm requires (e.g. lift_over chain file)',
             is_optional => 1,
+        },
+    ],
+    has_transient_optional => [
+        _chr_map => {
+            is => 'HASH',
+            doc => 'A hash ref with the source chr as the key and the destination chr as the value',
         },
     ],
 };
@@ -137,6 +144,15 @@ sub prepend_chr {
     return ($chrom, $start, $stop);
 }
 
+sub chr_md5 {
+    my $self = shift;
+    my ($chrom, $start, $stop) = @_;
+
+    my $chr_map = $self->get_or_create_chr_map_hash_ref();
+    my $new_chrom = $chr_map->{$chrom};
+    return ($new_chrom, $start, $stop);
+}
+
 sub lift_over {
     my $self = shift;
     my ($source_bed, $source_reference, $destination_bed, $destination_reference) = @_;
@@ -227,6 +243,31 @@ sub _coords_are_valid {
             and defined $stop and $stop ne q{}
             and $start <= $stop
     );
+}
+
+sub get_or_create_chr_map_hash_ref {
+    my $self = shift;
+
+    return $self->_chr_map if $self->_chr_map;
+    my %chr_map;
+
+    my $source_seqdict = $self->source_reference_build->get_or_create_seqdict_hash_ref;
+    my $destination_seqdict = $self->destination_reference_build->get_or_create_seqdict_hash_ref;
+
+    my @sorted_source_chrs = sort { $source_seqdict->{$a}{md5} cmp $source_seqdict->{$b}{md5}} keys %{$source_seqdict};
+    my @sorted_destination_chrs = sort { $destination_seqdict->{$a}{md5} cmp $destination_seqdict->{$b}{md5}} keys %{$destination_seqdict};
+    my $each_array = each_array(@sorted_source_chrs,@sorted_destination_chrs);
+    while ( my ($source_chr,$destination_chr) = $each_array->()) {
+        my $source_md5 = $source_seqdict->{$source_chr}{md5};
+        my $destination_md5 = $destination_seqdict->{$destination_chr}{md5};
+        if ($source_md5 eq $destination_md5) {
+            $chr_map{$source_chr} = $destination_chr;
+        } else {
+            $self->fatal_message('Unable to convert by chr_md5 due to unequal chromosome md5: '. $source_md5 .' is not equal to '. $destination_md5 .' for chromosomes '. $source_chr .' and '. $destination_chr);
+        }
+    }
+    $self->_chr_map(\%chr_map);
+    return $self->_chr_map;
 }
 
 1;
