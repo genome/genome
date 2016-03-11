@@ -11,12 +11,17 @@ require File::Spec;
 require File::Temp;
 require List::MoreUtils;
 require Sub::Install;
-use Test::More tests => 25;
+use Test::More tests => 26;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam';
 use_ok($class) or die;
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v3') or die;
 Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
+my $library = Genome::Library->__define__(
+    name => 'TEST-SAMPLE-extlibs',
+    sample => Genome::Sample->__define__(name => 'TEST-SAMPLE'),
+);
+ok($library, 'create library');
 
 subtest 'read1 or read2' => sub{
     plan tests => 3;
@@ -35,6 +40,7 @@ ok(-s $multi_rg_bam_path, 'linked two read groups bam');
 my $cmd = $class->execute(
     working_directory => $tmp_dir,
     bam_path => $multi_rg_bam_path,
+    library => $library,
 );
 ok($cmd->result, 'execute');
 

@@ -19,7 +19,11 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam {
         bam_path => {
             is => 'FilePath',
             doc => 'The path of the unsorted bam to sort.',
-        }
+        },
+        library => {
+            is => 'Genome::Library',
+            doc => 'Library to use in the bam headers.',
+        },
     ],
     has_output => [ 
         output_bam_paths => {
@@ -29,8 +33,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam {
         },
     ],
     has_optional_transient => [
-        headers => { is => 'Array', },
-        read_groups_and_tags => { is => 'HASH', default => {}, },
         old_and_new_read_group_ids => { is => 'HASH', default => {}, },
         _read_group_fhs => { is => 'HASH', default => {} },
     ],
@@ -40,8 +42,6 @@ sub execute {
     my $self = shift;
     $self->debug_message('Spilt bam by read group...');
 
-    my $set_headers_and_read_groups = $self->_set_headers_and_read_groups;
-
     my $write_reads_ok = $self->_process_reads;
     return if not $write_reads_ok;
 
@@ -49,22 +49,6 @@ sub execute {
     return if not $verify_read_count_ok;
 
     $self->debug_message('Spilt bam by read group...done');
-    return 1;
-}
-
-sub _set_headers_and_read_groups {
-    my $self = shift;
-
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $headers = $helpers->load_headers_from_bam($self->bam_path);
-    die $self->error_message('Failed to get headers!') if not $headers;
-    $self->headers($headers);
-    
-    my $read_group_headers = delete $headers->{'@RG'} || [];
-    my $read_groups_and_tags = $helpers->read_groups_and_tags_from_headers($read_group_headers);
-    die $self->error_message('Failed to get read groups and tags from headers!') if not $read_groups_and_tags;
-    $self->read_groups_and_tags($read_groups_and_tags);
-
     return 1;
 }
 
@@ -193,6 +177,7 @@ sub _write_reads_based_on_read_group_and_type {
 
     for my $read_tokens ( @{$params{reads}} ) {
         $self->_update_read_group_for_sam_tokens_based_on_type($read_tokens, $params{type});
+        print join("\t", @$read_tokens)."\n";
         $fhs->{$key}->print( join("\t", @$read_tokens)."\n" );
     }
 
@@ -231,7 +216,8 @@ sub _open_fh_for_read_group_and_type {
         die $self->error_message('Failed to open file handle to samtools command!');
     }
 
-    $self->_write_headers_for_read_group($fh, $read_group_id, $type);
+    $self->_create_new_read_group_ids($read_group_id);
+    $self->_write_header($fh, $self->old_and_new_read_group_ids->{$read_group_id}->{$type});
 
     my @output_bam_paths = $self->output_bam_paths;
     push @output_bam_paths, $read_group_bam_path;
@@ -240,45 +226,32 @@ sub _open_fh_for_read_group_and_type {
     return $fh;
 }
 
-sub _write_headers_for_read_group {
-    my ($self, $fh, $rg_id, $type) = @_;
+sub _create_new_read_group_ids {
+    my ($self, $rg_id) = @_;
 
-    # Add mapping for old RG id to new RG UUID
-    my $old_and_new_read_group_ids = $self->old_and_new_read_group_ids;
-    if ( not exists $old_and_new_read_group_ids->{$rg_id} ) {
-        $old_and_new_read_group_ids->{$rg_id} = {
-            paired => UR::Object::Type->autogenerate_new_object_id_uuid,
-            read1 => UR::Object::Type->autogenerate_new_object_id_uuid,
-            read2 => UR::Object::Type->autogenerate_new_object_id_uuid,
-        };
-    }
-
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $headers_as_string = $helpers->headers_to_string( $self->headers );
-    return if not $headers_as_string;
-    $fh->print( $headers_as_string );
-    $fh->print( $self->_header_for_read_group_and_type($rg_id, $type) );
-
-    return 1;
+    return 1 if exists $self->old_and_new_read_group_ids->{$rg_id};
+    $self->old_and_new_read_group_ids->{$rg_id} = {
+        paired => UR::Object::Type->autogenerate_new_object_id_uuid,
+        read1 => UR::Object::Type->autogenerate_new_object_id_uuid,
+        read2 => UR::Object::Type->autogenerate_new_object_id_uuid,
+    };
 }
 
-sub _header_for_read_group_and_type {
-    my ($self, $rg_id, $type) = @_;
+sub _write_header {
+    my ($self, $fh, $rg_id) = @_;
 
-    my $read_groups_and_tags = $self->read_groups_and_tags;
-    if ( not exists $read_groups_and_tags->{$rg_id} ) {
-        # Add RG tags for groups that are not in the header. This includes the 'unknown' group
-        $read_groups_and_tags->{$rg_id} = { CN => 'NA', };
-    }
-    delete $read_groups_and_tags->{$rg_id}->{ID} if exists $read_groups_and_tags->{$rg_id}->{ID};
-    my %rg_tags = %{$read_groups_and_tags->{$rg_id}};
-    my @tag_names = sort keys %rg_tags;
+    # Header Line
+    $fh->print( join("\t", '@HD', 'VN:1.4', 'SO:queryname')."\n" );
 
-    return join(
-        "\t", '@RG',
-        'ID:'.$self->old_and_new_read_group_ids->{$rg_id}->{$type},
-        map { join(':', $_, $rg_tags{$_}) } @tag_names
-    )."\n";
+    # Read Group
+    $fh->print(
+        join(
+            "\t", '@RG',
+            'ID:'.$rg_id,
+            'LB:'.$self->library->name,
+            'SM:'.$self->library->sample->name,
+        )."\n"
+    );
 }
 
 1;
