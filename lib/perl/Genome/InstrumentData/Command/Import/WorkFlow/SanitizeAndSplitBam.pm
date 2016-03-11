@@ -176,31 +176,16 @@ sub _write_reads_based_on_read_group_and_type {
     }
 
     for my $read_tokens ( @{$params{reads}} ) {
-        $self->_update_read_group_for_sam_tokens_based_on_type($read_tokens, $params{type});
-        print join("\t", @$read_tokens)."\n";
-        $fhs->{$key}->print( join("\t", @$read_tokens)."\n" );
+        # Set flag
+        $read_tokens->[1] = ( $read_tokens->[1] & 0x80 ? 141 : 77 );
+        # Remove alignment information
+        splice @$read_tokens, 2, 7, (qw/ * 0 0 * * 0 0 /);
+        # Remove ALL tags, add new RG tag
+        splice @$read_tokens, 11;
+        push @$read_tokens, 'RG:Z:'.$self->old_and_new_read_group_ids->{ $params{rg_id} }->{ $params{type} };
+        #print( join( "\t", @$read_tokens)."\n");
+        $fhs->{$key}->print( join( "\t", @$read_tokens)."\n");
     }
-
-    return 1;
-}
-
-sub _update_read_group_for_sam_tokens_based_on_type {
-    my ($self, $tokens, $type) = @_;
-
-    my $rg_tag_idx = List::MoreUtils::firstidx { $_ =~ m/^RG:/ } @$tokens;
-    my $rg_tag;
-    if ( defined $rg_tag_idx ) {
-        $rg_tag = splice(@$tokens, $rg_tag_idx, 1);
-    }
-    else {
-        $rg_tag = 'RG:Z:unknown';
-        $rg_tag_idx = $#$tokens;
-    }
-
-    my $rg_id = (split(':', $rg_tag))[2];
-    my $new_rg_id = $self->old_and_new_read_group_ids->{$rg_id}->{$type};
-    $rg_tag = join(':', 'RG',  'Z', $new_rg_id);
-    splice(@$tokens, $rg_tag_idx, 0, $rg_tag); # Add RG tag back
 
     return 1;
 }
