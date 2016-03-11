@@ -13,17 +13,17 @@ require List::MoreUtils;
 require Sub::Install;
 use Test::More tests => 25;
 
-my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup';
+my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam';
 use_ok($class) or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v2') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v3') or die;
 Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
 
 subtest 'read1 or read2' => sub{
     plan tests => 3;
 
-    is(Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup::_read1_or_read2(77), 'read1', 'flag marked as read 1 is read1');
-    is(Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup::_read1_or_read2(0), 'read1', 'unmarked flag is read1');
-    is(Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup::_read1_or_read2(141), 'read2', 'flag marked as read 2 is read2');
+    is(Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_read1_or_read2(77), 'read1', 'flag marked as read 1 is read1');
+    is(Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_read1_or_read2(0), 'read1', 'unmarked flag is read1');
+    is(Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_read1_or_read2(141), 'read2', 'flag marked as read 2 is read2');
 
 };
 
@@ -32,7 +32,7 @@ my $multi_rg_base_name = 'input.rg-multi.bam';
 my $multi_rg_bam_path = File::Spec->join($tmp_dir, $multi_rg_base_name);
 Genome::Sys->create_symlink(File::Spec->join($test_dir, $multi_rg_base_name), $multi_rg_bam_path);
 ok(-s $multi_rg_bam_path, 'linked two read groups bam');
-my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup->execute(
+my $cmd = $class->execute(
     working_directory => $tmp_dir,
     bam_path => $multi_rg_bam_path,
 );
@@ -50,5 +50,5 @@ for my $basename ( @bam_basenames ) {
 }
 ok(!glob($multi_rg_bam_path.'*'), 'removed bam path and auxiliary files after spliting');
 
-#print "$tmp_dir\n"; <STDIN>;
+#diag($tmp_dir); <STDIN>;
 done_testing();

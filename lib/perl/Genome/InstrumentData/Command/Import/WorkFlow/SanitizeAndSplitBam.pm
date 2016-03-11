@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup;
+package Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ require IO::File;
 require List::MoreUtils;
 use Params::Validate ':types';
 
-class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup { 
+class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam {
     is => 'Command::V2',
     roles => [qw/
         Genome::InstrumentData::Command::Import::WorkFlow::Role::WithWorkingDirectory
