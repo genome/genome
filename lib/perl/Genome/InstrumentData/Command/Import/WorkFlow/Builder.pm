@@ -83,32 +83,6 @@ sub _add_verify_not_imported_op_to_workflow {
     return $verify_not_imported_op;
 }
 
-sub _add_sanitize_bam_op_to_workflow {
-    my ($self, $previous_op) = @_;
-
-    die 'No previous operation given to _add_sanitize_bam_op_to_workflow!' if not $previous_op;
-
-    my $name = 'sanitize bam';
-    my $sanitize_bam_op = Genome::WorkflowBuilder::Command->create(
-        name => $name,
-        command => $self->work_flow_operation_class_for_name($name),
-    );
-    $self->_dag->add_operation($sanitize_bam_op);
-    $self->_dag->connect_input(
-        input_property => 'working_directory',
-        destination => $sanitize_bam_op,
-        destination_property => 'working_directory',
-    );
-    $self->_dag->create_link(
-        source => $previous_op,
-        source_property => 'output_bam_path',
-        destination => $sanitize_bam_op,
-        destination_property => 'bam_path',
-    );
-
-    return $sanitize_bam_op;
-}
-
 sub _add_sort_bam_op_to_workflow {
     my ($self, $previous_op) = @_;
 
@@ -167,30 +141,34 @@ sub _add_downsample_bam_op_to_workflow {
     return $downsample_bam_op;
 }
 
-sub _add_split_bam_by_rg_op_to_workflow {
+sub _add_sanitize_and_split_bam_op_to_workflow {
     my ($self, $previous_op) = @_;
 
     die 'No previous op given to _add_split_bam_by_rg_op_to_workflow!' if not $previous_op;
 
-    my $name = 'split bam by read group';
-    my $split_bam_by_rg_op = Genome::WorkflowBuilder::Command->create(
+    my $name = 'sanitize and split bam';
+    my $op = Genome::WorkflowBuilder::Command->create(
         name => $name,
         command => $self->work_flow_operation_class_for_name($name),
     );
-    $self->_dag->add_operation($split_bam_by_rg_op);
-    $self->_dag->connect_input(
-        input_property => 'working_directory',
-        destination => $split_bam_by_rg_op,
-        destination_property => 'working_directory',
-    );
+    $self->_dag->add_operation($op);
+
+    for my $prop (qw/ library working_directory /) {
+        $self->_dag->connect_input(
+            input_property => $prop,
+            destination => $op,
+            destination_property => $prop,
+        );
+    }
+
     $self->_dag->create_link(
         source => $previous_op,
         source_property => 'output_bam_path',
-        destination => $split_bam_by_rg_op,
+        destination => $op,
         destination_property => 'bam_path',
     );
 
-    return $split_bam_by_rg_op;
+    return $op;
 }
 
 sub _add_create_instrument_data_op_to_workflow {
