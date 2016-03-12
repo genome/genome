@@ -7216,7 +7216,8 @@ $Genome::Command::OPTS_SPEC = [
             'prepend_chr',
             'lift_over',
             'no_op',
-            'drop_extra_contigs'
+            'drop_extra_contigs',
+            'chr_md5'
           ],
           'resource=s',
           'files',
