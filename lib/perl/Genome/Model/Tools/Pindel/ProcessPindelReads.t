@@ -9,9 +9,6 @@ use File::Compare;
 use Test::More;
 use above 'Genome';
 
-BEGIN {
-    $ENV{NO_LSF} = 1;
-}
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
     plan skip_all => "Must run from 64-bit machine";
