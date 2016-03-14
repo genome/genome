@@ -95,14 +95,14 @@ sub execute {
                 return;
             }
             my $dir = $self->analysis_dir;
-            my $user = Genome::Sys->username;
+            my $user = Genome::Sys->current_user;
             if(-z "$dir/$lane_name.var" || !-e "$dir/$lane_name.var") {
                 my $command .= <<"COMMANDS";
 samtools pileup -vc -f $reference $alignment_file | perl -pe '\@F = split /\\t/; \\\$_=q{} unless(\\\$F[7] > 2);' > $dir/$lane_name.var
 gmt analysis lane-qc compare-snps --genotype-file $genotype_file --variant-file $dir/$lane_name.var > $dir/$lane_name.var.compare_snps
 COMMANDS
-                my $email_domain = Genome::Config::get('email_domain');
-                print `bsub -N -u $user\@$email_domain "$command"`;
+                my $email = $user->email;
+                print `bsub -N -u $email "$command"`;
                 #print $command,"\n";
             }
         }

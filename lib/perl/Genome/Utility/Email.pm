@@ -92,10 +92,14 @@ sub _validate_attachment {
 }
 
 sub construct_address {
-    my $user = shift;
-    $user = defined($user) ? $user : $ENV{USER};
+    my $username = shift;
 
-    return join('@', $user, Genome::Config::get('email_domain'));
+    my $user = defined($username)?
+        Genome::Sys::User->get(username => $username) :
+        Genome::Sys->current_user;
+
+
+    return $user->email;
 }
 
 1;

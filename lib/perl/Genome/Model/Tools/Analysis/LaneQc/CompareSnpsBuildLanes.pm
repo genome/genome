@@ -36,7 +36,7 @@ sub execute {
     my $self=shift;
     my $build_id = "";
     my $dir = $self->analysis_dir;
-    my $user = getlogin || getpwuid($<); #get current user name
+    my $user = Genome::Sys->current_user;
     my $sample_name ="";
     my $genotype_file ="";	 
     my $wgs_model_id = $self->model_id;
@@ -123,7 +123,8 @@ sub execute {
 
 # find reference sequences
     my $reference_file=$model->reference_sequence_build->full_consensus_path('fa') ;
-    print "reference: $reference_file User: $user\n";
+    my $username = $user->username;
+    print "reference: $reference_file User: $username\n";
     for my $data (@instrument_data) {
         my @alignments = $build->alignment_results_for_instrument_data($data);
         for my $alignment (@alignments) {
@@ -143,8 +144,8 @@ sub execute {
 samtools pileup -vc -f $reference_file $alignment_file | perl -pe '\@F = split /\\t/; \\\$_=q{} unless(\\\$F[7] > 2);' > $dir/$lane_name.var
 gmt analysis lane-qc compare-snps --genotype-file $genotype_file --variant-file $dir/$lane_name.var > $dir/$lane_name.var.compare_snps
 COMMANDS
-                my $email_domain = Genome::Config::get('email_domain');
-                print `bsub -N -u $user\@$email_domain "$command"`;
+                my $email = $user->email;
+                print `bsub -N -u $email "$command"`;
             }else{
                 $self->error_message("No alignment object for $lane_name");
                 return;
