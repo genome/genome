@@ -131,34 +131,33 @@ sub execute {
     $self->review_dir(get_or_create_directory(File::Spec->join($self->_output_dir, 'review')));
     $self->review_bed(File::Spec->join($self->review_dir, $self->sample_name . '.bed'));
     $self->review_xml(File::Spec->join($self->review_dir, $self->sample_name . '.xml'));
+    my %file_by_type;
+    for my $type ('snv','indel') {
+        my $stage_sub = 'stage_'. $type .'_file';
+        my $var_file   = $self->$stage_sub;
 
-    my $snv_file   = $self->stage_snv_file();
-    my $indel_file = $self->stage_indel_file();
+        my $dir_sub = $type .'s_dir';
+        my $dir = $self->$dir_sub;
 
-    $snv_file = $self->clean_file($snv_file, $self->snvs_dir);
-    $indel_file = $self->clean_file($indel_file, $self->indels_dir);
+        $var_file = $self->clean_file($var_file, $self->$dir_sub);
+        if ($type eq 'snv') {
+            $var_file = $self->remove_unsupported_sites($var_file);
+        }
+        if ($self->restrict_to_target_regions) {
+            $var_file = $self->_filter_off_target_regions($var_file, $dir);
+        }            $var_file   = $self->annotate($var_file, $dir);
 
-    $snv_file = $self->remove_unsupported_sites($snv_file);
+        $self->status_message("Adding tiers");
+        $var_file   = $self->add_tiers($var_file, $dir);
 
-    if ($self->restrict_to_target_regions) {
-        $snv_file = $self->_filter_off_target_regions($snv_file, $self->snvs_dir);
-        $indel_file = $self->_filter_off_target_regions($indel_file, $self->indels_dir);
+        $var_file = $self->_add_dbsnp_and_gmaf($var_file,$type);
+
+        $self->status_message("Getting read counts");
+        $var_file = $self->add_read_counts($var_file, $dir);
+
+        $file_by_type{$type} = $var_file;
     }
-
-    $snv_file   = $self->annotate($snv_file, $self->snvs_dir);
-    $indel_file = $self->annotate($indel_file, $self->indels_dir);
-
-    $self->status_message("Adding tiers");
-    $snv_file   = $self->add_tiers($snv_file, $self->snvs_dir);
-    $indel_file = $self->add_tiers($indel_file, $self->indels_dir);
-
-    ($snv_file, $indel_file) = $self->_add_dbsnp_and_gmaf($snv_file, $indel_file);
-
-    $self->status_message("Getting read counts");
-    $snv_file   = $self->add_read_counts($snv_file, $self->snvs_dir);
-    $indel_file = $self->add_read_counts($indel_file, $self->indels_dir);
-
-    $self->_create_master_files($snv_file, $indel_file);
+    $self->_create_master_files($file_by_type{snv}, $file_by_type{indel});
 
     $self->_create_review_files();
 
@@ -272,9 +271,29 @@ sub add_suffix {
     }
 }
 
+
+
 #read in the file, output a cleaned-up version
 sub clean_file {
     my ($self, $file, $directory) = @_;
+
+    my $outfile_path = $self->result_file_path(
+        input_file_path => $file,
+        suffix => 'clean',
+        directory => $directory,
+    );
+    if (-s $file) {
+        my $tempfile_path = $self->_deduplicate_var_file($file);
+        Genome::Sys->shellcmd( cmd => "joinx sort -i $tempfile_path -o $outfile_path" );
+    } else {
+        Genome::Sys->shellcmd( cmd => "touch $outfile_path" );
+    }
+    return $outfile_path;
+}
+
+sub _deduplicate_var_file {
+    my $self = shift;
+    my $file = shift;
 
     my %dups;
 
@@ -286,12 +305,12 @@ sub clean_file {
         if ($ref =~ /\//) {
             ( $ref, $var ) = split(/\//, $ref);
         }
-
+        
         $ref =~ s/0/-/g;
         $var =~ s/0/-/g;
         $ref =~ s/\*/-/g;
         $var =~ s/\*/-/g;
-
+        
         my @vars = ($var);
         unless ($ref =~ /-/ || $var =~ /-/) { #fixiub doesn't handle indels
             @vars = fix_IUB($ref, $var);
@@ -306,17 +325,9 @@ sub clean_file {
     }
     close($tempfile);
     close($infile);
-
-    my $outfile_path = $self->result_file_path(
-        input_file_path => $file,
-        suffix => 'clean',
-        directory => $directory,
-    );
-    Genome::Sys->shellcmd( cmd => "joinx sort -i $tempfile_path -o $outfile_path" );
-
-    return $outfile_path;
+    
+    return $tempfile_path;
 }
-
 
 sub get_site_hash  {
     my $self = shift;
@@ -620,6 +631,7 @@ sub stage_snv_file {
     Genome::Sys->shellcmd(
         cmd => $cmd,
         output_files => [$snv_file],
+        allow_zero_size_output_files => 1
     );
 
     return $snv_file;
@@ -650,6 +662,7 @@ sub stage_indel_file {
     Genome::Sys->shellcmd(
         cmd => $cmd,
         output_files => [$indel_file],
+        allow_zero_size_output_files => 1
     );
 
     return $indel_file;
@@ -682,8 +695,11 @@ sub _filter_off_target_regions {
             suffix => 'ontarget',
             directory => $directory,
         );
-
-        Genome::Sys->shellcmd(cmd => "joinx intersect -a $file -b $featurelist -o $new_file");
+        if (-s $file) {
+            Genome::Sys->shellcmd(cmd => "joinx intersect -a $file -b $featurelist -o $new_file");
+        } else {
+            Genome::Sys->shellcmd( cmd => "touch $new_file" );
+        }
         return $new_file;
     }
     else {
@@ -742,16 +758,18 @@ sub annotated_snvs_vcf {
 }
 
 sub _add_dbsnp_and_gmaf {
-    my ($self, $snv_file, $indel_file) = @_;
+    my $self = shift;
+    my $var_file = shift;
+    my $type = shift;
 
     if (-s $self->annotated_snvs_vcf) {
-        my $new_snv_file = $self->_add_dbsnp_and_gmaf_to_snv($snv_file);
-        my $new_indel_file = $self->_add_dbsnp_and_gmaf_to_indel($indel_file);
-        return ($new_snv_file, $new_indel_file);
+        my $add_to_type_sub = '_add_dbsnp_and_gmaf_to_'. $type;
+        my $new_var_file = $self->$add_to_type_sub($var_file);
+        return $new_var_file;
     }
     else {
-        $self->warning_message("Warning: couldn't find annotated SNV file in build, skipping dbsnp anno");
-        return ($snv_file, $indel_file);
+        $self->warning_message("Warning: couldn't find annotated $type file in build, skipping dbsnp anno");
+        return $var_file;
     }
 }
 
@@ -764,14 +782,17 @@ sub _add_dbsnp_and_gmaf_to_snv {
         suffix => 'rsid',
         directory => $self->snvs_dir,
     );
-
-    my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
-        anno_file   => $snv_file,
-        output_file => $output_file,
-        vcf_file    => $self->annotated_snvs_vcf,
-    );
-    unless ($db_cmd->execute) {
-        confess $self->error_message("Failed to add dbsnp anno to file $snv_file.");
+    if (-s $snv_file) {
+        my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
+            anno_file   => $snv_file,
+            output_file => $output_file,
+            vcf_file    => $self->annotated_snvs_vcf,
+        );
+        unless ($db_cmd->execute) {
+            confess $self->error_message("Failed to add dbsnp anno to file $snv_file.");
+        }
+    } else {
+        Genome::Sys->shellcmd( cmd => "touch $output_file" );
     }
     return $output_file;
 }
@@ -786,15 +807,18 @@ sub _add_dbsnp_and_gmaf_to_indel {
         suffix => 'rsid',
         directory => $self->indels_dir,
     );
-
-    my $outfile = Genome::Sys->open_file_for_writing($output_file);
-    my $infile  = Genome::Sys->open_file_for_reading($indel_file);
-    while ( my $line = $infile->getline ) {
-        chomp($line);
-        print $outfile $line . "\t\t\n"
+    if (-s $indel_file) {
+        my $outfile = Genome::Sys->open_file_for_writing($output_file);
+        my $infile  = Genome::Sys->open_file_for_reading($indel_file);
+        while ( my $line = $infile->getline ) {
+            chomp($line);
+            print $outfile $line . "\t\t\n"
+        }
+        close($infile);
+        close($outfile);
+    } else {
+        Genome::Sys->shellcmd( cmd => "touch $output_file" );
     }
-    close($infile);
-    close($outfile);
 
     return $output_file;
 }
