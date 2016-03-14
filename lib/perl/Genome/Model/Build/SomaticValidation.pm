@@ -326,4 +326,26 @@ sub individual_common_name {
     return $self->subject->common_name;
 }
 
+sub snvs_annotated_variants_vcf_file {
+    my $self = shift;
+
+    my $snvs_vcf_file = File::Spec->join($self->data_directory, 'variants', 'snvs.vcf.gz');
+    my $annotated_snvs_vcf_file = File::Spec->join($self->data_directory, 'variants', 'snvs.annotated.vcf.gz');
+    my $annotation_vcf = $self->previously_discovered_variations_build->snvs_vcf;
+    my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->create(
+        input_file => $snvs_vcf_file,
+        annotation_file => $annotation_vcf,
+        output_file => $annotated_snvs_vcf_file,
+        use_bgzip => 1,
+        info_fields => "",
+        info => "",
+        use_version => Genome::Model::Tools::Joinx->get_default_version,
+    );
+    unless ($vcf_annotator->execute) {
+        $self->fatal_message("Failed to execute Joinx Vcf annotation for vcf file (%s) using db (%s)", $snvs_vcf_file, $annotation_vcf);
+    }
+
+    return $annotated_snvs_vcf_file;
+}
+
 1;

@@ -465,12 +465,12 @@ sub gather_variants {
             $bed_files{$snvs_file}{var_type}           = "snv";
             $bed_files{$snvs_file}{data_type}          = $somatic_build_type;
             $bed_files{$snvs_file}{tier}               = $tier;
-            $bed_files{$snvs_file}{vcf_file}           = "$somatic_build_dir/variants/snvs.annotated.vcf.gz";
+            $bed_files{$snvs_file}{vcf_file}           = $somatic_build->snvs_annotated_variants_vcf_file;
             $bed_files{$indels_file}{somatic_build_id} = $somatic_build_id;
             $bed_files{$indels_file}{var_type}         = "indel";
             $bed_files{$indels_file}{data_type}        = $somatic_build_type;
             $bed_files{$indels_file}{tier}             = $tier;
-            $bed_files{$indels_file}{vcf_file}         = "$somatic_build_dir/variants/indels.detailed.vcf.gz";
+            $bed_files{$indels_file}{vcf_file}         = $somatic_build->indels_detailed_variants_vcf_file;
         }
     }
 

@@ -456,4 +456,9 @@ sub individual_common_name {
     return $self->subject->individual_common_name;
 }
 
+sub snvs_annotated_variants_vcf_file {
+    my $self = shift;
+    return File::Spec->join($self->data_directory, 'variants', 'snvs.annotated.vcf.gz');
+}
+
 1;

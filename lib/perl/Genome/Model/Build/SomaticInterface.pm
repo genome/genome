@@ -19,4 +19,14 @@ sub individual_common_name {
     $self->fatal_message('Abstract: (individual_common_name) needs to be defined on class (%s)', $self->class);
 }
 
+sub snvs_annotated_variants_vcf_file {
+    my $self = shift;
+    $self->fatal_message('Abstract: (snvs_annotated_variants_vcf_file) needs to be defined on class (%s)', $self->class);
+}
+
+sub indels_detailed_variants_vcf_file {
+    my $self = shift;
+    return File::Spec->join($self->data_directory, 'variants', 'indels.detailed.vcf.gz');
+}
+
 1;
