@@ -135,29 +135,26 @@ sub execute {
     for my $type ('snv','indel') {
         my $stage_sub = 'stage_'. $type .'_file';
         my $var_file   = $self->$stage_sub;
-        
+
         my $dir_sub = $type .'s_dir';
         my $dir = $self->$dir_sub;
 
         $var_file = $self->clean_file($var_file, $self->$dir_sub);
-        if (-s $var_file) {
-            if ($type eq 'snv') {
-                $var_file = $self->remove_unsupported_sites($var_file);
-            }
-            if ($self->restrict_to_target_regions) {
-                $var_file = $self->_filter_off_target_regions($var_file, $dir);
-            }
-
-            $var_file   = $self->annotate($var_file, $dir);
-
-            $self->status_message("Adding tiers");
-            $var_file   = $self->add_tiers($var_file, $dir);
-
-            $var_file = $self->_add_dbsnp_and_gmaf($var_file,$type);
-
-            $self->status_message("Getting read counts");
-            $var_file   = $self->add_read_counts($var_file, $dir);
+        if ($type eq 'snv') {
+            $var_file = $self->remove_unsupported_sites($var_file);
         }
+        if ($self->restrict_to_target_regions) {
+            $var_file = $self->_filter_off_target_regions($var_file, $dir);
+        }            $var_file   = $self->annotate($var_file, $dir);
+
+        $self->status_message("Adding tiers");
+        $var_file   = $self->add_tiers($var_file, $dir);
+
+        $var_file = $self->_add_dbsnp_and_gmaf($var_file,$type);
+
+        $self->status_message("Getting read counts");
+        $var_file = $self->add_read_counts($var_file, $dir);
+
         $file_by_type{$type} = $var_file;
     }
     $self->_create_master_files($file_by_type{snv}, $file_by_type{indel});
@@ -688,8 +685,11 @@ sub _filter_off_target_regions {
             suffix => 'ontarget',
             directory => $directory,
         );
-
-        Genome::Sys->shellcmd(cmd => "joinx intersect -a $file -b $featurelist -o $new_file");
+        if (-s $file) {
+            Genome::Sys->shellcmd(cmd => "joinx intersect -a $file -b $featurelist -o $new_file");
+        } else {
+            Genome::Sys->shellcmd( cmd => "touch $new_file" );
+        }
         return $new_file;
     }
     else {
@@ -772,14 +772,17 @@ sub _add_dbsnp_and_gmaf_to_snv {
         suffix => 'rsid',
         directory => $self->snvs_dir,
     );
-
-    my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
-        anno_file   => $snv_file,
-        output_file => $output_file,
-        vcf_file    => $self->annotated_snvs_vcf,
-    );
-    unless ($db_cmd->execute) {
-        confess $self->error_message("Failed to add dbsnp anno to file $snv_file.");
+    if (-s $snv_file) {
+        my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
+            anno_file   => $snv_file,
+            output_file => $output_file,
+            vcf_file    => $self->annotated_snvs_vcf,
+        );
+        unless ($db_cmd->execute) {
+            confess $self->error_message("Failed to add dbsnp anno to file $snv_file.");
+        }
+    } else {
+        Genome::Sys->shellcmd( cmd => "touch $output_file" );
     }
     return $output_file;
 }
@@ -794,15 +797,18 @@ sub _add_dbsnp_and_gmaf_to_indel {
         suffix => 'rsid',
         directory => $self->indels_dir,
     );
-
-    my $outfile = Genome::Sys->open_file_for_writing($output_file);
-    my $infile  = Genome::Sys->open_file_for_reading($indel_file);
-    while ( my $line = $infile->getline ) {
-        chomp($line);
-        print $outfile $line . "\t\t\n"
+    if (-s $indel_file) {
+        my $outfile = Genome::Sys->open_file_for_writing($output_file);
+        my $infile  = Genome::Sys->open_file_for_reading($indel_file);
+        while ( my $line = $infile->getline ) {
+            chomp($line);
+            print $outfile $line . "\t\t\n"
+        }
+        close($infile);
+        close($outfile);
+    } else {
+        Genome::Sys->shellcmd( cmd => "touch $output_file" );
     }
-    close($infile);
-    close($outfile);
 
     return $output_file;
 }
