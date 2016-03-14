@@ -55,31 +55,146 @@ class Genome::Model::ReferenceAlignment {
             is_optional => 1,
         },
     ],
+    has_param => [
+        sequencing_platform => {
+            doc => 'The sequencing platform from whence the model data was generated',
+            valid_values => ['454', 'solexa', 'sanger'],
+        },
+        dna_type => {
+            doc => 'the type of dna used in the reads for this model',
+            valid_values => ['genomic dna', 'cdna']
+        },
+        transcript_variant_annotator_version => {
+            doc => 'Version of the "annotate transcript-variants" tool to run during the annotation step',
+            is_optional => 1,
+            default_value => Genome::Model::Tools::Annotate::TranscriptVariants->default_annotator_version,
+            valid_values => [ 0,1,2,3,4],#Genome::Model::Tools::Annotate::TranscriptVariants->available_versions ],
+        },
+        transcript_variant_annotator_filter => {
+            doc => 'annotation-filter option to be used by the "annotate transcript-variants" tool run during the annotation step',
+            is_optional => 1,
+            default_value => 'top',
+            valid_values => ['top', 'none', 'gene'],
+        },
+        transcript_variant_annotator_accept_reference_IUB_codes => {
+            doc => 'annotation accept-reference-IUB-codes option to be used by the "annotate transcript-variants" to run during the annotation step',
+            is_optional => 1,
+            default_value => '0',
+            valid_values => [0, 1],
+        },
+        alignment_strategy => {
+            is => 'Text',
+            is_many => 0,
+            is_optional => 1,
+            doc => 'Strategy to be used to align the instrument data (this will eventually replace many of the alignment parameters)',
+        },
+        snv_detection_strategy => {
+            is => "Text",
+            is_many => 0,
+            is_optional =>1,
+            doc => "Strategy to be used to detect snvs.",
+        },
+        indel_detection_strategy => {
+            is => "Text",
+            is_many => 0,
+            is_optional =>1,
+            doc => "Strategy to be used to detect indels.",
+        },
+        sv_detection_strategy => {
+            is => "Text",
+            is_many => 0,
+            is_optional =>1,
+            doc => "Strategy to be used to detect svs.",
+        },
+        cnv_detection_strategy => {
+            is => "Text",
+            is_many => 0,
+            is_optional =>1,
+            doc => "Strategy to be used to detect cnvs.",
+        },
+        picard_version => {
+            doc => 'picard version for MarkDuplicates, MergeSamfiles, CreateSequenceDictionary...',
+            is_optional => 1,
+        },
+        samtools_version => {
+            doc => 'samtools version for SamToBam, samtools merge, etc...',
+            is_optional => 1,
+        },
+        bedtools_version => {
+            doc => 'bedtools version for bedtools bamtofastq',
+            is_optional => 1,
+        },
+        merger_name => {
+            doc => 'name of bam merger, picard, samtools (this will be replaced by alignment_strategy)',
+            is_optional => 1,
+        },
+        merger_version => {
+            doc => 'version of bam merger (this will be replaced by alignment_strategy)',
+            is_optional => 1,
+        },
+        merger_params => {
+            doc => 'parameters of bam merger (this will be replaced by alignment_strategy)',
+            is_optional => 1,
+        },
+        duplication_handler_name => {
+            doc => 'name of pcr duplication handler (this will be replaced by alignment_strategy)',
+            is_optional => 1,
+        },
+        duplication_handler_version => {
+            doc => 'version of pcr duplication handler (this will be replaced by alignment_strategy)',
+            is_optional => 1,
+        },
+        duplication_handler_params => {
+            doc => 'parameters of pcr duplication handler (this will be replaced by alignment_strategy)',
+            is_optional => 1,
+        },
+        read_aligner_name => {
+            doc => 'alignment algorithm/software used for this model (this will be replaced by alignment_strategy)',
+        },
+        read_aligner_version => {
+            doc => 'the aligner version used for this model (this will be replaced by alignment_strategy)',
+            is_optional => 1,
+        },
+        read_aligner_params => {
+            doc => 'command line args for the aligner (this will be replaced by alignment_strategy)',
+            is_optional => 1,
+        },
+        force_fragment => {
+            is => 'Integer',
+            #This doesn't seem to work yet because of the create code, can't the valid values logic be removed from create???
+            default_value => '0',
+            #valid_values => ['0', '1'],
+            doc => 'force all alignments as fragment reads',
+            is_optional => 1,
+        },
+        read_trimmer_name => {
+            doc => 'trimmer algorithm/software used for this model',
+            is_optional => 1,
+        },
+        read_trimmer_version => {
+            doc => 'the trimmer version used for this model',
+            is_optional => 1,
+        },
+        read_trimmer_params => {
+            doc => 'command line args for the trimmer',
+            is_optional => 1,
+        },
+        coverage_stats_params => {
+            doc => 'parameters necessary for generating reference coverage in the form of two comma delimited lists split by a colon like 1,5,10,15,20:0,200,500',
+            is_optional => 1,
+        },
+        append_event_steps => {
+            doc => 'Event classes to append to event_stage_job_classes, e.g. "alignment => Genome::Model::Event::Build::ReferenceAlignment::QC::CopyNumber".',
+            is_optional => 1,
+            is_deprecated => 1,
+        },
+    ],
     has => [
-        subject                     => { is => 'Genome::Sample', id_by => 'subject_id', doc => 'the subject of alignment and variant detection is a single sample' },
-        dna_type                     => { via => 'processing_profile'},
-        picard_version               => { via => 'processing_profile'},
-        samtools_version             => { via => 'processing_profile'},
-        merger_name                  => { via => 'processing_profile'},
-        merger_version               => { via => 'processing_profile'},
-        merger_params                => { via => 'processing_profile'},
-        duplication_handler_name     => { via => 'processing_profile'},
-        duplication_handler_version  => { via => 'processing_profile'},
-        duplication_handler_params   => { via => 'processing_profile'},
-        snv_detection_strategy       => { via => 'processing_profile'},
-        indel_detection_strategy     => { via => 'processing_profile'},
-        sv_detection_strategy        => { via => 'processing_profile'},
-        cnv_detection_strategy       => { via => 'processing_profile'},
-        transcript_variant_annotator_version => { via => 'processing_profile' },
-        transcript_variant_annotator_filter => { via => 'processing_profile' },
-        transcript_variant_annotator_accept_reference_IUB_codes => {via => 'processing_profile'},
-        read_aligner_name            => { via => 'processing_profile'},
-        read_aligner_version         => { via => 'processing_profile'},
-        read_aligner_params          => { via => 'processing_profile'},
-        read_trimmer_name            => { via => 'processing_profile'},
-        read_trimmer_version         => { via => 'processing_profile'},
-        read_trimmer_params          => { via => 'processing_profile'},
-        force_fragment               => { via => 'processing_profile'},
+        subject => {
+            is => 'Genome::Sample',
+            id_by => 'subject_id',
+            doc => 'the subject of alignment and variant detection is a single sample'
+        },
         dbsnp_model => {
             via => 'dbsnp_build',
             to => 'model',
@@ -104,7 +219,6 @@ class Genome::Model::ReferenceAlignment {
 
         reference_sequence_name      => { via => 'reference_sequence_build', to => 'name' },
         annotation_reference_name    => { via => 'annotation_reference_build', to => 'name' },
-        coverage_stats_params        => { via => 'processing_profile'},
         target_region_set_name => {
             is_many => 1, is_mutable => 1, is => 'Text', via => 'inputs', to => 'value_id', 
             where => [ name => 'target_region_set_name', value_class_name => 'UR::Value' ],

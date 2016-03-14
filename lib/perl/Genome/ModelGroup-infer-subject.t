@@ -12,7 +12,7 @@ use Test::More;
 
 use_ok('Genome::ModelGroup') or die;
 use_ok('Genome::Model::ReferenceAlignment') or die;
-use_ok('Genome::ProcessingProfile::ReferenceAlignment') or die;
+ok(Genome::ProcessingProfile::ReferenceAlignment->class, 'loaded ref-align processing-profile');
 
 my $taxon = Genome::Taxon->create(
     name => 'test taxon', 
