@@ -128,7 +128,14 @@ sub find_stats_tsv {
     my $m = $mb->{$c}->{model};
     my $model_name = $m->name;
     my $data_directory = $b->data_directory;
-    my $subject_name = $m->exome_model->tumor_model->subject->common_name;
+    my $subject_name;
+    if($m->wgs_model){
+        $subject_name = $m->wgs_model->tumor_model->subject->common_name;
+    }elsif($m->exome_model){
+        $subject_name = $m->exome_model->tumor_model->subject->common_name;
+    }else{
+        die $self->error_message("Unable to find WGS or EXOME models.");
+    }
     $subject_name =~ s/[\s,-]/_/g;
     my $subject_common_name = $b->subject->common_name;
     my $build_id = $b->id;
