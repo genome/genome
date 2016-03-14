@@ -73,7 +73,7 @@ sub execute {
         }
 
         my $max_running = $self->running_max;
-        if($run_as eq 'apipe-builder') {
+        if(Genome::Sys->user_has_role($run_as, 'production')) {
             $max_running *= 5;
         }
         my $running_count = $scheduled_count + builds_for($run_as, 'Running');

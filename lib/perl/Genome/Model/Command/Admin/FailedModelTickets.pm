@@ -56,13 +56,17 @@ sub execute {
 sub get_builds {
     my $self = shift;
 
+    my $production_role = Genome::Sys::User::Role->get(name => 'production');
+    my @prod_users = $production_role->users;
+    my @usernames = map $_->username, @prod_users;
+
     # Find cron models by failed build events
     my @builds;
     if ($self->include_failed) {
         $self->status_message('Looking for failed builds...');
         @builds = Genome::Model::Build->get(
             status => 'Failed',
-            run_by => 'apipe-builder',
+            'model.run_as' => \@usernames,
         );
     }
 
@@ -71,7 +75,7 @@ sub get_builds {
         $self->status_message('Looking for unstartable builds...');
         my @unstartable_builds = Genome::Model::Build->get(
             status => 'Unstartable',
-            run_by => 'apipe-builder',
+            'model.run_as' => \@usernames,
         );
         @builds = (@builds, @unstartable_builds);
     }

@@ -77,6 +77,30 @@ subtest change_rollback_removes_symlink_for_create_symlink_and_log_change => sub
     return 1;
 };
 
+subtest 'user roles' => sub {
+    plan tests => 4;
+
+    my $test_user = Genome::Sys::User->__define__(
+        username => 'user-for-testing-Sys.t',
+        email => join('@', 'testing-for-Sys.t', Genome::Config::get('email_domain')),
+    );
+    my $current_user = Genome::Sys->current_user;
+
+    my $test_role = Genome::Sys::User::Role->__define__( name => 'role-for-testing-Sys.t' );
+    Genome::Sys::User::RoleMember->__define__(role => $test_role, user => $test_user);
+    Genome::Sys::User::RoleMember->__define__(role => $test_role, user => $current_user);
+
+    my $other_test_role = Genome::Sys::User::Role->__define__( name => 'another-role-for-testing-Sys.t' );
+
+    for my $user ($test_user, $current_user) {
+        ok(Genome::Sys->user_has_role($user->username, $test_role->name), 'user has role');
+        ok(
+            !Genome::Sys->user_has_role($user->username, $other_test_role->name),
+            'user does not have another role'
+        );
+    }
+};
+
 subtest test_sudo_username => sub {
     plan tests => 4;
 
@@ -292,6 +316,7 @@ subtest create_symlink => sub {
             qr($expected_error),
             'symlink() failing throws an exception';
     };
+
 };
 
 done_testing();

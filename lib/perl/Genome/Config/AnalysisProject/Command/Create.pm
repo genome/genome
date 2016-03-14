@@ -100,7 +100,7 @@ sub _resolve_properties_for_environment {
         }
         when ('production') {
             return (
-                run_as => 'apipe-builder',
+                run_as => 'prod-builder',
                 is_cle => 0,
             );
         }
