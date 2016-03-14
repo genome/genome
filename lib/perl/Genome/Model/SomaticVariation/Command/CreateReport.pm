@@ -271,12 +271,30 @@ sub add_suffix {
     }
 }
 
+
+
 #read in the file, output a cleaned-up version
 sub clean_file {
     my ($self, $file, $directory) = @_;
 
-    return $file if !-s $file;
-    
+    my $outfile_path = $self->result_file_path(
+        input_file_path => $file,
+        suffix => 'clean',
+        directory => $directory,
+    );
+    if (-s $file) {
+        my $tempfile_path = $self->_deduplicate_var_file($file);
+        Genome::Sys->shellcmd( cmd => "joinx sort -i $tempfile_path -o $outfile_path" );
+    } else {
+        Genome::Sys->shellcmd( cmd => "touch $outfile_path" );
+    }
+    return $outfile_path;
+}
+
+sub _deduplicate_var_file {
+    my $self = shift;
+    my $file = shift;
+
     my %dups;
 
     my ($tempfile, $tempfile_path) = Genome::Sys->create_temp_file();
@@ -287,12 +305,12 @@ sub clean_file {
         if ($ref =~ /\//) {
             ( $ref, $var ) = split(/\//, $ref);
         }
-
+        
         $ref =~ s/0/-/g;
         $var =~ s/0/-/g;
         $ref =~ s/\*/-/g;
         $var =~ s/\*/-/g;
-
+        
         my @vars = ($var);
         unless ($ref =~ /-/ || $var =~ /-/) { #fixiub doesn't handle indels
             @vars = fix_IUB($ref, $var);
@@ -307,17 +325,9 @@ sub clean_file {
     }
     close($tempfile);
     close($infile);
-
-    my $outfile_path = $self->result_file_path(
-        input_file_path => $file,
-        suffix => 'clean',
-        directory => $directory,
-    );
-    Genome::Sys->shellcmd( cmd => "joinx sort -i $tempfile_path -o $outfile_path" );
-
-    return $outfile_path;
+    
+    return $tempfile_path;
 }
-
 
 sub get_site_hash  {
     my $self = shift;
