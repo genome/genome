@@ -304,6 +304,12 @@ sub run_filter {
     } else {
         $self->debug_message('Running BAM Readcounts...');
 
+        #Check for an empty variant file
+        if(-z $self->variant_file) {
+            $self->warning_message("Variant file is empty. Returning.");
+            return 1;
+        }
+
         #First, need to create a variant list file to use for generating the readcounts.
         my $input = Genome::Sys->open_file_for_reading($self->variant_file) or
           die $self->error_message("Unable to open " . $self->variant_file . ".");
