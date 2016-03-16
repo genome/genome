@@ -19,7 +19,7 @@ sub generate {
     my $aligner_name = ucfirst($tree->{action}->[0]->{name});
 
     #Make a workflow with its input and output connectors
-    my $input_properties = ['instrument_data', 'reference_sequence_build', $class->_general_workflow_input_properties];
+    my $input_properties = [$class->_general_workflow_input_properties];
     my $tree_properties = ['name', 'params', 'version'];
     my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $aligner_name,
@@ -36,10 +36,10 @@ sub generate {
     );
     $workflow->add_operation($operation);
 
-    my $instrument_data = $input_data->{instrument_data};
+    my @instrument_data = map { $_->[0] } @$alignment_objects;
     my $lsf_resource_string = $command_class->lsf_resource_string_for_aligner_and_instrument_data(
         $aligner_name,
-        @$instrument_data
+        @instrument_data
     );
 
     $operation->lsf_resource($lsf_resource_string);
@@ -64,6 +64,23 @@ sub generate {
         );
         push @$inputs, ( 'm_' . $input_property => $tree->{'action'}->[0]->{$input_property} );
     }
+
+    my $reference_input_name = $tree->{'action'}->[0]->{reference};
+    $workflow->connect_input(
+        input_property => 'reference_sequence_build',
+        destination => $operation,
+        destination_property => 'reference_sequence_build',
+        is_optional => 1,
+    );
+    push @$inputs, ( 'm_reference_sequence_build' => $input_data->{$reference_input_name} );
+
+    $workflow->connect_input(
+        input_property => 'instrument_data',
+        destination => $operation,
+        destination_property => 'instrument_data',
+        is_optional => 1,
+    );
+    push @$inputs, ( 'm_instrument_data' => \@instrument_data );
 
     #Connect output connectors to the operation
     $workflow->connect_output(
