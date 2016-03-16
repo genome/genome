@@ -105,10 +105,10 @@ sub execute {
 
         #Set a list of variant files to consider
         my %indel_files;
-        $self->get_indel_files_names(\%indel_files, $somatic_build_dir);
+        $self->get_indel_files_names(\%indel_files, $somatic_build);
 
         my %snv_files;
-        $self->get_snv_files_names(\%snv_files, $somatic_build_dir);
+        $self->get_snv_files_names(\%snv_files, $somatic_build);
 
         #Locate the final indel/snv results files and load into memory
         #For indels, use ~/effects/indels.hq.novel.tier1.v2.bed ?  (Or the annotated file?)
@@ -306,29 +306,23 @@ sub createSnvOutfile {
 sub get_indel_files_names {
     my $self        = shift;
     my $indel_files = shift;
-    my $build_dir   = shift;
-    $indel_files->{1}{file} = $build_dir . "/effects/indels.hq.novel.tier1.v2.bed";
-    $indel_files->{1}{tier} = "tier1";
-    $indel_files->{2}{file} = $build_dir . "/effects/indels.hq.novel.tier2.v2.bed";
-    $indel_files->{2}{tier} = "tier2";
-    $indel_files->{3}{file} = $build_dir . "/effects/indels.hq.novel.tier3.v2.bed";
-    $indel_files->{3}{tier} = "tier3";
-    $indel_files->{4}{file} = $build_dir . "/effects/indels.hq.novel.tier4.v2.bed";
-    $indel_files->{4}{tier} = "tier4";
+    my $build       = shift;
+    for my $tier (1..4) {
+        my $indel_file = $build->indels_effects_file("tier$tier");
+        $indel_files->{$tier}{file} = $indel_file;
+        $indel_files->{$tier}{tier} = "tier$tier";
+    }
 }
 
 sub get_snv_files_names {
     my $self      = shift;
     my $snv_files = shift;
-    my $build_dir = shift;
-    $snv_files->{1}{file} = $build_dir . "/effects/snvs.hq.novel.tier1.v2.bed";
-    $snv_files->{1}{tier} = "tier1";
-    $snv_files->{2}{file} = $build_dir . "/effects/snvs.hq.novel.tier2.v2.bed";
-    $snv_files->{2}{tier} = "tier2";
-    $snv_files->{3}{file} = $build_dir . "/effects/snvs.hq.novel.tier3.v2.bed";
-    $snv_files->{3}{tier} = "tier3";
-    $snv_files->{4}{file} = $build_dir . "/effects/snvs.hq.novel.tier4.v2.bed";
-    $snv_files->{4}{tier} = "tier4";
+    my $build     = shift;
+    for my $tier (1..4) {
+        my $snv_file = $build->snvs_effects_file("tier$tier");
+        $snv_files->{$tier}{file} = $snv_file;
+        $snv_files->{$tier}{tier} = "tier$tier";
+    }
 }
 
 sub get_variant_caller_results() {

@@ -348,4 +348,10 @@ sub snvs_annotated_variants_vcf_file {
     return $annotated_snvs_vcf_file;
 }
 
+sub indels_effects_file {
+    my $self = shift;
+    my $tier = shift;
+    return File::Spec->join($self->data_directory, 'effects', "indels.hq.$tier.bed");
+}
+
 1;

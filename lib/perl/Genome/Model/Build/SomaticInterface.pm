@@ -29,4 +29,16 @@ sub indels_detailed_variants_vcf_file {
     return File::Spec->join($self->data_directory, 'variants', 'indels.detailed.vcf.gz');
 }
 
+sub indels_effects_file {
+    my $self = shift;
+    my $tier = shift;
+    $self->fatal_message('Abstract: (indels_effects_file) needs to be defined on class (%s)', $self->class);
+}
+
+sub snvs_effects_file {
+    my $self = shift;
+    my $tier = shift;
+    return File::Spec->join($self->data_directory, 'effects', "snvs.hq.novel.$tier.v2.bed");
+}
+
 1;
