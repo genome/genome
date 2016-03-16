@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Model::Build::Command::SymlinkResults {
     is => ['Command::V2'],
-    has => [
+    has_input => [
         build => {
             is => 'Genome::Model::Build',
             shell_args_position => 1,
@@ -18,6 +18,12 @@ class Genome::Model::Build::Command::SymlinkResults {
             shell_args_position => 2,
             doc => 'The desired location under which to make a directory of symlink(s)',
         }
+    ],
+    has_transient_output => [
+        output_directory => {
+            is => 'DirectoryPath',
+            doc => 'The directory of symlinks that was created',
+        },
     ],
     doc => 'Creates symlinks to the results of a build.',
 };
@@ -35,14 +41,8 @@ sub execute {
     my $build = $self->build;
     my $destination = $self->destination;
 
-    Genome::Sys->validate_directory_for_read_write_access($destination);
-
-    unless($build->can('symlink_results')) {
-        $self->fatal_message('Symlinking results is unavailable for builds of type "%s"', $build->type_name);
-    }
-
     my $dir = $build->symlink_results($destination);
-    $self->status_message('Results for build %s symlinked to %s', $build->__display_name__, $dir);
+    $self->output_directory($dir);
 
     return 1;
 }

@@ -810,6 +810,26 @@ sub all_results {
     return uniq @results, @ancestors;
 }
 
+sub symlink_results {
+    my $self = shift;
+    my $destination = shift;
+
+    Genome::Sys->validate_directory_for_read_write_access($destination);
+
+    my $dir = $self->_symlink_results($destination);
+    $self->status_message('Results for build %s symlinked to %s', $self->__display_name__, $dir);
+
+    return $dir;
+}
+
+sub _symlink_results {
+    my $self = shift;
+    my $destination = shift;
+
+    #override in subclasses that implement this feature
+    $self->fatal_message('Symlinking results is unavailable for builds of type "%s"', $self->type_name);
+}
+
 
 sub symlinked_allocations {
     my $self = shift;

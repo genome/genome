@@ -73,7 +73,7 @@ sub reference_being_replaced_for_input {
     return;
 }
 
-sub symlink_results {
+sub _symlink_results {
     my $self = shift;
     my $destination = shift;
 
