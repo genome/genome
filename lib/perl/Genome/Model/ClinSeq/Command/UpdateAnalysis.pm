@@ -31,7 +31,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'When displaying samples, filter out those with certain sample types. [comma separate list]',
         },
         _ref_align_pp_id => {
-              is => 'Number',
+              is => 'Text',
               default => 'f5593bdfc0aa432b84e2bbdcc30c1c76',
         },
         ref_align_pp => {
@@ -40,7 +40,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Desired reference-alignment processing profile',
         },
         _wgs_somatic_variation_pp_id => {
-              is => 'Number',
+              is => 'Text',
               default => 'b359413673b040d2b29b7810e71c4882',
         },
         wgs_somatic_variation_pp => {
@@ -49,7 +49,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Desired WGS somatic-variation processing profile',
         },
         _exome_somatic_variation_pp_id => {
-              is => 'Number',
+              is => 'Text',
               default => '2762563',
         },
         exome_somatic_variation_pp => {
@@ -58,7 +58,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Desired Exome somatic-variation processing profile',
         },
         _rnaseq_pp_id => {
-              is => 'Number',
+              is => 'Text',
               default => '7381e45615374670877a4e16c97b4908',
         },
         rnaseq_pp => {
@@ -67,7 +67,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Desired rna-seq processing profile',
         },
         _differential_expression_pp => {
-              is => 'Number',
+              is => 'Text',
               default => '2760181',
         },
         differential_expression_pp => {
@@ -76,7 +76,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Desired differential-expression processing profile',
         },
         _clinseq_pp_id => {
-              is => 'Number',
+              is => 'Text',
               default => '33c5f2c5752e47eda3ea89dc8c47e1c0',
         },
         clinseq_pp => {
@@ -85,7 +85,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Desired clin-seq processing profile',
         },
         _reference_sequence_build_id => {
-              is => 'Number',
+              is => 'Text',
               default => '106942997',
         },
         reference_sequence_build => {
@@ -94,7 +94,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Desired reference sequence build',
         },
         _annotation_build_id => {
-              is => 'Number',
+              is => 'Text',
               default => 'd00a39c84382427fa0efdec3229e8f5f',
         },
         annotation_build => {
@@ -103,7 +103,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Desired reference annotation build',
         },
         _dbsnp_build_id => {
-              is => 'Number',
+              is => 'Text',
               default => '670086a1837548b5bd8abe7f240cd67d',
         },
         dbsnp_build => {
@@ -112,7 +112,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Desired dbSNP build',
         },
         _previously_discovered_variations_id => {
-              is => 'Number',
+              is => 'Text',
               default => '670086a1837548b5bd8abe7f240cd67d',
         },
         previously_discovered_variations => {
