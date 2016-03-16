@@ -81,12 +81,29 @@ sub _symlink_results {
     Genome::Sys->create_directory($top_directory);
 
     my $alignment = $self->merged_alignment_result;
-    my $alignment_dir = File::Spec->join($top_directory, 'alignments');
-    Genome::Sys->create_symlink($alignment->output_dir, $alignment_dir);
+    $self->_symlink_result($alignment, $top_directory, 'alignments');
 
     my $qc = $self->qc_result;
-    my $qc_dir = File::Spec->join($top_directory, 'qc');
-    Genome::Sys->create_symlink($qc->output_dir, $qc_dir);
+    $self->_symlink_result($qc, $top_directory, 'qc');
+
+    $self->_symlink_haplotype_caller_results($top_directory);
+
+    return $top_directory;
+}
+
+sub _symlink_result {
+    my $self = shift;
+    my $result = shift;
+    my $location = shift;
+    my $symlink_name = shift;
+
+    my $symlink_location = File::Spec->join($location, $symlink_name);
+    Genome::Sys->create_symlink($result->output_dir, $symlink_location);
+}
+
+sub _symlink_haplotype_caller_results {
+    my $self = shift;
+    my $top_directory = shift;
 
     my $variant_dir = File::Spec->join($top_directory, 'variants');
     Genome::Sys->create_directory($variant_dir);
@@ -95,11 +112,10 @@ sub _symlink_results {
         my $hc_basename = Genome::Utility::Text::sanitize_string_for_filesystem(
             join('-', $hc_result->intervals, $hc_result->id)
         );
-        my $hc_dir = File::Spec->join($variant_dir, $hc_basename);
-        Genome::Sys->create_symlink($hc_result->output_dir, $hc_dir);
+        $self->_symlink_result($hc_result, $variant_dir, $hc_basename);
     }
 
-    return $top_directory;
+    return $variant_dir;
 }
 
 sub _compare_output_files {
