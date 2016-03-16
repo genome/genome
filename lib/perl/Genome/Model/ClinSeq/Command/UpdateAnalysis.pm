@@ -41,7 +41,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _wgs_somatic_variation_pp_id => {
               is => 'Number',
-              default => '2762562',
+              default => 'b359413673b040d2b29b7810e71c4882',
         },
         wgs_somatic_variation_pp => {
               is => 'Genome::ProcessingProfile',
