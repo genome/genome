@@ -251,6 +251,13 @@ sub get_mutation_spectrum_sequence_context_result {
   my $final_name = shift;
   my $tier1_snvs = shift;
   my $sub_outdir2 = shift;
+
+  #Check for tier1 variants
+  if(-z $tier1_snvs) {
+      $self->status_message("Tier1 SNVs file empty. Skipping mutation spectrum" .
+                            "sequence context for tier1.");
+      return;
+  }
   my $somvar_build = $self->somvar_build;
   my $reference_sequence_build = $somvar_build->tumor_model->reference_sequence_build;
   my $reference_fasta_path = $reference_sequence_build->full_consensus_path('fa');
