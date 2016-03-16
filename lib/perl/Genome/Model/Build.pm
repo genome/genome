@@ -21,6 +21,9 @@ use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 use Genome::Utility::Vcf;
 
+use Ptero::HTTP qw();
+use Ptero::Statuses qw();
+
 require Scope::Guard;
 
 class Genome::Model::Build {
@@ -2626,6 +2629,18 @@ sub _heartbeat {
         return %heartbeat;
     }
 
+    my $running_lsf_job = $self->_get_running_master_lsf_job;
+    if($running_lsf_job) {
+        return $self->_workflow_heartbeat(%heartbeat);
+    } else {
+        return $self->_ptero_heartbeat(%heartbeat);
+    }
+}
+
+sub _workflow_heartbeat {
+    my $self = shift;
+    my %heartbeat = @_;
+
     my @wf_instances = ($self->newest_workflow_instance, $self->child_workflow_instances);
     my @wf_instance_execs = map { $_->current } @wf_instances;
 
@@ -2653,8 +2668,7 @@ sub _heartbeat {
             next WF;
         }
 
-        my $bjobs_output = qx(bjobs -l $lsf_job_id 2> /dev/null | tr '\\n' '\\0' | sed -r -e 's/\\x0\\s{21}//g' -e 's/\\x0/\\n\\n/g');
-        chomp $bjobs_output;
+        my $bjobs_output = $self->collect_bjobs_output($lsf_job_id);
         unless($bjobs_output) {
             $heartbeat{message} = "Expected bjobs (LSF ID: $lsf_job_id) output but received none.";
             last WF;
@@ -2694,21 +2708,11 @@ sub _heartbeat {
             $heartbeat{message} = 'Expected execution host.';
             last WF;
         }
-        my $ps_cmd = "ssh $execution_host ps -o pid= -o stat= -p " . join(" -p ", @pids) . ' 2> /dev/null';
-        my @ps_output = qx($ps_cmd);
-        chomp(@ps_output);
 
-        if (@ps_output != @pids) {
-            $heartbeat{message} = 'Expected ps output for ' . @pids . ' PIDs (' . $execution_host . ': ' . join(', ', @pids) . ').';
+        my $pid_error = $self->check_for_pid_heartbeat_errors($execution_host, @pids);
+        if ($pid_error) {
+            $heartbeat{message} = $pid_error;
             last WF;
-        }
-
-        for my $ps_output (@ps_output) {
-            my ($stat) = $ps_output =~ /\d+\s+(.*)/;
-            unless($stat =~ /^(R|S)/) {
-                $heartbeat{message} = 'Expected PID to be in a R or S stat.';
-                last WF;
-            }
         }
 
         my @parents = grep { $_->status eq 'running' } grep { defined($_->parent_execution_id) and $_->parent_execution_id eq $wf_instance_exec_id } @wf_instances;
@@ -2717,21 +2721,12 @@ sub _heartbeat {
         }
 
         my $output_file = $wf_instance_exec->stdout;
-        my $output_stat = stat($output_file);
-        my $elapsed_mtime_output_file = time - $output_stat->mtime;
         my $error_file = $wf_instance_exec->stderr;
-        my $error_stat = stat($error_file);
-        my $elapsed_mtime_error_file = time - $error_stat->mtime;
         my $op_class = $wf_instance_exec->operation_instance->operation_type->command_class_name;
-        my $hour = 3600;
-        my $max_elapsed_time = ($op_class->can('max_elapsed_log_time')) ? $op_class->max_elapsed_log_time : 48 * $hour;
-        if (($elapsed_mtime_output_file > $max_elapsed_time) && ($elapsed_mtime_error_file > $max_elapsed_time)) {
-            my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/$hour);
-            my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/$hour);
-            my $max_elapsed_time_hours = int($max_elapsed_time/$hour);
-            my $m = "Process is running BUT output and/or error file have not been modified in %d+ hours (%d hours, %d hours):\nOutput File: %s\nError File: %s";
-            $heartbeat{message} = sprintf($m, $max_elapsed_time_hours, $elapsed_mtime_output_file_hours, $elapsed_mtime_error_file_hours, $output_file, $error_file);
-
+        my $max_elapsed_time = ($op_class->can('max_elapsed_log_time')) ? $op_class->max_elapsed_log_time : undef;
+        my $output_error = $self->check_for_output_heartbeat_errors($output_file, $error_file, $max_elapsed_time);
+        if ($output_error) {
+            $heartbeat{message} = $output_error;
             last WF;
         }
     }
@@ -2742,6 +2737,95 @@ sub _heartbeat {
     }
 
     return %heartbeat;
+}
+
+sub _ptero_heartbeat {
+    my $self = shift;
+    my %heartbeat = @_;
+
+    my $proxy = $self->ptero_workflow_proxy;
+    unless ($proxy) {
+        $heartbeat{message} = 'No PTero workflow found.';
+        return %heartbeat;
+    }
+
+    unless ($proxy->is_running) {
+        $heartbeat{message} = 'PTero workflow is not running.';
+        return %heartbeat;
+    }
+
+    my $executions = $proxy->get_all_executions;
+    my @not_succeeded_executions = grep { !Ptero::Statuses::is_success($_->{status}) } @$executions;
+    my @detailed_executions = map { Ptero::Proxy::Workflow::Execution->new(url => $_->{details_url}) } @not_succeeded_executions;
+
+    EXECUTION: for my $e_proxy (@detailed_executions) {
+        my $e = $e_proxy->concrete_execution;
+        next EXECUTION unless $e->{data} && keys %{$e->{data}};
+        next EXECUTION unless $e->{data}{jobUrl} =~ m!^http://lsf!; #only care about real executions of real steps
+
+        if( Ptero::Statuses::is_abnormal($e->{status}) ) {
+            $heartbeat{message} = sprintf('Abnormal status "%s" reported for Ptero execution %s.', $e->{status}, $e->{name});
+            last EXECUTION;
+        }
+
+        my $lsf_info = Ptero::HTTP::make_request_and_decode_response(method => 'GET', url => $e->{data}{jobUrl});
+        my $lsf_job_id = $lsf_info->{lsfJobId};
+
+        my $bjobs_output = $self->collect_bjobs_output($lsf_job_id);
+        unless($bjobs_output) {
+            $heartbeat{message} = "Expected bjobs (LSF ID: $lsf_job_id) output but received none.";
+            last EXECUTION;
+        }
+
+        my @pids = $self->pids_from_bjobs_output($bjobs_output);
+        my $execution_host = $self->execution_host_from_bjobs_output($bjobs_output);
+        unless ($execution_host) {
+            $heartbeat{message} = 'Expected execution host.';
+            last EXECUTION;
+        }
+
+        my $error = $self->check_for_pid_heartbeat_errors($execution_host, @pids);
+        if ($error) {
+            $heartbeat{message} = $error;
+            last EXECUTION;
+        }
+
+        if($e_proxy->child_workflow_urls) {
+            my $children = $e_proxy->child_workflow_proxies;
+            if ( grep { $_->is_running } @$children ) {
+                next EXECUTION; #let the child determine the heartbeat status
+            }
+        }
+
+        my $command = $lsf_info->{command};
+        my ($command_class) = $command =~ /--command-class (\S+) /;
+
+        my $stdout = $e->{data}{stdout_log};
+        my $stderr = $e->{data}{stderr_log};
+        my $max_elapsed_time = ($command_class && $command_class->can('max_elapsed_log_time')) ? $command_class->max_elapsed_log_time : undef;
+        my $output_error = $self->check_for_output_heartbeat_errors($stdout, $stderr, $max_elapsed_time);
+        if ($output_error) {
+            $heartbeat{message} = $output_error;
+            last EXECUTION;
+        }
+    }
+
+    unless ($heartbeat{message}) {
+        $heartbeat{message} = 'OK. PTero workflow seems to be running!';
+        $heartbeat{is_ok} = 1;
+    }
+
+    return %heartbeat;
+}
+
+sub collect_bjobs_output {
+    my $self = shift;
+    my $lsf_job_id = shift;
+
+    my $bjobs_output = qx(bjobs -l $lsf_job_id 2> /dev/null | tr '\\n' '\\0' | sed -r -e 's/\\x0\\s{21}//g' -e 's/\\x0/\\n\\n/g');
+    chomp $bjobs_output;
+
+    return $bjobs_output;
 }
 
 sub status_from_bjobs_output {
@@ -2792,6 +2876,52 @@ sub execution_host_from_bjobs_output {
         $execution_host = undef;
     }
     return $execution_host;
+}
+
+sub check_for_pid_heartbeat_errors {
+    my $self = shift;
+    my $execution_host = shift;
+    my @pids = @_;
+
+    my $ps_cmd = "ssh $execution_host ps -o pid= -o stat= -p " . join(" -p ", @pids) . ' 2> /dev/null';
+    my @ps_output = qx($ps_cmd);
+    chomp(@ps_output);
+
+    if (@ps_output != @pids) {
+        return 'Expected ps output for ' . @pids . ' PIDs (' . $execution_host . ': ' . join(', ', @pids) . ').';
+    }
+
+    for my $ps_output (@ps_output) {
+        my ($stat) = $ps_output =~ /\d+\s+(.*)/;
+        unless($stat =~ /^(R|S)/) {
+            return 'Expected PID to be in a R or S stat.';
+        }
+    }
+
+    return;
+}
+
+sub check_for_output_heartbeat_errors {
+    my $self = shift;
+    my $output_file = shift;
+    my $error_file = shift;
+
+    my $hour = 3600;
+    my $max_elapsed_time = shift || (48 * $hour);
+
+    my $output_stat = stat($output_file);
+    my $elapsed_mtime_output_file = time - $output_stat->mtime;
+    my $error_stat = stat($error_file);
+    my $elapsed_mtime_error_file = time - $error_stat->mtime;
+    if (($elapsed_mtime_output_file > $max_elapsed_time) && ($elapsed_mtime_error_file > $max_elapsed_time)) {
+        my $elapsed_mtime_output_file_hours = int($elapsed_mtime_output_file/$hour);
+        my $elapsed_mtime_error_file_hours = int($elapsed_mtime_error_file/$hour);
+        my $max_elapsed_time_hours = int($max_elapsed_time/$hour);
+        my $m = "Process is running BUT output and/or error file have not been modified in %d+ hours (%d hours, %d hours):\nOutput File: %s\nError File: %s";
+        return sprintf($m, $max_elapsed_time_hours, $elapsed_mtime_output_file_hours, $elapsed_mtime_error_file_hours, $output_file, $error_file);
+    }
+
+    return;
 }
 
 sub is_current {
