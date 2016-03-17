@@ -113,9 +113,11 @@ sub _ptero_status_color {
 
 sub _format_line {
     my $self = shift;
-    my ($stage, $status, $started, $duration, $pindex, $indent, $name) = @_;
+    my ($id, $stage, $status, $started, $duration, $pindex, $indent, $name) = @_;
 
-    return join("  ", justify($self->_color_dim($stage), 'right', 8),
+    return join("  ",
+        justify($self->_color_dim($id), 'right', 10),
+        justify($self->_color_dim($stage), 'right', 8),
         justify($self->_ptero_status_color($status), 'right', 9),
         justify($self->_color_dim("$started"), 'right', 19),
         justify($duration, 'right', 13),
@@ -128,6 +130,7 @@ sub _write_ptero_header {
     my $handle = shift;
 
     $handle->print($self->_color_dim(strip_color($self->_format_line(
+        'ID',
         'STAGE',
         'STATUS',
         'STARTED',
@@ -145,6 +148,7 @@ sub _write_ptero_workflow {
     my $execution = $self->_top_level_dag($workflow)->{executions}->{$color};
     if ($execution) {
         $handle->print($self->_format_line(
+            '',
             '',
             $execution->{status},
             $execution->datetime_started,
@@ -179,6 +183,7 @@ sub _write_ptero_spawned_workflow {
     my $execution = $workflow->{executions}->{$color};
     if ($execution) {
         $handle->print($self->_format_line(
+            '',
             'spawn',
             $execution->{status},
             $execution->datetime_started,
@@ -264,6 +269,7 @@ sub _write_ptero_dag_details {
         my $execution = $method->{executions}->{$color};
         $handle->print($self->_format_line(
             '',
+            '',
             $execution->{status},
             $execution->datetime_started,
             $execution->duration,
@@ -344,6 +350,7 @@ sub _write_ptero_command_details_shortcut {
 
     if ($execution) {
         $handle->print($self->_format_line(
+            $execution->{id},
             'shortcut',
             $execution->{status},
             $execution->datetime_started,
@@ -369,6 +376,7 @@ sub _write_ptero_command_details_execute {
 
     if ($execution) {
         $handle->print($self->_format_line(
+            $execution->{id},
             'execute',
             $execution->{status},
             $execution->datetime_started,
@@ -389,7 +397,7 @@ sub _write_ptero_command_details_unstarted {
         $parallel_by_str = $self->_color_pair("parallel-by", $task->{parallel_by});
     }
 
-    $handle->printf("%s%s%s\n", justify($parallel_by_str, 'center', 66), $INDENTATION_STR x $indent, $task_name);
+    $handle->printf("%s%s%s\n", justify($parallel_by_str, 'center', 78), $INDENTATION_STR x $indent, $task_name);
     return;
 }
 
@@ -407,7 +415,7 @@ sub _write_ptero_task_summary {
             $statuses{$status});
     }
 
-    $handle->printf("%s%s%s\n", justify($status_str, 'center', 66), $INDENTATION_STR x $indent, $task_name);
+    $handle->printf("%s%s%s\n", justify($status_str, 'center', 78), $INDENTATION_STR x $indent, $task_name);
     return;
 }
 
