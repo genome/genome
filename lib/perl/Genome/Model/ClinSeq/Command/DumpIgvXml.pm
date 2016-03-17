@@ -133,16 +133,22 @@ sub get_levels {
 
 sub determine_genome_build {
   my $self = shift;
-  my $ref_build_name1 = shift;
-  my $genome_build = "";
-  my $b37_build =
-    Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
-  my $ref_build1 = Genome::Model::Build::ReferenceSequence->get(name => $ref_build_name1);
-  if($b37_build->is_compatible_with($ref_build1)) {
-    return "b37";
+  my $supplied_build_name = shift;
+
+  my $canonical_b37_build = Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
+  my $canonical_b38_build = Genome::Model::Build::ReferenceSequence->get(name => "GRC-human-build38");
+  my $supplied_build = Genome::Model::Build::ReferenceSequence->get(name => $supplied_build_name);
+  my $igv_named_build = '';
+  if($canonical_b37_build->is_compatible_with($supplied_build)) {
+    $igv_named_build = "b37";
+  } elsif ($canonical_b38_build->is_compatible_with($supplied_build)){
+    $igv_named_build = "hg38";
+  }
+  if ($igv_named_build){
+    return($igv_named_build);
   } else {
     die $self->error_message("Unrecognized reference genome name " .
-      "($ref_build_name1) supplied to DumpIgvXml.pm");
+      "($supplied_build_name) supplied to DumpIgvXml.pm");
   }
 }
 

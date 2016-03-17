@@ -181,13 +181,13 @@ sub execute {
     #Hardcoded list of allowed reference builds and their mappings to names used in IGV
     my $genome_build = "";
     my $gene_track_name = "";
-    my $starting_locus = "";
+    my $starting_locus = "12:25398182-25398361";
     if ($reference_genome_name eq 'GRCh37-lite-build37'){
       $genome_build = "b37";
-      $starting_locus = "12:25398182-25398361";
     }elsif($reference_genome_name eq 'UCSC-mouse-buildmm9'){
       $genome_build = "mm9";
-      $starting_locus = "12:25398182-25398361";
+    }elsif($reference_genome_name eq 'GRC-human-build38'){
+      $genome_build = "hg38";
     }else{
       $self->error_message("Unrecognized reference genome name ($reference_genome_name) supplied to DumpIgvXml.pm");
       return;
@@ -271,11 +271,6 @@ sub execute {
       my $outfile = IO::File->new(">$outfile_name");
       $outfile->print($final_xml);
     }
-
-
-
-
-
 
     #Copy any review files specified to new output build dir
     if ($self->review_files){
