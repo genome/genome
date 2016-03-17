@@ -7,7 +7,7 @@ id	name	common_name	species_name	upn	gender	ethnicity	race
 
 EXAMINE DESIRED PROCESSING PROFILES
 reference-alignment: November 2014 Reference Alignment Candidate 1 <f5593bdfc0aa432b84e2bbdcc30c1c76>
-wgs somatic-variation: Oct 2012 Default Somatic Variation WGS <2762562>
+wgs somatic-variation: Oct 2012 Default Somatic Variation WGS -- DV2 filter params bug fix <b359413673b040d2b29b7810e71c4882>
 exome somatic-variation: Oct 2012 Default Somatic Variation Exome <2762563>
 rna-seq: December 2014 Firststrand RNA-seq Candidate 1 <7381e45615374670877a4e16c97b4908>
 differential-expression: cuffcompare/cuffdiff 2.0.2 protein_coding only <2760181>

@@ -22,7 +22,7 @@ use_ok('Genome::Model::ClinSeq::Command::UpdateAnalysis') or die;
 use_ok('Genome::Model::ClinSeq::TestData');
 
 #Define the test where expected results are stored
-my $expected_output_dir = Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-UpdateAnalysis/2015-08-06/";
+my $expected_output_dir = Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-UpdateAnalysis/2016-03-17/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
