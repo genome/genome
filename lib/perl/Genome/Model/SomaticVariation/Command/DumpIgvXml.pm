@@ -182,16 +182,10 @@ sub execute {
     my $genome_build = "";
     my $gene_track_name = "";
     my $starting_locus = "12:25398182-25398361";
-    if ($reference_genome_name eq 'GRCh37-lite-build37'){
-      $genome_build = "b37";
-    }elsif($reference_genome_name eq 'UCSC-mouse-buildmm9'){
-      $genome_build = "mm9";
-    }elsif($reference_genome_name eq 'GRC-human-build38'){
-      $genome_build = "hg38";
-    }else{
-      $self->error_message("Unrecognized reference genome name ($reference_genome_name) supplied to DumpIgvXml.pm");
-      return;
-    }
+    my $genome_build =
+        Genome::Model::Tools::Analysis::ResolveIgvReferenceName::resolve_igv_reference_name($reference_genome_name) ||
+        die $self->error_message("Unrecognized reference genome name " .
+                                 "($reference_genome_name) supplied to DumpIgvXml.pm");
     $gene_track_name = $genome_build . "_genes";
     
     my $panel_count = 1;
