@@ -4,6 +4,7 @@ use warnings;
 use strict;
 
 use Genome;
+use Genome::Model::Build::Command::DetermineError::PteroHelper;
 use Genome::Model::Build::Command::DetermineError::WorkflowHelper;
 
 use IPC::System::Simple qw(capture);
@@ -168,14 +169,26 @@ sub handle_failed {
     $self->error_type("Failed");
 
     try {
-        my $workflow = $self->build->newest_workflow_instance;
-        $self->handle_failed_from_logs($workflow);
-    } catch {
-        my $error_log = find_error_log($self->build->log_directory);
-        if (defined $error_log)  {
-            $self->set_status_from_log_file($error_log);
+        if (my $workflow = $self->build->newest_workflow_instance) {
+            $self->handle_failed_from_logs($workflow);
+        } elsif (my $ptero_proxy = $self->build->ptero_workflow_proxy) {
+            $self->handle_failed_from_ptero($ptero_proxy);
+        } else {
+            $self->_search_error_logs;
         }
+    } catch {
+        die $_;
+        $self->_search_error_logs;
     };
+}
+
+sub _search_error_logs {
+    my $self = shift;
+
+    my $error_log = find_error_log($self->build->log_directory);
+    if (defined $error_log)  {
+        $self->set_status_from_log_file($error_log);
+    }
 }
 
 sub find_error_log {
