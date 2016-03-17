@@ -2754,8 +2754,8 @@ sub _ptero_heartbeat {
         return %heartbeat;
     }
 
-    my $executions = $proxy->get_all_executions;
-    my @not_succeeded_executions = grep { !Ptero::Statuses::is_success($_->{status}) } @$executions;
+    my @executions = $self->_get_all_ptero_executions($proxy);
+    my @not_succeeded_executions = grep { !Ptero::Statuses::is_success($_->{status}) } @executions;
     my @detailed_executions = map { Ptero::Proxy::Workflow::Execution->new(url => $_->{details_url}) } @not_succeeded_executions;
 
     EXECUTION: for my $e_proxy (@detailed_executions) {
@@ -2816,6 +2816,22 @@ sub _ptero_heartbeat {
     }
 
     return %heartbeat;
+}
+
+sub _get_all_ptero_executions {
+    my $self = shift;
+    my $workflow = shift;
+
+    my @executions = @{$workflow->workflow_executions};
+    my @child_executions;
+
+    for my $e (@executions) {
+        for my $child (@{$e->child_workflow_proxies}) {
+            push @child_executions, $self->_get_all_ptero_executions($child);
+        }
+    }
+
+    return (@executions, @child_executions);
 }
 
 sub collect_bjobs_output {
