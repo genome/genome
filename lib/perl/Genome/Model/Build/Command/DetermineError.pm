@@ -382,21 +382,6 @@ sub workflow_visitor {
     }
 }
 
-sub set_if_defined {
-    my ($self, $field, $error, $accessor_base) = @_;
-
-    # prefer $accessor_base then $inferred_accessor
-    my $inferred_accessor = "inferred_$accessor_base";
-    my $value = $error->$accessor_base;
-    unless ($value) {
-        $value = $error->$inferred_accessor;
-    }
-
-    if ($value) {
-        $self->$field($value);
-    }
-}
-
 sub handle_unstartable {
     my $self = shift;
 
