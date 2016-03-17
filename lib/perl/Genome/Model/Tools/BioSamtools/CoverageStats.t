@@ -12,8 +12,7 @@ if ($] < 5.010) {
 }
 plan tests => 6;
 
-# run_workflow_lsf uses this environment variable to allow it to run inline.
-$ENV{NO_LSF} = 1;
+Genome::Config::set_env('workflow_builder_backend', 'inline');
 
 map { print STDERR $_ . " => " . $ENV{$_} . "\n" } keys %ENV;
 

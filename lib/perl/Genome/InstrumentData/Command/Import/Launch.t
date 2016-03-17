@@ -1,7 +1,6 @@
 #!/usr/bin/env genome-perl
 
 BEGIN {
-    $ENV{NO_LSF} = 1;
     $ENV{UR_DBI_NO_COMMIT} = 1;
     $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 }
@@ -16,6 +15,8 @@ require Genome::Utility::Test;
 use List::Util;
 use Test::More tests => 7;
 use Test::Exception;
+
+Genome::Config::set_env('workflow_builder_backend', 'inline');
 
 my $class = 'Genome::InstrumentData::Command::Import::Launch';
 use_ok($class) or die;
