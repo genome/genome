@@ -19,10 +19,11 @@ sub generate {
     my $aligner_name = ucfirst($tree->{action}->[0]->{name});
 
     #Make a workflow with its input and output connectors
-    my $input_properties = ['instrument_data', 'reference_sequence_build', $class->_general_workflow_input_properties];
+    my $input_properties = [$class->_general_workflow_input_properties];
     my $tree_properties = ['name', 'params', 'version'];
+    my $dag_number = $class->next_counter_value;
     my $workflow = Genome::WorkflowBuilder::DAG->create(
-        name => $aligner_name,
+        name => join(' ', $aligner_name, $dag_number),
     );
     my $workflows = {};
     map { $workflows->{$_} = $workflow } @$alignment_objects;
@@ -36,10 +37,10 @@ sub generate {
     );
     $workflow->add_operation($operation);
 
-    my $instrument_data = $input_data->{instrument_data};
+    my @instrument_data = map { $_->[0] } @$alignment_objects;
     my $lsf_resource_string = $command_class->lsf_resource_string_for_aligner_and_instrument_data(
         $aligner_name,
-        @$instrument_data
+        @instrument_data
     );
 
     $operation->lsf_resource($lsf_resource_string);
@@ -56,20 +57,40 @@ sub generate {
         push @$inputs, ( 'm_' . $input_property => $input_data->{$input_property} );
     }
     for my $input_property (@$tree_properties) {
+        my $op_input_name = $class->_operation_specific_name($workflow, $input_property);
         $workflow->connect_input(
-            input_property => $input_property,
+            input_property => $op_input_name,
             destination => $operation,
             destination_property => $input_property,
             is_optional => 1,
         );
-        push @$inputs, ( 'm_' . $input_property => $tree->{'action'}->[0]->{$input_property} );
+        push @$inputs, ( 'm_' . $op_input_name => $tree->{'action'}->[0]->{$input_property} );
     }
+
+    my $reference_input_name = $tree->{'action'}->[0]->{reference};
+    my $op_reference_input_name = $class->_operation_specific_name($workflow, 'reference_sequence_build');
+    $workflow->connect_input(
+        input_property => $op_reference_input_name,
+        destination => $operation,
+        destination_property => 'reference_sequence_build',
+        is_optional => 1,
+    );
+    push @$inputs, ( 'm_' . $op_reference_input_name => $input_data->{$reference_input_name} );
+
+    my $op_instrument_data_input_name = $class->_operation_specific_name($workflow, 'instrument_data');
+    $workflow->connect_input(
+        input_property => $op_instrument_data_input_name,
+        destination => $operation,
+        destination_property => 'instrument_data',
+        is_optional => 1,
+    );
+    push @$inputs, ( 'm_' . $op_instrument_data_input_name => \@instrument_data );
 
     #Connect output connectors to the operation
     $workflow->connect_output(
         source => $operation,
         source_property => 'result_id',
-        output_property => 'result_id',
+        output_property => $class->_operation_specific_name($workflow, 'result_id'),
     );
 
     if (exists $tree->{'action'}->[0]->{decoration}) {
@@ -117,6 +138,14 @@ sub _wire_object_workflow_to_master_workflow {
     }
 
     return 1;
+}
+
+sub _operation_specific_name {
+    my $class = shift;
+    my $op = shift;
+    my $name = shift;
+
+    return join('-', $name, $op->name);
 }
 
 1;

@@ -10,6 +10,7 @@ BEGIN {
 
 use Sub::Override;
 use Test::More;
+use Test::Deep qw(cmp_bag);
 use above "Genome";
 
 use Genome::Utility::Test;
@@ -99,11 +100,11 @@ my $clip_overlap_result_two_inst_data = construct_clip_overlap_result(
 );
 
 my $speedseq_result = construct_speedseq_result($ref, @two_instrument_data);
+my $second_speedseq_result = construct_speedseq_result($ref, @one_instrument_data);
 
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
     reference_sequence_build => $ref,
 );
-
 
 subtest 'simple alignments' => sub {
     my $log_directory = Genome::Sys->create_temp_directory();
@@ -197,6 +198,35 @@ subtest 'simple align_and_merge strategy' => sub {
     my @ad_result_ids = $ad->_result_ids;
     my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     is_deeply([$speedseq_result], [sort @ad_results], 'found speedseq result');
+    check_result_bam(@ad_results);
+};
+
+subtest 'simple align_and_merge strategy with multiple samples' => sub {
+    use Genome::InstrumentData::AlignmentResult::Merged::Speedseq;
+    my $gtmp_override = Sub::Override->new(
+        'Genome::InstrumentData::AlignmentResult::Merged::Speedseq::estimated_gtmp_for_instrument_data',
+        sub { return 1; },
+    );
+
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            instrument_data => \@three_instrument_data,
+            reference_sequence_build => $ref,
+            force_fragment => 0,
+            result_users => $result_users,
+        },
+        strategy => 'instrument_data both aligned to reference_sequence_build and merged using speedseq 0.0.3a-gms [sort_memory => 8] api v1',
+    );
+    isa_ok(
+        $ad,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple align_and_merge strategy'
+    );
+
+    ok($ad->execute, 'executed dispatcher for simple align_and_merge');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+    cmp_bag([$speedseq_result, $second_speedseq_result], [@ad_results], 'found speedseq results');
     check_result_bam(@ad_results);
 };
 
