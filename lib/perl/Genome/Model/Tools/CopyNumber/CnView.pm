@@ -356,7 +356,7 @@ sub get_ideogram {
   my $ideogram_map = {
     "36" => {"build" => $default_build36, "ideogram" => $clinseq_annotations_dir . "/hg18/ideogram/ChrBandIdeogram.tsv"},
     "37" => {"build" => $default_build37, "ideogram" => $clinseq_annotations_dir . "/hg19/ideogram/ChrBandIdeogram.tsv"},
-    "38" => {"build" => $default_build38, "ideogram" => $clinseq_annotations_dir . "/hg19/ideogram/ChrBandIdeogram.tsv"}
+    "38" => {"build" => $default_build38, "ideogram" => $clinseq_annotations_dir . "/hg38/ideogram/ChrBandIdeogram.tsv"}
   };
   while (my ($build, $properties) = each %$ideogram_map) {
     if ($user_reference_build->is_compatible_with($properties->{"build"})) {
