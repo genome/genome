@@ -364,7 +364,7 @@ sub get_ideogram {
     }
   }
   die $self->error_message("Specified reference build resolved from annotation " .
-    "build is not compatible with default build36 or build37");
+    "build is not compatible with default build 36, 37 or 38");
 }
 
 #####################################################################################################################################################################
