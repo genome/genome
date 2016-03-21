@@ -129,7 +129,6 @@ sub execute{
     my $clinseq_annotations_dir = $cancer_annotation_db->data_directory;
     my $annotation_data_dir=$annotation_build->data_directory;
     my $reference_sequence_build=$annotation_build->reference_sequence;
-    #my $ideogram_map = $self->create_ideogram_map($clinseq_annotations_dir);
     $ideogram_file ||= $self->get_ideogram($reference_sequence_build,
                                               $clinseq_annotations_dir);
     $self->status_message($ideogram_file . "\n");
