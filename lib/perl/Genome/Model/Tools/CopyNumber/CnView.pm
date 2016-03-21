@@ -265,7 +265,7 @@ sub execute{
 
   #die if the inputs are invalid
   unless ($inputs_are_good) {
-    die $self->error_message("error processing inputs!");
+    $self->fatal_message("error processing inputs!");
   }
 
   #Done checking inputs
@@ -363,7 +363,7 @@ sub get_ideogram {
       return $properties->{"ideogram"};
     }
   }
-  die $self->error_message("Specified reference build resolved from annotation " .
+  $self->fatal_message("Specified reference build resolved from annotation " .
     "build is not compatible with default build 36, 37 or 38");
 }
 
