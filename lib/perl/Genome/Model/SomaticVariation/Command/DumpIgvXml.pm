@@ -4,6 +4,7 @@ package Genome::Model::SomaticVariation::Command::DumpIgvXml;
 use strict;
 use warnings;
 use Genome;
+use Genome::Model::Tools::Analysis::ResolveIgvReferenceName;
 use Data::Dumper;
 use Term::ANSIColor qw(:constants);
 use File::Path;
