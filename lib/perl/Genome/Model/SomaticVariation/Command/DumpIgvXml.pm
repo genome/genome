@@ -180,7 +180,6 @@ sub execute {
     my $reference_genome_name = $rb_names[0];
     
     #Hardcoded list of allowed reference builds and their mappings to names used in IGV
-    my $genome_build = "";
     my $gene_track_name = "";
     my $starting_locus = "12:25398182-25398361";
     my $genome_build =
