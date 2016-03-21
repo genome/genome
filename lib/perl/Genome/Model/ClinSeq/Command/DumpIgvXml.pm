@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Utility::List;
+use Genome::Model::Tools::Analysis::ResolveIgvReferenceName;
 
 class Genome::Model::ClinSeq::Command::DumpIgvXml {
     is => ['Command::V2',
