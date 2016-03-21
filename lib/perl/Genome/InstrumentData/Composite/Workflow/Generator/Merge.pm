@@ -79,10 +79,18 @@ sub _wire_merge_operation_to_master_workflow {
             input_property => 'm_' . $property,
             destination => $merge,
             destination_property => $property,
+            is_optional => $class->_is_duplication_parameter($property),
         );
     }
 
     return 1;
+}
+
+sub _is_duplication_parameter {
+    my $class = shift;
+    my $param = shift;
+
+    return (index($param, 'duplication_handler') == 0);
 }
 
 sub _merge_workflow_input_properties {
