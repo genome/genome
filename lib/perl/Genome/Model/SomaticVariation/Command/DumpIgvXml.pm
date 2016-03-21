@@ -184,7 +184,7 @@ sub execute {
     my $starting_locus = "12:25398182-25398361";
     my $genome_build =
         Genome::Model::Tools::Analysis::ResolveIgvReferenceName::resolve_igv_reference_name($reference_genome_name) ||
-        die $self->error_message("Unrecognized reference genome name " .
+        $self->fatal_message("Unrecognized reference genome name " .
                                  "($reference_genome_name) supplied to DumpIgvXml.pm");
     $gene_track_name = $genome_build . "_genes";
     
