@@ -1,5 +1,10 @@
 #!/usr/bin/env genome-perl
 
+BEGIN {
+    $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} =1;
+    $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} =1;
+}
+
 use strict;
 use warnings;
 
@@ -23,12 +28,35 @@ my $library = Genome::Library->__define__(
 );
 ok($library, 'create library');
 
-subtest 'read1 or read2' => sub{
-    plan tests => 3;
+subtest 'separate reads' => sub{
+    plan tests => 7;
 
-    is(Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_read1_or_read2(77), 'read1', 'flag marked as read 1 is read1');
-    is(Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_read1_or_read2(0), 'read1', 'unmarked flag is read1');
-    is(Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_read1_or_read2(141), 'read2', 'flag marked as read 2 is read2');
+    my $read = [ 'read', 0 ];
+    my $read1 = ['read1', 8 ];
+    my $secondary = ['secondary', 320 ];
+    my $read2 = ['read2', 128 ];
+    my $supplementary = ['supplementary', 2048 ];
+
+    my @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read);
+    is_deeply(\@r, [$read, undef], 'separate single read w/o flag info');
+
+    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read1, $read1);
+    is_deeply(\@r, [$read1, undef], 'separate reads when given 2 read1s');
+
+    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read1, $secondary);
+    is_deeply(\@r, [$read1, undef], 'separate reads when given read1 and secondary');
+
+    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($secondary);
+    is_deeply(\@r, [$secondary, undef], 'separate secondary read');
+
+    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($supplementary);
+    is_deeply(\@r, [undef, undef], 'separate supplementary read');
+
+    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($secondary, $supplementary, $read1, $read2);
+    is_deeply(\@r, [$secondary, $read2], 'separate secondary, supplementary, read1, and read2');
+
+    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read2);
+    is_deeply(\@r, [undef, $read2], 'separate read2');
 
 };
 

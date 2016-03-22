@@ -182,8 +182,8 @@ sub _separate_reads {
     my (@read1s, @read2s);
     for my $read ( @_ ) {
         # Remove Supplementary 2048 0x800
-        next if !$read->[1] & 0x800;
-        if ( $_[0] & 0x80 ) {
+        next if $read->[1] & 0x800;
+        if ( $read->[1] & 0x80 ) {
             # read 2
             push @read2s, $read; # flagged read2
         }
