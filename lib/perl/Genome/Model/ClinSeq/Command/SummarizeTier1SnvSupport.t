@@ -73,10 +73,10 @@ foreach my $pdf (@pdf_list) {
 #Diff the result, if there are differences, store the new result in /tmp for examination
 my $temp_dir = "/tmp/last-summarize-tier1-snv-support/";
 my @diff     = `diff -x '*.pdf' -x '*.R' -x '*.stderr' -x '*.stdout' -r $expected_out $output_dir`;
-is(scalar(@diff), 0, "only expected differences")
-    or do {
+my $is = is(scalar(@diff), 0, "only expected differences");
+unless ($is) {
     for (@diff) {diag($_)}
     Genome::Sys->shellcmd(cmd => "rm -fr $temp_dir");
     Genome::Sys->shellcmd(cmd => "mv $output_dir $temp_dir");
-    };
+};
 

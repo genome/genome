@@ -33,12 +33,12 @@ ok($command->execute, "execution succeeded");
 # verify results
 
 my @differences = `diff -r $expected_output_dir $actual_output_dir`;
-is(scalar(@differences), 37, "only expected differences found: diff $expected_output_dir $actual_output_dir")
-    or do {
+my $is = is(scalar(@differences), 37, "only expected differences found: diff $expected_output_dir $actual_output_dir");
+unless ($is) {
     #print "DIFF:\n", @differences;
     # un-comment these to keep the output for debugging
     #my $debug_location = "/tmp/last-output-make-circos-plot-$$";
     #system "mv $actual_output_dir $debug_location";
-    };
+}
 
 #TODO create tests for WGS only, WGS+Exome, and WGS+RNA. now this only tests for all three

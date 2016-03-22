@@ -42,11 +42,8 @@ $log->close();
 ok(-e $log_file, "Wrote message file from generate-sciclone-plots to a log file: $log_file");
 
 my @diff = `diff -r -x '*.log.txt' $expected_output_dir $temp_dir`;
-ok(
-    @diff == 0, "Found only expected number of differences between expected
-  results and test results"
-    )
-    or do {
+my $ok = ok(@diff == 0, "Found only expected number of differences between expected results and test results");
+unless ($ok) {
     diag("expected: $expected_output_dir\nactual: $temp_dir\n");
     diag("differences are:");
     diag(@diff);
@@ -54,6 +51,6 @@ ok(
     Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-run-summarize_sireport/");
     Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-run-summarize_sireport");
     die print "\n\nFound $diff_line_count differing lines\n\n";
-    };
+}
 
 done_testing();

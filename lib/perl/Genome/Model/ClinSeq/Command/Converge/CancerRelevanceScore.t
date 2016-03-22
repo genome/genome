@@ -34,8 +34,8 @@ my $return = $converge_cancerRelevanceScore->execute();
 ok($clinseq_build2, "Executed succesfully");
 
 my @diff = `diff $expected_output_dir $op_dir`;
-ok(@diff == 0, "Found only expected number of differences between expected results and test results")
-    or do {
+my $ok = ok(@diff == 0, "Found only expected number of differences between expected results and test results");
+unless ($ok) {
     diag("expected: $expected_output_dir\nactual: $op_dir\n");
     diag("differences are:");
     diag(@diff);
@@ -43,6 +43,6 @@ ok(@diff == 0, "Found only expected number of differences between expected resul
     print "\n\nFound $diff_line_count differing lines\n\n";
     Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-run-clinseq-converge-cancerRelevanceScore/");
     Genome::Sys->shellcmd(cmd => "mv $op_dir /tmp/last-run-clinseq-converge-cancerRelevanceScore");
-    };
+}
 
 done_testing();

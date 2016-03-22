@@ -63,8 +63,8 @@ $log->print(join("\n", @output));
 
 print "\n\nDiffing results from this run to the expected results here:\n\t$expected_data_directory\n";
 my @diff = `diff -r $expected_data_directory $temp_dir`;
-is(@diff, 0, "no differences from expected results.")
-    or do {
+my $is = is(@diff, 0, "no differences from expected results.");
+unless ($is) {
     diag("differences are:");
     diag(@diff);
     if (-e "/tmp/last-summarize-builds-test-result") {
@@ -72,7 +72,7 @@ is(@diff, 0, "no differences from expected results.")
     }
     Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-summarize-builds-test-result");
     print "\n\nPlaced new differing results in /tmp/last-summarize-builds-test-result\n";
-    };
+};
 
 #The summarize-builds tool changes the current working directory because the LIMS illumina_info tool writes output there and has no option to control this behavior
 #We need to change to somewhere else so that the testing harness can clean up the temp file created

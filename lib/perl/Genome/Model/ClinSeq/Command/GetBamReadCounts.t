@@ -88,12 +88,12 @@ ok(-e $expected_result_file, "Found a result file in the temp dir: $expected_res
 
 #Diff the new result against the old
 my @diff = `diff $expected_result_file $output_file`;
-is(@diff, 0, "no differences from expected results and actual")
-    or do {
+my $is = is(@diff, 0, "no differences from expected results and actual");
+unless ($is) {
     diag("differences are:");
     diag(@diff);
     if (-e "/tmp/last-get-bam-read-counts-test-result") {
         Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-get-bam-read-counts-test-result");
     }
     Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-get-bam-read-counts-test-result");
-    };
+}

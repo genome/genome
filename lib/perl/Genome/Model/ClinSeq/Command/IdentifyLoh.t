@@ -50,11 +50,8 @@ ok(
 #Check for diffs
 my @diff =
     `diff -r -x '*.log.txt' -x '*png' -x '*R' -x '*cbs*' -x '*seg' -x '*.err' -x '*.out' $expected_output_dir $temp_dir`;
-ok(
-    @diff == 0, "Found only expected number of differences between expected
-    results and test results"
-    )
-    or do {
+my $ok = ok(@diff == 0, "Found only expected number of differences between expected results and test results");
+unless ($ok){
     diag("expected: $expected_output_dir\nactual: $temp_dir\n");
     diag("differences are:");
     diag(@diff);
@@ -62,5 +59,6 @@ ok(
     Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-run-identifyloh/");
     Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-run-identifyloh");
     die print "\n\nFound $diff_line_count differing lines\n\n";
-    };
+}
+
 done_testing();

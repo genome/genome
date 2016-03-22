@@ -48,11 +48,8 @@ my $format_clusters_command =
 Genome::Sys->shellcmd(cmd => $format_clusters_command);
 
 my @diff = `diff -r -x '*.log.txt' -x '*.pdf' -x '*.jpeg' -x '*clusters.txt' -x '*R' $expected_output_dir $temp_dir`;
-ok(
-    @diff == 0, "Found only expected number of differences between expected
-  results and test results"
-    )
-    or do {
+my $ok = ok(@diff == 0, "Found only expected number of differences between expected results and test results");
+unless ($ok) {
     diag("expected: $expected_output_dir\nactual: $temp_dir\n");
     diag("differences are:");
     diag(@diff);
@@ -60,6 +57,6 @@ ok(
     Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-run-generatescicloneplots/");
     Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-run-generatescicloneplots");
     die print "\n\nFound $diff_line_count differing lines\n\n";
-    };
+}
 
 done_testing();
