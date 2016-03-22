@@ -147,6 +147,8 @@ sub _write_reads {
     }
 
     for my $read_tokens ( grep { defined } ( $read1, $read2 ) ) {
+        # Revcomp!
+        $read_tokens->[1] = _correct_sequence_and_qualities($read_tokens);
         # Set flag
         $read_tokens->[1] = _get_new_flag($read_tokens->[1], $type);
         # Remove alignment information
@@ -201,6 +203,15 @@ sub _determine_type {
     }
     elsif ( $read1 ) {
         return 'singleton';
+    }
+}
+
+sub _correct_sequence_and_qualities {
+    $_[0]->[9] = uc $_[0]->[9];
+    if ( $_[0]->[1] & 0x10 ) {
+        $_[0]->[9] = reverse $_[0]->[9];
+        $_[0]->[9] = tr/ATCG/TAGC/;
+        $_[0]->[10] = reverse $_[0]->[10];
     }
 }
 
