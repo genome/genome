@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Utility::List;
+use Genome::Model::Tools::Analysis::ResolveIgvReferenceName;
 
 class Genome::Model::ClinSeq::Command::DumpIgvXml {
     is => ['Command::V2',
@@ -133,17 +134,11 @@ sub get_levels {
 
 sub determine_genome_build {
   my $self = shift;
-  my $ref_build_name1 = shift;
-  my $genome_build = "";
-  my $b37_build =
-    Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
-  my $ref_build1 = Genome::Model::Build::ReferenceSequence->get(name => $ref_build_name1);
-  if($b37_build->is_compatible_with($ref_build1)) {
-    return "b37";
-  } else {
-    die $self->error_message("Unrecognized reference genome name " .
-      "($ref_build_name1) supplied to DumpIgvXml.pm");
-  }
+  my $supplied_build_name = shift;
+  my $igv_name = Genome::Model::Tools::Analysis::ResolveIgvReferenceName::resolve_igv_reference_name($supplied_build_name) ||
+    $self->fatal_message("Unrecognized reference genome name " .
+                             "($supplied_build_name) supplied to DumpIgvXml.pm");
+  return $igv_name;
 }
 
 sub execute {
@@ -414,7 +409,7 @@ sub generate_track_xml {
   }elsif($pp_type eq "rna seq"){
     $data_type = "RNA-Seq";
   }else{
-    die $self->error_message("Processing profile type not recognized: $pp_type");
+    $self->fatal_message("Processing profile type not recognized: $pp_type");
   }
 
   #Determine the tissue description: ('normal', 'tumor', 'somatic')
@@ -443,7 +438,7 @@ sub generate_track_xml {
   }elsif ($resource_type eq 'bed' && $pp_type eq 'somatic variation'){
     #User specifies actual file name - will be used to find file in a somatic variation result
     unless ($bed_file){
-      die $self->error_message("A bed file name must be defined in dump-igv-xml to generate a track of type 'bed'");
+      $self->fatal_message("A bed file name must be defined in dump-igv-xml to generate a track of type 'bed'");
     }
     $resource_file = $build_dir . "/$bed_file";
 
@@ -459,10 +454,10 @@ sub generate_track_xml {
       $resource_file = $build_dir . "/junctions/junctions.bed";
     }
     unless (-e $resource_file){
-      die $self->error_message("junctions.bed file not found for rna seq build: $build_dir");
+      $self->fatal_message("junctions.bed file not found for rna seq build: $build_dir");
     }
   }else{
-    die $self->error_message("Resource type and PP type combination not recognized: $resource_type (must be one of 'bam', 'junctions' (rna-seq models only), or 'bed')");
+    $self->fatal_message("Resource type and PP type combination not recognized: $resource_type (must be one of 'bam', 'junctions' (rna-seq models only), or 'bed')");
   }
 
 
@@ -524,7 +519,7 @@ XML
     if ($bed_file =~ /^\w+\/(.*)/){
       $bed_file_name = $1;
     }else{
-      die $self->error_message("Could not determine bed file name from bed file parameter: $bed_file");
+      $self->fatal_message("Could not determine bed file name from bed file parameter: $bed_file");
     }
 
     my $bed_track_name = "$bed_data_type $bed_file_name";
@@ -557,7 +552,7 @@ sub generate_resource_xml {
   my @resource_list = @{$args{'-resources'}};
 
   unless (scalar(@resource_list) > 0){
-    die $self->error_message("\n\nNo resources found for creation of a resource XML section for IGV in DumpIgvXml.pm\n\n");
+    $self->fatal_message("\n\nNo resources found for creation of a resource XML section for IGV in DumpIgvXml.pm\n\n");
   }
 
   my $xml = "  <Resources>";
@@ -630,7 +625,7 @@ sub generate_panel_layout_xml{
   #Every session should have at least 2 panels (the feature panel + at least one data panel) otherwise there may be an input problem and/or the igv session would 
   #If for some reason only the feature panel was present, simply return and empty string for the panel layout as a layout would be uneccessary
   if ($panel_count == 0){
-    die $self->error_message("\n\nNo panels defined for creation panel layout XML in DumpIgvXml.pm\n\n");
+    $self->fatal_message("\n\nNo panels defined for creation panel layout XML in DumpIgvXml.pm\n\n");
   }elsif($panel_count == 1){
     $xml = '';
   }else{

@@ -63,7 +63,7 @@ sub get_variant_files {
         chomp;
         my $line = $_;
         my ($chrom) = split(/\t/, $line);
-        next if($chrom =~ 'NT_' || $chrom =~ /GL/ || $chrom =~ /MT/);
+        next if($chrom =~ 'NT_' || $chrom =~ /GL/ || $chrom =~ /MT/ || $chrom =~ /KI/);
         my $variant_f = join "", $prefix, ".$chrom.unfiltered";
         if(-e $variant_f) {
             push @$variant_files, $variant_f;

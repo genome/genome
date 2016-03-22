@@ -115,11 +115,6 @@ sub execute {
   my $reference_build_ncbi_n = "";
   my $reference_build = $build->reference_sequence_build;
   my $reference_build_name = $reference_build->name;
-  if ($reference_build_name =~ /GRCh37\-lite\-build37/){
-    $reference_build_ncbi_n = "37";
-  }else{
-    die $self->error_message("Reference sequence build name not recognized by clin-seq summarize-cnvs");
-  }
 
   #Create a Stats.tsv and Summarize the number of CNV amp and del windows
   #Question Answer  Data_Type Analysis_Type Statistic_Type  Extra_Description

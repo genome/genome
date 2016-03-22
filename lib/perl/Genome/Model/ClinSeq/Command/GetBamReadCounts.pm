@@ -436,7 +436,7 @@ sub getBamReadCounts{
     if ( ($pos == ($data->{start} - 1) ) ) {
       unless ($no_fasta_check){
         my $ref_base = $fai->fetch($data->{chr} .':'. $data->{start} .'-'. $data->{stop});
-        unless ($data->{reference} eq $ref_base) {
+        unless (uc($data->{reference}) eq uc($ref_base)) {
           die $self->error_message("Reference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
         }
       }

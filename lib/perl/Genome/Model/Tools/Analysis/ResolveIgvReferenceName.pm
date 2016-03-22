@@ -57,6 +57,7 @@ sub resolve_igv_reference_name {
     my $reference_name = shift;
 
     my %igv_reference_name_of = (
+        'GRC-human-build38'     => 'hg38',
         'GRCh37-lite-build37'   => 'b37',
         'NCBI-human-build36'    => 'hg18',
         'g1k-human-build37'     => 'b37',
