@@ -567,434 +567,368 @@ sub _resolve_workflow_for_build {
         $lsf_project = 'build' . $build->id;
     }
 
-    # The wf system will call this method after we finish
-    # but it consolidates logic to make a workflow which will
-    # automatically take all inputs that method will assign.
+    #We need to call this so that the subdirectories get created for the test
     my %inputs           = $self->map_workflow_inputs($build);
-    my @input_properties = sort keys %inputs;
 
-    # This must be updated for each new tool added which is "terminal" in the workflow!
-    # (too bad it can't just be inferred from a dynamically expanding output connector)
-    my @output_properties = qw(
-        summarize_builds_result
-        igv_session_result
+    # Make the workflow
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
+        name    => $build->workflow_name,
+        log_dir => $build->log_directory,
     );
-
-    if ($build->wgs_build) {
-        push @output_properties, qw(
-            summarize_wgs_tier1_snv_support_result
-            summarize_svs_result
-            summarize_cnvs_result
-            clonality_result
-            run_cn_view_result
-            gene_category_cnv_amp_result
-            gene_category_cnv_del_result
-            gene_category_cnv_ampdel_result
-            gene_category_wgs_snv_result
-            gene_category_wgs_indel_result
-            dgidb_cnv_amp_result
-            dgidb_sv_fusion_result
-            dgidb_wgs_snv_result
-            dgidb_wgs_indel_result
-            wgs_variant_sources_result
-            circos_result
-        );
-    }
-
-    if ($build->exome_build) {
-        push @output_properties, qw(
-            summarize_exome_tier1_snv_support_result
-            gene_category_exome_snv_result
-            gene_category_exome_indel_result
-            dgidb_exome_snv_result
-            dgidb_exome_indel_result
-            exome_variant_sources_result
-        );
-    }
-
-    if ($build->wgs_build and $build->exome_build) {
-        push @output_properties, 'summarize_wgs_exome_tier1_snv_support_result';
-        push @output_properties, 'gene_category_wgs_exome_indel_result';
-        push @output_properties, 'gene_category_wgs_exome_snv_result';
-        push @output_properties, 'dgidb_wgs_exome_indel_result';
-        push @output_properties, 'dgidb_wgs_exome_snv_result';
-    }
-
-    if ($build->wgs_build or $build->exome_build) {
-        push @output_properties, 'mutation_diagram_result';
-        push @output_properties, 'import_snvs_indels_result';
-        push @output_properties, 'loh_result';
-        my $iterator = List::MoreUtils::each_arrayref([1 .. @$mqs], $mqs, $bqs);
-        while (my ($i, $mq, $bq) = $iterator->()) {
-            if ($build->wgs_build) {
-                push @output_properties, 'wgs_mutation_spectrum_result' . $i;
-                push @output_properties, 'sciclone_result' . $i;
-            }
-            if ($build->exome_build) {
-                push @output_properties, 'exome_mutation_spectrum_result' . $i;
-            }
-            if ($build->should_run_exome_cnv) {
-                push @output_properties, 'sciclone_result' . $i;
-            }
-            push @output_properties, 'converge_snv_indel_report_result' . $i;
-        }
-    }
-
-    if ($self->has_microarray_build()) {
-        push @output_properties, 'microarray_cnv_result';
-    }
-
-    if ($build->should_run_exome_cnv) {
-        push @output_properties, 'exome_cnv_result';
-    }
-
-    if (($build->exome_build or $build->wgs_build)
-        and $self->_get_docm_variants_file($self->cancer_annotation_db))
-    {
-        push @output_properties, 'docm_report_result';
-    }
-
-    if ($build->normal_rnaseq_build) {
-        push @output_properties, 'normal_tophat_junctions_absolute_result';
-        push @output_properties, 'normal_cufflinks_expression_absolute_result';
-    }
-
-    if ($build->tumor_rnaseq_build) {
-        push @output_properties, 'tumor_tophat_junctions_absolute_result';
-        push @output_properties, 'tumor_cufflinks_expression_absolute_result';
-        push @output_properties, 'gene_category_cufflinks_result';
-        push @output_properties, 'gene_category_tophat_result';
-        push @output_properties, 'dgidb_cufflinks_result';
-        push @output_properties, 'dgidb_tophat_result';
-        if (-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe') {
-            if ($build->wgs_build) {
-                if (-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated') {
-                    push @output_properties, 'intersect_tumor_fusion_sv_result';
-                }
-            }
-        }
-    }
-
-    if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build) {
-        push @output_properties, 'cufflinks_differential_expression_result';
-        push @output_properties, 'gene_category_coding_de_up_result';
-        push @output_properties, 'gene_category_coding_de_down_result';
-        push @output_properties, 'gene_category_coding_de_result';
-    }
-
-    # Make the workflow and some convenience wrappers for adding steps and links
-
-    my $workflow = Workflow::Model->create(
-        name              => $build->workflow_name,
-        input_properties  => \@input_properties,
-        output_properties => \@output_properties,
-    );
-
-    my $log_directory = $build->log_directory;
-    $workflow->log_dir($log_directory);
-
-    my $input_connector  = $workflow->get_input_connector;
-    my $output_connector = $workflow->get_output_connector;
-
-    my %steps_by_name;
-    my $step = 0;
-    my $add_step;
-    my $add_link;
-
-    $add_step = sub {
-        my ($name, $cmd) = @_;
-
-        if (substr($cmd, 0, 2) eq '::') {
-            $cmd = 'Genome::Model::ClinSeq::Command' . $cmd;
-        }
-
-        unless ($cmd->can("execute")) {
-            die "bad command $cmd!";
-        }
-
-        die "$name already used!" if $steps_by_name{$name};
-
-        my $op = $workflow->add_operation(
-            name           => $name,
-            operation_type => Workflow::OperationType::Command->create(command_class_name => $cmd,)
-        );
-        $op->operation_type->lsf_queue($lsf_queue);
-        $op->operation_type->lsf_project($lsf_project);
-        $steps_by_name{$name} = $op;
-
-        # for inputs with these names, always add a link from the input connector
-        # should this be default behavior for commands in a model's namespace?
-        my $cmeta = $cmd->__meta__;
-        for my $pname (
-            qw/
-            cancer_annotation_db
-            misc_annotation_db
-            cosmic_annotation_db
-            /
-            )
-        {
-            my $pmeta = $cmeta->property($pname);
-            if ($pmeta) {
-                $add_link->($input_connector, $pname, $op, $pname);
-            }
-        }
-
-        return $op;
-    };
-
-    my $converge;
-
-    $add_link = sub {
-        my ($from_op, $from_p, $to_op, $to_p) = @_;
-        $to_p = $from_p if not defined $to_p;
-
-        if (ref($to_p) eq 'ARRAY') {
-            Carp::confess("the 'to' property in a link cannot be a list!");
-        }
-
-        my $link;
-        if (ref($from_p) eq 'ARRAY') {
-            my $cname = "Combine: (@$from_p) for \"" . $to_op->name . "\" parameter \'$to_p\'";
-            my $converge_op = $converge->($cname, $from_op, $from_p);
-            $link = $workflow->add_link(
-                left_operation  => $converge_op,
-                left_property   => 'outputs',
-                right_operation => $to_op,
-                right_property  => $to_p
-            );
-        }
-        else {
-            $link = $workflow->add_link(
-                left_operation  => $from_op,
-                left_property   => $from_p,
-                right_operation => $to_op,
-                right_property  => $to_p
-            );
-        }
-        $link or die "Failed to make link from $link from $from_p to $to_p!";
-        return $link;
-    };
-
-    my $combo_cnt = 0;
-    $converge = sub {
-        my $cname   = shift;
-        my @params1 = @_;
-        my @params2 = @_;
-
-        # make a friendly name
-        my $name = '';
-        my $combo_cnt++;
-        my $input_count = 0;
-        while (@params1) {
-            my $from_op    = shift @params1;
-            my $from_props = shift @params1;
-            unless ($from_props) {
-                die "expected \$op2,['p1','p2',...],\$op2,['p3','p4'],...";
-            }
-            unless (ref($from_props) eq 'ARRAY') {
-                die "expected the second param (and every even param) in converge to be an arrayref of property names";
-            }
-            $input_count += scalar(@$from_props);
-            if ($name) {
-                $name .= " and ";
-            }
-            else {
-                $name = "combine ($combo_cnt): ";
-            }
-            if ($from_op->name eq 'input_conector') {
-                $name = "($combo_cnt)";
-            }
-            else {
-                $name .= $from_op->name . "(";
-            }
-            for my $p (@$from_props) {
-                $name .= $p;
-                $name .= "," unless $p eq $from_props->[-1];
-            }
-            $name .= ")";
-        }
-        my $op = $workflow->add_operation(
-            name           => $cname,
-            operation_type => Workflow::OperationType::Converge->create(
-                input_properties => [map {"i$_"} (1 .. $input_count)],
-                output_properties => ['outputs'],
-            )
-        );
-
-        # create links
-        my $input_n = 0;
-        while (@params2) {
-            my $from_op    = shift @params2;
-            my $from_props = shift @params2;
-            for my $from_prop (@$from_props) {
-                $input_n++;
-                $add_link->($from_op, $from_prop, $op, "i$input_n");
-            }
-        }
-
-        # return the op which will have a single "output"
-        return $op;
-    };
 
     #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
-    my $msg = "Creating a summary of input builds using summarize-builds";
-    my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
-    $add_link->($input_connector, 'build',                              $summarize_builds_op, 'builds');
-    $add_link->($input_connector, 'summarize_builds_outdir',            $summarize_builds_op, 'outdir');
-    $add_link->($input_connector, 'summarize_builds_skip_lims_reports', $summarize_builds_op, 'skip_lims_reports');
-    $add_link->($input_connector, 'summarize_builds_log_file',          $summarize_builds_op, 'log_file');
-    $add_link->($summarize_builds_op, 'result', $output_connector, 'summarize_builds_result');
+    my $summarize_builds_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Creating a summary of input builds using summarize-builds',
+        command => 'Genome::Model::ClinSeq::Command::SummarizeBuilds',
+    );
+    $workflow->add_operation($summarize_builds_op);
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $summarize_builds_op,
+        destination_property => 'builds',
+    );
+    $workflow->connect_input(
+        input_property       => 'summarize_builds_outdir',
+        destination          => $summarize_builds_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'summarize_builds_skip_lims_reports',
+        destination          => $summarize_builds_op,
+        destination_property => 'skip_lims_reports',
+    );
+    $workflow->connect_input(
+        input_property       => 'summarize_builds_log_file',
+        destination          => $summarize_builds_op,
+        destination_property => 'log_file',
+    );
+    $workflow->connect_output(
+        output_property => 'summarize_builds_result',
+        source          => $summarize_builds_op,
+        source_property => 'result',
+    );
 
     #ImportSnvsIndels - Import SNVs and Indels
     my $import_snvs_indels_op;
     if ($build->wgs_build or $build->exome_build) {
-        my $msg = "Importing SNVs and Indels from somatic results, parsing, and merging exome/wgs if possible";
-        $import_snvs_indels_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::ImportSnvsIndels");
-        $add_link->($input_connector, 'import_snvs_indels_outdir',    $import_snvs_indels_op, 'outdir');
-        $add_link->($input_connector, 'import_snvs_indels_filter_mt', $import_snvs_indels_op, 'filter_mt');
+        $import_snvs_indels_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Importing SNVs and Indels from somatic results, parsing, and merging exome/wgs if possible',
+            command => 'Genome::Model::ClinSeq::Command::ImportSnvsIndels',
+        );
+        $workflow->add_operation($import_snvs_indels_op);
+        $workflow->connect_input(
+            input_property       => 'cancer_annotation_db',
+            destination          => $import_snvs_indels_op,
+            destination_property => 'cancer_annotation_db',
+        );
+        $workflow->connect_input(
+            input_property       => 'import_snvs_indels_outdir',
+            destination          => $import_snvs_indels_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_input(
+            input_property       => 'import_snvs_indels_filter_mt',
+            destination          => $import_snvs_indels_op,
+            destination_property => 'filter_mt',
+        );
         if ($build->wgs_build) {
-            $add_link->($input_connector, 'wgs_build', $import_snvs_indels_op, 'wgs_build');
+            $workflow->connect_input(
+                input_property       => 'wgs_build',
+                destination          => $import_snvs_indels_op,
+                destination_property => 'wgs_build',
+            );
         }
         if ($build->exome_build) {
-            $add_link->($input_connector, 'exome_build', $import_snvs_indels_op, 'exome_build');
+            $workflow->connect_input(
+                input_property       => 'exome_build',
+                destination          => $import_snvs_indels_op,
+                destination_property => 'exome_build',
+            );
         }
-        $add_link->($import_snvs_indels_op, 'result', $output_connector, 'import_snvs_indels_result');
+        $workflow->connect_output(
+            output_property => 'import_snvs_indels_result',
+            source          => $import_snvs_indels_op,
+            source_property => 'result',
+        );
     }
 
     #GetVariantSources - Determine source variant caller for SNVs and InDels for wgs data
     my $wgs_variant_sources_op;
     if ($build->wgs_build) {
-        my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for wgs data";
-        $wgs_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
-        $add_link->($input_connector, 'wgs_build', $wgs_variant_sources_op, 'builds');
-        $add_link->($input_connector, 'wgs_variant_sources_dir', $wgs_variant_sources_op, 'outdir');
-        $add_link->($wgs_variant_sources_op, 'result', $output_connector, 'wgs_variant_sources_result');
+        $wgs_variant_sources_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Determining source variant callers of all tier1-3 SNVs and InDels for wgs data',
+            command => 'Genome::Model::ClinSeq::Command::GetVariantSources',
+        );
+        $workflow->add_operation($wgs_variant_sources_op);
+        $workflow->connect_input(
+            input_property       => 'wgs_build',
+            destination          => $wgs_variant_sources_op,
+            destination_property => 'builds',
+        );
+        $workflow->connect_input(
+            input_property       => 'wgs_variant_sources_dir',
+            destination          => $wgs_variant_sources_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_output(
+            output_property => 'wgs_variant_sources_result',
+            source          => $wgs_variant_sources_op,
+            source_property => 'result',
+        );
     }
     #GetVariantSources - Determine source variant caller for SNVs and InDels for exome data
     my $exome_variant_sources_op;
     if ($build->exome_build) {
-        my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for exome data";
-        $exome_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
-        $add_link->($input_connector, 'exome_build', $exome_variant_sources_op, 'builds');
-        $add_link->($input_connector, 'exome_variant_sources_dir', $exome_variant_sources_op, 'outdir');
-        $add_link->($exome_variant_sources_op, 'result', $output_connector, 'exome_variant_sources_result');
+        $exome_variant_sources_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Determining source variant callers of all tier1-3 SNVs and InDels for exome data',
+            command => 'Genome::Model::ClinSeq::Command::GetVariantSources',
+        );
+        $workflow->add_operation($exome_variant_sources_op);
+        $workflow->connect_input(
+            input_property       => 'exome_build',
+            destination          => $exome_variant_sources_op,
+            destination_property => 'builds',
+        );
+        $workflow->connect_input(
+            input_property       => 'exome_variant_sources_dir',
+            destination          => $exome_variant_sources_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_output(
+            output_property => 'exome_variant_sources_result',
+            source          => $exome_variant_sources_op,
+            source_property => 'result',
+        );
+    }
+
+    my $wgs_exome_build_converge_op;
+    if ($build->wgs_build and $build->exome_build) {
+        $wgs_exome_build_converge_op = Genome::WorkflowBuilder::Converge->create(
+            name => 'Converge wgs and exome builds',
+            input_properties => ['wgs_build', 'exome_build'],
+            output_properties => ['builds'],
+        );
+        $workflow->add_operation($wgs_exome_build_converge_op);
+        for my $build (qw(wgs_build exome_build)) {
+            $workflow->connect_input(
+                input_property => $build,
+                destination => $wgs_exome_build_converge_op,
+                destination_property => $build,
+            );
+        }
     }
 
     #CreateMutationDiagrams - Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
     if ($build->wgs_build or $build->exome_build) {
-        my $msg = "Creating mutation-diagram plots";
-        my $mutation_diagram_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::CreateMutationDiagrams");
+        my $mutation_diagram_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Creating mutation-diagram plots',
+            command => 'Genome::Model::ClinSeq::Command::CreateMutationDiagrams',
+        );
+        $workflow->add_operation($mutation_diagram_op);
+        for my $property (qw(cancer_annotation_db cosmic_annotation_db)) {
+            $workflow->connect_input(
+                input_property => $property,
+                destination => $mutation_diagram_op,
+                destination_property => $property,
+            );
+        }
         if ($build->wgs_build and $build->exome_build) {
-            $add_link->($input_connector, ['wgs_build', 'exome_build'], $mutation_diagram_op, 'builds');
+            $workflow->connect_input(
+                input_property       => 'exome_variant_sources_dir',
+                destination          => $exome_variant_sources_op,
+                destination_property => 'outdir',
+            );
+            $workflow->create_link(
+                source               => $wgs_exome_build_converge_op,
+                source_property      => 'builds',
+                destination          => $mutation_diagram_op,
+                destination_property => 'builds',
+            );
         }
         elsif ($build->wgs_build) {
-            $add_link->($input_connector, 'wgs_build', $mutation_diagram_op, 'builds');
+            $workflow->connect_input(
+                input_property       => 'wgs_build',
+                destination          => $mutation_diagram_op,
+                destination_property => 'builds',
+            );
         }
         elsif ($build->exome_build) {
-            $add_link->($input_connector, 'exome_build', $mutation_diagram_op, 'builds');
+            $workflow->connect_input(
+                input_property       => 'exome_build',
+                destination          => $mutation_diagram_op,
+                destination_property => 'builds',
+            );
         }
-        $add_link->($mutation_diagram_op, 'result', $output_connector, 'mutation_diagram_result');
+        $workflow->connect_output(
+            output_property => 'mutation_diagram_result',
+            source          => $mutation_diagram_op,
+            source_property => 'result',
+        );
 
-        for my $p (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
-            my $input_name = 'mutation_diagram_' . $p;
-            $add_link->($input_connector, $input_name, $mutation_diagram_op, $p);
+        for my $property (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
+            $workflow->connect_input(
+                input_property       => "mutation_diagram_$property",
+                destination          => $mutation_diagram_op,
+                destination_property => $property,
+            );
         }
     }
 
     #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on normal
     my $normal_tophat_junctions_absolute_op;
     if ($build->normal_rnaseq_build) {
-        my $msg = "Performing tophat junction expression absolute analysis for normal sample";
-        $normal_tophat_junctions_absolute_op =
-            $add_step->($msg, 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute');
-        $add_link->($input_connector, 'normal_rnaseq_build', $normal_tophat_junctions_absolute_op, 'build');
-        $add_link->(
-            $input_connector,
-            'normal_tophat_junctions_absolute_dir',
-            $normal_tophat_junctions_absolute_op, 'outdir'
+        $normal_tophat_junctions_absolute_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Performing tophat junction expression absolute analysis for normal sample',
+            command => 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute',
         );
-        $add_link->(
-            $normal_tophat_junctions_absolute_op,
-            'result', $output_connector, 'normal_tophat_junctions_absolute_result'
+        $workflow->add_operation($normal_tophat_junctions_absolute_op);
+        $workflow->connect_input(
+            input_property       => 'cancer_annotation_db',
+            destination          => $tumor_tophat_junctions_absolute_op,
+            destination_property => 'cancer_annotation_db',
+        );
+        $workflow->connect_input(
+            input_property       => 'normal_rnaseq_build',
+            destination          => $normal_tophat_junctions_absolute_op,
+            destination_property => 'build',
+        );
+        $workflow->connect_input(
+            input_property       => 'normal_tophat_junctions_absolute_dir',
+            destination          => $normal_tophat_junctions_absolute_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_output(
+            output_property => 'normal_tophat_junctions_absolute_result',
+            source          => $normal_tophat_junctions_absolute_op,
+            source_property => 'result',
         );
     }
     #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on tumor
     my $tumor_tophat_junctions_absolute_op;
     if ($build->tumor_rnaseq_build) {
-        my $msg = "Performing tophat junction expression absolute analysis for tumor sample";
-        $tumor_tophat_junctions_absolute_op =
-            $add_step->($msg, 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute');
-        $add_link->($input_connector, 'tumor_rnaseq_build', $tumor_tophat_junctions_absolute_op, 'build');
-        $add_link->(
-            $input_connector,
-            'tumor_tophat_junctions_absolute_dir',
-            $tumor_tophat_junctions_absolute_op, 'outdir'
+        $tumor_tophat_junctions_absolute_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Performing tophat junction expression absolute analysis for tumor sample',
+            command => 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute',
         );
-        $add_link->(
-            $tumor_tophat_junctions_absolute_op,
-            'result', $output_connector, 'tumor_tophat_junctions_absolute_result'
+        $workflow->add_operation($tumor_tophat_junctions_absolute_op);
+        $workflow->connect_input(
+            input_property       => 'cancer_annotation_db',
+            destination          => $tumor_tophat_junctions_absolute_op,
+            destination_property => 'cancer_annotation_db',
+        );
+        $workflow->connect_input(
+            input_property       => 'tumor_rnaseq_build',
+            destination          => $tumor_tophat_junctions_absolute_op,
+            destination_property => 'build',
+        );
+        $workflow->connect_input(
+            input_property       => 'tumor_tophat_junctions_absolute_dir',
+            destination          => $tumor_tophat_junctions_absolute_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_output(
+            output_property => 'tumor_tophat_junctions_absolute_result',
+            source          => $tumor_tophat_junctions_absolute_op,
+            source_property => 'result',
         );
     }
 
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on normal
     my $normal_cufflinks_expression_absolute_op;
     if ($build->normal_rnaseq_build) {
-        my $msg = "Performing cufflinks expression absolute analysis for normal sample";
-        $normal_cufflinks_expression_absolute_op =
-            $add_step->($msg, 'Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute');
-        $add_link->($input_connector, 'normal_rnaseq_build', $normal_cufflinks_expression_absolute_op, 'build');
-        $add_link->(
-            $input_connector,
-            'normal_cufflinks_expression_absolute_dir',
-            $normal_cufflinks_expression_absolute_op, 'outdir'
+        $normal_cufflinks_expression_absolute_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Performing cufflinks expression absolute analysis for normal sample',
+            command => 'Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute',
         );
-        $add_link->(
-            $input_connector, 'cufflinks_percent_cutoff', $normal_cufflinks_expression_absolute_op,
-            'percent_cutoff'
+        $workflow->add_operation($normal_cufflinks_expression_absolute_op);
+        $workflow->connect_input(
+            input_property       => 'cancer_annotation_db',
+            destination          => $normal_cufflinks_expression_absolute_op,
+            destination_property => 'cancer_annotation_db',
         );
-        $add_link->(
-            $normal_cufflinks_expression_absolute_op,
-            'result', $output_connector, 'normal_cufflinks_expression_absolute_result'
+        $workflow->connect_input(
+            input_property       => 'normal_rnaseq_build',
+            destination          => $normal_cufflinks_expression_absolute_op,
+            destination_property => 'build',
+        );
+        $workflow->connect_input(
+            input_property       => 'normal_cufflinks_expression_absolute_dir',
+            destination          => $normal_cufflinks_expression_absolute_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_input(
+            input_property       => 'cufflinks_percent_cutoff',
+            destination          => $normal_cufflinks_expression_absolute_op,
+            destination_property => 'percent_cutoff',
+        );
+        $workflow->connect_output(
+            output_property => 'normal_cufflinks_expression_absolute_result',
+            source          => $normal_cufflinks_expression_absolute_op,
+            source_property => 'result',
         );
     }
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on tumor
     my $tumor_cufflinks_expression_absolute_op;
     if ($build->tumor_rnaseq_build) {
-        my $msg = "Performing cufflinks expression absolute analysis for tumor sample";
-        $tumor_cufflinks_expression_absolute_op =
-            $add_step->($msg, 'Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute');
-        $add_link->($input_connector, 'tumor_rnaseq_build', $tumor_cufflinks_expression_absolute_op, 'build');
-        $add_link->(
-            $input_connector,
-            'tumor_cufflinks_expression_absolute_dir',
-            $tumor_cufflinks_expression_absolute_op, 'outdir'
+        $tumor_cufflinks_expression_absolute_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Performing cufflinks expression absolute analysis for tumor sample',
+            command => 'Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute',
         );
-        $add_link->(
-            $input_connector, 'cufflinks_percent_cutoff', $tumor_cufflinks_expression_absolute_op,
-            'percent_cutoff'
+        $workflow->add_operation($tumor_cufflinks_expression_absolute_op);
+        $workflow->connect_input(
+            input_property       => 'cancer_annotation_db',
+            destination          => $tumor_cufflinks_expression_absolute_op,
+            destination_property => 'cancer_annotation_db',
         );
-        $add_link->(
-            $tumor_cufflinks_expression_absolute_op,
-            'result', $output_connector, 'tumor_cufflinks_expression_absolute_result'
+        $workflow->connect_input(
+            input_property       => 'tumor_rnaseq_build',
+            destination          => $tumor_cufflinks_expression_absolute_op,
+            destination_property => 'build',
+        );
+        $workflow->connect_input(
+            input_property       => 'tumor_cufflinks_expression_absolute_dir',
+            destination          => $tumor_cufflinks_expression_absolute_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_input(
+            input_property       => 'cufflinks_percent_cutoff',
+            destination          => $tumor_cufflinks_expression_absolute_op,
+            destination_property => 'percent_cutoff',
+        );
+        $workflow->connect_output(
+            output_property => 'tumor_cufflinks_expression_absolute_result',
+            source          => $tumor_cufflinks_expression_absolute_op,
+            source_property => 'result',
         );
     }
 
     #CufflinksDifferentialExpression - Run cufflinks differential expression
     my $cufflinks_differential_expression_op;
     if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build) {
-        my $msg = "Performing cufflinks differential expression analysis for case vs. control (e.g. tumor vs. normal)";
-        $cufflinks_differential_expression_op =
-            $add_step->($msg, 'Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression');
-        $add_link->($input_connector, 'normal_rnaseq_build', $cufflinks_differential_expression_op, 'control_build');
-        $add_link->($input_connector, 'tumor_rnaseq_build',  $cufflinks_differential_expression_op, 'case_build');
-        $add_link->(
-            $input_connector,
-            'cufflinks_differential_expression_dir',
-            $cufflinks_differential_expression_op, 'outdir'
+        $cufflinks_differential_expression_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Performing cufflinks differential expression analysis for case vs. control (e.g. tumor vs. normal)',
+            command => 'Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression',
         );
-        $add_link->(
-            $cufflinks_differential_expression_op,
-            'result', $output_connector, 'cufflinks_differential_expression_result'
+        $workflow->add_operation($cufflinks_differential_expression_op);
+        $workflow->connect_input(
+            input_property       => 'normal_rnaseq_build',
+            destination          => $cufflinks_differential_expression_op,
+            destination_property => 'control_build',
+        );
+        $workflow->connect_input(
+            input_property       => 'tumor_rnaseq_build',
+            destination          => $cufflinks_differential_expression_op,
+            destination_property => 'case_build',
+        );
+        $workflow->connect_input(
+            input_property       => 'cufflinks_differential_expression_dir',
+            destination          => $cufflinks_differential_expression_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_output(
+            output_property => 'cufflinks_differential_expression_result',
+            source          => $cufflinks_differential_expression_op,
+            source_property => 'result',
         );
     }
 
@@ -1006,23 +940,35 @@ sub _resolve_workflow_for_build {
             $self->copy_fusion_files($build);
             if ($build->wgs_build) {
                 if (-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated') {
-                    my $msg = "Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls.";
-                    $intersect_tumor_fusion_sv_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::IntersectSv');
-                    $add_link->(
-                        $input_connector, 'ncbi_human_ensembl_build_id', $intersect_tumor_fusion_sv_op,
-                        'annotation_build_id'
+                    $intersect_tumor_fusion_sv_op = Genome::WorkflowBuilder::Command->create(
+                        name => 'Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls',
+                        command => 'Genome::Model::Tools::ChimeraScan::IntersectSv',
                     );
-                    $add_link->(
-                        $input_connector, 'tumor_filtered_intersected_fusion_file',
-                        $intersect_tumor_fusion_sv_op, 'output_file'
+                    $workflow->add_operation($intersect_tumor_fusion_sv_op);
+                    $workflow->connect_input(
+                        input_property       => 'ncbi_human_ensembl_build_id',
+                        destination          => $intersect_tumor_fusion_sv_op,
+                        destination_property => 'annotation_build_id',
                     );
-                    $add_link->($input_connector, 'wgs_sv_file', $intersect_tumor_fusion_sv_op, 'sv_output_file');
-                    $add_link->(
-                        $input_connector, 'tumor_filtered_fusion_file', $intersect_tumor_fusion_sv_op,
-                        'filtered_bedpe_file'
+                    $workflow->connect_input(
+                        input_property       => 'tumor_filtered_intersected_fusion_file',
+                        destination          => $intersect_tumor_fusion_sv_op,
+                        destination_property => 'output_file',
                     );
-                    $add_link->(
-                        $intersect_tumor_fusion_sv_op, 'result', $output_connector, 'intersect_tumor_fusion_sv_result'
+                    $workflow->connect_input(
+                        input_property       => 'wgs_sv_file',
+                        destination          => $intersect_tumor_fusion_sv_op,
+                        destination_property => 'sv_output_file',
+                    );
+                    $workflow->connect_input(
+                        input_property       => 'tumor_filtered_fusion_file',
+                        destination          => $intersect_tumor_fusion_sv_op,
+                        destination_property => 'filtered_bedpe_file',
+                    );
+                    $workflow->connect_output(
+                        output_property => 'intersect_tumor_fusion_sv_result',
+                        source          => $intersect_tumor_fusion_sv_op,
+                        source_property => 'result',
                     );
                 }
             }
@@ -1031,56 +977,160 @@ sub _resolve_workflow_for_build {
 
     #DumpIgvXml - Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
     #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
-    $msg = "Create IGV XML session files for varying levels of detail using the input builds";
-    my $igv_session_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::DumpIgvXml");
-    $add_link->($input_connector, 'build',           $igv_session_op,   'builds');
-    $add_link->($input_connector, 'igv_session_dir', $igv_session_op,   'outdir');
-    $add_link->($igv_session_op,  'result',          $output_connector, 'igv_session_result');
+    my $igv_session_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Create IGV XML session files for varying levels of detail using the input builds',
+        command => 'Genome::Model::ClinSeq::Command::DumpIgvXml',
+    );
+    $workflow->add_operation($igv_session_op);
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $igv_session_op,
+        destination_property => 'builds',
+    );
+    $workflow->connect_input(
+        input_property       => 'igv_session_dir',
+        destination          => $igv_session_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_output(
+        output_property => 'igv_session_result',
+        source          => $igv_session_op,
+        source_property => 'result',
+    );
 
     #GenerateClonalityPlots - Run clonality analysis and produce clonality plots
     my $clonality_op;
     if ($build->wgs_build) {
-        my $msg = "Run clonality analysis and produce clonality plots";
-        $clonality_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateClonalityPlots");
-        $add_link->($input_connector, 'wgs_build',             $clonality_op,     'somatic_var_build');
-        $add_link->($input_connector, 'clonality_dir',         $clonality_op,     'output_dir');
-        $add_link->($input_connector, 'common_name',           $clonality_op,     'common_name');
-        $add_link->($input_connector, 'bam_readcount_version', $clonality_op,     'bam_readcount_version');
-        $add_link->($clonality_op,    'result',                $output_connector, 'clonality_result');
+        $clonality_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Run clonality analysis and produce clonality plots',
+            command => 'Genome::Model::ClinSeq::Command::GenerateClonalityPlots',
+        );
+        $workflow->add_operation($clonality_op);
+        $workflow->connect_input(
+            input_property       => 'misc_annotation_db',
+            destination          => $clonality_op,
+            destination_property => 'misc_annotation_db',
+        );
+        $workflow->connect_input(
+            input_property       => 'wgs_build',
+            destination          => $clonality_op,
+            destination_property => 'somatic_var_build',
+        );
+        $workflow->connect_input(
+            input_property       => 'clonality_dir',
+            destination          => $clonality_op,
+            destination_property => 'output_dir',
+        );
+        for my $property (qw(common_name bam_readcount_version)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $clonality_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->connect_output(
+            output_property => 'clonality_result',
+            source          => $clonality_op,
+            source_property => 'result',
+        );
     }
 
     #RunCnView - Produce copy number results with run-cn-view.  Relies on clonality step already having been run
     my $run_cn_view_op;
     if ($build->wgs_build) {
-        my $msg = "Use gmt copy-number cn-view to produce copy number tables and images";
-        $run_cn_view_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::RunCnView");
-        $add_link->($input_connector, 'wgs_build',   $run_cn_view_op, 'build');
-        $add_link->($input_connector, 'wgs_cnv_dir', $run_cn_view_op, 'outdir');
-        $add_link->($clonality_op,   'cnv_hmm_file', $run_cn_view_op);
-        $add_link->($clonality_op,   'cnv_hq_file',  $run_cn_view_op);
-        $add_link->($run_cn_view_op, 'result',       $output_connector, 'run_cn_view_result');
+        $run_cn_view_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Use gmt copy-number cn-view to produce copy number tables and images',
+            command => 'Genome::Model::ClinSeq::Command::RunCnView',
+        );
+        $workflow->add_operation($run_cn_view_op);
+        $workflow->connect_input(
+            input_property       => 'cancer_annotation_db',
+            destination          => $run_cn_view_op,
+            destination_property => 'cancer_annotation_db',
+        );
+        $workflow->connect_input(
+            input_property       => 'wgs_build',
+            destination          => $run_cn_view_op,
+            destination_property => 'build',
+        );
+        $workflow->connect_input(
+            input_property       => 'wgs_cnv_dir',
+            destination          => $run_cn_view_op,
+            destination_property => 'outdir',
+        );
+        for my $property (qw(cnv_hmm_file cnv_hq_file)) {
+            $workflow->create_link(
+                source               => $clonality_op,
+                source_property      => $property,
+                destination          => $run_cn_view_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->connect_output(
+            output_property => 'run_cn_view_result',
+            source          => $run_cn_view_op,
+            source_property => 'result',
+        );
     }
 
     #RunMicroarrayCNV - produce cnv plots using microarray results
     my $microarray_cnv_op;
     if ($self->has_microarray_build()) {
-        my $msg = "Call somatic copy number changes using microarray calls";
-        $microarray_cnv_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MicroarrayCnv");
-        $add_link->($input_connector,   'microarray_cnv_dir', $microarray_cnv_op, 'outdir');
-        $add_link->($input_connector,   'model',              $microarray_cnv_op, 'clinseq_model');
-        $add_link->($input_connector,   'annotation_build',   $microarray_cnv_op, 'annotation_build_id');
-        $add_link->($microarray_cnv_op, 'result',             $output_connector,  'microarray_cnv_result');
+        $microarray_cnv_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Call somatic copy number changes using microarray calls',
+            command => 'Genome::Model::ClinSeq::Command::MicroarrayCnv',
+        );
+        $workflow->add_operation($microarray_cnv_op);
+        $workflow->connect_input(
+            input_property       => 'microarray_cnv_dir',
+            destination          => $microarray_cnv_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_input(
+            input_property       => 'model',
+            destination          => $microarray_cnv_op,
+            destination_property => 'clinseq_model',
+        );
+        $workflow->connect_input(
+            input_property       => 'annotation_build',
+            destination          => $microarray_cnv_op,
+            destination_property => 'annotation_build_id',
+        );
+        $workflow->connect_output(
+            output_property => 'microarray_cnv_result',
+            source          => $microarray_cnv_op,
+            source_property => 'result',
+        );
     }
 
     #RunExomeCNV - produce cnv plots using WEx results
     my $exome_cnv_op;
     if ($build->should_run_exome_cnv) {
-        my $msg = "Call somatic copy number changes using exome data";
-        $exome_cnv_op = $add_step->($msg, "Genome::Model::Tools::CopyNumber::Cnmops");
-        $add_link->($input_connector, 'exome_cnv_dir',    $exome_cnv_op,     'outdir');
-        $add_link->($input_connector, 'model',            $exome_cnv_op,     'clinseq_model');
-        $add_link->($input_connector, 'annotation_build', $exome_cnv_op,     'annotation_build_id');
-        $add_link->($exome_cnv_op,    'result',           $output_connector, 'exome_cnv_result');
+        $exome_cnv_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Call somatic copy number changes using exome data',
+            command => 'Genome::Model::Tools::CopyNumber::Cnmops',
+        );
+        $workflow->add_operation($exome_cnv_op);
+        $workflow->connect_input(
+            input_property       => 'exome_cnv_dir',
+            destination          => $exome_cnv_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_input(
+            input_property       => 'model',
+            destination          => $exome_cnv_op,
+            destination_property => 'clinseq_model',
+        );
+        $workflow->connect_input(
+            input_property       => 'annotation_build',
+            destination          => $exome_cnv_op,
+            destination_property => 'annotation_build_id',
+        );
+        $workflow->connect_output(
+            output_property => 'exome_cnv_result',
+            source          => $exome_cnv_op,
+            source_property => 'result',
+        );
     }
 
     #RunDOCMReport
@@ -1088,15 +1138,40 @@ sub _resolve_workflow_for_build {
     if (($build->exome_build or $build->wgs_build)
         and $self->_get_docm_variants_file($self->cancer_annotation_db))
     {
-        my $msg = "Produce a report using DOCM";
-        $docm_report_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::DocmReport");
-        $add_link->($input_connector, 'docm_report_dir',       $docm_report_op,   'outdir');
-        $add_link->($input_connector, 'build',                 $docm_report_op,   'builds');
-        $add_link->($input_connector, 'docm_variants_file',    $docm_report_op,   'docm_variants_file');
-        $add_link->($input_connector, 'bam_readcount_version', $docm_report_op,   'bam_readcount_version');
-        $add_link->($input_connector, 'docmreport_min_bq',     $docm_report_op,   'bq');
-        $add_link->($input_connector, 'docmreport_min_mq',     $docm_report_op,   'mq');
-        $add_link->($docm_report_op,  'result',                $output_connector, 'docm_report_result');
+        $docm_report_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Produce a report using DOCM',
+            command => 'Genome::Model::ClinSeq::Command::Converge::DocmReport',
+        );
+        $workflow->add_operation($docm_report_op);
+        $workflow->connect_input(
+            input_property       => 'docm_report_dir',
+            destination          => $docm_report_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_input(
+            input_property       => 'build',
+            destination          => $docm_report_op,
+            destination_property => 'builds',
+        );
+        for my $property (qw(docm_variants_file bam_readcount_version)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $docm_report_op,
+                destination_property => $property,
+            );
+        }
+        for my $property (qw(bq mq)) {
+            $workflow->connect_input(
+                input_property       => "docmreport_min_$property",
+                destination          => $docm_report_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->connect_output(
+            output_property => 'docm_report_result',
+            source          => $docm_report_op,
+            source_property => 'result',
+        );
     }
 
     #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
@@ -1104,202 +1179,618 @@ sub _resolve_workflow_for_build {
     #It also relies on run-cn-view step having been run already
     my $summarize_cnvs_op;
     if ($build->wgs_build) {
-        my $msg = "Summarize CNV results from WGS somatic variation";
-        $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
-        $add_link->($input_connector,   'wgs_cnv_summary_dir', $summarize_cnvs_op, 'outdir');
-        $add_link->($input_connector,   'wgs_build',           $summarize_cnvs_op, 'build');
-        $add_link->($clonality_op,      'cnv_hmm_file',        $summarize_cnvs_op);
-        $add_link->($clonality_op,      'cnv_hq_file',         $summarize_cnvs_op);
-        $add_link->($run_cn_view_op,    'gene_amp_file',       $summarize_cnvs_op);
-        $add_link->($run_cn_view_op,    'gene_del_file',       $summarize_cnvs_op);
-        $add_link->($summarize_cnvs_op, 'result',              $output_connector,  'summarize_cnvs_result');
+        $summarize_cnvs_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Summarize CNV results from WGS somatic variation',
+            command => 'Genome::Model::ClinSeq::Command::SummarizeCnvs',
+        );
+        $workflow->add_operation($summarize_cnvs_op);
+        $workflow->connect_input(
+            input_property       => 'wgs_cnv_summary_dir',
+            destination          => $summarize_cnvs_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_input(
+            input_property       => 'wgs_build',
+            destination          => $summarize_cnvs_op,
+            destination_property => 'build',
+        );
+        for my $property (qw(cnv_hmm_file cnv_hq_file)) {
+            $workflow->create_link(
+                source               => $clonality_op,
+                source_property      => $property,
+                destination          => $summarize_cnvs_op,
+                destination_property => $property,
+            );
+        }
+        for my $property (qw(gene_amp_file gene_del_file)) {
+            $workflow->create_link(
+                source               => $run_cn_view_op,
+                source_property      => $property,
+                destination          => $summarize_cnvs_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->connect_output(
+            output_property => 'summarize_cnvs_result',
+            source          => $summarize_cnvs_op,
+            source_property => 'result',
+        );
     }
 
     #SummarizeSvs - Generate a summary of SV results from the WGS SV results
     my $summarize_svs_op;
     if ($build->wgs_build) {
-        my $msg = "Summarize SV results from WGS somatic variation";
-        $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
-        $add_link->($input_connector,  'wgs_build', $summarize_svs_op, 'builds');
-        $add_link->($input_connector,  'sv_dir',    $summarize_svs_op, 'outdir');
-        $add_link->($summarize_svs_op, 'result',    $output_connector, 'summarize_svs_result');
+        $summarize_svs_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Summarize SV results from WGS somatic variation',
+            command => 'Genome::Model::ClinSeq::Command::SummarizeSvs',
+        );
+        $workflow->add_operation($summarize_svs_op);
+        $workflow->connect_input(
+            input_property       => 'cancer_annotation_db',
+            destination          => $summarize_svs_op,
+            destination_property => 'cancer_annotation_db',
+        );
+        $workflow->connect_input(
+            input_property       => 'sv_dir',
+            destination          => $summarize_svs_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_input(
+            input_property       => 'wgs_build',
+            destination          => $summarize_svs_op,
+            destination_property => 'builds',
+        );
+        $workflow->connect_output(
+            output_property => 'summarize_svs_result',
+            source          => $summarize_svs_op,
+            source_property => 'result',
+        );
     }
 
     #Add gene category annotations to some output files from steps above. (e.g. determine which SNV affected genes are kinases, ion channels, etc.)
     #AnnotateGenesByCategory - gene_category_exome_snv_result
     if ($build->exome_build) {
-        my $msg = "Add gene category annotations to SNVs identified by exome";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->($import_snvs_indels_op, 'exome_snv_file',    $annotate_genes_by_category_op, 'infile');
-        $add_link->($input_connector,       'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_exome_snv_result');
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to SNVs identified by exome',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+        );
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $import_snvs_indels_op,
+            source_property      => 'exome_snv_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_exome_snv_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_wgs_snv_result
     if ($build->wgs_build) {
-        my $msg = "Add gene category annotations to SNVs identified by wgs";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->($import_snvs_indels_op, 'wgs_snv_file',      $annotate_genes_by_category_op, 'infile');
-        $add_link->($input_connector,       'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_snv_result');
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to SNVs identified by wgs',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+        );
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $import_snvs_indels_op,
+            source_property      => 'wgs_snv_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_wgs_snv_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_wgs_exome_snv_result
     if ($build->wgs_build and $build->exome_build) {
-        my $msg = "Add gene category annotations to SNVs identified by wgs OR exome";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->($import_snvs_indels_op, 'wgs_exome_snv_file', $annotate_genes_by_category_op, 'infile');
-        $add_link->($input_connector,       'gene_name_columns',  $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_exome_snv_result');
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to SNVs identified by wgs OR exome',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+        );
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $import_snvs_indels_op,
+            source_property      => 'wgs_exome_snv_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_wgs_exome_snv_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_exome_indel_result
     if ($build->exome_build) {
-        my $msg = "Add gene category annotations to InDels identified by exome";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->($import_snvs_indels_op, 'exome_indel_file',  $annotate_genes_by_category_op, 'infile');
-        $add_link->($input_connector,       'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_exome_indel_result');
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to InDels identified by exome',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+        );
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $import_snvs_indels_op,
+            source_property      => 'exome_indel_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_exome_indel_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_wgs_indel_result
     if ($build->wgs_build) {
-        my $msg = "Add gene category annotations to InDels identified by wgs";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->($import_snvs_indels_op, 'wgs_indel_file',    $annotate_genes_by_category_op, 'infile');
-        $add_link->($input_connector,       'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_wgs_indel_result');
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to InDels identified by wgs',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+        );
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $import_snvs_indels_op,
+            source_property      => 'wgs_indel_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_wgs_indel_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_wgs_exome_indel_result
     if ($build->wgs_build and $build->exome_build) {
-        my $msg = "Add gene category annotations to InDels identified by wgs OR exome";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->($import_snvs_indels_op, 'wgs_exome_indel_file', $annotate_genes_by_category_op, 'infile');
-        $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector,
-            'gene_category_wgs_exome_indel_result');
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to InDels identified by wgs OR exome',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+        );
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $import_snvs_indels_op,
+            source_property      => 'wgs_exome_indel_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_wgs_exome_indel_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_cnv_amp_result
     if ($build->wgs_build) {
-        my $msg = "Add gene category annotations to CNV amp genes";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->($run_cn_view_op,  'gene_amp_file',     $annotate_genes_by_category_op, 'infile');
-        $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_amp_result');
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to CNV amp genes',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+        );
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $run_cn_view_op,
+            source_property      => 'gene_amp_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_cnv_amp_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_cnv_del_result
     if ($build->wgs_build) {
-        my $msg = "Add gene category annotations to CNV del genes";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->($run_cn_view_op,  'gene_del_file',     $annotate_genes_by_category_op, 'infile');
-        $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_del_result');
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to CNV del genes',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+        );
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $run_cn_view_op,
+            source_property      => 'gene_del_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_cnv_del_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_cnv_ampdel_result
     if ($build->wgs_build) {
-        my $msg = "Add gene category annotations to CNV amp OR del genes";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->($run_cn_view_op,  'gene_ampdel_file',  $annotate_genes_by_category_op, 'infile');
-        $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cnv_ampdel_result');
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to CNV amp OR del genes',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+        );
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $run_cn_view_op,
+            source_property      => 'gene_ampdel_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_cnv_ampdel_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_cufflinks_result
     if ($build->tumor_rnaseq_build) {
-        my $msg = "Add gene category annotations to cufflinks top1 percent genes";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->(
-            $tumor_cufflinks_expression_absolute_op,
-            'tumor_fpkm_topnpercent_file', $annotate_genes_by_category_op, 'infile'
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to cufflinks top1 percent genes',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
         );
-        $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_cufflinks_result');
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $tumor_cufflinks_expression_absolute_op,
+            source_property      => 'tumor_fpkm_topnpercent_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_cufflinks_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_tophat_result
     if ($build->tumor_rnaseq_build) {
-        my $msg = "Add gene category annotations to tophat junctions top1 percent genes";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->(
-            $tumor_tophat_junctions_absolute_op,
-            'junction_topnpercent_file', $annotate_genes_by_category_op, 'infile'
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to tophat junctions top1 percent genes',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
         );
-        $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_tophat_result');
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $tumor_tophat_junctions_absolute_op,
+            source_property      => 'junction_topnpercent_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_tophat_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_coding_de_up_result
     if ($build->normal_rnaseq_build && $build->tumor_rnaseq_build) {
-        my $msg = "Add gene category annotations to up-regulated coding genes";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->(
-            $cufflinks_differential_expression_op,
-            'coding_hq_up_file', $annotate_genes_by_category_op, 'infile'
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to up-regulated coding genes',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
         );
-        $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_up_result');
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $cufflinks_differential_expression_op,
+            source_property      => 'coding_hq_up_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_coding_de_up_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_coding_de_down_result
     if ($build->normal_rnaseq_build && $build->tumor_rnaseq_build) {
-        my $msg = "Add gene category annotations to down-regulated coding genes";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->(
-            $cufflinks_differential_expression_op,
-            'coding_hq_down_file', $annotate_genes_by_category_op, 'infile'
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to down-regulated coding genes',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
         );
-        $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_down_result');
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $cufflinks_differential_expression_op,
+            source_property      => 'coding_hq_down_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_coding_de_down_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
     #AnnotateGenesByCategory - gene_category_coding_de_result
     if ($build->normal_rnaseq_build && $build->tumor_rnaseq_build) {
-        my $msg = "Add gene category annotations to DE coding genes";
-        my $annotate_genes_by_category_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByCategory");
-        $add_link->(
-            $cufflinks_differential_expression_op,
-            'coding_hq_de_file', $annotate_genes_by_category_op, 'infile'
+        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add gene category annotations to DE coding genes',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
         );
-        $add_link->($input_connector, 'gene_name_columns', $annotate_genes_by_category_op, 'gene_name_columns');
-        $add_link->($annotate_genes_by_category_op, 'result', $output_connector, 'gene_category_coding_de_result');
+        $workflow->add_operation($annotate_genes_by_category_op);
+        for my $property (qw(gene_name_columns cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_category_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $cufflinks_differential_expression_op,
+            source_property      => 'coding_hq_de_file',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        $workflow->connect_output(
+            output_property => 'gene_category_coding_de_result',
+            source          => $annotate_genes_by_category_op,
+            source_property => 'result',
+        );
     }
 
     #DGIDB gene annotation
     if ($build->exome_build) {
-        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'exome_snv_file', $input_connector,
-            $output_connector, 'dgidb_exome_snv_result');
-        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'exome_indel_file', $input_connector,
-            $output_connector, 'dgidb_exome_indel_result');
+        for my $variant_type (qw(snv indel)) {
+            my $annotate_genes_by_dgidb_op = Genome::WorkflowBuilder::Command->create(
+                name => sprintf('Add dgidb gene annotations to exome_%s_file', $variant_type),
+                command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
+            );
+            $workflow->add_operation($annotate_genes_by_dgidb_op);
+            for my $property (qw(gene_name_regex)) {
+                $workflow->connect_input(
+                    input_property       => $property,
+                    destination          => $annotate_genes_by_dgidb_op,
+                    destination_property => $property,
+                );
+            }
+            $workflow->create_link(
+                source               => $import_snvs_indels_op,
+                source_property      => sprintf('exome_%s_file', $variant_type),
+                destination          => $annotate_genes_by_dgidb_op,
+                destination_property => 'input_file',
+            );
+            $workflow->connect_output(
+                output_property => sprintf('dgidb_exome_%s_result', $variant_type),
+                source          => $annotate_genes_by_dgidb_op,
+                source_property => 'result',
+            );
+        }
     }
 
     if ($build->wgs_build) {
-        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_snv_file', $input_connector,
-            $output_connector, 'dgidb_wgs_snv_result');
-        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_indel_file', $input_connector,
-            $output_connector, 'dgidb_wgs_indel_result');
-        $self->add_dgidb_op_to_flow($add_step, $add_link, $run_cn_view_op, 'gene_amp_file', $input_connector,
-            $output_connector, 'dgidb_cnv_amp_result');
-        $self->add_dgidb_op_to_flow($add_step, $add_link, $summarize_svs_op, 'fusion_output_file', $input_connector,
-            $output_connector, 'dgidb_sv_fusion_result');
+        for my $variant_type (qw(snv indel)) {
+            my $annotate_genes_by_dgidb_op = Genome::WorkflowBuilder::Command->create(
+                name => sprintf('Add dgidb gene annotations to wgs_%s_file', $variant_type),
+                command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
+            );
+            $workflow->add_operation($annotate_genes_by_dgidb_op);
+            for my $property (qw(gene_name_regex)) {
+                $workflow->connect_input(
+                    input_property       => $property,
+                    destination          => $annotate_genes_by_dgidb_op,
+                    destination_property => $property,
+                );
+            }
+            $workflow->create_link(
+                source               => $import_snvs_indels_op,
+                source_property      => sprintf('wgs_%s_file', $variant_type),
+                destination          => $annotate_genes_by_dgidb_op,
+                destination_property => 'input_file',
+            );
+            $workflow->connect_output(
+                output_property => sprintf('dgidb_wgs_%s_result', $variant_type),
+                source          => $annotate_genes_by_dgidb_op,
+                source_property => 'result',
+            );
+        }
+        my $annotate_genes_by_dgidb_cnv_amp_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add dgidb gene annotations to gene_amp_file',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
+        );
+        $workflow->add_operation($annotate_genes_by_dgidb_cnv_amp_op);
+        for my $property (qw(gene_name_regex)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_dgidb_cnv_amp_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $run_cn_view_op,
+            source_property      => 'gene_amp_file',
+            destination          => $annotate_genes_by_dgidb_cnv_amp_op,
+            destination_property => 'input_file',
+        );
+        $workflow->connect_output(
+            output_property => 'dgidb_cnv_amp_result',
+            source          => $annotate_genes_by_dgidb_cnv_amp_op,
+            source_property => 'result',
+        );
+        my $annotate_genes_by_dgidb_sv_fusion_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add dgidb gene annotations to fusion_output_file',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
+        );
+        $workflow->add_operation($annotate_genes_by_dgidb_sv_fusion_op);
+        for my $property (qw(gene_name_regex)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_dgidb_sv_fusion_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $summarize_svs_op,
+            source_property      => 'fusion_output_file',
+            destination          => $annotate_genes_by_dgidb_sv_fusion_op,
+            destination_property => 'input_file',
+        );
+        $workflow->connect_output(
+            output_property => 'dgidb_sv_fusion_result',
+            source          => $annotate_genes_by_dgidb_sv_fusion_op,
+            source_property => 'result',
+        );
     }
 
     if ($build->wgs_build and $build->exome_build) {
-        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_exome_snv_file',
-            $input_connector, $output_connector, 'dgidb_wgs_exome_snv_result');
-        $self->add_dgidb_op_to_flow($add_step, $add_link, $import_snvs_indels_op, 'wgs_exome_indel_file',
-            $input_connector, $output_connector, 'dgidb_wgs_exome_indel_result');
+        for my $variant_type (qw(snv indel)) {
+            my $annotate_genes_by_dgidb_op = Genome::WorkflowBuilder::Command->create(
+                name => sprintf('Add dgidb gene annotations to wgs_exome_%s_file', $variant_type),
+                command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
+            );
+            $workflow->add_operation($annotate_genes_by_dgidb_op);
+            for my $property (qw(gene_name_regex)) {
+                $workflow->connect_input(
+                    input_property       => $property,
+                    destination          => $annotate_genes_by_dgidb_op,
+                    destination_property => $property,
+                );
+            }
+            $workflow->create_link(
+                source               => $import_snvs_indels_op,
+                source_property      => sprintf('wgs_exome_%s_file', $variant_type),
+                destination          => $annotate_genes_by_dgidb_op,
+                destination_property => 'input_file',
+            );
+            $workflow->connect_output(
+                output_property => sprintf('dgidb_wgs_exome_%s_result', $variant_type),
+                source          => $annotate_genes_by_dgidb_op,
+                source_property => 'result',
+            );
+        }
     }
 
     if ($build->tumor_rnaseq_build) {
-        $self->add_dgidb_op_to_flow($add_step, $add_link, $tumor_cufflinks_expression_absolute_op,
-            'tumor_fpkm_topnpercent_file', $input_connector, $output_connector, 'dgidb_cufflinks_result');
-        $self->add_dgidb_op_to_flow($add_step, $add_link, $tumor_tophat_junctions_absolute_op,
-            'junction_topnpercent_file', $input_connector, $output_connector, 'dgidb_tophat_result');
+        my $annotate_genes_by_dgidb_cufflink_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add dgidb gene annotations to tumor_fpkm_topnpercent_file',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
+        );
+        $workflow->add_operation($annotate_genes_by_dgidb_cufflink_op);
+        for my $property (qw(gene_name_regex)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_dgidb_cufflink_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $tumor_cufflinks_expression_absolute_op,
+            source_property      => 'tumor_fpkm_topnpercent_file',
+            destination          => $annotate_genes_by_dgidb_cufflink_op,
+            destination_property => 'input_file',
+        );
+        $workflow->connect_output(
+            output_property => 'dgidb_cufflinks_result',
+            source          => $annotate_genes_by_dgidb_cufflink_op,
+            source_property => 'result',
+        );
+        my $annotate_genes_by_dgidb_tophat_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Add dgidb gene annotations to junction_topnpercent_file',
+            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
+        );
+        $workflow->add_operation($annotate_genes_by_dgidb_tophat_op);
+        for my $property (qw(gene_name_regex)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $annotate_genes_by_dgidb_tophat_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $tumor_tophat_junctions_absolute_op,
+            source_property      => 'junction_topnpercent_file',
+            destination          => $annotate_genes_by_dgidb_tophat_op,
+            destination_property => 'input_file',
+        );
+        $workflow->connect_output(
+            output_property => 'dgidb_tophat_result',
+            source          => $annotate_genes_by_dgidb_tophat_op,
+            source_property => 'result',
+        );
     }
 
     #SummarizeTier1SnvSupport - For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
@@ -1320,27 +1811,37 @@ sub _resolve_workflow_for_build {
         $txt_name =~ s/_/ plus /g;
         $txt_name =~ s/wgs/WGS/;
         $txt_name =~ s/exome/Exome/;
-        $msg = "$txt_name Summarize Tier 1 SNV Support (BAM read counts)";
-        $summarize_tier1_snv_support_op =
-            $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport");
-        $add_link->(
-            $import_snvs_indels_op,
-            $run . "_snv_file",
-            $summarize_tier1_snv_support_op,
-            $run . "_positions_file"
+        $summarize_tier1_snv_support_op = Genome::WorkflowBuilder::Command->create(
+            name => "$txt_name Summarize Tier 1 SNV Support (BAM read counts)",
+            command => 'Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport',
         );
-        $add_link->($input_connector, 'wgs_build',           $summarize_tier1_snv_support_op);
-        $add_link->($input_connector, 'exome_build',         $summarize_tier1_snv_support_op);
-        $add_link->($input_connector, 'tumor_rnaseq_build',  $summarize_tier1_snv_support_op);
-        $add_link->($input_connector, 'normal_rnaseq_build', $summarize_tier1_snv_support_op);
+        $workflow->add_operation($summarize_tier1_snv_support_op);
+        for my $property (qw(wgs_build exome_build tumor_rnaseq_build normal_rnaseq_build verbose cancer_annotation_db)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $summarize_tier1_snv_support_op,
+                destination_property => $property,
+            );
+        }
+        $workflow->create_link(
+            source               => $import_snvs_indels_op,
+            source_property      => $run . "_snv_file",
+            destination          => $summarize_tier1_snv_support_op,
+            destination_property => $run . "_positions_file",
+        );
 
         if ($build->tumor_rnaseq_build) {
-            $add_link->($tumor_cufflinks_expression_absolute_op, 'tumor_fpkm_file', $summarize_tier1_snv_support_op);
+            $workflow->create_link(
+                source               => $tumor_cufflinks_expression_absolute_op,
+                source_property      => 'tumor_fpkm_file',
+                destination          => $summarize_tier1_snv_support_op,
+                destination_property => 'tumor_fpkm_file',
+            );
         }
-        $add_link->($input_connector, 'verbose', $summarize_tier1_snv_support_op);
-        $add_link->(
-            $summarize_tier1_snv_support_op,
-            'result', $output_connector, "summarize_${run}_tier1_snv_support_result"
+        $workflow->connect_output(
+            output_property => "summarize_${run}_tier1_snv_support_result",
+            source          => $summarize_tier1_snv_support_op,
+            source_property => 'result',
         );
     }
 
@@ -1348,172 +1849,212 @@ sub _resolve_workflow_for_build {
     #Currently WGS data is a minimum requirement for Circos plot generation.
     my $make_circos_plot_op;
     if ($build->wgs_build) {
-        $msg = "Create a Circos plot using MakeCircosPlot";
-        $make_circos_plot_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MakeCircosPlot");
-        $add_link->($input_connector,  'build',              $make_circos_plot_op);
-        $add_link->($input_connector,  'circos_outdir',      $make_circos_plot_op, 'output_directory');
-        $add_link->($summarize_svs_op, 'fusion_output_file', $make_circos_plot_op, 'candidate_fusion_infile');
-        $add_link->($clonality_op,     'cnv_hmm_file',       $make_circos_plot_op);
+        $make_circos_plot_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Create a Circos plot using MakeCircosPlot',
+            command => 'Genome::Model::ClinSeq::Command::MakeCircosPlot',
+        );
+        $workflow->add_operation($make_circos_plot_op);
+        $workflow->connect_input(
+            input_property       => 'build',
+            destination          => $make_circos_plot_op,
+            destination_property => 'build',
+        );
+        $workflow->connect_input(
+            input_property       => 'circos_outdir',
+            destination          => $make_circos_plot_op,
+            destination_property => 'output_directory',
+        );
+        $workflow->create_link(
+            source               => $summarize_svs_op,
+            source_property      => 'fusion_output_file',
+            destination          => $make_circos_plot_op,
+            destination_property => 'candidate_fusion_infile',
+        );
+        $workflow->create_link(
+            source               => $clonality_op,
+            source_property      => 'cnv_hmm_file',
+            destination          => $make_circos_plot_op,
+            destination_property => 'cnv_hmm_file',
+        );
         if ($build->normal_rnaseq_build || $build->tumor_rnaseq_build) {
             if ($build->normal_rnaseq_build) {
-                $add_link->($cufflinks_differential_expression_op, 'coding_hq_de_file', $make_circos_plot_op);
+                $workflow->create_link(
+                    source               => $cufflinks_differential_expression_op,
+                    source_property      => 'coding_hq_de_file',
+                    destination          => $make_circos_plot_op,
+                    destination_property => 'coding_hq_de_file',
+                );
             }
             else {
-                $add_link->(
-                    $tumor_cufflinks_expression_absolute_op,
-                    'tumor_fpkm_topnpercent_file', $make_circos_plot_op
+                $workflow->create_link(
+                    source               => $tumor_cufflinks_expression_absolute_op,
+                    source_property      => 'tumor_fpkm_topnpercent_file',
+                    destination          => $make_circos_plot_op,
+                    destination_property => 'tumor_fpkm_topnpercent_file',
                 );
             }
         }
-        $add_link->($import_snvs_indels_op, 'result', $make_circos_plot_op, 'import_snvs_indels_result');
-        $add_link->($run_cn_view_op, 'gene_ampdel_file', $make_circos_plot_op);
-        $add_link->($make_circos_plot_op, 'result', $output_connector, 'circos_result');
+        $workflow->create_link(
+            source               => $import_snvs_indels_op,
+            source_property      => 'result',
+            destination          => $make_circos_plot_op,
+            destination_property => 'import_snvs_indels_result',
+        );
+        $workflow->create_link(
+            source               => $run_cn_view_op,
+            source_property      => 'gene_ampdel_file',
+            destination          => $make_circos_plot_op,
+            destination_property => 'gene_ampdel_file',
+        );
+        $workflow->connect_output(
+            output_property => 'circos_result',
+            source          => $make_circos_plot_op,
+            source_property => 'result',
+        );
     }
 
     #Converge SnvIndelReport
-    my $converge_snv_indel_report_op1;
     my @converge_snv_indel_report_ops;
     if ($build->wgs_build || $build->exome_build) {
         #Create a report for each $bq $mq combo.
         my $iterator = List::MoreUtils::each_arrayref([1 .. @$mqs], $mqs, $bqs);
         while (my ($i, $mq, $bq) = $iterator->()) {
-            $msg = "Generate SnvIndel Report" . $i . ".";
-            $converge_snv_indel_report_op1 =
-                $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::SnvIndelReport");
-            $add_link->($input_connector, 'build', $converge_snv_indel_report_op1, 'builds');
-            $add_link->(
-                $input_connector, 'bam_readcount_version', $converge_snv_indel_report_op1,
-                'bam_readcount_version'
+            my $converge_snv_indel_report_op = Genome::WorkflowBuilder::Command->create(
+                name => "Generate SnvIndel Report$i",
+                command => 'Genome::Model::ClinSeq::Command::Converge::SnvIndelReport',
             );
-            $add_link->($input_connector, 'snv_indel_report_dir' . $i,  $converge_snv_indel_report_op1, 'outdir');
-            $add_link->($input_connector, 'snv_indel_report_clean',     $converge_snv_indel_report_op1, 'clean');
-            $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op1, 'tmp_space');
-            $add_link->($input_connector, 'annotation_build', $converge_snv_indel_report_op1, 'annotation_build');
-            $add_link->(
-                $input_connector,
-                'snv_indel_report_target_gene_list',
-                $converge_snv_indel_report_op1,
-                'target_gene_list'
+            $workflow->add_operation($converge_snv_indel_report_op);
+            $workflow->connect_input(
+                input_property       => 'build',
+                destination          => $converge_snv_indel_report_op,
+                destination_property => 'builds',
             );
-            $add_link->(
-                $input_connector,
-                'snv_indel_report_target_gene_list_name',
-                $converge_snv_indel_report_op1,
-                'target_gene_list_name'
-            );
-            $add_link->($input_connector, 'sireport_min_tumor_vaf',  $converge_snv_indel_report_op1, 'min_tumor_vaf');
-            $add_link->($input_connector, 'sireport_max_normal_vaf', $converge_snv_indel_report_op1, 'max_normal_vaf');
-            $add_link->($input_connector, 'sireport_min_coverage',   $converge_snv_indel_report_op1, 'min_coverage');
-            $add_link->($input_connector, 'sireport_min_bq' . $i,    $converge_snv_indel_report_op1, 'bq');
-            $add_link->($input_connector, 'sireport_min_mq' . $i,    $converge_snv_indel_report_op1, 'mq');
-
-            if ($build->wgs_build) {
-                $add_link->(
-                    $wgs_variant_sources_op,        'snv_variant_sources_file',
-                    $converge_snv_indel_report_op1, '_wgs_snv_variant_sources_file'
-                );
-                $add_link->(
-                    $wgs_variant_sources_op,        'indel_variant_sources_file',
-                    $converge_snv_indel_report_op1, '_wgs_indel_variant_sources_file'
+            for my $property (qw(bam_readcount_version annotation_build)) {
+                $workflow->connect_input(
+                    input_property       => $property,
+                    destination          => $converge_snv_indel_report_op,
+                    destination_property => $property,
                 );
             }
+            $workflow->connect_input(
+                input_property       => "snv_indel_report_dir$i",
+                destination          => $converge_snv_indel_report_op,
+                destination_property => 'outdir',
+            );
+            for my $property (qw(clean tmp_space target_gene_list target_gene_list_name)) {
+                $workflow->connect_input(
+                    input_property       => "snv_indel_report_$property",
+                    destination          => $converge_snv_indel_report_op,
+                    destination_property => $property,
+                );
+            }
+            for my $property (qw(min_tumor_vaf max_normal_vaf min_coverage)) {
+                $workflow->connect_input(
+                    input_property       => "sireport_$property",
+                    destination          => $converge_snv_indel_report_op,
+                    destination_property => $property,
+                );
+            }
+            for my $property (qw(bq mq)) {
+                $workflow->connect_input(
+                    input_property       => "sireport_min_$property$i",
+                    destination          => $converge_snv_indel_report_op,
+                    destination_property => $property,
+                );
+            }
+            if ($build->wgs_build) {
+                for my $variant_type (qw(snv indel)) {
+                    $workflow->create_link(
+                        source               => $wgs_variant_sources_op,
+                        source_property      => $variant_type . '_variant_sources_file',
+                        destination          => $converge_snv_indel_report_op,
+                        destination_property => sprintf('_wgs_%s_variant_sources_file', $variant_type),
+                    );
+                }
+            }
             if ($build->exome_build) {
-                $add_link->(
-                    $exome_variant_sources_op,      'snv_variant_sources_file',
-                    $converge_snv_indel_report_op1, '_exome_snv_variant_sources_file'
-                );
-                $add_link->(
-                    $exome_variant_sources_op,      'indel_variant_sources_file',
-                    $converge_snv_indel_report_op1, '_exome_indel_variant_sources_file'
-                );
+                for my $variant_type (qw(snv indel)) {
+                    $workflow->create_link(
+                        source               => $exome_variant_sources_op,
+                        source_property      => $variant_type . '_variant_sources_file',
+                        destination          => $converge_snv_indel_report_op,
+                        destination_property => sprintf('_exome_%s_variant_sources_file', $variant_type),
+                    );
+                }
             }
             #If this is a build of a test model, perform a faster analysis (e.g. apipe-test-clinseq-wer)
             if ($self->name =~ /^apipe\-test/) {
-                $add_link->($input_connector, 'snv_indel_report_tiers', $converge_snv_indel_report_op1, 'tiers');
+                $workflow->connect_input(
+                    input_property       => 'snv_indel_report_tiers',
+                    destination          => $converge_snv_indel_report_op,
+                    destination_property => 'tiers',
+                );
             }
-            $add_link->(
-                $converge_snv_indel_report_op1,
-                'result', $output_connector, 'converge_snv_indel_report_result' . $i
+            $workflow->connect_output(
+                output_property => "converge_snv_indel_report_result$i",
+                source          => $converge_snv_indel_report_op,
+                source_property => 'result',
             );
-            push @converge_snv_indel_report_ops, $converge_snv_indel_report_op1;
+            push @converge_snv_indel_report_ops, $converge_snv_indel_report_op;
         }
     }
 
-    #CreateMutationDiagrams - Create mutation spectrum results for wgs data
+    #CreateMutationDiagrams - Create mutation spectrum results for wgs and exome data
+    my @runs;
     if ($build->wgs_build) {
-        my $iterator = List::MoreUtils::each_arrayref([1 .. @$mqs], $mqs, $bqs);
-        while (my ($i, $mq, $bq) = $iterator->()) {
-            my $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum" . $i;
-            my $create_mutation_spectrum_wgs_op =
-                $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
-            $add_link->($input_connector, 'build',     $create_mutation_spectrum_wgs_op, 'clinseq_build');
-            $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'somvar_build');
-            $add_link->(
-                $input_connector,
-                'wgs_mutation_spectrum_outdir' . $i,
-                $create_mutation_spectrum_wgs_op, 'outdir'
-            );
-            $add_link->(
-                $input_connector,
-                'wgs_mutation_spectrum_datatype' . $i,
-                $create_mutation_spectrum_wgs_op, 'datatype'
-            );
-            $add_link->($input_connector, 'sireport_min_bq' . $i, $create_mutation_spectrum_wgs_op, 'min_base_quality');
-            $add_link->($input_connector, 'sireport_min_mq' . $i, $create_mutation_spectrum_wgs_op,
-                'min_quality_score');
-            $add_link->(
-                $converge_snv_indel_report_ops[$i - 1],
-                'result',
-                $create_mutation_spectrum_wgs_op,
-                'converge_snv_indel_report_result'
-            );
-            $add_link->(
-                $create_mutation_spectrum_wgs_op,
-                'result', $output_connector, 'wgs_mutation_spectrum_result' . $i
-            );
-        }
+        push(@runs, 'wgs');
     }
-
-    #CreateMutationDiagrams - Create mutation spectrum results for exome data
     if ($build->exome_build) {
+        push(@runs, 'exome');
+    }
+    for my $run (@runs) {
         my $iterator = List::MoreUtils::each_arrayref([1 .. @$mqs], $mqs, $bqs);
         while (my ($i, $mq, $bq) = $iterator->()) {
-            my $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum " . $i;
-            my $create_mutation_spectrum_exome_op =
-                $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
-            $add_link->($input_connector, 'build',       $create_mutation_spectrum_exome_op, 'clinseq_build');
-            $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'somvar_build');
-            $add_link->(
-                $input_connector,
-                'exome_mutation_spectrum_outdir' . $i,
-                $create_mutation_spectrum_exome_op, 'outdir'
+            my $create_mutation_spectrum_op = Genome::WorkflowBuilder::Command->create(
+                name => "Creating mutation spectrum results for $run snvs using create-mutation-spectrum$i",
+                command => 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum',
             );
-            $add_link->(
-                $input_connector,
-                'exome_mutation_spectrum_datatype' . $i,
-                $create_mutation_spectrum_exome_op, 'datatype'
+            $workflow->add_operation($create_mutation_spectrum_op);
+            $workflow->connect_input(
+                input_property       => 'build',
+                destination          => $create_mutation_spectrum_op,
+                destination_property => 'clinseq_build',
             );
-            $add_link->(
-                $input_connector,
-                'sireport_min_bq' . $i,
-                $create_mutation_spectrum_exome_op,
-                'min_base_quality'
+            $workflow->connect_input(
+                input_property       => "${run}_build",
+                destination          => $create_mutation_spectrum_op,
+                destination_property => 'somvar_build',
             );
-            $add_link->(
-                $input_connector,
-                'sireport_min_mq' . $i,
-                $create_mutation_spectrum_exome_op,
-                'min_quality_score'
+            $workflow->connect_input(
+                input_property       => "${run}_mutation_spectrum_outdir$i",
+                destination          => $create_mutation_spectrum_op,
+                destination_property => 'outdir',
             );
-            $add_link->(
-                $converge_snv_indel_report_ops[$i - 1],
-                'result',
-                $create_mutation_spectrum_exome_op,
-                'converge_snv_indel_report_result'
+            $workflow->connect_input(
+                input_property       => "${run}_mutation_spectrum_datatype$i",
+                destination          => $create_mutation_spectrum_op,
+                destination_property => 'datatype',
             );
-            $add_link->(
-                $create_mutation_spectrum_exome_op,
-                'result', $output_connector, 'exome_mutation_spectrum_result' . $i
+            $workflow->connect_input(
+                input_property       => "sireport_min_bq$i",
+                destination          => $create_mutation_spectrum_op,
+                destination_property => 'min_base_quality',
+            );
+            $workflow->connect_input(
+                input_property       => "sireport_min_mq$i",
+                destination          => $create_mutation_spectrum_op,
+                destination_property => 'min_quality_score',
+            );
+            $workflow->create_link(
+                source               => $converge_snv_indel_report_ops[$i - 1],
+                source_property      => 'result',
+                destination          => $create_mutation_spectrum_op,
+                destination_property => 'converge_snv_indel_report_result',
+            );
+            $workflow->connect_output(
+                output_property => "${run}_mutation_spectrum_result$i",
+                source          => $create_mutation_spectrum_op,
+                source_property => 'result',
             );
         }
     }
@@ -1522,67 +2063,122 @@ sub _resolve_workflow_for_build {
     if ($build->wgs_build or $build->should_run_exome_cnv) {
         my $iterator = List::MoreUtils::each_arrayref([1 .. @$mqs], $mqs, $bqs);
         while (my ($i, $mq, $bq) = $iterator->()) {
-            my $msg = "Run clonality analysis and produce clonality plots using SciClone " . $i;
-            my $sciclone_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateSciclonePlots");
-            $add_link->($input_connector, 'sciclone_dir' . $i,     $sciclone_op, 'outdir');
-            $add_link->($input_connector, 'build',                 $sciclone_op, 'clinseq_build');
-            $add_link->($input_connector, 'sireport_min_coverage', $sciclone_op, 'min_coverage');
-            $add_link->($input_connector, 'sireport_min_mq' . $i,  $sciclone_op, 'min_mq');
-            $add_link->($input_connector, 'sireport_min_bq' . $i,  $sciclone_op, 'min_bq');
+            my $sciclone_op = Genome::WorkflowBuilder::Command->create(
+                name => "Run clonality analysis and produce clonality plots using SciClone $i",
+                command => 'Genome::Model::ClinSeq::Command::GenerateSciclonePlots',
+            );
+            $workflow->add_operation($sciclone_op);
+            $workflow->connect_input(
+                input_property       => "sciclone_dir$i",
+                destination          => $sciclone_op,
+                destination_property => 'outdir',
+            );
+            $workflow->connect_input(
+                input_property       => 'build',
+                destination          => $sciclone_op,
+                destination_property => 'clinseq_build',
+            );
+            $workflow->connect_input(
+                input_property       => 'sireport_min_coverage',
+                destination          => $sciclone_op,
+                destination_property => 'min_coverage',
+            );
+            for my $property (qw(min_mq min_bq)) {
+                $workflow->connect_input(
+                    input_property       => "sireport_$property$i",
+                    destination          => $sciclone_op,
+                    destination_property => $property,
+                );
+            }
             if ($build->wgs_build) {
-                $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
+                $workflow->create_link(
+                    source               => $run_cn_view_op,
+                    source_property      => 'result',
+                    destination          => $sciclone_op,
+                    destination_property => 'wgs_cnv_result',
+                );
             }
             if ($build->should_run_exome_cnv) {
-                $add_link->($exome_cnv_op, 'result', $sciclone_op, 'exome_cnv_result');
+                $workflow->create_link(
+                    source               => $exome_cnv_op,
+                    source_property      => 'result',
+                    destination          => $sciclone_op,
+                    destination_property => 'exome_cnv_result',
+                );
             }
             if ($self->has_microarray_build()) {
-                $add_link->($microarray_cnv_op, 'result', $sciclone_op, 'microarray_cnv_result');
+                $workflow->create_link(
+                    source               => $microarray_cnv_op,
+                    source_property      => 'result',
+                    destination          => $sciclone_op,
+                    destination_property => 'microarray_cnv_result',
+                );
             }
-            $add_link->(
-                $converge_snv_indel_report_ops[$i - 1],
-                'result', $sciclone_op, 'converge_snv_indel_report_result'
+            $workflow->create_link(
+                source               =>  $converge_snv_indel_report_ops[$i - 1],
+                source_property      => 'result',
+                destination          => $sciclone_op,
+                destination_property => 'converge_snv_indel_report_result',
             );
-            $add_link->($sciclone_op, 'result', $output_connector, 'sciclone_result' . $i);
+            $workflow->connect_output(
+                output_property => "sciclone_result$i",
+                source          => $sciclone_op,
+                source_property => 'result',
+            );
         }
     }
 
     #IdentifyLoh - Run identify-loh tool for exome or WGS data
     #genome model clin-seq identify-loh --clinseq-build=fafd219665d54462893fbacfe6639f70 --outdir=/Documents/GTB11/ --bamrc-version=0.7
     if ($build->wgs_build or $build->exome_build) {
-        $msg = "Identify regions of LOH and create plots";
-        my $identify_loh_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::IdentifyLoh");
-        $add_link->($input_connector, 'build',                 $identify_loh_op, 'clinseq_build');
-        $add_link->($input_connector, 'loh_output_dir',        $identify_loh_op, 'outdir');
-        $add_link->($input_connector, 'bam_readcount_version', $identify_loh_op, 'bamrc_version');
+        my $identify_loh_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Identify regions of LOH and create plots',
+            command => 'Genome::Model::ClinSeq::Command::IdentifyLoh',
+        );
+        $workflow->add_operation($identify_loh_op);
+        $workflow->connect_input(
+            input_property       => 'build',
+            destination          => $identify_loh_op,
+            destination_property => 'clinseq_build',
+        );
+        $workflow->connect_input(
+            input_property       => 'loh_output_dir',
+            destination          => $identify_loh_op,
+            destination_property => 'outdir',
+        );
+        $workflow->connect_input(
+            input_property       => 'bam_readcount_version',
+            destination          => $identify_loh_op,
+            destination_property => 'bamrc_version',
+        );
+
         if ($self->name =~ /^apipe\-test/) {
-            $add_link->($input_connector, 'test', $identify_loh_op, 'test');
+            $workflow->connect_input(
+                input_property       => 'test',
+                destination          => $identify_loh_op,
+                destination_property => 'test',
+            );
         }
-        $add_link->($identify_loh_op, 'result', $output_connector, 'loh_result');
+        $workflow->connect_output(
+            output_property => 'loh_result',
+            source          => $identify_loh_op,
+            source_property => 'result',
+        );
     }
 
     # REMINDER:
     # For new steps be sure to add their result to the output connector if they do not feed into another step.
     # When you do that, expand the list of output properties above.
 
-    my @errors = $workflow->validate();
-    if (@errors) {
-        for my $error (@errors) {
-            $self->error_message($error);
-        }
-        die "Invalid workflow!";
-    }
+    # my @errors = $workflow->validate();
+    # if (@errors) {
+        # for my $error (@errors) {
+            # $self->error_message($error);
+        # }
+        # die "Invalid workflow!";
+    # }
 
     return $workflow;
-}
-
-sub add_dgidb_op_to_flow {
-    my ($self, $add_step, $add_link, $op, $op_prop, $input_connector, $output_connector, $out_prop) = @_;
-    my $msg = "Add dgidb gene annotations to $op_prop";
-    my $annotate_genes_by_dgidb_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb");
-    $add_link->($op,                         $op_prop,          $annotate_genes_by_dgidb_op, 'input_file');
-    $add_link->($input_connector,            'gene_name_regex', $annotate_genes_by_dgidb_op, 'gene_name_regex');
-    $add_link->($annotate_genes_by_dgidb_op, 'result',          $output_connector,           $out_prop);
-    return 1;
 }
 
 sub _infer_candidate_subjects_from_input_models {
