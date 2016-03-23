@@ -95,10 +95,10 @@ sub _filter_variants {
     while (my $line = $fh->getline) {
         next unless $line =~ /\S+/;
         chomp $line;
-        my ($mean)   = $line =~ /mean\w*\:(\S+)\b/i;
-        my ($std)    = $line =~ /std\w*\:(\S+)\b/i;
-        my ($lib)    = $line =~ /lib\w*\:(\S+)\b/i;
-        my ($rd_len) = $line =~ /readlen\w*\:(\S+)\b/i;
+        my ($mean)   = $line =~ /mean\w*\:(\S+)\s+/i;
+        my ($std)    = $line =~ /std\w*\:(\S+)\s+/i;
+        my ($lib)    = $line =~ /lib\w*\:(\S+)\s+/i;
+        my ($rd_len) = $line =~ /readlen\w*\:(\S+)\s+/i;
 
         ($lib) = $line =~ /samp\w*\:(\S+)\b/i unless defined $lib;
         $mean_insertsize{$lib} = int($mean + 0.5);
