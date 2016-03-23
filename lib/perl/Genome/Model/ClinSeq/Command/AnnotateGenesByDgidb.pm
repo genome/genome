@@ -6,7 +6,7 @@ use Genome;
 use File::Basename;
 
 class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
-    is => 'Command::V2',
+    is        => 'Command::V2',
     has_input => [
         input_file => {
             is  => 'FilesystemPath',
@@ -19,7 +19,7 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
     ],
     has_input_output => [
         output_dir => {
-            is  => 'FilesystemPath',
+            is          => 'FilesystemPath',
             is_optional => 1,
             doc => 'result directory of DGIDB output, it will create a xxx.dgidb subdir under input file source dir',
         },
@@ -33,7 +33,6 @@ sub help_synopsis {
 EOS
 }
 
-
 sub help_detail {
     return <<EOS
     Generate a DGIDB gene annotation output. It will run dgidb guery gene with three options:
@@ -43,13 +42,13 @@ sub help_detail {
 EOS
 }
 
-
 sub execute {
-    my $self   = shift;
-    my $infile = $self->input_file;
+    my $self            = shift;
+    my $infile          = $self->input_file;
     my $gene_name_regex = $self->gene_name_regex;
 
-    $self->debug_message("Adding DGIDB gene annotation to $infile using genes in this gene name column: $gene_name_regex");
+    $self->debug_message(
+        "Adding DGIDB gene annotation to $infile using genes in this gene name column: $gene_name_regex");
 
     my $reader = Genome::Utility::IO::SeparatedValueReader->create(
         input     => $infile,
@@ -65,25 +64,20 @@ sub execute {
     my $outdir_name = $self->_prepare_output_directory;
 
     my @parameter_sets = (
-        {
-            output_file         => "$outdir_name/all_interactions.tsv"
-        },
+        {output_file => "$outdir_name/all_interactions.tsv"},
         {
             output_file         => "$outdir_name/expert_antineoplastic.tsv",
             source_trust_levels => 'Expert curated',
             antineoplastic_only => 1,
         },
         {
-            output_file         => "$outdir_name/kinase_only.tsv",
-            gene_categories     => 'KINASE',
+            output_file     => "$outdir_name/kinase_only.tsv",
+            gene_categories => 'KINASE',
         },
     );
 
     for my $parameter_set (@parameter_sets) {
-        my $cmd =Genome::Model::Tools::Dgidb::QueryGene->create(
-            %$parameter_set,
-            genes => $gene_list,
-        );
+        my $cmd = Genome::Model::Tools::Dgidb::QueryGene->create(%$parameter_set, genes => $gene_list,);
 
         unless ($cmd->execute) {
             die $self->error_message("Failed to run gmt dgidb query-gene on gene list: $gene_list");
@@ -92,7 +86,6 @@ sub execute {
 
     return 1;
 }
-
 
 sub convert {
     my ($class, $reader, $column_regex) = @_;
@@ -115,7 +108,7 @@ sub convert {
 sub _prepare_output_directory {
     my $self = shift;
 
-    unless($self->output_dir) {
+    unless ($self->output_dir) {
         my $infile = $self->input_file;
         my ($outdir_name, $dir) = fileparse($infile);
         $outdir_name .= '.dgidb';
