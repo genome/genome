@@ -81,6 +81,25 @@ subtest "determine type" => sub{
 
 };
 
+subtest 'correct_sequence_and_qualities' => sub{
+    plan tests => 2;
+
+    my @read_tokens;
+    my $seq = 'AATTTCCCGG';
+    my $revcomp_seq = 'CCGGGAAATT';
+    my $qual = '0123456789';
+    my $revcomp_qual = reverse $qual;
+
+    @read_tokens = ( undef, 0, undef, undef, undef, undef, undef, undef, undef, $seq, $qual );
+    Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_correct_sequence_and_qualities(\@read_tokens);
+    is_deeply(\@read_tokens, [ undef, 0, undef, undef, undef, undef, undef, undef, undef, $seq, $qual ], 'non complemented read');
+
+    splice(@read_tokens, 1, 1, 16);
+    Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_correct_sequence_and_qualities(\@read_tokens);
+    is_deeply(\@read_tokens, [ undef, 16, undef, undef, undef, undef, undef, undef, undef, $revcomp_seq, $revcomp_qual ], 'complemented read');
+
+};
+
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $multi_rg_base_name = 'input.rg-multi.bam';
 my $multi_rg_bam_path = File::Spec->join($tmp_dir, $multi_rg_base_name);

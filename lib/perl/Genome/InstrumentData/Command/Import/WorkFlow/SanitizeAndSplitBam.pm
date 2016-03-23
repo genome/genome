@@ -211,7 +211,7 @@ sub _correct_sequence_and_qualities {
     $_[0]->[9] = uc $_[0]->[9];
     if ( $_[0]->[1] & 0x10 ) {
         $_[0]->[9] = reverse $_[0]->[9];
-        $_[0]->[9] = tr/ATCG/TAGC/;
+        $_[0]->[9] =~ tr/ATCG/TAGC/;
         $_[0]->[10] = reverse $_[0]->[10];
     }
 }
