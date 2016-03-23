@@ -16,6 +16,7 @@ require File::Spec;
 require File::Temp;
 require List::MoreUtils;
 require Sub::Install;
+use Test::Exception;
 use Test::More tests => 26;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam';
@@ -57,6 +58,26 @@ subtest 'separate reads' => sub{
 
     @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read2);
     is_deeply(\@r, [undef, $read2], 'separate read2');
+
+};
+
+subtest "determine type" => sub{
+    plan tests => 4;
+
+    my $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type(1, 1);
+    is($type, 'paired', 'given 2 reads, type is paired');
+
+    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type(1, undef);
+    is($type, 'singleton', 'given read1, type is singleton');
+
+    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type(undef, 1);
+    is($type, 'singleton', 'given read2, type is singleton');
+
+    throws_ok(
+        sub{ Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type(undef, undef); },
+        qr/No reads given to determine type\!/,
+        'determine reads fails w/o reads',
+    );
 
 };
 

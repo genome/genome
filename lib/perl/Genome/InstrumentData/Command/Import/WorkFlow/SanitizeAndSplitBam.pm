@@ -196,13 +196,14 @@ sub _separate_reads {
 }
 
 sub _determine_type {
-    my ($read1, $read2) = @_;
-
-    if ( $read1 and $read2 ) {
+    if ( defined $_[0] and defined $_[1] ) {
         return 'paired';
     }
-    elsif ( $read1 ) {
+    elsif ( defined $_[0] or defined $_[1] ) {
         return 'singleton';
+    }
+    else {
+        die 'No reads given to determine type!';
     }
 }
 
