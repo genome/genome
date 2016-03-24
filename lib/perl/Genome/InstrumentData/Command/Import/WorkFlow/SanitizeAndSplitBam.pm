@@ -149,8 +149,7 @@ sub _write_reads {
     for my $read_tokens ( grep { defined } ( $read1, $read2 ) ) {
         # Sanitize!
         _sanitize_read($read_tokens);
-        # Remove ALL tags, add new RG tag
-        splice @$read_tokens, 11;
+        # Add RG tag
         push @$read_tokens, 'RG:Z:'.$self->old_and_new_read_group_ids->{$rg_id}->{$type};
         #print( join( "\t", @$read_tokens)."\n");
         $fhs->{$key}->print( join( "\t", @$read_tokens)."\n");
@@ -233,6 +232,8 @@ sub _sanitize_read {
     }
     # Remove alignment information
     splice @{$_[0]}, 2, 7, (qw/ * 0 0 * * 0 0 /);
+    # Remove ALL tags
+    splice @{$_[0]}, 11;
 }
 
 sub _open_fh_for_read_group_and_type {
