@@ -747,161 +747,20 @@ sub _resolve_workflow_for_build {
     }
 
     #Add gene category annotations to some output files from steps above. (e.g. determine which SNV affected genes are kinases, ion channels, etc.)
-    #AnnotateGenesByCategory - gene_category_exome_snv_result
-    if ($build->exome_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to SNVs identified by exome',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
+    #AnnotateGenesByCategory - gene_category_<exome|wgs|wgs_exome>_<snv|indel>_result
+    for my $sequencing_type (qw(exome wgs wgs_exome)) {
+        my $build_accessor = "${sequencing_type}_build";
+        if ($build->$build_accessor) {
+            for my $variant_type (qw(snv indel)) {
+                my $annotate_genes_by_category_op = $self->annotate_genes_by_category_op($workflow, $sequencing_type, $variant_type);
+                $workflow->create_link(
+                    source               => $import_snvs_indels_op,
+                    source_property      => "${sequencing_type}_${variant_type}_file",
+                    destination          => $annotate_genes_by_category_op,
+                    destination_property => 'infile',
+                );
+            }
         }
-        $workflow->create_link(
-            source               => $import_snvs_indels_op,
-            source_property      => 'exome_snv_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_exome_snv_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
-    }
-    #AnnotateGenesByCategory - gene_category_wgs_snv_result
-    if ($build->wgs_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to SNVs identified by wgs',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->create_link(
-            source               => $import_snvs_indels_op,
-            source_property      => 'wgs_snv_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_wgs_snv_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
-    }
-    #AnnotateGenesByCategory - gene_category_wgs_exome_snv_result
-    if ($build->wgs_build and $build->exome_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to SNVs identified by wgs OR exome',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->create_link(
-            source               => $import_snvs_indels_op,
-            source_property      => 'wgs_exome_snv_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_wgs_exome_snv_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
-    }
-    #AnnotateGenesByCategory - gene_category_exome_indel_result
-    if ($build->exome_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to InDels identified by exome',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->create_link(
-            source               => $import_snvs_indels_op,
-            source_property      => 'exome_indel_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_exome_indel_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
-    }
-    #AnnotateGenesByCategory - gene_category_wgs_indel_result
-    if ($build->wgs_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to InDels identified by wgs',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->create_link(
-            source               => $import_snvs_indels_op,
-            source_property      => 'wgs_indel_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_wgs_indel_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
-    }
-    #AnnotateGenesByCategory - gene_category_wgs_exome_indel_result
-    if ($build->wgs_build and $build->exome_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to InDels identified by wgs OR exome',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->create_link(
-            source               => $import_snvs_indels_op,
-            source_property      => 'wgs_exome_indel_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_wgs_exome_indel_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
     }
     #AnnotateGenesByCategory - gene_category_cnv_amp_result
     if ($build->wgs_build) {
@@ -2245,6 +2104,34 @@ sub summarize_svs_op {
     );
 
     return $summarize_svs_op;
+}
+
+sub annotate_genes_by_category_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $sequencing_type = shift;
+    my $variant_type = shift;
+
+    my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
+        name => "Add gene category annotations to ${variant_type}s identified by $sequencing_type",
+        command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+    );
+    $workflow->add_operation($annotate_genes_by_category_op);
+    for my $property (qw(gene_name_columns cancer_annotation_db)) {
+        $workflow->connect_input(
+            input_property       => $property,
+            destination          => $annotate_genes_by_category_op,
+            destination_property => $property,
+        );
+    }
+
+    $workflow->connect_output(
+        output_property => "gene_category_${sequencing_type}_${variant_type}_result",
+        source          => $annotate_genes_by_category_op,
+        source_property => 'result',
+    );
+
+    return $annotate_genes_by_category_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
