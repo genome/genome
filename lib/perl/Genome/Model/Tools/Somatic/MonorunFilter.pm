@@ -44,7 +44,7 @@ class Genome::Model::Tools::Somatic::MonorunFilter {
        },
        'reference' => {
             type => 'String',
-            example_values => ['/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa'],
+            example_values => ['/gscmnt/gc4096/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa'],
             is_optional => 1,
             is_input => 1,
             doc => 'Reference sequence to use',

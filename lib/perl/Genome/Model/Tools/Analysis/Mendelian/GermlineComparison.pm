@@ -29,7 +29,7 @@ class Genome::Model::Tools::Analysis::Mendelian::GermlineComparison {
     has => [                                # specify the command's single-value properties (parameters) <--- 
         sample_file	=> { is => 'Text', doc => "Tab-delimited file of family, sample, status, dir", is_optional => 0, is_input => 1},
         inheritance_model	=> { is => 'Text', doc => "Mendelian inheritance model to use", is_optional => 0, is_input => 1, default => 'autosomal-dominant'},
-        reference	=> { is => 'Text', doc => "Path to the reference to use [defaults to build 37]", is_optional => 0, is_input => 1, example_values=> ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa']},
+        reference	=> { is => 'Text', doc => "Path to the reference to use [defaults to build 37]", is_optional => 0, is_input => 1, example_values=> ['/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa']},
         output_dir	=> { is => 'Text', doc => "Output directory to contain files", is_optional => 1, is_input => 1},
         tier1_only	=> { is => 'Text', doc => "If set to 1, restrict variants to tier 1 annotation types", is_optional => 1, is_input => 1},
         outside_tier1_only	=> { is => 'Text', doc => "If set to 1, only report sites outside tier 1", is_optional => 1, is_input => 1},

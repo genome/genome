@@ -34,7 +34,7 @@ class Genome::Model::Tools::Capture::ExomeLohPlots {
 		min_coverage	=> { is => 'Text', doc => "Minimum coverage to include variant" , is_optional => 0, default => 20},
 		min_var_freq	=> { is => 'Text', doc => "Minimum variant allele frequency in normal for het" , is_optional => 0, default => 40},
 		max_var_freq	=> { is => 'Text', doc => "Maximum variant allele frequency in normal for het" , is_optional => 0, default => 60},
-		reference	=> 	{ is => 'Text', doc => "Reference to use for bam-readcounts-based filters; defaults to build 37" , is_optional => 1, example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa']},
+		reference	=> 	{ is => 'Text', doc => "Reference to use for bam-readcounts-based filters; defaults to build 37" , is_optional => 1, example_values => ['/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa']},
 	],
 };
 

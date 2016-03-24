@@ -59,7 +59,7 @@ class Genome::Model::Tools::Varscan::CopyNumberParallel {
             is => 'Text',
             doc => "Reference FASTA file for BAMs",
             is_optional => 0,
-            example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'],
+            example_values => ['/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa'],
         },
         heap_space => {
             is => 'Text',

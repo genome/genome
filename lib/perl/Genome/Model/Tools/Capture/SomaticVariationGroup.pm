@@ -14,7 +14,7 @@ class Genome::Model::Tools::Capture::SomaticVariationGroup {
     output_bam_list => { is => 'Text', doc => "Specify a filename for a Tumor-normal BAM list" , is_optional => 1 },
     output_germline_calls => { is => 'Text', doc => "Specify a directory to output germline SNV/indel calls" , is_optional => 1 },
     germline_roi_file => { is => 'Text', doc => "A BED file within which to restrict the reported germline calls" , is_optional => 1 },
-    reference => { is => 'Text', doc => "Reference FASTA for use by FP filters", is_optional => 0, example_values => ['build37   /gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'] },
+    reference => { is => 'Text', doc => "Reference FASTA for use by FP filters", is_optional => 0, example_values => ['build37   /gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa'] },
     reference_transcripts => { is => 'Text', doc => "Annotation build to use to annotate variants" , is_optional => 1, example_values => ['NCBI-human.combined-annotation/58_37c_v2'] },
   ],
   doc => "Perform various operations on a given SomaticVariation model-group",
