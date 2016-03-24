@@ -655,72 +655,13 @@ sub _resolve_workflow_for_build {
     }
 
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on normal
-    my $normal_cufflinks_expression_absolute_op;
     if ($build->normal_rnaseq_build) {
-        $normal_cufflinks_expression_absolute_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Performing cufflinks expression absolute analysis for normal sample',
-            command => 'Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute',
-        );
-        $workflow->add_operation($normal_cufflinks_expression_absolute_op);
-        $workflow->connect_input(
-            input_property       => 'cancer_annotation_db',
-            destination          => $normal_cufflinks_expression_absolute_op,
-            destination_property => 'cancer_annotation_db',
-        );
-        $workflow->connect_input(
-            input_property       => 'normal_rnaseq_build',
-            destination          => $normal_cufflinks_expression_absolute_op,
-            destination_property => 'build',
-        );
-        $workflow->connect_input(
-            input_property       => 'normal_cufflinks_expression_absolute_dir',
-            destination          => $normal_cufflinks_expression_absolute_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_input(
-            input_property       => 'cufflinks_percent_cutoff',
-            destination          => $normal_cufflinks_expression_absolute_op,
-            destination_property => 'percent_cutoff',
-        );
-        $workflow->connect_output(
-            output_property => 'normal_cufflinks_expression_absolute_result',
-            source          => $normal_cufflinks_expression_absolute_op,
-            source_property => 'result',
-        );
+        my $normal_cufflinks_expression_absolute_op = $self->cufflinks_expression_absolute_op($workflow, 'normal');
     }
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on tumor
     my $tumor_cufflinks_expression_absolute_op;
     if ($build->tumor_rnaseq_build) {
-        $tumor_cufflinks_expression_absolute_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Performing cufflinks expression absolute analysis for tumor sample',
-            command => 'Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute',
-        );
-        $workflow->add_operation($tumor_cufflinks_expression_absolute_op);
-        $workflow->connect_input(
-            input_property       => 'cancer_annotation_db',
-            destination          => $tumor_cufflinks_expression_absolute_op,
-            destination_property => 'cancer_annotation_db',
-        );
-        $workflow->connect_input(
-            input_property       => 'tumor_rnaseq_build',
-            destination          => $tumor_cufflinks_expression_absolute_op,
-            destination_property => 'build',
-        );
-        $workflow->connect_input(
-            input_property       => 'tumor_cufflinks_expression_absolute_dir',
-            destination          => $tumor_cufflinks_expression_absolute_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_input(
-            input_property       => 'cufflinks_percent_cutoff',
-            destination          => $tumor_cufflinks_expression_absolute_op,
-            destination_property => 'percent_cutoff',
-        );
-        $workflow->connect_output(
-            output_property => 'tumor_cufflinks_expression_absolute_result',
-            source          => $tumor_cufflinks_expression_absolute_op,
-            source_property => 'result',
-        );
+        $tumor_cufflinks_expression_absolute_op = $self->cufflinks_expression_absolute_op($workflow, 'tumor');
     }
 
     #CufflinksDifferentialExpression - Run cufflinks differential expression
@@ -2189,6 +2130,44 @@ sub tophat_junctions_absolute_op {
     return $tophat_junctions_absolute_op;
 }
 
+sub cufflinks_expression_absolute_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $type = shift;
+
+    my $cufflinks_expression_absolute_op = Genome::WorkflowBuilder::Command->create(
+        name => "Performing cufflinks expression absolute analysis for $type sample",
+        command => 'Genome::Model::ClinSeq::Command::CufflinksExpressionAbsolute',
+    );
+    $workflow->add_operation($cufflinks_expression_absolute_op);
+    $workflow->connect_input(
+        input_property       => 'cancer_annotation_db',
+        destination          => $cufflinks_expression_absolute_op,
+        destination_property => 'cancer_annotation_db',
+    );
+    $workflow->connect_input(
+        input_property       => "${type}_rnaseq_build",
+        destination          => $cufflinks_expression_absolute_op,
+        destination_property => 'build',
+    );
+    $workflow->connect_input(
+        input_property       => "${type}_cufflinks_expression_absolute_dir",
+        destination          => $cufflinks_expression_absolute_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'cufflinks_percent_cutoff',
+        destination          => $cufflinks_expression_absolute_op,
+        destination_property => 'percent_cutoff',
+    );
+    $workflow->connect_output(
+        output_property => "${type}_cufflinks_expression_absolute_result",
+        source          => $cufflinks_expression_absolute_op,
+        source_property => 'result',
+    );
+
+    return $cufflinks_expression_absolute_op;
+}
 
 sub _infer_candidate_subjects_from_input_models {
     my $self = shift;
