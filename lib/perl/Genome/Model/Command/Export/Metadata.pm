@@ -109,8 +109,8 @@ sub execute {
     my %sanitize_map = (
         # TGI has two IDs for build 37: merge into one.
         # The one we merge away is only around in TGI for legacy reasons.
-        'sata420/info/model_data/2857786885/build102671028' => 'ams1102/info/model_data/2869585698/build106942997',
-        'sata420/info/model_data/2857786885/build106942997' => 'ams1102/info/model_data/2869585698/build106942997',
+        'gc4096/info/model_data/2857786885/build102671028' => 'ams1102/info/model_data/2869585698/build106942997',
+        'gc4096/info/model_data/2857786885/build106942997' => 'ams1102/info/model_data/2869585698/build106942997',
         102671028 => 106942997,
         '/gscmnt/' => '/opt/gms/GMS1/fs/',
         'WUGC' => 'GMS1',
