@@ -106,6 +106,10 @@
                                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
                               "service" : "job",
+                              "serviceDataToSave" : [
+                                 "error_message",
+                                 "error"
+                              ],
                               "serviceUrl" : "http://example.com/v1"
                            },
                            {
@@ -133,6 +137,11 @@
                                  "user" : "dmorton"
                               },
                               "service" : "job",
+                              "serviceDataToSave" : [
+                                 "error_message",
+                                 "error",
+                                 "lsfJobId"
+                              ],
                               "serviceUrl" : "http://lsf.example.com/v1"
                            }
                         ],
@@ -216,6 +225,10 @@
                                                                "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                                                             },
                                                             "service" : "job",
+                                                            "serviceDataToSave" : [
+                                                               "error_message",
+                                                               "error"
+                                                            ],
                                                             "serviceUrl" : "http://example.com/v1"
                                                          },
                                                          {
@@ -243,6 +256,11 @@
                                                                "user" : "dmorton"
                                                             },
                                                             "service" : "job",
+                                                            "serviceDataToSave" : [
+                                                               "error_message",
+                                                               "error",
+                                                               "lsfJobId"
+                                                            ],
                                                             "serviceUrl" : "http://lsf.example.com/v1"
                                                          }
                                                       ],
