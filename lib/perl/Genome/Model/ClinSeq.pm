@@ -611,38 +611,11 @@ sub _resolve_workflow_for_build {
         $exome_variant_sources_op = $self->variant_sources_op($workflow, 'exome');
     }
 
-    my $wgs_exome_build_converge_op;
-    if ($build->wgs_build and $build->exome_build) {
-        $wgs_exome_build_converge_op = Genome::WorkflowBuilder::Converge->create(
-            name => 'Converge wgs and exome builds',
-            input_properties => ['wgs_build', 'exome_build'],
-            output_properties => ['builds'],
-        );
-        $workflow->add_operation($wgs_exome_build_converge_op);
-        for my $build (qw(wgs_build exome_build)) {
-            $workflow->connect_input(
-                input_property => $build,
-                destination => $wgs_exome_build_converge_op,
-                destination_property => $build,
-            );
-        }
-    }
-
     #CreateMutationDiagrams - Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
     if ($build->wgs_build or $build->exome_build) {
-        my $mutation_diagram_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Creating mutation-diagram plots',
-            command => 'Genome::Model::ClinSeq::Command::CreateMutationDiagrams',
-        );
-        $workflow->add_operation($mutation_diagram_op);
-        for my $property (qw(cancer_annotation_db cosmic_annotation_db)) {
-            $workflow->connect_input(
-                input_property => $property,
-                destination => $mutation_diagram_op,
-                destination_property => $property,
-            );
-        }
+        my $mutation_diagram_op = $self->mutation_diagram_op($workflow);
         if ($build->wgs_build and $build->exome_build) {
+            my $wgs_exome_build_converge_op = $self->wgs_exome_build_converge_op($workflow);
             $workflow->connect_input(
                 input_property       => 'exome_variant_sources_dir',
                 destination          => $exome_variant_sources_op,
@@ -667,19 +640,6 @@ sub _resolve_workflow_for_build {
                 input_property       => 'exome_build',
                 destination          => $mutation_diagram_op,
                 destination_property => 'builds',
-            );
-        }
-        $workflow->connect_output(
-            output_property => 'mutation_diagram_result',
-            source          => $mutation_diagram_op,
-            source_property => 'result',
-        );
-
-        for my $property (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
-            $workflow->connect_input(
-                input_property       => "mutation_diagram_$property",
-                destination          => $mutation_diagram_op,
-                destination_property => $property,
             );
         }
     }
@@ -2189,6 +2149,59 @@ sub variant_sources_op {
     );
 
     return $variant_sources_op;
+}
+
+sub mutation_diagram_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $mutation_diagram_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Creating mutation-diagram plots',
+        command => 'Genome::Model::ClinSeq::Command::CreateMutationDiagrams',
+    );
+    $workflow->add_operation($mutation_diagram_op);
+    for my $property (qw(cancer_annotation_db cosmic_annotation_db)) {
+        $workflow->connect_input(
+            input_property => $property,
+            destination => $mutation_diagram_op,
+            destination_property => $property,
+        );
+    }
+    for my $property (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
+        $workflow->connect_input(
+            input_property       => "mutation_diagram_$property",
+            destination          => $mutation_diagram_op,
+            destination_property => $property,
+        );
+    }
+    $workflow->connect_output(
+        output_property => 'mutation_diagram_result',
+        source          => $mutation_diagram_op,
+        source_property => 'result',
+    );
+
+    return $mutation_diagram_op;
+}
+
+sub wgs_exome_build_converge_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $wgs_exome_build_converge_op = Genome::WorkflowBuilder::Converge->create(
+        name => 'Converge wgs and exome builds',
+        input_properties => ['wgs_build', 'exome_build'],
+        output_properties => ['builds'],
+    );
+    $workflow->add_operation($wgs_exome_build_converge_op);
+    for my $build (qw(wgs_build exome_build)) {
+        $workflow->connect_input(
+            input_property => $build,
+            destination => $wgs_exome_build_converge_op,
+            destination_property => $build,
+        );
+    }
+
+    return $wgs_exome_build_converge_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
