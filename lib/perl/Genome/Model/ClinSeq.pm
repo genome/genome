@@ -2046,8 +2046,31 @@ sub annotate_genes_by_category_op {
     my $sequencing_type = shift;
     my $variant_type = shift;
 
+    my $name = "Add gene category annotations to ${variant_type}s identified by $sequencing_type";
+    my $output_property = "gene_category_${sequencing_type}_${variant_type}_result";
+
+    return $self->_annotate_genes_by_category_op($workflow, $name, $output_property);
+}
+
+sub annotate_genes_by_category_cnv_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $type = shift;
+
+    my $name = "Add gene category annotations to CNV ${type} genes";
+    my $output_property = "gene_category_cnv_${type}_result";
+
+    return $self->_annotate_genes_by_category_op($workflow, $name, $output_property);
+}
+
+sub _annotate_genes_by_category_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $name = shift;
+    my $output_property = shift;
+
     my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-        name => "Add gene category annotations to ${variant_type}s identified by $sequencing_type",
+        name => $name,
         command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
     );
     $workflow->add_operation($annotate_genes_by_category_op);
@@ -2058,40 +2081,13 @@ sub annotate_genes_by_category_op {
             destination_property => $property,
         );
     }
-
     $workflow->connect_output(
-        output_property => "gene_category_${sequencing_type}_${variant_type}_result",
+        output_property => $output_property,
         source          => $annotate_genes_by_category_op,
         source_property => 'result',
     );
 
     return $annotate_genes_by_category_op;
-}
-
-sub annotate_genes_by_category_cnv_op {
-    my $self = shift;
-    my $workflow = shift;
-    my $type = shift;
-
-    my $annotate_genes_by_category_cnv_op = Genome::WorkflowBuilder::Command->create(
-        name => "Add gene category annotations to CNV ${type} genes",
-        command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-    );
-    $workflow->add_operation($annotate_genes_by_category_cnv_op);
-    for my $property (qw(gene_name_columns cancer_annotation_db)) {
-        $workflow->connect_input(
-            input_property       => $property,
-            destination          => $annotate_genes_by_category_cnv_op,
-            destination_property => $property,
-        );
-    }
-    $workflow->connect_output(
-        output_property => "gene_category_cnv_${type}_result",
-        source          => $annotate_genes_by_category_cnv_op,
-        source_property => 'result',
-    );
-
-    return $annotate_genes_by_category_cnv_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
