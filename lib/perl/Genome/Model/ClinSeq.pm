@@ -685,26 +685,7 @@ sub _resolve_workflow_for_build {
 
     #DumpIgvXml - Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
     #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
-    my $igv_session_op = Genome::WorkflowBuilder::Command->create(
-        name => 'Create IGV XML session files for varying levels of detail using the input builds',
-        command => 'Genome::Model::ClinSeq::Command::DumpIgvXml',
-    );
-    $workflow->add_operation($igv_session_op);
-    $workflow->connect_input(
-        input_property       => 'build',
-        destination          => $igv_session_op,
-        destination_property => 'builds',
-    );
-    $workflow->connect_input(
-        input_property       => 'igv_session_dir',
-        destination          => $igv_session_op,
-        destination_property => 'outdir',
-    );
-    $workflow->connect_output(
-        output_property => 'igv_session_result',
-        source          => $igv_session_op,
-        source_property => 'result',
-    );
+    my $igv_session_op = $self->igv_session_op($workflow);
 
     #GenerateClonalityPlots - Run clonality analysis and produce clonality plots
     my $clonality_op;
@@ -2184,6 +2165,34 @@ sub intersect_tumor_fusion_sv_op {
     );
 
     return $intersect_tumor_fusion_sv_op;
+}
+
+sub igv_session_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $igv_session_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Create IGV XML session files for varying levels of detail using the input builds',
+        command => 'Genome::Model::ClinSeq::Command::DumpIgvXml',
+    );
+    $workflow->add_operation($igv_session_op);
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $igv_session_op,
+        destination_property => 'builds',
+    );
+    $workflow->connect_input(
+        input_property       => 'igv_session_dir',
+        destination          => $igv_session_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_output(
+        output_property => 'igv_session_result',
+        source          => $igv_session_op,
+        source_property => 'result',
+    );
+
+    return $igv_session_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
