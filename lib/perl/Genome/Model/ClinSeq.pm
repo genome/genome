@@ -667,31 +667,7 @@ sub _resolve_workflow_for_build {
     #CufflinksDifferentialExpression - Run cufflinks differential expression
     my $cufflinks_differential_expression_op;
     if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build) {
-        $cufflinks_differential_expression_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Performing cufflinks differential expression analysis for case vs. control (e.g. tumor vs. normal)',
-            command => 'Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression',
-        );
-        $workflow->add_operation($cufflinks_differential_expression_op);
-        $workflow->connect_input(
-            input_property       => 'normal_rnaseq_build',
-            destination          => $cufflinks_differential_expression_op,
-            destination_property => 'control_build',
-        );
-        $workflow->connect_input(
-            input_property       => 'tumor_rnaseq_build',
-            destination          => $cufflinks_differential_expression_op,
-            destination_property => 'case_build',
-        );
-        $workflow->connect_input(
-            input_property       => 'cufflinks_differential_expression_dir',
-            destination          => $cufflinks_differential_expression_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_output(
-            output_property => 'cufflinks_differential_expression_result',
-            source          => $cufflinks_differential_expression_op,
-            source_property => 'result',
-        );
+        $cufflinks_differential_expression_op = $self->cufflinks_differential_expression_op($workflow);
     }
 
     #Intersect filtered fusion calls with WGS SV calls.
@@ -2167,6 +2143,39 @@ sub cufflinks_expression_absolute_op {
     );
 
     return $cufflinks_expression_absolute_op;
+}
+
+sub cufflinks_differential_expression_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $cufflinks_differential_expression_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Performing cufflinks differential expression analysis for case vs. control (e.g. tumor vs. normal)',
+        command => 'Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression',
+    );
+    $workflow->add_operation($cufflinks_differential_expression_op);
+    $workflow->connect_input(
+        input_property       => 'normal_rnaseq_build',
+        destination          => $cufflinks_differential_expression_op,
+        destination_property => 'control_build',
+    );
+    $workflow->connect_input(
+        input_property       => 'tumor_rnaseq_build',
+        destination          => $cufflinks_differential_expression_op,
+        destination_property => 'case_build',
+    );
+    $workflow->connect_input(
+        input_property       => 'cufflinks_differential_expression_dir',
+        destination          => $cufflinks_differential_expression_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_output(
+        output_property => 'cufflinks_differential_expression_result',
+        source          => $cufflinks_differential_expression_op,
+        source_property => 'result',
+    );
+
+    return $cufflinks_differential_expression_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
