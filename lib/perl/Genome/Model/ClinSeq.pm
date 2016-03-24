@@ -696,26 +696,7 @@ sub _resolve_workflow_for_build {
     #RunCnView - Produce copy number results with run-cn-view.  Relies on clonality step already having been run
     my $run_cn_view_op;
     if ($build->wgs_build) {
-        $run_cn_view_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Use gmt copy-number cn-view to produce copy number tables and images',
-            command => 'Genome::Model::ClinSeq::Command::RunCnView',
-        );
-        $workflow->add_operation($run_cn_view_op);
-        $workflow->connect_input(
-            input_property       => 'cancer_annotation_db',
-            destination          => $run_cn_view_op,
-            destination_property => 'cancer_annotation_db',
-        );
-        $workflow->connect_input(
-            input_property       => 'wgs_build',
-            destination          => $run_cn_view_op,
-            destination_property => 'build',
-        );
-        $workflow->connect_input(
-            input_property       => 'wgs_cnv_dir',
-            destination          => $run_cn_view_op,
-            destination_property => 'outdir',
-        );
+        $run_cn_view_op = $self->run_cn_view_op($workflow);
         for my $property (qw(cnv_hmm_file cnv_hq_file)) {
             $workflow->create_link(
                 source               => $clonality_op,
@@ -724,11 +705,6 @@ sub _resolve_workflow_for_build {
                 destination_property => $property,
             );
         }
-        $workflow->connect_output(
-            output_property => 'run_cn_view_result',
-            source          => $run_cn_view_op,
-            source_property => 'result',
-        );
     }
 
     #RunMicroarrayCNV - produce cnv plots using microarray results
@@ -2202,6 +2178,39 @@ sub clonality_op {
     );
 
     return $clonality_op;
+}
+
+sub run_cn_view_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $run_cn_view_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Use gmt copy-number cn-view to produce copy number tables and images',
+        command => 'Genome::Model::ClinSeq::Command::RunCnView',
+    );
+    $workflow->add_operation($run_cn_view_op);
+    $workflow->connect_input(
+        input_property       => 'cancer_annotation_db',
+        destination          => $run_cn_view_op,
+        destination_property => 'cancer_annotation_db',
+    );
+    $workflow->connect_input(
+        input_property       => 'wgs_build',
+        destination          => $run_cn_view_op,
+        destination_property => 'build',
+    );
+    $workflow->connect_input(
+        input_property       => 'wgs_cnv_dir',
+        destination          => $run_cn_view_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_output(
+        output_property => 'run_cn_view_result',
+        source          => $run_cn_view_op,
+        source_property => 'result',
+    );
+
+    return $run_cn_view_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
