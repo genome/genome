@@ -552,6 +552,7 @@ sub map_workflow_inputs {
     return @inputs;
 }
 
+
 sub _resolve_workflow_for_build {
     # This is called by Genome::Model::Build::start()
     # Returns a Workflow::Operation
@@ -582,26 +583,7 @@ sub _resolve_workflow_for_build {
     #ImportSnvsIndels - Import SNVs and Indels
     my $import_snvs_indels_op;
     if ($build->wgs_build or $build->exome_build) {
-        $import_snvs_indels_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Importing SNVs and Indels from somatic results, parsing, and merging exome/wgs if possible',
-            command => 'Genome::Model::ClinSeq::Command::ImportSnvsIndels',
-        );
-        $workflow->add_operation($import_snvs_indels_op);
-        $workflow->connect_input(
-            input_property       => 'cancer_annotation_db',
-            destination          => $import_snvs_indels_op,
-            destination_property => 'cancer_annotation_db',
-        );
-        $workflow->connect_input(
-            input_property       => 'import_snvs_indels_outdir',
-            destination          => $import_snvs_indels_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_input(
-            input_property       => 'import_snvs_indels_filter_mt',
-            destination          => $import_snvs_indels_op,
-            destination_property => 'filter_mt',
-        );
+        $import_snvs_indels_op = $self->import_snvs_indels_op($workflow);
         if ($build->wgs_build) {
             $workflow->connect_input(
                 input_property       => 'wgs_build',
@@ -616,11 +598,6 @@ sub _resolve_workflow_for_build {
                 destination_property => 'exome_build',
             );
         }
-        $workflow->connect_output(
-            output_property => 'import_snvs_indels_result',
-            source          => $import_snvs_indels_op,
-            source_property => 'result',
-        );
     }
 
     #GetVariantSources - Determine source variant caller for SNVs and InDels for wgs data
@@ -2188,6 +2165,39 @@ sub summarize_builds_op {
     );
 
     return $summarize_builds_op;
+}
+
+sub import_snvs_indels_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $import_snvs_indels_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Importing SNVs and Indels from somatic results, parsing, and merging exome/wgs if possible',
+        command => 'Genome::Model::ClinSeq::Command::ImportSnvsIndels',
+    );
+    $workflow->add_operation($import_snvs_indels_op);
+    $workflow->connect_input(
+        input_property       => 'cancer_annotation_db',
+        destination          => $import_snvs_indels_op,
+        destination_property => 'cancer_annotation_db',
+    );
+    $workflow->connect_input(
+        input_property       => 'import_snvs_indels_outdir',
+        destination          => $import_snvs_indels_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'import_snvs_indels_filter_mt',
+        destination          => $import_snvs_indels_op,
+        destination_property => 'filter_mt',
+    );
+    $workflow->connect_output(
+        output_property => 'import_snvs_indels_result',
+        source          => $import_snvs_indels_op,
+        source_property => 'result',
+    );
+
+    return $import_snvs_indels_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
