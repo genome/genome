@@ -791,83 +791,22 @@ sub _resolve_workflow_for_build {
             destination_property => 'infile',
         );
     }
-    #AnnotateGenesByCategory - gene_category_coding_de_up_result
+    #AnnotateGenesByCategory - gene_category_coding_<up|down|de>_result
     if ($build->normal_rnaseq_build && $build->tumor_rnaseq_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to up-regulated coding genes',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+        my %types = (
+            up   => 'up-regulated',
+            down => 'down-regulated',
+            de   => 'DE',
         );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
+        while (my ($type_short, $type) = each %types) {
+            my $annotate_genes_by_category_normal_rna_op = $self->annotate_genes_by_category_normal_rna_op($workflow, $type, $type_short);
+            $workflow->create_link(
+                source               => $cufflinks_differential_expression_op,
+                source_property      => "coding_hq_${type_short}_file",
+                destination          => $annotate_genes_by_category_normal_rna_op,
+                destination_property => 'infile',
             );
         }
-        $workflow->create_link(
-            source               => $cufflinks_differential_expression_op,
-            source_property      => 'coding_hq_up_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_coding_de_up_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
-    }
-    #AnnotateGenesByCategory - gene_category_coding_de_down_result
-    if ($build->normal_rnaseq_build && $build->tumor_rnaseq_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to down-regulated coding genes',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->create_link(
-            source               => $cufflinks_differential_expression_op,
-            source_property      => 'coding_hq_down_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_coding_de_down_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
-    }
-    #AnnotateGenesByCategory - gene_category_coding_de_result
-    if ($build->normal_rnaseq_build && $build->tumor_rnaseq_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to DE coding genes',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->create_link(
-            source               => $cufflinks_differential_expression_op,
-            source_property      => 'coding_hq_de_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_coding_de_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
     }
 
     #DGIDB gene annotation
@@ -2035,6 +1974,18 @@ sub annotate_genes_by_category_tumor_rna_op {
 
     my $name = "Add gene category annotations to $software top1 percent genes";
     my $output_property = "gene_category_${software}_result";
+
+    return $self->_annotate_genes_by_category_op($workflow, $name, $output_property);
+}
+
+sub annotate_genes_by_category_normal_rna_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $type = shift;
+    my $type_short = shift;
+
+    my $name = "Add gene category annotations to $type coding genes";
+    my $output_property = "gene_category_coding_${type_short}_result";
 
     return $self->_annotate_genes_by_category_op($workflow, $name, $output_property);
 }
