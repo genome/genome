@@ -688,20 +688,34 @@ sub _resolve_workflow_for_build {
     my $igv_session_op = $self->igv_session_op($workflow);
 
     #GenerateClonalityPlots - Run clonality analysis and produce clonality plots
-    my $clonality_op;
+    #RunCnView - Produce copy number results with run-cn-view.
+    #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
+    my ($clonality_op, $run_cn_view_op);
     if ($build->wgs_build) {
         $clonality_op = $self->clonality_op($workflow);
-    }
-
-    #RunCnView - Produce copy number results with run-cn-view.  Relies on clonality step already having been run
-    my $run_cn_view_op;
-    if ($build->wgs_build) {
         $run_cn_view_op = $self->run_cn_view_op($workflow);
         for my $property (qw(cnv_hmm_file cnv_hq_file)) {
             $workflow->create_link(
                 source               => $clonality_op,
                 source_property      => $property,
                 destination          => $run_cn_view_op,
+                destination_property => $property,
+            );
+        }
+        my $summarize_cnvs_op = $self->summarize_cnvs_op($workflow);
+        for my $property (qw(cnv_hmm_file cnv_hq_file)) {
+            $workflow->create_link(
+                source               => $clonality_op,
+                source_property      => $property,
+                destination          => $summarize_cnvs_op,
+                destination_property => $property,
+            );
+        }
+        for my $property (qw(gene_amp_file gene_del_file)) {
+            $workflow->create_link(
+                source               => $run_cn_view_op,
+                source_property      => $property,
+                destination          => $summarize_cnvs_op,
                 destination_property => $property,
             );
         }
@@ -724,29 +738,6 @@ sub _resolve_workflow_for_build {
         and $self->_get_docm_variants_file($self->cancer_annotation_db))
     {
         my $docm_report_op = $self->docm_report_op($workflow);
-    }
-
-    #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
-    #This step relies on the generate-clonality-plots step already having been run
-    #It also relies on run-cn-view step having been run already
-    if ($build->wgs_build) {
-        my $summarize_cnvs_op = $self->summarize_cnvs_op($workflow);
-        for my $property (qw(cnv_hmm_file cnv_hq_file)) {
-            $workflow->create_link(
-                source               => $clonality_op,
-                source_property      => $property,
-                destination          => $summarize_cnvs_op,
-                destination_property => $property,
-            );
-        }
-        for my $property (qw(gene_amp_file gene_del_file)) {
-            $workflow->create_link(
-                source               => $run_cn_view_op,
-                source_property      => $property,
-                destination          => $summarize_cnvs_op,
-                destination_property => $property,
-            );
-        }
     }
 
     #SummarizeSvs - Generate a summary of SV results from the WGS SV results
