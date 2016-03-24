@@ -710,31 +710,7 @@ sub _resolve_workflow_for_build {
     #RunMicroarrayCNV - produce cnv plots using microarray results
     my $microarray_cnv_op;
     if ($self->has_microarray_build()) {
-        $microarray_cnv_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Call somatic copy number changes using microarray calls',
-            command => 'Genome::Model::ClinSeq::Command::MicroarrayCnv',
-        );
-        $workflow->add_operation($microarray_cnv_op);
-        $workflow->connect_input(
-            input_property       => 'microarray_cnv_dir',
-            destination          => $microarray_cnv_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_input(
-            input_property       => 'model',
-            destination          => $microarray_cnv_op,
-            destination_property => 'clinseq_model',
-        );
-        $workflow->connect_input(
-            input_property       => 'annotation_build',
-            destination          => $microarray_cnv_op,
-            destination_property => 'annotation_build_id',
-        );
-        $workflow->connect_output(
-            output_property => 'microarray_cnv_result',
-            source          => $microarray_cnv_op,
-            source_property => 'result',
-        );
+        $microarray_cnv_op = $self->microarray_cnv_op($workflow);
     }
 
     #RunExomeCNV - produce cnv plots using WEx results
@@ -2211,6 +2187,39 @@ sub run_cn_view_op {
     );
 
     return $run_cn_view_op;
+}
+
+sub microarray_cnv_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $microarray_cnv_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Call somatic copy number changes using microarray calls',
+        command => 'Genome::Model::ClinSeq::Command::MicroarrayCnv',
+    );
+    $workflow->add_operation($microarray_cnv_op);
+    $workflow->connect_input(
+        input_property       => 'microarray_cnv_dir',
+        destination          => $microarray_cnv_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'model',
+        destination          => $microarray_cnv_op,
+        destination_property => 'clinseq_model',
+    );
+    $workflow->connect_input(
+        input_property       => 'annotation_build',
+        destination          => $microarray_cnv_op,
+        destination_property => 'annotation_build_id',
+    );
+    $workflow->connect_output(
+        output_property => 'microarray_cnv_result',
+        source          => $microarray_cnv_op,
+        source_property => 'result',
+    );
+
+    return $microarray_cnv_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
