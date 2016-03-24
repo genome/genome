@@ -729,23 +729,8 @@ sub _resolve_workflow_for_build {
     #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
     #This step relies on the generate-clonality-plots step already having been run
     #It also relies on run-cn-view step having been run already
-    my $summarize_cnvs_op;
     if ($build->wgs_build) {
-        $summarize_cnvs_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Summarize CNV results from WGS somatic variation',
-            command => 'Genome::Model::ClinSeq::Command::SummarizeCnvs',
-        );
-        $workflow->add_operation($summarize_cnvs_op);
-        $workflow->connect_input(
-            input_property       => 'wgs_cnv_summary_dir',
-            destination          => $summarize_cnvs_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_input(
-            input_property       => 'wgs_build',
-            destination          => $summarize_cnvs_op,
-            destination_property => 'build',
-        );
+        my $summarize_cnvs_op = $self->summarize_cnvs_op($workflow);
         for my $property (qw(cnv_hmm_file cnv_hq_file)) {
             $workflow->create_link(
                 source               => $clonality_op,
@@ -762,11 +747,6 @@ sub _resolve_workflow_for_build {
                 destination_property => $property,
             );
         }
-        $workflow->connect_output(
-            output_property => 'summarize_cnvs_result',
-            source          => $summarize_cnvs_op,
-            source_property => 'result',
-        );
     }
 
     #SummarizeSvs - Generate a summary of SV results from the WGS SV results
@@ -2237,6 +2217,34 @@ sub docm_report_op {
     );
 
     return $docm_report_op;
+}
+
+sub summarize_cnvs_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $summarize_cnvs_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Summarize CNV results from WGS somatic variation',
+        command => 'Genome::Model::ClinSeq::Command::SummarizeCnvs',
+    );
+    $workflow->add_operation($summarize_cnvs_op);
+    $workflow->connect_input(
+        input_property       => 'wgs_cnv_summary_dir',
+        destination          => $summarize_cnvs_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'wgs_build',
+        destination          => $summarize_cnvs_op,
+        destination_property => 'build',
+    );
+    $workflow->connect_output(
+        output_property => 'summarize_cnvs_result',
+        source          => $summarize_cnvs_op,
+        source_property => 'result',
+    );
+
+    return $summarize_cnvs_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
