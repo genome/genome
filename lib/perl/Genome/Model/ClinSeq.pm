@@ -671,43 +671,13 @@ sub _resolve_workflow_for_build {
     }
 
     #Intersect filtered fusion calls with WGS SV calls.
-    my $intersect_tumor_fusion_sv_op;
     if ($build->tumor_rnaseq_build) {
         if (-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe') {
             #copy over fusion files
             $self->copy_fusion_files($build);
             if ($build->wgs_build) {
                 if (-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated') {
-                    $intersect_tumor_fusion_sv_op = Genome::WorkflowBuilder::Command->create(
-                        name => 'Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls',
-                        command => 'Genome::Model::Tools::ChimeraScan::IntersectSv',
-                    );
-                    $workflow->add_operation($intersect_tumor_fusion_sv_op);
-                    $workflow->connect_input(
-                        input_property       => 'ncbi_human_ensembl_build_id',
-                        destination          => $intersect_tumor_fusion_sv_op,
-                        destination_property => 'annotation_build_id',
-                    );
-                    $workflow->connect_input(
-                        input_property       => 'tumor_filtered_intersected_fusion_file',
-                        destination          => $intersect_tumor_fusion_sv_op,
-                        destination_property => 'output_file',
-                    );
-                    $workflow->connect_input(
-                        input_property       => 'wgs_sv_file',
-                        destination          => $intersect_tumor_fusion_sv_op,
-                        destination_property => 'sv_output_file',
-                    );
-                    $workflow->connect_input(
-                        input_property       => 'tumor_filtered_fusion_file',
-                        destination          => $intersect_tumor_fusion_sv_op,
-                        destination_property => 'filtered_bedpe_file',
-                    );
-                    $workflow->connect_output(
-                        output_property => 'intersect_tumor_fusion_sv_result',
-                        source          => $intersect_tumor_fusion_sv_op,
-                        source_property => 'result',
-                    );
+                    my $intersect_tumor_fusion_sv_op = $self->intersect_tumor_fusion_sv_op($workflow);
                 }
             }
         }
@@ -2176,6 +2146,44 @@ sub cufflinks_differential_expression_op {
     );
 
     return $cufflinks_differential_expression_op;
+}
+
+sub intersect_tumor_fusion_sv_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $intersect_tumor_fusion_sv_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls',
+        command => 'Genome::Model::Tools::ChimeraScan::IntersectSv',
+    );
+    $workflow->add_operation($intersect_tumor_fusion_sv_op);
+    $workflow->connect_input(
+        input_property       => 'ncbi_human_ensembl_build_id',
+        destination          => $intersect_tumor_fusion_sv_op,
+        destination_property => 'annotation_build_id',
+    );
+    $workflow->connect_input(
+        input_property       => 'tumor_filtered_intersected_fusion_file',
+        destination          => $intersect_tumor_fusion_sv_op,
+        destination_property => 'output_file',
+    );
+    $workflow->connect_input(
+        input_property       => 'wgs_sv_file',
+        destination          => $intersect_tumor_fusion_sv_op,
+        destination_property => 'sv_output_file',
+    );
+    $workflow->connect_input(
+        input_property       => 'tumor_filtered_fusion_file',
+        destination          => $intersect_tumor_fusion_sv_op,
+        destination_property => 'filtered_bedpe_file',
+    );
+    $workflow->connect_output(
+        output_property => 'intersect_tumor_fusion_sv_result',
+        source          => $intersect_tumor_fusion_sv_op,
+        source_property => 'result',
+    );
+
+    return $intersect_tumor_fusion_sv_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
