@@ -774,56 +774,21 @@ sub _resolve_workflow_for_build {
             );
         }
     }
-    #AnnotateGenesByCategory - gene_category_cufflinks_result
+    #AnnotateGenesByCategory - gene_category_<cufflinks|tophat>_result
     if ($build->tumor_rnaseq_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to cufflinks top1 percent genes',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
+        my $annotate_genes_by_category_cufflinks_op = $self->annotate_genes_by_category_tumor_rna_op($workflow, 'cufflinks');
         $workflow->create_link(
             source               => $tumor_cufflinks_expression_absolute_op,
             source_property      => 'tumor_fpkm_topnpercent_file',
-            destination          => $annotate_genes_by_category_op,
+            destination          => $annotate_genes_by_category_cufflinks_op,
             destination_property => 'infile',
         );
-        $workflow->connect_output(
-            output_property => 'gene_category_cufflinks_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
-    }
-    #AnnotateGenesByCategory - gene_category_tophat_result
-    if ($build->tumor_rnaseq_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to tophat junctions top1 percent genes',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
+        my $annotate_genes_by_category_tophat_op = $self->annotate_genes_by_category_tumor_rna_op($workflow, 'tophat');
         $workflow->create_link(
             source               => $tumor_tophat_junctions_absolute_op,
             source_property      => 'junction_topnpercent_file',
-            destination          => $annotate_genes_by_category_op,
+            destination          => $annotate_genes_by_category_tophat_op,
             destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_tophat_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
         );
     }
     #AnnotateGenesByCategory - gene_category_coding_de_up_result
@@ -2057,8 +2022,19 @@ sub annotate_genes_by_category_cnv_op {
     my $workflow = shift;
     my $type = shift;
 
-    my $name = "Add gene category annotations to CNV ${type} genes";
+    my $name = "Add gene category annotations to CNV $type genes";
     my $output_property = "gene_category_cnv_${type}_result";
+
+    return $self->_annotate_genes_by_category_op($workflow, $name, $output_property);
+}
+
+sub annotate_genes_by_category_tumor_rna_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $software = shift;
+
+    my $name = "Add gene category annotations to $software top1 percent genes";
+    my $output_property = "gene_category_${software}_result";
 
     return $self->_annotate_genes_by_category_op($workflow, $name, $output_property);
 }
