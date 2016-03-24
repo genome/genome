@@ -645,62 +645,13 @@ sub _resolve_workflow_for_build {
     }
 
     #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on normal
-    my $normal_tophat_junctions_absolute_op;
     if ($build->normal_rnaseq_build) {
-        $normal_tophat_junctions_absolute_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Performing tophat junction expression absolute analysis for normal sample',
-            command => 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute',
-        );
-        $workflow->add_operation($normal_tophat_junctions_absolute_op);
-        $workflow->connect_input(
-            input_property       => 'cancer_annotation_db',
-            destination          => $tumor_tophat_junctions_absolute_op,
-            destination_property => 'cancer_annotation_db',
-        );
-        $workflow->connect_input(
-            input_property       => 'normal_rnaseq_build',
-            destination          => $normal_tophat_junctions_absolute_op,
-            destination_property => 'build',
-        );
-        $workflow->connect_input(
-            input_property       => 'normal_tophat_junctions_absolute_dir',
-            destination          => $normal_tophat_junctions_absolute_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_output(
-            output_property => 'normal_tophat_junctions_absolute_result',
-            source          => $normal_tophat_junctions_absolute_op,
-            source_property => 'result',
-        );
+        my $normal_tophat_junctions_absolute_op = $self->tophat_junctions_absolute_op($workflow, 'normal');
     }
     #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on tumor
     my $tumor_tophat_junctions_absolute_op;
     if ($build->tumor_rnaseq_build) {
-        $tumor_tophat_junctions_absolute_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Performing tophat junction expression absolute analysis for tumor sample',
-            command => 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute',
-        );
-        $workflow->add_operation($tumor_tophat_junctions_absolute_op);
-        $workflow->connect_input(
-            input_property       => 'cancer_annotation_db',
-            destination          => $tumor_tophat_junctions_absolute_op,
-            destination_property => 'cancer_annotation_db',
-        );
-        $workflow->connect_input(
-            input_property       => 'tumor_rnaseq_build',
-            destination          => $tumor_tophat_junctions_absolute_op,
-            destination_property => 'build',
-        );
-        $workflow->connect_input(
-            input_property       => 'tumor_tophat_junctions_absolute_dir',
-            destination          => $tumor_tophat_junctions_absolute_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_output(
-            output_property => 'tumor_tophat_junctions_absolute_result',
-            source          => $tumor_tophat_junctions_absolute_op,
-            source_property => 'result',
-        );
+        $tumor_tophat_junctions_absolute_op = $self->tophat_junctions_absolute_op($workflow, 'tumor');
     }
 
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on normal
@@ -2203,6 +2154,41 @@ sub wgs_exome_build_converge_op {
 
     return $wgs_exome_build_converge_op;
 }
+
+sub tophat_junctions_absolute_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $type = shift;
+
+    my $tophat_junctions_absolute_op = Genome::WorkflowBuilder::Command->create(
+        name => "Performing tophat junction expression absolute analysis for $type sample",
+        command => 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute',
+    );
+    $workflow->add_operation($tophat_junctions_absolute_op);
+    $workflow->connect_input(
+        input_property       => 'cancer_annotation_db',
+        destination          => $tophat_junctions_absolute_op,
+        destination_property => 'cancer_annotation_db',
+    );
+    $workflow->connect_input(
+        input_property       => "${type}_rnaseq_build",
+        destination          => $tophat_junctions_absolute_op,
+        destination_property => 'build',
+    );
+    $workflow->connect_input(
+        input_property       => "${type}_tophat_junctions_absolute_dir",
+        destination          => $tophat_junctions_absolute_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_output(
+        output_property => "${type}tophat_junctions_absolute_result",
+        source          => $tophat_junctions_absolute_op,
+        source_property => 'result',
+    );
+
+    return $tophat_junctions_absolute_op;
+}
+
 
 sub _infer_candidate_subjects_from_input_models {
     my $self = shift;
