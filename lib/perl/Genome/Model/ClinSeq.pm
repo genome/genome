@@ -577,36 +577,7 @@ sub _resolve_workflow_for_build {
     );
 
     #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
-    my $summarize_builds_op = Genome::WorkflowBuilder::Command->create(
-        name => 'Creating a summary of input builds using summarize-builds',
-        command => 'Genome::Model::ClinSeq::Command::SummarizeBuilds',
-    );
-    $workflow->add_operation($summarize_builds_op);
-    $workflow->connect_input(
-        input_property       => 'build',
-        destination          => $summarize_builds_op,
-        destination_property => 'builds',
-    );
-    $workflow->connect_input(
-        input_property       => 'summarize_builds_outdir',
-        destination          => $summarize_builds_op,
-        destination_property => 'outdir',
-    );
-    $workflow->connect_input(
-        input_property       => 'summarize_builds_skip_lims_reports',
-        destination          => $summarize_builds_op,
-        destination_property => 'skip_lims_reports',
-    );
-    $workflow->connect_input(
-        input_property       => 'summarize_builds_log_file',
-        destination          => $summarize_builds_op,
-        destination_property => 'log_file',
-    );
-    $workflow->connect_output(
-        output_property => 'summarize_builds_result',
-        source          => $summarize_builds_op,
-        source_property => 'result',
-    );
+    my $summarize_builds_op = $self->summarize_builds_op($workflow);
 
     #ImportSnvsIndels - Import SNVs and Indels
     my $import_snvs_indels_op;
@@ -2179,6 +2150,44 @@ sub _resolve_workflow_for_build {
     # }
 
     return $workflow;
+}
+
+sub summarize_builds_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $summarize_builds_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Creating a summary of input builds using summarize-builds',
+        command => 'Genome::Model::ClinSeq::Command::SummarizeBuilds',
+    );
+    $workflow->add_operation($summarize_builds_op);
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $summarize_builds_op,
+        destination_property => 'builds',
+    );
+    $workflow->connect_input(
+        input_property       => 'summarize_builds_outdir',
+        destination          => $summarize_builds_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'summarize_builds_skip_lims_reports',
+        destination          => $summarize_builds_op,
+        destination_property => 'skip_lims_reports',
+    );
+    $workflow->connect_input(
+        input_property       => 'summarize_builds_log_file',
+        destination          => $summarize_builds_op,
+        destination_property => 'log_file',
+    );
+    $workflow->connect_output(
+        output_property => 'summarize_builds_result',
+        source          => $summarize_builds_op,
+        source_property => 'result',
+    );
+
+    return $summarize_builds_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
