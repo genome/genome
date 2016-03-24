@@ -5,7 +5,7 @@ package Genome::File::Vcf::VepConsequenceParser;
 
 use Data::Dumper;
 use Carp qw/confess/;
-use URI::Escape;
+use URI::Escape qw/uri_unescape/;
 
 use strict;
 use warnings;
