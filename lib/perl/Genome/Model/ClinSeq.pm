@@ -716,31 +716,7 @@ sub _resolve_workflow_for_build {
     #RunExomeCNV - produce cnv plots using WEx results
     my $exome_cnv_op;
     if ($build->should_run_exome_cnv) {
-        $exome_cnv_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Call somatic copy number changes using exome data',
-            command => 'Genome::Model::Tools::CopyNumber::Cnmops',
-        );
-        $workflow->add_operation($exome_cnv_op);
-        $workflow->connect_input(
-            input_property       => 'exome_cnv_dir',
-            destination          => $exome_cnv_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_input(
-            input_property       => 'model',
-            destination          => $exome_cnv_op,
-            destination_property => 'clinseq_model',
-        );
-        $workflow->connect_input(
-            input_property       => 'annotation_build',
-            destination          => $exome_cnv_op,
-            destination_property => 'annotation_build_id',
-        );
-        $workflow->connect_output(
-            output_property => 'exome_cnv_result',
-            source          => $exome_cnv_op,
-            source_property => 'result',
-        );
+        $exome_cnv_op = $self->exome_cnv_op($workflow);
     }
 
     #RunDOCMReport
@@ -2220,6 +2196,39 @@ sub microarray_cnv_op {
     );
 
     return $microarray_cnv_op;
+}
+
+sub exome_cnv_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $exome_cnv_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Call somatic copy number changes using exome data',
+        command => 'Genome::Model::Tools::CopyNumber::Cnmops',
+    );
+    $workflow->add_operation($exome_cnv_op);
+    $workflow->connect_input(
+        input_property       => 'exome_cnv_dir',
+        destination          => $exome_cnv_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'model',
+        destination          => $exome_cnv_op,
+        destination_property => 'clinseq_model',
+    );
+    $workflow->connect_input(
+        input_property       => 'annotation_build',
+        destination          => $exome_cnv_op,
+        destination_property => 'annotation_build_id',
+    );
+    $workflow->connect_output(
+        output_property => 'exome_cnv_result',
+        source          => $exome_cnv_op,
+        source_property => 'result',
+    );
+
+    return $exome_cnv_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
