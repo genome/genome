@@ -150,7 +150,7 @@ sub _write_reads {
         # Revcomp!
         $read_tokens->[1] = _correct_sequence_and_qualities($read_tokens);
         # Set flag
-        $read_tokens->[1] = _get_new_flag($read_tokens->[1], $type);
+        $read_tokens->[1] = _get_new_flag($type, $read_tokens->[1]);
         # Remove alignment information
         splice @$read_tokens, 2, 7, (qw/ * 0 0 * * 0 0 /);
         # Remove ALL tags, add new RG tag
@@ -217,7 +217,7 @@ sub _correct_sequence_and_qualities {
 }
 
 sub _get_new_flag {
-    my ($flag, $type) = @_;
+    my ($type, $flag) = @_;
 
     # sigleton will get:
     # 4  first in pair

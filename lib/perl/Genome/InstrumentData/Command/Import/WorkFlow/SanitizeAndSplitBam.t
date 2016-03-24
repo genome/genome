@@ -100,6 +100,20 @@ subtest 'correct_sequence_and_qualities' => sub{
 
 };
 
+subtest '_get_new_flag' => sub{
+    plan tests => 3;
+
+    my $flag = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_get_new_flag('singleton', '77');
+    is($flag, 68, 'flag for singleton');
+
+    $flag = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_get_new_flag('paired', 64);
+    is($flag, 77, 'flag for paired read1');
+
+    $flag = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_get_new_flag('paired', 128);
+    is($flag, 141, 'flag for paired read2');
+
+};
+
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $multi_rg_base_name = 'input.rg-multi.bam';
 my $multi_rg_bam_path = File::Spec->join($tmp_dir, $multi_rg_base_name);
