@@ -61,21 +61,25 @@ subtest 'separate reads' => sub{
 
 };
 
-subtest "determine type" => sub{
-    plan tests => 4;
+subtest "_determine_type_and_set_flags" => sub{
+    plan tests => 7;
 
-    my $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type(1, 1);
-    is($type, 'paired', 'given 2 reads, type is paired');
+    my ($read1, $read2) = ( [], [] );
+    my $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags($read1, $read2);
+    is($type, 'paired', 'type is paired for 2 reads');
+    is_deeply([$read1, $read2], [[undef, 77], [undef, 141]], 'correct flags for 2 reads');
 
-    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type(1, undef);
+    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags($read1, undef);
     is($type, 'singleton', 'given read1, type is singleton');
+    is_deeply($read1, [undef, 68], 'correct flags for just read1');
 
-    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type(undef, 1);
+    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags(undef, $read2);
     is($type, 'singleton', 'given read2, type is singleton');
+    is_deeply($read2, [undef, 68], 'correct flags for just read2');
 
     throws_ok(
-        sub{ Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type(undef, undef); },
-        qr/No reads given to determine type\!/,
+        sub{ Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags(undef, undef); },
+        qr/No reads given to _determine_type_and_set_flags\!/,
         'determine reads fails w/o reads',
     );
 
@@ -97,20 +101,6 @@ subtest 'correct_sequence_and_qualities' => sub{
     splice(@read_tokens, 1, 1, 16);
     Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_correct_sequence_and_qualities(\@read_tokens);
     is_deeply(\@read_tokens, [ undef, 16, undef, undef, undef, undef, undef, undef, undef, $revcomp_seq, $revcomp_qual ], 'complemented read');
-
-};
-
-subtest '_get_new_flag' => sub{
-    plan tests => 3;
-
-    my $flag = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_get_new_flag('singleton', '77');
-    is($flag, 68, 'flag for singleton');
-
-    $flag = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_get_new_flag('paired', 64);
-    is($flag, 77, 'flag for paired read1');
-
-    $flag = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_get_new_flag('paired', 128);
-    is($flag, 141, 'flag for paired read2');
 
 };
 

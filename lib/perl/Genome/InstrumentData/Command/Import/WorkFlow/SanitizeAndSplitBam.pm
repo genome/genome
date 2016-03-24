@@ -149,8 +149,6 @@ sub _write_reads {
     for my $read_tokens ( grep { defined } ( $read1, $read2 ) ) {
         # Revcomp!
         $read_tokens->[1] = _correct_sequence_and_qualities($read_tokens);
-        # Set flag
-        $read_tokens->[1] = _get_new_flag($type, $read_tokens->[1]);
         # Remove alignment information
         splice @$read_tokens, 2, 7, (qw/ * 0 0 * * 0 0 /);
         # Remove ALL tags, add new RG tag
@@ -195,16 +193,35 @@ sub _separate_reads {
     return ( $read1s[0], $read2s[0] );
 }
 
-sub _determine_type {
+sub _determine_type_and_set_flags {
+    # Determine the type paired/singleton and set the flags accordingly
+    my $type;
+    # paired will get:
+    # 64/128 first/second in pair
+    # 1      read paired
+    # 4      read unmapped
+    # 8      mate unmapped
     if ( defined $_[0] and defined $_[1] ) {
-        return 'paired';
+        $type = 'paired';
+        $_[0]->[1] = 77;
+        $_[1]->[1] = 141;
     }
-    elsif ( defined $_[0] or defined $_[1] ) {
-        return 'singleton';
+    # sigleton will get:
+    # 4  first in pair
+    # 64 read unmapped
+    elsif ( defined $_[0] ) {
+        $type = 'singleton';
+        $_[0]->[1] = 68;
     }
+    elsif ( defined $_[1] ) {
+        $type = 'singleton';
+        $_[1]->[1] = 68;
+    }
+    # Gotta send in reads!
     else {
-        die 'No reads given to determine type!';
+        die 'No reads given to _determine_type_and_set_flags!';
     }
+    $type;
 }
 
 sub _correct_sequence_and_qualities {
@@ -213,29 +230,6 @@ sub _correct_sequence_and_qualities {
         $_[0]->[9] = reverse $_[0]->[9];
         $_[0]->[9] =~ tr/ATCG/TAGC/;
         $_[0]->[10] = reverse $_[0]->[10];
-    }
-}
-
-sub _get_new_flag {
-    my ($type, $flag) = @_;
-
-    # sigleton will get:
-    # 4  first in pair
-    # 64 read unmapped
-    if ( $type eq 'singleton' ) {
-        return 68;
-    }
-
-    # paired will get:
-    # 64/128 first/second in pair
-    # 1      read paired
-    # 4      read unmapped
-    # 8      mate unmapped
-    if ( $flag & 0x80 ) {
-        return 141;
-    }
-    else {
-        return 77;
     }
 }
 
