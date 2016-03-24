@@ -762,83 +762,17 @@ sub _resolve_workflow_for_build {
             }
         }
     }
-    #AnnotateGenesByCategory - gene_category_cnv_amp_result
+    #AnnotateGenesByCategory - gene_category_cnv_<amp|del|ampdel>_result
     if ($build->wgs_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to CNV amp genes',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
+        for my $type (qw(amp del ampdel)) {
+            my $annotate_genes_by_category_cnv_op = $self->annotate_genes_by_category_cnv_op($workflow, $type);
+            $workflow->create_link(
+                source               => $run_cn_view_op,
+                source_property      => "gene_${type}_file",
+                destination          => $annotate_genes_by_category_cnv_op,
+                destination_property => 'infile',
             );
         }
-        $workflow->create_link(
-            source               => $run_cn_view_op,
-            source_property      => 'gene_amp_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_cnv_amp_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
-    }
-    #AnnotateGenesByCategory - gene_category_cnv_del_result
-    if ($build->wgs_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to CNV del genes',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->create_link(
-            source               => $run_cn_view_op,
-            source_property      => 'gene_del_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_cnv_del_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
-    }
-    #AnnotateGenesByCategory - gene_category_cnv_ampdel_result
-    if ($build->wgs_build) {
-        my $annotate_genes_by_category_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add gene category annotations to CNV amp OR del genes',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
-        );
-        $workflow->add_operation($annotate_genes_by_category_op);
-        for my $property (qw(gene_name_columns cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_category_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->create_link(
-            source               => $run_cn_view_op,
-            source_property      => 'gene_ampdel_file',
-            destination          => $annotate_genes_by_category_op,
-            destination_property => 'infile',
-        );
-        $workflow->connect_output(
-            output_property => 'gene_category_cnv_ampdel_result',
-            source          => $annotate_genes_by_category_op,
-            source_property => 'result',
-        );
     }
     #AnnotateGenesByCategory - gene_category_cufflinks_result
     if ($build->tumor_rnaseq_build) {
@@ -2132,6 +2066,32 @@ sub annotate_genes_by_category_op {
     );
 
     return $annotate_genes_by_category_op;
+}
+
+sub annotate_genes_by_category_cnv_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $type = shift;
+
+    my $annotate_genes_by_category_cnv_op = Genome::WorkflowBuilder::Command->create(
+        name => "Add gene category annotations to CNV ${type} genes",
+        command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByCategory',
+    );
+    $workflow->add_operation($annotate_genes_by_category_cnv_op);
+    for my $property (qw(gene_name_columns cancer_annotation_db)) {
+        $workflow->connect_input(
+            input_property       => $property,
+            destination          => $annotate_genes_by_category_cnv_op,
+            destination_property => $property,
+        );
+    }
+    $workflow->connect_output(
+        output_property => "gene_category_cnv_${type}_result",
+        source          => $annotate_genes_by_category_cnv_op,
+        source_property => 'result',
+    );
+
+    return $annotate_genes_by_category_cnv_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
