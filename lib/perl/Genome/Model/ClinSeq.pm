@@ -603,50 +603,12 @@ sub _resolve_workflow_for_build {
     #GetVariantSources - Determine source variant caller for SNVs and InDels for wgs data
     my $wgs_variant_sources_op;
     if ($build->wgs_build) {
-        $wgs_variant_sources_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Determining source variant callers of all tier1-3 SNVs and InDels for wgs data',
-            command => 'Genome::Model::ClinSeq::Command::GetVariantSources',
-        );
-        $workflow->add_operation($wgs_variant_sources_op);
-        $workflow->connect_input(
-            input_property       => 'wgs_build',
-            destination          => $wgs_variant_sources_op,
-            destination_property => 'builds',
-        );
-        $workflow->connect_input(
-            input_property       => 'wgs_variant_sources_dir',
-            destination          => $wgs_variant_sources_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_output(
-            output_property => 'wgs_variant_sources_result',
-            source          => $wgs_variant_sources_op,
-            source_property => 'result',
-        );
+        $wgs_variant_sources_op = $self->variant_sources_op($workflow, 'wgs');
     }
     #GetVariantSources - Determine source variant caller for SNVs and InDels for exome data
     my $exome_variant_sources_op;
     if ($build->exome_build) {
-        $exome_variant_sources_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Determining source variant callers of all tier1-3 SNVs and InDels for exome data',
-            command => 'Genome::Model::ClinSeq::Command::GetVariantSources',
-        );
-        $workflow->add_operation($exome_variant_sources_op);
-        $workflow->connect_input(
-            input_property       => 'exome_build',
-            destination          => $exome_variant_sources_op,
-            destination_property => 'builds',
-        );
-        $workflow->connect_input(
-            input_property       => 'exome_variant_sources_dir',
-            destination          => $exome_variant_sources_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_output(
-            output_property => 'exome_variant_sources_result',
-            source          => $exome_variant_sources_op,
-            source_property => 'result',
-        );
+        $exome_variant_sources_op = $self->variant_sources_op($workflow, 'exome');
     }
 
     my $wgs_exome_build_converge_op;
@@ -2198,6 +2160,35 @@ sub import_snvs_indels_op {
     );
 
     return $import_snvs_indels_op;
+}
+
+sub variant_sources_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $type = shift;
+
+    my $variant_sources_op = Genome::WorkflowBuilder::Command->create(
+        name => "Determining source variant callers of all tier1-3 SNVs and InDels for $type data",
+        command => 'Genome::Model::ClinSeq::Command::GetVariantSources',
+    );
+    $workflow->add_operation($variant_sources_op);
+    $workflow->connect_input(
+        input_property       => "${type}_build",
+        destination          => $variant_sources_op,
+        destination_property => 'builds',
+    );
+    $workflow->connect_input(
+        input_property       => "${type}_variant_sources_dir",
+        destination          => $variant_sources_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_output(
+        output_property => "${type}_variant_sources_result",
+        source          => $variant_sources_op,
+        source_property => 'result',
+    );
+
+    return $variant_sources_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
