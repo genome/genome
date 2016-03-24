@@ -992,53 +992,25 @@ sub _resolve_workflow_for_build {
     #SummarizeTier1SnvSupport - For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
     #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
     #TODO: Break this down to do direct calls to GetBamReadCounts instead of wrapping it.
-    my $summarize_tier1_snv_support_op;
-    for my $run (qw/wgs exome wgs_exome/) {
-        if ($run eq 'wgs' and not $build->wgs_build) {
-            next;
-        }
-        if ($run eq 'exome' and not $build->exome_build) {
-            next;
-        }
-        if ($run eq 'wgs_exome' and not($build->wgs_build and $build->exome_build)) {
-            next;
-        }
-        my $txt_name = $run;
-        $txt_name =~ s/_/ plus /g;
-        $txt_name =~ s/wgs/WGS/;
-        $txt_name =~ s/exome/Exome/;
-        $summarize_tier1_snv_support_op = Genome::WorkflowBuilder::Command->create(
-            name => "$txt_name Summarize Tier 1 SNV Support (BAM read counts)",
-            command => 'Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport',
-        );
-        $workflow->add_operation($summarize_tier1_snv_support_op);
-        for my $property (qw(wgs_build exome_build tumor_rnaseq_build normal_rnaseq_build verbose cancer_annotation_db)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $summarize_tier1_snv_support_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->create_link(
-            source               => $import_snvs_indels_op,
-            source_property      => $run . "_snv_file",
-            destination          => $summarize_tier1_snv_support_op,
-            destination_property => $run . "_positions_file",
-        );
-
-        if ($build->tumor_rnaseq_build) {
+    for my $sequencing_type (qw(wgs exome wgs_exome)) {
+        my $build_accessor = "${sequencing_type}_build";
+        if ($build->$build_accessor) {
+            my $summarize_tier1_snv_support_op = $self->summarize_tier1_snv_support_op($workflow, $sequencing_type);
             $workflow->create_link(
-                source               => $tumor_cufflinks_expression_absolute_op,
-                source_property      => 'tumor_fpkm_file',
+                source               => $import_snvs_indels_op,
+                source_property      => "${sequencing_type}_snv_file",
                 destination          => $summarize_tier1_snv_support_op,
-                destination_property => 'tumor_fpkm_file',
+                destination_property => "${sequencing_type}_positions_file",
             );
+            if ($build->tumor_rnaseq_build) {
+                $workflow->create_link(
+                    source               => $tumor_cufflinks_expression_absolute_op,
+                    source_property      => 'tumor_fpkm_file',
+                    destination          => $summarize_tier1_snv_support_op,
+                    destination_property => 'tumor_fpkm_file',
+                );
+            }
         }
-        $workflow->connect_output(
-            output_property => "summarize_${run}_tier1_snv_support_result",
-            source          => $summarize_tier1_snv_support_op,
-            source_property => 'result',
-        );
     }
 
     #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
@@ -2015,6 +1987,38 @@ sub _annotate_genes_by_category_op {
     );
 
     return $annotate_genes_by_category_op;
+}
+
+sub summarize_tier1_snv_support_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $sequencing_type = shift;
+
+    my %sequencing_types = (
+        wgs       => 'WGS',
+        exome     => 'Exome',
+        wgs_exome => 'WGS and Exome'
+    );
+    my $txt_name = $sequencing_types{$sequencing_type};
+    my $summarize_tier1_snv_support_op = Genome::WorkflowBuilder::Command->create(
+        name => "$txt_name Summarize Tier 1 SNV Support (BAM read counts)",
+        command => 'Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport',
+    );
+    $workflow->add_operation($summarize_tier1_snv_support_op);
+    for my $property (qw(wgs_build exome_build tumor_rnaseq_build normal_rnaseq_build verbose cancer_annotation_db)) {
+        $workflow->connect_input(
+            input_property       => $property,
+            destination          => $summarize_tier1_snv_support_op,
+            destination_property => $property,
+        );
+    }
+    $workflow->connect_output(
+        output_property => "summarize_${sequencing_type}_tier1_snv_support_result",
+        source          => $summarize_tier1_snv_support_op,
+        source_property => 'result',
+    );
+
+    return $summarize_tier1_snv_support_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
