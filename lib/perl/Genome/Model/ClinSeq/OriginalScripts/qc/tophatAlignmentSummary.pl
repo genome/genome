@@ -41,7 +41,7 @@ my $usage=<<INFO;
 
   Example usage: 
   
-  tophatAlignmentStats.pl  --reference_fasta_file='/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'  --tophat_alignment_dir='/gscmnt/gc2014/info/model_data/2880794541/build115909743/alignments/'  --reference_annotations_dir='/gscmnt/sata132/techd/mgriffit/reference_annotations/hg19/'  --working_dir='/gscmnt/sata132/techd/mgriffit/hgs/hg1/qc/tophat/'
+  tophatAlignmentStats.pl  --reference_fasta_file='/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa'  --tophat_alignment_dir='/gscmnt/gc2014/info/model_data/2880794541/build115909743/alignments/'  --reference_annotations_dir='/gscmnt/sata132/techd/mgriffit/reference_annotations/hg19/'  --working_dir='/gscmnt/sata132/techd/mgriffit/hgs/hg1/qc/tophat/'
   
   Intro:
   This script summarizes results from a tophat alignment directory and writes resulting stats and figures to a working directory
