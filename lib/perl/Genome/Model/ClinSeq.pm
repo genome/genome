@@ -690,38 +690,7 @@ sub _resolve_workflow_for_build {
     #GenerateClonalityPlots - Run clonality analysis and produce clonality plots
     my $clonality_op;
     if ($build->wgs_build) {
-        $clonality_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Run clonality analysis and produce clonality plots',
-            command => 'Genome::Model::ClinSeq::Command::GenerateClonalityPlots',
-        );
-        $workflow->add_operation($clonality_op);
-        $workflow->connect_input(
-            input_property       => 'misc_annotation_db',
-            destination          => $clonality_op,
-            destination_property => 'misc_annotation_db',
-        );
-        $workflow->connect_input(
-            input_property       => 'wgs_build',
-            destination          => $clonality_op,
-            destination_property => 'somatic_var_build',
-        );
-        $workflow->connect_input(
-            input_property       => 'clonality_dir',
-            destination          => $clonality_op,
-            destination_property => 'output_dir',
-        );
-        for my $property (qw(common_name bam_readcount_version)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $clonality_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->connect_output(
-            output_property => 'clonality_result',
-            source          => $clonality_op,
-            source_property => 'result',
-        );
+        $clonality_op = $self->clonality_op($workflow);
     }
 
     #RunCnView - Produce copy number results with run-cn-view.  Relies on clonality step already having been run
@@ -2193,6 +2162,46 @@ sub igv_session_op {
     );
 
     return $igv_session_op;
+}
+
+sub clonality_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $clonality_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Run clonality analysis and produce clonality plots',
+        command => 'Genome::Model::ClinSeq::Command::GenerateClonalityPlots',
+    );
+    $workflow->add_operation($clonality_op);
+    $workflow->connect_input(
+        input_property       => 'misc_annotation_db',
+        destination          => $clonality_op,
+        destination_property => 'misc_annotation_db',
+    );
+    $workflow->connect_input(
+        input_property       => 'wgs_build',
+        destination          => $clonality_op,
+        destination_property => 'somatic_var_build',
+    );
+    $workflow->connect_input(
+        input_property       => 'clonality_dir',
+        destination          => $clonality_op,
+        destination_property => 'output_dir',
+    );
+    for my $property (qw(common_name bam_readcount_version)) {
+        $workflow->connect_input(
+            input_property       => $property,
+            destination          => $clonality_op,
+            destination_property => $property,
+        );
+    }
+    $workflow->connect_output(
+        output_property => 'clonality_result',
+        source          => $clonality_op,
+        source_property => 'result',
+    );
+
+    return $clonality_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
