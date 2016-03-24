@@ -11,7 +11,7 @@ use Config::IniFiles;
 #Basic running of Strelka
 #cd /gscmnt/gc2142/techd/analysis/strelka/all_chrs/
 #cp /gscmnt/gc2142/techd/tools/strelka/v0.4.6.2/strelka_workflow/strelka/etc/strelka_config_bwa_default.ini .
-#/gscmnt/gc2142/techd/tools/strelka/v0.4.6.2/strelka_workflow/configureStrelkaWorkflow.pl --tumor /gscmnt/gc12001/info/model_data/2886829900/build125238592/alignments/125442070.bam --normal /gscmnt/gc8001/info/model_data/2883343119/build121512916/alignments/121537788.bam --ref /gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa --config strelka_config_bwa_default.ini --output-dir ./results
+#/gscmnt/gc2142/techd/tools/strelka/v0.4.6.2/strelka_workflow/configureStrelkaWorkflow.pl --tumor /gscmnt/gc12001/info/model_data/2886829900/build125238592/alignments/125442070.bam --normal /gscmnt/gc8001/info/model_data/2883343119/build121512916/alignments/121537788.bam --ref /gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa --config strelka_config_bwa_default.ini --output-dir ./results
 #time make -j 8 -C /gscmnt/gc2142/techd/analysis/strelka/all_chrs/results
 my $DEFAULT_VERSION = '0.4.6.2';
 
