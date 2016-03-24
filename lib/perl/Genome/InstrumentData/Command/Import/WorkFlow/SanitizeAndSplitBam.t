@@ -85,7 +85,7 @@ subtest "_determine_type_and_set_flags" => sub{
 
 };
 
-subtest 'correct_sequence_and_qualities' => sub{
+subtest '_sanitize_read' => sub{
     plan tests => 2;
 
     my @read_tokens;
@@ -94,13 +94,13 @@ subtest 'correct_sequence_and_qualities' => sub{
     my $qual = '0123456789';
     my $revcomp_qual = reverse $qual;
 
-    @read_tokens = ( undef, 0, undef, undef, undef, undef, undef, undef, undef, $seq, $qual );
-    Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_correct_sequence_and_qualities(\@read_tokens);
-    is_deeply(\@read_tokens, [ undef, 0, undef, undef, undef, undef, undef, undef, undef, $seq, $qual ], 'non complemented read');
+    @read_tokens = ( undef, 0, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual );
+    Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_read(\@read_tokens);
+    is_deeply(\@read_tokens, [ undef, 0, (qw/ * 0 0 * * 0 0 /), $seq, $qual ], 'sanitized read');
 
-    splice(@read_tokens, 1, 1, 16);
-    Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_correct_sequence_and_qualities(\@read_tokens);
-    is_deeply(\@read_tokens, [ undef, 16, undef, undef, undef, undef, undef, undef, undef, $revcomp_seq, $revcomp_qual ], 'complemented read');
+    @read_tokens = ( undef, 16, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual );
+    Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_read(\@read_tokens);
+    is_deeply(\@read_tokens, [ undef, 16, (qw/ * 0 0 * * 0 0 /), $revcomp_seq, $revcomp_qual ], 'sanitized complemented read');
 
 };
 

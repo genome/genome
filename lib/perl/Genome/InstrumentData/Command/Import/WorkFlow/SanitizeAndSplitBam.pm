@@ -147,10 +147,8 @@ sub _write_reads {
     }
 
     for my $read_tokens ( grep { defined } ( $read1, $read2 ) ) {
-        # Revcomp!
-        $read_tokens->[1] = _correct_sequence_and_qualities($read_tokens);
-        # Remove alignment information
-        splice @$read_tokens, 2, 7, (qw/ * 0 0 * * 0 0 /);
+        # Sanitize!
+        _sanitize_read($read_tokens);
         # Remove ALL tags, add new RG tag
         splice @$read_tokens, 11;
         push @$read_tokens, 'RG:Z:'.$self->old_and_new_read_group_ids->{$rg_id}->{$type};
@@ -224,13 +222,17 @@ sub _determine_type_and_set_flags {
     $type;
 }
 
-sub _correct_sequence_and_qualities {
+sub _sanitize_read {
+    # Upcase sequence
     $_[0]->[9] = uc $_[0]->[9];
+    # If listed as revcomp, revcomp seq and qual
     if ( $_[0]->[1] & 0x10 ) {
         $_[0]->[9] = reverse $_[0]->[9];
         $_[0]->[9] =~ tr/ATCG/TAGC/;
         $_[0]->[10] = reverse $_[0]->[10];
     }
+    # Remove alignment information
+    splice @{$_[0]}, 2, 7, (qw/ * 0 0 * * 0 0 /);
 }
 
 sub _open_fh_for_read_group_and_type {
