@@ -743,31 +743,7 @@ sub _resolve_workflow_for_build {
     #SummarizeSvs - Generate a summary of SV results from the WGS SV results
     my $summarize_svs_op;
     if ($build->wgs_build) {
-        $summarize_svs_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Summarize SV results from WGS somatic variation',
-            command => 'Genome::Model::ClinSeq::Command::SummarizeSvs',
-        );
-        $workflow->add_operation($summarize_svs_op);
-        $workflow->connect_input(
-            input_property       => 'cancer_annotation_db',
-            destination          => $summarize_svs_op,
-            destination_property => 'cancer_annotation_db',
-        );
-        $workflow->connect_input(
-            input_property       => 'sv_dir',
-            destination          => $summarize_svs_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_input(
-            input_property       => 'wgs_build',
-            destination          => $summarize_svs_op,
-            destination_property => 'builds',
-        );
-        $workflow->connect_output(
-            output_property => 'summarize_svs_result',
-            source          => $summarize_svs_op,
-            source_property => 'result',
-        );
+        $summarize_svs_op = $self->summarize_svs_op($workflow);
     }
 
     #Add gene category annotations to some output files from steps above. (e.g. determine which SNV affected genes are kinases, ion channels, etc.)
@@ -2236,6 +2212,39 @@ sub summarize_cnvs_op {
     );
 
     return $summarize_cnvs_op;
+}
+
+sub summarize_svs_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $summarize_svs_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Summarize SV results from WGS somatic variation',
+        command => 'Genome::Model::ClinSeq::Command::SummarizeSvs',
+    );
+    $workflow->add_operation($summarize_svs_op);
+    $workflow->connect_input(
+        input_property       => 'cancer_annotation_db',
+        destination          => $summarize_svs_op,
+        destination_property => 'cancer_annotation_db',
+    );
+    $workflow->connect_input(
+        input_property       => 'sv_dir',
+        destination          => $summarize_svs_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'wgs_build',
+        destination          => $summarize_svs_op,
+        destination_property => 'builds',
+    );
+    $workflow->connect_output(
+        output_property => 'summarize_svs_result',
+        source          => $summarize_svs_op,
+        source_property => 'result',
+    );
+
+    return $summarize_svs_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
