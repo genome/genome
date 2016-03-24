@@ -720,44 +720,10 @@ sub _resolve_workflow_for_build {
     }
 
     #RunDOCMReport
-    my $docm_report_op;
     if (($build->exome_build or $build->wgs_build)
         and $self->_get_docm_variants_file($self->cancer_annotation_db))
     {
-        $docm_report_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Produce a report using DOCM',
-            command => 'Genome::Model::ClinSeq::Command::Converge::DocmReport',
-        );
-        $workflow->add_operation($docm_report_op);
-        $workflow->connect_input(
-            input_property       => 'docm_report_dir',
-            destination          => $docm_report_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_input(
-            input_property       => 'build',
-            destination          => $docm_report_op,
-            destination_property => 'builds',
-        );
-        for my $property (qw(docm_variants_file bam_readcount_version)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $docm_report_op,
-                destination_property => $property,
-            );
-        }
-        for my $property (qw(bq mq)) {
-            $workflow->connect_input(
-                input_property       => "docmreport_min_$property",
-                destination          => $docm_report_op,
-                destination_property => $property,
-            );
-        }
-        $workflow->connect_output(
-            output_property => 'docm_report_result',
-            source          => $docm_report_op,
-            source_property => 'result',
-        );
+        my $docm_report_op = $self->docm_report_op($workflow);
     }
 
     #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
@@ -2229,6 +2195,48 @@ sub exome_cnv_op {
     );
 
     return $exome_cnv_op;
+}
+
+sub docm_report_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $docm_report_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Produce a report using DOCM',
+        command => 'Genome::Model::ClinSeq::Command::Converge::DocmReport',
+    );
+    $workflow->add_operation($docm_report_op);
+    $workflow->connect_input(
+        input_property       => 'docm_report_dir',
+        destination          => $docm_report_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $docm_report_op,
+        destination_property => 'builds',
+    );
+    for my $property (qw(docm_variants_file bam_readcount_version)) {
+        $workflow->connect_input(
+            input_property       => $property,
+            destination          => $docm_report_op,
+            destination_property => $property,
+        );
+    }
+    for my $property (qw(bq mq)) {
+        $workflow->connect_input(
+            input_property       => "docmreport_min_$property",
+            destination          => $docm_report_op,
+            destination_property => $property,
+        );
+    }
+    $workflow->connect_output(
+        output_property => 'docm_report_result',
+        source          => $docm_report_op,
+        source_property => 'result',
+    );
+
+    return $docm_report_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
