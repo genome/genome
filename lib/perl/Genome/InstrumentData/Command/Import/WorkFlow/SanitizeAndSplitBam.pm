@@ -7,6 +7,7 @@ use Genome;
 
 require IO::File;
 require List::MoreUtils;
+require List::Util;
 use Params::Validate ':types';
 
 class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam {
@@ -138,8 +139,8 @@ sub _write_reads {
     my ($read1, $read2) =_separate_reads($reads);
     return if not defined $read1 and not defined $read2;
 
-    my $type = _determine_type($read1, $read2);
-    my $rg_id = $self->_read_group_id_for_reads($read1, $read2);
+    my $type = _determine_type_and_set_flags($read1, $read2);
+    my $rg_id = _read_group_id_for_reads( grep { defined } ($read1, $read2) );
     my $fh = $self->_get_fh_for_read_group_and_type($rg_id, $type);
     for my $read_tokens ( grep { defined } ( $read1, $read2 ) ) {
         # Sanitize!
@@ -153,13 +154,11 @@ sub _write_reads {
 }
 
 sub _read_group_id_for_reads {
-    my ($self, @reads) = @_;
-
     my @rg_ids;
-    for my $read ( @reads ) {
-        my $rg_tag_idx = List::MoreUtils::firstidx { $_ =~ m/^RG:/ } @$read;
-        next if defined $rg_tag_idx;
-        push @rg_ids, (split(':', $read->[$rg_tag_idx]))[2];
+    for ( @_ ) {
+        my $rg_tag = List::Util::first { $_ =~ m/^RG:/ } @$_;
+        next if not defined $rg_tag;
+        push @rg_ids, (split(':', $rg_tag))[2];
     }
 
     return 'unknown' if not @rg_ids;
