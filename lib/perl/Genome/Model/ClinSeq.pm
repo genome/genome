@@ -810,182 +810,52 @@ sub _resolve_workflow_for_build {
     }
 
     #DGIDB gene annotation
-    if ($build->exome_build) {
-        for my $variant_type (qw(snv indel)) {
-            my $annotate_genes_by_dgidb_op = Genome::WorkflowBuilder::Command->create(
-                name => sprintf('Add dgidb gene annotations to exome_%s_file', $variant_type),
-                command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
-            );
-            $workflow->add_operation($annotate_genes_by_dgidb_op);
-            for my $property (qw(gene_name_regex)) {
-                $workflow->connect_input(
-                    input_property       => $property,
+    for my $sequencing_type (qw(exome wgs wgs_exome)) {
+        my $build_accessor = "${sequencing_type}_build";
+        if ($build->$build_accessor) {
+            for my $variant_type (qw(snv indel)) {
+                my $annotate_genes_by_dgidb_op = $self->annotate_genes_by_dgidb_op($workflow, $sequencing_type, $variant_type);
+                $workflow->create_link(
+                    source               => $import_snvs_indels_op,
+                    source_property      => "${sequencing_type}_${variant_type}_file",
                     destination          => $annotate_genes_by_dgidb_op,
-                    destination_property => $property,
+                    destination_property => 'input_file',
                 );
             }
-            $workflow->create_link(
-                source               => $import_snvs_indels_op,
-                source_property      => sprintf('exome_%s_file', $variant_type),
-                destination          => $annotate_genes_by_dgidb_op,
-                destination_property => 'input_file',
-            );
-            $workflow->connect_output(
-                output_property => sprintf('dgidb_exome_%s_result', $variant_type),
-                source          => $annotate_genes_by_dgidb_op,
-                source_property => 'result',
-            );
         }
     }
 
     if ($build->wgs_build) {
-        for my $variant_type (qw(snv indel)) {
-            my $annotate_genes_by_dgidb_op = Genome::WorkflowBuilder::Command->create(
-                name => sprintf('Add dgidb gene annotations to wgs_%s_file', $variant_type),
-                command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
-            );
-            $workflow->add_operation($annotate_genes_by_dgidb_op);
-            for my $property (qw(gene_name_regex)) {
-                $workflow->connect_input(
-                    input_property       => $property,
-                    destination          => $annotate_genes_by_dgidb_op,
-                    destination_property => $property,
-                );
-            }
-            $workflow->create_link(
-                source               => $import_snvs_indels_op,
-                source_property      => sprintf('wgs_%s_file', $variant_type),
-                destination          => $annotate_genes_by_dgidb_op,
-                destination_property => 'input_file',
-            );
-            $workflow->connect_output(
-                output_property => sprintf('dgidb_wgs_%s_result', $variant_type),
-                source          => $annotate_genes_by_dgidb_op,
-                source_property => 'result',
-            );
-        }
-        my $annotate_genes_by_dgidb_cnv_amp_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add dgidb gene annotations to gene_amp_file',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
-        );
-        $workflow->add_operation($annotate_genes_by_dgidb_cnv_amp_op);
-        for my $property (qw(gene_name_regex)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_dgidb_cnv_amp_op,
-                destination_property => $property,
-            );
-        }
+        my $annotate_genes_by_dgidb_cnv_amp_op = $self->_annotate_genes_by_dgidb_op($workflow, 'gene_amp_file', 'dgidb_cnv_amp_result');
         $workflow->create_link(
             source               => $run_cn_view_op,
             source_property      => 'gene_amp_file',
             destination          => $annotate_genes_by_dgidb_cnv_amp_op,
             destination_property => 'input_file',
         );
-        $workflow->connect_output(
-            output_property => 'dgidb_cnv_amp_result',
-            source          => $annotate_genes_by_dgidb_cnv_amp_op,
-            source_property => 'result',
-        );
-        my $annotate_genes_by_dgidb_sv_fusion_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add dgidb gene annotations to fusion_output_file',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
-        );
-        $workflow->add_operation($annotate_genes_by_dgidb_sv_fusion_op);
-        for my $property (qw(gene_name_regex)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_dgidb_sv_fusion_op,
-                destination_property => $property,
-            );
-        }
+        my $annotate_genes_by_dgidb_sv_fusion_op = $self->_annotate_genes_by_dgidb_op($workflow, 'fusion_output_file', 'dgidb_sv_fusion_result');
         $workflow->create_link(
             source               => $summarize_svs_op,
             source_property      => 'fusion_output_file',
             destination          => $annotate_genes_by_dgidb_sv_fusion_op,
             destination_property => 'input_file',
         );
-        $workflow->connect_output(
-            output_property => 'dgidb_sv_fusion_result',
-            source          => $annotate_genes_by_dgidb_sv_fusion_op,
-            source_property => 'result',
-        );
-    }
-
-    if ($build->wgs_build and $build->exome_build) {
-        for my $variant_type (qw(snv indel)) {
-            my $annotate_genes_by_dgidb_op = Genome::WorkflowBuilder::Command->create(
-                name => sprintf('Add dgidb gene annotations to wgs_exome_%s_file', $variant_type),
-                command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
-            );
-            $workflow->add_operation($annotate_genes_by_dgidb_op);
-            for my $property (qw(gene_name_regex)) {
-                $workflow->connect_input(
-                    input_property       => $property,
-                    destination          => $annotate_genes_by_dgidb_op,
-                    destination_property => $property,
-                );
-            }
-            $workflow->create_link(
-                source               => $import_snvs_indels_op,
-                source_property      => sprintf('wgs_exome_%s_file', $variant_type),
-                destination          => $annotate_genes_by_dgidb_op,
-                destination_property => 'input_file',
-            );
-            $workflow->connect_output(
-                output_property => sprintf('dgidb_wgs_exome_%s_result', $variant_type),
-                source          => $annotate_genes_by_dgidb_op,
-                source_property => 'result',
-            );
-        }
     }
 
     if ($build->tumor_rnaseq_build) {
-        my $annotate_genes_by_dgidb_cufflink_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add dgidb gene annotations to tumor_fpkm_topnpercent_file',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
-        );
-        $workflow->add_operation($annotate_genes_by_dgidb_cufflink_op);
-        for my $property (qw(gene_name_regex)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_dgidb_cufflink_op,
-                destination_property => $property,
-            );
-        }
+        my $annotate_genes_by_dgidb_cufflink_op = $self->_annotate_genes_by_dgidb_op($workflow, 'tumor_fpkm_topnpercent_file', 'dgidb_cufflinks_result');
         $workflow->create_link(
             source               => $tumor_cufflinks_expression_absolute_op,
             source_property      => 'tumor_fpkm_topnpercent_file',
             destination          => $annotate_genes_by_dgidb_cufflink_op,
             destination_property => 'input_file',
         );
-        $workflow->connect_output(
-            output_property => 'dgidb_cufflinks_result',
-            source          => $annotate_genes_by_dgidb_cufflink_op,
-            source_property => 'result',
-        );
-        my $annotate_genes_by_dgidb_tophat_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Add dgidb gene annotations to junction_topnpercent_file',
-            command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
-        );
-        $workflow->add_operation($annotate_genes_by_dgidb_tophat_op);
-        for my $property (qw(gene_name_regex)) {
-            $workflow->connect_input(
-                input_property       => $property,
-                destination          => $annotate_genes_by_dgidb_tophat_op,
-                destination_property => $property,
-            );
-        }
+        my $annotate_genes_by_dgidb_tophat_op = $self->_annotate_genes_by_dgidb_op($workflow, 'junction_topnpercent_file', 'dgidb_tophat_result');
         $workflow->create_link(
             source               => $tumor_tophat_junctions_absolute_op,
             source_property      => 'junction_topnpercent_file',
             destination          => $annotate_genes_by_dgidb_tophat_op,
             destination_property => 'input_file',
-        );
-        $workflow->connect_output(
-            output_property => 'dgidb_tophat_result',
-            source          => $annotate_genes_by_dgidb_tophat_op,
-            source_property => 'result',
         );
     }
 
@@ -1774,6 +1644,40 @@ sub _annotate_genes_by_category_op {
     );
 
     return $annotate_genes_by_category_op;
+}
+
+sub annotate_genes_by_dgidb_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $sequencing_type = shift;
+    my $variant_type = shift;
+
+    return $self->_annotate_genes_by_dgidb_op($workflow, "${sequencing_type}_${variant_type}_file", "dgidb_${sequencing_type}_${variant_type}_result");
+}
+
+sub _annotate_genes_by_dgidb_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $file_name = shift;
+    my $output_property = shift;
+
+    my $annotate_genes_by_dgidb_op = Genome::WorkflowBuilder::Command->create(
+        name => "Add dgidb gene annotations to $file_name",
+        command => 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb',
+    );
+    $workflow->add_operation($annotate_genes_by_dgidb_op);
+    $workflow->connect_input(
+        input_property       => 'gene_name_regex',
+        destination          => $annotate_genes_by_dgidb_op,
+        destination_property => 'gene_name_regex',
+    );
+    $workflow->connect_output(
+        output_property => $output_property,
+        source          => $annotate_genes_by_dgidb_op,
+        source_property => 'result',
+    );
+
+    return $annotate_genes_by_dgidb_op;
 }
 
 sub summarize_tier1_snv_support_op {
