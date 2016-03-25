@@ -43,10 +43,10 @@ sub execute {
     my $self = shift;
     $self->debug_message('Spilt bam by read group...');
 
-    my $write_reads_ok = $self->_process_reads;
-    return if not $write_reads_ok;
+    my $metrics = $self->_process_reads;
+    return if not $metrics;
 
-    my $verify_read_count_ok = $self->_verify_read_count;
+    my $verify_read_count_ok = $self->_verify_read_count($metrics);
     return if not $verify_read_count_ok;
 
     $self->debug_message('Spilt bam by read group...done');
@@ -65,6 +65,7 @@ sub _process_reads {
     }
 
     my ($template_name, @reads);
+    my %metrics = ( input => 0, output => 0 );
     while ( my $line = $bam_fh->getline ) {
         chomp $line;
         my @tokens = split(/\t/, $line);
@@ -79,13 +80,16 @@ sub _process_reads {
             next;
         }
 
-        $self->_write_reads(@reads);
+        $metrics{input} += @reads;
+        $metrics{output} += $self->_write_reads(@reads);
+
         $template_name = $tokens[0];
         @reads = ( \@tokens );
     }
 
     if ( @reads ) {
-        $self->_write_reads(@reads);
+        $metrics{input} += @reads;
+        $metrics{output} += $self->_write_reads(@reads);
     }
 
     for my $fh ( $bam_fh, values %{$self->_read_group_fhs} ) {
@@ -93,11 +97,11 @@ sub _process_reads {
     }
 
     $self->debug_message('Processing reads...done');
-    return 1;
+    return \%metrics;
 }
 
 sub _verify_read_count {
-    my $self = shift;
+    my ($self, $metrics) = @_;
     $self->debug_message('Verify read count...');
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
@@ -122,11 +126,24 @@ sub _verify_read_count {
     my $original_flagstat = $helpers->load_or_run_flagstat($self->bam_path);
     return if not $original_flagstat;
 
-    $self->debug_message('Original bam read count: '.$original_flagstat->{total_reads});
-    $self->debug_message('Read group bams read count: '.$read_count);
+    $self->debug_message('Original bam reads:   '.$original_flagstat->{total_reads});
+    $self->debug_message('Reads processed:      '.$metrics->{input});
+    $self->debug_message('Reads Excluded:       '.($metrics->{input} - $metrics->{output}));
+    $self->debug_message('Reads Written:        '.$metrics->{output});
+    $self->debug_message('Read group bam reads: '.$read_count);
 
-    if ( $original_flagstat->{total_reads} != $read_count ) {
-        die $self->error_message('Original and split by read group bam read counts do not match!');
+    if ( $original_flagstat->{total_reads} != $metrics->{input} ) {
+        $self->fatal_message(
+            'Conflicting read counts from flagstat and input metrics! %s <=> %s',
+            $original_flagstat->{total_reads}, $self->_metrics->{input},
+        );
+    }
+
+    if ( $read_count != $metrics->{output}  ) {
+        $self->fatal_message(
+            'Conflicting read counts from output flagstats and output metrics! %s <=> %s',
+            $read_count, $metrics->{output},
+        );
     }
 
     $self->debug_message('Verify read count...done');
@@ -134,23 +151,25 @@ sub _verify_read_count {
 }
 
 sub _write_reads {
-    my ($self, $reads) = @_;
+    my $self = shift;
 
-    my ($read1, $read2) =_separate_reads($reads);
-    return if not defined $read1 and not defined $read2;
+    my ($read1, $read2) =_separate_reads(@_);
+    my @separated_reads = grep { defined } ( $read1, $read2 );
+    return 0 if not @separated_reads;
 
     my $type = _determine_type_and_set_flags($read1, $read2);
-    my $rg_id = _read_group_id_for_reads( grep { defined } ($read1, $read2) );
+    my $rg_id = _read_group_id_for_reads(@separated_reads);
     my $fh = $self->_get_fh_for_read_group_and_type($rg_id, $type);
-    for my $read_tokens ( grep { defined } ( $read1, $read2 ) ) {
+    for my $read_tokens ( @separated_reads ) {
         # Sanitize!
         _sanitize_read($read_tokens);
         # Add RG tag
         push @$read_tokens, 'RG:Z:'.$self->old_and_new_read_group_ids->{$rg_id}->{$type};
+        print( join( "\t", @$read_tokens)."\n");
         $fh->print( join( "\t", @$read_tokens)."\n");
     }
 
-    return 1;
+    return @separated_reads;
 }
 
 sub _read_group_id_for_reads {
