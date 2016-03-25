@@ -645,33 +645,18 @@ sub _resolve_workflow_for_build {
     }
 
     #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on normal
-    if ($build->normal_rnaseq_build) {
-        my $normal_tophat_junctions_absolute_op = $self->tophat_junctions_absolute_op($workflow, 'normal');
-    }
-    #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on tumor
-    my $tumor_tophat_junctions_absolute_op;
-    if ($build->tumor_rnaseq_build) {
-        $tumor_tophat_junctions_absolute_op = $self->tophat_junctions_absolute_op($workflow, 'tumor');
-    }
-
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on normal
     if ($build->normal_rnaseq_build) {
+        my $normal_tophat_junctions_absolute_op = $self->tophat_junctions_absolute_op($workflow, 'normal');
         my $normal_cufflinks_expression_absolute_op = $self->cufflinks_expression_absolute_op($workflow, 'normal');
     }
+    #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on tumor
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on tumor
-    my $tumor_cufflinks_expression_absolute_op;
-    if ($build->tumor_rnaseq_build) {
-        $tumor_cufflinks_expression_absolute_op = $self->cufflinks_expression_absolute_op($workflow, 'tumor');
-    }
-
-    #CufflinksDifferentialExpression - Run cufflinks differential expression
-    my $cufflinks_differential_expression_op;
-    if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build) {
-        $cufflinks_differential_expression_op = $self->cufflinks_differential_expression_op($workflow);
-    }
-
     #Intersect filtered fusion calls with WGS SV calls.
+    my ($tumor_tophat_junctions_absolute_op, $tumor_cufflinks_expression_absolute_op);
     if ($build->tumor_rnaseq_build) {
+        $tumor_tophat_junctions_absolute_op = $self->tophat_junctions_absolute_op($workflow, 'tumor');
+        $tumor_cufflinks_expression_absolute_op = $self->cufflinks_expression_absolute_op($workflow, 'tumor');
         if (-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe') {
             #copy over fusion files
             $self->copy_fusion_files($build);
@@ -681,6 +666,12 @@ sub _resolve_workflow_for_build {
                 }
             }
         }
+    }
+
+    #CufflinksDifferentialExpression - Run cufflinks differential expression
+    my $cufflinks_differential_expression_op;
+    if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build) {
+        $cufflinks_differential_expression_op = $self->cufflinks_differential_expression_op($workflow);
     }
 
     #DumpIgvXml - Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
