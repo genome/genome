@@ -1060,7 +1060,8 @@ sub _resolve_workflow_for_build {
     }
 
     #Converge SnvIndelReport
-    my @converge_snv_indel_report_ops;
+    #CreateMutationDiagrams - Create mutation spectrum results for wgs and exome data
+    #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
     if ($build->wgs_build || $build->exome_build) {
         my %variant_sources_ops = (
             exome => $exome_variant_sources_op,
@@ -1089,77 +1090,40 @@ sub _resolve_workflow_for_build {
                     destination          => $create_mutation_spectrum_op,
                     destination_property => 'converge_snv_indel_report_result',
                 );
-                push @converge_snv_indel_report_ops, $converge_snv_indel_report_op;
             }
-        }
-    }
-
-    #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
-    if ($build->wgs_build or $build->should_run_exome_cnv) {
-        my $iterator = List::MoreUtils::each_arrayref([1 .. @$mqs], $mqs, $bqs);
-        while (my ($i, $mq, $bq) = $iterator->()) {
-            my $sciclone_op = Genome::WorkflowBuilder::Command->create(
-                name => "Run clonality analysis and produce clonality plots using SciClone $i",
-                command => 'Genome::Model::ClinSeq::Command::GenerateSciclonePlots',
-            );
-            $workflow->add_operation($sciclone_op);
-            $workflow->connect_input(
-                input_property       => "sciclone_dir$i",
-                destination          => $sciclone_op,
-                destination_property => 'outdir',
-            );
-            $workflow->connect_input(
-                input_property       => 'build',
-                destination          => $sciclone_op,
-                destination_property => 'clinseq_build',
-            );
-            $workflow->connect_input(
-                input_property       => 'sireport_min_coverage',
-                destination          => $sciclone_op,
-                destination_property => 'min_coverage',
-            );
-            for my $property (qw(min_mq min_bq)) {
-                $workflow->connect_input(
-                    input_property       => "sireport_$property$i",
-                    destination          => $sciclone_op,
-                    destination_property => $property,
-                );
-            }
-            if ($build->wgs_build) {
+            if ($build->wgs_build or $build->should_run_exome_cnv) {
+                my $sciclone_op = $self->sciclone_op($workflow, $i);
+                if ($build->wgs_build) {
+                    $workflow->create_link(
+                        source               => $run_cn_view_op,
+                        source_property      => 'result',
+                        destination          => $sciclone_op,
+                        destination_property => 'wgs_cnv_result',
+                    );
+                }
+                if ($build->should_run_exome_cnv) {
+                    $workflow->create_link(
+                        source               => $exome_cnv_op,
+                        source_property      => 'result',
+                        destination          => $sciclone_op,
+                        destination_property => 'exome_cnv_result',
+                    );
+                }
+                if ($self->has_microarray_build()) {
+                    $workflow->create_link(
+                        source               => $microarray_cnv_op,
+                        source_property      => 'result',
+                        destination          => $sciclone_op,
+                        destination_property => 'microarray_cnv_result',
+                    );
+                }
                 $workflow->create_link(
-                    source               => $run_cn_view_op,
+                    source               =>  $converge_snv_indel_report_op,
                     source_property      => 'result',
                     destination          => $sciclone_op,
-                    destination_property => 'wgs_cnv_result',
+                    destination_property => 'converge_snv_indel_report_result',
                 );
             }
-            if ($build->should_run_exome_cnv) {
-                $workflow->create_link(
-                    source               => $exome_cnv_op,
-                    source_property      => 'result',
-                    destination          => $sciclone_op,
-                    destination_property => 'exome_cnv_result',
-                );
-            }
-            if ($self->has_microarray_build()) {
-                $workflow->create_link(
-                    source               => $microarray_cnv_op,
-                    source_property      => 'result',
-                    destination          => $sciclone_op,
-                    destination_property => 'microarray_cnv_result',
-                );
-            }
-            $workflow->create_link(
-                source               =>  $converge_snv_indel_report_ops[$i - 1],
-                source_property      => 'result',
-                destination          => $sciclone_op,
-                destination_property => 'converge_snv_indel_report_result',
-            );
-            $workflow->connect_output(
-                output_property => "sciclone_result$i",
-                source          => $sciclone_op,
-                source_property => 'result',
-            );
         }
     }
 
@@ -2029,6 +1993,47 @@ sub create_mutation_spectrum_op {
     );
 
     return $create_mutation_spectrum_op;
+}
+
+sub sciclone_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $iterator = shift;
+
+    my $sciclone_op = Genome::WorkflowBuilder::Command->create(
+        name => "Run clonality analysis and produce clonality plots using SciClone $iterator",
+        command => 'Genome::Model::ClinSeq::Command::GenerateSciclonePlots',
+    );
+    $workflow->add_operation($sciclone_op);
+    $workflow->connect_input(
+        input_property       => "sciclone_dir$iterator",
+        destination          => $sciclone_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $sciclone_op,
+        destination_property => 'clinseq_build',
+    );
+    $workflow->connect_input(
+        input_property       => 'sireport_min_coverage',
+        destination          => $sciclone_op,
+        destination_property => 'min_coverage',
+    );
+    for my $property (qw(min_mq min_bq)) {
+        $workflow->connect_input(
+            input_property       => "sireport_$property$iterator",
+            destination          => $sciclone_op,
+            destination_property => $property,
+        );
+    }
+    $workflow->connect_output(
+        output_property => "sciclone_result$iterator",
+        source          => $sciclone_op,
+        source_property => 'result',
+    );
+
+    return $sciclone_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
