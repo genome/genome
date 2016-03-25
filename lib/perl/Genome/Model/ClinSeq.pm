@@ -1082,68 +1082,15 @@ sub _resolve_workflow_for_build {
                         );
                     }
                 }
+                my $create_mutation_spectrum_op = $self->create_mutation_spectrum_op($workflow, $sequencing_type, $i);
+                $workflow->create_link(
+                    source               => $converge_snv_indel_report_op,
+                    source_property      => 'result',
+                    destination          => $create_mutation_spectrum_op,
+                    destination_property => 'converge_snv_indel_report_result',
+                );
+                push @converge_snv_indel_report_ops, $converge_snv_indel_report_op;
             }
-            push @converge_snv_indel_report_ops, $converge_snv_indel_report_op;
-        }
-    }
-
-    #CreateMutationDiagrams - Create mutation spectrum results for wgs and exome data
-    my @runs;
-    if ($build->wgs_build) {
-        push(@runs, 'wgs');
-    }
-    if ($build->exome_build) {
-        push(@runs, 'exome');
-    }
-    for my $run (@runs) {
-        my $iterator = List::MoreUtils::each_arrayref([1 .. @$mqs], $mqs, $bqs);
-        while (my ($i, $mq, $bq) = $iterator->()) {
-            my $create_mutation_spectrum_op = Genome::WorkflowBuilder::Command->create(
-                name => "Creating mutation spectrum results for $run snvs using create-mutation-spectrum$i",
-                command => 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum',
-            );
-            $workflow->add_operation($create_mutation_spectrum_op);
-            $workflow->connect_input(
-                input_property       => 'build',
-                destination          => $create_mutation_spectrum_op,
-                destination_property => 'clinseq_build',
-            );
-            $workflow->connect_input(
-                input_property       => "${run}_build",
-                destination          => $create_mutation_spectrum_op,
-                destination_property => 'somvar_build',
-            );
-            $workflow->connect_input(
-                input_property       => "${run}_mutation_spectrum_outdir$i",
-                destination          => $create_mutation_spectrum_op,
-                destination_property => 'outdir',
-            );
-            $workflow->connect_input(
-                input_property       => "${run}_mutation_spectrum_datatype$i",
-                destination          => $create_mutation_spectrum_op,
-                destination_property => 'datatype',
-            );
-            $workflow->connect_input(
-                input_property       => "sireport_min_bq$i",
-                destination          => $create_mutation_spectrum_op,
-                destination_property => 'min_base_quality',
-            );
-            $workflow->connect_input(
-                input_property       => "sireport_min_mq$i",
-                destination          => $create_mutation_spectrum_op,
-                destination_property => 'min_quality_score',
-            );
-            $workflow->create_link(
-                source               => $converge_snv_indel_report_ops[$i - 1],
-                source_property      => 'result',
-                destination          => $create_mutation_spectrum_op,
-                destination_property => 'converge_snv_indel_report_result',
-            );
-            $workflow->connect_output(
-                output_property => "${run}_mutation_spectrum_result$i",
-                source          => $create_mutation_spectrum_op,
-                source_property => 'result',
-            );
         }
     }
 
@@ -2032,6 +1979,56 @@ sub converge_snv_indel_report_op {
     );
 
     return $converge_snv_indel_report_op;
+}
+
+sub create_mutation_spectrum_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $sequencing_type = shift;
+    my $iterator = shift;
+
+    my $create_mutation_spectrum_op = Genome::WorkflowBuilder::Command->create(
+        name => "Creating mutation spectrum results for $sequencing_type snvs using create-mutation-spectrum$iterator",
+        command => 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum',
+    );
+    $workflow->add_operation($create_mutation_spectrum_op);
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $create_mutation_spectrum_op,
+        destination_property => 'clinseq_build',
+    );
+    $workflow->connect_input(
+        input_property       => "${sequencing_type}_build",
+        destination          => $create_mutation_spectrum_op,
+        destination_property => 'somvar_build',
+    );
+    $workflow->connect_input(
+        input_property       => "${sequencing_type}_mutation_spectrum_outdir$iterator",
+        destination          => $create_mutation_spectrum_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => "${sequencing_type}_mutation_spectrum_datatype$iterator",
+        destination          => $create_mutation_spectrum_op,
+        destination_property => 'datatype',
+    );
+    $workflow->connect_input(
+        input_property       => "sireport_min_bq$iterator",
+        destination          => $create_mutation_spectrum_op,
+        destination_property => 'min_base_quality',
+    );
+    $workflow->connect_input(
+        input_property       => "sireport_min_mq$iterator",
+        destination          => $create_mutation_spectrum_op,
+        destination_property => 'min_quality_score',
+    );
+    $workflow->connect_output(
+        output_property => "${sequencing_type}_mutation_spectrum_result$iterator",
+        source          => $create_mutation_spectrum_op,
+        source_property => 'result',
+    );
+
+    return $create_mutation_spectrum_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
