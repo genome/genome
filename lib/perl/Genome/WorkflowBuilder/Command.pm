@@ -92,6 +92,7 @@ sub _get_ptero_shortcut_method {
     my %job_args = (
         name => 'shortcut',
         service_url => Genome::Config::get('ptero_shell_command_service_url'),
+        service_data_to_save => ['error_message', 'error'],
         parameters => {
             commandLine => [
                 'genome', 'ptero', 'wrapper',
@@ -135,6 +136,7 @@ sub _get_ptero_execute_method {
     return Ptero::Builder::Job->new(
         name => 'execute',
         service_url => Genome::Config::get('ptero_lsf_service_url'),
+        service_data_to_save => ['error_message', 'error', 'lsfJobId'],
         parameters => $ptero_lsf_parameters);
 }
 
