@@ -802,52 +802,6 @@ sub _resolve_workflow_for_build {
         );
     }
 
-    #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
-    #Currently WGS data is a minimum requirement for Circos plot generation.
-    if ($build->wgs_build) {
-        my $make_circos_plot_op = $self->make_circos_plot_op($workflow);
-        $workflow->create_link(
-            source               => $summarize_svs_op,
-            source_property      => 'fusion_output_file',
-            destination          => $make_circos_plot_op,
-            destination_property => 'candidate_fusion_infile',
-        );
-        $workflow->create_link(
-            source               => $clonality_op,
-            source_property      => 'cnv_hmm_file',
-            destination          => $make_circos_plot_op,
-            destination_property => 'cnv_hmm_file',
-        );
-        if ($build->normal_rnaseq_build) {
-            $workflow->create_link(
-                source               => $cufflinks_differential_expression_op,
-                source_property      => 'coding_hq_de_file',
-                destination          => $make_circos_plot_op,
-                destination_property => 'coding_hq_de_file',
-            );
-        }
-        elsif ($build->tumor_rnaseq_build) {
-            $workflow->create_link(
-                source               => $tumor_cufflinks_expression_absolute_op,
-                source_property      => 'tumor_fpkm_topnpercent_file',
-                destination          => $make_circos_plot_op,
-                destination_property => 'tumor_fpkm_topnpercent_file',
-            );
-        }
-        $workflow->create_link(
-            source               => $import_snvs_indels_op,
-            source_property      => 'result',
-            destination          => $make_circos_plot_op,
-            destination_property => 'import_snvs_indels_result',
-        );
-        $workflow->create_link(
-            source               => $run_cn_view_op,
-            source_property      => 'gene_ampdel_file',
-            destination          => $make_circos_plot_op,
-            destination_property => 'gene_ampdel_file',
-        );
-    }
-
     #Converge SnvIndelReport
     #CreateMutationDiagrams - Create mutation spectrum results for wgs and exome data
     #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
@@ -966,6 +920,52 @@ sub _resolve_workflow_for_build {
             source_property      => 'final_filtered_coding_tsv',
             destination          => $mutation_diagram_op,
             destination_property => 'annotated_variants_tsv',
+        );
+    }
+
+    #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
+    #Currently WGS data is a minimum requirement for Circos plot generation.
+    if ($build->wgs_build) {
+        my $make_circos_plot_op = $self->make_circos_plot_op($workflow);
+        $workflow->create_link(
+            source               => $summarize_svs_op,
+            source_property      => 'fusion_output_file',
+            destination          => $make_circos_plot_op,
+            destination_property => 'candidate_fusion_infile',
+        );
+        $workflow->create_link(
+            source               => $clonality_op,
+            source_property      => 'cnv_hmm_file',
+            destination          => $make_circos_plot_op,
+            destination_property => 'cnv_hmm_file',
+        );
+        if ($build->normal_rnaseq_build) {
+            $workflow->create_link(
+                source               => $cufflinks_differential_expression_op,
+                source_property      => 'coding_hq_de_file',
+                destination          => $make_circos_plot_op,
+                destination_property => 'coding_hq_de_file',
+            );
+        }
+        elsif ($build->tumor_rnaseq_build) {
+            $workflow->create_link(
+                source               => $tumor_cufflinks_expression_absolute_op,
+                source_property      => 'tumor_fpkm_topnpercent_file',
+                destination          => $make_circos_plot_op,
+                destination_property => 'tumor_fpkm_topnpercent_file',
+            );
+        }
+        $workflow->create_link(
+            source               => $converge_snv_indel_report_ops[-1],
+            source_property      => 'final_filtered_coding_clean_tsv',
+            destination          => $make_circos_plot_op,
+            destination_property => 'annotated_variants_tsv',
+        );
+        $workflow->create_link(
+            source               => $run_cn_view_op,
+            source_property      => 'gene_ampdel_file',
+            destination          => $make_circos_plot_op,
+            destination_property => 'gene_ampdel_file',
         );
     }
 
