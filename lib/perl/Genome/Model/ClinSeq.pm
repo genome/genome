@@ -1130,52 +1130,8 @@ sub _resolve_workflow_for_build {
     #IdentifyLoh - Run identify-loh tool for exome or WGS data
     #genome model clin-seq identify-loh --clinseq-build=fafd219665d54462893fbacfe6639f70 --outdir=/Documents/GTB11/ --bamrc-version=0.7
     if ($build->wgs_build or $build->exome_build) {
-        my $identify_loh_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Identify regions of LOH and create plots',
-            command => 'Genome::Model::ClinSeq::Command::IdentifyLoh',
-        );
-        $workflow->add_operation($identify_loh_op);
-        $workflow->connect_input(
-            input_property       => 'build',
-            destination          => $identify_loh_op,
-            destination_property => 'clinseq_build',
-        );
-        $workflow->connect_input(
-            input_property       => 'loh_output_dir',
-            destination          => $identify_loh_op,
-            destination_property => 'outdir',
-        );
-        $workflow->connect_input(
-            input_property       => 'bam_readcount_version',
-            destination          => $identify_loh_op,
-            destination_property => 'bamrc_version',
-        );
-
-        if ($self->name =~ /^apipe\-test/) {
-            $workflow->connect_input(
-                input_property       => 'test',
-                destination          => $identify_loh_op,
-                destination_property => 'test',
-            );
-        }
-        $workflow->connect_output(
-            output_property => 'loh_result',
-            source          => $identify_loh_op,
-            source_property => 'result',
-        );
+        my $identify_loh_op = $self->identify_loh_op($workflow);
     }
-
-    # REMINDER:
-    # For new steps be sure to add their result to the output connector if they do not feed into another step.
-    # When you do that, expand the list of output properties above.
-
-    # my @errors = $workflow->validate();
-    # if (@errors) {
-        # for my $error (@errors) {
-            # $self->error_message($error);
-        # }
-        # die "Invalid workflow!";
-    # }
 
     return $workflow;
 }
@@ -2034,6 +1990,47 @@ sub sciclone_op {
     );
 
     return $sciclone_op;
+}
+
+sub identify_loh_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $identify_loh_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Identify regions of LOH and create plots',
+        command => 'Genome::Model::ClinSeq::Command::IdentifyLoh',
+    );
+    $workflow->add_operation($identify_loh_op);
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $identify_loh_op,
+        destination_property => 'clinseq_build',
+    );
+    $workflow->connect_input(
+        input_property       => 'loh_output_dir',
+        destination          => $identify_loh_op,
+        destination_property => 'outdir',
+    );
+    $workflow->connect_input(
+        input_property       => 'bam_readcount_version',
+        destination          => $identify_loh_op,
+        destination_property => 'bamrc_version',
+    );
+
+    if ($self->name =~ /^apipe\-test/) {
+        $workflow->connect_input(
+            input_property       => 'test',
+            destination          => $identify_loh_op,
+            destination_property => 'test',
+        );
+    }
+    $workflow->connect_output(
+        output_property => 'loh_result',
+        source          => $identify_loh_op,
+        source_property => 'result',
+    );
+
+    return $identify_loh_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
