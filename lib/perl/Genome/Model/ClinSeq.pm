@@ -1015,23 +1015,8 @@ sub _resolve_workflow_for_build {
 
     #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
     #Currently WGS data is a minimum requirement for Circos plot generation.
-    my $make_circos_plot_op;
     if ($build->wgs_build) {
-        $make_circos_plot_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Create a Circos plot using MakeCircosPlot',
-            command => 'Genome::Model::ClinSeq::Command::MakeCircosPlot',
-        );
-        $workflow->add_operation($make_circos_plot_op);
-        $workflow->connect_input(
-            input_property       => 'build',
-            destination          => $make_circos_plot_op,
-            destination_property => 'build',
-        );
-        $workflow->connect_input(
-            input_property       => 'circos_outdir',
-            destination          => $make_circos_plot_op,
-            destination_property => 'output_directory',
-        );
+        my $make_circos_plot_op = $self->make_circos_plot_op($workflow);
         $workflow->create_link(
             source               => $summarize_svs_op,
             source_property      => 'fusion_output_file',
@@ -1044,23 +1029,21 @@ sub _resolve_workflow_for_build {
             destination          => $make_circos_plot_op,
             destination_property => 'cnv_hmm_file',
         );
-        if ($build->normal_rnaseq_build || $build->tumor_rnaseq_build) {
-            if ($build->normal_rnaseq_build) {
-                $workflow->create_link(
-                    source               => $cufflinks_differential_expression_op,
-                    source_property      => 'coding_hq_de_file',
-                    destination          => $make_circos_plot_op,
-                    destination_property => 'coding_hq_de_file',
-                );
-            }
-            else {
-                $workflow->create_link(
-                    source               => $tumor_cufflinks_expression_absolute_op,
-                    source_property      => 'tumor_fpkm_topnpercent_file',
-                    destination          => $make_circos_plot_op,
-                    destination_property => 'tumor_fpkm_topnpercent_file',
-                );
-            }
+        if ($build->normal_rnaseq_build) {
+            $workflow->create_link(
+                source               => $cufflinks_differential_expression_op,
+                source_property      => 'coding_hq_de_file',
+                destination          => $make_circos_plot_op,
+                destination_property => 'coding_hq_de_file',
+            );
+        }
+        elsif ($build->tumor_rnaseq_build) {
+            $workflow->create_link(
+                source               => $tumor_cufflinks_expression_absolute_op,
+                source_property      => 'tumor_fpkm_topnpercent_file',
+                destination          => $make_circos_plot_op,
+                destination_property => 'tumor_fpkm_topnpercent_file',
+            );
         }
         $workflow->create_link(
             source               => $import_snvs_indels_op,
@@ -1073,11 +1056,6 @@ sub _resolve_workflow_for_build {
             source_property      => 'gene_ampdel_file',
             destination          => $make_circos_plot_op,
             destination_property => 'gene_ampdel_file',
-        );
-        $workflow->connect_output(
-            output_property => 'circos_result',
-            source          => $make_circos_plot_op,
-            source_property => 'result',
         );
     }
 
@@ -2019,6 +1997,34 @@ sub summarize_tier1_snv_support_op {
     );
 
     return $summarize_tier1_snv_support_op;
+}
+
+sub make_circos_plot_op {
+    my $self = shift;
+    my $workflow = shift;
+
+    my $make_circos_plot_op = Genome::WorkflowBuilder::Command->create(
+        name => 'Create a Circos plot using MakeCircosPlot',
+        command => 'Genome::Model::ClinSeq::Command::MakeCircosPlot',
+    );
+    $workflow->add_operation($make_circos_plot_op);
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $make_circos_plot_op,
+        destination_property => 'build',
+    );
+    $workflow->connect_input(
+        input_property       => 'circos_outdir',
+        destination          => $make_circos_plot_op,
+        destination_property => 'output_directory',
+    );
+    $workflow->connect_output(
+        output_property => 'circos_result',
+        source          => $make_circos_plot_op,
+        source_property => 'result',
+    );
+
+    return $make_circos_plot_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
