@@ -1,8 +1,8 @@
 #!/usr/bin/env genome-perl
 
 BEGIN {
-    $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} =1;
-    $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} =1;
+    $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
+    $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 }
 
 use strict;
@@ -15,19 +15,11 @@ require File::Compare;
 require File::Spec;
 require File::Temp;
 require List::MoreUtils;
-require Sub::Install;
 use Test::Exception;
-use Test::More tests => 26;
+use Test::More tests => 5;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam';
 use_ok($class) or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v3') or die;
-Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
-my $library = Genome::Library->__define__(
-    name => 'TEST-SAMPLE-extlibs',
-    sample => Genome::Sample->__define__(name => 'TEST-SAMPLE'),
-);
-ok($library, 'create library');
 
 subtest 'separate reads' => sub{
     plan tests => 7;
@@ -104,29 +96,43 @@ subtest '_sanitize_read' => sub{
 
 };
 
-my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
-my $multi_rg_base_name = 'input.rg-multi.bam';
-my $multi_rg_bam_path = File::Spec->join($tmp_dir, $multi_rg_base_name);
-Genome::Sys->create_symlink(File::Spec->join($test_dir, $multi_rg_base_name), $multi_rg_bam_path);
-ok(-s $multi_rg_bam_path, 'linked two read groups bam');
-my $cmd = $class->execute(
-    working_directory => $tmp_dir,
-    bam_path => $multi_rg_bam_path,
-    library => $library,
-);
-ok($cmd->result, 'execute');
+subtest 'execute' => sub{
+    plan tests => 18;
 
-my @output_bam_paths = $cmd->output_bam_paths;
-my @bam_basenames = (qw/ 2883581797.paired 2883581797.read1 2883581797.read2 2883581798.paired 2883581798.read1 2883581798.read2 /);
-is(@output_bam_paths, @bam_basenames, '6 read group bam paths');
-for my $basename ( @bam_basenames ) {
-    my $output_bam_path = File::Spec::->join($tmp_dir, 'input.rg-multi.'.$basename.'.bam');
-    ok((List::MoreUtils::any { $_ eq $output_bam_path } @output_bam_paths), 'expected bam in output bams');
-    ok(-s $output_bam_path, 'expected bam path exists');
-    my $expected_bam_path = File::Spec->join($test_dir, 'split-by-rg.'.$basename.'.bam');
-    is(File::Compare::compare($output_bam_path, $expected_bam_path), 0, "expected $basename bam path matches");
-}
-ok(!glob($multi_rg_bam_path.'*'), 'removed bam path and auxiliary files after spliting');
+    my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v3') or die;
+    Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
+    my $library = Genome::Library->__define__(
+        name => 'TEST-SAMPLE-extlibs',
+        sample => Genome::Sample->__define__(name => 'TEST-SAMPLE'),
+    );
+    ok($library, 'create library');
 
-#diag($tmp_dir); <STDIN>;
+    my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
+    my $multi_rg_base_name = 'input.rg-multi.bam';
+    my $multi_rg_bam_path = File::Spec->join($tmp_dir, $multi_rg_base_name);
+    Genome::Sys->create_symlink(File::Spec->join($test_dir, $multi_rg_base_name), $multi_rg_bam_path);
+    ok(-s $multi_rg_bam_path, 'linked two read groups bam');
+    my $cmd = $class->execute(
+        working_directory => $tmp_dir,
+        bam_path => $multi_rg_bam_path,
+        library => $library,
+    );
+    ok($cmd->result, 'execute');
+
+    my @output_bam_paths = $cmd->output_bam_paths;
+    my @bam_basenames = (qw/ 2883581797.paired 2883581797.singleton 2883581798.paired 2883581798.singleton /);
+    is(@output_bam_paths, @bam_basenames, '4 read group bam paths');
+    for my $basename ( @bam_basenames ) {
+        my $output_bam_path = File::Spec::->join($tmp_dir, 'input.rg-multi.'.$basename.'.bam');
+        ok((List::MoreUtils::any { $_ eq $output_bam_path } @output_bam_paths), 'expected bam in output bams');
+        ok(-s $output_bam_path, 'expected bam path exists');
+        my $expected_bam_path = File::Spec->join($test_dir, 'split-by-rg.'.$basename.'.bam');
+        is(File::Compare::compare($output_bam_path, $expected_bam_path), 0, "expected $basename bam path matches");
+    }
+    ok(!glob($multi_rg_bam_path.'*'), 'removed bam path and auxiliary files after spliting');
+
+    #diag($tmp_dir); <STDIN>;
+
+};
+
 done_testing();

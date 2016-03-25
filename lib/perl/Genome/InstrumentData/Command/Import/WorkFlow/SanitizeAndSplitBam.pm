@@ -165,7 +165,6 @@ sub _write_reads {
         _sanitize_read($read_tokens);
         # Add RG tag
         push @$read_tokens, 'RG:Z:'.$self->old_and_new_read_group_ids->{$rg_id}->{$type};
-        print( join( "\t", @$read_tokens)."\n");
         $fh->print( join( "\t", @$read_tokens)."\n");
     }
 
