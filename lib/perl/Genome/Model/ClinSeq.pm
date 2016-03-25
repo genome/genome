@@ -1062,85 +1062,27 @@ sub _resolve_workflow_for_build {
     #Converge SnvIndelReport
     my @converge_snv_indel_report_ops;
     if ($build->wgs_build || $build->exome_build) {
+        my %variant_sources_ops = (
+            exome => $exome_variant_sources_op,
+            wgs   => $wgs_variant_sources_op,
+        );
         #Create a report for each $bq $mq combo.
         my $iterator = List::MoreUtils::each_arrayref([1 .. @$mqs], $mqs, $bqs);
         while (my ($i, $mq, $bq) = $iterator->()) {
-            my $converge_snv_indel_report_op = Genome::WorkflowBuilder::Command->create(
-                name => "Generate SnvIndel Report$i",
-                command => 'Genome::Model::ClinSeq::Command::Converge::SnvIndelReport',
-            );
-            $workflow->add_operation($converge_snv_indel_report_op);
-            $workflow->connect_input(
-                input_property       => 'build',
-                destination          => $converge_snv_indel_report_op,
-                destination_property => 'builds',
-            );
-            for my $property (qw(bam_readcount_version annotation_build)) {
-                $workflow->connect_input(
-                    input_property       => $property,
-                    destination          => $converge_snv_indel_report_op,
-                    destination_property => $property,
-                );
-            }
-            $workflow->connect_input(
-                input_property       => "snv_indel_report_dir$i",
-                destination          => $converge_snv_indel_report_op,
-                destination_property => 'outdir',
-            );
-            for my $property (qw(clean tmp_space target_gene_list target_gene_list_name)) {
-                $workflow->connect_input(
-                    input_property       => "snv_indel_report_$property",
-                    destination          => $converge_snv_indel_report_op,
-                    destination_property => $property,
-                );
-            }
-            for my $property (qw(min_tumor_vaf max_normal_vaf min_coverage)) {
-                $workflow->connect_input(
-                    input_property       => "sireport_$property",
-                    destination          => $converge_snv_indel_report_op,
-                    destination_property => $property,
-                );
-            }
-            for my $property (qw(bq mq)) {
-                $workflow->connect_input(
-                    input_property       => "sireport_min_$property$i",
-                    destination          => $converge_snv_indel_report_op,
-                    destination_property => $property,
-                );
-            }
-            if ($build->wgs_build) {
-                for my $variant_type (qw(snv indel)) {
-                    $workflow->create_link(
-                        source               => $wgs_variant_sources_op,
-                        source_property      => $variant_type . '_variant_sources_file',
-                        destination          => $converge_snv_indel_report_op,
-                        destination_property => sprintf('_wgs_%s_variant_sources_file', $variant_type),
-                    );
+            my $converge_snv_indel_report_op = $self->converge_snv_indel_report_op($workflow, $i);
+            for my $sequencing_type (qw(exome wgs)) {
+                my $build_accessor = "${sequencing_type}_build";
+                if ($build->$build_accessor) {
+                    for my $variant_type (qw(snv indel)) {
+                        $workflow->create_link(
+                            source               => $variant_sources_ops{$sequencing_type},
+                            source_property      => "${variant_type}_variant_sources_file",
+                            destination          => $converge_snv_indel_report_op,
+                            destination_property => "_${sequencing_type}_${variant_type}_variant_sources_file",
+                        );
+                    }
                 }
             }
-            if ($build->exome_build) {
-                for my $variant_type (qw(snv indel)) {
-                    $workflow->create_link(
-                        source               => $exome_variant_sources_op,
-                        source_property      => $variant_type . '_variant_sources_file',
-                        destination          => $converge_snv_indel_report_op,
-                        destination_property => sprintf('_exome_%s_variant_sources_file', $variant_type),
-                    );
-                }
-            }
-            #If this is a build of a test model, perform a faster analysis (e.g. apipe-test-clinseq-wer)
-            if ($self->name =~ /^apipe\-test/) {
-                $workflow->connect_input(
-                    input_property       => 'snv_indel_report_tiers',
-                    destination          => $converge_snv_indel_report_op,
-                    destination_property => 'tiers',
-                );
-            }
-            $workflow->connect_output(
-                output_property => "converge_snv_indel_report_result$i",
-                source          => $converge_snv_indel_report_op,
-                source_property => 'result',
-            );
             push @converge_snv_indel_report_ops, $converge_snv_indel_report_op;
         }
     }
@@ -2025,6 +1967,71 @@ sub make_circos_plot_op {
     );
 
     return $make_circos_plot_op;
+}
+
+sub converge_snv_indel_report_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $iterator = shift;
+
+    my $converge_snv_indel_report_op = Genome::WorkflowBuilder::Command->create(
+        name => "Generate SnvIndel Report$iterator",
+        command => 'Genome::Model::ClinSeq::Command::Converge::SnvIndelReport',
+    );
+    $workflow->add_operation($converge_snv_indel_report_op);
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $converge_snv_indel_report_op,
+        destination_property => 'builds',
+    );
+    for my $property (qw(bam_readcount_version annotation_build)) {
+        $workflow->connect_input(
+            input_property       => $property,
+            destination          => $converge_snv_indel_report_op,
+            destination_property => $property,
+        );
+    }
+    $workflow->connect_input(
+        input_property       => "snv_indel_report_dir$iterator",
+        destination          => $converge_snv_indel_report_op,
+        destination_property => 'outdir',
+    );
+    for my $property (qw(clean tmp_space target_gene_list target_gene_list_name)) {
+        $workflow->connect_input(
+            input_property       => "snv_indel_report_$property",
+            destination          => $converge_snv_indel_report_op,
+            destination_property => $property,
+        );
+    }
+    for my $property (qw(min_tumor_vaf max_normal_vaf min_coverage)) {
+        $workflow->connect_input(
+            input_property       => "sireport_$property",
+            destination          => $converge_snv_indel_report_op,
+            destination_property => $property,
+        );
+    }
+    for my $property (qw(bq mq)) {
+        $workflow->connect_input(
+            input_property       => "sireport_min_$property$iterator",
+            destination          => $converge_snv_indel_report_op,
+            destination_property => $property,
+        );
+    }
+    #If this is a build of a test model, perform a faster analysis (e.g. apipe-test-clinseq-wer)
+    if ($self->name =~ /^apipe\-test/) {
+        $workflow->connect_input(
+            input_property       => 'snv_indel_report_tiers',
+            destination          => $converge_snv_indel_report_op,
+            destination_property => 'tiers',
+        );
+    }
+    $workflow->connect_output(
+        output_property => "converge_snv_indel_report_result$iterator",
+        source          => $converge_snv_indel_report_op,
+        source_property => 'result',
+    );
+
+    return $converge_snv_indel_report_op;
 }
 
 sub _infer_candidate_subjects_from_input_models {
