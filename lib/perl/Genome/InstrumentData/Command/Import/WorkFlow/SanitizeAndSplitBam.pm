@@ -135,24 +135,18 @@ sub _verify_read_count {
 sub _write_reads {
     my ($self, $reads) = @_;
 
-    my $rg_id = $self->_read_group_id_for_reads($reads);
     my ($read1, $read2) =_separate_reads($reads);
+    return if not defined $read1 and not defined $read2;
+
     my $type = _determine_type($read1, $read2);
-
-    my $fhs = $self->_read_group_fhs;
-    my $key = join('*', $rg_id, $type);
-    unless(exists $fhs->{$key}) {
-        $fhs->{$key} = $self->_open_fh_for_read_group_and_type($rg_id, $type);
-        $self->_read_group_fhs($fhs);
-    }
-
+    my $rg_id = $self->_read_group_id_for_reads($read1, $read2);
+    my $fh = $self->_get_fh_for_read_group_and_type($rg_id, $type);
     for my $read_tokens ( grep { defined } ( $read1, $read2 ) ) {
         # Sanitize!
         _sanitize_read($read_tokens);
         # Add RG tag
         push @$read_tokens, 'RG:Z:'.$self->old_and_new_read_group_ids->{$rg_id}->{$type};
-        #print( join( "\t", @$read_tokens)."\n");
-        $fhs->{$key}->print( join( "\t", @$read_tokens)."\n");
+        $fh->print( join( "\t", @$read_tokens)."\n");
     }
 
     return 1;
@@ -236,25 +230,29 @@ sub _sanitize_read {
     splice @{$_[0]}, 11;
 }
 
-sub _open_fh_for_read_group_and_type {
+sub _get_fh_for_read_group_and_type {
     my ($self, $read_group_id, $type) = @_;
 
-    my $read_group_bam_path = $self->get_working_bam_path_with_new_extension($self->bam_path, $read_group_id, $type);
-    my $samtools_cmd = "| samtools view -S -b -o $read_group_bam_path -";
-    $self->debug_message("Opening fh for $read_group_bam_path $type with:\n$samtools_cmd");
-    my $fh = IO::File->new($samtools_cmd);
-    if ( not $fh ) {
-        die $self->error_message('Failed to open file handle to samtools command!');
+    my $key = join('*', $read_group_id, $type);
+    unless ( exists $self->_read_group_fhs->{$key} ) {
+        my $read_group_bam_path = $self->get_working_bam_path_with_new_extension($self->bam_path, $read_group_id, $type);
+        my $samtools_cmd = "| samtools view -S -b -o $read_group_bam_path -";
+        $self->debug_message("Opening fh for $read_group_bam_path $type with:\n$samtools_cmd");
+        my $fh = IO::File->new($samtools_cmd);
+        if ( not $fh ) {
+            $self->fata_message('Failed to open file handle to samtools command!');
+        }
+        $self->_read_group_fhs->{$key} = $fh;
+
+        $self->_create_new_read_group_ids($read_group_id);
+        $self->_write_header($fh, $self->old_and_new_read_group_ids->{$read_group_id}->{$type});
+
+        my @output_bam_paths = $self->output_bam_paths;
+        push @output_bam_paths, $read_group_bam_path;
+        $self->output_bam_paths(\@output_bam_paths);
     }
 
-    $self->_create_new_read_group_ids($read_group_id);
-    $self->_write_header($fh, $self->old_and_new_read_group_ids->{$read_group_id}->{$type});
-
-    my @output_bam_paths = $self->output_bam_paths;
-    push @output_bam_paths, $read_group_bam_path;
-    $self->output_bam_paths(\@output_bam_paths);
-
-    return $fh;
+    return $self->_read_group_fhs->{$key};
 }
 
 sub _create_new_read_group_ids {
