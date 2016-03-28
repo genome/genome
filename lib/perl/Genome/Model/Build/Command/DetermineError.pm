@@ -253,6 +253,13 @@ sub parse_error_log {
     for(1) {
         Genome::Sys->iterate_file_lines(
             $filename,
+            sub {
+                if ($get_one_more_line) {
+                    # sometimes we die immediately after the error, so check one more line before returning the error
+                    ($error_source_file, $error_source_line) = shift =~ m/at (\S+\.pm) line (\d+)/;
+                    last SCAN_FILE;
+                }
+            },
             $PTERO_HOST_FINDING_REGEX,
                 sub { $found_host = $1 },
 
@@ -265,14 +272,6 @@ sub parse_error_log {
                     last SCAN_FILE if ($error_source_file);
                     $get_one_more_line = 1;
                 },
-
-            sub {
-                if ($get_one_more_line) {
-                    # sometimes we die immediately after the error
-                    ($error_source_file, $error_source_line) = shift =~ m/at (\S+\.pm) line (\d+)/;
-                    last SCAN_FILE;
-                }
-            }
         );
     }
 
