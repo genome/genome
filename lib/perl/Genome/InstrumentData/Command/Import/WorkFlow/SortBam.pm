@@ -66,11 +66,14 @@ sub _sort_bam {
     my $output_bam_path = $self->output_bam_path;
     $self->debug_message("Sorted bam path: $output_bam_path");
 
-    my @cmd = (qw/ samtools sort -m 3000000000 -n /, $bam_path, $sorted_bam_prefix );
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => \@cmd); };
-    if ( not $rv or not -s $output_bam_path ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to run samtools sort!');
+    my $cmd = Genome::Model::Tools::Picard::SortSam->execute(
+        input_file => $bam_path,
+        output_file => $output_bam_path,
+        sort_order => 'queryname',
+        use_version => '1.82',
+    );
+    if ( not $cmd->result or not -s $output_bam_path ) {
+        $self->error_message('Failed to run picard sort sam!');
         return;
     }
 
