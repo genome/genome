@@ -106,9 +106,9 @@ subtest 'success' => sub{
     is($launch->gtmp, 1, 'gtmp');
 
     my @instdata = Genome::InstrumentData::Imported->get(library_id => [map {$_->id} @libraries]);
-    is(@instdata, 3, 'create 3 instrument data');
+    is(@instdata, 2, 'create 2 instrument data');
     my @instdata_process_attrs = map { $_->attributes(attribute_label => 'process_id') } @instdata;
-    is(@instdata_process_attrs, 3, 'added process_id attrs to instdata');
+    is(@instdata_process_attrs, 2, 'added process_id attrs to instdata');
     is(List::Util::sum( map { $_->read_count } @instdata), 128, 'isntdata read counts');
 };
 
