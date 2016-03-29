@@ -156,6 +156,12 @@ sub _get_ptero_lsf_parameters {
     $set_lsf_option->('queue', $attributes{lsfQueue});
     $set_lsf_option->('projectName', $attributes{lsfProject});
 
+    my $default_job_group = join('/',
+        Genome::Config::get('lsf_job_group'),
+        Genome::Sys->username,
+    );
+    $set_lsf_option->('jobGroup', $default_job_group);
+
     my ($stderr, $stdout, $postexec) = _get_lsf_log_paths();
     $lsf_params->{options}->{errFile} = $stderr;
     $lsf_params->{options}->{outFile} = $stdout;

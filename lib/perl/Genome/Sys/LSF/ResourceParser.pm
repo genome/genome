@@ -162,7 +162,7 @@ sub _formatters {
 my %valid_options = (
     'b' => 'beginTime',
     'e' => 'errFile',
-    'g' => 'group',
+    'g' => 'jobGroup',
     'i' => 'inFile',
     'J' => 'jobName',
     'u' => 'mail_user',

@@ -129,6 +129,7 @@
                                                 },
                                                 "options" : {
                                                    "errFile" : "/tmp/ptero-lsf-logfile-36eb3984-6a0a-4fd1-bc73-bf44742636ad.err",
+                                                   "jobGroup" : "/genome/dmorton",
                                                    "numProcessors" : 1,
                                                    "outFile" : "/tmp/ptero-lsf-logfile-36eb3984-6a0a-4fd1-bc73-bf44742636ad.out",
                                                    "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-36eb3984-6a0a-4fd1-bc73-bf44742636ad.err --stdout /tmp/ptero-lsf-logfile-36eb3984-6a0a-4fd1-bc73-bf44742636ad.out",
