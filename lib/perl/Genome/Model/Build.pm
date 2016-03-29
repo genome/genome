@@ -2778,6 +2778,10 @@ sub _ptero_heartbeat {
         }
 
         my @pids = $self->pids_from_bjobs_output($bjobs_output);
+        unless(@pids) {
+            $heartbeat{message} = "No PIDs found in bjobs output (LSF ID: $lsf_job_id). This may be normal if the job just started.";
+            last EXECUTION;
+        }
         my $execution_host = $self->execution_host_from_bjobs_output($bjobs_output);
         unless ($execution_host) {
             $heartbeat{message} = 'Expected execution host.';
