@@ -7,6 +7,7 @@ variant	The variant called at this position
 variant_type	The type of variant: snp, ins (insertion), del (deletion), other
 transcript_name	Ensembl stable ID of feature
 trv_type	Consequence type of this variation
+c_position	The HGVS coding sequence name
 amino_acid_change	The HGVS protein sequence name
 default_gene_name	The gene symbol
 ensembl_gene_id	Ensembl stable ID of affected gene

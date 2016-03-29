@@ -5,7 +5,7 @@ package Genome::File::Vcf::VepConsequenceParser;
 
 use Data::Dumper;
 use Carp qw/confess/;
-use CGI qw/unescape/;
+use URI::Escape qw/uri_unescape/;
 
 use strict;
 use warnings;
@@ -85,7 +85,7 @@ sub process_entry {
     my $value = $entry->info($self->{tag_name});
     return unless $value;
 
-    $value = CGI::unescape($value);
+    $value = uri_unescape($value);
     my @annotations = split(",", $value);
 
     my %allele_map = resolve_alleles($entry);

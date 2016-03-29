@@ -42,6 +42,7 @@ my $interpretations = {
             amino_acid_change => '',
             default_gene_name => 'RP5-857K21.5',
             ensembl_gene_id   => 'ENSG00000223659',
+            c_position        => '',
         },
         G => {
             transcript_name   => 'ENST00000452176',
@@ -49,6 +50,7 @@ my $interpretations = {
             amino_acid_change => '',
             default_gene_name => 'RP5-857K22.5',
             ensembl_gene_id   => 'ENSG00000223695',
+            c_position        => '',
         },
     },
     'variant-type' => {

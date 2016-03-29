@@ -61,6 +61,7 @@ sub headers {
         transcript_name
         trv_type
         trv_type_category
+        c_position
         amino_acid_change
         default_gene_name
         ensembl_gene_id
