@@ -159,6 +159,7 @@ sub _write_ptero_workflow {
     } elsif (scalar(keys %{$workflow->{executions}}) == 0) {
         $handle->print($self->_format_line(
             '',
+            '',
             $workflow->{status},
             '',
             '',
@@ -193,6 +194,7 @@ sub _write_ptero_spawned_workflow {
             $workflow->{name}));
     } elsif (scalar(keys %{$workflow->{executions}}) == 0) {
         $handle->print($self->_format_line(
+            '',
             'spawn',
             $workflow->{status},
             '',
@@ -278,6 +280,7 @@ sub _write_ptero_dag_details {
             $method->{name}));
     } elsif (scalar(keys %{$method->{executions}}) == 0) {
         $handle->print($self->_format_line(
+            '',
             '',
             '',
             '',
