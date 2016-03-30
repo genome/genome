@@ -296,7 +296,7 @@ sub execute {
         my $workflow = $self->workflow;
         my $workflow_inputs = $self->workflow_inputs;
         $workflow_inputs->{analysis_process} = $process;
-        local $ENV{NO_LSF} = 1;
+        my $guard = Genome::Config::set_env('workflow_builder_backend', 'inline');
         $process->run_and_wait(workflow_xml => $workflow->get_xml,
                                workflow_inputs => $workflow_inputs);
     }
