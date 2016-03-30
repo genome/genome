@@ -389,7 +389,7 @@ sub _execute_build {
 
     #mendelian is broken so let's abort if that's our PP
     if($self->trait_type eq 'mendelian') {
-        $self->error_message("Mendelian specific analysis is currently under construction. Model will succeed but not move forwards.");
+        $self->error_message("Mendelian specific analysis is currently unimplemented. Model will succeed but not move forwards.");
         return 1;
     }
     if($self->trait_type eq 'none') {
