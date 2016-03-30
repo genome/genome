@@ -41,7 +41,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam {
 
 sub execute {
     my $self = shift;
-    $self->debug_message('Spilt bam by read group...');
+    $self->debug_message('Sanitize and split bam...');
 
     my $metrics = $self->_process_reads;
     return if not $metrics;
@@ -49,7 +49,7 @@ sub execute {
     my $verify_read_count_ok = $self->_verify_read_count($metrics);
     return if not $verify_read_count_ok;
 
-    $self->debug_message('Spilt bam by read group...done');
+    $self->debug_message('Sanitize and split bam...done');
     return 1;
 }
 
@@ -61,7 +61,7 @@ sub _process_reads {
     $self->debug_message("Bam path: $bam_path");
     my $bam_fh = IO::File->new("samtools view $bam_path |");
     if ( not $bam_fh ) {
-        die $self->error_message('Failed to open file handle to samtools command!');
+        $self->fatal_message('Failed to open file handle to samtools command!');
     }
 
     my ($template_name, @reads);
@@ -257,7 +257,7 @@ sub _get_fh_for_read_group_and_type {
         $self->debug_message("Opening fh for $read_group_bam_path $type with:\n$samtools_cmd");
         my $fh = IO::File->new($samtools_cmd);
         if ( not $fh ) {
-            $self->fata_message('Failed to open file handle to samtools command!');
+            $self->fatal_message('Failed to open file handle to samtools command!');
         }
         $self->_read_group_fhs->{$key} = $fh;
 
