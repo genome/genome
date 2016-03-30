@@ -213,42 +213,44 @@ sub _resolve_workflow_for_build {
     $lsf_queue = Genome::Config::get('lsf_queue_build_worker_alt') unless defined($lsf_queue);
     $lsf_project = 'build' . $build->id unless defined($lsf_project);
 
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $build->workflow_name,
-        input_properties => [qw/ build /],
-        output_properties => [qw/ build /],
-        log_dir => $build->log_directory,
     );
 
-    my $previous_op = $workflow->get_input_connector;
+    my $previous_op;
     my $add_operation = sub{
         my ($name) = @_;
         my $command_class_name = 'Genome::Model::GenotypeMicroarray::Build::'.join('', map { ucfirst } split(' ', $name));
-        my $operation_type = Workflow::OperationType::Command->create(command_class_name => $command_class_name);
-        if ( not $operation_type ) {
-            $self->error_message("Failed to create work flow operation for $name");
-            return;
-        }
-        $operation_type->lsf_queue($lsf_queue);
-        $operation_type->lsf_project($lsf_project);
 
-        my $operation = $workflow->add_operation(
+        my $operation = Genome::WorkflowBuilder::Command->create(
             name => $name,
-            operation_type => $operation_type,
+            command => $command_class_name,
         );
+        $operation->lsf_queue($lsf_queue);
+        $operation->lsf_project($lsf_project);
 
-        $workflow->add_link(
-            left_operation => $previous_op,
-            left_property => 'build',
-            right_operation => $operation,
-            right_property => 'build',
-        );
+        $workflow->add_operation($operation);
+
+        if ($previous_op) {
+            $workflow->create_link(
+                source => $previous_op,
+                source_property => 'build',
+                destination => $operation,
+                destination_property => 'build',
+            );
+        }
 
         return $operation;
     };
 
     my $create_og_files_op = $add_operation->('create original genotype files');
     $previous_op = $create_og_files_op;
+
+    $workflow->connect_input(
+        input_property => 'build',
+        destination => $create_og_files_op,
+        destination_property => 'build',
+    );
 
     my $create_filtered_genotype_file_op = $add_operation->('create filtered genotype tsv file');
     $previous_op = $create_filtered_genotype_file_op;
@@ -262,12 +264,13 @@ sub _resolve_workflow_for_build {
     my $create_gold_snp_bed_file_op = $add_operation->('create gold snp bed file');
     $previous_op = $create_gold_snp_bed_file_op;
 
-    $workflow->add_link(
-        left_operation => $previous_op,
-        left_property => 'build',
-        right_operation => $workflow->get_output_connector,
-        right_property => 'build',
+    $workflow->connect_output(
+        source => $previous_op,
+        source_property => 'build',
+        output_property => 'build',
     );
+
+    $workflow->recursively_set_log_dir($build->log_directory);
 
     return $workflow;
 }

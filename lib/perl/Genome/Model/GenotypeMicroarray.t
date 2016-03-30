@@ -12,6 +12,7 @@ use above 'Genome';
 require File::Compare;
 use Workflow::Simple;
 use Test::More;
+use Test::Exception;
 
 use Genome::Test::Factory::AnalysisProject;
 
@@ -198,8 +199,7 @@ sub test_run_build {
     ok($example_build, 'example genotype microarray build');
 
     my $workflow = $build->model->_resolve_workflow_for_build($build);
-    $workflow->validate();
-    ok($workflow->is_valid, 'workflow validated');
+    lives_ok(sub { $workflow->validate(); }, 'workflow validated');
 
     my %workflow_inputs = $build->model->map_workflow_inputs($build);
     my %expected_workflow_inputs = (
@@ -207,8 +207,7 @@ sub test_run_build {
     );
     is_deeply(\%workflow_inputs, \%expected_workflow_inputs, 'map_workflow_inputs succeeded');
 
-    my $workflow_xml = $workflow->save_to_xml();
-    my $success = Workflow::Simple::run_workflow($workflow_xml, %workflow_inputs);
+    my $success = $workflow->execute_inline(\%workflow_inputs);
     ok($success, 'run workflow');
     
     my $original_genotype_vcf = $build->original_genotype_vcf_file_path;
