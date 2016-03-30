@@ -33,7 +33,6 @@ my @sub_commands_expected = qw/
   rna-seq
   single-sample-genotype
   small-rna
-  somatic
   somatic-validation
   somatic-variation
 /;
