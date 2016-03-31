@@ -17,10 +17,10 @@ require File::Compare;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::SortBam') or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v1') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v01') or die;
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
-my $unsorted_bam_base_name = 'input.clean.bam';
+my $unsorted_bam_base_name = 'sort-bam.input.bam';
 my $bam_path = $tmp_dir.'/'.$unsorted_bam_base_name;
 Genome::Sys->create_symlink($test_dir.'/'.$unsorted_bam_base_name, $bam_path);
 ok(-s $bam_path, 'linked unsorted bam path');
@@ -33,12 +33,12 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SortBam->execute(
 );
 ok($cmd->result, 'execute');
 my $output_bam_path = $cmd->output_bam_path;
-my $sorted_bam_base_name = 'input.clean.sorted.bam';
-is($output_bam_path, $tmp_dir.'/'.$sorted_bam_base_name, 'sorted bam path named correctly');
+is($output_bam_path, $tmp_dir.'/'. 'sort-bam.input.sorted.bam', 'sorted bam path named correctly');
 ok(-s $output_bam_path, 'sorted bam path exists');
-is(File::Compare::compare($output_bam_path, $test_dir.'/'.$sorted_bam_base_name), 0, 'sorted bam matches');
+my $expected_bam_basename = 'sort-bam.expected.bam';
+is(File::Compare::compare($output_bam_path, $test_dir.'/'.$expected_bam_basename), 0, 'sorted bam matches');
 ok(-s $output_bam_path.'.flagstat', 'flagstat path exists');
-is(File::Compare::compare($output_bam_path.'.flagstat', $test_dir.'/'.$sorted_bam_base_name.'.flagstat'), 0, 'flagstat matches');
+is(File::Compare::compare($output_bam_path.'.flagstat', $test_dir.'/'.$expected_bam_basename.'.flagstat'), 0, 'flagstat matches');
 ok(!glob($bam_path.'*'), 'removed bam path and auxillary files after sorting');
 
 #print "$tmp_dir\n"; <STDIN>;

@@ -19,11 +19,12 @@
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
-  <operation name="sanitize bam">
-    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam">
+  <operation name="sanitize and split bam">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam">
       <inputproperty>bam_path</inputproperty>
+      <inputproperty>library</inputproperty>
       <inputproperty>working_directory</inputproperty>
-      <outputproperty>output_bam_path</outputproperty>
+      <outputproperty>output_bam_paths</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
@@ -32,14 +33,6 @@
       <inputproperty>bam_path</inputproperty>
       <inputproperty>working_directory</inputproperty>
       <outputproperty>output_bam_path</outputproperty>
-      <outputproperty>result</outputproperty>
-    </operationtype>
-  </operation>
-  <operation name="split bam by read group">
-    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup">
-      <inputproperty>bam_path</inputproperty>
-      <inputproperty>working_directory</inputproperty>
-      <outputproperty>output_bam_paths</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
@@ -66,15 +59,14 @@
   <link fromOperation="input connector" fromProperty="analysis_project" toOperation="create instrument data" toProperty="analysis_project"/>
   <link fromOperation="input connector" fromProperty="instrument_data_properties" toOperation="create instrument data" toProperty="instrument_data_properties"/>
   <link fromOperation="input connector" fromProperty="library" toOperation="create instrument data" toProperty="library"/>
-  <link fromOperation="input connector" fromProperty="working_directory" toOperation="sanitize bam" toProperty="working_directory"/>
+  <link fromOperation="input connector" fromProperty="library" toOperation="sanitize and split bam" toProperty="library"/>
+  <link fromOperation="input connector" fromProperty="working_directory" toOperation="sanitize and split bam" toProperty="working_directory"/>
   <link fromOperation="input connector" fromProperty="working_directory" toOperation="sort bam" toProperty="working_directory"/>
-  <link fromOperation="input connector" fromProperty="working_directory" toOperation="split bam by read group" toProperty="working_directory"/>
   <link fromOperation="input connector" fromProperty="working_directory" toOperation="sra to bam" toProperty="working_directory"/>
   <link fromOperation="input connector" fromProperty="source_paths" toOperation="verify not imported" toProperty="source_paths"/>
   <link fromOperation="input connector" fromProperty="working_directory" toOperation="verify not imported" toProperty="working_directory"/>
-  <link fromOperation="sanitize bam" fromProperty="output_bam_path" toOperation="split bam by read group" toProperty="bam_path"/>
-  <link fromOperation="sort bam" fromProperty="output_bam_path" toOperation="sanitize bam" toProperty="bam_path"/>
-  <link fromOperation="split bam by read group" fromProperty="output_bam_paths" toOperation="create instrument data" toProperty="bam_paths"/>
+  <link fromOperation="sanitize and split bam" fromProperty="output_bam_paths" toOperation="create instrument data" toProperty="bam_paths"/>
+  <link fromOperation="sort bam" fromProperty="output_bam_path" toOperation="sanitize and split bam" toProperty="bam_path"/>
   <link fromOperation="sra to bam" fromProperty="output_path" toOperation="sort bam" toProperty="bam_path"/>
   <link fromOperation="verify not imported" fromProperty="source_md5s" toOperation="create instrument data" toProperty="source_md5s"/>
   <link fromOperation="verify not imported" fromProperty="output_path" toOperation="sra to bam" toProperty="sra_path"/>

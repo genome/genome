@@ -14,14 +14,14 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Builder::Sra {
 sub _steps_to_build_workflow {
     return (
         'verify not imported', 'sra to bam', 'sort bam',
-        'sanitize bam', 'split bam by rg', 'create instrument data',
+        'sanitize and split bam', 'create instrument data',
     );
 }
 
 sub _add_sra_to_bam_op_to_workflow {
     my ($self, $previous_op) = @_;
 
-    die 'No previous op given to _add_split_bam_by_rg_op_to_workflow!' if not $previous_op;
+    die 'No previous op given to _add_sra_to_bam_op_to_workflow!' if not $previous_op;
 
     my $name = 'sra to bam';
     my $sra_to_bam_op = Genome::WorkflowBuilder::Command->create(
