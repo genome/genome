@@ -86,6 +86,20 @@ class Genome::Model {
             via => 'processing_profile',
             doc => 'the name of the type of model (pipeline name)',
         },
+        created_by => {
+            is => 'Text',
+            len => 64,
+            doc => 'entity that created the model',
+        },
+        run_as => {
+            is => 'Text',
+            len => 64,
+            doc => 'username to run builds as',
+        },
+        creation_date => {
+            is => 'DateTime',
+            doc => 'the time at which the model was defined',
+        },
 # These were added by 'ur update classes-from-db' on 22 Sep 2014.  They look like
 # old columns that should be removed
 #        _user_name => {
@@ -126,20 +140,6 @@ class Genome::Model {
             to => 'created_by',
             is_deprecated => 1,
             doc => 'use created_by (or maybe run_as)',
-        },
-        created_by => {
-            is => 'Text',
-            len => 64,
-            doc => 'entity that created the model',
-        },
-        run_as => {
-            is => 'Text',
-            len => 64,
-            doc => 'username to run builds as',
-        },
-        creation_date => {
-            is => 'DateTime',
-            doc => 'the time at which the model was defined',
         },
         auto_build => {
             is => 'Boolean',
