@@ -36,6 +36,8 @@ class Genome::Qc::Config {
     id_generator => '-uuid',
 };
 
+sub __display_name__ { sprintf('%s for %s (%s)', $_[0]->name, $_[0]->type, $_[0]->id); }
+
 sub __errors__ {
     my $self = shift;
 
