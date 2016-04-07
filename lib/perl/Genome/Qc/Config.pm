@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 use JSON qw(decode_json);
 use Set::Scalar;
+use YAML qw( Dump );
 
 class Genome::Qc::Config {
     roles => [
@@ -37,6 +38,8 @@ class Genome::Qc::Config {
 };
 
 sub __display_name__ { sprintf('%s for %s (%s)', $_[0]->name, $_[0]->type, $_[0]->id); }
+
+sub config_to_yaml { Dump decode_json $_[0]->config; }
 
 sub __errors__ {
     my $self = shift;
