@@ -90,8 +90,7 @@ sub execute {
     my $build_dir = $rnaseq_build->data_directory;
     my $model     = $rnaseq_build->model;
     my $ab        = $model->annotation_build;
-    my $ab_name   = $ab->name;
-    $ab_name =~ s/\//-/g;
+    my $ab_name   = Genome::Utility::Text::sanitize_string_for_filesystem($ab->name);
     my $test_path   = $working_dir . $ab_name . ".Junction.GeneExpression.top*percent.tsv";
     my $test_result = `ls $test_path`;
     chomp($test_result);
