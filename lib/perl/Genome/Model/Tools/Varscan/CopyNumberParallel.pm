@@ -42,6 +42,12 @@ class Genome::Model::Tools::Varscan::CopyNumberParallel {
             is_optional => 1,
             is_input => 1,
         },
+        data_ratio => {
+            is => 'Text',
+            doc => "Provide the normal/tumor data ratio (otherwise, will be calculated)",
+            is_optional => 1,
+            is_input => 1,
+        },	
         output => {
             is => 'Text',
             doc => "Output file for copy number results",
@@ -160,27 +166,38 @@ sub execute {                               # replace with real execution logic.
 	}
 
 	if(-e $normal_bam && -e $tumor_bam)
-	{	
-		## Get the flagstat ##
-		print "Getting Flagstat...\n";	
-		my %normal_flagstat = get_flagstat($normal_bam);
-		my %tumor_flagstat = get_flagstat($tumor_bam);
-
-		print "Computing Average Read Length...\n";
-		my $normal_readlen = avg_read_len($normal_bam);
-		my $tumor_readlen = avg_read_len($tumor_bam);
+	{
+		my $normal_tumor_ratio = 1;
 		
-		## Determine the total unique GBP ##
-		
-		my $normal_unique_bp = ($normal_flagstat{'mapped'} - $normal_flagstat{'duplicates'}) * $normal_readlen;
-		my $tumor_unique_bp = ($tumor_flagstat{'mapped'} - $tumor_flagstat{'duplicates'}) * $tumor_readlen;
-
-		my $normal_tumor_ratio = $normal_unique_bp / $tumor_unique_bp;
-		$normal_tumor_ratio = sprintf("%.4f", $normal_tumor_ratio);
-
-		print "Normal: $normal_readlen ==> $normal_unique_bp\n";
-		print "Tumor: $tumor_readlen ==> $tumor_unique_bp\n";
-		print "Ratio: $normal_tumor_ratio\n";
+		if($self->data_ratio)
+		{
+		    $normal_tumor_ratio = $self->data_ratio;
+		    print "Using provided normal/tumor data ratio: " . $normal_tumor_ratio . "\n";
+		}
+		else
+		{
+		    ## Get the flagstat ##
+		    print "Getting Flagstat...\n";	
+		    my %normal_flagstat = get_flagstat($normal_bam);
+		    my %tumor_flagstat = get_flagstat($tumor_bam);
+    
+		    print "Computing Average Read Length...\n";
+		    my $normal_readlen = avg_read_len($normal_bam);
+		    my $tumor_readlen = avg_read_len($tumor_bam);
+		    
+		    ## Determine the total unique GBP ##
+		    
+		    my $normal_unique_bp = ($normal_flagstat{'mapped'} - $normal_flagstat{'duplicates'}) * $normal_readlen;
+		    my $tumor_unique_bp = ($tumor_flagstat{'mapped'} - $tumor_flagstat{'duplicates'}) * $tumor_readlen;
+    
+		    $normal_tumor_ratio = $normal_unique_bp / $tumor_unique_bp;
+		    $normal_tumor_ratio = sprintf("%.4f", $normal_tumor_ratio);
+    
+		    print "Normal: $normal_readlen ==> $normal_unique_bp\n";
+		    print "Tumor: $tumor_readlen ==> $tumor_unique_bp\n";
+		    print "Ratio: $normal_tumor_ratio\n";
+		    
+		}
 
 		my $input = new FileHandle ($index_file);
 		my $lineCounter = 0;
