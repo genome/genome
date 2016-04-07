@@ -47,6 +47,8 @@ function help {
 
     -p    Persist the test-db outside of this shell.
 
+    -R    Disable rebuilding of the Meta DB.
+
     -U    Disable configuration of UR.
 
     -u ur_repo
@@ -69,7 +71,7 @@ function main {
         TOP="$PWD"
     fi
 
-    local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF \
+    local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF DISABLE_METADB_REBUILD \
         DB_SNAPSHOT_NAME DB_ID DB_HOST DB_PORT SQITCH_REPO UR_REPO WF_REPO \
         TESTING_MODE=""
     parse_opts "$@"
@@ -79,7 +81,11 @@ function main {
 
     validate_bash
 
-    rebuild_meta_db
+    if test -z "$DISABLE_METADB_REBUILD"
+    then
+        rebuild_meta_db
+    fi
+
     local TESTDBSERVER_DB_NAME TESTDBSERVER_DB_HOST TESTDBSERVER_DB_PORT
     if test -z "$DISABLE_DB"
     then
@@ -161,10 +167,10 @@ function validate_bash {
 }
 
 function parse_opts {
-    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" DB_ID="" DB_HOST="" DB_PORT="" SQITCH_REPO="" UR_REPO="" WF_REPO="" PERSIST_DB=""
+    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" DB_ID="" DB_HOST="" DB_PORT="" SQITCH_REPO="" UR_REPO="" WF_REPO="" PERSIST_DB="" DISABLE_METADB_REBUILD=""
 
     local opts
-    while getopts :hMm:Dd:i:pUu:Ww:t opts "$@"
+    while getopts :hMm:Dd:i:pRUu:Ww:t opts "$@"
     do
         case $opts in
             h)
@@ -192,6 +198,8 @@ function parse_opts {
                 PERSIST_DB="TRUE"
                 ;;
             p)  PERSIST_DB="TRUE"
+                ;;
+            R)  DISABLE_METADB_REBUILD="TRUE"
                 ;;
             U)
                 DISABLE_UR="TRUE"
