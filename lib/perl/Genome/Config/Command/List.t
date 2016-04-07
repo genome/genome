@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Genome qw();
+use above 'Genome';
 use Genome::Test::Config qw(setup_config);
 
 use Test::More tests => 4;
