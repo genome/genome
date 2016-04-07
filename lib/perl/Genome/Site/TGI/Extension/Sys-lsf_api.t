@@ -57,7 +57,7 @@ subtest 'get job statuses' => sub {
 };
 
 subtest 'bsub_and_wait_for_completion' => sub {
-    plan tests => 7;
+    plan tests => 1;
 
     my @cmds = (['ls', '~'],
                 'exit 1',
@@ -67,15 +67,9 @@ subtest 'bsub_and_wait_for_completion' => sub {
     my @statuses = Genome::Sys->bsub_and_wait_for_completion(
                         queue => Genome::Config::get('lsf_queue_short'),
                         cmds => \@cmds,
-                        on_submit => sub { my($idx, $job_id) = @_; $submitted{$idx} = $job_id },
-                        on_complete => sub { my($idx, $job_id) = @_; $completed{$idx} = $job_id },
                     );
     is_deeply(\@statuses,
               [SUCCESSFUL_JOB, FAILED_JOB, SUCCESSFUL_JOB],
               'statuses are correct');
 
-    for (my $i = 0; $i < @cmds; $i++) {
-        ok($submitted{$i}, "on_submit callback fired for command $i");
-        ok($completed{$i}, "on_complete callback fired for command $i");
-    }
 };
