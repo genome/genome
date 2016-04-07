@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Genome::Ptero::Utils;
+
 use Ptero::HTTP;
 use Ptero::Proxy::Workflow::Execution;
 
@@ -24,7 +26,7 @@ sub _find_failed_ptero_steps {
     my $self = shift;
     my $ptero_proxy = shift;
 
-    my @all_steps = _get_all_executions($ptero_proxy);
+    my @all_steps = Genome::Ptero::Utils::get_all_executions_for_proxy($ptero_proxy);
 
     my @failed_executions = grep {
         Ptero::Statuses::is_abnormal($_->{status})
