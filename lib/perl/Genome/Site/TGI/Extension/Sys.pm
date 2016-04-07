@@ -96,7 +96,9 @@ sub bsub_and_wait_for_completion {
         $seq_to_job_id{$seq} = $job_id;
     }
 
-    $class->_bsub_and_wait_for_completion__wait_on_jobs_with_lsf_dependency([values %seq_to_job_id], { queue => $bsub_args{queue} || 'short' } );
+    $class->_bsub_and_wait_for_completion__wait_on_jobs_with_lsf_dependency( \%seq_to_job_id,
+        { queue => $bsub_args{queue} || 'short' },
+        $on_complete_cb );
 
     # immediately after being reaped in _bsub_and_wait_for_completion_wait_on_jobs(), bjobs
     # reports their status as still "RUN".  Instead, we go into the traditional polling until
@@ -125,12 +127,20 @@ sub _bsub_and_wait_for_completion__validate_args {
 }
 
 sub _bsub_and_wait_for_completion__wait_on_jobs_with_lsf_dependency {
-    my ($class, $job_ids, $bsub_args) = @_;
+    my ( $class, $seq_to_job_id, $bsub_args, $on_complete_cb ) = @_;
     local $ENV{LSF_NIOS_JOBSTATUS_INTERVAL} = 1;
-    $class->bsub(%$bsub_args,
-                 wait_for_completion => 1,
-                 depend_on => (join "&&", map { "ended($_)" } @$job_ids) ,
-                 cmd => "echo DONE");
+    $class->bsub(
+        %$bsub_args,
+        wait_for_completion => 1,
+        depend_on           => ( join "&&", ( map {"ended($_)"} values %$seq_to_job_id ) ),
+        cmd                 => "echo DONE"
+    ) or do { return; };
+    if ($on_complete_cb) {
+        for my $seq ( keys %$seq_to_job_id ) {
+            $on_complete_cb->( $seq, $seq_to_job_id->{$seq} );
+        }
+    }
+    return 1;
 }
 
 sub wait_for_lsf_job {
