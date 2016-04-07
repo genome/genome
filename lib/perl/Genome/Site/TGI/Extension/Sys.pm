@@ -92,10 +92,11 @@ sub bsub_and_wait_for_completion {
                                   %bsub_args,
                                   %this_cmd_bsub_args,
                                 );
+        $on_submit_cb->($seq, $job_id) if $on_submit_cb;
         $seq_to_job_id{$seq} = $job_id;
     }
 
-    $class->_bsub_and_wait_for_completion__wait_on_jobs_with_lsf_dependency([values %seq_to_job_id], \%bsub_args);
+    $class->_bsub_and_wait_for_completion__wait_on_jobs_with_lsf_dependency([values %seq_to_job_id], { queue => $bsub_args{queue} || 'short' } );
 
     # immediately after being reaped in _bsub_and_wait_for_completion_wait_on_jobs(), bjobs
     # reports their status as still "RUN".  Instead, we go into the traditional polling until
@@ -130,25 +131,6 @@ sub _bsub_and_wait_for_completion__wait_on_jobs_with_lsf_dependency {
                  wait_for_completion => 1,
                  depend_on => (join "&&", map { "ended($_)" } @$job_ids) ,
                  cmd => "echo DONE");
-}
-
-sub _bsub_and_wait_for_completion__wait_on_jobs {
-    my($class, $waiting_socket, $on_complete_cb, %seq_to_job_id) = @_;
-
-    while (%seq_to_job_id) {
-        my $fh = $waiting_socket->accept();
-        my $seq = $fh->getline;
-        $fh->close;
-        $seq =~ s/\r|\n//g;
-
-        my $job_id = delete $seq_to_job_id{$seq};
-        unless ($job_id) {
-            Carp::croak("Got unexpected response '$seq' while waiting for these jobs:\n",
-                join("\n", map { join(' => ', $_, $seq_to_job_id{$_}) } keys %seq_to_job_id));
-        }
-        $on_complete_cb->($seq, $job_id) if $on_complete_cb;
-    }
-    return 1;
 }
 
 sub wait_for_lsf_job {
