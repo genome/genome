@@ -3,6 +3,8 @@ package Genome::Utility::IO::SeparatedValueReader;
 use strict;
 use warnings;
 
+use Text::CSV;
+
 use Genome;
 
 class Genome::Utility::IO::SeparatedValueReader {
@@ -89,7 +91,21 @@ sub create {
     else {
         $regexp = qr/\Q$sep\E/;
     }
-    $self->{_split} = sub{ return _strip_quotes(split($regexp, $_[0], -1)) };
+
+    if ($sep eq ',') {
+        my $csv = Text::CSV->new({ binary => 1, auto_diag => 1, sep_char => ',' });
+        $self->{_split} = sub {
+            my $line = $_[0];
+            chomp($line);
+            if ($csv->parse($line)) {
+                return _strip_quotes($csv->fields());
+            } else {
+                $self->fatal_message('Failed to parse CSV line: '. $line);
+            }
+        };
+    } else {
+        $self->{_split} = sub{ return _strip_quotes(split($regexp, $_[0], -1)) };
+    }
 
     if (defined($self->ignore_lines_starting_with)) {
         my $char = $self->ignore_lines_starting_with;
