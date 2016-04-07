@@ -4,6 +4,7 @@ package Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute;
 use strict;
 use warnings;
 use Genome;
+use Genome::Utility::Text;
 
 class Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute {
     is        => ['Command::V2', 'Genome::Model::ClinSeq::Util'],
