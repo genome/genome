@@ -44,6 +44,11 @@ class Genome::Db::Ucsc::Command::DbSnp {
             is => 'Text',
         },
     ],
+    has => [
+        sort_position => {
+            default_value => '2,4',
+        },
+    ],
 };
 
 sub headings {
@@ -60,5 +65,6 @@ sub filter {
     my $self = shift;
     return "class='named'";
 }
+
 
 1;

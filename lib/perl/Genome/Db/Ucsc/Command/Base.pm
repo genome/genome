@@ -39,6 +39,14 @@ class Genome::Db::Ucsc::Command::Base {
             default_value => 'genome-mysql.cse.ucsc.edu',
         },
     ],
+    has => [
+        sort_position => {
+            is => 'Text',
+            doc => 'The position string used for the linux sort.',
+            example_values => ['1','2','2,3'],
+            is_abstract => 1,
+        },
+    ],
     doc => "Fetches data from UCSC tables",
 };
 
@@ -122,8 +130,7 @@ sub _sort_into_output_file {
         die $self->error_message;
     }
 
-    my $command = sprintf('sort -V %s >> %s',
-        $unsorted_filename, $self->filename);
+    my $command = sprintf('sort -V -k %s %s >> %s',$self->sort_position,$unsorted_filename, $self->filename);
 
     Genome::Sys->shellcmd(cmd => $command);
 

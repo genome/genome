@@ -51,8 +51,12 @@ our %_DB_TABLES_NAMES = (
 
 class Genome::Db::Ucsc::Command::GapList {
     is => 'Genome::Db::Ucsc::Command::Base',
-
     doc => "Fetches gap data for a reference name",
+    has => [
+        sort_position => {
+            default_value => '1,3',
+        },
+    ],
 };
 
 sub headings {
@@ -64,5 +68,6 @@ sub table_names {
     my $self = shift;
     return $_DB_TABLES_NAMES{$self->reference_name};
 }
+
 
 1;
