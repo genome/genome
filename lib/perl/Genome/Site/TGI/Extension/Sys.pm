@@ -97,7 +97,7 @@ sub bsub_and_wait_for_completion {
     }
 
     $class->_bsub_and_wait_for_completion__wait_on_jobs_with_lsf_dependency( \%seq_to_job_id,
-        { queue => $bsub_args{queue} || 'short' },
+        { queue => $bsub_args{queue} || Genome::Config::get('lsf_queue_short') },
         $on_complete_cb );
 
     # immediately after being reaped in _bsub_and_wait_for_completion_wait_on_jobs(), bjobs
