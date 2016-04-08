@@ -22,7 +22,7 @@ class Genome::Db::Ucsc::Command::Base {
         },
         reference_name => {
             is => 'Text',
-            valid_values => ["hg18", "hg19"],
+            valid_values => ['hg18', 'hg19', 'hg38'],
         },
     ],
     has_optional_param => [

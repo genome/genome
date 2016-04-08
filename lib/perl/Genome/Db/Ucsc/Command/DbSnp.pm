@@ -26,15 +26,19 @@ our @_HEADINGS = (
 );
 
 our %_DB_TABLES_NAMES = (
-    "137" => {'hg19' => ['snp137'],
-    'hg18' => [],}
+    '144' => {'hg38' => ['snp144']},
+    '142' => {'hg38' => ['snp142']},
+    '137' => {
+        'hg19' => ['snp137'],
+        'hg18' => [],
+    },
 );
 
 
 class Genome::Db::Ucsc::Command::DbSnp {
     is => 'Genome::Db::Ucsc::Command::Base',
 
-    doc => "Fetches gap data for a reference name",
+    doc => "Fetches dbsnp data for a reference name",
     has_input => [
         dbsnp_version => {
             is => 'Text',
