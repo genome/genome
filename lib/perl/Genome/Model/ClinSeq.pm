@@ -1748,10 +1748,10 @@ sub make_circos_plot_op {
 sub converge_snv_indel_report_op {
     my $self = shift;
     my $workflow = shift;
-    my $iterator = shift;
+    my $index = shift;
 
     my $converge_snv_indel_report_op = Genome::WorkflowBuilder::Command->create(
-        name => "Generate SnvIndel Report$iterator",
+        name => "Generate SnvIndel Report$index",
         command => 'Genome::Model::ClinSeq::Command::Converge::SnvIndelReport',
     );
     $workflow->add_operation($converge_snv_indel_report_op);
@@ -1768,7 +1768,7 @@ sub converge_snv_indel_report_op {
         );
     }
     $workflow->connect_input(
-        input_property       => "snv_indel_report_dir$iterator",
+        input_property       => "snv_indel_report_dir$index",
         destination          => $converge_snv_indel_report_op,
         destination_property => 'outdir',
     );
@@ -1788,7 +1788,7 @@ sub converge_snv_indel_report_op {
     }
     for my $property (qw(bq mq)) {
         $workflow->connect_input(
-            input_property       => "sireport_min_$property$iterator",
+            input_property       => "sireport_min_$property$index",
             destination          => $converge_snv_indel_report_op,
             destination_property => $property,
         );
@@ -1802,7 +1802,7 @@ sub converge_snv_indel_report_op {
         );
     }
     $workflow->connect_output(
-        output_property => "converge_snv_indel_report_result$iterator",
+        output_property => "converge_snv_indel_report_result$index",
         source          => $converge_snv_indel_report_op,
         source_property => 'result',
     );
@@ -1814,10 +1814,10 @@ sub create_mutation_spectrum_op {
     my $self = shift;
     my $workflow = shift;
     my $sequencing_type = shift;
-    my $iterator = shift;
+    my $index = shift;
 
     my $create_mutation_spectrum_op = Genome::WorkflowBuilder::Command->create(
-        name => "Creating mutation spectrum results for $sequencing_type snvs using create-mutation-spectrum$iterator",
+        name => "Creating mutation spectrum results for $sequencing_type snvs using create-mutation-spectrum$index",
         command => 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum',
     );
     $workflow->add_operation($create_mutation_spectrum_op);
@@ -1832,27 +1832,27 @@ sub create_mutation_spectrum_op {
         destination_property => 'somvar_build',
     );
     $workflow->connect_input(
-        input_property       => "${sequencing_type}_mutation_spectrum_outdir$iterator",
+        input_property       => "${sequencing_type}_mutation_spectrum_outdir$index",
         destination          => $create_mutation_spectrum_op,
         destination_property => 'outdir',
     );
     $workflow->connect_input(
-        input_property       => "${sequencing_type}_mutation_spectrum_datatype$iterator",
+        input_property       => "${sequencing_type}_mutation_spectrum_datatype$index",
         destination          => $create_mutation_spectrum_op,
         destination_property => 'datatype',
     );
     $workflow->connect_input(
-        input_property       => "sireport_min_bq$iterator",
+        input_property       => "sireport_min_bq$index",
         destination          => $create_mutation_spectrum_op,
         destination_property => 'min_base_quality',
     );
     $workflow->connect_input(
-        input_property       => "sireport_min_mq$iterator",
+        input_property       => "sireport_min_mq$index",
         destination          => $create_mutation_spectrum_op,
         destination_property => 'min_quality_score',
     );
     $workflow->connect_output(
-        output_property => "${sequencing_type}_mutation_spectrum_result$iterator",
+        output_property => "${sequencing_type}_mutation_spectrum_result$index",
         source          => $create_mutation_spectrum_op,
         source_property => 'result',
     );
@@ -1863,15 +1863,15 @@ sub create_mutation_spectrum_op {
 sub sciclone_op {
     my $self = shift;
     my $workflow = shift;
-    my $iterator = shift;
+    my $index = shift;
 
     my $sciclone_op = Genome::WorkflowBuilder::Command->create(
-        name => "Run clonality analysis and produce clonality plots using SciClone $iterator",
+        name => "Run clonality analysis and produce clonality plots using SciClone $index",
         command => 'Genome::Model::ClinSeq::Command::GenerateSciclonePlots',
     );
     $workflow->add_operation($sciclone_op);
     $workflow->connect_input(
-        input_property       => "sciclone_dir$iterator",
+        input_property       => "sciclone_dir$index",
         destination          => $sciclone_op,
         destination_property => 'outdir',
     );
@@ -1887,13 +1887,13 @@ sub sciclone_op {
     );
     for my $property (qw(min_mq min_bq)) {
         $workflow->connect_input(
-            input_property       => "sireport_$property$iterator",
+            input_property       => "sireport_$property$index",
             destination          => $sciclone_op,
             destination_property => $property,
         );
     }
     $workflow->connect_output(
-        output_property => "sciclone_result$iterator",
+        output_property => "sciclone_result$index",
         source          => $sciclone_op,
         source_property => 'result',
     );
