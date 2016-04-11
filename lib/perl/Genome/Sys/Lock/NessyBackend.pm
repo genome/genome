@@ -7,7 +7,6 @@ use Carp qw(carp croak);
 use POSIX qw(strftime);
 use Sys::Hostname qw(hostname);
 
-require Genome::Model::Build;
 require Genome::Logger;
 
 use Mouse;
@@ -62,7 +61,7 @@ sub lock {
         pid => $$,
         lsf_id => ($ENV{LSB_JOBID} || 'NONE'),
         user => scalar(getpwuid($<)),
-        genome_build_id => (Genome::Model::Build::get_build_id() || 'NONE'),
+        genome_build_id => (Genome::Model::Build->get_build_id() || 'NONE'),
         lsf_project => ($ENV{WF_LSF_PROJECT} || 'NONE'),
         requested_at => strftime('%a, %d %b %Y %T %z', localtime($initial_time)),
     );
