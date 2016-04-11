@@ -193,9 +193,6 @@ sub execute {
     $self->error_message("Error generating post assembly reports")  and die unless
     Genome::Model::Tools::PooledBac::GeneratePostAssemblyReports->execute( project_dir => $project_dir)->result;
 
-#    $self->error_message("Error updating seqmgr") unless
-#    Genome::Model::Tools::Lims::UpdateSeqMgr->execute(project_dir => $project_dir);
-
     chdir( $orig_dir );
 
     return 1;
