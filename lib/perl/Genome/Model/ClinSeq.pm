@@ -593,7 +593,7 @@ sub _resolve_workflow_for_build {
     );
 
     #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
-    my $summarize_builds_op = $self->summarize_builds_op($workflow);
+    $self->summarize_builds_op($workflow);
 
     #ImportSnvsIndels - Import SNVs and Indels
     my $import_snvs_indels_op;
@@ -662,8 +662,8 @@ sub _resolve_workflow_for_build {
     #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on normal
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on normal
     if ($build->normal_rnaseq_build) {
-        my $normal_tophat_junctions_absolute_op = $self->tophat_junctions_absolute_op($workflow, 'normal');
-        my $normal_cufflinks_expression_absolute_op = $self->cufflinks_expression_absolute_op($workflow, 'normal');
+        $self->tophat_junctions_absolute_op($workflow, 'normal');
+        $self->cufflinks_expression_absolute_op($workflow, 'normal');
     }
     #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on tumor
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on tumor
@@ -677,7 +677,7 @@ sub _resolve_workflow_for_build {
             $self->copy_fusion_files($build);
             if ($build->wgs_build) {
                 if (-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated') {
-                    my $intersect_tumor_fusion_sv_op = $self->intersect_tumor_fusion_sv_op($workflow);
+                    $self->intersect_tumor_fusion_sv_op($workflow);
                 }
             }
         }
@@ -691,7 +691,7 @@ sub _resolve_workflow_for_build {
 
     #DumpIgvXml - Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
     #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
-    my $igv_session_op = $self->igv_session_op($workflow);
+    $self->igv_session_op($workflow);
 
     #GenerateClonalityPlots - Run clonality analysis and produce clonality plots
     #RunCnView - Produce copy number results with run-cn-view.
@@ -743,7 +743,7 @@ sub _resolve_workflow_for_build {
     if (($build->exome_build or $build->wgs_build)
         and $self->_get_docm_variants_file($self->cancer_annotation_db))
     {
-        my $docm_report_op = $self->docm_report_op($workflow);
+        $self->docm_report_op($workflow);
     }
 
     #SummarizeSvs - Generate a summary of SV results from the WGS SV results
@@ -1006,7 +1006,7 @@ sub _resolve_workflow_for_build {
     #IdentifyLoh - Run identify-loh tool for exome or WGS data
     #genome model clin-seq identify-loh --clinseq-build=fafd219665d54462893fbacfe6639f70 --outdir=/Documents/GTB11/ --bamrc-version=0.7
     if ($build->wgs_build or $build->exome_build) {
-        my $identify_loh_op = $self->identify_loh_op($workflow);
+        $self->identify_loh_op($workflow);
     }
 
     return $workflow;
