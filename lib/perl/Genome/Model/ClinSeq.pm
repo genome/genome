@@ -944,8 +944,7 @@ sub _resolve_workflow_for_build {
             wgs   => $wgs_variant_sources_op,
         );
         #Create a report for each $bq $mq combo.
-        my $iterator = List::MoreUtils::each_arrayref([1 .. @$mqs], $mqs, $bqs);
-        while (my ($i, $mq, $bq) = $iterator->()) {
+        for my $i (1..@$mqs) {
             my $converge_snv_indel_report_op = $self->converge_snv_indel_report_op($workflow, $i);
             for my $sequencing_type (qw(exome wgs)) {
                 my $build_accessor = "${sequencing_type}_build";
