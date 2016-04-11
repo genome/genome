@@ -30,4 +30,9 @@ sub resolve_rnaseq_builds {
   $rnaseq_builds->{$normal_build->id}{type} = 'rnaseq' if $normal_build;
 }
 
+sub wgs_exome_build {
+    my $clinseq_build = shift;
+    return ($clinseq_build->wgs_build and $clinseq_build->exome_build);
+}
+
 1;
