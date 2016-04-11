@@ -940,7 +940,16 @@ sub set_gid {
 
 sub gidgrnam {
     my $group_name = shift;
-    (getgrnam($group_name))[2];
+
+    #LSF: Try 2 times to group information.
+    #     LDAP something fail to return at
+    #     first request.
+    for ( 1 .. 2 ) {
+        if ( my @group_info = ( getgrnam($group_name) ) ) {
+            return $group_info[2];
+        }
+    }
+    die "Not able to find the group info for $group_name.";
 }
 
 sub create_symlink {
