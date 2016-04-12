@@ -70,6 +70,11 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
             is_optional => 1,
             doc         => 'For debugging purposes, limit to this number of transcripts',
         },
+        annotated_variants_tsv => {
+             is => 'Text',
+             doc => 'A TSV file of annotated variants.',
+             is_optional => 1
+         },
     ],
     doc => 'summarize the SVs of somatic variation build',
 };
@@ -217,45 +222,50 @@ sub import_somatic_variants {
 
     my %var;
 
-    #Hardcode location of files.  TODO: Add option to supply your own annotation files in case you want to do something custom...
+    #Hardcode location of files.
     my @file_list;
-    for my $somatic_build (@builds) {
-        my $build_dir        = $somatic_build->data_directory;
-        my $tier1_snv_file   = $build_dir . "/effects/snvs.hq.tier1.v1.annotated";
-        my $tier1_indel_file = $build_dir . "/effects/indels.hq.tier1.v1.annotated";
+    if ($self->annotated_variants_tsv) {
+        push(@file_list, $self->annotated_variants_tsv);
+    }
+    else {
+        for my $somatic_build (@builds) {
+            my $build_dir        = $somatic_build->data_directory;
+            my $tier1_snv_file   = $build_dir . "/effects/snvs.hq.tier1.v1.annotated";
+            my $tier1_indel_file = $build_dir . "/effects/indels.hq.tier1.v1.annotated";
 
-        #Add the SNV file to the list to be processed - if an optional max-allowed SNVs parameter was supplied, determine the number of unique SNVs in this file and skip if neccessary
-        unless (-e $tier1_snv_file) {
-            die $self->error_message("\n\nCould not find tier1 SNV annotated file in build dir: $build_dir\n\n");
-        }
-        if ($self->max_snvs_per_file) {
-            my $var_count = $self->unique_variant_count('-variant_file' => $tier1_snv_file);
-            if ($var_count > $self->max_snvs_per_file) {
-                $self->debug_message("Too many variants ... skipping file: $tier1_snv_file");
+            #Add the SNV file to the list to be processed - if an optional max-allowed SNVs parameter was supplied, determine the number of unique SNVs in this file and skip if neccessary
+            unless (-e $tier1_snv_file) {
+                die $self->error_message("\n\nCould not find tier1 SNV annotated file in build dir: $build_dir\n\n");
+            }
+            if ($self->max_snvs_per_file) {
+                my $var_count = $self->unique_variant_count('-variant_file' => $tier1_snv_file);
+                if ($var_count > $self->max_snvs_per_file) {
+                    $self->debug_message("Too many variants ... skipping file: $tier1_snv_file");
+                }
+                else {
+                    push(@file_list, $tier1_snv_file);
+                }
             }
             else {
                 push(@file_list, $tier1_snv_file);
             }
-        }
-        else {
-            push(@file_list, $tier1_snv_file);
-        }
 
-        #Add the INDEL file to the list to be processed - if an optional max-allowed SNVs parameter was supplied, determine the number of unique SNVs in this file and skip if neccessary
-        unless (-e $tier1_indel_file) {
-            die $self->error_message("\n\nCould not find tier1 INDEL annotated file in build dir: $build_dir\n\n");
-        }
-        if ($self->max_indels_per_file) {
-            my $var_count = $self->unique_variant_count('-variant_file' => $tier1_indel_file);
-            if ($var_count > $self->max_indels_per_file) {
-                $self->debug_message("Too many variants ... skipping file: $tier1_indel_file");
+            #Add the INDEL file to the list to be processed - if an optional max-allowed SNVs parameter was supplied, determine the number of unique SNVs in this file and skip if neccessary
+            unless (-e $tier1_indel_file) {
+                die $self->error_message("\n\nCould not find tier1 INDEL annotated file in build dir: $build_dir\n\n");
+            }
+            if ($self->max_indels_per_file) {
+                my $var_count = $self->unique_variant_count('-variant_file' => $tier1_indel_file);
+                if ($var_count > $self->max_indels_per_file) {
+                    $self->debug_message("Too many variants ... skipping file: $tier1_indel_file");
+                }
+                else {
+                    push(@file_list, $tier1_indel_file) unless ($var_count > $var_count);
+                }
             }
             else {
-                push(@file_list, $tier1_indel_file) unless ($var_count > $var_count);
+                push(@file_list, $tier1_indel_file);
             }
-        }
-        else {
-            push(@file_list, $tier1_indel_file);
         }
     }
 

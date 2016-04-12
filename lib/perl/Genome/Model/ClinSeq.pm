@@ -626,38 +626,6 @@ sub _resolve_workflow_for_build {
         $exome_variant_sources_op = $self->variant_sources_op($workflow, 'exome');
     }
 
-    #CreateMutationDiagrams - Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
-    if ($build->wgs_build or $build->exome_build) {
-        my $mutation_diagram_op = $self->mutation_diagram_op($workflow);
-        if ($build->wgs_build and $build->exome_build) {
-            my $wgs_exome_build_converge_op = $self->wgs_exome_build_converge_op($workflow);
-            $workflow->connect_input(
-                input_property       => 'exome_variant_sources_dir',
-                destination          => $exome_variant_sources_op,
-                destination_property => 'outdir',
-            );
-            $workflow->create_link(
-                source               => $wgs_exome_build_converge_op,
-                source_property      => 'builds',
-                destination          => $mutation_diagram_op,
-                destination_property => 'builds',
-            );
-        }
-        elsif ($build->wgs_build) {
-            $workflow->connect_input(
-                input_property       => 'wgs_build',
-                destination          => $mutation_diagram_op,
-                destination_property => 'builds',
-            );
-        }
-        elsif ($build->exome_build) {
-            $workflow->connect_input(
-                input_property       => 'exome_build',
-                destination          => $mutation_diagram_op,
-                destination_property => 'builds',
-            );
-        }
-    }
 
     #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on normal
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on normal
@@ -962,6 +930,42 @@ sub _resolve_workflow_for_build {
             source_property      => 'final_filtered_coding_clean_tsv',
             destination          => $annotate_genes_by_dgidb_op,
             destination_property => 'input_file',
+        );
+        #CreateMutationDiagrams - Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
+        my $mutation_diagram_op = $self->mutation_diagram_op($workflow);
+        if ($build->wgs_build and $build->exome_build) {
+            my $wgs_exome_build_converge_op = $self->wgs_exome_build_converge_op($workflow);
+            $workflow->connect_input(
+                input_property       => 'exome_variant_sources_dir',
+                destination          => $exome_variant_sources_op,
+                destination_property => 'outdir',
+            );
+            $workflow->create_link(
+                source               => $wgs_exome_build_converge_op,
+                source_property      => 'builds',
+                destination          => $mutation_diagram_op,
+                destination_property => 'builds',
+            );
+        }
+        elsif ($build->wgs_build) {
+            $workflow->connect_input(
+                input_property       => 'wgs_build',
+                destination          => $mutation_diagram_op,
+                destination_property => 'builds',
+            );
+        }
+        elsif ($build->exome_build) {
+            $workflow->connect_input(
+                input_property       => 'exome_build',
+                destination          => $mutation_diagram_op,
+                destination_property => 'builds',
+            );
+        }
+        $workflow->create_link(
+            source               => $converge_snv_indel_report_ops[-1],
+            source_property      => 'final_filtered_coding_tsv',
+            destination          => $mutation_diagram_op,
+            destination_property => 'annotated_variants_tsv',
         );
     }
 
