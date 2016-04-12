@@ -752,22 +752,7 @@ sub _resolve_workflow_for_build {
         $summarize_svs_op = $self->summarize_svs_op($workflow);
     }
 
-    #Add gene category annotations to some output files from steps above. (e.g. determine which SNV affected genes are kinases, ion channels, etc.)
-    #AnnotateGenesByCategory - gene_category_<exome|wgs|wgs_exome>_<snv|indel>_result
-    for my $sequencing_type (qw(exome wgs wgs_exome)) {
-        my $build_accessor = "${sequencing_type}_build";
-        if ($build->$build_accessor) {
-            for my $variant_type (qw(snv indel)) {
-                my $annotate_genes_by_category_op = $self->annotate_genes_by_category_op($workflow, $sequencing_type, $variant_type);
-                $workflow->create_link(
-                    source               => $import_snvs_indels_op,
-                    source_property      => "${sequencing_type}_${variant_type}_file",
-                    destination          => $annotate_genes_by_category_op,
-                    destination_property => 'infile',
-                );
-            }
-        }
-    }
+
     #AnnotateGenesByCategory - gene_category_cnv_<amp|del|ampdel>_result
     if ($build->wgs_build) {
         for my $type (qw(amp del ampdel)) {
@@ -914,6 +899,7 @@ sub _resolve_workflow_for_build {
     #Converge SnvIndelReport
     #CreateMutationDiagrams - Create mutation spectrum results for wgs and exome data
     #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
+    my @converge_snv_indel_report_ops;
     if ($build->wgs_build || $build->exome_build) {
         my %variant_sources_ops = (
             exome => $exome_variant_sources_op,
@@ -942,6 +928,7 @@ sub _resolve_workflow_for_build {
                     destination_property => 'converge_snv_indel_report_result',
                 );
             }
+            push @converge_snv_indel_report_ops, $converge_snv_indel_report_op;
             if ($build->wgs_build or $build->should_run_exome_cnv) {
                 my $sciclone_op = $self->sciclone_op($workflow, $i);
                 if ($build->wgs_build) {
@@ -976,6 +963,15 @@ sub _resolve_workflow_for_build {
                 );
             }
         }
+        #Add gene category annotations to some output files from steps above. (e.g. determine which SNV affected genes are kinases, ion channels, etc.)
+        #AnnotateGenesByCategory - gene_category_<exome|wgs|wgs_exome>_<snv|indel>_result
+        my $annotate_genes_by_category_op = $self->annotate_genes_by_category_op($workflow);
+        $workflow->create_link(
+            source               => $converge_snv_indel_report_ops[-1],
+            source_property      => 'final_filtered_coding_clean_tsv',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
     }
 
     #IdentifyLoh - Run identify-loh tool for exome or WGS data
@@ -1557,11 +1553,9 @@ sub summarize_svs_op {
 sub annotate_genes_by_category_op {
     my $self = shift;
     my $workflow = shift;
-    my $sequencing_type = shift;
-    my $variant_type = shift;
 
-    my $name = "Add gene category annotations to ${variant_type}s identified by $sequencing_type";
-    my $output_property = "gene_category_${sequencing_type}_${variant_type}_result";
+    my $name = 'Add gene category annotations to snvs and indels';
+    my $output_property = 'gene_category_snv_indel_result';
 
     return $self->_annotate_genes_by_category_op($workflow, $name, $output_property);
 }
