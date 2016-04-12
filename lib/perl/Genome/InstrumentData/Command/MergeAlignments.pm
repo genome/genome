@@ -67,6 +67,9 @@ class Genome::InstrumentData::Command::MergeAlignments {
         lsf_resource => {
             default_value => &bsub_rusage,
         },
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_build_worker'),
+        },
     ],
 };
 
