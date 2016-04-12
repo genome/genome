@@ -3,6 +3,7 @@ package Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute;
 
 use strict;
 use warnings;
+use File::Spec;
 use Genome;
 use Genome::Utility::Text;
 
