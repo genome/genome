@@ -18,7 +18,7 @@ sub fasta_for_reference {
     my ($name, $version) = @_;
     return Genome::Model::ImportedReferenceSequence->get(
         name => $name
-    )->build_by_version($version)->fasta_file();
+    )->build_by_version($version)->full_consensus_path('fa');
 }
 
 sub create_test_object {
