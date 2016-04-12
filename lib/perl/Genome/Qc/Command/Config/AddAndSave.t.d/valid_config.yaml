@@ -1,6 +1,6 @@
---- 
-tool1: 
+---
+tool1:
   class: Genome::Qc::Tool::Picard::CollectGcBiasMetrics
-  params: 
+  params:
     param1: value1
     param2: value2

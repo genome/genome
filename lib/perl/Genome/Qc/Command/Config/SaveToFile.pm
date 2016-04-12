@@ -26,11 +26,7 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
-
-    my $config = decode_json($self->config_item->config);
-    Genome::Config::Parser::YAML->write($self->file_path, $config);
-
-    return 1;
+    return Genome::Sys->write_file($self->file_path, $self->config_item->config_to_yaml);
 }
 
 1;
