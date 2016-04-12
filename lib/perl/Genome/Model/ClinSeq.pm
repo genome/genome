@@ -354,10 +354,6 @@ sub map_workflow_inputs {
         }
     }
 
-    #ImportSnvsIndels
-    push @inputs, import_snvs_indels_filter_mt => 1;
-    push @inputs, import_snvs_indels_outdir    => $patient_dir;
-
     #CreateMutationDiagrams
     if ($wgs_build or $exome_build) {
         my $mutation_diagram_dir = $patient_dir . '/mutation_diagrams';
@@ -594,26 +590,6 @@ sub _resolve_workflow_for_build {
 
     #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
     $self->summarize_builds_op($workflow);
-
-    #ImportSnvsIndels - Import SNVs and Indels
-    my $import_snvs_indels_op;
-    if ($build->wgs_build or $build->exome_build) {
-        $import_snvs_indels_op = $self->import_snvs_indels_op($workflow);
-        if ($build->wgs_build) {
-            $workflow->connect_input(
-                input_property       => 'wgs_build',
-                destination          => $import_snvs_indels_op,
-                destination_property => 'wgs_build',
-            );
-        }
-        if ($build->exome_build) {
-            $workflow->connect_input(
-                input_property       => 'exome_build',
-                destination          => $import_snvs_indels_op,
-                destination_property => 'exome_build',
-            );
-        }
-    }
 
     #GetVariantSources - Determine source variant caller for SNVs and InDels for wgs data
     my $wgs_variant_sources_op;
@@ -1014,39 +990,6 @@ sub summarize_builds_op {
     );
 
     return $summarize_builds_op;
-}
-
-sub import_snvs_indels_op {
-    my $self = shift;
-    my $workflow = shift;
-
-    my $import_snvs_indels_op = Genome::WorkflowBuilder::Command->create(
-        name => 'Importing SNVs and Indels from somatic results, parsing, and merging exome/wgs if possible',
-        command => 'Genome::Model::ClinSeq::Command::ImportSnvsIndels',
-    );
-    $workflow->add_operation($import_snvs_indels_op);
-    $workflow->connect_input(
-        input_property       => 'cancer_annotation_db',
-        destination          => $import_snvs_indels_op,
-        destination_property => 'cancer_annotation_db',
-    );
-    $workflow->connect_input(
-        input_property       => 'import_snvs_indels_outdir',
-        destination          => $import_snvs_indels_op,
-        destination_property => 'outdir',
-    );
-    $workflow->connect_input(
-        input_property       => 'import_snvs_indels_filter_mt',
-        destination          => $import_snvs_indels_op,
-        destination_property => 'filter_mt',
-    );
-    $workflow->connect_output(
-        output_property => 'import_snvs_indels_result',
-        source          => $import_snvs_indels_op,
-        source_property => 'result',
-    );
-
-    return $import_snvs_indels_op;
 }
 
 sub variant_sources_op {
