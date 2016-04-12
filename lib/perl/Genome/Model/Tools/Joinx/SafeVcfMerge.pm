@@ -227,27 +227,23 @@ sub _generate_workflow {
         push(@converge_inputs, "Group $i");
     }
 
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => 'Vcf Merge',
-        input_properties => [sort(keys %workflow_inputs)],
-        output_properties => [ "merged_vcf_file"],
     );
-    $workflow->log_dir($workflow_log_dir);
 
-    my $converge_operation = $workflow->add_operation(
+    my $converge_operation = Genome::WorkflowBuilder::Converge->create(
         name => "Converge Inputs for Final Merge",
-        operation_type => Workflow::OperationType::Converge->create(
-            input_properties => \@converge_inputs,
-            output_properties => [qw(input_files)],
-        ),
+        input_properties => \@converge_inputs,
+        output_properties => [qw(input_files)],
     );
+    $workflow->add_operation($converge_operation);
 
     # final merge operation
-    my $final_merge_operation = $workflow->add_operation(
+    my $final_merge_operation = Genome::WorkflowBuilder::Command->create(
         name => "Final Merge",
-        operation_type => Workflow::OperationType::Command->get(
-                $self->class),
+        command => $self->class,
     );
+    $workflow->add_operation($final_merge_operation);
 
     my %properties = (
         final_output_file => "output_file",
@@ -258,28 +254,26 @@ sub _generate_workflow {
     _connect_common_inputs($workflow, \%common_workflow_inputs,
             $final_merge_operation);
 
-    $workflow->add_link(
-        left_operation => $converge_operation,
-        left_property => "input_files",
-        right_operation => $final_merge_operation,
-        right_property => "input_files",
+    $workflow->create_link(
+        source => $converge_operation,
+        source_property => "input_files",
+        destination => $final_merge_operation,
+        destination_property => "input_files",
     );
 
-    $workflow->add_link(
-        left_operation => $final_merge_operation,
-        left_property => "output_file",
-        right_operation => $workflow->get_output_connector(),
-        right_property => "merged_vcf_file",
+    $workflow->connect_output(
+        source => $final_merge_operation,
+        source_property => "output_file",
+        output_property => "merged_vcf_file",
     );
 
     # group merge operations
-    my $input_connector = $workflow->get_input_connector();
     for my $i (0..$#input_groups) {
-        my $group_merge_operation = $workflow->add_operation(
+        my $group_merge_operation = Genome::WorkflowBuilder::Command->create(
             name => "Merge Group $i",
-            operation_type => Workflow::OperationType::Command->get(
-                    $self->class),
+            command => $self->class,
         );
+        $workflow->add_operation($group_merge_operation);
 
         my %properties = (
             "input_files_$i" => "input_files",
@@ -290,22 +284,22 @@ sub _generate_workflow {
         _connect_common_inputs($workflow, \%common_workflow_inputs,
                 $group_merge_operation);
 
-        $workflow->add_link(
-            left_operation => $group_merge_operation,
-            left_property => "output_file",
-            right_operation => $converge_operation,
-            right_property => $converge_inputs[$i],
+        $workflow->create_link(
+            source => $group_merge_operation,
+            source_property => "output_file",
+            destination => $converge_operation,
+            destination_property => $converge_inputs[$i],
         );
     }
+    $workflow->recursively_set_log_dir($workflow_log_dir);
+
     return $workflow, \%workflow_inputs, \@intermediate_files;
 }
 
 sub _dump_workflow {
     my ($workflow, $output_filename) = @_;
 
-    my $xml_file = Genome::Sys->open_file_for_writing($output_filename);
-    $workflow->save_to_xml(OutputFile => $xml_file);
-    $xml_file->close();
+    Genome::Sys->write_file($output_filename, $workflow->get_xml);
 }
 
 sub _execute_workflow {
@@ -322,13 +316,10 @@ sub _execute_workflow {
             join("/", $working_directory, 'workflow.xml'));
 
     $self->status_message("Launching the vcf-merge workflow.");
-    my $result = Workflow::Simple::run_workflow_lsf($workflow, %{$workflow_inputs});
+    my $result = $workflow->execute(inputs => $workflow_inputs);
 
     unless($result){
-        $self->error_message("Vcf-merge workflow did not return correctly.");
-        $self->error_message(join("\n",
-                map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)));
-        Carp::croak($self->error_message());
+        $self->fatal_message("Vcf-merge workflow did not return correctly.");
     }
     return $workflow_inputs->{final_output_file};
 }
@@ -338,14 +329,12 @@ sub _make_links {
     my ($workflow, $properties, $target_operation) = @_;
     my %properties = %{$properties};
 
-    my $input_connector = $workflow->get_input_connector();
     for my $left_property (keys %properties) {
         my $right_property = $properties{$left_property};
-        $workflow->add_link(
-            left_operation => $input_connector,
-            left_property => $left_property,
-            right_operation => $target_operation,
-            right_property => $right_property,
+        $workflow->connect_input(
+            input_property => $left_property,
+            destination => $target_operation,
+            destination_property => $right_property,
         );
     }
 }
@@ -355,13 +344,11 @@ sub _connect_common_inputs {
     my ($workflow, $common_workflow_inputs, $target_operation) = @_;
     my %common_workflow_inputs = %{$common_workflow_inputs};
 
-    my $input_connector = $workflow->get_input_connector();
     for my $key (keys %common_workflow_inputs) {
-        $workflow->add_link(
-            left_operation => $input_connector,
-            left_property => $key,
-            right_operation => $target_operation,
-            right_property => $key,
+        $workflow->connect_input(
+            input_property => $key,
+            destination => $target_operation,
+            destination_property => $key,
         );
     }
 }
