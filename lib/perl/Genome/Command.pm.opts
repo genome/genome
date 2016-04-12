@@ -8251,32 +8251,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>mendelian',
-      [
-        '>family-based',
-        [
-          'processing-profile=s',
-          undef,
-          'build=s',
-          undef,
-          'multisample-vcf=s',
-          'files',
-          'ped-file=s',
-          'files',
-          'bgzip=s',
-          'files',
-          'output-directory=s',
-          'files',
-          'dbsnp-vcf=s',
-          'files',
-          'thousand-genomes-vcf=s',
-          'files',
-          'help!',
-          undef
-        ],
-        'help!',
-        undef
-      ],
       '>clinical-correlation-wrapper',
       [
         'variant-matrix=s',
@@ -18923,40 +18897,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>heterozygous-dominant',
-      [
-        'input-vcf=s',
-        'files',
-        'lsf-queue=s',
-        'files',
-        'lsf-resource=s',
-        'files',
-        'ped-file=s',
-        'files',
-        'vcf-output=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
-      '>homozygous-recessive',
-      [
-        'input-vcf=s',
-        'files',
-        'lsf-queue=s',
-        'files',
-        'lsf-resource=s',
-        'files',
-        'ped-file=s',
-        'files',
-        'vcf-output=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
       '>lsf-job',
       [
         'command-line=s',
@@ -28154,60 +28094,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>lims',
-    [
-      '>update-seq-mgr',
-      [
-        'project-dir=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
-      '>samples-for-work-order',
-      [
-        'show=s',
-        'files',
-        'work-order=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>assembly-get-clone-reads',
-      [
-        'read-type=s',
-        [
-          'all',
-          'end'
-        ],
-        'clone=s',
-        'files',
-        'debug!',
-        undef,
-        'dump-separately!',
-        undef,
-        'list-of-clones=s',
-        'files',
-        'output-dir=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>compare-validation-models-to-work-order',
-      [
-        'show=s',
-        'files',
-        'work-order=s',
-        undef,
-        'models=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>music',
     [
       '>proximity',
@@ -28988,22 +28874,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>methyl-array',
-    [
-      '>probe-distribution',
-      [
-        'probe-list-file=s',
-        'files',
-        'annotation-tsv-file=s',
-        'files',
-        'output-file=s',
-        'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>lift-over',
     [
       'lift-direction=s',
@@ -29036,6 +28906,22 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'chain-file=s',
       'files',
+      'help!',
+      undef
+    ],
+    '>methyl-array',
+    [
+      '>probe-distribution',
+      [
+        'probe-list-file=s',
+        'files',
+        'annotation-tsv-file=s',
+        'files',
+        'output-file=s',
+        'files',
+        'help!',
+        undef
+      ],
       'help!',
       undef
     ],
