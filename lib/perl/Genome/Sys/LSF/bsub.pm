@@ -129,6 +129,21 @@ sub _args_spec {
             option_flag => '-g',
             type => SCALAR,
         },
+        job_name => {
+            optional => 1,
+            option_flag => '-J',
+            type => SCALAR,
+        },
+        depend_on => {
+            optional => 1,
+            option_flag => '-w',
+            type => SCALAR,
+        },
+        wait_for_completion => {
+            optional => 1,
+            option_flag => '-K',
+            type => BOOLEAN,
+        },
         post_exec_cmd => {
             optional => 1,
             option_flag => '-Ep',

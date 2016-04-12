@@ -78,10 +78,6 @@ sub bsub_and_wait_for_completion {
     ($special_args, %bsub_args) = _bsub_and_wait_for_completion__validate_args(%bsub_args);
     my($commands, $on_submit_cb, $on_complete_cb) = @$special_args{'commands','on_submit','on_complete'};
 
-    my $hostname = hostname;
-    my $waiting_socket = IO::Socket::INET->new(Listen => 5, Proto => 'tcp', LocalHost => $hostname);
-    my $port = $waiting_socket->sockport;
-
     my %seq_to_job_id;
     for(my $seq = 0; $seq < @$commands; $seq++) {
         my $cmd = $commands->[$seq];
@@ -92,7 +88,7 @@ sub bsub_and_wait_for_completion {
             %this_cmd_bsub_args = ( cmd => $cmd );
         }
 
-        my $job_id = $class->bsub(post_exec_cmd => qq(echo $seq | netcat $hostname $port),
+        my $job_id = $class->bsub(
                                   %bsub_args,
                                   %this_cmd_bsub_args,
                                 );
@@ -100,7 +96,9 @@ sub bsub_and_wait_for_completion {
         $seq_to_job_id{$seq} = $job_id;
     }
 
-    $class->_bsub_and_wait_for_completion__wait_on_jobs($waiting_socket, $on_complete_cb, %seq_to_job_id);
+    $class->_bsub_and_wait_for_completion__wait_on_jobs_with_lsf_dependency( \%seq_to_job_id,
+        { queue => $bsub_args{queue} || Genome::Config::get('lsf_queue_short') },
+        $on_complete_cb );
 
     # immediately after being reaped in _bsub_and_wait_for_completion_wait_on_jobs(), bjobs
     # reports their status as still "RUN".  Instead, we go into the traditional polling until
@@ -128,21 +126,19 @@ sub _bsub_and_wait_for_completion__validate_args {
     return(\%special_args, %bsub_args);
 }
 
-sub _bsub_and_wait_for_completion__wait_on_jobs {
-    my($class, $waiting_socket, $on_complete_cb, %seq_to_job_id) = @_;
-
-    while (%seq_to_job_id) {
-        my $fh = $waiting_socket->accept();
-        my $seq = $fh->getline;
-        $fh->close;
-        $seq =~ s/\r|\n//g;
-
-        my $job_id = delete $seq_to_job_id{$seq};
-        unless ($job_id) {
-            Carp::croak("Got unexpected response '$seq' while waiting for these jobs:\n",
-                join("\n", map { join(' => ', $_, $seq_to_job_id{$_}) } keys %seq_to_job_id));
+sub _bsub_and_wait_for_completion__wait_on_jobs_with_lsf_dependency {
+    my ( $class, $seq_to_job_id, $bsub_args, $on_complete_cb ) = @_;
+    local $ENV{LSF_NIOS_JOBSTATUS_INTERVAL} = 1;
+    $class->bsub(
+        %$bsub_args,
+        wait_for_completion => 1,
+        depend_on           => ( join "&&", ( map {"ended($_)"} values %$seq_to_job_id ) ),
+        cmd                 => "echo DONE"
+    ) or do { return; };
+    if ($on_complete_cb) {
+        for my $seq ( keys %$seq_to_job_id ) {
+            $on_complete_cb->( $seq, $seq_to_job_id->{$seq} );
         }
-        $on_complete_cb->($seq, $job_id) if $on_complete_cb;
     }
     return 1;
 }
