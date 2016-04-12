@@ -800,31 +800,15 @@ sub _resolve_workflow_for_build {
         }
     }
 
-    #DGIDB gene annotation
-    for my $sequencing_type (qw(exome wgs wgs_exome)) {
-        my $build_accessor = "${sequencing_type}_build";
-        if ($build->$build_accessor) {
-            for my $variant_type (qw(snv indel)) {
-                my $annotate_genes_by_dgidb_op = $self->annotate_genes_by_dgidb_op($workflow, $sequencing_type, $variant_type);
-                $workflow->create_link(
-                    source               => $import_snvs_indels_op,
-                    source_property      => "${sequencing_type}_${variant_type}_file",
-                    destination          => $annotate_genes_by_dgidb_op,
-                    destination_property => 'input_file',
-                );
-            }
-        }
-    }
-
     if ($build->wgs_build) {
-        my $annotate_genes_by_dgidb_cnv_amp_op = $self->_annotate_genes_by_dgidb_op($workflow, 'gene_amp_file', 'dgidb_cnv_amp_result');
+        my $annotate_genes_by_dgidb_cnv_amp_op = $self->annotate_genes_by_dgidb_op($workflow, 'gene_amp_file', 'dgidb_cnv_amp_result');
         $workflow->create_link(
             source               => $run_cn_view_op,
             source_property      => 'gene_amp_file',
             destination          => $annotate_genes_by_dgidb_cnv_amp_op,
             destination_property => 'input_file',
         );
-        my $annotate_genes_by_dgidb_sv_fusion_op = $self->_annotate_genes_by_dgidb_op($workflow, 'fusion_output_file', 'dgidb_sv_fusion_result');
+        my $annotate_genes_by_dgidb_sv_fusion_op = $self->annotate_genes_by_dgidb_op($workflow, 'fusion_output_file', 'dgidb_sv_fusion_result');
         $workflow->create_link(
             source               => $summarize_svs_op,
             source_property      => 'fusion_output_file',
@@ -834,14 +818,14 @@ sub _resolve_workflow_for_build {
     }
 
     if ($build->tumor_rnaseq_build) {
-        my $annotate_genes_by_dgidb_cufflink_op = $self->_annotate_genes_by_dgidb_op($workflow, 'tumor_fpkm_topnpercent_file', 'dgidb_cufflinks_result');
+        my $annotate_genes_by_dgidb_cufflink_op = $self->annotate_genes_by_dgidb_op($workflow, 'tumor_fpkm_topnpercent_file', 'dgidb_cufflinks_result');
         $workflow->create_link(
             source               => $tumor_cufflinks_expression_absolute_op,
             source_property      => 'tumor_fpkm_topnpercent_file',
             destination          => $annotate_genes_by_dgidb_cufflink_op,
             destination_property => 'input_file',
         );
-        my $annotate_genes_by_dgidb_tophat_op = $self->_annotate_genes_by_dgidb_op($workflow, 'junction_topnpercent_file', 'dgidb_tophat_result');
+        my $annotate_genes_by_dgidb_tophat_op = $self->annotate_genes_by_dgidb_op($workflow, 'junction_topnpercent_file', 'dgidb_tophat_result');
         $workflow->create_link(
             source               => $tumor_tophat_junctions_absolute_op,
             source_property      => 'junction_topnpercent_file',
@@ -971,6 +955,13 @@ sub _resolve_workflow_for_build {
             source_property      => 'final_filtered_coding_clean_tsv',
             destination          => $annotate_genes_by_category_op,
             destination_property => 'infile',
+        );
+        my $annotate_genes_by_dgidb_op = $self->annotate_genes_by_dgidb_op($workflow, 'final_filtered_coding_clean_tsv', 'dgidb_snv_indel_result');
+        $workflow->create_link(
+            source               => $converge_snv_indel_report_ops[-1],
+            source_property      => 'final_filtered_coding_clean_tsv',
+            destination          => $annotate_genes_by_dgidb_op,
+            destination_property => 'input_file',
         );
     }
 
@@ -1622,15 +1613,6 @@ sub _annotate_genes_by_category_op {
 }
 
 sub annotate_genes_by_dgidb_op {
-    my $self = shift;
-    my $workflow = shift;
-    my $sequencing_type = shift;
-    my $variant_type = shift;
-
-    return $self->_annotate_genes_by_dgidb_op($workflow, "${sequencing_type}_${variant_type}_file", "dgidb_${sequencing_type}_${variant_type}_result");
-}
-
-sub _annotate_genes_by_dgidb_op {
     my $self = shift;
     my $workflow = shift;
     my $file_name = shift;
