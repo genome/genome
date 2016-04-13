@@ -77,6 +77,3 @@ sub successfully_abandoned_callback {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

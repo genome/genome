@@ -34,13 +34,7 @@ sub _limit_results_for_builds {
             push @run_by_builds, $build;
         }
         elsif ($user eq 'apipe-builder') {
-            if ( $class =~ /::Stop$/    || $class =~ /::Remove$/ ||
-                 $class =~ /::Abandon$/ || $class =~ /::Start$/   ) {
-                    push @apipe_builder_builds, $build;
-            }
-            else {
-                next;
-            }
+            push @apipe_builder_builds, $build;
         }
         else {
             next;
