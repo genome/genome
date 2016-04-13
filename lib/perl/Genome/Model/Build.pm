@@ -1798,7 +1798,7 @@ sub generate_send_and_save_report {
 
     # Do not send report if user is apipe-builder/tester and it is a init, fail or succ report
     my $username = $self->build_event->user_name;
-    return 1 if ( $username eq 'apipe-builder' or $username eq 'apipe-tester' )
+    return 1 if ( Genome::Sys->user_has_role($username, 'production') or $username eq 'apipe-tester' )
         and grep { $generator_class eq 'Genome::Model::Report::'.$_ } (qw/ BuildInitialized BuildSucceeded BuildFailed /);
     # or user does not exist
     return 1 if not getpwnam($username);
