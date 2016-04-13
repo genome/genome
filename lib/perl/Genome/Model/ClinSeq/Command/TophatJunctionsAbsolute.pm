@@ -3,7 +3,9 @@ package Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute;
 
 use strict;
 use warnings;
+use File::Spec;
 use Genome;
+use Genome::Utility::Text;
 
 class Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute {
     is        => ['Command::V2', 'Genome::Model::ClinSeq::Util'],
@@ -89,22 +91,14 @@ sub execute {
     my $build_id  = $rnaseq_build->id;
     my $build_dir = $rnaseq_build->data_directory;
     my $model     = $rnaseq_build->model;
-    my $ab        = $model->annotation_build;
-    my $ab_name   = $ab->name;
-    $ab_name =~ s/\//-/g;
-    my $test_path   = $working_dir . $ab_name . ".Junction.GeneExpression.top*percent.tsv";
-    my $test_result = `ls $test_path`;
-    chomp($test_result);
-    die $self->error_message("Could not find junctions file in rnaseq build: $build_id ($build_dir)")
-        unless (-e $test_result);
-
+    my $junctions_file  =  $self->get_junctions_filename();
     #Add a 'mapped_gene_name' column to this file and save as an updated version
     my $junction_topnpercent_file = $working_dir . "Junction.GeneExpression.topnpercent.tsv";
 
     #Get Entrez and Ensembl data for gene name mappings
     my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
 
-    open(JUNC_IN, "$test_result") || die $self->error_message("Could not open junction file for reading: $test_result");
+    open(JUNC_IN, "$junctions_file") || die $self->error_message("Could not open junction file for reading: $junctions_file");
     open(JUNC_OUT, ">$junction_topnpercent_file")
         || die $self->error_message("Could not open junction file for writing: $junction_topnpercent_file");
     my $header = 1;
@@ -139,6 +133,23 @@ sub execute {
     $self->junction_topnpercent_file($junction_topnpercent_file);
 
     return 1;
+}
+
+#Get the "Junction.GeneExpression.top*percent.tsv" file path
+sub get_junctions_filename() {
+    my $self = shift;
+    my $working_dir = $self->outdir;
+    my $initial_ab_name = $self->build->model->annotation_build->name;
+    my $ab_name_1 = Genome::Utility::Text::sanitize_string_for_filesystem($initial_ab_name);
+    (my $ab_name_2 = $initial_ab_name) =~ s/\//-/g;
+    for my $ab_name ($ab_name_1, $ab_name_2) {
+        my $junctions_file = glob File::Spec->join($working_dir, $ab_name . ".Junction.GeneExpression.top*percent.tsv");
+        if ($junctions_file) {
+            return $junctions_file;
+        }
+    }
+    die $self->error_message("Could not find junctions file " .
+            "*Junction.GeneExpression.top*percent.tsv.");
 }
 
 1;
