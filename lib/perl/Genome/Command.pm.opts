@@ -113,6 +113,22 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>view',
+      [
+        'qc-config=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>diff',
+      [
+        'qc-config-a=s',
+        undef,
+        'qc-config-b=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>save-to-file',
       [
         'config-item=s',
