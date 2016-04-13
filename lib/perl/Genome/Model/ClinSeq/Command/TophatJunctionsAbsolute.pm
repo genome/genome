@@ -140,8 +140,8 @@ sub get_junctions_filename() {
     my $self = shift;
     my $working_dir = $self->outdir;
     my $initial_ab_name = $self->build->model->annotation_build->name;
-    (my $ab_name_1 = $initial_ab_name) =~ s/\//-/g;
-    my $ab_name_2 = Genome::Utility::Text::sanitize_string_for_filesystem($initial_ab_name);
+    my $ab_name_1 = Genome::Utility::Text::sanitize_string_for_filesystem($initial_ab_name);
+    (my $ab_name_2 = $initial_ab_name) =~ s/\//-/g;
     for my $ab_name ($ab_name_1, $ab_name_2) {
         my $junctions_file = glob File::Spec->join($working_dir, $ab_name . ".Junction.GeneExpression.top*percent.tsv");
         if ($junctions_file) {
