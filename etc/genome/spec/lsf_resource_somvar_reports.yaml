@@ -1,0 +1,3 @@
+---
+default_value: "-R 'select[tmp>2000] rusage[tmp=2000]'"
+env: XGENOME_LSF_RESOURCE_SOMVAR_REPORTS

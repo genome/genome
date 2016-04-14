@@ -87,7 +87,7 @@ class Genome::Model::SomaticVariation::Command::CreateReport {
     ],
     has_param => [
         lsf_resource => {
-            default => "-R 'select[tmp>2000] rusage[tmp=2000]'",
+            default => Genome::Config::get('lsf_resource_somvar_reports'),
         },
     ],
 };
