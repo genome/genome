@@ -781,7 +781,7 @@ sub _resolve_workflow_for_build {
     #Converge SnvIndelReport
     #CreateMutationDiagrams - Create mutation spectrum results for wgs and exome data
     #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
-    my @converge_snv_indel_report_ops;
+    my ($best_converge_snv_indel_report_op, $best_mq_bq_sum) = (undef, -Inf);
     if ($build->wgs_build || $build->exome_build) {
         my %variant_sources_ops = (
             exome => $exome_variant_sources_op,
@@ -810,7 +810,10 @@ sub _resolve_workflow_for_build {
                     destination_property => 'converge_snv_indel_report_result',
                 );
             }
-            push @converge_snv_indel_report_ops, $converge_snv_indel_report_op;
+            if (($mqs->[$i] + $bqs->[$i]) > $best_mq_bq_sum) {
+                $best_mq_bq_sum = $mqs->[$i] + $bqs->[$i];
+                $best_converge_snv_indel_report_op = $converge_snv_indel_report_op;
+            }
             if ($build->wgs_build or $build->should_run_exome_cnv) {
                 my $sciclone_op = $self->sciclone_op($workflow, $i);
                 if ($build->wgs_build) {
@@ -849,14 +852,14 @@ sub _resolve_workflow_for_build {
         #AnnotateGenesByCategory - gene_category_<exome|wgs|wgs_exome>_<snv|indel>_result
         my $annotate_genes_by_category_op = $self->annotate_genes_by_category_op($workflow);
         $workflow->create_link(
-            source               => $converge_snv_indel_report_ops[-1],
+            source               => $best_converge_snv_indel_report_op,
             source_property      => 'final_filtered_coding_clean_tsv',
             destination          => $annotate_genes_by_category_op,
             destination_property => 'infile',
         );
         my $annotate_genes_by_dgidb_op = $self->annotate_genes_by_dgidb_op($workflow, 'final_filtered_coding_clean_tsv', 'dgidb_snv_indel_result');
         $workflow->create_link(
-            source               => $converge_snv_indel_report_ops[-1],
+            source               => $best_converge_snv_indel_report_op,
             source_property      => 'final_filtered_coding_clean_tsv',
             destination          => $annotate_genes_by_dgidb_op,
             destination_property => 'input_file',
@@ -892,7 +895,7 @@ sub _resolve_workflow_for_build {
             );
         }
         $workflow->create_link(
-            source               => $converge_snv_indel_report_ops[-1],
+            source               => $best_converge_snv_indel_report_op,
             source_property      => 'final_filtered_coding_tsv',
             destination          => $mutation_diagram_op,
             destination_property => 'annotated_variants_tsv',
@@ -932,7 +935,7 @@ sub _resolve_workflow_for_build {
             );
         }
         $workflow->create_link(
-            source               => $converge_snv_indel_report_ops[-1],
+            source               => $best_converge_snv_indel_report_op,
             source_property      => 'final_filtered_coding_clean_tsv',
             destination          => $make_circos_plot_op,
             destination_property => 'annotated_variants_tsv',
