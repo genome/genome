@@ -129,7 +129,21 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
         _wgs_indel_variant_sources_file   => {is => 'FilesystemPath',},
         _exome_indel_variant_sources_file => {is => 'FilesystemPath',},
     ],
-    has_param => [lsf_resource => {value => q{-R 'select[mem>12000] rusage[mem=12000]' -M 12000000},},],
+    has_param => [
+        lsf_resource => {
+            value => q{-R 'select[mem>12000] rusage[mem=12000]' -M 12000000},
+        },
+    ],
+    has_output => [
+        final_filtered_coding_clean_tsv => {
+            is => 'Text',
+            doc => 'The final tier1 output variants file used by downstream clin-seq pipeline steps. Select annotator columns are retained.',
+        },
+        final_filtered_coding_tsv => {
+            is => 'Text',
+            doc => 'The final tier1 output variants file used by downstream clin-seq pipeline steps. All the columns from the annotator are retained.',
+        },
+    ],
     doc =>
         'converge SNV and InDels from multiple clin-seq builds, annotate, bam-readcount, etc. and summarize into a single spreadsheet',
 };
@@ -374,6 +388,17 @@ sub execute {
         );
         $summarize->execute();
     }
+
+    # Set the path to the final output files used as a workflow link to downstream steps
+    my $final_filtered_coding_clean_tsv = $result_files->{final_filtered_coding_clean_tsv};
+    my $final_filtered_coding_tsv = $result_files->{final_filtered_coding_tsv};
+    if ($self->tmp_space) {
+        my $outdir = $self->outdir;
+        $final_filtered_coding_clean_tsv =~ s/$outdir/$original_outdir\//;
+        $final_filtered_coding_tsv =~ s/$outdir/$original_outdir\//;
+    }
+    $self->final_filtered_coding_clean_tsv($final_filtered_coding_clean_tsv);
+    $self->final_filtered_coding_tsv($final_filtered_coding_tsv);
 
     return 1;
 }
@@ -1213,22 +1238,21 @@ sub get_result_files {
     my $result_files;
 
     #Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
-    my $final_unfiltered_tsv            = $self->outdir . "$case_name" . "_final_unfiltered.tsv";             #OUT1
-    my $final_unfiltered_clean_tsv      = $self->outdir . "$case_name" . "_final_unfiltered_clean.tsv";       #OUT1b
-    my $final_filtered_tsv              = $self->outdir . "$case_name" . "_final_filtered.tsv";               #OUT2
-    my $final_filtered_clean_tsv        = $self->outdir . "$case_name" . "_final_filtered_clean.tsv";         #OUT3
-    my $final_filtered_coding_clean_tsv = $self->outdir . "$case_name" . "_final_filtered_coding_clean.tsv";  #OUT4
-    my $final_filtered_clean_xls        = $self->outdir . "$case_name" . "_final_filtered_clean.xls";         #OUT5
-    my $final_filtered_coding_clean_xls = $self->outdir . "$case_name" . "_final_filtered_coding_clean.xls";  #OUT6
-
     #Store the result files paths and pass out to be used in the visualization step
-    $result_files->{final_unfiltered_tsv}            = $final_unfiltered_tsv;
-    $result_files->{final_unfiltered_clean_tsv}      = $final_unfiltered_clean_tsv;
-    $result_files->{final_filtered_tsv}              = $final_filtered_tsv;
-    $result_files->{final_filtered_clean_tsv}        = $final_filtered_clean_tsv;
-    $result_files->{final_filtered_coding_clean_tsv} = $final_filtered_coding_clean_tsv;
-    $result_files->{final_filtered_clean_xls}        = $final_filtered_clean_xls;
-    $result_files->{final_filtered_coding_clean_xls} = $final_filtered_coding_clean_xls;
+    for my $file (qw(
+        final_unfiltered.tsv
+        final_unfiltered_clean.tsv
+        final_filtered.tsv
+        final_filtered_clean.tsv
+        final_filtered_coding.tsv
+        final_filtered_coding_clean.tsv
+        final_filtered_clean.xls
+        final_filtered_coding_clean.xls
+    )) {
+        my $key = $file;
+        $key =~ s/\./_/;
+        $result_files->{$key} = $self->outdir . $case_name . "_$file";
+    }
 
     return $result_files;
 }
@@ -1274,6 +1298,8 @@ sub print_final_files {
     my $final_unfiltered_clean_fh = Genome::Sys->open_file_for_writing($result_files->{final_unfiltered_clean_tsv});
     my $final_filtered_fh         = Genome::Sys->open_file_for_writing($result_files->{final_filtered_tsv});
     my $final_filtered_clean_fh   = Genome::Sys->open_file_for_writing($result_files->{final_filtered_clean_tsv});
+    my $final_filtered_coding_fh =
+        Genome::Sys->open_file_for_writing($result_files->{final_filtered_coding_tsv});
     my $final_filtered_coding_clean_fh =
         Genome::Sys->open_file_for_writing($result_files->{final_filtered_coding_clean_tsv});
 
@@ -1293,6 +1319,8 @@ sub print_final_files {
 
         #Remove ugly GMAF=$val from annotation lines to tidy up output
         $_ =~ s/GMAF\=//g;
+        #Rename default_gene_name to mapped_gene_name for downstream tools to work
+        $_ =~ s/default_gene_name/mapped_gene_name/;
 
         my @line = split("\t", $_);
 
@@ -1322,6 +1350,7 @@ sub print_final_files {
             $full_header .= "\t$per_lib_header" if $per_lib_header;
             print $final_unfiltered_fh "$full_header\n";
             print $final_filtered_fh "$full_header\n";
+            print $final_filtered_coding_fh "$full_header\n";
 
             my @include_values        = @line[@include_col_pos];
             my $include_values_string = join("\t", @include_values);
@@ -1368,6 +1397,7 @@ sub print_final_files {
         my $trv_type = $variants->{$v}->{trv_type};
         unless ($variants->{$v}->{filtered}) {
             unless ($trv_type_filter =~ /$trv_type/i) {
+                print $final_filtered_coding_fh "$full_line\n";
                 print $final_filtered_coding_clean_fh "$short_line\n";
             }
         }
@@ -1378,6 +1408,7 @@ sub print_final_files {
     close($final_unfiltered_clean_fh);
     close($final_filtered_fh);
     close($final_filtered_clean_fh);
+    close($final_filtered_coding_fh);
     close($final_filtered_coding_clean_fh);
 
     # convert master table to excel
