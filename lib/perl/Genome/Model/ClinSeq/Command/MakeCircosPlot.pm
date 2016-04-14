@@ -1,7 +1,6 @@
 package Genome::Model::ClinSeq::Command::MakeCircosPlot;
 use strict;
 use warnings;
-use Switch;
 use Genome;
 
 # Written by Ben Ainscough and Scott Smith, based on prototype from Obi Griffith
@@ -982,14 +981,6 @@ EOS
             $genes_noAmpDel{$4}="hs$1\t$2\t$3";
             $genes_AmpDel{$4}="hs$1\t$2\t$3";
             print $snv_fh "hs$1 $2 $3 0.5 fill_color=black\n";
-            #        switch($5){
-            #            case "nonsense"            {print $snv_fh "fill_color=goldenrod\n"}
-            #            case "missense"            {print $snv_fh "fill_color=blue\n"}
-            #            case "silent"            {print $snv_fh "fill_color=green\n"}
-            #            case "splice_site"        {print $snv_fh "fill_color=black\n"}
-            #            case "rna"                {print $snv_fh "fill_color=purple\n"}
-            #            case "nonstop"            {print $snv_fh "fill_color=black\n"}
-            #        }
         }
 
     #Indel
