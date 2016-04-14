@@ -88,11 +88,7 @@ sub create
     my $assembly_exception_feature_adaptor = $registry->get_adaptor( $ucfirst_species, $data_set, 'AssemblyExceptionFeature');
 
     # Map Ensembl and GENCODE biotypes to more general categories that our annotator can use
-    my %biotype_class;
-    map{$biotype_class{lc($_)} = 'ncrna'} qw( 3prime_overlapping_ncrna Mt_rRNA Mt_tRNA antisense lincRNA macro_lncRNA miRNA misc_RNA ncRNA ncrna_host non_coding processed_transcript ribozyme rRNA sense_intronic scaRNA sense_overlapping snRNA snoRNA sRNA tRNA vaultRNA bidirectional_promoter_lncRNA scRNA);
-    map{$biotype_class{lc($_)} = 'ncrna_pseudogene'} qw( Mt_tRNA_pseudogene miRNA_pseudogene misc_RNA_pseudogene rRNA_pseudogene scRNA_pseudogene snRNA_pseudogene snoRNA_pseudogene tRNA_pseudogene );
-    map{$biotype_class{lc($_)} = 'coding'} qw( LRG_gene IG_C_gene IG_D_gene IG_J_gene IG_LV_gene IG_V_gene TR_C_gene TR_D_gene TR_J_gene TR_V_gene protein_coding ambiguous_orf disrupted_domain non_stop_decay nonsense_mediated_decay retained_intron TEC );
-    map{$biotype_class{lc($_)} = 'coding_pseudogene'} qw( retrotransposed TR_J_pseudogene TR_V_pseudogene IG_C_pseudogene IG_D_pseudogene IG_J_pseudogene IG_V_pseudogene polymorphic_pseudogene processed_pseudogene pseudogene transcribed_processed_pseudogene transcribed_unprocessed_pseudogene translated_processed_pseudogene unitary_pseudogene unprocessed_pseudogene transcribed_unitary_pseudogene translated_unprocessed_pseudogene );
+    my %biotype_class= %{$self->resolve_biotype_class_hash_ref};
 
     my @slices = @{ $slice_adaptor->fetch_all('toplevel', undef, 1, 1, 1) };
 
@@ -1128,6 +1124,19 @@ sub dump_sub_structures {
     $dump_fh->print(Dumper \%hash);
     $dump_fh->print("substructure samples:\n".Dumper \@ss_sample);
     $dump_fh->print("\n#########################################\n#######################################\n\n");
+}
+
+sub resolve_biotype_class_hash_ref {
+    my $class = shift;
+
+    my %biotype_class;
+    
+    map{$biotype_class{lc($_)} = 'ncrna'} qw( 3prime_overlapping_ncrna Mt_rRNA Mt_tRNA antisense lincRNA macro_lncRNA miRNA misc_RNA ncRNA ncrna_host non_coding processed_transcript ribozyme rRNA sense_intronic scaRNA sense_overlapping snRNA snoRNA sRNA tRNA vaultRNA bidirectional_promoter_lncRNA scRNA);
+    map{$biotype_class{lc($_)} = 'ncrna_pseudogene'} qw( Mt_tRNA_pseudogene miRNA_pseudogene misc_RNA_pseudogene rRNA_pseudogene scRNA_pseudogene snRNA_pseudogene snoRNA_pseudogene tRNA_pseudogene );
+    map{$biotype_class{lc($_)} = 'coding'} qw( LRG_gene IG_C_gene IG_D_gene IG_J_gene IG_LV_gene IG_V_gene TR_C_gene TR_D_gene TR_J_gene TR_V_gene protein_coding ambiguous_orf disrupted_domain non_stop_decay nonsense_mediated_decay retained_intron TEC );
+    map{$biotype_class{lc($_)} = 'coding_pseudogene'} qw( retrotransposed TR_J_pseudogene TR_V_pseudogene IG_C_pseudogene IG_D_pseudogene IG_J_pseudogene IG_V_pseudogene polymorphic_pseudogene processed_pseudogene pseudogene transcribed_processed_pseudogene transcribed_unprocessed_pseudogene translated_processed_pseudogene unitary_pseudogene unprocessed_pseudogene transcribed_unitary_pseudogene translated_unprocessed_pseudogene IG_pseudogene);
+    
+    return \%biotype_class;
 }
 
 1;
