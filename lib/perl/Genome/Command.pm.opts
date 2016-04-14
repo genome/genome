@@ -35991,6 +35991,8 @@ $Genome::Command::OPTS_SPEC = [
     [
       'lsf-resource=s',
       'files',
+      'lsf-queue=s',
+      'files',
       'alignment-result-ids=s',
       undef,
       'merger-name=s',
