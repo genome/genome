@@ -3,7 +3,6 @@ package Genome::Model::SmallRna::Command::ParallelWorkflow;
 use strict;
 use warnings;
 use Genome;
-use Workflow::Simple;
 
 my $DEFAULT_CLUSTERS = '5000';
 my $DEFAULT_CUTOFF = '2';
@@ -92,19 +91,11 @@ sub execute {
     my $module_path = $self->__meta__->module_path;
     my $xml_path    = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
-    my $workflow = Workflow::Operation->create_from_xml($xml_path);
-    my @errors   = $workflow->validate;
-    unless ( $workflow->is_valid ) {
-        die(    'Errors encountered while validating workflow '
-              . $xml_path . "\n"
-              . join( "\n", @errors ) );
-    }
-    my $output = run_workflow_lsf( $xml_path, %params );
+    my $workflow = Genome::WorkflowBuilder::DAG->from_xml_filename($xml_path);
+
+    my $output = $workflow->execute(inputs => \%params);
     unless ( defined $output ) {
-        my @errors = @Workflow::Simple::ERROR;
-        for (@errors) {
-            print STDERR $_->error . "\n";
-        }
+        print STDERR "Failed to run workflow\n";
         return;
     }
     return 1;
