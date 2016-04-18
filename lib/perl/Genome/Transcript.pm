@@ -57,7 +57,7 @@ class Genome::Transcript {
         },
         transcript_status => { is => 'VARCHAR',
             is_optional => 1,
-            valid_values => ['reviewed', 'unknown', 'model', 'validated', 'predicted', 'inferred', 'provisional', 'unknown', 'known', 'novel', 'putative'],
+            valid_values => ['reviewed', 'unknown', 'model', 'validated', 'predicted', 'inferred', 'provisional', 'unknown', 'known', 'novel', 'putative', 'known_by_projection'],
         },
         strand => { is => 'VARCHAR',
             is_optional => 1,

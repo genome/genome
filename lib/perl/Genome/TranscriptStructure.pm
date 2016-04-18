@@ -112,7 +112,7 @@ UR::Object::Type->define(
         transcript_transcript_stop  => { is => 'NUMBER', is_optional => 1 },
         transcript_transcript_name  => { is => 'VARCHAR', is_optional => 1 },
         transcript_transcript_status => { is => 'VARCHAR', is_optional => 1,
-            valid_values => ['putative', 'reviewed', 'unknown', 'model', 'validated', 'predicted', 'inferred', 'provisional', 'unknown', 'known', 'novel'],
+            valid_values => ['putative', 'reviewed', 'unknown', 'model', 'validated', 'predicted', 'inferred', 'provisional', 'unknown', 'known', 'novel', 'known_by_projection'],
         },
         transcript_strand            => { is => 'VARCHAR', is_optional => 1, valid_values => ['+1', '-1', 'UNDEF'], },
         transcript_chrom_name        => { is => 'Text' },
