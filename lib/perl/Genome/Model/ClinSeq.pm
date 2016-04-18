@@ -943,10 +943,11 @@ sub _resolve_workflow_for_build {
             exome => $exome_variant_sources_op,
             wgs   => $wgs_variant_sources_op,
         );
+        my $sequencing_types = $self->_get_sequencing_types($build);
         #Create a report for each $bq $mq combo.
         for my $i (1..@$mqs) {
             my $converge_snv_indel_report_op = $self->converge_snv_indel_report_op($workflow, $i);
-            for my $sequencing_type (qw(exome wgs)) {
+            for my $sequencing_type (@$sequencing_types) {
                 my $build_accessor = "${sequencing_type}_build";
                 if ($build->$build_accessor) {
                     for my $variant_type (qw(snv indel)) {
@@ -2190,6 +2191,15 @@ sub has_microarray_build {
     else {
         return 0;
     }
+}
+
+sub _get_sequencing_types {
+    my $self = shift;
+    my $build = shift;
+    my @sequencing_types;
+    push @sequencing_types, "wgs" if $build->wgs_build;
+    push @sequencing_types, "exome" if $build->exome_build;
+    return \@sequencing_types;
 }
 
 sub _get_docm_variants_file {
