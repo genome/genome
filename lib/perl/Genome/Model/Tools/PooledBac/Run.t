@@ -14,7 +14,7 @@ if (Genome::Sys->arch_os ne 'x86_64') {
 
 use_ok( 'Genome::Model::Tools::PooledBac::Run' ) or die;
 
-my $version = 1;
+my $version = 2;
 my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-PooledBac/Run_v'.$version;
 ok( -d $test_dir, 'Test suite dir exists' ) or die;
 
