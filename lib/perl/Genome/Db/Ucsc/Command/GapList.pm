@@ -18,6 +18,7 @@ our @_HEADINGS = (
 );
 
 our %_DB_TABLES_NAMES = (
+    'hg38' => ['gap'],
     'hg19' => ['gap'],
     'hg18' => [
         'chr1_gap',
