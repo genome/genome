@@ -89,7 +89,7 @@ sub resolve_clinseq_subject_labels {
     foreach my $build (@builds) {
 
         #Patient common names. e.g. PNC6
-        my $patient_common_name = $self->get_final_common_name('-clinseq_build' => $build);
+        my $patient_common_name = $build->subject->common_name;
         $patient_common_names{$patient_common_name} = $build->id if $patient_common_name;
 
         #Patient common name combined with dna sample type.  e.g. PNC6_tumor
@@ -173,41 +173,6 @@ sub resolve_clinseq_subject_labels {
     }
 
     return (\%labels2);
-}
-
-sub get_final_common_name {
-    my $self          = shift;
-    my %args          = @_;
-    my $clinseq_build = $args{'-clinseq_build'};
-
-    my $final_name;
-
-    my $wgs_build           = $clinseq_build->wgs_build;
-    my $exome_build         = $clinseq_build->exome_build;
-    my $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
-    my $tumor_rnaseq_build  = $clinseq_build->tumor_rnaseq_build;
-
-    my @builds = ($clinseq_build, $wgs_build, $exome_build, $normal_rnaseq_build, $tumor_rnaseq_build);
-
-    my %names;
-    foreach my $build (@builds) {
-        next unless $build;
-        if ($build->subject->class eq 'Genome::Individual') {
-            my $common_name = $build->subject->common_name;
-            $names{$common_name} = 1 if $common_name;
-            $final_name = $common_name if $common_name;
-        }
-        elsif ($build->subject->class eq 'Genome::Sample') {
-            my $common_name = $build->subject->individual->common_name;
-            $names{$common_name} = 1 if $common_name;
-            $final_name = $common_name if $common_name;
-        }
-    }
-    if (scalar(keys %names) > 1) {
-        $self->warning_message("Found multiple patient common names for clin-seq build: " . $clinseq_build->id);
-    }
-
-    return ($final_name);
 }
 
 sub get_final_name {
@@ -580,7 +545,7 @@ sub get_case_name {
     my %common_names;
     my $final_common_name;
     foreach my $build (@builds) {
-        my $name = $self->get_final_common_name('-clinseq_build' => $build);
+        my $name = $build->subject->common_name;
         $common_names{$name} = 1 if $name;
         $final_common_name = $name;
     }
