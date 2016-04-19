@@ -21,7 +21,7 @@ use_ok('Genome::Model::ClinSeq::Command::SummarizeModels') or die;
 
 #Define the test where expected results are stored
 my $expected_output_dir =
-    Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-SummarizeModels/2014-09-29/";
+    Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-SummarizeModels/2016-04-18/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
