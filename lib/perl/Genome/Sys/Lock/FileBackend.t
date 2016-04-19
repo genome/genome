@@ -24,6 +24,11 @@ use Socket qw(AF_UNIX SOCK_STREAM PF_UNSPEC);
 use Test::More;
 use Time::HiRes qw(gettimeofday);
 
+use Sub::Override;
+
+my $sub_override = Sub::Override->new;
+$sub_override->replace('Genome::Logger::warning' => sub { diag($_[1]); }, 'Genome::Logger::info' => sub { diag($_[1]); });
+
 require_ok('Genome::Sys::Lock::FileBackend');
 
 my $tmp_dir = File::Temp::tempdir('Genome-Utility-FileSystem-writetest-XXXXX', CLEANUP => 1, TMPDIR => 1);
@@ -221,7 +226,7 @@ for (@event_log) {
         ok($_->{event} eq $valid_next_event, sprintf("Last lock event was a %s so we expected a to see %s, got a %s", $last_event, $valid_next_event, $_->{event}));
     }
     $last_event = $_->{event};
-    printf("%s\t%s\t%s\n", $_->{etime}, $_->{pid}, $_->{event});
+    diag(sprintf("%s\t%s\t%s\n", $_->{etime}, $_->{pid}, $_->{event}));
 }
 
 done_testing();
@@ -260,7 +265,7 @@ sub print_event {
     my $tp = sprintf( "%s\t%s\t%s\t%s", $time, $info, $$, $msg );
 
     print $fh $tp, "\n";
-    print $tp, "\n";
+    diag($tp);
 }
 
 sub test_locking_forked {
