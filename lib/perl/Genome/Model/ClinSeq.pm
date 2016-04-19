@@ -1818,7 +1818,6 @@ sub _infer_candidate_subjects_from_input_models {
 
     my %subjects;
     for my $input_model ($self->_input_models) {
-        next unless $input_model;
         my $patient;
         if ($input_model->subject->isa("Genome::Individual")) {
             $patient = $input_model->subject;
@@ -1827,15 +1826,6 @@ sub _infer_candidate_subjects_from_input_models {
             $patient = $input_model->subject->individual;
         }
         $subjects{$patient->id} = $patient;
-
-        if ($input_model->can("tumor_model")) {
-            $subjects{ $input_model->tumor_model->subject->individual->id } =
-                $input_model->tumor_model->subject->individual;
-        }
-        if ($input_model->can("normal_model")) {
-            $subjects{ $input_model->normal_model->subject->individual->id } =
-                $input_model->normal_model->subject->individual;
-        }
     }
     my @subjects = sort {$a->id cmp $b->id} values %subjects;
     return @subjects;
@@ -1846,14 +1836,11 @@ sub _infer_annotations_from_input_models {
 
     my %annotations;
     for my $input_model ($self->_input_models) {
-        next unless $input_model;
-        if ($input_model->can("annotation_build")) {
-            my $annotation_build = $input_model->annotation_build;
-            $annotations{$annotation_build->id} = $annotation_build;
-        }
-        if ($input_model->can("annotation_reference_build")) {
-            my $annotation_build = $input_model->annotation_reference_build;
-            $annotations{$annotation_build->id} = $annotation_build;
+        for my $accessor (qw(annotation_build annotation_reference_build)) {
+            if ($input_model->can($accessor)) {
+                my $annotation_build = $input_model->$accessor;
+                $annotations{$annotation_build->id} = $annotation_build;
+            }
         }
     }
     my @annotations = sort {$a->id cmp $b->id} values %annotations;
@@ -1863,38 +1850,31 @@ sub _infer_annotations_from_input_models {
 sub _infer_references_from_input_models {
     my $self = shift;
 
-    my %references;
+    my @references;
     for my $input_model ($self->_input_models) {
-        next unless $input_model;
-        if ($input_model->can("reference_sequence_build")) {
-            my $reference_build = $input_model->reference_sequence_build;
-            $references{$reference_build->id} = $reference_build;
+        if ($input_model->can('reference_sequence_build')) {
+            push @references, $input_model->reference_sequence_build;
         }
     }
-    my @references = sort {$a->id cmp $b->id} values %references;
-    return @references;
-}
-
-sub _infer_input_models_for_somatic_model {
-    my $self = shift;
-    my $input_models = shift;
-    my $somatic_model = shift;
-
-    if ($somatic_model->class eq 'Genome::Model::SomaticValidation') { return; }
-
-    push (@$input_models, $somatic_model->normal_model);
-    push (@$input_models, $somatic_model->tumor_model);
+    return sort {$a->id cmp $b->id} uniq @references;
 }
 
 sub _input_models {
     my $self = shift;
 
-    my @input_models = ( $self->wgs_model, $self->exome_model, $self->tumor_rnaseq_model, $self->normal_rnaseq_model );
+    my @input_models = ( $self->tumor_rnaseq_model, $self->normal_rnaseq_model );
+    for my $accessor (qw(wgs_model exome_model)) {
+        if ($self->$accessor) {
+            push @input_models, $self->$accessor;
+            for my $model (qw(tumor_model normal_model)) {
+                if ($self->$accessor->can($model)) {
+                    push @input_models, $self->$accessor->$model;
+                }
+            }
+        }
+    }
 
-    $self->_infer_input_models_for_somatic_model(\@input_models,$self->wgs_model) if $self->wgs_model;
-    $self->_infer_input_models_for_somatic_model(\@input_models,$self->exome_model) if $self->exome_model;
-
-    return @input_models;
+    return grep {defined($_)} @input_models;
 }
 
 sub _resolve_resource_requirements_for_build {
