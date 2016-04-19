@@ -10,7 +10,9 @@ class Genome::Model::Build::SomaticVariation {
     is => [
         'Genome::Model::Build',
         'Genome::Model::Build::RunsDV2',
-        'Genome::Model::Build::HasFeatureLists'],
+        'Genome::Model::Build::HasFeatureLists',
+        'Genome::Model::Build::SomaticInterface',
+    ],
     has => [
         snv_detection_strategy => {
             is => 'Text',

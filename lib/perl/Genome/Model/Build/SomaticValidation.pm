@@ -9,7 +9,9 @@ class Genome::Model::Build::SomaticValidation {
     is => [
         'Genome::Model::Build',
         'Genome::Model::Build::RunsDV2',
-        'Genome::Model::Build::HasFeatureLists'],
+        'Genome::Model::Build::HasFeatureLists',
+        'Genome::Model::Build::SomaticInterface',
+    ],
     has_optional => [
         reference_sequence_build => {
             is => 'Genome::Model::Build::ReferenceSequence', via => 'inputs', to => 'value', where => [name => 'reference_sequence_build'],
