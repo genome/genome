@@ -158,30 +158,12 @@ sub summarize_clinseq_build {
 
     $self->status_message("\n***** " . $clinseq_build->__display_name__ . " ****");
 
-    #Get build objects for all builds that might underly a clinseq model (Ref Align, Somatic variation, RNA-seq)
-    my ($wgs_somvar_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build,
-        $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build);
-
-    $wgs_somvar_build            = $clinseq_build->wgs_build;
-    $exome_somvar_build          = $clinseq_build->exome_build;
-    $tumor_rnaseq_build          = $clinseq_build->tumor_rnaseq_build;
-    $normal_rnaseq_build         = $clinseq_build->normal_rnaseq_build;
-    $wgs_normal_refalign_build   = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
-    $wgs_tumor_refalign_build    = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
-    $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
-    $exome_tumor_refalign_build  = $exome_somvar_build->tumor_build if ($exome_somvar_build);
-
     #set the build types
     my %data_types;
     $self->_set_data_types($clinseq_build, \%data_types);
 
     #Gather all builds into a single array
-    my @builds = (
-        $wgs_normal_refalign_build,   $wgs_tumor_refalign_build,   $wgs_somvar_build,
-        $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build,
-        $tumor_rnaseq_build,          $normal_rnaseq_build,        $clinseq_build
-    );
-    @builds = grep {$_} @builds;
+    my @builds = ($clinseq_build->input_builds, $clinseq_build);
 
     #Get a list of sample names for samples associated with this clinseq build
     my %model_samples;

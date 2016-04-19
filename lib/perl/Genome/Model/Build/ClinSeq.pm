@@ -29,4 +29,22 @@ sub should_run_exome_cnv {
     return ($self->exome_build and $self->processing_profile->exome_cnv);
 }
 
+sub input_builds {
+    my $self = shift;
+
+    my @input_builds = ( $self->tumor_rnaseq_build, $self->normal_rnaseq_build );
+    for my $accessor (qw(wgs_build exome_build)) {
+        if ($self->$accessor) {
+            push @input_builds, $self->$accessor;
+            for my $build (qw(tumor_build normal_build)) {
+                if ($self->$accessor->can($build)) {
+                    push @input_builds, $self->$accessor->$build;
+                }
+            }
+        }
+    }
+
+    return grep {defined($_)} @input_builds;
+}
+
 1;

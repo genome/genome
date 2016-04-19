@@ -317,33 +317,6 @@ sub get_dna_subject_name {
     return ($final_name);
 }
 
-sub resolve_input_builds {
-    my $self = shift;
-    my %args = @_;
-
-    #Get all underlying builds that could make up a single clinseq model/build
-    my $clinseq_build               = $args{'-clinseq_build'};
-    my $wgs_build                   = $clinseq_build->wgs_build;
-    my $exome_build                 = $clinseq_build->exome_build;
-    my $tumor_rnaseq_build          = $clinseq_build->tumor_rnaseq_build;
-    my $normal_rnaseq_build         = $clinseq_build->normal_rnaseq_build;
-    my $wgs_normal_refalign_build   = $wgs_build->normal_build if ($wgs_build);
-    my $wgs_tumor_refalign_build    = $wgs_build->tumor_build if ($wgs_build);
-    my $exome_normal_refalign_build = $exome_build->normal_build if ($exome_build);
-    my $exome_tumor_refalign_build  = $exome_build->tumor_build if ($exome_build);
-    my @builds                      = (
-        $wgs_build, $exome_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build,
-        $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build
-    );
-    my @defined_builds;
-
-    foreach my $build (@builds) {
-        next unless $build;
-        push(@defined_builds, $build);
-    }
-    return (\@defined_builds);
-}
-
 sub resolve_clinseq_reference_build {
     my $self           = shift;
     my @clinseq_builds = $self->builds;
@@ -384,8 +357,7 @@ sub resolve_clinseq_annotation_build {
     my %annotation_builds;
 
     foreach my $clinseq_build (@clinseq_builds) {
-        my @builds = @{$self->resolve_input_builds('-clinseq_build' => $clinseq_build)};
-        foreach my $build (@builds) {
+        foreach my $build ($clinseq_build->input_builds) {
             my $m = $build->model;
             if ($m->can("annotation_build")) {
                 $annotation_build = $m->annotation_build;
