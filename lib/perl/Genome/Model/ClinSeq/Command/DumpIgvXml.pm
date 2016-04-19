@@ -405,10 +405,7 @@ sub generate_track_xml {
     #variation', or 'somatic validation'
 
     my $build_id = $build->id;
-    my $model    = $build->model;
-    my $model_id = $model->id;
-    my $pp_id    = $model->processing_profile_id;
-    my $pp       = Genome::ProcessingProfile->get($pp_id);
+    my $pp       = $build->processing_profile;
     my $pp_name  = $pp->name;
     my $pp_type  = $pp->type_name;
     my $ref_name = $build->reference_sequence_build->name;
@@ -494,7 +491,7 @@ sub generate_track_xml {
         }
         else {
             $self->fatal_message(
-                "Could not find BAM file for build: $build_id\tmodel: $model_id - did you specify the correct resource type?"
+                "Could not find BAM file for build: $build_id - did you specify the correct resource type?"
             );
         }
         $resource_file = $bam_file;

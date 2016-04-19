@@ -257,11 +257,9 @@ sub summarize_clinseq_build {
     #Summarize the processing profiles associated with each model
     $self->status_message("\n\nProcessing profiles associated with each model");
     for my $build (@builds) {
-        my $m       = $build->model;
-        my $pp      = $m->processing_profile;
-        my $pp_type = $pp->type_name;
+        my $pp      = $build->processing_profile;
         $self->status_message(
-            "model '" . $m->id . "' used processing profile '" . $pp->__display_name__ . "' ($pp_type)");
+            "model '%s' used processing profile '%s' (%s)", $build->model->id, $pp->__display_name__, $pp->type_name);
     }
 
     #Summarize the reference sequence build associated with each model
