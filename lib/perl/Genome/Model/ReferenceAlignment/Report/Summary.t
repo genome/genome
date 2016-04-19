@@ -3,9 +3,14 @@
 use strict;
 use warnings;
 
+use File::Temp;
+
+
 BEGIN {
     #use locks local to this test--must be set before Genome is loaded
-    $ENV{XGENOME_SITE_LOCK_DIR} = '/tmp';
+    my $lock_tempdir = File::Temp::tempdir(CLEANUP => 1);
+    $ENV{XGENOME_SITE_LOCK_DIR} = $lock_tempdir;
+
     $ENV{UR_DBI_NO_COMMIT} = 1;
 }
 
