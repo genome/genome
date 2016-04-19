@@ -1632,31 +1632,21 @@ sub _set_data_types {
     my $self                        = shift;
     my $clinseq_build               = shift;
     my $data_types                  = shift;
-    my $wgs_somvar_build            = $clinseq_build->wgs_build;
-    my $exome_somvar_build          = $clinseq_build->exome_build;
-    my $tumor_rnaseq_build          = $clinseq_build->tumor_rnaseq_build;
-    my $normal_rnaseq_build         = $clinseq_build->normal_rnaseq_build;
-    my $wgs_normal_refalign_build   = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
-    my $wgs_tumor_refalign_build    = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
-    my $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
-    my $exome_tumor_refalign_build  = $exome_somvar_build->tumor_build if ($exome_somvar_build);
-    if ($wgs_tumor_refalign_build) {
-        $data_types->{$wgs_tumor_refalign_build->id} = "WGS";
-    }
-    if ($wgs_normal_refalign_build) {
-        $data_types->{$wgs_normal_refalign_build->id} = "WGS";
-    }
-    if ($exome_tumor_refalign_build) {
-        $data_types->{$exome_tumor_refalign_build->id} = "Exome";
-    }
-    if ($exome_normal_refalign_build) {
-        $data_types->{$exome_normal_refalign_build->id} = "Exome";
-    }
-    if ($tumor_rnaseq_build) {
-        $data_types->{$tumor_rnaseq_build->id} = "RNAseq";
-    }
-    if ($normal_rnaseq_build) {
-        $data_types->{$normal_rnaseq_build->id} = "RNAseq";
+
+    my $wgs_build            = $clinseq_build->wgs_build;
+    my $exome_build          = $clinseq_build->exome_build;
+    for my $type (qw(normal tumor)) {
+        my $refalign_accessor = "${type}_build";
+        if ($wgs_build && $wgs_build->can($refalign_accessor)) {
+            $data_types->{$wgs_build->$refalign_accessor->id} = 'WGS';
+        }
+        if ($exome_build && $exome_build->can($refalign_accessor)) {
+            $data_types->{$exome_build->$refalign_accessor->id} = 'Exome';
+        }
+        my $rnaseq_accessor = "${type}_rnaseq_build";
+        if ($clinseq_build->$rnaseq_accessor) {
+            $data_types->{$clinseq_build->$rnaseq_accessor->id} = 'RNAseq';
+        }
     }
 }
 
