@@ -6,6 +6,7 @@ use warnings;
 BEGIN {
     #use locks local to this test--must be set before Genome is loaded
     $ENV{XGENOME_SITE_LOCK_DIR} = '/tmp';
+    $ENV{UR_DBI_NO_COMMIT} = 1;
 }
 
 use above "Genome";
