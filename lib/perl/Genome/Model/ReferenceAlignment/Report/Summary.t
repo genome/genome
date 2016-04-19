@@ -3,6 +3,11 @@
 use strict;
 use warnings;
 
+BEGIN {
+    #use locks local to this test--must be set before Genome is loaded
+    $ENV{XGENOME_SITE_LOCK_DIR} = '/tmp';
+}
+
 use above "Genome";
 use Test::More tests => 8;
 use Genome::Sys;
