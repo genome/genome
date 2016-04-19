@@ -153,30 +153,13 @@ sub get_tumor_normal_bam {
     return ($tumor_bam, $normal_bam);
 }
 
-#Get the reference-sequence build from the
-# ref-align builds used in somatic-variation
-sub reference_build {
-    my $self                  = shift;
-    my $somvar_build          = shift;
-    my $normal_refalign_build = $somvar_build->normal_build if ($somvar_build);
-    my $tumor_refalign_build  = $somvar_build->tumor_build if ($somvar_build);
-    my @input_builds          = ($normal_refalign_build, $tumor_refalign_build, $somvar_build);
-    for my $build (@input_builds) {
-        next unless $build;
-        my $m = $build->model;
-        if ($m->can("reference_sequence_build")) {
-            return $m->reference_sequence_build;
-        }
-    }
-}
-
 #Filter out putative false-positive SNVs
 sub filter_snvs {
     my $self         = shift;
     my $somvar_build = shift;
     my $snv_prefix   = shift;
     my ($tumor_bam, $normal_bam) = $self->get_tumor_normal_bam($somvar_build);
-    my $refbuild = $self->reference_build($somvar_build);
+    my $refbuild = $somvar_build->reference_sequence_build;
     my $ref_fa   = $refbuild->full_consensus_path('fa');
     my $filter   = Genome::Model::Tools::Varscan::SomaticFilterWorkflow->create(
         outdir        => $self->outdir,

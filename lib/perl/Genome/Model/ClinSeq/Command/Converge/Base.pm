@@ -323,28 +323,19 @@ sub resolve_clinseq_reference_build {
 
     $self->debug_message(
         "Attempting to resolve a distinct reference sequence build from the input models of all clinseq builds");
-    my $reference_build;
-    my %reference_builds;
 
+    my @reference_builds;
     foreach my $clinseq_build (@clinseq_builds) {
-        my @builds = @{$self->resolve_input_builds('-clinseq_build' => $clinseq_build)};
-        foreach my $build (@builds) {
-            my $m = $build->model;
-            if ($m->can("reference_sequence_build")) {
-                $reference_build = $m->reference_sequence_build;
-                my $rb_id = $reference_build->id;
-                $reference_builds{$rb_id} = 1;
-            }
-        }
+        push @reference_builds, $clinseq_build->reference_sequence_build;
     }
-    my $rb_count = keys %reference_builds;
-    unless ($rb_count == 1) {
-        print Dumper %reference_builds;
-        die $self->error_message("Found $rb_count reference builds for this group of input builds - must be only one");
+    my $reference_build_count = scalar(uniq @reference_builds);
+    if ($reference_build_count > 1) {
+        print Dumper @reference_builds;
+        $self->fatal_message("Found $reference_build_count reference builds for this group of input builds - must be only one");
     }
-    $self->debug_message("Found 1: " . $reference_build->__display_name__);
+    $self->debug_message("Found 1: " . $reference_builds[0]->__display_name__);
 
-    return ($reference_build);
+    return $reference_builds[0];
 }
 
 sub resolve_clinseq_annotation_build {

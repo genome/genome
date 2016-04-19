@@ -267,16 +267,8 @@ sub summarize_clinseq_build {
     #Summarize the reference sequence build associated with each model
     $self->status_message("\n\nReference sequence build associated with each model");
     for my $build (@builds) {
-        my $m          = $build->model;
-        my $build_type = $build->type_name;
-        if ($m->can("reference_sequence_build")) {
-            my $rb = $m->reference_sequence_build;
-            $self->status_message("model '"
-                    . $m->__display_name__
-                    . " ($build_type)"
-                    . "' used reference sequence build "
-                    . $rb->__display_name__);
-        }
+        my $rb = $build->reference_sequence_build;
+        $self->status_message("model '%s (%s)' used reference sequence build %s", $build->model->__display_name__, $build->type_name, $rb->__display_name__);
     }
 
     #Summarize the annotation reference build associated with each model

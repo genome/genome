@@ -653,13 +653,10 @@ sub get_ref_fasta {
     my %refs;
     foreach my $build_id (keys %{$ref_align_builds}) {
         my $ref_align_build = $ref_align_builds->{$build_id}->{build};
-        my $m               = $ref_align_build->model;
-        if ($m->can("reference_sequence_build")) {
-            my $rb      = $m->reference_sequence_build;
-            my $rb_name = $rb->name;
-            $ref_fasta_path = $rb->full_consensus_path('fa');
-            $refs{$rb_name} = 1;
-        }
+        my $rb      = $ref_align_build->reference_sequence_build;
+        my $rb_name = $rb->name;
+        $ref_fasta_path = $rb->full_consensus_path('fa');
+        $refs{$rb_name} = 1;
     }
     my $rb_count = keys %refs;
     if ($rb_count > 1) {

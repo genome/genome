@@ -161,7 +161,7 @@ sub execute {
     foreach my $clinseq_build (@clinseq_builds) {
         my $clinseq_build_id = $clinseq_build->id;
 
-        my $reference_build       = Genome::Model::ClinSeq::Util::resolve_reference_sequence_build($clinseq_build);
+        my $reference_build       = $clinseq_build->reference_sequence_build;
         my $reference_genome_name = $reference_build->name;
 
         #Hardcoded list of allowed reference builds and their mappings to names used in IGV
@@ -401,7 +401,8 @@ sub generate_track_xml {
     my $bed_file      = $args{'-bed_file'};
     my $bed_data_type = $args{'-bed_data_type'};
 
-    #Input build could be a 'reference alignment', 'rna seq', or 'somatic variation'
+    #Input build could be a 'reference alignment', 'rna seq', 'somatic
+    #variation', or 'somatic validation'
 
     my $build_id = $build->id;
     my $model    = $build->model;
@@ -410,11 +411,7 @@ sub generate_track_xml {
     my $pp       = Genome::ProcessingProfile->get($pp_id);
     my $pp_name  = $pp->name;
     my $pp_type  = $pp->type_name;
-    my $ref_name = "n/a";
-    if ($model->can("reference_sequence_build")) {
-        my $rb = $model->reference_sequence_build;
-        $ref_name = $rb->name;
-    }
+    my $ref_name = $build->reference_sequence_build->name;
 
     my $subject         = $build->subject;
     my $subject_name    = $subject->name;

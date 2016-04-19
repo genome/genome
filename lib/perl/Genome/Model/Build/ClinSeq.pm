@@ -47,4 +47,9 @@ sub input_builds {
     return grep {defined($_)} @input_builds;
 }
 
+sub reference_sequence_build {
+    my $self = shift;
+    return $self->model->_resolve_reference;
+}
+
 1;

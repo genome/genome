@@ -3,7 +3,7 @@ package Genome::Model::ClinSeq;
 use strict;
 use warnings;
 use Genome;
-use List::MoreUtils;
+use List::MoreUtils qw(uniq);
 
 # these are used below, and are also used in the documentation on commands in the tree
 # to provide the most useful examples possible
