@@ -15,8 +15,12 @@ our @_HEADINGS = (
 
 class Genome::Db::Ucsc::Command::RepeatMasker {
     is => 'Genome::Db::Ucsc::Command::Base',
-
     doc => "Fetches gap data for a reference name",
+    has => [
+        sort_position => {
+            default_value => '2,4',
+        },
+    ]
 };
 
 sub headings {
