@@ -96,18 +96,12 @@ sub __errors__ {
 #Get a somatic-variation build from input or from clinseq-build
 sub resolve_somvar {
     my $self         = shift;
-    my $somvar_build = $self->somvar_build;
-    unless ($somvar_build) {
-        my $clinseq_build = $self->clinseq_build;
-        unless ($clinseq_build) {
-            die $self->error_message(
-                "Please pass a somatic-variation
-                or clinseq build as input."
-            );
-        }
-        $somvar_build = $self->get_best_somvar_build($clinseq_build);
+    if ($self->somvar_build) {
+        return $self->somvar_build;
     }
-    return $somvar_build;
+    else {
+        return $self->clinseq_build->best_somatic_build;
+    }
 }
 
 #Take Varscan SNVs and split into per-chromosome calls.

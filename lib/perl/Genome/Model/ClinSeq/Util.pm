@@ -1498,22 +1498,6 @@ sub _is_copycat_somvar {
     }
 }
 
-sub get_best_somvar_build {
-    my $self          = shift;
-    my $clinseq_build = shift;
-    my $somvar_build  = $clinseq_build->wgs_build;
-    unless ($somvar_build) {
-        $somvar_build = $clinseq_build->exome_build;
-        $self->status_message("Using exome somvvar build.");
-    }
-    else {
-        $self->status_message("Using WGS somvvar build.");
-    }
-    unless ($somvar_build) {
-        die $self->error_message("Unable to find exome or wgs somvar build for clinseq model");
-    }
-}
-
 sub create_igv_link {
     my $self = shift;
     my ($chr, $start, $stop) = @_;

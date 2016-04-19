@@ -52,4 +52,19 @@ sub reference_sequence_build {
     return $self->model->_resolve_reference;
 }
 
+sub best_somatic_build {
+    my $self = shift;
+    if ($self->wgs_build) {
+        return $self->wgs_build;
+    }
+    elsif ($self->exome_build) {
+        return $self->exome_build;
+    }
+}
+
+sub best_somatic_build_subject_common_name {
+    my $self = shift;
+    return $self->best_somatic_build->subject->common_name;
+}
+
 1;

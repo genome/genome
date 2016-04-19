@@ -175,41 +175,6 @@ sub resolve_clinseq_subject_labels {
     return (\%labels2);
 }
 
-sub get_final_name {
-    my $self          = shift;
-    my %args          = @_;
-    my $clinseq_build = $args{'-clinseq_build'};
-
-    my $final_name;
-
-    my $wgs_build           = $clinseq_build->wgs_build;
-    my $exome_build         = $clinseq_build->exome_build;
-    my $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
-    my $tumor_rnaseq_build  = $clinseq_build->tumor_rnaseq_build;
-
-    my @builds = ($clinseq_build, $wgs_build, $exome_build, $normal_rnaseq_build, $tumor_rnaseq_build);
-
-    my %names;
-    foreach my $build (@builds) {
-        next unless $build;
-        if ($build->subject->class eq 'Genome::Individual') {
-            my $name = $build->subject->name;
-            $names{$name} = 1 if $name;
-            $final_name = $name if $name;
-        }
-        elsif ($build->subject->class eq 'Genome::Sample') {
-            my $name = $build->subject->individual->name;
-            $names{$name} = 1 if $name;
-            $final_name = $name if $name;
-        }
-    }
-    if (scalar(keys %names) > 1) {
-        $self->warning_message("Found multiple patient names for clin-seq build: " . $clinseq_build->id);
-    }
-
-    return ($final_name);
-}
-
 sub get_dna_sample_type {
     my $self          = shift;
     my %args          = @_;
@@ -559,7 +524,7 @@ sub get_case_name {
     my %names;
     my $final_name;
     foreach my $build (@builds) {
-        my $name = $self->get_final_name('-clinseq_build' => $build);
+        my $name = $build->subject->name;
         $names{$name} = 1 if $name;
         $final_name = $name;
     }
@@ -806,19 +771,6 @@ sub parseKnownDruggableFiles {
     return (\%result);
 }
 
-sub get_somatic_subject_common_name {
-    my $self                = shift;
-    my $b                   = shift;
-    my $subject_common_name = "null";
-    if ($b->model->wgs_model) {
-        $subject_common_name = $b->model->wgs_model->last_succeeded_build->subject->common_name;
-    }
-    elsif ($b->model->exome_model) {
-        my $subject_common_name = $b->model->exome_model->last_succeeded_build->subject->common_name;
-    }
-    return $subject_common_name;
-}
-
 #Get input files to be parsed
 sub getFiles {
     my $self   = shift;
@@ -830,7 +782,7 @@ sub getFiles {
     foreach my $b (@$builds) {
         my $build_directory     = $b->data_directory;
         my $subject_common_name = $b->subject->common_name;
-        my $subject_name        = $self->get_somatic_subject_common_name($b);
+        my $subject_name        = $b->best_somatic_build_subject_common_name;
         $subject_name =~ s/[\s-]/_/g;
         my $build_id = $b->id;
 
