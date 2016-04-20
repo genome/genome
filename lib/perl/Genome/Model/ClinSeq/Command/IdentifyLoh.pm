@@ -135,30 +135,17 @@ sub get_varscan_snvs {
     $self->split_snvs($varscan_snvs[0], $snv_prefix);
 }
 
-#Get tumor/normal BAMs from somatic-variation
-sub get_tumor_normal_bam {
-    my $self         = shift;
-    my $somvar_build = shift;
-    my $tumor_bam    = $somvar_build->tumor_build->whole_rmdup_bam_file;
-    my $normal_bam   = $somvar_build->normal_build->whole_rmdup_bam_file;
-    unless (-e $tumor_bam and -e $normal_bam) {
-        die $self->error_message("tumor_bam $tumor_bam or normal_bam " . "$normal_bam does not exist.");
-    }
-    return ($tumor_bam, $normal_bam);
-}
-
 #Filter out putative false-positive SNVs
 sub filter_snvs {
     my $self         = shift;
     my $somvar_build = shift;
     my $snv_prefix   = shift;
-    my ($tumor_bam, $normal_bam) = $self->get_tumor_normal_bam($somvar_build);
     my $refbuild = $somvar_build->reference_sequence_build;
     my $ref_fa   = $refbuild->full_consensus_path('fa');
     my $filter   = Genome::Model::Tools::Varscan::SomaticFilterWorkflow->create(
         outdir        => $self->outdir,
-        tumor_bam     => $tumor_bam,
-        normal_bam    => $normal_bam,
+        tumor_bam     => $somvar_build->tumor_bam,
+        normal_bam    => $somvar_build->normal_bam,
         prefix        => $snv_prefix,
         reference     => $ref_fa,
         bamrc_version => $self->bamrc_version,
