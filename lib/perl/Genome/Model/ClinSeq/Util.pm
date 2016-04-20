@@ -1237,9 +1237,9 @@ sub get_ref_align_builds {
     my $sort_on_time_point = 0;
 
     foreach my $somatic_build_id (keys %{$somatic_builds}) {
-        my $build_type    = $somatic_builds->{$somatic_build_id}->{type}           || "NA";
-        my $somatic_build = $somatic_builds->{$somatic_build_id}->{build}          || "NA";
-        my $subject_icn   = $somatic_build->model->subject->individual_common_name || "NA";
+        my $build_type    = $somatic_builds->{$somatic_build_id}->{type}  || "NA";
+        my $somatic_build = $somatic_builds->{$somatic_build_id}->{build} || "NA";
+        my $subject_icn   = $somatic_build->individual_common_name        || "NA";
         my @builds = ($somatic_build->normal_build, $somatic_build->tumor_build);
         foreach my $build (@builds) {
             my $subject_name        = $build->subject->name        || "NA";

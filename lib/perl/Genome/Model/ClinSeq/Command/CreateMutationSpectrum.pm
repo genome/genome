@@ -92,10 +92,9 @@ sub __errors__ {
 sub get_final_name {
     my $self            = shift;
     my $somvar_build    = shift;
-    my $somvar_build_id = $somvar_build->model->id;
-    my $final_name      = $somvar_build->model->subject->name if ($somvar_build->model->subject->name);
-    $final_name = $somvar_build->model->subject->individual->common_name
-        if ($somvar_build->model->subject->individual->common_name);
+    my $final_name      = $somvar_build->subject->name if ($somvar_build->subject->name);
+    $final_name = $somvar_build->individual_common_name
+        if ($somvar_build->individual_common_name);
     return $final_name;
 }
 
