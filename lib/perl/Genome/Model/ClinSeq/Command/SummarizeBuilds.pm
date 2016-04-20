@@ -218,19 +218,10 @@ sub summarize_clinseq_build {
         my $instdata_count = scalar(@instdata);
 
         if ($instdata_count > 0) {
-            $self->status_message("\nbuild "
-                    . $build->__display_name__
-                    . " ($build_type)"
-                    . " uses "
-                    . $instdata_count
-                    . " instrument data");
+            $self->status_message("\nbuild %s (%s) uses %s instrument data", $build->__display_name__, $build_type, $instdata_count);
             foreach my $instdata (@instdata) {
                 my $run_name = $instdata->run_name || "[UNDEF run_name]";
-                $self->status_message("\t"
-                        . $instdata->id . "\t"
-                        . $run_name . "\t"
-                        . $instdata->library_name . "\t"
-                        . $instdata->sample_name);
+                $self->status_message("\t%s\t%s\t%s\t%s", $instdata->id, $run_name, $instdata->library_name, $instdata->sample_name);
             }
         }
     }
@@ -238,7 +229,7 @@ sub summarize_clinseq_build {
     #Summarize the build IDs and status of each build comprising the ClinSeq model
     $self->status_message("\n\nBuilds and status of each");
     for my $build (@builds) {
-        $self->status_message("build '" . $build->__display_name__ . "' has status " . $build->status);
+        $self->status_message("build '%s' has status %s", $build->__display_name__, $build->status);
     }
 
     #List the build dirs for each build
@@ -254,8 +245,7 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nProcessing profiles associated with each model");
     for my $build (@builds) {
         my $pp      = $build->processing_profile;
-        $self->status_message(
-            "model '%s' used processing profile '%s' (%s)", $build->model->id, $pp->__display_name__, $pp->type_name);
+        $self->status_message("model '%s' used processing profile '%s' (%s)", $build->model->id, $pp->__display_name__, $pp->type_name);
     }
 
     #Summarize the reference sequence build associated with each model
@@ -274,30 +264,17 @@ sub summarize_clinseq_build {
             if ($ab) {
                 my $ab_name  = $ab->name             || "[UNDEF annotation_name]";
                 my $ab_dname = $ab->__display_name__ || "[UNDEF annotation_reference_build]";
-                $self->status_message("model '"
-                        . $build->model->__display_name__
-                        . " ($build_type)"
-                        . "' used annotation reference build "
-                        . $ab_dname
-                        . " ($ab_name)");
+                $self->status_message("model '%s (%s)' used annotation reference build %s (%s)", $build->model->__display_name__, $build_type, $ab_dname, $ab_name);
             }
             else {
-                $self->status_message("model '"
-                        . $build->model->__display_name__
-                        . " ($build_type)"
-                        . "' did NOT have an annotation reference build defined!");
+                $self->status_message("model '%s (%s)' did NOT have an annotation reference build defined", $build->model->__display_name__, $build_type);
             }
         }
         elsif ($build->can("annotation_build") && defined($build->annotation_build)) {
             my $ab       = $build->annotation_build;
             my $ab_name  = $ab->name || "[UNDEF annotation_name]";
             my $ab_dname = $ab->__display_name__ || "[UNDEF annotation_reference_build]";
-            $self->status_message("model '"
-                    . $build->model->__display_name__
-                    . " ($build_type)"
-                    . "' used annotation reference build "
-                    . $ab_dname
-                    . " ($ab_name)");
+            $self->status_message("model '%s (%s)' used annotation reference build %s (%s)", $build->model->__display_name__, $build_type, $ab_dname, $ab_name);
         }
     }
 
@@ -309,17 +286,10 @@ sub summarize_clinseq_build {
             my $gb = $build->genotype_microarray_build;
             if ($gb) {
                 my $gb_name = $gb->__display_name__ || "[UNDEF genotype_microarray_build]";
-                $self->status_message("model '"
-                        . $build->model->__display_name__
-                        . " ($build_type)"
-                        . "' used genotype microarray build "
-                        . $gb_name);
+                $self->status_message("model '%s (%s)' used genotype microarray build %s", $build->model->__display_name__, $build_type, $gb_name);
             }
             else {
-                $self->status_message("model '"
-                        . $build->model->__display_name__
-                        . " ($build_type)"
-                        . "' did NOT have an associated microarray build ");
+                $self->status_message("model '%s (%s)' did NOT have an associated microarray build", $build->model->__display_name__, $build_type);
             }
         }
     }
@@ -335,8 +305,7 @@ sub summarize_clinseq_build {
             my $dm_name = $dm->__display_name__ || "[UNDEF dbsnp_model]";
             my $dm_id   = $dm->id || "[UNDEF dbsnp_model]";
 
-            $self->status_message(
-                "model '" . $build->model->__display_name__ . " ($build_type)" . "' used dbSNP build " . $db_name . " ($dm_id)");
+            $self->status_message("model '%s (%s)' used dbSNP build %s (%s)", $build->model->__display_name__, $build_type, $db_name, $dm_id);
         }
     }
 
@@ -771,11 +740,7 @@ sub summarize_sample {
     my $scn             = $sample->common_name || "[UNDEF sample common_name]";
     my $tissue_desc     = $sample->tissue_desc || "[UNDEF sample tissue_desc]";
     my $extraction_type = $sample->extraction_type || "[UNDEF sample extraction_type]";
-    $self->status_message("sample "
-            . $sample->__display_name__
-            . " ($tissue_desc - $extraction_type) has "
-            . scalar(@instdata)
-            . " instrument data");
+    $self->status_message("sample %s (%s - %s) has %s instrument data", $sample->__display_name__, $tissue_desc, $extraction_type, scalar(@instdata));
     my $normal_sample_common_names = $self->normal_sample_common_names;
     my $tumor_sample_common_names  = $self->tumor_sample_common_names;
 
