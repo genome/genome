@@ -2,7 +2,7 @@ package Genome::Model::ClinSeq::Util;
 use strict;
 use warnings;
 use Data::Dumper;
-use List::MoreUtils qw/ uniq /;
+use List::MoreUtils qw/ uniq each_array /;
 
 #Written by Malachi Griffith
 class Genome::Model::ClinSeq::Util {};
@@ -1203,22 +1203,20 @@ sub _get_si_report_tumor_prefix {
         '-rnaseq_builds'  => \%rnaseq_builds
     );
     my @prefixes = $self->get_header_prefixes('-align_builds' => $align_builds);
-    my (@tumor_refalign_names, $somatic_build, $tumor_build);
+    my (@tumor_refalign_names, $somatic_build);
     my ($tumor_subject_name, $tumor_subject_common_name);
     $self->status_message("keys " . keys %somatic_builds);
 
     foreach my $somatic_build_id (keys %somatic_builds) {
         $somatic_build             = $somatic_builds{$somatic_build_id}{build};
-        $tumor_build               = $somatic_build->tumor_build;
-        $tumor_subject_name        = $tumor_build->subject->name;
-        $tumor_subject_common_name = $tumor_build->subject->common_name;
+        $tumor_subject_name        = $somatic_build->model->experimental_subject->name;
+        $tumor_subject_common_name = $somatic_build->model->experimental_subject->common_name;
         $tumor_subject_common_name =~ s/\,//g;
         $tumor_subject_common_name =~ s/\s+/\_/g;
     }
     foreach my $prefix (@prefixes) {
         if (   ($prefix =~ /$tumor_subject_name/)
-            or ($prefix =~ /$tumor_subject_common_name/)
-            or ($prefix =~ /$tumor_build/))
+            or ($prefix =~ /$tumor_subject_common_name/))
         {
             push @tumor_refalign_names, $prefix;
         }
@@ -1240,19 +1238,19 @@ sub get_ref_align_builds {
         my $build_type    = $somatic_builds->{$somatic_build_id}->{type}  || "NA";
         my $somatic_build = $somatic_builds->{$somatic_build_id}->{build} || "NA";
         my $subject_icn   = $somatic_build->individual_common_name        || "NA";
-        my @builds = ($somatic_build->normal_build, $somatic_build->tumor_build);
-        foreach my $build (@builds) {
-            my $subject_name        = $build->subject->name        || "NA";
-            my $subject_common_name = $build->subject->common_name || "NA";
+        my @subjects = ($somatic_build->model->control_subject, $somatic_build->model->experimental_subject);
+        my @bam_path_accessors = qw(normal_bam tumor_bam);
+        my $it = each_array(@subjects, @bam_path_accessors);
+        while ( my ($subject, $bam_path_accessor) = $it->() ) {
+            my $subject_name = $subject->name || "NA";
+            my $subject_common_name = $subject->common_name || "NA";
             $subject_common_name =~ s/\,//g;
             $subject_common_name =~ s/\s+/\_/g;
             my $refalign_name = join("_", ($subject_name, $build_type, $subject_common_name));
-            my $bam_path = $build->whole_rmdup_bam_file || "NA";
-            my @timepoints = $build->subject->attributes(
-                attribute_label => "timepoint",
-                nomenclature    => "caTissue"
-            );
-            my $tissue_desc = $build->subject->tissue_desc || "NA";
+            my $bam_path = 'NA';
+            eval { $bam_path = $somatic_build->$bam_path_accessor; };
+            my @timepoints = $subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+            my $tissue_desc = $subject->tissue_desc || "NA";
             $tissue_desc =~ s/\s+/\-/g;
             $tissue_desc =~ s/\,//g;
 
@@ -1275,9 +1273,9 @@ sub get_ref_align_builds {
                 join("_", ($subject_common_name, $build_type, $tissue_desc, $time_point));
             $ref_builds{$refalign_name}{time_point_string} = $time_point;
             $ref_builds{$refalign_name}{tissue_desc}       = $tissue_desc;
-            $ref_builds{$refalign_name}{tissue_label}      = $build->subject->tissue_label || '';
-            $ref_builds{$refalign_name}{extraction_type}   = $build->subject->extraction_type;
-            $ref_builds{$refalign_name}{extraction_label}  = $build->subject->extraction_label;
+            $ref_builds{$refalign_name}{tissue_label}      = $subject->tissue_label || '';
+            $ref_builds{$refalign_name}{extraction_type}   = $subject->extraction_type;
+            $ref_builds{$refalign_name}{extraction_label}  = $subject->extraction_label;
         }
     }
 
