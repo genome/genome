@@ -10,7 +10,7 @@ class Genome::Model::Tools::Manta::Run {
     has_input => [
         working_directory => {
             is => 'Text',
-            doc => 'The same working directory used during the Config step.  The directory should contain the  script used to execute Manta',
+            doc => 'The same working directory used during the Config step.  The directory should contain the script used to execute Manta',
         },
     ],
     has_optional_param => [
