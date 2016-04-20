@@ -13,3 +13,6 @@ class Genome::Model::Tools::Manta {
 sub help_detail {
     "These commands are used to execute Manta and related processes";
 }
+
+
+1;
