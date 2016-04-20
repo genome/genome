@@ -17,5 +17,3 @@ my $run_manta = Genome::Model::Tools::Manta::Run->create(
 
 my $cmdline_string = $run_manta->build_cmdline_string();
 is($cmdline_string,$expected_cmdline,'expected command-line');
-
-exit;

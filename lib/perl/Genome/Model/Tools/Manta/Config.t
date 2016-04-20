@@ -30,4 +30,3 @@ is_deeply(\@input_files,\@expected_input_files,'expected input files');
 
 # TODO: Test the execute subroutine
 
-exit;
