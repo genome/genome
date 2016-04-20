@@ -357,8 +357,7 @@ sub create {
 
     eval {
         # Give the model a chance to update itself prior to copying inputs from it
-        # TODO: the model can have an observer on it's private subclass of build for
-        # the one general case which uses this (Convergence).
+        # TODO: the model can have an observer on it's private subclass of build
         # The other case which uses this is ReferenceAlignment but just for TGI-specific
         # policies, which should really be observers in ::Site::TGI.
         if ($self->model->can("check_for_updates")) {
@@ -1581,20 +1580,6 @@ sub success {
     unless ( $self->generate_send_and_save_report( $self->report_generator_class_for_success ) ) {
         $self->_verify_build_is_not_abandoned_and_set_status_to('Running');
         return;
-    }
-
-    # Launch new builds for any convergence models containing this model.
-    # To prevent infinite loops, don't do this for convergence builds.
-    # FIXME convert this to use the commit callback and model links with a custom notify that doesn't require succeeded builds
-    if($self->type_name !~ /convergence/) {
-        for my $model_group ($self->model->model_groups) {
-            eval {
-                $model_group->schedule_convergence_rebuild;
-            };
-            if($@) {
-                $self->error_message('Could not schedule convergence build for model group ' . $model_group->id . '.  Continuing anyway.');
-            }
-        }
     }
 
     my $commit_callback;

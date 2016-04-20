@@ -9,33 +9,6 @@
       </div>
       <div class="result">
         <h3>Model Group: <xsl:call-template name="object_link"/></h3>
-        <p class="resource_buttons">
-          <xsl:for-each select="aspect[@name='convergence_model']/object">
-            <xsl:call-template name="object_link_button">
-              <xsl:with-param name="linktext" select="'convergence model'" />
-              <xsl:with-param name="icon" select="'sm-icon-extlink'" />
-            </xsl:call-template>
-            <xsl:text> </xsl:text>
-            <xsl:choose>
-              <xsl:when test="aspect[@name='last_complete_build']/object">
-                <xsl:for-each select="aspect[@name='last_complete_build']/object">
-                  <xsl:call-template name="object_link_button">
-                    <xsl:with-param name="linktext" select="'last succeeded build'" />
-                    <xsl:with-param name="icon" select="'sm-icon-extlink'" />
-                  </xsl:call-template>
-                  <xsl:text> </xsl:text>
-                  <xsl:variable name="build_directory_url">
-                    <xsl:text>https://gscweb.gsc.wustl.edu/</xsl:text><xsl:value-of select="normalize-space(aspect[@name='data_directory']/value)" />
-                  </xsl:variable>
-                  <a class="mini btn"><xsl:attribute name="href"><xsl:value-of select='$build_directory_url'/><xsl:text>/reports/Summary/report.html</xsl:text></xsl:attribute><span class="sm-icon sm-icon-extlink"><br/></span>summary report</a>
-                </xsl:for-each>
-              </xsl:when>
-              <xsl:otherwise>
-                [No succeeded builds.]
-              </xsl:otherwise>
-            </xsl:choose>
-          </xsl:for-each>
-        </p>
         <p class="result_summary">
           <strong>Members: </strong>
           <xsl:for-each select="aspect[@name='models']/object">

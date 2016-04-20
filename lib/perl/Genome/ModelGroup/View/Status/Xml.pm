@@ -92,24 +92,6 @@ class Genome::ModelGroup::View::Status::Xml {
                     perspective => 'default',
                     toolkit => 'xml',
                 },
-                {
-                    name => 'convergence_model',
-                    aspects => [
-                        'id',
-                        'name',
-                        {
-                            name => 'last_complete_build',
-                            aspects => [
-                                'id', 'data_directory'
-                            ],
-                            perspective => 'default',
-                            toolkit => 'xml',
-                            subject_class_name => 'Genome::Model::Build',
-                        }
-                    ],
-                    perspective => 'default',
-                    toolkit => 'xml',
-                },
             ]
         }
     ]

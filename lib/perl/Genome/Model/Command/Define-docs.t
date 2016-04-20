@@ -17,7 +17,6 @@ chomp @sub_commands;
 
 my @sub_commands_expected = qw/
   clin-seq
-  convergence
   de-novo-assembly
   differential-expression
   gene-prediction
