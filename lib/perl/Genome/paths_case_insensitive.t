@@ -7,6 +7,8 @@ use warnings;
 use Test::More;
 use IPC::System::Simple qw(capture);
 
+use above 'Genome'; #test-tracker wants each test to use at least one module in the namespace
+
 my %count;
 my @files = git('ls-files');
 
