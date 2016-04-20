@@ -957,14 +957,14 @@ sub _resolve_workflow_for_build {
                             destination_property => "_${sequencing_type}_${variant_type}_variant_sources_file",
                         );
                     }
+                    my $create_mutation_spectrum_op = $self->create_mutation_spectrum_op($workflow, $sequencing_type, $i);
+                    $workflow->create_link(
+                        source               => $converge_snv_indel_report_op,
+                        source_property      => 'result',
+                        destination          => $create_mutation_spectrum_op,
+                        destination_property => 'converge_snv_indel_report_result',
+                    );
                 }
-                my $create_mutation_spectrum_op = $self->create_mutation_spectrum_op($workflow, $sequencing_type, $i);
-                $workflow->create_link(
-                    source               => $converge_snv_indel_report_op,
-                    source_property      => 'result',
-                    destination          => $create_mutation_spectrum_op,
-                    destination_property => 'converge_snv_indel_report_result',
-                );
             }
             if ($build->wgs_build or $build->should_run_exome_cnv) {
                 my $sciclone_op = $self->sciclone_op($workflow, $i);
