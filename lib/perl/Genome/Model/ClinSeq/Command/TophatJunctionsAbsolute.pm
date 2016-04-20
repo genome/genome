@@ -90,7 +90,6 @@ sub execute {
     #Find the file like 'AML103/rnaseq/tumor/tophat_junctions_absolute/NCBI-human.ensembl-67_37l_v2.Junction.GeneExpression.top1percent.tsv' and set as an output to this step
     my $build_id  = $rnaseq_build->id;
     my $build_dir = $rnaseq_build->data_directory;
-    my $model     = $rnaseq_build->model;
     my $junctions_file  =  $self->get_junctions_filename();
     #Add a 'mapped_gene_name' column to this file and save as an updated version
     my $junction_topnpercent_file = $working_dir . "Junction.GeneExpression.topnpercent.tsv";

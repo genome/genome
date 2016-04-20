@@ -10,6 +10,7 @@ use Genome::Utility::List;
 use Genome::Utility::Text;
 
 use Cwd;
+use List::MoreUtils qw(uniq);
 
 class Genome::Model::ClinSeq::Command::SummarizeBuilds {
     is        => 'Command::V2',
@@ -154,8 +155,6 @@ sub summarize_clinseq_build {
     open(my $stats_fh, ">$stats_file") || die "\n\nCould not open output file: $stats_file\n\n";
     print $stats_fh "Question\tAnswer\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\n";
 
-    my $model = $clinseq_build->model;
-
     $self->status_message("\n***** " . $clinseq_build->__display_name__ . " ****");
 
     #set the build types
@@ -169,17 +168,14 @@ sub summarize_clinseq_build {
     my @somatic_builds = grep {$_->isa('Genome::Model::Build::SomaticInterface')} @builds;
 
     #Get a list of sample names for samples associated with this clinseq build
-    my %model_samples;
     my @model_samples;
     for my $build (@builds) {
-        next unless ($build->model->subject->class eq "Genome::Sample");
-        $model_samples{$build->model->subject->id}{sample} = $build->model->subject;
-    }
-    foreach my $sample_id (keys %model_samples) {
-        push(@model_samples, $model_samples{$sample_id}{sample});
+        if ($build->subject->class->isa('Genome::Sample')) {
+            push(@model_samples, $build->subject);
+        }
     }
 
-    my $individual = $model->subject;
+    my $individual = $clinseq_build->subject;
     $self->summarize_individual($individual);
 
     #Display instrument data counts for each sample/build actually associated with the clinseq model
@@ -191,7 +187,7 @@ sub summarize_clinseq_build {
         for my $type ('dna', 'rna') {$instdata_counts{$tn . $type} = 'n/a';}
     }
 
-    for my $sample (@model_samples) {
+    for my $sample (uniq @model_samples) {
         my ($key, $value) = $self->summarize_sample($sample);
         $instdata_counts{$key} = $value;
     }
@@ -272,15 +268,14 @@ sub summarize_clinseq_build {
     #Summarize the annotation reference build associated with each model
     $self->status_message("\n\nAnnotation reference build associated with each model");
     for my $build (@builds) {
-        my $m          = $build->model;
         my $build_type = $build->type_name;
-        if ($m->can("annotation_reference_build")) {
-            my $ab = $m->annotation_reference_build;
+        if ($build->can("annotation_reference_build")) {
+            my $ab = $build->annotation_reference_build;
             if ($ab) {
                 my $ab_name  = $ab->name             || "[UNDEF annotation_name]";
                 my $ab_dname = $ab->__display_name__ || "[UNDEF annotation_reference_build]";
                 $self->status_message("model '"
-                        . $m->__display_name__
+                        . $build->model->__display_name__
                         . " ($build_type)"
                         . "' used annotation reference build "
                         . $ab_dname
@@ -288,17 +283,17 @@ sub summarize_clinseq_build {
             }
             else {
                 $self->status_message("model '"
-                        . $m->__display_name__
+                        . $build->model->__display_name__
                         . " ($build_type)"
                         . "' did NOT have an annotation reference build defined!");
             }
         }
-        elsif ($m->can("annotation_build")) {
-            my $ab       = $m->annotation_build;
+        elsif ($build->can("annotation_build") && defined($build->annotation_build)) {
+            my $ab       = $build->annotation_build;
             my $ab_name  = $ab->name || "[UNDEF annotation_name]";
             my $ab_dname = $ab->__display_name__ || "[UNDEF annotation_reference_build]";
             $self->status_message("model '"
-                    . $m->__display_name__
+                    . $build->model->__display_name__
                     . " ($build_type)"
                     . "' used annotation reference build "
                     . $ab_dname
@@ -309,21 +304,20 @@ sub summarize_clinseq_build {
     #Summarize the genotype microarray build used with each model
     $self->status_message("\n\nGenotype microarray build associated with each model");
     for my $build (@builds) {
-        my $m          = $build->model;
         my $build_type = $build->type_name;
         if ($build->can("genotype_microarray_build")) {
             my $gb = $build->genotype_microarray_build;
             if ($gb) {
                 my $gb_name = $gb->__display_name__ || "[UNDEF genotype_microarray_build]";
                 $self->status_message("model '"
-                        . $m->__display_name__
+                        . $build->model->__display_name__
                         . " ($build_type)"
                         . "' used genotype microarray build "
                         . $gb_name);
             }
             else {
                 $self->status_message("model '"
-                        . $m->__display_name__
+                        . $build->model->__display_name__
                         . " ($build_type)"
                         . "' did NOT have an associated microarray build ");
             }
@@ -333,17 +327,16 @@ sub summarize_clinseq_build {
     #Summarize the dbsnp build used with each model
     $self->status_message("\n\ndbSNP build associated with each model");
     for my $build (@builds) {
-        my $m          = $build->model;
         my $build_type = $build->type_name;
-        if ($m->can("dbsnp_build")) {
+        if ($build->can("dbsnp_build")) {
             my $db      = $build->dbsnp_build;
-            my $dm      = $m->dbsnp_model;
+            my $dm      = $db->model;
             my $db_name = $db->__display_name__ || "[UNDEF dbsnp_build]";
             my $dm_name = $dm->__display_name__ || "[UNDEF dbsnp_model]";
             my $dm_id   = $dm->id || "[UNDEF dbsnp_model]";
 
             $self->status_message(
-                "model '" . $m->__display_name__ . " ($build_type)" . "' used dbSNP build " . $db_name . " ($dm_id)");
+                "model '" . $build->model->__display_name__ . " ($build_type)" . "' used dbSNP build " . $db_name . " ($dm_id)");
         }
     }
 
@@ -505,8 +498,7 @@ sub summarize_clinseq_build {
         "pp_name\ttier1_snv_count\ttier2_snv_count\ttier3_snv_count\ttier4_snv_count\ttier1_indel_count\ttier2_indel_count\ttier3_indel_count\ttier4_indel_count\tsv_count\tbuild_id"
     );
     for my $build (@somatic_builds) {
-        my $m         = $build->model;
-        my $pp        = $m->processing_profile;
+        my $pp        = $build->processing_profile;
         my $pp_name   = $pp->name;
         my $data_type = $self->_determine_wgs_or_exome_for_build($build, \%data_types);
 
@@ -594,8 +586,7 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nGet more detailed merged somatic SV stats");
     $self->status_message("pp_name\tsv_count\tctx_count\tdel_count\tinv_count\titx_count\tbuild_id");
     for my $build (@somatic_builds) {
-        my $m         = $build->model;
-        my $pp        = $m->processing_profile;
+        my $pp        = $build->processing_profile;
         my $pp_name   = $pp->name;
         my $data_type = $self->_determine_wgs_or_exome_for_build($build, \%data_types);
         next unless $data_type eq 'WGS';
@@ -651,8 +642,7 @@ sub summarize_clinseq_build {
     $self->status_message("\n\nGet basic expression count from RNA-seq");
     $self->status_message("pp_name\tgenes_fpkm_greater_1\ttranscripts_fpkm_greater_1\tbuild_id");
     for my $build (@rna_seq_builds) {
-        my $m            = $build->model;
-        my $pp           = $m->processing_profile;
+        my $pp           = $build->processing_profile;
         my $pp_name      = $pp->name;
         my $subject      = $build->subject;
         my $subject_name = $subject->name;
@@ -1350,7 +1340,7 @@ sub generate_LIMS_reports {
     $self->status_message("\n\nSample sequencing metrics from LIMS");
     #$self->status_message("See results files in: $build_outdir\n");
     for my $build (@$ref_align_builds) {
-        next unless ($build->model->subject->class eq "Genome::Sample");
+        next unless ($build->subject->class eq "Genome::Sample");
         my $subject      = $build->subject;
         my $subject_name = $subject->name;
         my $common_name  = $self->_get_subject_common_name($subject);
@@ -1376,7 +1366,7 @@ sub generate_APIPE_reports {
     $self->status_message("\n\nSample sequencing metrics from APIPE");
     my %samples_processed;
     for my $build (@$ref_align_builds) {
-        next unless ($build->model->subject->class eq "Genome::Sample");
+        next unless ($build->subject->class eq "Genome::Sample");
         my $subject      = $build->subject;
         my $subject_name = $subject->name;
         my $common_name  = $self->_get_subject_common_name($subject);
@@ -1644,13 +1634,12 @@ sub _determine_wgs_or_exome_for_build {
     my $self       = shift;
     my $build      = shift;
     my $data_types = shift;
-    my $m          = $build->model;
     my $id         = $build->id;
     if (defined $data_types->{$id}) {
         return $data_types->{$id};
     }
 
-    my $pp        = $m->processing_profile;
+    my $pp        = $build->processing_profile;
     my $pp_name   = $pp->name;
     my $data_type = "Unknown";
     if ($pp_name =~ /wgs/i) {

@@ -599,8 +599,8 @@ sub get_ref_align_builds {
                     }
                 }
                 unless ($common_name) {
-                    my $normal_subject_name = $normal_build->model->subject->name;
-                    my $tumor_subject_name  = $tumor_build->model->subject->name;
+                    my $normal_subject_name = $normal_build->subject->name;
+                    my $tumor_subject_name  = $tumor_build->subject->name;
                     $normal_label = $normal_subject_name . "_" . $normal_label;
                     $tumor_label  = $tumor_subject_name . "_" . $tumor_label;
                 }
