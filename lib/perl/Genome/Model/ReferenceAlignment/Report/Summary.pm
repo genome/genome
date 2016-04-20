@@ -364,10 +364,13 @@ sub _generate_summary_information
     unless (@lq_files) {
         @lq_files = $build->get_variant_bed_file('snps_all_sequences');
     }
-    my $lq_snp_calls = `wc -l @lq_files | tail -n 1`;
-    $lq_snp_calls =~ s/\s\S+\s*$//i;
-    $lq_snp_calls =~ s/\s//g;
-    my $unfiltered_snp_calls = $filtered_snp_calls + $lq_snp_calls;
+    my $unfiltered_snp_calls = $filtered_snp_calls;
+    if (@lq_files) {
+        my $lq_snp_calls = `wc -l @lq_files | tail -n 1`;
+        $lq_snp_calls =~ s/\s\S+\s*$//i;
+        $lq_snp_calls =~ s/\s//g;
+        $unfiltered_snp_calls += $lq_snp_calls;
+    }
 
     my $snp_chromosomes = $self->model->reference_sequence_build->description;
     my $snp_caller = $self->model->snv_detection_strategy;
@@ -474,9 +477,10 @@ sub get_contents {
 }
 
 sub commify {
-	local $_  = shift;
-	1 while s/^([-+]?\d+)(\d{3})/$1,$2/;
-	return $_;
+    return unless ( @_ && defined $_[0] );
+    local $_ = shift;
+    1 while s/^([-+]?\d+)(\d{3})/$1,$2/;
+    return $_;
 }
 
 sub format_gold_snp_metrics {
