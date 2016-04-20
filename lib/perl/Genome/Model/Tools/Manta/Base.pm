@@ -145,20 +145,20 @@ sub _tool_input_files_from_meta {
 # command line args that come after the executable
 #
 # The default implementation just translates all the inputs that have
-# speedseq_param_name defined. Boolean values get translated to true/false,
+# tool_arg_name defined. Boolean values get translated to true,
+# false are not translated,
 # and is many attributes get repeated, e.g.,
 #
-#  create_md5_file => {..., is => 'Boolean'}
-#       when set to something that evalutes to false
-#       yields
-#  qw(CREATE_MD5_FILE=false)
+#  exome => {..., is => 'Boolean'}
+#       when set to something that evalutes to false the argument is not returned
+#       when set to true it simply returns the correct tool argument as defined by tool_arg_name
+#  ex. ('--exome')
 #
 # and
 #
-#  program_name => {..., is_many => 1}
-#       when set to ['a', 'b', 'c']
-#       yields
-#  qw(PROGRAM_NAME=a PROGRAM_NAME=b PROGRAM_NAME=c)
+#  bams => {..., is_many => 1}
+#       when set to ['a', 'b', 'c'] yields:
+#  ex. ('--bam "a"', '--bam "b"','--bam "c"')
 #
 
 sub _tool_param_args {
