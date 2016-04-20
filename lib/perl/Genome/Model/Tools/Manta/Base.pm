@@ -6,6 +6,10 @@ use warnings;
 use Genome;
 use Carp qw(confess);
 
+my %TOOL_VERSIONS = (
+    '0.29.6'     => '/gscmnt/gc13001/info/model_data/jwalker_scratch/src/manta-0.29.6.centos5_x86_64/bin',
+);
+
 class Genome::Model::Tools::Manta::Base {
     is => 'Command',
     is_abstract => 1,
@@ -23,7 +27,7 @@ class Genome::Model::Tools::Manta::Base {
         version => {
             is => 'Version',
             doc => 'The version of Manta to use.',
-            valid_values => ['0.29.6'],
+            valid_values => [sort keys %TOOL_VERSIONS],
         },
     ],
     has_optional_output => [
@@ -38,15 +42,6 @@ class Genome::Model::Tools::Manta::Base {
 
 sub help_detail {
     "Manta calls structural variants (SVs) and indels from mapped paired-end sequencing reads."
-}
-
-my %TOOL_VERSIONS = (
-    '0.29.6'     => '/gscmnt/gc13001/info/model_data/jwalker_scratch/src/manta-0.29.6.centos5_x86_64/bin',
-);
-
-sub available_versions {
-    my $self = shift;
-    return keys(%TOOL_VERSIONS);
 }
 
 sub path_for_version {
