@@ -54,6 +54,12 @@ sub _detect_variants {
 
     my $set = Genome::Model::Tools::Speedseq::Sv->create(%final_cmd);
     $set->execute();
+
+    # Make a symlink to the actual VCF as the DV2 Dispatcher expects an output of svs.hq rather than BED or VCF output
+    my ($vcf_file) = glob($self->_sv_staging_output .'*.vcf.gz');
+    if ($vcf_file) {
+        symlink($vcf_file,$self->_sv_staging_output);
+    }
 }
 
 sub find_file {
