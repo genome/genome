@@ -104,9 +104,12 @@ sub _tool_input_file_metas {
 # formatting (argname=argvalue).
 sub _format_tool_arg {
     my ($type, $name, $value) = @_;
-    return '--'. $name if ($type eq 'Boolean');
-    $value = qq{"$value"} if $type eq 'Text';
-    return sprintf('--%s %s', $name, $value);
+
+    if ($type eq 'Boolean') {
+        return '--'. $name;
+    } else {
+        return '--'.$name, $value;
+    }
 }
 
 # given a property meta object (defining property name, and ostensibly
@@ -201,27 +204,19 @@ sub _shellcmd_extra_params {
     return (
         skip_if_output_is_present => 0,
         keep_dbh_connection_open => 0,
-        set_pipefail => 0,
         input_files => \@input_files,
         output_files => \@output_files,
     );
 }
 
-sub build_cmdline_list {
+sub build_cmdline_array_ref {
     my $self = shift;
 
-    return (
+    return [
         $self->tool_path,
         $self->_tool_param_args,
         $self->_tool_input_args,
-    );
-}
-
-sub build_cmdline_string {
-    my $self = shift;
-
-    my $cmd = join(' ', $self->build_cmdline_list);
-    return $cmd;
+    ];
 }
 
 # override with care.
@@ -231,7 +226,7 @@ sub execute {
     $self->_validate_params;
 
     my %params = (
-        cmd => $self->build_cmdline_string,
+        cmd => $self->build_cmdline_array_ref,
         $self->_shellcmd_extra_params
     );
 
