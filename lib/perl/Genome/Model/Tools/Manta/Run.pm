@@ -22,6 +22,13 @@ class Genome::Model::Tools::Manta::Run {
             default_value => 'local',
             is_mutable => 0,
         },
+        jobs => {
+            is => 'Integer',
+            # the tool will also except 'unlimited', but that seems dangerous when running on shared compute
+            doc => 'number of jobs, must be an integer',
+            default_value => '1',
+            tool_arg_name => 'jobs',
+        },
         memory => {
             is => 'Number',
             doc => 'gigabytes of memory available to run workflow -- only meaningful in local mode, must be an integer ( Estimate the total memory for this node for local mode).',
