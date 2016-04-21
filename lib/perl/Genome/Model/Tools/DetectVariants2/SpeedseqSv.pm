@@ -10,6 +10,11 @@ use File::Spec;
 
 class Genome::Model::Tools::DetectVariants2::SpeedseqSv {
     is => 'Genome::Model::Tools::DetectVariants2::Detector',
+    has_param => [
+        lsf_resource => {
+            default_value => Genome::Config::get('lsf_resource_dv2_speedseq_sv'),
+        },
+    ],
 };
 
 # For the Parameters what I need to do is make two hashes.
