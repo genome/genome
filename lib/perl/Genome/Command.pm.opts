@@ -2317,17 +2317,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>convergence',
-      [
-        'name=s',
-        'files',
-        'based-on=s',
-        undef,
-        'describe!',
-        undef,
-        'help!',
-        undef
-      ],
       '>imported-annotation',
       [
         'name=s',
@@ -3139,31 +3128,6 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
-        'help!',
-        undef
-      ],
-      '>convergence',
-      [
-        'show=s',
-        'files',
-        'style=s',
-        [
-          'text',
-          'csv',
-          'tsv',
-          'pretty',
-          'html',
-          'xml',
-          'newtext'
-        ],
-        'csv-delimiter=s',
-        'files',
-        'noheaders!',
-        undef,
-        'order-by=s',
-        'files',
-        'filter=s',
-        'files',
         'help!',
         undef
       ],
@@ -5720,24 +5684,6 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'filter=s',
         'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
-    '>convergence',
-    [
-      '>find-significant-attributes',
-      [
-        'data-file=s',
-        'files',
-        'output-file=s',
-        'files',
-        'annotation-build=s',
-        undef,
-        'build=s',
-        undef,
         'help!',
         undef
       ],
@@ -9283,35 +9229,6 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
-        'help!',
-        undef
-      ],
-      '>convergence',
-      [
-        'model-group=s',
-        undef,
-        'auto-assign-inst-data!',
-        undef,
-        'model-name=s',
-        'files',
-        'subject-name=s',
-        'files',
-        'processing-profile-name=s',
-        'files',
-        'auto-build-alignments!',
-        undef,
-        'processing-profile=s',
-        undef,
-        'add-to-projects=s@',
-        undef,
-        'instrument-data=s@',
-        undef,
-        'subject=s',
-        undef,
-        'groups=s@',
-        undef,
-        'run-as=s',
-        'files',
         'help!',
         undef
       ],
@@ -14700,31 +14617,6 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'tumor-purities=s',
       undef,
-      'help!',
-      undef
-    ],
-    '>convergence',
-    [
-      '>gather-refalign-summary-data',
-      [
-        'build-id=s',
-        'files',
-        'data=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
-      '>summary-report',
-      [
-        'build-id=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
       'help!',
       undef
     ],
