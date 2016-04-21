@@ -53,7 +53,7 @@ class Genome::Model::Tools::Manta::Run {
         # The version is not required since the python paths are configured separately
         version => {
         },
-        # Ignoring manta params for SGE : queue and jobs
+        # Ignoring manta param 'queue' for SGE mode
     ],
 };
 
