@@ -3458,31 +3458,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
-  '>convergence',
-  [
-    '>gather-refalign-summary-data',
-    [
-      'build-id=s',
-      'files',
-      'data=s',
-      'files',
-      'debug!',
-      undef,
-      'help!',
-      undef
-    ],
-    '>summary-report',
-    [
-      'build-id=s',
-      'files',
-      'debug!',
-      undef,
-      'help!',
-      undef
-    ],
-    'help!',
-    undef
-  ],
   '>wu-blast',
   [
     '>blastn',
