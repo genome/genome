@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Data::Dumper;
 use File::Temp;
+use POSIX (qw(floor));
 
 my $DEFAULT_VERSION = '2.3.6';
 
@@ -40,6 +41,28 @@ class Genome::Model::Tools::Varscan {
             doc => 'Stop varscan from putting headers on its output files',
             default_value => '0',
         },
+        java_interpreter => {
+            is => 'Text',
+            doc => 'The java interpreter to use',
+            #LSF:  Not able to use the Genome::Sys->java_executable_path('1.7')
+            #      since it depends on java version below.
+            #
+            #  java version "1.6.0_18"
+            #  Java(TM) SE Runtime Environment (build 1.6.0_18-b07)
+            #  Java HotSpot(TM) 64-Bit Server VM (build 16.0-b13, mixed mode)
+            #
+            default_value => 'java',
+        },
+        max_memory => {
+            # Accessor is overridden so that it can be limited based on available memory or LSF limit.
+            is => 'Text',
+            doc => 'The maximum memory (GB) to use when running Java VM. Limited to environmental constraints.',
+            default => '4',
+        },
+        tmp_dir => {
+            is => 'Text',
+            doc => 'Temporary directory for Java.',
+        },
 
     ],
 };
@@ -66,14 +89,20 @@ my %VARSCAN_VERSIONS = (
 );
 
 sub java_command_line {
-    my $self = shift;
+    my $self             = shift;
     my $parameter_string = shift;
 
-    my $path = $self->path_for_version($self->version);
-    my $headers = $self->no_headers ? "--no-headers 1" : "";
-    my $command_line = 'java -jar ' . $path . ' ' . $parameter_string . ' '.$headers;
+    my @java_cmd = ( $self->java_interpreter );
 
-    return $command_line;
+    my $path = $self->path_for_version( $self->version );
+    if ( defined $self->max_memory ) {
+        push @java_cmd, sprintf( "-Xmx%dg", $self->max_memory );
+    }
+    push @java_cmd, "-Djava.io.tmpdir=" . $self->tmp_dir, '-jar' => $path;
+    push @java_cmd, $parameter_string;
+    push @java_cmd, ( "--no-headers" => 1 ) if ( $self->no_headers );
+
+    return join( ' ', @java_cmd );
 }
 
 sub command_line {
@@ -161,6 +190,26 @@ sub available_varscan_versions {
 sub samtools_path {
     my $self = shift;
     return Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+}
+
+sub max_memory {
+    my $self = shift;
+    my $max_memory = $self->__max_memory(@_);
+    my $max_memory_kb = $max_memory * 1_048_576;
+    my $mem_limit_kb = Genome::Sys->mem_limit_kb;
+    if ($mem_limit_kb) {
+        my $safe_mem_limit_kb = int(0.8 * $mem_limit_kb);
+        if ($max_memory_kb > $safe_mem_limit_kb) {
+            my $safe_mem_limit_gb = floor($safe_mem_limit_kb / 1_048_576);
+            if ($safe_mem_limit_gb == 0) {
+                die "Does not work on systems with less than 1GB of memory.\n";
+            }
+            $max_memory = $safe_mem_limit_gb;
+            $self->__max_memory($max_memory);
+            warn "Overriding max_memory due to environmental limitations.";
+        }
+    }
+    return $max_memory;
 }
 
 1;
