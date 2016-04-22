@@ -1892,31 +1892,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>metagenomic-shotgun',
-      [
-        'name=s',
-        'files',
-        'viral-protein-pp-id=s',
-        'files',
-        'based-on=s',
-        undef,
-        'viral-nucleotide-pp-id=s',
-        'files',
-        'describe!',
-        undef,
-        'metagenomic-nucleotide-pp-id=s',
-        'files',
-        'filter-contaminant-fragments!',
-        undef,
-        'metagenomic-protein-pp-id=s',
-        'files',
-        'contamination-screen-pp-id=s',
-        'files',
-        'filter-duplicates!',
-        undef,
-        'help!',
-        undef
-      ],
       '>metagenomic-composition16s',
       [
         'name=s',
@@ -2518,41 +2493,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>metagenomic-composition-shotgun',
-      [
-        'name=s',
-        'files',
-        'second-viral-verification-alignment-pp-id=s',
-        'files',
-        'based-on=s',
-        undef,
-        'non-n-base-threshold=s',
-        undef,
-        'n-removal-threshold=s',
-        undef,
-        'contamination-screen-pp-id=s',
-        'files',
-        'describe!',
-        undef,
-        'include-taxonomy-report!',
-        undef,
-        'metagenomic-alignment-pp-id=s',
-        'files',
-        'dust-unaligned-reads!',
-        undef,
-        'unaligned-metagenomic-alignment-pp-id=s',
-        'files',
-        'first-viral-verification-alignment-pp-id=s',
-        'files',
-        'merging-strategy=s',
-        'files',
-        'skip-qc-on-untrimmed-reads!',
-        undef,
-        'mismatch-cutoff=s',
-        undef,
-        'help!',
-        undef
-      ],
       '>somatic-variation',
       [
         'name=s',
@@ -2802,31 +2742,6 @@ $Genome::Command::OPTS_SPEC = [
         undef
       ],
       '>imported-assembly',
-      [
-        'show=s',
-        'files',
-        'style=s',
-        [
-          'text',
-          'csv',
-          'tsv',
-          'pretty',
-          'html',
-          'xml',
-          'newtext'
-        ],
-        'csv-delimiter=s',
-        'files',
-        'noheaders!',
-        undef,
-        'order-by=s',
-        'files',
-        'filter=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>metagenomic-shotgun',
       [
         'show=s',
         'files',
@@ -3232,31 +3147,6 @@ $Genome::Command::OPTS_SPEC = [
         undef
       ],
       '>clin-seq',
-      [
-        'show=s',
-        'files',
-        'style=s',
-        [
-          'text',
-          'csv',
-          'tsv',
-          'pretty',
-          'html',
-          'xml',
-          'newtext'
-        ],
-        'csv-delimiter=s',
-        'files',
-        'noheaders!',
-        undef,
-        'order-by=s',
-        'files',
-        'filter=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>metagenomic-composition-shotgun',
       [
         'show=s',
         'files',
@@ -6151,64 +6041,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>metagenomic-composition-shotgun',
-    [
-      '>imported-data-archives',
-      [
-        'model-id=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
-      '>qc-report',
-      [
-        'build-id=s',
-        undef,
-        'debug!',
-        undef,
-        'overwrite!',
-        undef,
-        'report-dir=s',
-        'files',
-        'skip-qc-on-untrimmed-reads!',
-        undef,
-        'help!',
-        undef
-      ],
-      '>status',
-      [
-        'debug!',
-        undef,
-        'item=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>taxonomy-report',
-      [
-        'build=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>validate',
-      [
-        'build-id=s',
-        undef,
-        'debug!',
-        undef,
-        'report-dir=s',
-        'files',
-        'verbose!',
-        undef,
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>clin-seq',
     [
       '>run-cn-view',
@@ -7487,29 +7319,6 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'separator=s',
         'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
-    '>metagenomic-shotgun',
-    [
-      '>status',
-      [
-        'model=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>mapx-alignment-to-aligned-fastq',
-      [
-        'mapx-alignment=s',
-        'files',
-        'instrument-data=s',
-        undef,
-        'output-directory=s',
-        undef,
         'help!',
         undef
       ],
@@ -8810,21 +8619,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>metagenomic-shotgun',
-      [
-        'name=s',
-        'files',
-        'subject=s',
-        undef,
-        'processing-profile=s',
-        undef,
-        'projects=s@',
-        undef,
-        'params=s@',
-        'files',
-        'help!',
-        undef
-      ],
       '>metagenomic-composition16s',
       [
         'auto-assign-inst-data!',
@@ -9456,21 +9250,6 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'force!',
         undef,
-        'help!',
-        undef
-      ],
-      '>metagenomic-composition-shotgun',
-      [
-        'name=s',
-        'files',
-        'subject=s',
-        undef,
-        'processing-profile=s',
-        undef,
-        'projects=s@',
-        undef,
-        'params=s@',
-        'files',
         'help!',
         undef
       ],
