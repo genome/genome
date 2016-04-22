@@ -90,9 +90,9 @@ sub __errors__ {
 }
 
 sub get_final_name {
-    my $self            = shift;
-    my $somvar_build    = shift;
-    my $final_name      = $somvar_build->subject->name if ($somvar_build->subject->name);
+    my $self          = shift;
+    my $somvar_build  = $self->somvar_build;
+    my $final_name    = $somvar_build->subject->name if ($somvar_build->subject->name);
     $final_name = $somvar_build->individual_common_name
         if ($somvar_build->individual_common_name);
     return $final_name;
@@ -100,7 +100,7 @@ sub get_final_name {
 
 sub make_outdirs {
     my $self     = shift;
-    my $datatype = shift;
+    my $datatype = $self->datatype;
     my $outdir   = $self->outdir;
     $outdir .= "/" unless ($outdir =~ /\/$/);
     Genome::Sys->create_directory($outdir);
@@ -206,8 +206,9 @@ sub parse_variant_file {
 
 sub get_alltier_snvs {
     my $self                        = shift;
-    my $clinseq_build               = shift;
     my $sub_outdir                  = shift;
+
+    my $clinseq_build               = $self->clinseq_build;
     my $outfile                     = $sub_outdir . "/alltiers.variants.filtered.clean.tsv";
     my $bq                          = $self->min_base_quality;
     my $mq                          = $self->min_quality_score;
@@ -274,11 +275,10 @@ sub get_mutation_spectrum_sequence_context_result {
 
 sub generate_summarize_mutation_spectrum_result {
     my $self          = shift;
-    my $somvar_build  = shift;
     my $final_name    = shift;
     my $tier1to3snvs  = shift;
     my $sub_outdir3   = shift;
-    my $somatic_id    = $somvar_build->model->id;
+    my $somatic_id    = $self->somvar_build->model->id;
     my $mut_spec_file = $sub_outdir3 . "mutation_spectrum.tsv";
     my $sms_file      = $sub_outdir3 . $final_name . "_summarize-mutation-spectrum.pdf";
     my $input_file    = $sub_outdir3 . "/mutation_spectrum.input.tsv";
@@ -298,14 +298,13 @@ sub generate_summarize_mutation_spectrum_result {
 
 sub generate_mutation_rate_result {
     my $self                     = shift;
-    my $somvar_build             = shift;
     my $final_name               = shift;
     my $tier1_snvs               = shift;
     my $tier2_snvs               = shift;
     my $tier3_snvs               = shift;
     my $sub_outdir4              = shift;
     my $data_type                = $self->datatype;
-    my $reference_annotation_dir = $somvar_build->model->annotation_build->data_directory;
+    my $reference_annotation_dir = $self->somvar_build->model->annotation_build->data_directory;
     #Get tier bed files from annotation dir
     my $tier1_bed = $reference_annotation_dir . "/annotation_data/tiering_bed_files_v3/tier1.bed";
     my $tier2_bed = $reference_annotation_dir . "/annotation_data/tiering_bed_files_v3/tier2.bed";
@@ -371,13 +370,10 @@ sub create_readme_file {
 
 sub execute {
     my $self          = shift;
-    my $somvar_build  = $self->somvar_build;
-    my $clinseq_build = $self->clinseq_build;
-    my $data_type     = $self->datatype;
     $self->debug_message("Performing mutation spectrum analysis");
-    my ($sub_outdir, $sub_outdir2, $sub_outdir3, $sub_outdir4) = $self->make_outdirs($data_type);
-    my $final_name = $self->get_final_name($somvar_build);
-    my ($tier1_snvs, $tier2_snvs, $tier3_snvs, $tier1to3_snvs) = $self->get_alltier_snvs($clinseq_build, $sub_outdir);
+    my ($sub_outdir, $sub_outdir2, $sub_outdir3, $sub_outdir4) = $self->make_outdirs;
+    my $final_name = $self->get_final_name;
+    my ($tier1_snvs, $tier2_snvs, $tier3_snvs, $tier1to3_snvs) = $self->get_alltier_snvs($sub_outdir);
 
     if ($self->test) {
         $self->reduce_file_length(
@@ -385,8 +381,8 @@ sub execute {
             );
     }
     $self->get_mutation_spectrum_sequence_context_result($final_name, $tier1_snvs, $sub_outdir2);
-    $self->generate_summarize_mutation_spectrum_result($somvar_build, $final_name, $tier1to3_snvs, $sub_outdir3);
-    $self->generate_mutation_rate_result($somvar_build, $final_name, $tier1_snvs, $tier2_snvs, $tier3_snvs,
+    $self->generate_summarize_mutation_spectrum_result($final_name, $tier1to3_snvs, $sub_outdir3);
+    $self->generate_mutation_rate_result($final_name, $tier1_snvs, $tier2_snvs, $tier3_snvs,
         $sub_outdir4);
     $self->create_readme_file($sub_outdir4);
     return 1;
