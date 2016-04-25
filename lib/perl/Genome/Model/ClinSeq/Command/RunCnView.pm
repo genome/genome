@@ -92,13 +92,12 @@ sub execute {
         unless (-e $gene_symbol_lists_dir);
     my $annotation_build_id = $build->annotation_build->id;
     my ($cnv_data_file, $cnv_hmm_file);
-    my $is_copycat = $self->_is_copycat_somvar($build);
 
     if ($self->cnv_hq_file and $self->cnv_hmm_file) {
         $cnv_data_file = $self->cnv_hq_file;
         $cnv_hmm_file  = $self->cnv_hmm_file;
     }
-    elsif ($is_copycat) {
+    elsif ($build->ran_copycat) {
         $cnv_data_file = $self->create_copycat_cnvhq_file($build, $outdir);
         $cnv_hmm_file = $outdir . "cnvs.hmm";
         $self->create_copycat_cnvhmm_file($build, $cnv_hmm_file);

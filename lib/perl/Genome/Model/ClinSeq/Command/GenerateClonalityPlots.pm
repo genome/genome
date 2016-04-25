@@ -134,7 +134,7 @@ sub execute {
 
     #Get somatic variation effects dir, tumor bam and normal bam from a somatic variation model ID
     my %data_paths;
-    my $is_copycat = $self->_is_copycat_somvar($somatic_var_build);
+    my $is_copycat = $somatic_build->ran_copycat;
     $self->get_data_paths(\%data_paths, $somatic_var_build, $is_copycat, $output_dir);
     my $somatic_effects_dir = $data_paths{effects_dir};
 

@@ -1483,19 +1483,6 @@ sub create_copycat_cnvhq_file {
     return $copycat_cnvhmm;
 }
 
-sub _is_copycat_somvar {
-    my $self              = shift;
-    my $somatic_var_build = shift;
-    if (not -s $somatic_var_build->data_directory . "/variants/cnvs.hq"
-        and glob($somatic_var_build->data_directory . "/variants/cnv/copy-cat*"))
-    {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
 sub create_igv_link {
     my $self = shift;
     my ($chr, $start, $stop) = @_;
