@@ -526,4 +526,9 @@ sub __profile_errors__ {
     return @errors
 }
 
+sub individual {
+    my $self = shift;
+    return $self->subject->individual;
+}
+
 1;

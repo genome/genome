@@ -406,4 +406,9 @@ sub known_sites_id {
     return $self->__known_sites_id;
 }
 
+sub individual {
+    my $self = shift;
+    return $self->subject;
+}
+
 1;

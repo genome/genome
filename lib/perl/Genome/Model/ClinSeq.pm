@@ -96,28 +96,12 @@ class Genome::Model::ClinSeq {
             calculate      => q|
               my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
               if ($wgs_model) {
-                  my $wgs_model_subject = $wgs_model->subject;
-                  my $wgs_model_individual;
-                  if ($wgs_model_subject->class eq 'Genome::Individual') {
-                      $wgs_model_individual = $wgs_model_subject;
-                  }
-                  else {
-                      $wgs_model_individual = $wgs_model->subject->individual;
-                  }
-                  $wgs_common_name = $wgs_model_individual->common_name;
-                  $wgs_name = $wgs_model_individual->name;
+                  $wgs_common_name = $wgs_model->individual_common_name;
+                  $wgs_name = $wgs_model->individual->name;
               }
               if ($exome_model) {
-                  my $exome_model_subject = $exome_model->subject;
-                  my $exome_model_individual;
-                  if ($exome_model_subject->class eq 'Genome::Individual') {
-                      $exome_model_individual = $exome_model_subject;
-                  }
-                  else {
-                      $exome_model_individual = $exome_model->subject->individual;
-                  }
-                  $exome_common_name = $exome_model_individual->common_name;
-                  $exome_name = $exome_model_individual->name;
+                  $exome_common_name = $exome_model->individual_common_name;
+                  $exome_name = $exome_model->individual->name;
               }
               if ($tumor_rnaseq_model) {
                   $tumor_rnaseq_common_name = $tumor_rnaseq_model->subject->individual->common_name;
@@ -1818,13 +1802,7 @@ sub _infer_candidate_subjects_from_input_models {
 
     my %subjects;
     for my $input_model ($self->_input_models) {
-        my $patient;
-        if ($input_model->subject->isa("Genome::Individual")) {
-            $patient = $input_model->subject;
-        }
-        else {
-            $patient = $input_model->subject->individual;
-        }
+        my $patient = $input_model->individual;
         $subjects{$patient->id} = $patient;
     }
     my @subjects = sort {$a->id cmp $b->id} values %subjects;

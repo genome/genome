@@ -321,6 +321,11 @@ sub get_feature_list_from_reference {
     return $self->reference_sequence_build->get_feature_list($feature_list_accessor);
 }
 
+sub individual {
+    my $self = shift;
+    return $self->subject;
+}
+
 sub individual_common_name {
     my $self = shift;
     return $self->subject->common_name;

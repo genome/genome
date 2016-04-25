@@ -664,4 +664,9 @@ sub map_workflow_inputs {
     return (build => $build);
 }
 
+sub individual {
+    my $self = shift;
+    return $self->subject->individual;
+}
+
 1;

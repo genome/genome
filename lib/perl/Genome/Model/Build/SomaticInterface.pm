@@ -14,6 +14,11 @@ sub reference_sequence_build {
     $self->fatal_message('Abstract: (reference_sequence_build) needs to be defined on class (%s)', $self->class);
 }
 
+sub individual {
+    my $self = shift;
+    $self->fatal_message('Abstract: (individual) needs to be defined on class (%s)', $self->class);
+}
+
 sub individual_common_name {
     my $self = shift;
     $self->fatal_message('Abstract: (individual_common_name) needs to be defined on class (%s)', $self->class);
