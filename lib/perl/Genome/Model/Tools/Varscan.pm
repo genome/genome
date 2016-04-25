@@ -62,7 +62,6 @@ class Genome::Model::Tools::Varscan {
         tmp_dir => {
             is => 'Text',
             doc => 'Temporary directory for Java.',
-            default_value => Genome::Sys->create_temp_directory,
         },
 
     ],
@@ -98,6 +97,10 @@ sub java_command_line {
     my $path = $self->path_for_version( $self->version );
     if ( defined $self->max_memory ) {
         push @java_cmd, sprintf( "-Xmx%dg", $self->max_memory );
+    }
+    if ( not $self->tmp_dir ) {
+        my $tempdir = Genome::Sys->create_temp_directory;
+        $self->tmp_dir($tempdir);
     }
     push @java_cmd, "-Djava.io.tmpdir=" . $self->tmp_dir, '-jar' => $path;
     push @java_cmd, $parameter_string;
