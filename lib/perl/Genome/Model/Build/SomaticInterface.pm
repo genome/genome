@@ -46,4 +46,9 @@ sub snvs_effects_file {
     return File::Spec->join($self->data_directory, 'effects', "snvs.hq.novel.$tier.v2.bed");
 }
 
+sub has_microarray_build {
+    my $self = shift;
+    $self->fatal_message('Abstract: (has_microarray_build) needs to be defined on class (%s)', $self->class);
+}
+
 1;

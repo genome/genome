@@ -472,4 +472,15 @@ sub indels_effects_file {
     return File::Spec->join($self->data_directory, 'effects', "indels.hq.novel.$tier.v2.bed");
 }
 
+sub has_microarray_build {
+    my $self = shift;
+
+    if ($self->tumor_build->genotype_microarray_build && $self->normal_build->genotype_microarray_build) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 1;

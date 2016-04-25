@@ -359,4 +359,8 @@ sub indels_effects_file {
     return File::Spec->join($self->data_directory, 'effects', "indels.hq.$tier.bed");
 }
 
+sub has_microarray_build {
+    my $self = shift;
+    return 0;
+}
 1;

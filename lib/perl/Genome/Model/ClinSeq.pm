@@ -422,7 +422,7 @@ sub map_workflow_inputs {
     }
 
     #Make base-dir for CNV's
-    if ($wgs_build or $exome_build or $self->has_microarray_build()) {
+    if ($wgs_build or $exome_build or $build->has_microarray_build) {
         my $cnv_dir = $patient_dir . "/cnv/";
         push @dirs, $cnv_dir;
         push @inputs, cnv_dir => $cnv_dir;
@@ -436,7 +436,7 @@ sub map_workflow_inputs {
     }
 
     #RunMicroArrayCnView
-    if ($self->has_microarray_build()) {
+    if ($build->has_microarray_build) {
         my $microarray_cnv_dir = $patient_dir . "/cnv/microarray_cnv/";
         push @dirs, $microarray_cnv_dir;
         push @inputs, microarray_cnv_dir => $microarray_cnv_dir;
@@ -657,7 +657,7 @@ sub _resolve_workflow_for_build {
 
     #RunMicroarrayCNV - produce cnv plots using microarray results
     my $microarray_cnv_op;
-    if ($self->has_microarray_build()) {
+    if ($build->has_microarray_build) {
         $microarray_cnv_op = $self->microarray_cnv_op($workflow);
     }
 
@@ -817,7 +817,7 @@ sub _resolve_workflow_for_build {
                         destination_property => 'exome_cnv_result',
                     );
                 }
-                if ($self->has_microarray_build()) {
+                if ($build->has_microarray_build) {
                     $workflow->create_link(
                         source               => $microarray_cnv_op,
                         source_property      => 'result',
@@ -1991,34 +1991,6 @@ sub cnaseq_hmm_file {
         die $self->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
     }
     return $hmm_file;
-}
-
-sub has_microarray_build {
-    my $self = shift;
-    my $base_model;
-    if ($self->exome_model) {
-        $base_model = $self->exome_model;
-    }
-    elsif ($self->wgs_model) {
-        $base_model = $self->wgs_model;
-    }
-    else {
-        return 0;
-    }
-    if ($base_model->class eq 'Genome::Model::SomaticValidation') { return 0; }
-    if ($base_model->tumor_model->genotype_microarray && $base_model->normal_model->genotype_microarray) {
-        if (   $base_model->tumor_model->genotype_microarray->last_succeeded_build
-            && $base_model->normal_model->genotype_microarray->last_succeeded_build)
-        {
-            return 1;
-        }
-        else {
-            return 0;
-        }
-    }
-    else {
-        return 0;
-    }
 }
 
 sub _get_docm_variants_file {

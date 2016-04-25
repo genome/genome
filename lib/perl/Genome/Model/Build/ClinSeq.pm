@@ -67,4 +67,21 @@ sub best_somatic_build_subject_common_name {
     return $self->best_somatic_build->subject->common_name;
 }
 
+sub has_microarray_build {
+    my $self = shift;
+
+    my $base_build;
+    if ($self->exome_build) {
+        $base_build = $self->exome_build;
+    }
+    elsif ($self->wgs_build) {
+        $base_build = $self->wgs_build;
+    }
+    else {
+        return 0;
+    }
+
+    return $base_build->has_microarray_build;
+}
+
 1;
