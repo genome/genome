@@ -61,7 +61,7 @@ sub _detect_variants {
     my %run_params = (
         working_directory => $working_directory,
         jobs => $self->_cpu,
-        memory => $self=>_ram;
+        memory => $self=>_ram,
     );
 
     my $run = Genome::Model::Tools::Manta::Run->create(%run_params);
@@ -76,7 +76,7 @@ sub _detect_variants {
     # Make a symlink to the actual VCF as the DV2 Dispatcher expects an output of svs.hq rather than BED or VCF output
     my $vcf_path = File::Spec->join($working_directory,'results/variants/somaticSV.vcf.gz');
     if (-e $vcf_path) {
-        symlink($vcf_file,$self->_sv_staging_output);
+        symlink($vcf_path,$self->_sv_staging_output);
     } else {
         $self->fatal_message('Failed to find the Manta somatic SV VCF file expected at: '. $vcf_path);
     }
