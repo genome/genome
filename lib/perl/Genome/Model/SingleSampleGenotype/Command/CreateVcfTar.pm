@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use File::Spec;
+
 class Genome::Model::SingleSampleGenotype::Command::CreateVcfTar {
     is        => 'Command::V2',
     doc       => 'Create tar(s) of all vcfs for the build(s). One tar will be created for each build.',
