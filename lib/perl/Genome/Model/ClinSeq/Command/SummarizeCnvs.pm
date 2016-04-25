@@ -10,11 +10,11 @@ class Genome::Model::ClinSeq::Command::SummarizeCnvs {
     is        => 'Command::V2',
     has_input => [
         build => {
-            is                  => 'Genome::Model::Build::SomaticVariation',
+            is                  => 'Genome::Model::Build::SomaticInterface',
             is_many             => 0,
             shell_args_position => 1,
             require_user_verify => 0,
-            doc                 => 'somatic variation build to summarize CNVs from',
+            doc                 => 'somatic build to summarize CNVs from',
         },
         cnv_hmm_file => {
             is  => 'FilesystemPath',
@@ -23,7 +23,7 @@ class Genome::Model::ClinSeq::Command::SummarizeCnvs {
         cnv_hq_file => {
             is  => 'FilesystemPath',
             doc => 'cnvhq file from clin-seq generate-clonality-plots,'
-                . 'if not provided file from WGS somvar is used',
+                . 'if not provided file from WGS somatic build is used',
             is_optional => 1,
         },
         gene_amp_file => {
@@ -60,7 +60,7 @@ EOS
 
 sub help_detail {
     return <<EOS
-Summarize copy number variants using a somatic-variation build and files from a clinseq build 
+Summarize copy number variants using a somatic build and files from a clinseq build
 
 (put more content here)
 EOS
@@ -265,7 +265,8 @@ sub execute {
             "CNV deleted genes\t$del_count\twgs\tcnv_cnview\tcount\tNumber of CNV tumor vs. normal deleted genes according to CNView analysis\n";
     }
     #Summarize the number of CNV amp and del segments from the hmm-segs file
-    #Unfortunately, for now this is only available from the ClinSeq build itself... it would be better to get all this from somatic variation probably...
+    #Unfortunately, for now this is only available from the ClinSeq build
+    #itself... it would be better to get all this from somatic builds probably...
     my $cnv_hmm = $self->cnv_hmm_file;
     if (-e $cnv_hmm) {
         #Gather some basic stats from the cna-seg analysis

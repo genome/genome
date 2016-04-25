@@ -10,11 +10,11 @@ class Genome::Model::ClinSeq::Command::GetVariantSources {
     is        => 'Command::V2',
     has_input => [
         builds => {
-            is                  => 'Genome::Model::Build::SomaticVariation',
+            is                  => 'Genome::Model::Build::SomaticInterface',
             is_many             => 1,
             shell_args_position => 1,
             require_user_verify => 0,
-            doc                 => 'somatic variation build(s) to get variant sources from',
+            doc                 => 'somatic build(s) to get variant sources from',
         },
         outdir => {
             is  => 'FilesystemPath',
@@ -31,7 +31,7 @@ class Genome::Model::ClinSeq::Command::GetVariantSources {
             is_optional => 1,
         },
     ],
-    doc => 'summarize the sources of variants (i.e., which variant callers) for a somatic variation build',
+    doc => 'summarize the sources of variants (i.e., which variant callers) for a somatic build',
 };
 
 sub help_synopsis {
@@ -52,7 +52,7 @@ EOS
 
 sub help_detail {
     return <<EOS
-Summarize source of variants (i.e., snv/indel caller) for one or more somatic variation builds
+Summarize source of variants (i.e., snv/indel caller) for one or more somatic builds
 
 (put more content here)
 EOS
@@ -99,7 +99,7 @@ sub execute {
 
         #Locate the individual indel/snv files for each caller to use in joinx intersect
         #This should be replaced by a method which somehow determines the appropriate files automatically
-        #Depending on whether the somatic variation build is for exome or wgs data, the paths will differ - this should also be determined automatically
+        #Depending on whether the somatic build is for exome or wgs data, the paths will differ - this should also be determined automatically
         for my $caller (qw(strelka gatk pindel varscan)) {
             $self->get_variant_caller_results("indel", $caller, $somatic_build);
         }
@@ -167,7 +167,7 @@ sub build_outdir {
     my $self          = shift;
     my $somatic_build = shift;
 
-    #If there is more than one somatic variation build supplied... create sub-directories for each
+    #If there is more than one somatic build supplied... create sub-directories for each
     my $build_outdir;
     if (scalar($self->builds) > 1) {
         $build_outdir = File::Spec->join($self->outdir, $somatic_build->id);

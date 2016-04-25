@@ -459,10 +459,10 @@ sub summarize_clinseq_build {
         $self->get_rnaseq_metrics($build, $build_outdir, $stats_fh);
     }
 
-    #Summarize basic stats for the WGS and Exome somatic variation models - try using metrics object of somatic variation build?
+    #Summarize basic stats for the WGS and Exome somatic models - try using metrics object of somatic build?
     #e.g. number of tier 1,2,3,4 SNVs and InDels (both 'novel' and 'previously known')
     #e.g. number of SVs
-    $self->status_message("\n\nGet basic somatic variation stats");
+    $self->status_message("\n\nGet basic somatic stats");
     $self->status_message(
         "pp_name\ttier1_snv_count\ttier2_snv_count\ttier3_snv_count\ttier4_snv_count\ttier1_indel_count\ttier2_indel_count\ttier3_indel_count\ttier4_indel_count\tsv_count\tbuild_id"
     );
@@ -532,26 +532,26 @@ sub summarize_clinseq_build {
         );
 
         print $stats_fh
-            "SomVar Tier1 SNV Count\t$tier1_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 1 SNV count for $common_name $extraction_type data\n";
+            "SomVar Tier1 SNV Count\t$tier1_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 1 SNV count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier2 SNV Count\t$tier2_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 2 SNV count for $common_name $extraction_type data\n";
+            "SomVar Tier2 SNV Count\t$tier2_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 2 SNV count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier3 SNV Count\t$tier3_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 3 SNV count for $common_name $extraction_type data\n";
+            "SomVar Tier3 SNV Count\t$tier3_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 3 SNV count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier4 SNV Count\t$tier4_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 4 SNV count for $common_name $extraction_type data\n";
+            "SomVar Tier4 SNV Count\t$tier4_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 4 SNV count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier1 INDEL Count\t$tier1_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 1 INDEL count for $common_name $extraction_type data\n";
+            "SomVar Tier1 INDEL Count\t$tier1_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 1 INDEL count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier2 INDEL Count\t$tier2_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 2 INDEL count for $common_name $extraction_type data\n";
+            "SomVar Tier2 INDEL Count\t$tier2_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 2 INDEL count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier3 INDEL Count\t$tier3_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 3 INDEL count for $common_name $extraction_type data\n";
+            "SomVar Tier3 INDEL Count\t$tier3_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 3 INDEL count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier4 INDEL Count\t$tier4_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 4 INDEL count for $common_name $extraction_type data\n";
+            "SomVar Tier4 INDEL Count\t$tier4_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 4 INDEL count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar SV Count\t$sv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation SV count for $common_name $extraction_type data\n";
+            "SomVar SV Count\t$sv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic SV count for $common_name $extraction_type data\n";
     }
 
-    #Summarize SV annotation file from somatic variation results
+    #Summarize SV annotation file from somatic results
     $self->status_message("\n\nGet more detailed merged somatic SV stats");
     $self->status_message("pp_name\tsv_count\tctx_count\tdel_count\tinv_count\titx_count\tbuild_id");
     for my $build (@somatic_builds) {
@@ -607,7 +607,7 @@ sub summarize_clinseq_build {
         }
     }
 
-    #Summarize SV annotation file from somatic variation results
+    #Summarize SV annotation file from somatic results
     $self->status_message("\n\nGet basic expression count from RNA-seq");
     $self->status_message("pp_name\tgenes_fpkm_greater_1\ttranscripts_fpkm_greater_1\tbuild_id");
     for my $build (@rna_seq_builds) {

@@ -10,19 +10,19 @@ class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
     is        => ['Command::V2', 'Genome::Model::ClinSeq::Util'],
     has_input => [
         wgs_build => {
-            is          => 'Genome::Model::Build',
+            is          => 'Genome::Model::Build::SomaticInterface',
             is_optional => 1,
         },
         exome_build => {
-            is          => 'Genome::Model::Build',
+            is          => 'Genome::Model::Build::SomaticInterface',
             is_optional => 1,
         },
         tumor_rnaseq_build => {
-            is          => 'Genome::Model::Build',
+            is          => 'Genome::Model::Build::RnaSeq',
             is_optional => 1,
         },
         normal_rnaseq_build => {
-            is          => 'Genome::Model::Build',
+            is          => 'Genome::Model::Build::RnaSeq',
             is_optional => 1,
         },
 
@@ -118,8 +118,8 @@ sub execute {
         }
 
         my @params = ('positions_file' => $positions_file);
-        push(@params, ('wgs_som_var_build'    => $wgs_build))           if $wgs_build;
-        push(@params, ('exome_som_var_build'  => $exome_build))         if $exome_build;
+        push(@params, ('wgs_somatic_build'    => $wgs_build))           if $wgs_build;
+        push(@params, ('exome_somatic_build'  => $exome_build))         if $exome_build;
         push(@params, ('rna_seq_tumor_build'  => $tumor_rnaseq_build))  if $tumor_rnaseq_build;
         push(@params, ('rna_seq_normal_build' => $normal_rnaseq_build)) if $normal_rnaseq_build;
         push(@params, ('output_file'          => $output_file));

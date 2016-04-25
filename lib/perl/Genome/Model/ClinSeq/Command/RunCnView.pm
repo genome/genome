@@ -7,11 +7,11 @@ class Genome::Model::ClinSeq::Command::RunCnView {
     is        => ['Command::V2', 'Genome::Model::ClinSeq::Util'],
     has_input => [
         build => {
-            is                  => 'Genome::Model::Build::SomaticVariation',
+            is                  => 'Genome::Model::Build::SomaticInterface',
             is_many             => 0,
             shell_args_position => 1,
             require_user_verify => 0,
-            doc                 => 'somatic variation model to be used for CnView runs'
+            doc                 => 'somatic build to be used for CnView runs'
         },
         cancer_annotation_db => {
             is             => 'Genome::Db',
@@ -30,7 +30,7 @@ class Genome::Model::ClinSeq::Command::RunCnView {
         cnv_hq_file => {
             is          => 'FilesystemPath',
             is_optional => 1,
-            doc         => 'cnv_hq file from clonality analysis.' . 'if not provided file from wgs_somvar build is used'
+            doc         => 'cnv_hq file from clonality analysis. if not provided file from wgs somaic build is used'
         },
         test => {
             is          => 'Boolean',

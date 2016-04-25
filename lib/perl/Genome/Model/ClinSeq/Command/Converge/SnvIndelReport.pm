@@ -245,7 +245,7 @@ sub execute {
     $self->status_message("Producing report for individual: $case_name");
 
     #Gather variants for the tiers specified by the user from each build. Note which build each came from.
-    #Get these from the underlying somatic-variation builds.
+    #Get these from the underlying somatic builds.
     #Annotate all variants (gmt annotate transcript-variants --help)
     my @clinseq_builds = $self->builds;
     my (%somatic_builds, %rnaseq_builds);

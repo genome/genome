@@ -233,6 +233,19 @@ sub _resolve_reference {
 sub __errors__ {
     my $self   = shift;
     my @errors = $self->SUPER::__errors__;
+
+    for my $model (qw(wgs_model exome_model)) {
+        if ($self->$model) {
+            unless ($self->$model->isa('Genome::Model::SomaticVariation') || $self->$model->isa('Genome::Model::SomaticValidation')) {
+                push @errors, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => [$model],
+                    desc => "$model must be of type (Genome::Model::SomaticVariation) or (Genome::Model::SomaticValidation)",
+                );
+            }
+        }
+    }
+
     return @errors;
 }
 
@@ -1251,7 +1264,7 @@ sub clonality_op {
     $workflow->connect_input(
         input_property       => 'wgs_build',
         destination          => $clonality_op,
-        destination_property => 'somatic_var_build',
+        destination_property => 'somatic_build',
     );
     $workflow->connect_input(
         input_property       => 'clonality_dir',
@@ -1684,7 +1697,7 @@ sub create_mutation_spectrum_op {
     $workflow->connect_input(
         input_property       => "${sequencing_type}_build",
         destination          => $create_mutation_spectrum_op,
-        destination_property => 'somvar_build',
+        destination_property => 'somatic_build',
     );
     $workflow->connect_input(
         input_property       => "${sequencing_type}_mutation_spectrum_outdir$index",

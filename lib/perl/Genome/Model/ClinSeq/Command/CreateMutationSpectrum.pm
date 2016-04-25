@@ -7,11 +7,11 @@ use Genome;
 class Genome::Model::ClinSeq::Command::CreateMutationSpectrum {
     is        => ['Command::V2', 'Genome::Model::ClinSeq::Util'],
     has_input => [
-        somvar_build => {
-            is                  => 'Genome::Model::Build::SomaticVariation',
+        somatic_build => {
+            is                  => 'Genome::Model::Build::SomaticInterface',
             shell_args_position => 1,
             require_user_verify => 0,
-            doc                 => 'somatic variation build(s) to ' . 'create mutation spectrum results from',
+            doc                 => 'somatic variation to create mutation spectrum results from',
         },
         clinseq_build => {
             is  => 'Genome::Model::Build::ClinSeq',
@@ -91,10 +91,10 @@ sub __errors__ {
 
 sub get_final_name {
     my $self          = shift;
-    my $somvar_build  = $self->somvar_build;
-    my $final_name    = $somvar_build->subject->name if ($somvar_build->subject->name);
-    $final_name = $somvar_build->individual_common_name
-        if ($somvar_build->individual_common_name);
+    my $somatic_build = $self->somatic_build;
+    my $final_name    = $somatic_build->subject->name if ($somatic_build->subject->name);
+    $final_name = $somatic_build->individual_common_name
+        if ($somatic_build->individual_common_name);
     return $final_name;
 }
 
@@ -254,7 +254,7 @@ sub get_mutation_spectrum_sequence_context_result {
         $self->status_message("Tier1 SNVs file empty. Skipping mutation spectrum" . "sequence context for tier1.");
         return;
     }
-    my $reference_fasta_path        = $self->somvar_build->reference_sequence_build->full_consensus_path('fa');
+    my $reference_fasta_path        = $self->somatic_build->reference_sequence_build->full_consensus_path('fa');
     my $mssc_file4plot              = $sub_outdir2 . $final_name . ".data.tsv";
     my $mssc_outfile                = $sub_outdir2 . $final_name . ".mutation-spectrum-sequence-context.pdf";
     my $mssc_proportiontest_outfile = $sub_outdir2 . $final_name . ".prop.test";
@@ -278,7 +278,7 @@ sub generate_summarize_mutation_spectrum_result {
     my $final_name    = shift;
     my $tier1to3snvs  = shift;
     my $sub_outdir3   = shift;
-    my $somatic_id    = $self->somvar_build->model->id;
+    my $somatic_id    = $self->somatic_build->model->id;
     my $mut_spec_file = $sub_outdir3 . "mutation_spectrum.tsv";
     my $sms_file      = $sub_outdir3 . $final_name . "_summarize-mutation-spectrum.pdf";
     my $input_file    = $sub_outdir3 . "/mutation_spectrum.input.tsv";
@@ -304,7 +304,7 @@ sub generate_mutation_rate_result {
     my $tier3_snvs               = shift;
     my $sub_outdir4              = shift;
     my $data_type                = $self->datatype;
-    my $reference_annotation_dir = $self->somvar_build->model->annotation_build->data_directory;
+    my $reference_annotation_dir = $self->somatic_build->model->annotation_build->data_directory;
     #Get tier bed files from annotation dir
     my $tier1_bed = $reference_annotation_dir . "/annotation_data/tiering_bed_files_v3/tier1.bed";
     my $tier2_bed = $reference_annotation_dir . "/annotation_data/tiering_bed_files_v3/tier2.bed";

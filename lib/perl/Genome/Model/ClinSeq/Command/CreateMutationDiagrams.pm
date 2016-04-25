@@ -18,11 +18,11 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
             doc => 'data from COSMIC (catalog of somatic mutations in cancer',
         },
         builds => {
-            is                  => 'Genome::Model::Build::SomaticVariation',
+            is                  => 'Genome::Model::Build::SomaticInterface',
             is_many             => 1,
             shell_args_position => 1,
             require_user_verify => 0,
-            doc                 => 'somatic variation build(s) to create mutation diagrams from',
+            doc                 => 'somatic build(s) to create mutation diagrams from',
         },
         outdir => {
             is  => 'FilesystemPath',
@@ -32,7 +32,7 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
             is          => 'Boolean',
             is_optional => 1,
             doc =>
-                'Remove identical variants from different somatic-variation builds (do this for WGS + Exome builds from a single case)',
+                'Remove identical variants from different somatic builds (do this for WGS + Exome builds from a single case)',
         },
         effect_type_filter => {
             is          => 'Text',
@@ -76,7 +76,7 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
              is_optional => 1
          },
     ],
-    doc => 'summarize the SVs of somatic variation build',
+    doc => 'summarize the SVs of somatic build',
 };
 
 sub help_synopsis {
@@ -99,11 +99,11 @@ EOS
 
 sub help_detail {
     return <<EOS
-Create mutation diagrams ('loli-plots') for one or more somatic-variation builds.  Only annotated Tier1 variants will be used
+Create mutation diagrams ('loli-plots') for one or more somatic builds.  Only annotated Tier1 variants will be used
 
-A similar plot will be created for Cosmic mutations based on the annotation build of the somatic-variation builds specified
+A similar plot will be created for Cosmic mutations based on the annotation build of the somatic builds specified
 
-In clin-seq it would be typical to specify and *collapse* two somatic-variation builds, one from WGS and one Exome data
+In clin-seq it would be typical to specify and *collapse* two somatic builds, one from WGS and one Exome data
 
 (put more content here)
 EOS
@@ -133,10 +133,10 @@ sub execute {
         $outdir .= "/";
     }
 
-    #Get the annotation reference name for the set of somatic-variation builds supplied
+    #Get the annotation reference name for the set of somatic builds supplied
     my $annotation_reference_build = $self->resolve_annotation_build;
 
-    #Get COSMIC mutation annotation for the annotation build used for this somatic variation model and cosmic version specified by the user
+    #Get COSMIC mutation annotation for the annotation build used for this somatic model and cosmic version specified by the user
     #TODO: Create official versions of these data on allocated disk
     my $cancer_annotation_db = $self->cancer_annotation_db;
     my $cosmic_annotation_db = $self->cosmic_annotation_db;
@@ -153,7 +153,7 @@ sub execute {
     my $filtered_somatic_variants_file = $outdir . "variants.hq.tier1.v1.annotated.filtered";
     my $filtered_cosmic_variants_file  = $outdir . "cosmic.annotated.filtered";
 
-    #Import Tier1 variants from the somatic-variation builds - key on transcript IDs
+    #Import Tier1 variants from the somatic builds - key on transcript IDs
     my $somatic_variants = $self->import_somatic_variants(
         '-complete_variants_file' => $complete_somatic_variants_file,
         '-filtered_variants_file' => $filtered_somatic_variants_file
@@ -167,7 +167,7 @@ sub execute {
         '-filtered_variants_file' => $filtered_cosmic_variants_file
     );
 
-    #Create mutation diagrams for every transcript (one for the somatic-variation data and one for the cosmic data)
+    #Create mutation diagrams for every transcript (one for the somatic data and one for the cosmic data)
     $self->draw_mutation_diagrams(
         '-somatic_variants_file' => $filtered_somatic_variants_file,
         '-cosmic_variants_file'  => $filtered_cosmic_variants_file,
@@ -179,13 +179,13 @@ sub execute {
 }
 
 #####################################################################################################################
-#Determine the reference annotation build from the input somatic variation builds                                   #
+#Determine the reference annotation build from the input somatic builds                                             #
 #####################################################################################################################
 sub resolve_annotation_build {
     my $self   = shift;
     my @builds = $self->builds;
 
-    #Get the annotation version for the series of somatic variation builds specified
+    #Get the annotation version for the series of somatic builds specified
     my %ab_names;
     my %tmp;
     my $final_annotation_build;
@@ -202,16 +202,16 @@ sub resolve_annotation_build {
         $final_annotation_build                     = $annotation_build;
     }
     if (keys %tmp > 1) {
-        die $self->error_message("Found non-matching annotation build names for the list of somatic-variation builds");
+        die $self->error_message("Found non-matching annotation build names for the list of somatic builds");
     }
     unless ($final_annotation_build) {
-        die $self->error_message("Unable to resolve annotation build for the list of somatic-variation builds");
+        die $self->error_message("Unable to resolve annotation build for the list of somatic builds");
     }
     return $final_annotation_build;
 }
 
 #####################################################################################################################
-#Import variants from the somatic-variation effects dirs                                                            #
+#Import variants from the somatic effects dirs                                                                      #
 #####################################################################################################################
 sub import_somatic_variants {
     my $self                   = shift;

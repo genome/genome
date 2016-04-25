@@ -44,7 +44,7 @@ elsif ($ARGV[0]) {
 }
 else {
     $expected_data_directory =
-        Genome::Config::get('test_inputs') . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2016-04-19';
+        Genome::Config::get('test_inputs') . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2016-04-25';
     ok(-d $expected_data_directory, "found expected data directory: $expected_data_directory") or die;
     $cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(
         builds            => [$b],

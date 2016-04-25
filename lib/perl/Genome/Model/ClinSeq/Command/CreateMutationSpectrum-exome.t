@@ -52,7 +52,7 @@ my $mutation_spectrum_cmd = Genome::Model::ClinSeq::Command::CreateMutationSpect
     outdir        => $temp_dir,
     datatype      => "exome",
     clinseq_build => $clinseq_build,
-    somvar_build  => $somvar_build,
+    somatic_build => $somvar_build,
     test          => 1
 );
 $mutation_spectrum_cmd->queue_status_messages(1);

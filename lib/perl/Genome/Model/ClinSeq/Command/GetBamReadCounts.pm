@@ -15,16 +15,16 @@ class Genome::Model::ClinSeq::Command::GetBamReadCounts {
                 . "  (e.g. 5:112176318-112176318	APC	APC	p.R1676T	G	C)"
         },
 
-        wgs_som_var_build => {
+        wgs_somatic_build => {
             is          => 'Genome::Model::Build::SomaticVariation',
             is_optional => 1,
-            doc         => 'Whole genome sequence (WGS) somatic variation build'
+            doc         => 'Whole genome sequence (WGS) somatic build'
         },
 
-        exome_som_var_build => {
+        exome_somatic_build => {
             is          => 'Genome::Model::Build::SomaticVariation',
             is_optional => 1,
-            doc         => 'Exome capture sequence somatic variation build'
+            doc         => 'Exome capture sequence somatic build'
         },
 
         rna_seq_normal_build => {
@@ -94,8 +94,8 @@ sub __errors__ {
 
     unless (
         (
-               $self->wgs_som_var_build
-            || $self->exome_som_var_build
+               $self->wgs_somatic_build
+            || $self->exome_somatic_build
             || $self->rna_seq_normal_build
             || $self->rna_seq_tumor_build
         )
@@ -104,7 +104,7 @@ sub __errors__ {
         push @errors,
             UR::Object::Tag->create(
             type       => 'error',
-            properties => [qw/wgs_som_var_build exome_som_var_build rna_seq_normal_build rna_seq_tumor_build/],
+            properties => [qw/wgs_somatic_build exome_somatic_build rna_seq_normal_build rna_seq_tumor_build/],
             desc       => 'at least one of the four build types must be specified!'
             );
     }
@@ -172,8 +172,8 @@ sub execute {
     }
 
     my $positions_file       = $self->positions_file;
-    my $wgs_som_var_build    = $self->wgs_som_var_build;
-    my $exome_som_var_build  = $self->exome_som_var_build;
+    my $wgs_somatic_build    = $self->wgs_somatic_build;
+    my $exome_somatic_build  = $self->exome_somatic_build;
     my $rna_seq_normal_build = $self->rna_seq_normal_build;
     my $rna_seq_tumor_build  = $self->rna_seq_tumor_build;
     my $no_fasta_check       = $self->no_fasta_check;
@@ -184,7 +184,7 @@ sub execute {
     #Build a map of ensembl transcript ids to gene ids and gene names
     my $annotation_build;
     my $reference_build;
-    my @builds = ($wgs_som_var_build, $exome_som_var_build, $rna_seq_normal_build, $rna_seq_tumor_build);
+    my @builds = ($wgs_somatic_build, $exome_somatic_build, $rna_seq_normal_build, $rna_seq_tumor_build);
     foreach my $build (@builds) {
         if ($build) {
             unless ($build->status eq 'Succeeded') {
@@ -229,8 +229,8 @@ sub execute {
     #Get BAM file paths from build IDs.  Perform sanity checks
     my $data;
     $data = $self->getFilePaths_Genome(
-        '-wgs_som_var_build'    => $wgs_som_var_build,
-        '-exome_som_var_build'  => $exome_som_var_build,
+        '-wgs_somatic_build'    => $wgs_somatic_build,
+        '-exome_somatic_build'  => $exome_somatic_build,
         '-rna_seq_normal_build' => $rna_seq_normal_build,
         '-rna_seq_tumor_build'  => $rna_seq_tumor_build,
     );
@@ -418,21 +418,21 @@ sub importPositions {
 sub getFilePaths_Genome {
     my $self                 = shift;
     my %args                 = @_;
-    my $wgs_som_var_build    = $args{'-wgs_som_var_build'};
-    my $exome_som_var_build  = $args{'-exome_som_var_build'};
+    my $wgs_somatic_build    = $args{'-wgs_somatic_build'};
+    my $exome_somatic_build  = $args{'-exome_somatic_build'};
     my $rna_seq_normal_build = $args{'-rna_seq_normal_build'};
     my $rna_seq_tumor_build  = $args{'-rna_seq_tumor_build'};
 
     my @data;
 
     #WGS tumor normal BAMs
-    if ($wgs_som_var_build) {
-        push @data, $self->_getFilePaths_Genome_forSomVar($wgs_som_var_build, 'WGS');
+    if ($wgs_somatic_build) {
+        push @data, $self->_getFilePaths_Genome_forSomVar($wgs_somatic_build, 'WGS');
     }
 
     #Exome tumor normal BAMs
-    if ($exome_som_var_build) {
-        push @data, $self->_getFilePaths_Genome_forSomVar($exome_som_var_build, 'Exome');
+    if ($exome_somatic_build) {
+        push @data, $self->_getFilePaths_Genome_forSomVar($exome_somatic_build, 'Exome');
     }
 
     #RNAseq normal BAM
@@ -452,23 +452,23 @@ sub getFilePaths_Genome {
 
 sub _getFilePaths_Genome_forSomVar {
     my $self          = shift;
-    my $som_var_build = shift;
+    my $somatic_build = shift;
     my $data_type     = shift;
 
     #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-    my $build_dir = $som_var_build->data_directory . "/";
+    my $build_dir = $somatic_build->data_directory . "/";
 
     my %normal_data;
     $normal_data{build_dir}   = $build_dir;
     $normal_data{data_type}   = $data_type;
     $normal_data{sample_type} = "Normal";
-    $normal_data{bam_path}    = $som_var_build->normal_bam;
+    $normal_data{bam_path}    = $somatic_build->normal_bam;
 
     my %tumor_data;
     $tumor_data{build_dir}   = $build_dir;
     $tumor_data{data_type}   = $data_type;
     $tumor_data{sample_type} = "Tumor";
-    $tumor_data{bam_path}    = $som_var_build->tumor_bam;
+    $tumor_data{bam_path}    = $somatic_build->tumor_bam;
 
     return \%normal_data, \%tumor_data;
 }

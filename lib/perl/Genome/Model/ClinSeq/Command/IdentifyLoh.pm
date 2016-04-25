@@ -11,15 +11,15 @@ class Genome::Model::ClinSeq::Command::IdentifyLoh {
         clinseq_build => {
             is  => 'Genome::Model::Build::ClinSeq',
             doc => 'ClinSeq build to identify LOH regions in.
-            [Either this or a somatic variation build is required.]',
+            [Either this or a somatic build is required.]',
             is_optional => 1,
         },
         outdir => {
             is  => 'FilesystemPath',
             doc => 'Directory where output files will be written.',
         },
-        somvar_build => {
-            is  => 'Genome::Model::Build::SomaticVariation',
+        somatic_build => {
+            is  => 'Genome::Model::Build::SomaticInterface',
             doc => 'SomVar build to identify LOH regions in.
         [Either this or a clinseq build is required.]',
             is_optional => 1,
@@ -58,23 +58,23 @@ genome model clin-seq identify-loh\\
     --bamrc-version=0.7
 genome model clin-seq identify-loh\\
     --outdir=/tmp/test/ \\
-    --somvar-build='9dc0385a1b634c9bb85eb2017b3a0c73' \\
+    --somatic-build='9dc0385a1b634c9bb85eb2017b3a0c73' \\
     --bamrc-version=0.7
 EOS
 }
 
 sub help_detail {
     return <<EOS
-Use the results from Varscan in the somatic-variation builds and identify
+Use the results from Varscan in the somatic builds and identify
 regions of LOH. Specifically, look at heterozygous single nucleotide variants
 in the normal sample and compare with stretches of homozygosity in the tumor.
 
 If a clinseq build is supplied as input, the tool attempts to use the results
-from the WGS-somatic-variation build input, if these are unavailable the tool
-looks for WEx-somatic-variation build.
+from the WGS-somatic build input, if these are unavailable the tool
+looks for WEx-somatic build.
 
 Alternatively, instead of a clin-seq build you can supply a
-somatic-variation build as an input.
+somatic build as an input.
 
 EOS
 }
@@ -93,11 +93,11 @@ sub __errors__ {
     return @errors;
 }
 
-#Get a somatic-variation build from input or from clinseq-build
-sub resolve_somvar {
+#Get a somatic build from input or from clinseq-build
+sub resolve_somatic_build {
     my $self         = shift;
-    if ($self->somvar_build) {
-        return $self->somvar_build;
+    if ($self->somatic_build) {
+        return $self->somatic_build;
     }
     else {
         return $self->clinseq_build->best_somatic_build;
@@ -124,9 +124,9 @@ sub split_snvs {
 #Get Varscan SNVs from somatic-variation
 sub get_varscan_snvs {
     my $self         = shift;
-    my $somvar_build = shift;
+    my $somatic_build = shift;
     my $snv_prefix   = shift;
-    my $dd           = $somvar_build->data_directory;
+    my $dd           = $somatic_build->data_directory;
     my @varscan_snvs = glob(File::Spec->join($dd, "variants/snv/varscan-somatic-*/snvs.hq.unfiltered"));
     unless (scalar @varscan_snvs) {
         die $self->error_message("Unable to find varscan SNVs in $dd");
@@ -138,14 +138,14 @@ sub get_varscan_snvs {
 #Filter out putative false-positive SNVs
 sub filter_snvs {
     my $self         = shift;
-    my $somvar_build = shift;
+    my $somatic_build = shift;
     my $snv_prefix   = shift;
-    my $refbuild = $somvar_build->reference_sequence_build;
+    my $refbuild = $somatic_build->reference_sequence_build;
     my $ref_fa   = $refbuild->full_consensus_path('fa');
     my $filter   = Genome::Model::Tools::Varscan::SomaticFilterWorkflow->create(
         outdir        => $self->outdir,
-        tumor_bam     => $somvar_build->tumor_bam,
-        normal_bam    => $somvar_build->normal_bam,
+        tumor_bam     => $somatic_build->tumor_bam,
+        normal_bam    => $somatic_build->normal_bam,
         prefix        => $snv_prefix,
         reference     => $ref_fa,
         bamrc_version => $self->bamrc_version,
@@ -223,10 +223,10 @@ sub cleanup {
 #Get, Filter, Combine, Segment, Filter, Cleanup
 sub execute {
     my $self         = shift;
-    my $somvar_build = $self->resolve_somvar;
+    my $somatic_build = $self->resolve_somatic_build;
     my $snv_prefix   = File::Spec->join($self->outdir, "snvs");
-    $self->get_varscan_snvs($somvar_build, $snv_prefix);
-    $self->filter_snvs($somvar_build, $snv_prefix);
+    $self->get_varscan_snvs($somatic_build, $snv_prefix);
+    $self->filter_snvs($somatic_build, $snv_prefix);
     my $combined_sorted = $self->combine_sort_snvs($snv_prefix);
     my $loh_basename    = File::Spec->join($self->outdir, "loh");
     my $loh_segments    = $self->segment_loh($combined_sorted, $loh_basename);
