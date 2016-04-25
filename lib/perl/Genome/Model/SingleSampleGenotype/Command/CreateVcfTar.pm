@@ -32,7 +32,7 @@ sub execute {
             $self->fatal_message("Tar file already exists, please remove: $tar_fullpath");
         }
 
-        my @tar_cmd = [ "tar -rvf", $tar_fullpath ];
+        my @tar_cmd = ( "tar", "-rvf", $tar_fullpath );
 
         for my $r ( sort { ( $a->intervals )[0] cmp( $b->intervals )[0] } $build->haplotype_caller_result ) {
             my $filename = $r->_vcf_filename;
