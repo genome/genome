@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Model::SingleSampleGenotype::Command::CreateVcfTar {
     is        => 'Command::V2',
-    doc       => 'Create a tar of all vcfs for the build',
+    doc       => 'Create tar(s) of all vcfs for the build(s). One tar will be created for each build.',
     has_input => {
         builds => {
             is      => "Genome::Model::Build::SingleSampleGenotype",
