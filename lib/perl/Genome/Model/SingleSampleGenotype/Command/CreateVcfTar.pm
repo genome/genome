@@ -34,10 +34,12 @@ sub execute {
         for my $r (sort {($a->intervals)[0] cmp ($b->intervals)[0]} $build->haplotype_caller_result) {
             my $filename = $r->_vcf_filename;
             my $dir = $r->output_dir;
-            `$tar_cmd -C $dir $filename`;
+            Genome::Sys->shellcmd(cmd => "$tar_cmd -C $dir $filename");
         }
 
-        `gzip $tar_fullpath`;
+
+        Genome::Sys->shellcmd(cmd => "gzip $tar_fullpath");
+        
     }
     return 1;
 }
