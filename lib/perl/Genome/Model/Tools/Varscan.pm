@@ -62,6 +62,7 @@ class Genome::Model::Tools::Varscan {
         tmp_dir => {
             is => 'Text',
             doc => 'Temporary directory for Java.',
+            default_value => Genome::Sys->create_temp_directory,
         },
 
     ],
