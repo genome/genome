@@ -1,0 +1,49 @@
+package Genome::Model::SingleSampleGenotype::Command::CreateVcfTar;
+
+use strict;
+use warnings;
+
+use Genome;
+
+use Cwd;
+
+class Genome::Model::SingleSampleGenotype::Command::CreateVcfTar {
+    is => 'Command::V2',
+    doc => 'Create a tar of all vcfs for the build',
+    has_input => {
+        builds => {
+            is => "Genome::Model::Build::SingleSampleGenotype",
+            is_many => 1,
+        },
+    },
+};
+
+sub execute {
+    my $self = shift;
+    for my $build ($self->builds) {
+        my $cwd = getcwd;
+        my $build_id = $build->build_id;
+        my $tar_fullpath = "$cwd/$build_id.tar";
+
+        if (-e $tar_fullpath) {
+            $self->fatal_message("Tar file already exists, please remove: $tar_fullpath");
+        }
+
+        my $tar_cmd = "tar -rvf $tar_fullpath ";
+
+        for my $r (sort {($a->intervals)[0] cmp ($b->intervals)[0]} $build->haplotype_caller_result) {
+            my $filename = $r->_vcf_filename;
+            my $dir = $r->output_dir;
+            `$tar_cmd -C $dir $filename`;
+        }
+
+        `gzip $tar_fullpath`;
+    }
+    return 1;
+}
+
+sub sub_command_category {
+    return 'analyst tools';
+}
+
+1;
