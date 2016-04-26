@@ -1,0 +1,12 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="test outer pipeline" executor="Workflow::Executor::SerialDeferred" logDir="/tmp/">
+    <operation name="inner" workflowFile="inner.xml" />
+
+    <link fromOperation="input connector" fromProperty="input" toOperation="inner" toProperty="input" />
+    <link fromOperation="inner" fromProperty="single_output" toOperation="output connector" toProperty="single_output" />
+
+     <operationtype typeClass="Workflow::OperationType::Model">
+        <inputproperty>input</inputproperty>
+        <outputproperty>single_output</outputproperty>
+    </operationtype>
+</workflow>
