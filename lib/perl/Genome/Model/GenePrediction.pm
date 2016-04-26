@@ -167,8 +167,7 @@ sub start_assembly_build {
     my ($self, $assembly_model) = @_;
     my $assembly_model_id = $assembly_model->id;
 
-    unless ($assembly_model->isa('Genome::Model::DeNovoAssembly') or 
-            $assembly_model->isa('Genome::Model::ImportedAssembly')) {
+    unless ($assembly_model->isa('Genome::Model::DeNovoAssembly')) {
         $self->error_message("Model $assembly_model_id is not an assembly model! Not starting build!");
         confess;
     }
