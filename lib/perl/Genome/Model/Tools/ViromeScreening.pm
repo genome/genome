@@ -4,10 +4,8 @@ use strict;
 use warnings;
 
 use Genome;
-use Command;
 use Workflow::Simple;
-use Data::Dumper;
-use File::Basename;
+
 use Mail::Sender;
 
 UR::Object::Type->define(
