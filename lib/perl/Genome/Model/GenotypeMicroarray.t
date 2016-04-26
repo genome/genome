@@ -10,7 +10,6 @@ use warnings;
 use above 'Genome';
 
 require File::Compare;
-use Workflow::Simple;
 use Test::More;
 use Test::Exception;
 
