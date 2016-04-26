@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow::Simple;
 
 use Mail::Sender;
 
@@ -96,17 +95,20 @@ sub execute {
 sub _run_workflow {
     my $self = shift;
 
-    my $rv = run_workflow_lsf(
-	Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ViromeScreening/virome-screening6.xml',
-	'fasta_file'  => $self->fasta_file,
-	'barcode_file'=> $self->barcode_file,
-	'dir'         => $self->dir,
-	'logfile'     => $self->logfile,
+    my $dag = Genome::WorkflowBuilder::DAG->from_xml_filename(
+        Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ViromeScreening/virome-screening6.xml'
+    );
+    my %inputs = (
+        'fasta_file'  => $self->fasta_file,
+        'barcode_file'=> $self->barcode_file,
+        'dir'         => $self->dir,
+        'logfile'     => $self->logfile,
         'human_db'    => $self->human_db,
         'nt_db'       => $self->nt_db,
         'virus_db'    => $self->virus_db,
         'taxonomy_db' => $self->taxonomy_db,
     );
+    my $rv = $dag->execute(inputs => \%inputs);
 
     return if not $rv;
 
