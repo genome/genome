@@ -5,11 +5,10 @@ use strict;
 
 use Genome;
 
+use Genome::Sys::LSF::ResourceParser qw(parse_lsf_params);
+
 use File::Spec qw(join);
 use Data::Dumper;
-
-my $CPU = 12;
-my $RAM = 8;
 
 class Genome::Model::Tools::DetectVariants2::Manta {
     is => 'Genome::Model::Tools::DetectVariants2::Detector',
@@ -20,12 +19,18 @@ class Genome::Model::Tools::DetectVariants2::Manta {
     ],
 };
 
-sub _cpu {
-    return $CPU;
-}
+sub _gb_ram {
+    my $self = shift;
 
-sub _ram {
-    return $RAM;
+    my $lsf_params = parse_lsf_params($self->lsf_resource);
+
+    my $kb_ram = $lsf_params->{'rLimits'}->{'RSS'};
+
+    if (!defined($kb_ram)) {
+        $self->fatal_message('Unable to resolve RAM from the lsf resource string: '. $self->lsf_resource);
+    }
+
+    return ($kb_ram / 1_000_000);
 }
 
 sub _detect_variants {
@@ -33,34 +38,35 @@ sub _detect_variants {
 
     my $working_directory = $self->_temp_staging_directory;
 
-    my %config_params = (
-        tumor_bam_file => $self->aligned_reads_input,
-        normal_bam_file => $self->control_aligned_reads_input,
-        version => $self->version,
-        working_directory => $working_directory,
-        reference_fasta => $self->reference_sequence_input,
-    );
-
-    # TODO : Determine if this is exome or rna (if rna, unstranded?)
-    # One option is to define these as detector params in the processing profile, ie. $self->params
-    # If so, parse the param string to make the necessary param to hash ref translation
-    # The same could be done with the config_file option but it will have a value rather than a simple flag
+    # Optional params defined as detector params in the processing profile
+    # parse the param string to make the necessary param to hash ref translation
     # Example : --exome --config-file=/my/foo/config.txt
     # ( exome => 1, config_file => '/my/foo/config/txt' )
+    # Also see Genome::Model::Tools::DetectVariants2::Mutect::parse_params
+    my @resolved_config_params = (
+        '--tumor-bam-file' => $self->aligned_reads_input,
+        '--normal-bam-file' => $self->control_aligned_reads_input,
+        '--version' => $self->version,
+        '--working-directory' => $working_directory,
+        '--reference-fasta' => $self->reference_sequence_input,
+    );
 
-    my $config = Genome::Model::Tools::Manta::Config->create(%config_params);
+    my @dv2_config_params = split(' ',$self->params);
+    my ($config_cmd_class, $config_cmd_params) = Genome::Model::Tools::Manta::Config->resolve_class_and_params_for_argv(@dv2_config_params,@resolved_config_params);
 
-    unless ($config) {
-        $self->fatal_message('Failed to create Manta config command with params: '. Data::Dumper::Dumper(%config_params) );
+    my $config_cmd = Genome::Model::Tools::Manta::Config->create($config_cmd_params);
+
+    unless ($config_cmd) {
+        $self->fatal_message('Failed to create Manta config command with params: '. Data::Dumper::Dumper($config_cmd_params) );
     }
-    unless ($config->execute()) {
+    unless ($config_cmd->execute()) {
         $self->fatal_message('Could not execute Manta config command!');
     }
 
     my %run_params = (
         working_directory => $working_directory,
-        jobs => $self->_cpu,
-        memory => $self->_ram,
+        jobs => Genome::SoftwareResult->_available_cpu_count,
+        memory => $self->_gb_ram,
     );
 
     my $run = Genome::Model::Tools::Manta::Run->create(%run_params);
