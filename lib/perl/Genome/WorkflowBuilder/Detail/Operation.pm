@@ -94,8 +94,8 @@ sub from_xml_file {
 sub from_xml_filename {
     my ($class, $filename) = @_;
 
-    my $fh = Genome::Sys->open_file_for_reading($filename);
-    return $class->from_xml_file($fh);
+    my $doc = XML::LibXML->load_xml(location => $filename);
+    return $class->from_xml_element($doc->documentElement);
 }
 
 sub operation_type {
