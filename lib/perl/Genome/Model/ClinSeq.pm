@@ -810,8 +810,8 @@ sub _resolve_workflow_for_build {
                     destination_property => 'converge_snv_indel_report_result',
                 );
             }
-            if (($mqs->[$i] + $bqs->[$i]) > $best_mq_bq_sum) {
-                $best_mq_bq_sum = $mqs->[$i] + $bqs->[$i];
+            if (($mqs->[$i-1] + $bqs->[$i-1]) > $best_mq_bq_sum) {
+                $best_mq_bq_sum = $mqs->[$i-1] + $bqs->[$i-1];
                 $best_converge_snv_indel_report_op = $converge_snv_indel_report_op;
             }
             if ($build->wgs_build or $build->should_run_exome_cnv) {
