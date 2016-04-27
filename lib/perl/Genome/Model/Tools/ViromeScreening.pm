@@ -96,11 +96,7 @@ sub execute {
 sub _run_workflow {
     my $self = shift;
 
-    my $location = __FILE__;
-    $location =~ s/\.pm$//;
-    my $xml = File::Spec->join($location, 'virome-screening6.xml');
-
-    my $dag = Genome::WorkflowBuilder::DAG->from_xml_filename($xml);
+    my $dag = $self->_construct_workflow;
     my %inputs = (
         'fasta_file'  => $self->fasta_file,
         'barcode_file'=> $self->barcode_file,
@@ -116,6 +112,17 @@ sub _run_workflow {
     return if not $rv;
 
     return 1;
+}
+
+sub _construct_workflow {
+    my $self = shift;
+
+    my $location = __FILE__;
+    $location =~ s/\.pm$//;
+    my $xml = File::Spec->join($location, 'virome-screening6.xml');
+
+    my $dag = Genome::WorkflowBuilder::DAG->from_xml_filename($xml);
+    return $dag;
 }
 
 sub _send_failed_mail {
