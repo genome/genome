@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow::Simple;
 
 class Genome::Model::Tools::Blat::Parallel {
     is => ['Genome::Model::Tools::Blat'],
@@ -100,11 +99,10 @@ sub execute {
     my $xml_path = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
 
-    my $output = run_workflow_lsf($xml_path,%params);
+    my $wf = Genome::WorkflowBuilder::DAG->from_xml_filename($xml_path);
+    my $output = $wf->execute(inputs => \%params);
     unless (defined $output) {
-        for (@Workflow::Simple::ERROR) {
-            print STDERR $_->error ."\n";
-        }
+        $self->fatal_message('Failed to execute workflow.');
     }
     return 1;
 }

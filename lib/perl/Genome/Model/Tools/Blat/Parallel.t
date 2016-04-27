@@ -12,9 +12,10 @@ use File::Compare;
 use File::Temp;
 
 BEGIN {
-    $ENV{NO_LSF} = 1;
     use_ok ('Genome::Model::Tools::Blat::Parallel');
 }
+
+Genome::Config::set_env('workflow_builder_backend', 'inline');
 
 my $tmp_dir = File::Temp::tempdir('Genome-Model-Tools-Blat-Parallel-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Blat-Parallel';
