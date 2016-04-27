@@ -113,6 +113,19 @@ sub run_polymutt {
     $inputs{output_merged}= $self->output_directory . "/snvs.vcf.gz";
     $inputs{chr2process} = $self->chr2process;
 
+    my $workflow = $self->_create_workflow;
+
+    $self->debug_message("Now launching 2 polymutt jobs");
+    my $result = $workflow->execute(inputs => \%inputs);
+    unless($result) {
+        $self->error_message("parallel polymutt did not return correctly.");
+        die;
+    }
+}
+
+sub _create_workflow {
+    my $self = shift;
+
     my $workflow = Genome::WorkflowBuilder::DAG->create(
         name=> "Run polymutt standard and denov",
     );
@@ -120,7 +133,7 @@ sub run_polymutt {
     my $denovo_op;
     my @polymutt_operations;
     if (!$self->skip_denovo) {
-        my $denovo_op = Genome::WorkflowBuilder::Command->create(
+        $denovo_op = Genome::WorkflowBuilder::Command->create(
             name=>"denovo polymutt",
             command => "Genome::Model::Tools::Relationship::RunPolymutt",
         );
@@ -191,7 +204,6 @@ sub run_polymutt {
             destination_property => "denovo_vcf",
         );
     }
-   
 
     my $log_dir = $self->output_directory;
     if (Genome::WorkflowBuilder::DAG->parent_log_dir) {
@@ -199,13 +211,7 @@ sub run_polymutt {
     }
     $workflow->recursively_set_log_dir($log_dir);
 
-    $self->debug_message("Now launching 2 polymutt jobs");
-    my $result = $workflow->execute(inputs => \%inputs);
-    unless($result) {
-        $self->error_message("parallel polymutt did not return correctly.");
-        die;
-    }
-
+    return $workflow;
 }
 
 sub generate_dat {
@@ -254,8 +260,23 @@ sub parse_ped {
 sub generate_glfs {
     my $self = shift;
     my @alignments = @_;
+
+    my ($workflow, $inputs, $outputs) = $self->_create_glfs_workflow(@alignments);
+
+    $self->debug_message("Now launching glf generation jobs");
+    my $result = $workflow->execute(inputs => $inputs);
+    unless($result) {
+        die $self->error_message("parallel glf generation workflow did not return correctly.");
+    }
+
+    return @$outputs;
+}
+
+sub _create_glfs_workflow {
+    my $self = shift;
+    my @alignments = @_;
     my %inputs;
-    my (@outputs, @inputs);
+    my @outputs;
     $inputs{ref_fasta} = $alignments[0]->reference_build->full_consensus_path("fa");
 
 #    my $bam_path = $a->bam_file;
@@ -266,7 +287,6 @@ sub generate_glfs {
         push @outputs, $output_name;
         $inputs{"bam_$i"}=$alignments[$i]->get_bam_file;
         $inputs{"output_glf_$i"}=$output_name;
-        push @inputs, ("bam_$i", "output_glf_$i");
     }
     my $workflow = Genome::WorkflowBuilder::DAG->create(
         name=> "polymutt parallel glf file creation",
@@ -300,13 +320,9 @@ sub generate_glfs {
         );
     }
     $workflow->recursively_set_log_dir($self->output_directory);
-    $self->debug_message("Now launching glf generation jobs");
-    my $result = $workflow->execute(inputs => \%inputs);
-    unless($result) {
-        die $self->error_message("parallel glf generation workflow did not return correctly.");
-    }
 
-    return @outputs;
+
+    return ($workflow, \%inputs, \@outputs);
 }
 
 
