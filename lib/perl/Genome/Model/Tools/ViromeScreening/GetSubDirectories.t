@@ -10,7 +10,7 @@ print "user:  " . Genome::Sys->username . "\n";
 
 BEGIN {use_ok('Genome::Model::Tools::ViromeScreening::GetSubDirectories');}
 
-my ($dir) = ('/gscmnt/sata835/info/medseq/virome/test17');
+my $dir = Genome->base_dir;
 
 #create
 my $gsd = Genome::Model::Tools::ViromeScreening::GetSubDirectories->create(
