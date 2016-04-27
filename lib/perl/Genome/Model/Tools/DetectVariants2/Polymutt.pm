@@ -6,8 +6,6 @@ use warnings;
 use FileHandle;
 
 use Genome;
-use Workflow;
-use Workflow::Simple;
 use File::Basename;
 class Genome::Model::Tools::DetectVariants2::Polymutt {
     is => ['Genome::Model::Tools::DetectVariants2::Detector'],
@@ -114,141 +112,96 @@ sub run_polymutt {
     $inputs{output_standard} = $self->output_directory . "/snvs.standard.vcf.gz";
     $inputs{output_merged}= $self->output_directory . "/snvs.vcf.gz";
     $inputs{chr2process} = $self->chr2process;
-    my $workflow = Workflow::Model->create(
+
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name=> "Run polymutt standard and denov",
-        input_properties => [
-        'dat_file',
-        'glf_index',
-        'ped_file',
-        'output_denovo',
-        'output_standard',
-        'output_merged',
-        'denovo',
-        'version',
-        'chr2process',
-        ],
-        output_properties => [
-        'output',
-        ],
     );
 
     my $denovo_op;
     my @polymutt_operations;
     if (!$self->skip_denovo) {
-        $denovo_op = $workflow->add_operation(
+        my $denovo_op = Genome::WorkflowBuilder::Command->create(
             name=>"denovo polymutt",
-            operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Relationship::RunPolymutt"),
+            command => "Genome::Model::Tools::Relationship::RunPolymutt",
         );
+        $workflow->add_operation($denovo_op);
         push @polymutt_operations, $denovo_op;
     }
 
-    my $standard_op = $workflow->add_operation(
+    my $standard_op = Genome::WorkflowBuilder::Command->create(
         name=>"standard polymutt",
-        operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Relationship::RunPolymutt"),
+        command => "Genome::Model::Tools::Relationship::RunPolymutt",
     );
+    $workflow->add_operation($standard_op);
     push @polymutt_operations, $standard_op;
 
     for my $op (@polymutt_operations) {
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"dat_file",
-            right_operation=>$op,
-            right_property=>"dat_file",
-        );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"glf_index",
-            right_operation=>$op,
-            right_property=>"glf_index",
-        );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"ped_file",
-            right_operation=>$op,
-            right_property=>"ped_file",
-        );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"version",
-            right_operation=>$op,
-            right_property=>"version",
-        );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"chr2process",
-            right_operation=>$op,
-            right_property=>"chr2process",
-        );
-
+        for my $property (qw(dat_file glf_index ped_file version chr2process)) {
+            $workflow->connect_input(
+                input_property       => $property,
+                destination          => $op,
+                destination_property => $property,
+            );
+        }
     }
 
-    $workflow->add_link(
-        left_operation=>$workflow->get_input_connector,
-        left_property=>"output_standard",
-        right_operation=>$standard_op,
-        right_property=>"output_vcf",
+    $workflow->connect_input(
+        input_property       => "output_standard",
+        destination          => $standard_op,
+        destination_property => "output_vcf",
     );
-    my $merge_op = $workflow->add_operation(
+    my $merge_op = Genome::WorkflowBuilder::Command->create(
         name=>"merge standard and denovo vcfs",
-        operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Relationship::MergeAndFixVcfs"),
+        command => "Genome::Model::Tools::Relationship::MergeAndFixVcfs",
     );
+    $workflow->add_operation($merge_op);
 
-    $workflow->add_link(
-        left_operation=>$standard_op,
-        left_property=>"output_vcf",
-        right_operation=>$merge_op,
-        right_property=>"standard_vcf",
+    $workflow->create_link(
+        source               => $standard_op,
+        source_property      => "output_vcf",
+        destination          => $merge_op,
+        destination_property => "standard_vcf",
     );
-    $workflow->add_link(
-        left_operation=>$workflow->get_input_connector,
-        left_property=>'output_merged',
-        right_operation=>$merge_op,
-        right_property=>'output_vcf',
+    $workflow->connect_input(
+        input_property       => 'output_merged',
+        destination          => $merge_op,
+        destination_property => 'output_vcf',
     );
-     $workflow->add_link(
-        left_operation=>$merge_op,
-        left_property=>'output_vcf',
-        right_operation=>$workflow->get_output_connector,
-        right_property=>'output',
+    $workflow->connect_output(
+        source          => $merge_op,
+        source_property => 'output_vcf',
+        output_property => 'output',
     );
 
     if (!$self->skip_denovo) {
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"output_denovo",
-            right_operation=>$denovo_op,
-            right_property=>"output_vcf",
+        $workflow->connect_input(
+            input_property       => "output_denovo",
+            destination          => $denovo_op,
+            destination_property => "output_vcf",
         );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"denovo",
-            right_operation=>$denovo_op,
-            right_property=>"denovo",
+        $workflow->connect_input(
+            input_property       => "denovo",
+            destination          => $denovo_op,
+            destination_property => "denovo",
         );
-        $workflow->add_link(
-            left_operation=>$denovo_op,
-            left_property=>"output_vcf",
-            right_operation=>$merge_op,
-            right_property=>"denovo_vcf",
+        $workflow->create_link(
+            source               => $denovo_op,
+            source_property      => "output_vcf",
+            destination          => $merge_op,
+            destination_property => "denovo_vcf",
         );
     }
    
 
     my $log_dir = $self->output_directory;
-    if(Workflow::Model->parent_workflow_log_dir) {
-        $log_dir = Workflow::Model->parent_workflow_log_dir;
+    if (Genome::WorkflowBuilder::DAG->parent_log_dir) {
+        $log_dir = Genome::WorkflowBuilder::DAG->parent_log_dir;
     }
-    $workflow->log_dir($log_dir);
+    $workflow->recursively_set_log_dir($log_dir);
 
-    my @errors = $workflow->validate;
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
-    }
     $self->debug_message("Now launching 2 polymutt jobs");
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
+    my $result = $workflow->execute(inputs => \%inputs);
     unless($result) {
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         $self->error_message("parallel polymutt did not return correctly.");
         die;
     }
@@ -315,57 +268,41 @@ sub generate_glfs {
         $inputs{"output_glf_$i"}=$output_name;
         push @inputs, ("bam_$i", "output_glf_$i");
     }
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name=> "polymutt parallel glf file creation",
-        input_properties => [
-        'ref_fasta',
-        @inputs,
-        ],
-        output_properties => [
-        'output',
-        ],
     );
     for(my $i=0; $i< scalar(@alignments); $i++) {
-        my $hybridview_op = $workflow->add_operation(
+        my $hybridview_op = Genome::WorkflowBuilder::Command->create(
             name=>"glf creation $i",
-            operation_type=>Workflow::OperationType::Command->get("Genome::Model::Tools::Samtools::HybridView"),
+            command => "Genome::Model::Tools::Samtools::HybridView",
         );
+        $workflow->add_operation($hybridview_op);
 
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"ref_fasta",
-            right_operation=>$hybridview_op,
-            right_property=>"ref_fasta",
+        $workflow->connect_input(
+            input_property       => "ref_fasta",
+            destination          => $hybridview_op,
+            destination_property => "ref_fasta",
         );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"bam_$i",
-            right_operation=>$hybridview_op,
-            right_property=>"bam",
+        $workflow->connect_input(
+            input_property       => "bam_$i",
+            destination          => $hybridview_op,
+            destination_property => "bam",
         );
-        $workflow->add_link(
-            left_operation=>$workflow->get_input_connector,
-            left_property=>"output_glf_$i",
-            right_operation=>$hybridview_op,
-            right_property=>"output_glf",
+        $workflow->connect_input(
+            input_property       => "output_glf_$i",
+            destination          => $hybridview_op,
+            destination_property => "output_glf",
         );
-        $workflow->add_link(
-            left_operation=>$hybridview_op,
-            left_property=>"output_glf",
-            right_operation=>$workflow->get_output_connector,
-            right_property=>"output",
+        $workflow->connect_output(
+            source          => $hybridview_op,
+            source_property => "output_glf",
+            output_property => "output",
         );
     }
-    my @errors = $workflow->validate;
-    $workflow->log_dir($self->output_directory);
-    if (@errors) {
-        $self->error_message(@errors);
-        die "Errors validating workflow\n";
-    }
+    $workflow->recursively_set_log_dir($self->output_directory);
     $self->debug_message("Now launching glf generation jobs");
-    my $result = Workflow::Simple::run_workflow_lsf( $workflow, %inputs);
+    my $result = $workflow->execute(inputs => \%inputs);
     unless($result) {
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         die $self->error_message("parallel glf generation workflow did not return correctly.");
     }
 
