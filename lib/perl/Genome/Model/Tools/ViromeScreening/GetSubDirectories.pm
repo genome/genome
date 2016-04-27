@@ -1,4 +1,4 @@
-package Genome::Model::Tools::GetSubDirectories;
+package Genome::Model::Tools::ViromeScreening::GetSubDirectories;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 use Workflow;
 use IO::File;
 
-class Genome::Model::Tools::GetSubDirectories{
+class Genome::Model::Tools::ViromeScreening::GetSubDirectories{
     is => 'Command',
     has => [
         dir => {is => 'String', doc => 'path for parent directory', is_input => 1,},

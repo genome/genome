@@ -8,15 +8,15 @@ use Test::More tests => 4;
 
 print "user:  " . Genome::Sys->username . "\n";
 
-BEGIN {use_ok('Genome::Model::Tools::GetSubDirectories');}
+BEGIN {use_ok('Genome::Model::Tools::ViromeScreening::GetSubDirectories');}
 
 my ($dir) = ('/gscmnt/sata835/info/medseq/virome/test17');
 
 #create
-my $gsd = Genome::Model::Tools::GetSubDirectories->create(
+my $gsd = Genome::Model::Tools::ViromeScreening::GetSubDirectories->create(
                 dir => $dir,
 );
-isa_ok($gsd, 'Genome::Model::Tools::GetSubDirectories');
+isa_ok($gsd, 'Genome::Model::Tools::ViromeScreening::GetSubDirectories');
 
 ok($gsd->execute, 'getting sub directories');
 
