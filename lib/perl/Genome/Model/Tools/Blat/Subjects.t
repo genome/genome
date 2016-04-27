@@ -9,7 +9,6 @@ use above 'Workflow';
 use Test::More tests => 5;
 #use Test::More skip_all => 'workflow and lsf issues taking a long time to test this and randomly failing';
 use File::Compare;
-use File::Temp;
 use File::Copy;
 
 BEGIN {
@@ -19,9 +18,7 @@ BEGIN {
 my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Blat-Subjects';
 my $query_file = $data_dir .'/test.fa';
 my $expected_psl = $data_dir .'/test.psl';
-# Must use a network dis
-#my $tmp_dir = Genome::Sys->create_temp_directory('Genome-Model-Tools-Blat-Subjects-'. Genome::Sys->username);
-my $tmp_dir = File::Temp::tempdir('Genome-Model-Tools-Blat-Subjects-XXXXX', CLEANUP => 1, TMPDIR => 1);
+my $tmp_dir = Genome::Sys->create_temp_directory;
 
 my $tmp_query_file = $tmp_dir . '/test.fa';
 copy $query_file, $tmp_query_file;
