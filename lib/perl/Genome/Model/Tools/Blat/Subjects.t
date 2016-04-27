@@ -11,9 +11,11 @@ use File::Compare;
 use File::Copy;
 
 BEGIN {
-        $ENV{NO_LSF} = 1;
         use_ok ('Genome::Model::Tools::Blat::Subjects');
 }
+
+Genome::Config::set_env('workflow_builder_backend', 'inline');
+
 my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Blat-Subjects';
 my $query_file = $data_dir .'/test.fa';
 my $expected_psl = $data_dir .'/test.psl';
