@@ -1,0 +1,160 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="virome_pipeline" executor="Workflow::Executor::SerialDeferred" logDir="/gscmnt/sata835/info/medseq/virome/workflow/tracking2">
+    <link fromOperation="input connector"           fromProperty="fasta_file"               toOperation="split based on barcode"    toProperty="fasta_file" />
+    <link fromOperation="input connector"           fromProperty="barcode_file"             toOperation="split based on barcode"    toProperty="barcode_file" />
+    <link fromOperation="input connector"           fromProperty="dir"                      toOperation="split based on barcode"    toProperty="dir" />
+    <link fromOperation="input connector"           fromProperty="dir"                      toOperation="wait for split"            toProperty="dir" />
+    <link fromOperation="input connector"           fromProperty="dir"                      toOperation="wait for blastx viral"     toProperty="dir" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="split based on barcode"    toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="inner cdhit"               toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="inner repeat masker"       toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="sqcRpMskr"                 toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="blast human genome"        toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="blastn nt"                 toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="blastx nt"                 toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="blastx viral"              toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="report"                    toProperty="logfile" />
+
+    <link fromOperation="split based on barcode"    fromProperty="result"                   toOperation="wait for split"            toProperty="split_complete" />
+
+    <link fromOperation="wait for split"            fromProperty="dir"                      toOperation="get sub directories"       toProperty="dir"/> 
+
+    <link fromOperation="get sub directories"       fromProperty="sub_directories"          toOperation="inner cdhit"               toProperty="dirs" />
+    <link fromOperation="get sub directories"       fromProperty="sub_directories"          toOperation="wait for cdhit"            toProperty="dirs" />
+    <link fromOperation="get sub directories"       fromProperty="sub_directories"          toOperation="wait for repeat masker"    toProperty="dirs" />
+    <link fromOperation="get sub directories"       fromProperty="sub_directories"          toOperation="wait for sqc"              toProperty="dirs" />
+    <link fromOperation="get sub directories"       fromProperty="sub_directories"          toOperation="wait for bhg"              toProperty="dirs" />
+    <link fromOperation="get sub directories"       fromProperty="sub_directories"          toOperation="wait for blastn nt"        toProperty="dirs" />
+    <link fromOperation="get sub directories"       fromProperty="sub_directories"          toOperation="wait for blastx nt"        toProperty="dirs" />
+
+    <link fromOperation="inner cdhit"               fromProperty="result"                   toOperation="wait for cdhit"            toProperty="cdhit_complete" />
+
+    <link fromOperation="wait for cdhit"            fromProperty="dirs"                     toOperation="inner repeat masker"       toProperty="dirs" />
+
+    <link fromOperation="inner repeat masker"       fromProperty="result"                   toOperation="wait for repeat masker"    toProperty="repeat_masker_complete" />
+
+    <link fromOperation="wait for repeat masker"    fromProperty="dirs"                     toOperation="sqcRpMskr"                 toProperty="dir" />
+
+    <link fromOperation="sqcRpMskr"                 fromProperty="result"                   toOperation="wait for sqc"              toProperty="sqc_complete" />
+
+    <link fromOperation="wait for sqc"              fromProperty="dirs"                     toOperation="blast human genome"        toProperty="dirs" />
+    <link fromOperation="input connector"           fromProperty="human_db"                 toOperation="blast human genome"        toProperty="human_db" />
+
+    <link fromOperation="blast human genome"        fromProperty="result"                   toOperation="wait for bhg"              toProperty="bhg_complete" />
+
+    <link fromOperation="wait for bhg"              fromProperty="dirs"                     toOperation="blastn nt"                 toProperty="dirs" />
+    <link fromOperation="input connector"           fromProperty="nt_db"                    toOperation="blastn nt"                 toProperty="nt_db" />
+    <link fromOperation="input connector"           fromProperty="taxonomy_db"              toOperation="blastn nt"                 toProperty="taxonomy_db" />
+
+    <link fromOperation="blastn nt"                 fromProperty="result"                   toOperation="wait for blastn nt"        toProperty="blastn_complete" />
+
+    <link fromOperation="wait for blastn nt"        fromProperty="dirs"                     toOperation="blastx nt"                 toProperty="dirs" />
+    <link fromOperation="input connector"           fromProperty="nt_db"                    toOperation="blastx nt"                 toProperty="nt_db" />
+    <link fromOperation="input connector"           fromProperty="taxonomy_db"              toOperation="blastx nt"                 toProperty="taxonomy_db" />
+
+    <link fromOperation="blastx nt"                 fromProperty="result"                   toOperation="wait for blastx nt"        toProperty="blastx_nt_complete" />
+
+    <link fromOperation="wait for blastx nt"        fromProperty="dirs"                     toOperation="blastx viral"              toProperty="dirs" />
+    <link fromOperation="input connector"           fromProperty="virus_db"                 toOperation="blastx viral"              toProperty="virus_db" />
+    <link fromOperation="input connector"           fromProperty="taxonomy_db"              toOperation="blastx viral"              toProperty="taxonomy_db" />
+
+    <link fromOperation="blastx viral"              fromProperty="result"                   toOperation="wait for blastx viral"     toProperty="blastx_viral_complete" />
+
+    <link fromOperation="wait for blastx viral"     fromProperty="dir"                      toOperation="report"                    toProperty="dir" />
+
+    <link fromOperation="report"                    fromProperty="result"                   toOperation="output connector"          toProperty="result" />
+
+    <operation name="split based on barcode">
+        <operationtype commandClass="Genome::Model::Tools::ViromeEvent::SplitBasedOnBarCode" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <operation name="wait for split">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dir</property>
+            <property>split_complete</property>
+        </operationtype> 
+    </operation>
+
+    <operation name="get sub directories">
+        <operationtype commandClass="Genome::Model::Tools::ViromeScreening::GetSubDirectories" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <operation name="inner cdhit" workflowFile="parallel_cdhit3.xml"/>
+
+    <operation name="wait for cdhit">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property> 
+            <property>cdhit_complete</property>
+        </operationtype>
+    </operation>
+    
+    <operation name="inner repeat masker" workflowFile="parallel_repeat_masker3.xml" />
+
+    <operation name="wait for repeat masker">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>repeat_masker_complete</property>
+        </operationtype>
+    </operation>
+
+    <operation name="sqcRpMskr" parallelBy="dir">
+        <operationtype commandClass="Genome::Model::Tools::ViromeEvent::SequenceQualityControl" typeClass="Workflow::OperationType::Command" />
+    </operation>
+
+    <operation name="wait for sqc">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>sqc_complete</property>
+        </operationtype>
+    </operation>
+
+    <operation name="blast human genome" workflowFile="parallel_blast_human_genome3.xml" />
+
+    <operation name="wait for bhg">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>bhg_complete</property>
+        </operationtype>
+    </operation>
+
+    <operation name="blastn nt" workflowFile="parallel_blast_n_nt4.xml" />
+
+    <operation name="wait for blastn nt">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>blastn_complete</property>
+        </operationtype>
+    </operation>
+
+    <operation name="blastx nt" workflowFile="parallel_blast_x_nt4.xml" />
+
+    <operation name="wait for blastx nt">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>blastx_nt_complete</property>
+        </operationtype>
+    </operation>
+
+    <operation name="blastx viral" workflowFile="parallel_blast_x_viral4.xml" />
+
+    <operation name="wait for blastx viral">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dir</property>
+            <property>blastx_viral_complete</property>
+        </operationtype>
+    </operation>
+
+    <operation name="report" workflowFile="split_report.xml" />
+
+    <operationtype typeClass="Workflow::OperationType::Model">
+        <inputproperty>fasta_file</inputproperty>
+        <inputproperty>barcode_file</inputproperty>
+        <inputproperty>dir</inputproperty>
+        <inputproperty>logfile</inputproperty>
+        <inputproperty>human_db</inputproperty>
+        <inputproperty>nt_db</inputproperty>
+        <inputproperty>virus_db</inputproperty>
+        <inputproperty>taxonomy_db</inputproperty>
+        <outputproperty>result</outputproperty>
+    </operationtype>
+</workflow>

@@ -1,0 +1,45 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="parallel repeat masker" executor="Workflow::Executor::SerialDeferred" logDir="/gscmnt/sata835/info/medseq/virome/workflow/tracking2">
+    <link fromOperation="input connector"           fromProperty="dirs"                     toOperation="spliRpMsk"                             toProperty="dir" />
+    <link fromOperation="input connector"           fromProperty="dirs"                     toOperation="wait for split"                        toProperty="dirs" />
+    <link fromOperation="input connector"           fromProperty="dirs"                     toOperation="wait for check"                        toProperty="dirs" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="spliRpMsk"                             toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="prpRpMskr"                             toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"                  toOperation="inner check result"                    toProperty="logfile" />
+    
+    <link fromOperation="spliRpMsk"                 fromProperty="result"                   toOperation="wait for split"                        toProperty="split_complete" />
+    <link fromOperation="wait for split"            fromProperty="dirs"                     toOperation="prpRpMskr"                             toProperty="dir" />
+    <link fromOperation="prpRpMskr"                 fromProperty="files_to_run"             toOperation="inner check result"                    toProperty="files_to_run" />
+    <link fromOperation="inner check result"        fromProperty="result"                   toOperation="wait for check"                        toProperty="check_complete"/>
+    <link fromOperation="wait for check"            fromProperty="dirs"                     toOperation="output connector"                      toProperty="result" />
+
+    <operation name="spliRpMsk" parallelBy="dir">
+        <operationtype commandClass="Genome::Model::Tools::ViromeEvent::RepeatMasker::SplitGivenNumberReads" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <operation name="wait for split">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>split_complete</property>
+        </operationtype> 
+    </operation>
+
+    <operation name="prpRpMskr" parallelBy="dir">
+        <operationtype commandClass="Genome::Model::Tools::ViromeEvent::RepeatMasker::OuterCheckResult" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <operation name="inner check result" workflowFile="inner_repeat_masker_check_result2.xml" parallelBy="files_to_run" />
+
+    <operation name="wait for check">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>check_complete</property>
+        </operationtype>
+    </operation>
+
+    <operationtype typeClass="Workflow::OperationType::Model">
+        <inputproperty>dirs</inputproperty>
+        <inputproperty>logfile</inputproperty>
+        <outputproperty>result</outputproperty>
+    </operationtype>
+</workflow>

@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Mail::Sender;
+use File::Spec;
 
 UR::Object::Type->define(
     class_name => __PACKAGE__,
@@ -95,9 +96,11 @@ sub execute {
 sub _run_workflow {
     my $self = shift;
 
-    my $dag = Genome::WorkflowBuilder::DAG->from_xml_filename(
-        Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ViromeScreening/virome-screening6.xml'
-    );
+    my $location = __FILE__;
+    $location =~ s/\.pm$//;
+    my $xml = File::Spec->join($location, 'virome-screening6.xml');
+
+    my $dag = Genome::WorkflowBuilder::DAG->from_xml_filename($xml);
     my %inputs = (
         'fasta_file'  => $self->fasta_file,
         'barcode_file'=> $self->barcode_file,
