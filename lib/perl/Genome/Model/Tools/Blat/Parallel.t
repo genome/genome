@@ -7,7 +7,6 @@ use above 'Genome';
 use above 'Workflow';
 
 use Test::More tests => 5;
-#use Test::More skip_all => 'workflow and lsf issues taking a long time to test this';
 use File::Compare;
 
 BEGIN {
