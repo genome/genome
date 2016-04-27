@@ -9,7 +9,6 @@ use above 'Workflow';
 use Test::More tests => 5;
 #use Test::More skip_all => 'workflow and lsf issues taking a long time to test this';
 use File::Compare;
-use File::Temp;
 
 BEGIN {
     use_ok ('Genome::Model::Tools::Blat::Parallel');
@@ -17,7 +16,7 @@ BEGIN {
 
 Genome::Config::set_env('workflow_builder_backend', 'inline');
 
-my $tmp_dir = File::Temp::tempdir('Genome-Model-Tools-Blat-Parallel-XXXXX', CLEANUP => 1, TMPDIR => 1);
+my $tmp_dir = Genome::Sys->create_temp_directory;
 my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Blat-Parallel';
 
 my @query_files = (
