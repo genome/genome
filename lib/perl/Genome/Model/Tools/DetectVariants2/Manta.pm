@@ -45,11 +45,19 @@ sub _detect_variants {
     # Also see Genome::Model::Tools::DetectVariants2::Mutect::parse_params
     my @resolved_config_params = (
         '--tumor-bam-file' => $self->aligned_reads_input,
-        '--normal-bam-file' => $self->control_aligned_reads_input,
         '--version' => $self->version,
         '--working-directory' => $working_directory,
         '--reference-fasta' => $self->reference_sequence_input,
     );
+
+    # Determine which manta output VCF should be used as the "high-quality" result
+    # If single-sample, assume tumor-only (NOT GERMLINE).  We know somatic if a normal is defined.
+    my $manta_vcf_filename = 'tumorSV.vcf.gz';
+
+    if ( defined($self->control_aligned_reads_input) ) {
+        push @resolved_config_params, ('--normal-bam-file' => $self->control_aligned_reads_input);
+        $manta_vcf_filename = 'somaticSV.vcf.gz';
+    }
 
     my @dv2_config_params = split(' ',$self->params);
     my ($config_cmd_class, $config_cmd_params) = Genome::Model::Tools::Manta::Config->resolve_class_and_params_for_argv(@dv2_config_params,@resolved_config_params);
@@ -78,12 +86,15 @@ sub _detect_variants {
         $self->fatal_message('Could not execute Manta run command!');
     }
 
-    # Make a symlink to the actual VCF as the DV2 Dispatcher expects an output of svs.hq rather than BED or VCF output
-    my $vcf_path = File::Spec->join($working_directory,'results/variants/somaticSV.vcf.gz');
-    if (-e $vcf_path) {
-        symlink($vcf_path,$self->_sv_staging_output);
+    # Move the VCF to where the DV2 Dispatcher and the DetectVariants build command expect output with a basename like 'svs.hq'
+    my $manta_vcf_path = File::Spec->join($working_directory,'results/variants/'. $manta_vcf_filename);
+    if (-e $manta_vcf_path) {
+        my $sv_staging_path = $self->_sv_staging_output .'.vcf.gz';
+        # Could use move_file if disk where a concern, but retaining the original results/ directory contents from manta
+        Genome::Sys->copy_file($manta_vcf_path, $sv_staging_path);
+        Genome::Sys->copy_file($manta_vcf_path .'.tbi', $sv_staging_path .'.tbi');
     } else {
-        $self->fatal_message('Failed to find the Manta somatic SV VCF file expected at: '. $vcf_path);
+        $self->fatal_message('Failed to find the Manta somatic SV VCF file expected at: '. $manta_vcf_path);
     }
 }
 
