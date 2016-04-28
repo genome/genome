@@ -1020,36 +1020,58 @@ sub _create_bed_from_vcf {
 sub set_output_files {
     my $self = shift;
     my $result = shift;
-    for my $variant_type (@{$self->variant_types}){
-        my $file_accessor = "_".$variant_type."_hq_output_file";
-        my $strategy = $variant_type."_detection_strategy";
-        my $out_dir = $variant_type."_output_directory";
-        if(defined( $self->$strategy)){
+    
+    for my $variant_type (@{$self->variant_types}) {
+        my $file_accessor = '_'. $variant_type .'_hq_output_file';
+        my $strategy = $variant_type .'_detection_strategy';
+        my $out_dir = $variant_type .'_output_directory';
+        if ( defined($self->$strategy) ) {
             my $relative_path = $self->get_relative_path_to_output_directory($result->{$out_dir});
-            unless($relative_path){
-                $self->error_message("No ".$variant_type." output directory. Workflow returned: ".Data::Dumper::Dumper($result));
-                die $self->error_message;
+            unless ($relative_path) {
+                $self->fatal_message('No '. $variant_type .' output directory. Workflow returned: '. Data::Dumper::Dumper($result));
             }
-            my $hq_output_dir = $self->output_directory."/".$relative_path;
-            my $hq_file;
+            my $hq_output_dir = File::Spec->join($self->output_directory,$relative_path);
+            my $hq_full_path;
             if ($variant_type eq 'sv' || $variant_type eq 'cnv'){
-                $hq_file = $variant_type."s.hq";
-            }else{
-                $hq_file = $variant_type."s.hq.bed"; # FIXME this will not be true for polymutt or other detectors that output only vcf
+                my $hq_file_name = $variant_type .'s.hq';
+                my $hq_file_path = File::Spec->join($hq_output_dir,$hq_file_name);
+                $hq_full_path = $self->_resolve_variant_file_full_path($hq_output_dir, $hq_file_path);
+                unless ($hq_full_path) {
+                    $hq_full_path = $self->_resolve_variant_file_full_path($hq_output_dir, $hq_file_path .'.vcf.gz');
+                }
+            } else {
+                my $hq_file_name = $variant_type .'s.hq.bed'; # FIXME this will not be true for polymutt or other detectors that output only vcf
+                my $hq_file_path = File::Spec->join($hq_output_dir,$hq_file_name);
+                $hq_full_path = $self->_resolve_variant_file_full_path($hq_output_dir, $hq_file_path);
             }
-            my $file;
-            if(-l $hq_output_dir."/".$hq_file){
-                $file = readlink($hq_output_dir."/".$hq_file); # Should look like "dir/snvs_hq.bed"
-                $file = basename($file,['bed']);
+            if ( defined($hq_full_path) ) {
+                $self->$file_accessor($hq_full_path);
+            } else {
+                $self->fatal_message('Unable to locate full path to high-quality '. $variant_type .' variant file!');
             }
-            else{
-                $file = $hq_file;
-            }
-            my $hq_output_file = $hq_output_dir . "/". $file;
-            $self->$file_accessor($hq_output_file);
         }
     }
     return 1;
+}
+
+sub _resolve_variant_file_full_path {
+    my $self = shift;
+
+    my $dir = shift;
+    my $file_path = shift;
+
+    my $file_base;
+    if (-l $file_path) {
+        my $file_link = readlink($file_path);
+        $file_base = basename($file_link);
+    } else {
+        $file_base = basename($file_path);
+    }
+
+    my $full_path = File::Spec->join($dir,$file_base);
+    return $full_path if -e $full_path;
+
+    return;
 }
 
 # The HQ bed files for each variant type are already symlinked to the base output directory.
