@@ -3,11 +3,13 @@ package Genome::Model::Tools::DetectVariants2::Dispatcher;
 use strict;
 use warnings;
 
+use Genome;
+
 use Clone qw/clone/;
 use Data::Dumper;
 use JSON;
-use Genome;
 use File::Basename;
+use Cwd qw();
 
 class Genome::Model::Tools::DetectVariants2::Dispatcher {
     is => ['Genome::Model::Tools::DetectVariants2::Base'],
@@ -1062,8 +1064,8 @@ sub _resolve_variant_file_full_path {
 
     my $file_base;
     if (-l $file_path) {
-        my $file_link = readlink($file_path);
-        $file_base = basename($file_link);
+        $file_path = Cwd::abs_path($file_path);
+        $file_base = basename($file_path);
     } else {
         $file_base = basename($file_path);
     }
