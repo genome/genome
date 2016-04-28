@@ -354,10 +354,6 @@ sub map_workflow_inputs {
         }
     }
 
-    #ImportSnvsIndels
-    push @inputs, import_snvs_indels_filter_mt => 1;
-    push @inputs, import_snvs_indels_outdir    => $patient_dir;
-
     #CreateMutationDiagrams
     if ($wgs_build or $exome_build) {
         my $mutation_diagram_dir = $patient_dir . '/mutation_diagrams';
@@ -595,26 +591,6 @@ sub _resolve_workflow_for_build {
     #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
     $self->summarize_builds_op($workflow);
 
-    #ImportSnvsIndels - Import SNVs and Indels
-    my $import_snvs_indels_op;
-    if ($build->wgs_build or $build->exome_build) {
-        $import_snvs_indels_op = $self->import_snvs_indels_op($workflow);
-        if ($build->wgs_build) {
-            $workflow->connect_input(
-                input_property       => 'wgs_build',
-                destination          => $import_snvs_indels_op,
-                destination_property => 'wgs_build',
-            );
-        }
-        if ($build->exome_build) {
-            $workflow->connect_input(
-                input_property       => 'exome_build',
-                destination          => $import_snvs_indels_op,
-                destination_property => 'exome_build',
-            );
-        }
-    }
-
     #GetVariantSources - Determine source variant caller for SNVs and InDels for wgs data
     my $wgs_variant_sources_op;
     if ($build->wgs_build) {
@@ -626,38 +602,6 @@ sub _resolve_workflow_for_build {
         $exome_variant_sources_op = $self->variant_sources_op($workflow, 'exome');
     }
 
-    #CreateMutationDiagrams - Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
-    if ($build->wgs_build or $build->exome_build) {
-        my $mutation_diagram_op = $self->mutation_diagram_op($workflow);
-        if ($build->wgs_build and $build->exome_build) {
-            my $wgs_exome_build_converge_op = $self->wgs_exome_build_converge_op($workflow);
-            $workflow->connect_input(
-                input_property       => 'exome_variant_sources_dir',
-                destination          => $exome_variant_sources_op,
-                destination_property => 'outdir',
-            );
-            $workflow->create_link(
-                source               => $wgs_exome_build_converge_op,
-                source_property      => 'builds',
-                destination          => $mutation_diagram_op,
-                destination_property => 'builds',
-            );
-        }
-        elsif ($build->wgs_build) {
-            $workflow->connect_input(
-                input_property       => 'wgs_build',
-                destination          => $mutation_diagram_op,
-                destination_property => 'builds',
-            );
-        }
-        elsif ($build->exome_build) {
-            $workflow->connect_input(
-                input_property       => 'exome_build',
-                destination          => $mutation_diagram_op,
-                destination_property => 'builds',
-            );
-        }
-    }
 
     #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on normal
     #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on normal
@@ -752,22 +696,7 @@ sub _resolve_workflow_for_build {
         $summarize_svs_op = $self->summarize_svs_op($workflow);
     }
 
-    #Add gene category annotations to some output files from steps above. (e.g. determine which SNV affected genes are kinases, ion channels, etc.)
-    #AnnotateGenesByCategory - gene_category_<exome|wgs|wgs_exome>_<snv|indel>_result
-    for my $sequencing_type (qw(exome wgs wgs_exome)) {
-        my $build_accessor = "${sequencing_type}_build";
-        if ($build->$build_accessor) {
-            for my $variant_type (qw(snv indel)) {
-                my $annotate_genes_by_category_op = $self->annotate_genes_by_category_op($workflow, $sequencing_type, $variant_type);
-                $workflow->create_link(
-                    source               => $import_snvs_indels_op,
-                    source_property      => "${sequencing_type}_${variant_type}_file",
-                    destination          => $annotate_genes_by_category_op,
-                    destination_property => 'infile',
-                );
-            }
-        }
-    }
+
     #AnnotateGenesByCategory - gene_category_cnv_<amp|del|ampdel>_result
     if ($build->wgs_build) {
         for my $type (qw(amp del ampdel)) {
@@ -815,31 +744,15 @@ sub _resolve_workflow_for_build {
         }
     }
 
-    #DGIDB gene annotation
-    for my $sequencing_type (qw(exome wgs wgs_exome)) {
-        my $build_accessor = "${sequencing_type}_build";
-        if ($build->$build_accessor) {
-            for my $variant_type (qw(snv indel)) {
-                my $annotate_genes_by_dgidb_op = $self->annotate_genes_by_dgidb_op($workflow, $sequencing_type, $variant_type);
-                $workflow->create_link(
-                    source               => $import_snvs_indels_op,
-                    source_property      => "${sequencing_type}_${variant_type}_file",
-                    destination          => $annotate_genes_by_dgidb_op,
-                    destination_property => 'input_file',
-                );
-            }
-        }
-    }
-
     if ($build->wgs_build) {
-        my $annotate_genes_by_dgidb_cnv_amp_op = $self->_annotate_genes_by_dgidb_op($workflow, 'gene_amp_file', 'dgidb_cnv_amp_result');
+        my $annotate_genes_by_dgidb_cnv_amp_op = $self->annotate_genes_by_dgidb_op($workflow, 'gene_amp_file', 'dgidb_cnv_amp_result');
         $workflow->create_link(
             source               => $run_cn_view_op,
             source_property      => 'gene_amp_file',
             destination          => $annotate_genes_by_dgidb_cnv_amp_op,
             destination_property => 'input_file',
         );
-        my $annotate_genes_by_dgidb_sv_fusion_op = $self->_annotate_genes_by_dgidb_op($workflow, 'fusion_output_file', 'dgidb_sv_fusion_result');
+        my $annotate_genes_by_dgidb_sv_fusion_op = $self->annotate_genes_by_dgidb_op($workflow, 'fusion_output_file', 'dgidb_sv_fusion_result');
         $workflow->create_link(
             source               => $summarize_svs_op,
             source_property      => 'fusion_output_file',
@@ -849,14 +762,14 @@ sub _resolve_workflow_for_build {
     }
 
     if ($build->tumor_rnaseq_build) {
-        my $annotate_genes_by_dgidb_cufflink_op = $self->_annotate_genes_by_dgidb_op($workflow, 'tumor_fpkm_topnpercent_file', 'dgidb_cufflinks_result');
+        my $annotate_genes_by_dgidb_cufflink_op = $self->annotate_genes_by_dgidb_op($workflow, 'tumor_fpkm_topnpercent_file', 'dgidb_cufflinks_result');
         $workflow->create_link(
             source               => $tumor_cufflinks_expression_absolute_op,
             source_property      => 'tumor_fpkm_topnpercent_file',
             destination          => $annotate_genes_by_dgidb_cufflink_op,
             destination_property => 'input_file',
         );
-        my $annotate_genes_by_dgidb_tophat_op = $self->_annotate_genes_by_dgidb_op($workflow, 'junction_topnpercent_file', 'dgidb_tophat_result');
+        my $annotate_genes_by_dgidb_tophat_op = $self->annotate_genes_by_dgidb_op($workflow, 'junction_topnpercent_file', 'dgidb_tophat_result');
         $workflow->create_link(
             source               => $tumor_tophat_junctions_absolute_op,
             source_property      => 'junction_topnpercent_file',
@@ -865,79 +778,10 @@ sub _resolve_workflow_for_build {
         );
     }
 
-    #SummarizeTier1SnvSupport - For each of the following: WGS SNVs, Exome SNVs, and WGS+Exome SNVs, do the following:
-    #Get BAM readcounts for WGS (tumor/normal), Exome (tumor/normal), RNAseq (tumor), RNAseq (normal) - as available of course
-    #TODO: Break this down to do direct calls to GetBamReadCounts instead of wrapping it.
-    for my $sequencing_type (qw(wgs exome wgs_exome)) {
-        my $build_accessor = "${sequencing_type}_build";
-        if ($build->$build_accessor) {
-            my $summarize_tier1_snv_support_op = $self->summarize_tier1_snv_support_op($workflow, $sequencing_type);
-            $workflow->create_link(
-                source               => $import_snvs_indels_op,
-                source_property      => "${sequencing_type}_snv_file",
-                destination          => $summarize_tier1_snv_support_op,
-                destination_property => "${sequencing_type}_positions_file",
-            );
-            if ($build->tumor_rnaseq_build) {
-                $workflow->create_link(
-                    source               => $tumor_cufflinks_expression_absolute_op,
-                    source_property      => 'tumor_fpkm_file',
-                    destination          => $summarize_tier1_snv_support_op,
-                    destination_property => 'tumor_fpkm_file',
-                );
-            }
-        }
-    }
-
-    #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
-    #Currently WGS data is a minimum requirement for Circos plot generation.
-    if ($build->wgs_build) {
-        my $make_circos_plot_op = $self->make_circos_plot_op($workflow);
-        $workflow->create_link(
-            source               => $summarize_svs_op,
-            source_property      => 'fusion_output_file',
-            destination          => $make_circos_plot_op,
-            destination_property => 'candidate_fusion_infile',
-        );
-        $workflow->create_link(
-            source               => $clonality_op,
-            source_property      => 'cnv_hmm_file',
-            destination          => $make_circos_plot_op,
-            destination_property => 'cnv_hmm_file',
-        );
-        if ($build->normal_rnaseq_build) {
-            $workflow->create_link(
-                source               => $cufflinks_differential_expression_op,
-                source_property      => 'coding_hq_de_file',
-                destination          => $make_circos_plot_op,
-                destination_property => 'coding_hq_de_file',
-            );
-        }
-        elsif ($build->tumor_rnaseq_build) {
-            $workflow->create_link(
-                source               => $tumor_cufflinks_expression_absolute_op,
-                source_property      => 'tumor_fpkm_topnpercent_file',
-                destination          => $make_circos_plot_op,
-                destination_property => 'tumor_fpkm_topnpercent_file',
-            );
-        }
-        $workflow->create_link(
-            source               => $import_snvs_indels_op,
-            source_property      => 'result',
-            destination          => $make_circos_plot_op,
-            destination_property => 'import_snvs_indels_result',
-        );
-        $workflow->create_link(
-            source               => $run_cn_view_op,
-            source_property      => 'gene_ampdel_file',
-            destination          => $make_circos_plot_op,
-            destination_property => 'gene_ampdel_file',
-        );
-    }
-
     #Converge SnvIndelReport
     #CreateMutationDiagrams - Create mutation spectrum results for wgs and exome data
     #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
+    my ($best_converge_snv_indel_report_op, $best_mq_bq_sum) = (undef, -Inf);
     if ($build->wgs_build || $build->exome_build) {
         my %variant_sources_ops = (
             exome => $exome_variant_sources_op,
@@ -965,6 +809,10 @@ sub _resolve_workflow_for_build {
                         destination_property => 'converge_snv_indel_report_result',
                     );
                 }
+            }
+            if (($mqs->[$i-1] + $bqs->[$i-1]) > $best_mq_bq_sum) {
+                $best_mq_bq_sum = $mqs->[$i-1] + $bqs->[$i-1];
+                $best_converge_snv_indel_report_op = $converge_snv_indel_report_op;
             }
             if ($build->wgs_build or $build->should_run_exome_cnv) {
                 my $sciclone_op = $self->sciclone_op($workflow, $i);
@@ -1000,6 +848,104 @@ sub _resolve_workflow_for_build {
                 );
             }
         }
+        #Add gene category annotations to some output files from steps above. (e.g. determine which SNV affected genes are kinases, ion channels, etc.)
+        #AnnotateGenesByCategory - gene_category_<exome|wgs|wgs_exome>_<snv|indel>_result
+        my $annotate_genes_by_category_op = $self->annotate_genes_by_category_op($workflow);
+        $workflow->create_link(
+            source               => $best_converge_snv_indel_report_op,
+            source_property      => 'final_filtered_coding_clean_tsv',
+            destination          => $annotate_genes_by_category_op,
+            destination_property => 'infile',
+        );
+        my $annotate_genes_by_dgidb_op = $self->annotate_genes_by_dgidb_op($workflow, 'final_filtered_coding_clean_tsv', 'dgidb_snv_indel_result');
+        $workflow->create_link(
+            source               => $best_converge_snv_indel_report_op,
+            source_property      => 'final_filtered_coding_clean_tsv',
+            destination          => $annotate_genes_by_dgidb_op,
+            destination_property => 'input_file',
+        );
+        #CreateMutationDiagrams - Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
+        my $mutation_diagram_op = $self->mutation_diagram_op($workflow);
+        if ($build->wgs_build and $build->exome_build) {
+            my $wgs_exome_build_converge_op = $self->wgs_exome_build_converge_op($workflow);
+            $workflow->connect_input(
+                input_property       => 'exome_variant_sources_dir',
+                destination          => $exome_variant_sources_op,
+                destination_property => 'outdir',
+            );
+            $workflow->create_link(
+                source               => $wgs_exome_build_converge_op,
+                source_property      => 'builds',
+                destination          => $mutation_diagram_op,
+                destination_property => 'builds',
+            );
+        }
+        elsif ($build->wgs_build) {
+            $workflow->connect_input(
+                input_property       => 'wgs_build',
+                destination          => $mutation_diagram_op,
+                destination_property => 'builds',
+            );
+        }
+        elsif ($build->exome_build) {
+            $workflow->connect_input(
+                input_property       => 'exome_build',
+                destination          => $mutation_diagram_op,
+                destination_property => 'builds',
+            );
+        }
+        $workflow->create_link(
+            source               => $best_converge_snv_indel_report_op,
+            source_property      => 'final_filtered_coding_tsv',
+            destination          => $mutation_diagram_op,
+            destination_property => 'annotated_variants_tsv',
+        );
+    }
+
+    #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
+    #Currently WGS data is a minimum requirement for Circos plot generation.
+    if ($build->wgs_build) {
+        my $make_circos_plot_op = $self->make_circos_plot_op($workflow);
+        $workflow->create_link(
+            source               => $summarize_svs_op,
+            source_property      => 'fusion_output_file',
+            destination          => $make_circos_plot_op,
+            destination_property => 'candidate_fusion_infile',
+        );
+        $workflow->create_link(
+            source               => $clonality_op,
+            source_property      => 'cnv_hmm_file',
+            destination          => $make_circos_plot_op,
+            destination_property => 'cnv_hmm_file',
+        );
+        if ($build->normal_rnaseq_build) {
+            $workflow->create_link(
+                source               => $cufflinks_differential_expression_op,
+                source_property      => 'coding_hq_de_file',
+                destination          => $make_circos_plot_op,
+                destination_property => 'coding_hq_de_file',
+            );
+        }
+        elsif ($build->tumor_rnaseq_build) {
+            $workflow->create_link(
+                source               => $tumor_cufflinks_expression_absolute_op,
+                source_property      => 'tumor_fpkm_topnpercent_file',
+                destination          => $make_circos_plot_op,
+                destination_property => 'tumor_fpkm_topnpercent_file',
+            );
+        }
+        $workflow->create_link(
+            source               => $best_converge_snv_indel_report_op,
+            source_property      => 'final_filtered_coding_clean_tsv',
+            destination          => $make_circos_plot_op,
+            destination_property => 'annotated_variants_tsv',
+        );
+        $workflow->create_link(
+            source               => $run_cn_view_op,
+            source_property      => 'gene_ampdel_file',
+            destination          => $make_circos_plot_op,
+            destination_property => 'gene_ampdel_file',
+        );
     }
 
     #IdentifyLoh - Run identify-loh tool for exome or WGS data
@@ -1047,39 +993,6 @@ sub summarize_builds_op {
     );
 
     return $summarize_builds_op;
-}
-
-sub import_snvs_indels_op {
-    my $self = shift;
-    my $workflow = shift;
-
-    my $import_snvs_indels_op = Genome::WorkflowBuilder::Command->create(
-        name => 'Importing SNVs and Indels from somatic results, parsing, and merging exome/wgs if possible',
-        command => 'Genome::Model::ClinSeq::Command::ImportSnvsIndels',
-    );
-    $workflow->add_operation($import_snvs_indels_op);
-    $workflow->connect_input(
-        input_property       => 'cancer_annotation_db',
-        destination          => $import_snvs_indels_op,
-        destination_property => 'cancer_annotation_db',
-    );
-    $workflow->connect_input(
-        input_property       => 'import_snvs_indels_outdir',
-        destination          => $import_snvs_indels_op,
-        destination_property => 'outdir',
-    );
-    $workflow->connect_input(
-        input_property       => 'import_snvs_indels_filter_mt',
-        destination          => $import_snvs_indels_op,
-        destination_property => 'filter_mt',
-    );
-    $workflow->connect_output(
-        output_property => 'import_snvs_indels_result',
-        source          => $import_snvs_indels_op,
-        source_property => 'result',
-    );
-
-    return $import_snvs_indels_op;
 }
 
 sub variant_sources_op {
@@ -1581,11 +1494,9 @@ sub summarize_svs_op {
 sub annotate_genes_by_category_op {
     my $self = shift;
     my $workflow = shift;
-    my $sequencing_type = shift;
-    my $variant_type = shift;
 
-    my $name = "Add gene category annotations to ${variant_type}s identified by $sequencing_type";
-    my $output_property = "gene_category_${sequencing_type}_${variant_type}_result";
+    my $name = 'Add gene category annotations to snvs and indels';
+    my $output_property = 'gene_category_snv_indel_result';
 
     return $self->_annotate_genes_by_category_op($workflow, $name, $output_property);
 }
@@ -1654,15 +1565,6 @@ sub _annotate_genes_by_category_op {
 sub annotate_genes_by_dgidb_op {
     my $self = shift;
     my $workflow = shift;
-    my $sequencing_type = shift;
-    my $variant_type = shift;
-
-    return $self->_annotate_genes_by_dgidb_op($workflow, "${sequencing_type}_${variant_type}_file", "dgidb_${sequencing_type}_${variant_type}_result");
-}
-
-sub _annotate_genes_by_dgidb_op {
-    my $self = shift;
-    my $workflow = shift;
     my $file_name = shift;
     my $output_property = shift;
 
@@ -1683,38 +1585,6 @@ sub _annotate_genes_by_dgidb_op {
     );
 
     return $annotate_genes_by_dgidb_op;
-}
-
-sub summarize_tier1_snv_support_op {
-    my $self = shift;
-    my $workflow = shift;
-    my $sequencing_type = shift;
-
-    my %sequencing_types = (
-        wgs       => 'WGS',
-        exome     => 'Exome',
-        wgs_exome => 'WGS and Exome'
-    );
-    my $txt_name = $sequencing_types{$sequencing_type};
-    my $summarize_tier1_snv_support_op = Genome::WorkflowBuilder::Command->create(
-        name => "$txt_name Summarize Tier 1 SNV Support (BAM read counts)",
-        command => 'Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport',
-    );
-    $workflow->add_operation($summarize_tier1_snv_support_op);
-    for my $property (qw(wgs_build exome_build tumor_rnaseq_build normal_rnaseq_build verbose cancer_annotation_db)) {
-        $workflow->connect_input(
-            input_property       => $property,
-            destination          => $summarize_tier1_snv_support_op,
-            destination_property => $property,
-        );
-    }
-    $workflow->connect_output(
-        output_property => "summarize_${sequencing_type}_tier1_snv_support_result",
-        source          => $summarize_tier1_snv_support_op,
-        source_property => 'result',
-    );
-
-    return $summarize_tier1_snv_support_op;
 }
 
 sub make_circos_plot_op {

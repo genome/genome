@@ -6,7 +6,7 @@ use Test::More tests => 7;
 use Genome::Utility::Test;
 
 my $expected_out =
-    Genome::Utility::Test->data_dir_ok('Genome::Model::ClinSeq::Command::Converge::SnvIndelReport', '2015-05-05');
+    Genome::Utility::Test->data_dir_ok('Genome::Model::ClinSeq::Command::Converge::SnvIndelReport', '2016-04-13');
 ok(-d $expected_out, "directory of expected output exists: $expected_out") or die;
 
 my $clinseq_build_id = 'a2eb4f40a47a4dc5ac410c81b3d2fc17';

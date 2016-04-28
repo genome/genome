@@ -1,7 +1,6 @@
 package Genome::Model::ClinSeq::Command::MakeCircosPlot;
 use strict;
 use warnings;
-use Switch;
 use Genome;
 
 # Written by Ben Ainscough and Scott Smith, based on prototype from Obi Griffith
@@ -45,6 +44,11 @@ class Genome::Model::ClinSeq::Command::MakeCircosPlot {
         import_snvs_indels_result => {
             is          => 'Boolean',
             doc         => 'Used in the to link in workflow',
+            is_optional => 1
+        },
+        annotated_variants_tsv    => {
+            is => 'Text',
+            doc => 'A TSV file of annotated variants.',
             is_optional => 1
         },
         gene_ampdel_file => {
@@ -399,14 +403,16 @@ sub execute {
             $snv_data_dir   = "$dataDir/snv/wgs";
             $indel_data_dir = "$dataDir/indel/wgs";
         }
-        Genome::Sys->copy_file(
-            "$snv_data_dir/snvs.hq.tier1.v1.annotated.compact.tsv",
-            "$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv"
-        );
-        Genome::Sys->copy_file(
-            "$indel_data_dir/indels.hq.tier1.v1.annotated.compact.tsv",
-            "$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv"
-        );
+        unless ($self->annotated_variants_tsv) {
+            Genome::Sys->copy_file(
+                "$snv_data_dir/snvs.hq.tier1.v1.annotated.compact.tsv",
+                "$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv"
+            );
+            Genome::Sys->copy_file(
+                "$indel_data_dir/indels.hq.tier1.v1.annotated.compact.tsv",
+                "$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv"
+            );
+        }
 
         $config = <<EOS;
 # Chromosome name, size and color definition
@@ -663,14 +669,16 @@ EOS
             $snv_data_dir   = "$dataDir/snv/wgs";
             $indel_data_dir = "$dataDir/indel/wgs";
         }
-        Genome::Sys->copy_file(
-            "$snv_data_dir/snvs.hq.tier1.v1.annotated.compact.tsv",
-            "$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv"
-        );
-        Genome::Sys->copy_file(
-            "$indel_data_dir/indels.hq.tier1.v1.annotated.compact.tsv",
-            "$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv"
-        );
+        unless ($self->annotated_variants_tsv) {
+            Genome::Sys->copy_file(
+                "$snv_data_dir/snvs.hq.tier1.v1.annotated.compact.tsv",
+                "$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv"
+            );
+            Genome::Sys->copy_file(
+                "$indel_data_dir/indels.hq.tier1.v1.annotated.compact.tsv",
+                "$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv"
+            );
+        }
 
         #TODO if user enters specific files to run then overide the standard files retrived from the build here
 
@@ -963,43 +971,55 @@ EOS
 
     ### Tier1 SNVs and INDELs
 
-    #SNV
-    my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
     my $snv_fh   = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.compact.tsv");
-    while ($snv_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+).*/g) {
-
-        $genes_noAmpDel{$4} = "hs$1\t$2\t$3";
-        $genes_AmpDel{$4}   = "hs$1\t$2\t$3";
-        print $snv_fh "hs$1 $2 $3 0.5 fill_color=black\n";
-
-#        switch($5){
-#            case "nonsense"            {print $snv_fh "fill_color=goldenrod\n"}
-#            case "missense"            {print $snv_fh "fill_color=blue\n"}
-#            case "silent"            {print $snv_fh "fill_color=green\n"}
-#            case "splice_site"        {print $snv_fh "fill_color=black\n"}
-#            case "rna"                {print $snv_fh "fill_color=purple\n"}
-#            case "nonstop"            {print $snv_fh "fill_color=black\n"}
-#        }
-
-    }
-    $snv_fh->close;
-
-    #Indel
-    my $indel_file = Genome::Sys->read_file("$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
     my $indel_fh =
         Genome::Sys->open_file_for_writing("$output_directory/data/indels.hq.tier1.v1.annotated.compact.tsv");
-    my $color;
-    while ($indel_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+).*/g) {
+    #SNV
+    unless ($self->annotated_variants_tsv ) {
+        my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
+        while ($snv_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+).*/g) {
+            $genes_noAmpDel{$4}="hs$1\t$2\t$3";
+            $genes_AmpDel{$4}="hs$1\t$2\t$3";
+            print $snv_fh "hs$1 $2 $3 0.5 fill_color=black\n";
+        }
 
-        $genes_noAmpDel{$4} = "hs$1\t$2\t$3";
-        $genes_AmpDel{$4}   = "hs$1\t$2\t$3";
-        if   ($6 eq "-") {$color = "red";}
-        else             {$color = "blue";}
-
-        print $indel_fh "hs$1 $2 $3 0.5 fill_color=$color\n";
-
+    #Indel
+        my $indel_file = Genome::Sys->read_file("$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
+        while ($indel_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+).*/g) {
+            $genes_noAmpDel{$4}="hs$1\t$2\t$3";
+            $genes_AmpDel{$4}="hs$1\t$2\t$3";
+            my $color;
+            if ($6 eq "-"){$color="red";}
+            else {$color="blue";}
+            print $indel_fh "hs$1 $2 $3 0.5 fill_color=$color\n";
+        }
+    }
+    else {
+        my $var_file = Genome::Utility::IO::SeparatedValueReader->create(
+            input     => $self->annotated_variants_tsv,
+            separator => "\t",
+        );
+        while (my $data = $var_file->next) {
+            $genes_noAmpDel{$data->{'mapped_gene_name'}} = 'hs'. $data->{'chromosome_name'} ."\t". $data->{'start'} ."\t". $data->{'stop'};
+            $genes_AmpDel{$data->{'mapped_gene_name'}} = 'hs'. $data->{'chromosome_name'} ."\t". $data->{'start'} ."\t". $data->{'stop'};
+            if ($data->{'type'} eq 'SNP') {
+                print $snv_fh 'hs'. $data->{'chromosome_name'} .' '. $data->{'start'} .' '. $data->{'stop'} ." 0.5 fill_color=black\n";
+            }
+            elsif ($data->{'type'} eq 'INS' || $data->{type} eq 'DEL') {
+                my $color;
+                if ($data->{'reference'} eq "-") {
+                    # Insertion
+                    $color="red";
+                }
+                else {
+                    $color="blue";
+                }
+                print $indel_fh 'hs'. $data->{'chromosome_name'} .' '. $data->{'start'} .' '. $data->{'stop'} ." 0.5 fill_color=$color\n";;
+            }
+        }
     }
     $indel_fh->close;
+    $snv_fh->close;
 
     $config .= <<EOS;
 #TIER 1 SNV DATA

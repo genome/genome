@@ -70,6 +70,11 @@ class Genome::Model::ClinSeq::Command::CreateMutationDiagrams {
             is_optional => 1,
             doc         => 'For debugging purposes, limit to this number of transcripts',
         },
+        annotated_variants_tsv => {
+             is => 'Text',
+             doc => 'A TSV file of annotated variants.',
+             is_optional => 1
+         },
     ],
     doc => 'summarize the SVs of somatic variation build',
 };
@@ -215,88 +220,135 @@ sub import_somatic_variants {
     my $filtered_variants_file = $args{'-filtered_variants_file'};
     my @builds                 = $self->builds;
 
-    my %var;
 
-    #Hardcode location of files.  TODO: Add option to supply your own annotation files in case you want to do something custom...
-    my @file_list;
-    for my $somatic_build (@builds) {
-        my $build_dir        = $somatic_build->data_directory;
-        my $tier1_snv_file   = $build_dir . "/effects/snvs.hq.tier1.v1.annotated";
-        my $tier1_indel_file = $build_dir . "/effects/indels.hq.tier1.v1.annotated";
+    #Hardcode location of files.
+    my %other_params;
+    if ($self->annotated_variants_tsv) {
+        Genome::Sys->copy_file($self->annotated_variants_tsv, $complete_variants_file);
+    }
+    else {
+        my @file_list;
+        for my $somatic_build (@builds) {
+            my $build_dir        = $somatic_build->data_directory;
+            my $tier1_snv_file   = $build_dir . "/effects/snvs.hq.tier1.v1.annotated";
+            my $tier1_indel_file = $build_dir . "/effects/indels.hq.tier1.v1.annotated";
 
-        #Add the SNV file to the list to be processed - if an optional max-allowed SNVs parameter was supplied, determine the number of unique SNVs in this file and skip if neccessary
-        unless (-e $tier1_snv_file) {
-            die $self->error_message("\n\nCould not find tier1 SNV annotated file in build dir: $build_dir\n\n");
-        }
-        if ($self->max_snvs_per_file) {
-            my $var_count = $self->unique_variant_count('-variant_file' => $tier1_snv_file);
-            if ($var_count > $self->max_snvs_per_file) {
-                $self->debug_message("Too many variants ... skipping file: $tier1_snv_file");
+            #Add the SNV file to the list to be processed - if an optional max-allowed SNVs parameter was supplied, determine the number of unique SNVs in this file and skip if neccessary
+            unless (-e $tier1_snv_file) {
+                die $self->error_message("\n\nCould not find tier1 SNV annotated file in build dir: $build_dir\n\n");
+            }
+            if ($self->max_snvs_per_file) {
+                my $var_count = $self->unique_variant_count('-variant_file' => $tier1_snv_file);
+                if ($var_count > $self->max_snvs_per_file) {
+                    $self->debug_message("Too many variants ... skipping file: $tier1_snv_file");
+                }
+                else {
+                    push(@file_list, $tier1_snv_file);
+                }
             }
             else {
                 push(@file_list, $tier1_snv_file);
             }
-        }
-        else {
-            push(@file_list, $tier1_snv_file);
-        }
 
-        #Add the INDEL file to the list to be processed - if an optional max-allowed SNVs parameter was supplied, determine the number of unique SNVs in this file and skip if neccessary
-        unless (-e $tier1_indel_file) {
-            die $self->error_message("\n\nCould not find tier1 INDEL annotated file in build dir: $build_dir\n\n");
-        }
-        if ($self->max_indels_per_file) {
-            my $var_count = $self->unique_variant_count('-variant_file' => $tier1_indel_file);
-            if ($var_count > $self->max_indels_per_file) {
-                $self->debug_message("Too many variants ... skipping file: $tier1_indel_file");
+            #Add the INDEL file to the list to be processed - if an optional max-allowed SNVs parameter was supplied, determine the number of unique SNVs in this file and skip if neccessary
+            unless (-e $tier1_indel_file) {
+                die $self->error_message("\n\nCould not find tier1 INDEL annotated file in build dir: $build_dir\n\n");
+            }
+            if ($self->max_indels_per_file) {
+                my $var_count = $self->unique_variant_count('-variant_file' => $tier1_indel_file);
+                if ($var_count > $self->max_indels_per_file) {
+                    $self->debug_message("Too many variants ... skipping file: $tier1_indel_file");
+                }
+                else {
+                    push(@file_list, $tier1_indel_file) unless ($var_count > $var_count);
+                }
             }
             else {
-                push(@file_list, $tier1_indel_file) unless ($var_count > $var_count);
+                push(@file_list, $tier1_indel_file);
             }
         }
-        else {
-            push(@file_list, $tier1_indel_file);
+
+        #Make sure at least one file made it through the filters if not, exit with status 0
+        unless (scalar(@file_list) > 0) {
+            $self->warning_message(
+                "All files were skipped because they exceeded the max specified number of SNVs or INDELs - no plots will be generated"
+            );
+            return 1;
         }
-    }
 
-    #Make sure at least one file made it through the filters if not, exit with status 0
-    unless (scalar(@file_list) > 0) {
-        $self->warning_message(
-            "All files were skipped because they exceeded the max specified number of SNVs or INDELs - no plots will be generated"
+        #If the user specified to merge duplicate variants, do so now
+        my $file_list_string = join(" ", @file_list);
+        my $merge_cmd;
+        if ($self->collapse_variants) {
+            $merge_cmd = "cat $file_list_string | sort | uniq > $complete_variants_file";
+        }
+        else {
+            $merge_cmd = "cat $file_list_string > $complete_variants_file";
+        }
+        $self->debug_message("\n\n$merge_cmd");
+        Genome::Sys->shellcmd(cmd => $merge_cmd);
+
+        %other_params = (
+            headers => [qw(
+                chromosome_name
+                start
+                stop
+                reference
+                variant
+                type
+                gene_name
+                transcript_name
+                transcript_species
+                transcript_source
+                transcript_version
+                strand
+                transcript_status
+                trv_type
+                c_position
+                amino_acid_change
+                ucsc_cons
+                domain
+                all_domains
+                deletion_substructures
+                transcript_error
+                mapped_gene_name
+                gene_name_source
+                filtered
+            )]
         );
-        return 1;
     }
 
-    #If the user specified to merge duplicate variants, do so now
-    my $file_list_string = join(" ", @file_list);
-    my $merge_cmd;
-    if ($self->collapse_variants) {
-        $merge_cmd = "cat $file_list_string | sort | uniq > $complete_variants_file";
-    }
-    else {
-        $merge_cmd = "cat $file_list_string > $complete_variants_file";
-    }
-    $self->debug_message("\n\n$merge_cmd");
-    Genome::Sys->shellcmd(cmd => $merge_cmd);
-
-    #Create a filtered version of the variants file that removes variants that match the effects type filter
-    open(VAR, "$complete_variants_file")
-        || die "\n\nCould not open complete variants file: $complete_variants_file\n\n";
-    open(VARF, ">$filtered_variants_file")
-        || die "\n\nCould not open filtered variants file for writing: $filtered_variants_file\n\n";
+    my %var;
     my $filter_string = $self->effect_type_filter;
     my $c             = 0;
-    while (<VAR>) {
-        chomp($_);
-        my @line          = split("\t", $_);
-        my $chr           = $line[0];
-        my $start         = $line[1];
-        my $end           = $line[2];
+    #Create a filtered version of the variants file that removes variants that match the effects type filter
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $complete_variants_file,
+        separator => "\t",
+        %other_params,
+    );
+    my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+        headers => $reader->{headers},
+        print_headers => 0,
+        separator => "\t",
+        output => $filtered_variants_file,
+    );
+    while (my $line = $reader->next) {
+        next if ($line->{trv_type} =~ /$filter_string/);
+
+        $c++;
+        if ($self->max_transcripts) {
+            next if ($c > $self->max_transcripts);
+        }
+
+        my $chr           = $line->{chromosome_name};
+        my $start         = $line->{start};
+        my $end           = $line->{stop};
         my $coord         = "$chr:$start-$end";
-        my $gid           = $line[6];
-        my $tid           = $line[7];
-        my $cdna_position = $tid . "_" . $line[14];
-        my $aa_effect     = $line[15];
+        my $gid           = $line->{gene_name};
+        my $tid           = $line->{transcript_name};
+        my $cdna_position = $tid . "_" . $line->{c_position};
+        my $aa_effect     = $line->{amino_acid_change};
         my $aa_position   = $tid . "_" . $aa_effect;
         my $aa_id         = $aa_position;
         my $chr_position  = $tid . "_" . $coord;
@@ -305,18 +357,13 @@ sub import_somatic_variants {
             $aa_position = $tid . "_" . $1;
         }
 
-        next if ($line[13] =~ /$filter_string/);
-        $c++;
+        $writer->write_one($line);
 
-        if ($self->max_transcripts) {
-            next if ($c > $self->max_transcripts);
-        }
-
-        print VARF "$_\n";
-
+        my $current_line = $reader->{current_line};
+        chomp($current_line);
         if ($var{$tid}) {
             my $transcript_variants = $var{$tid}{variants};
-            $transcript_variants->{$c}->{var}           = $_;
+            $transcript_variants->{$c}->{var}           = $current_line;
             $transcript_variants->{$c}->{aa_id}         = $aa_id;
             $transcript_variants->{$c}->{cdna_position} = $cdna_position;
             $transcript_variants->{$c}->{chr_position}  = $chr_position;
@@ -324,7 +371,7 @@ sub import_somatic_variants {
         }
         else {
             my %tmp;
-            $tmp{$c}{var}           = $_;
+            $tmp{$c}{var}           = $current_line;
             $tmp{$c}{aa_id}         = $aa_id;
             $tmp{$c}{cdna_position} = $cdna_position;
             $tmp{$c}{chr_position}  = $chr_position;
@@ -333,8 +380,6 @@ sub import_somatic_variants {
             $var{$tid}{gid}         = $gid;
         }
     }
-    close(VAR);
-    close(VARF);
 
     return (\%var);
 }
