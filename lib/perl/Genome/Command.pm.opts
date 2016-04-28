@@ -8232,6 +8232,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>create-vcf-tar',
+      [
+        'builds=s@',
+        undef,
+        'output-dir=s',
+        'directories',
+        'help!',
+        undef
+      ],
       '>haplotype-caller',
       [
         'intervals=s@',
