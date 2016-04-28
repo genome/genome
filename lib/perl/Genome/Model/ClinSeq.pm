@@ -1158,6 +1158,11 @@ sub cufflinks_differential_expression_op {
     );
     $workflow->add_operation($cufflinks_differential_expression_op);
     $workflow->connect_input(
+        input_property       => 'cancer_annotation_db',
+        destination          => $cufflinks_differential_expression_op,
+        destination_property => 'cancer_annotation_db',
+    );
+    $workflow->connect_input(
         input_property       => 'normal_rnaseq_build',
         destination          => $cufflinks_differential_expression_op,
         destination_property => 'control_build',
@@ -1362,6 +1367,11 @@ sub exome_cnv_op {
         command => 'Genome::Model::Tools::CopyNumber::Cnmops',
     );
     $workflow->add_operation($exome_cnv_op);
+    $workflow->connect_input(
+        input_property       => 'cancer_annotation_db',
+        destination          => $exome_cnv_op,
+        destination_property => 'cancer_annotation_db',
+    );
     $workflow->connect_input(
         input_property       => 'exome_cnv_dir',
         destination          => $exome_cnv_op,
