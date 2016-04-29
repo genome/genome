@@ -21,12 +21,6 @@ class Genome::Model::Tools::Manta::Config {
         },
     ],
     has_optional_input => [
-        config_file => {
-            is => 'Text',
-            doc => 'provide a configuration file to override defaults in global config file',
-            tool_arg_name => 'config',
-            tool_input_file => 1,
-        },
         bams => {
             is => 'Text',
             doc => 'Sample BAM or CRAM file. May be specified more than once, multiple inputs will be treated as each BAM file representing a different sample.',
@@ -62,6 +56,12 @@ class Genome::Model::Tools::Manta::Config {
             is => 'Boolean',
             doc => 'Set if RNA-Seq input is unstranded: Allows splice-junctions on either strand',
             tool_arg_name => 'unstrandedRNA',
+        },
+        config_file => {
+            is => 'Text',
+            doc => 'provide a configuration file to override defaults in global config file',
+            tool_arg_name => 'config',
+            tool_input_file => 1,
         },
     ],
 };
