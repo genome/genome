@@ -261,18 +261,18 @@ sub _dump_workflow {
     my $self = shift;
     my $workflow = shift;
     my $xml = $workflow->get_xml();
-    my $xml_location = $self->output_directory."/workflow.xml";
+    my $xml_location = $self->_temp_staging_directory."/workflow.xml";
     $self->_rotate_old_files($xml_location); #clean up any previous runs
     my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
     print $xml_file $xml;
     $xml_file->close;
-    #$workflow->as_png($self->output_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
+    #$workflow->as_png($self->_temp_staging_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
 }
 
 sub _dump_dv_cmd {
     my $self = shift;
     my $cmd = join(" ",@INC)."\n===============================================\n";
-    $cmd .=   "gmt detect-variants2 dispatcher --output-directory ".$self->output_directory;
+    $cmd .=   "gmt detect-variants2 dispatcher --output-directory ".$self->_temp_staging_directory;
     $cmd .=     " --reference-build " . $self->reference_build_id;
     #new
     $cmd .=     " --alignment-results " . join(',', map {$_->id} $self->alignment_results) if $self->alignment_results;
@@ -293,7 +293,7 @@ sub _dump_dv_cmd {
         }
     }
 
-    my $dispatcher_cmd_file = $self->output_directory."/dispatcher.cmd";
+    my $dispatcher_cmd_file = $self->_temp_staging_directory."/dispatcher.cmd";
     $self->_rotate_old_files($dispatcher_cmd_file); #clean up any previous runs
 
     my $dfh = Genome::Sys->open_file_for_writing($dispatcher_cmd_file);
@@ -305,10 +305,16 @@ sub _dump_dv_cmd {
 sub get_relative_path_to_output_directory {
     my $self = shift;
     my $full_path = shift;
+
     my $relative_path = $full_path;
+
     my $temp_path = $self->_temp_staging_directory;
-    $relative_path =~ s/$temp_path\/?//;
-    return $relative_path;
+    if ($relative_path =~ /$temp_path\/?/ ) {
+        $relative_path =~ s/$temp_path\/?//;
+        return $relative_path;
+    }
+
+    return;
 }
 
 sub calculate_operation_output_directory {
@@ -488,7 +494,7 @@ sub generate_workflow {
         );
     }
 
-    my $log_dir = $self->output_directory;
+    my $log_dir = $self->_temp_staging_directory;
     if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
         $log_dir = $parent_dir;
     }
@@ -932,40 +938,39 @@ sub _create_temp_directories {
 # After promoting staged data as per normal, create a symlink from the final output files to the top level of the dispatcher output directory
 sub _promote_staged_data {
     my $self = shift;
-    my $output_dir  = $self->output_directory;
 
     # This sifts the workflow results for relative paths to output files, and places them in the appropriate params
     $self->set_output_files($self->_workflow_result);
 
     # Symlink the most recent version bed files of the final hq calls into the base of the output directory
-    for my $variant_type (@{$self->variant_types}){
-        my $output_accessor = "_".$variant_type."_hq_output_file";
-        if(defined($self->$output_accessor)){
+    for my $variant_type ( @{$self->variant_types} ) {
+        my $output_accessor = '_'. $variant_type .'_hq_output_file';
+        if ( defined($self->$output_accessor) ) {
             my $file = $self->$output_accessor;
             my $output_file = basename($file);
-            my $output = "$output_dir/$output_file";
+            my $output = File::Spec->join($self->_temp_staging_directory,$output_file);
             if (-e $file) {
                 Genome::Sys->create_symlink($file,$output);
             }
 
             # This may or may not exist, depending on the variant type
-            my $vcf_link = dirname($file)."/$variant_type" . "s.vcf.gz";
-            if(-e $vcf_link){
+            my $vcf_link = File::Spec->join(dirname($file),$variant_type .'s.vcf.gz');
+            if (-e $vcf_link){
                 my $source;
-                if(-l $vcf_link){
+                if (-l $vcf_link) {
                     $source = readlink($vcf_link);
                 } else {
                     $source = $vcf_link;
                 }
-                my $link_target = $output_dir."/$variant_type" . "s.detailed.vcf.gz";
-                my $clipped_vcf = $output_dir."/$variant_type" . "s.vcf.gz";
+                my $link_target = File::Spec->join($self->_temp_staging_directory,$variant_type .'s.detailed.vcf.gz');
+                my $clipped_vcf = File::Spec->join($self->_temp_staging_directory, $variant_type .'s.vcf.gz');
                 Genome::Model::Tools::Vcf::CleanupVcf->execute(input_file => $source, output_file => $clipped_vcf);
-                if ($variant_type eq "snv") {
+                if ($variant_type eq 'snv') {
                     $self->_create_bed_from_vcf($clipped_vcf);
                 }
                 # Link both the vcf and the tabix index
                 Genome::Sys->create_symlink($source, $link_target);
-                Genome::Sys->create_symlink("$source.tbi", "$link_target.tbi");
+                Genome::Sys->create_symlink($source .'.tbi', $link_target .'.tbi');
             }
 
             # FIXME refactor this when we refactor versioning. This is pretty awful.
@@ -1028,11 +1033,14 @@ sub set_output_files {
         my $strategy = $variant_type .'_detection_strategy';
         my $out_dir = $variant_type .'_output_directory';
         if ( defined($self->$strategy) ) {
+            my $hq_output_dir = $self->_temp_staging_directory;
             my $relative_path = $self->get_relative_path_to_output_directory($result->{$out_dir});
-            unless ($relative_path) {
-                $self->fatal_message('No '. $variant_type .' output directory. Workflow returned: '. Data::Dumper::Dumper($result));
+            if ($relative_path) {
+                my $hq_output_dir = File::Spec->join($self->_temp_staging_directory,$relative_path);
+            } else {
+                $self->debug_message('Unable to resolve relative path for '. $variant_type .' output directory. Workflow returned: '. Data::Dumper::Dumper($result));
             }
-            my $hq_output_dir = File::Spec->join($self->output_directory,$relative_path);
+
             my $hq_full_path;
             if ($variant_type eq 'sv' || $variant_type eq 'cnv'){
                 my $hq_file_name = $variant_type .'s.hq';
@@ -1142,7 +1150,7 @@ sub _generate_standard_files {
             $self->$lq_accessor($lq_result);
 
             my $f = $lq_result->_file_for_type($variant_type);
-            Genome::Sys->create_symlink($lq_result->path($f), $self->output_directory . "/$f");
+            Genome::Sys->create_symlink($lq_result->path($f), $self->_temp_staging_directory . "/$f");
         }
     }
 
