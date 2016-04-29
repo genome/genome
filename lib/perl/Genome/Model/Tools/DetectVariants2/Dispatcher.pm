@@ -1041,15 +1041,21 @@ sub set_output_files {
                 unless ($hq_full_path) {
                     $hq_full_path = $self->_resolve_variant_file_full_path($hq_output_dir, $hq_file_path .'.vcf.gz');
                 }
+                if ( defined($hq_full_path) ) {
+                    $self->$file_accessor($hq_full_path);
+                } else {
+                    $self->fatal_message('Unable to locate full path to high-quality '. $variant_type .' variant file!');
+                }
             } else {
                 my $hq_file_name = $variant_type .'s.hq.bed'; # FIXME this will not be true for polymutt or other detectors that output only vcf
                 my $hq_file_path = File::Spec->join($hq_output_dir,$hq_file_name);
                 $hq_full_path = $self->_resolve_variant_file_full_path($hq_output_dir, $hq_file_path);
-            }
-            if ( defined($hq_full_path) ) {
-                $self->$file_accessor($hq_full_path);
-            } else {
-                $self->fatal_message('Unable to locate full path to high-quality '. $variant_type .' variant file!');
+                if ( defined($hq_full_path) ) {
+                    $self->$file_accessor($hq_full_path);
+                } else {
+                    $self->debug_message('Unable to locate full path to high-quality '. $variant_type .' variant file, but continuing since DV2 somehow figures it out from the basename.');
+                    $self->$file_accessor($hq_file_path);
+                }
             }
         }
     }
