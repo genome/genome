@@ -61,8 +61,7 @@ sub _detect_variants {
 
     my @dv2_config_params = split(' ',$self->params);
     my ($config_cmd_class, $config_cmd_params) = Genome::Model::Tools::Manta::Config->resolve_class_and_params_for_argv(@dv2_config_params,@resolved_config_params);
-
-    my $config_cmd = Genome::Model::Tools::Manta::Config->create($config_cmd_params);
+    my $config_cmd = Genome::Model::Tools::Manta::Config->create(%$config_cmd_params);
 
     unless ($config_cmd) {
         $self->fatal_message('Failed to create Manta config command with params: '. Data::Dumper::Dumper($config_cmd_params) );
