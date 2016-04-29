@@ -8,6 +8,7 @@ use Genome;
 use Genome::Sys::LSF::ResourceParser qw(parse_lsf_params);
 
 use File::Spec qw(join);
+use Text::ParseWords qw(shellwords);
 use Data::Dumper;
 
 class Genome::Model::Tools::DetectVariants2::Manta {
@@ -59,7 +60,7 @@ sub _detect_variants {
         $manta_vcf_filename = 'somaticSV.vcf.gz';
     }
 
-    my @dv2_config_params = split(' ',$self->params);
+    my @dv2_config_params = Text::ParseWords::shellwords($self->params);
     my ($config_cmd_class, $config_cmd_params) = Genome::Model::Tools::Manta::Config->resolve_class_and_params_for_argv(@dv2_config_params,@resolved_config_params);
     my $config_cmd = Genome::Model::Tools::Manta::Config->create(%$config_cmd_params);
 
