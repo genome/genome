@@ -261,19 +261,19 @@ sub _dump_workflow {
     my $self = shift;
     my $workflow = shift;
     my $xml = $workflow->get_xml();
-    my $xml_location = File::Spec->join($self->_temp_staging_directory,'workflow.xml');
+    my $xml_location = File::Spec->join($self->output_directory,'workflow.xml');
     $self->_rotate_old_files($xml_location); #clean up any previous runs
     my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
     print $xml_file $xml;
     $xml_file->close;
     #currently commented out because blades do not all have the "dot" library to use graphviz
-    #$workflow->as_png(File::Spec->join($self->_temp_staging_directory,'workflow.png'));
+    #$workflow->as_png(File::Spec->join($self->output_directory,'workflow.png'));
 }
 
 sub _dump_dv_cmd {
     my $self = shift;
     my $cmd = join(" ",@INC)."\n===============================================\n";
-    $cmd .=   "gmt detect-variants2 dispatcher --output-directory ".$self->_temp_staging_directory;
+    $cmd .=   "gmt detect-variants2 dispatcher --output-directory ".$self->output_directory;
     $cmd .=     " --reference-build " . $self->reference_build_id;
     #new
     $cmd .=     " --alignment-results " . join(',', map {$_->id} $self->alignment_results) if $self->alignment_results;
@@ -294,7 +294,7 @@ sub _dump_dv_cmd {
         }
     }
 
-    my $dispatcher_cmd_file = File::Spec->join($self->_temp_staging_directory,'dispatcher.cmd');
+    my $dispatcher_cmd_file = File::Spec->join($self->output_directory,'dispatcher.cmd');
     $self->_rotate_old_files($dispatcher_cmd_file); #clean up any previous runs
 
     my $dfh = Genome::Sys->open_file_for_writing($dispatcher_cmd_file);
@@ -303,15 +303,15 @@ sub _dump_dv_cmd {
     return 1;
 }
 
-sub get_relative_path_to_output_directory {
+sub get_relative_path_to_result_directory {
     my $self = shift;
-    my $full_path = shift;
+    my $result_path = shift;
 
-    my $relative_path = $full_path;
+    my $relative_path = $result_path;
 
-    my $temp_path = $self->_temp_staging_directory;
-    if ($relative_path =~ /$temp_path\/?/ ) {
-        $relative_path =~ s/$temp_path\/?//;
+    my $dispatcher_path = $self->output_directory;
+    if ($relative_path =~ /$dispatcher_path\/?/ ) {
+        $relative_path =~ s/$dispatcher_path\/?//;
         return $relative_path;
     }
 
@@ -496,7 +496,7 @@ sub generate_workflow {
         );
     }
 
-    my $log_dir = $self->_temp_staging_directory;
+    my $log_dir = $self->output_directory;
     if(my $parent_dir = Genome::WorkflowBuilder::DAG->parent_log_dir) {
         $log_dir = $parent_dir;
     }
@@ -626,7 +626,7 @@ sub create_combine_operation {
     my $workflow_model = $self->_workflow_model;
     my $unique_combine_name = join("-",($operation_type, $alink,$blink));
     $unique_combine_name =  Genome::Utility::Text::sanitize_string_for_filesystem($unique_combine_name);
-    my $combine_directory = File::Spec->join($self->_temp_staging_directory,$variant_type,$unique_combine_name);
+    my $combine_directory = File::Spec->join($self->output_directory,$variant_type,$unique_combine_name);
 
     my $combine_operation = Genome::WorkflowBuilder::Command->create(
         name => join(" ",($operation_type, $alink, $blink)),
@@ -792,7 +792,7 @@ sub add_detectors_and_filters {
                 # compose a hash containing input_connector outputs and the operations to which they connect, then connect them
 
                 # first add links from input_connector to detector
-                my $detector_output_directory = $self->calculate_operation_output_directory( File::Spec->join($self->_temp_staging_directory,$variant_type), $name,  $version, $params );
+                my $detector_output_directory = $self->calculate_operation_output_directory( File::Spec->join($self->output_directory,$variant_type), $name,  $version, $params );
 
                 my $inputs_to_store;
                 $inputs_to_store->{$unique_detector_base_name."_version"}->{value} = $version;
@@ -912,7 +912,7 @@ sub _create_directories {
         }
     }
     # create subdirectories for the variant types we are detecting
-    my @subdirs = map { File::Spec->join($self->_temp_staging_directory,$_) } @variant_types;
+    my @subdirs = map { File::Spec->join($self->output_directory,$_) } @variant_types;
     for my $output_directory (@subdirs) {
         unless (-d $output_directory) {
             eval {
@@ -951,7 +951,7 @@ sub _promote_staged_data {
         if ( defined($self->$output_accessor) ) {
             my $file = $self->$output_accessor;
             my $output_file = basename($file);
-            my $output = File::Spec->join($self->_temp_staging_directory,$output_file);
+            my $output = File::Spec->join($self->output_directory,$output_file);
             if (-e $file) {
                 Genome::Sys->create_symlink($file,$output);
             }
@@ -965,8 +965,8 @@ sub _promote_staged_data {
                 } else {
                     $source = $vcf_link;
                 }
-                my $link_target = File::Spec->join($self->_temp_staging_directory,$variant_type .'s.detailed.vcf.gz');
-                my $clipped_vcf = File::Spec->join($self->_temp_staging_directory, $variant_type .'s.vcf.gz');
+                my $link_target = File::Spec->join($self->output_directory,$variant_type .'s.detailed.vcf.gz');
+                my $clipped_vcf = File::Spec->join($self->output_directory, $variant_type .'s.vcf.gz');
                 Genome::Model::Tools::Vcf::CleanupVcf->execute(input_file => $source, output_file => $clipped_vcf);
                 if ($variant_type eq 'snv') {
                     $self->_create_bed_from_vcf($clipped_vcf);
@@ -1036,10 +1036,10 @@ sub set_output_files {
         my $strategy = $variant_type .'_detection_strategy';
         my $out_dir = $variant_type .'_output_directory';
         if ( defined($self->$strategy) ) {
-            my $hq_output_dir = $self->_temp_staging_directory;
-            my $relative_path = $self->get_relative_path_to_output_directory($result->{$out_dir});
+            my $hq_output_dir = $self->output_directory;
+            my $relative_path = $self->get_relative_path_to_result_directory($result->{$out_dir});
             if ($relative_path) {
-                my $hq_output_dir = File::Spec->join($self->_temp_staging_directory,$relative_path);
+                $hq_output_dir = File::Spec->join($self->output_directory,$relative_path);
             } else {
                 $self->debug_message('Unable to resolve relative path for '. $variant_type .' output directory. Workflow returned: '. Data::Dumper::Dumper($result));
             }
@@ -1064,7 +1064,7 @@ sub set_output_files {
                 if ( defined($hq_full_path) ) {
                     $self->$file_accessor($hq_full_path);
                 } else {
-                    $self->debug_message('Unable to locate full path to high-quality '. $variant_type .' variant file, but continuing since DV2 somehow figures it out from the basename.');
+                    $self->debug_message('Unable to locate full path to high-quality '. $variant_type .' variant file. Continuing with \''. $hq_file_path .'\' since DV2 laters resolves the path using the file basename.');
                     $self->$file_accessor($hq_file_path);
                 }
             }
@@ -1153,7 +1153,7 @@ sub _generate_standard_files {
             $self->$lq_accessor($lq_result);
 
             my $f = $lq_result->_file_for_type($variant_type);
-            Genome::Sys->create_symlink($lq_result->path($f), File::Spec->join($self->_temp_staging_directory,$f));
+            Genome::Sys->create_symlink($lq_result->path($f), File::Spec->join($self->output_directory,$f));
         }
     }
 
