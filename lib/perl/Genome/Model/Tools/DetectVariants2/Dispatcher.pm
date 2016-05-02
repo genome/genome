@@ -261,12 +261,13 @@ sub _dump_workflow {
     my $self = shift;
     my $workflow = shift;
     my $xml = $workflow->get_xml();
-    my $xml_location = $self->_temp_staging_directory."/workflow.xml";
+    my $xml_location = File::Spec->join($self->_temp_staging_directory,'workflow.xml');
     $self->_rotate_old_files($xml_location); #clean up any previous runs
     my $xml_file = Genome::Sys->open_file_for_writing($xml_location);
     print $xml_file $xml;
     $xml_file->close;
-    #$workflow->as_png($self->_temp_staging_directory."/workflow.png"); #currently commented out because blades do not all have the "dot" library to use graphviz
+    #currently commented out because blades do not all have the "dot" library to use graphviz
+    #$workflow->as_png(File::Spec->join($self->_temp_staging_directory,'workflow.png'));
 }
 
 sub _dump_dv_cmd {
@@ -293,7 +294,7 @@ sub _dump_dv_cmd {
         }
     }
 
-    my $dispatcher_cmd_file = $self->_temp_staging_directory."/dispatcher.cmd";
+    my $dispatcher_cmd_file = File::Spec->join($self->_temp_staging_directory,'dispatcher.cmd');
     $self->_rotate_old_files($dispatcher_cmd_file); #clean up any previous runs
 
     my $dfh = Genome::Sys->open_file_for_writing($dispatcher_cmd_file);
@@ -320,6 +321,7 @@ sub get_relative_path_to_output_directory {
 sub calculate_operation_output_directory {
     my $self = shift;
     my ($base_directory, $name, $version, $param_list) = @_;
+
     my $subdirectory = join('-', $name, $version, Genome::Sys->md5sum_data($param_list));
 
     if($ENV{UR_DBI_NO_COMMIT}) {
@@ -624,7 +626,7 @@ sub create_combine_operation {
     my $workflow_model = $self->_workflow_model;
     my $unique_combine_name = join("-",($operation_type, $alink,$blink));
     $unique_combine_name =  Genome::Utility::Text::sanitize_string_for_filesystem($unique_combine_name);
-    my $combine_directory = $self->_temp_staging_directory."/".$variant_type."/".$unique_combine_name;
+    my $combine_directory = File::Spec->join($self->_temp_staging_directory,$variant_type,$unique_combine_name);
 
     my $combine_operation = Genome::WorkflowBuilder::Command->create(
         name => join(" ",($operation_type, $alink, $blink)),
@@ -790,7 +792,7 @@ sub add_detectors_and_filters {
                 # compose a hash containing input_connector outputs and the operations to which they connect, then connect them
 
                 # first add links from input_connector to detector
-                my $detector_output_directory = $self->calculate_operation_output_directory($self->_temp_staging_directory."/".$variant_type, $name, $version, $params);
+                my $detector_output_directory = $self->calculate_operation_output_directory( File::Spec->join($self->_temp_staging_directory,$variant_type), $name,  $version, $params );
 
                 my $inputs_to_store;
                 $inputs_to_store->{$unique_detector_base_name."_version"}->{value} = $version;
@@ -896,6 +898,7 @@ sub add_detectors_and_filters {
     $self->_workflow_model($workflow_model);
     return $workflow_model;
 }
+
 sub _create_directories {
     my $self = shift;
     $self->SUPER::_create_directories(@_);
@@ -909,7 +912,7 @@ sub _create_directories {
         }
     }
     # create subdirectories for the variant types we are detecting
-    my @subdirs = map {$self->_temp_staging_directory."/".$_ } @variant_types;
+    my @subdirs = map { File::Spec->join($self->_temp_staging_directory,$_) } @variant_types;
     for my $output_directory (@subdirs) {
         unless (-d $output_directory) {
             eval {
@@ -1150,7 +1153,7 @@ sub _generate_standard_files {
             $self->$lq_accessor($lq_result);
 
             my $f = $lq_result->_file_for_type($variant_type);
-            Genome::Sys->create_symlink($lq_result->path($f), $self->_temp_staging_directory . "/$f");
+            Genome::Sys->create_symlink($lq_result->path($f), File::Spec->join($self->_temp_staging_directory,$f));
         }
     }
 
