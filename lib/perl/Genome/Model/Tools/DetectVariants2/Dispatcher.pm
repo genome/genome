@@ -1064,7 +1064,7 @@ sub set_output_files {
                 if ( defined($hq_full_path) ) {
                     $self->$file_accessor($hq_full_path);
                 } else {
-                    $self->debug_message('Unable to locate full path to high-quality '. $variant_type .' variant file. Continuing with \''. $hq_file_path .'\' since DV2 laters resolves the path using the file basename.');
+                    $self->debug_message('Unable to locate full path to high-quality '. $variant_type .' variant file. Continuing with \''. $hq_file_path .'\' since DV2 later resolves the path using the file basename.');
                     $self->$file_accessor($hq_file_path);
                 }
             }
