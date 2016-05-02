@@ -310,8 +310,7 @@ sub get_relative_path_to_result_directory {
     my $relative_path = $result_path;
 
     my $dispatcher_path = $self->output_directory;
-    if ($relative_path =~ /$dispatcher_path\/?/ ) {
-        $relative_path =~ s/$dispatcher_path\/?//;
+    if ($relative_path =~ s/$dispatcher_path\/?//; ) {
         return $relative_path;
     }
 
