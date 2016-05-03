@@ -16,12 +16,22 @@ sub reference_sequence_build {
 
 sub individual {
     my $self = shift;
-    $self->fatal_message('Abstract: (individual) needs to be defined on class (%s)', $self->class);
+
+    my $subject = $self->subject;
+    if ($subject->isa('Genome::Sample')) {
+        return $self->subject->individual;
+    }
+    elsif ($subject->isa('Genome::Individual')) {
+        return $self->subject;
+    }
+    else {
+        $self->fatal_message("Can't resolve subject for build (%s) of class (%s)", $self->id, $self->class);
+    }
 }
 
 sub individual_common_name {
     my $self = shift;
-    $self->fatal_message('Abstract: (individual_common_name) needs to be defined on class (%s)', $self->class);
+    return $self->individual->common_name;
 }
 
 sub snvs_annotated_variants_vcf_file {

@@ -451,16 +451,6 @@ sub get_feature_list_from_reference {
     return $self->tumor_build->reference_sequence_build->get_feature_list($feature_list_accessor);
 }
 
-sub individual {
-    my $self = shift;
-    return $self->subject->individual;
-}
-
-sub individual_common_name {
-    my $self = shift;
-    return $self->subject->individual_common_name;
-}
-
 sub snvs_annotated_variants_vcf_file {
     my $self = shift;
     return File::Spec->join($self->data_directory, 'variants', 'snvs.annotated.vcf.gz');
