@@ -30,7 +30,7 @@ class Genome::Model::ClinSeq::Command::RunCnView {
         cnv_hq_file => {
             is          => 'FilesystemPath',
             is_optional => 1,
-            doc         => 'cnv_hq file from clonality analysis. if not provided file from wgs somaic build is used'
+            doc         => 'cnv_hq file from clonality analysis. if not provided file from wgs somatic build is used'
         },
         test => {
             is          => 'Boolean',

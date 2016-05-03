@@ -11,7 +11,7 @@ class Genome::Model::ClinSeq::Command::CreateMutationSpectrum {
             is                  => 'Genome::Model::Build::SomaticInterface',
             shell_args_position => 1,
             require_user_verify => 0,
-            doc                 => 'somatic variation to create mutation spectrum results from',
+            doc                 => 'somatic build(s) to create mutation spectrum results from',
         },
         clinseq_build => {
             is  => 'Genome::Model::Build::ClinSeq',
@@ -69,7 +69,7 @@ EOS
 
 sub help_detail {
     return <<EOS
-Create mutation spectrum results for a single somatic variation build.
+Create mutation spectrum results for a single somatic build.
 Should work for either wgs or exome data but different sets of variants will be used.
 The read-counts are obtained from the SNVINdel report directory.
 EOS
