@@ -70,18 +70,33 @@ sub best_somatic_build_subject_common_name {
 sub has_microarray_build {
     my $self = shift;
 
-    my $base_build;
-    if ($self->exome_build) {
-        $base_build = $self->exome_build;
-    }
-    elsif ($self->wgs_build) {
-        $base_build = $self->wgs_build;
-    }
-    else {
-        return 0;
+    for my $build_accessor (qw(exome_build wgs_build)) {
+        if (my $build = $self->$build_accessor) {
+            return 1 if ($build->has_microarray_build);
+        }
     }
 
-    return $base_build->has_microarray_build;
+    return 0;
+}
+
+sub tumor_microarray_build {
+    my $self = shift;
+
+    for my $build_accessor (qw(exome_build wgs_build)) {
+        if (my $build = $self->$build_accessor) {
+            return $build->tumor_microarray_build if ($build->has_microarray_build);
+        }
+    }
+}
+
+sub normal_microarray_build {
+    my $self = shift;
+
+    for my $build_accessor (qw(exome_build wgs_build)) {
+        if (my $build = $self->$build_accessor) {
+            return $build->normal_microarray_build if ($build->has_microarray_build);
+        }
+    }
 }
 
 1;

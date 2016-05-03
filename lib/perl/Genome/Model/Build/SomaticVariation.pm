@@ -465,12 +465,22 @@ sub indels_effects_file {
 sub has_microarray_build {
     my $self = shift;
 
-    if ($self->tumor_build->genotype_microarray_build && $self->normal_build->genotype_microarray_build) {
+    if ($self->tumor_microarray_build && $self->normal_microarray_build) {
         return 1;
     }
     else {
         return 0;
     }
+}
+
+sub tumor_microarray_build {
+    my $self = shift;
+    return $self->tumor_build->genotype_microarray_build;
+}
+
+sub normal_microarray_build {
+    my $self = shift;
+    return $self->normal_build->genotype_microarray_build;
 }
 
 1;
