@@ -306,7 +306,7 @@ sub createIndelOutfile {
     close(INDEL_OUT);
 
     #Set output files as output to this step
-    die $self->error_message("Trying to set a file as output but the file does not exist: $indel_outfile")
+    $self->fatal_message("Trying to set a file as output but the file does not exist: $indel_outfile")
         unless (-e $indel_outfile);
     $self->indel_variant_sources_file($indel_outfile);
 
@@ -348,7 +348,7 @@ sub createSnvOutfile {
     close(SNV_OUT);
 
     #Set output files as output to this step
-    die $self->error_message("Trying to set a file as output but the file does not exist: $snv_outfile")
+    $self->fatal_message("Trying to set a file as output but the file does not exist: $snv_outfile")
         unless (-e $snv_outfile);
     $self->snv_variant_sources_file($snv_outfile);
 
