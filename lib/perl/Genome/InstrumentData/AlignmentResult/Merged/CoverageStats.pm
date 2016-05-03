@@ -198,7 +198,7 @@ sub dump_bed_file {
     my $use_short_names = $self->use_short_roi_names;
 
     unless ($bed_file_path) {
-        $bed_file_path = $self->temp_staging_directory .'/'. $roi_set->id .'.bed';
+        $bed_file_path = File::Spec->join($self->temp_staging_directory, $roi_set->id . '.bed');
     }
     unless (-e $bed_file_path) {
         my %dump_params = (
