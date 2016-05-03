@@ -34,11 +34,11 @@ sub input_builds {
 
     my @input_builds = ( $self->tumor_rnaseq_build, $self->normal_rnaseq_build );
     for my $accessor (qw(wgs_build exome_build)) {
-        if ($self->$accessor) {
-            push @input_builds, $self->$accessor;
+        if (my $input_build = $self->$accessor) {
+            push @input_builds, $input_build;
             for my $build (qw(tumor_build normal_build)) {
-                if ($self->$accessor->can($build)) {
-                    push @input_builds, $self->$accessor->$build;
+                if ($input_build->can($build)) {
+                    push @input_builds, $input_build->$build;
                 }
             }
         }

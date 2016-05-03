@@ -1865,11 +1865,11 @@ sub _input_models {
 
     my @input_models = ( $self->tumor_rnaseq_model, $self->normal_rnaseq_model );
     for my $accessor (qw(wgs_model exome_model)) {
-        if ($self->$accessor) {
-            push @input_models, $self->$accessor;
+        if (my $input_model = $self->$accessor) {
+            push @input_models, $input_model;
             for my $model (qw(tumor_model normal_model)) {
-                if ($self->$accessor->can($model)) {
-                    push @input_models, $self->$accessor->$model;
+                if ($input_model->can($model)) {
+                    push @input_models, $input_model->$model;
                 }
             }
         }
