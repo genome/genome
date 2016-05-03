@@ -16,13 +16,13 @@ class Genome::Model::ClinSeq::Command::GetBamReadCounts {
         },
 
         wgs_somatic_build => {
-            is          => 'Genome::Model::Build::SomaticVariation',
+            is          => 'Genome::Model::Build::SomaticInterface',
             is_optional => 1,
             doc         => 'Whole genome sequence (WGS) somatic build'
         },
 
         exome_somatic_build => {
-            is          => 'Genome::Model::Build::SomaticVariation',
+            is          => 'Genome::Model::Build::SomaticInterface',
             is_optional => 1,
             doc         => 'Exome capture sequence somatic build'
         },
