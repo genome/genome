@@ -53,11 +53,11 @@ reinstall_sub({
 my $cmd = $pkg->create(builds => [$build]);
 
 my $out = Genome::Sys->create_temp_file_path;
-open(SAVED_STDOUT, ">&STDOUT") || die "Can't save STDOUT\n";
+my $SAVED_STDOUT = IO::Handle->new_from_fd(*STDOUT, 'w') || die "Can't save STDOUT\n";
 open OUTPUT, ' >> '.$out or die $!;
 STDOUT->fdopen(\*OUTPUT, 'w') or die $!;
 $cmd->execute;
-open(STDOUT, ">&SAVED_STDOUT") || die "Can't restore STDOUT\n";
+STDOUT->fdopen($SAVED_STDOUT, 'w') || die "Can't restore STDOUT\n";
 my $expected_file = File::Spec->join(__FILE__.".d", "expected_out.txt");
 compare_ok($out, $expected_file, "File created correctly");
 done_testing;
