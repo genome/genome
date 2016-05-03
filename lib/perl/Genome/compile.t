@@ -60,7 +60,10 @@ sub resolve_start_point {
         return $ENV{JENKINS_STABLE_REVISION};
     }
 
-    if (system(q(git rev-parse '@{u}' 2> /dev/null)) == 0) {
+    # Redirect the standard output and error to the /dev/null.
+    # Otherwise, the standard output will interfere with the
+    # TAP output.
+    if (system(q(git rev-parse '@{u}' 2>&1 > /dev/null)) == 0) {
         return '@{u}';
     }
 
