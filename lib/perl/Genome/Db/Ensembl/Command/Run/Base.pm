@@ -125,7 +125,7 @@ class Genome::Db::Ensembl::Command::Run::Base {
         },
         gene => {
             is => 'Boolean',
-            doc => 'Force output fo Ensembl gene identifier.',
+            doc => 'Force output of Ensembl gene identifier.',
             default_value => 0,
             is_optional => 1,
             is_vep_param => 1,
@@ -203,7 +203,7 @@ class Genome::Db::Ensembl::Command::Run::Base {
         quiet => {
             is => 'Boolean',
             default => 0,
-            doc => "Don't print the potput of vep to the terminal",
+            doc => "Don't print the output of vep to the terminal",
             is_vep_param => 1,
         },
         custom => {
