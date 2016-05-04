@@ -15,7 +15,9 @@ my $start_point = resolve_start_point();
 my @files_to_compile = files_to_compile($start_point);;
 plan tests => scalar(@files_to_compile) + 1;
 
-ok(@files_to_compile >= 0); # have to have at least one test for this to pass when there is nothing to compile
+# LSF Have to put a message otherwise, it might
+#     cause an error  if it is only one test.
+ok(@files_to_compile >= 0, 'checked files to compile'); # have to have at least one test for this to pass when there is nothing to compile
 
 for my $file (@files_to_compile) {
     my $pid = fork();
