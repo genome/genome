@@ -9,6 +9,7 @@ use Clone qw/clone/;
 use Data::Dumper;
 use JSON;
 use File::Basename;
+use Path::Class;
 use Cwd qw();
 
 class Genome::Model::Tools::DetectVariants2::Dispatcher {
@@ -307,11 +308,12 @@ sub get_relative_path_to_result_directory {
     my $self = shift;
     my $result_path = shift;
 
-    my $relative_path = $result_path;
+    my $result_dir = Path::Class::dir($result_path);
 
-    my $dispatcher_path = $self->output_directory;
-    if ($relative_path =~ s/$dispatcher_path\/?//; ) {
-        return $relative_path;
+    my $dispatcher_dir = Path::Class::dir($self->output_directory);
+
+    if ( $dispatcher_dir->contains($result_dir) ) {
+        return $result_dir->relative($dispatcher_dir);
     }
 
     return;
