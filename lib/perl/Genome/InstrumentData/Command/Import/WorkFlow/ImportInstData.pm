@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 
 require File::Temp;
-use Workflow::Simple;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::ImportInstData {
     is => 'Command::V2',
@@ -53,7 +52,7 @@ sub execute {
     return if not $inputs;
     $inputs->{working_directory} = $self->_working_directory;
 
-    my $success = Workflow::Simple::run_workflow($dag->get_xml, %$inputs);
+    my $success = $dag->execute_inline($inputs);
     die 'Run wf failed!' if not $success;
 
     $self->instrument_data($success->{instrument_data});
