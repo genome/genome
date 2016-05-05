@@ -112,9 +112,9 @@ sub execute {
         $cmd .= " --no-info";
     }
 
-    if(defined($self->output_file) && not defined($self->use_bgzip)){
+    if(defined($self->output_file) && not $self->use_bgzip){
         $cmd .= " --output-file $output" if defined($self->output_file);
-    } elsif ( defined($self->use_bgzip) && defined($self->output_file) ){
+    } elsif ( $self->use_bgzip && defined($self->output_file) ){
         $cmd .= " | bgzip -c > $output";
         $cmd = "bash -c \"$cmd\"";
     }
