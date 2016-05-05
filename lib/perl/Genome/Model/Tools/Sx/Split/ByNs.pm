@@ -42,7 +42,7 @@ sub _split_seq {
     my @seqs;
     my $cnt = 0;
     my $n = $self->number_of_ns;
-    for my $bases ( split(/n{$n}/i, $seq->{seq}) ) {
+    for my $bases ( split(/n{$n,}/i, $seq->{seq}) ) {
         push @seqs, {
             id => join('.', $seq->{id}, ++$cnt),
             seq => $bases,
