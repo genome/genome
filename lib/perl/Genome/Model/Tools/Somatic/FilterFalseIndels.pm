@@ -42,7 +42,7 @@ class Genome::Model::Tools::Somatic::FilterFalseIndels {
             is_optional => 1,
             is_input => 1,
             doc => 'Reference sequence to use.',
-            example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa', '/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa'],
+            example_values => ['/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa', '/gscmnt/gc4096/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa'],
         },  
        'min_homopolymer' => {
             type => 'String',

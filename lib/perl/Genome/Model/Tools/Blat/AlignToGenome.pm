@@ -52,7 +52,7 @@ EOS
 sub help_detail {                           # this is what the user will see with the longer version of help. <---
     return <<EOS 
 This command would spawn BLAT alignments between myDeletions.fasta and each of the 24 human chrom refseqs:
- gmt blat align-to-genome --reference-dir /gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/ --search-string *.fasta --query-file myDeletions.fasta --output-dir ./ 
+ gmt blat align-to-genome --reference-dir /gscmnt/gc4096/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/ --search-string *.fasta --query-file myDeletions.fasta --output-dir ./ 
 
 By default, each BLAT alignment will be launched in the Genome::Config::get('lsf_queue_build_worker') queue, and outputs will be in the ./ directory.
 

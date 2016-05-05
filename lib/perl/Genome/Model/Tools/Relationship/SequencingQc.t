@@ -43,7 +43,7 @@ my @snp_files = qw(
     /gscmnt/gc8002/info/model_data/2882404755/build125446372/variants/snvs.hq.bed
     /gscmnt/gc8001/info/model_data/2882403051/build125446442/variants/snvs.hq.bed
 );
-my $reference_fasta = "/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa";
+my $reference_fasta = "/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa";
 
 my %test_params = (
     output_dir => $test_output_base,

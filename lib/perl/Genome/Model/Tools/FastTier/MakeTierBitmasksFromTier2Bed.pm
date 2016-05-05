@@ -20,7 +20,7 @@ class Genome::Model::Tools::FastTier::MakeTierBitmasksFromTier2Bed {
             type => 'Text',
             is_input => 1,
             doc => 'Reference sequence to use for tier mask creation',
-            example_values => ['/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa'],
+            example_values => ['/gscmnt/gc4096/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa'],
         },
         transcript_version => {
             type => 'Text',

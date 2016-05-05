@@ -30,7 +30,7 @@ class Genome::Model::Tools::Analysis::Mendelian::BuildMpileupTable {
         sample_file	=> { is => 'Text', doc => "Tab-delimited file of family, sample, status, dir", is_optional => 0, is_input => 1},
         variant_file	=> { is => 'Text', doc => "Variants in sorted annotation format to build mpileup for", is_optional => 0, is_input => 1},
         family	=> { is => 'Text', doc => "Family for which to build mpileup", is_optional => 0, is_input => 1},
-        reference	=> { is => 'Text', doc => "Path to the reference to use [defaults to build 37]", is_optional => 0, is_input => 1, example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa']},
+        reference	=> { is => 'Text', doc => "Path to the reference to use [defaults to build 37]", is_optional => 0, is_input => 1, example_values => ['/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa']},
         output_file	=> { is => 'Text', doc => "Output directory to contain files", is_optional => 1, is_input => 1},
         ],
 };

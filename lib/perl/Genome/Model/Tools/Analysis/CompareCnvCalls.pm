@@ -25,7 +25,7 @@ class Genome::Model::Tools::Analysis::CompareCnvCalls {
     fai_file => {
       is => 'FilesystemPath',
       doc => '.fai index for the reference sequence, contains the length of the chromosomes',
-      default => '/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa.fai',
+      default => '/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa.fai',
     },
     outdir => {
       is => 'FilesystemPath',

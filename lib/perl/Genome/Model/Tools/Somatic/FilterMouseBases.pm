@@ -30,14 +30,14 @@ class Genome::Model::Tools::Somatic::FilterMouseBases {
            is_input => 1,
            is_output => 1,
            doc => 'Indexed FASTA of the human genome',
-           example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'],
+           example_values => ['/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa'],
        },
        'mouse_reference' => {
            type => 'String',
            is_input => 1,
            is_output => 1,
            doc => 'Indexed FASTA of the mouse genome ',
-           example_values => ['/gscmnt/sata420/info/reference_sequences/NCBI-mouse-build37/all_sequences.fa'],
+           example_values => ['/gscmnt/gc4096/info/reference_sequences/NCBI-mouse-build37/all_sequences.fa'],
        },
        'output_file' => {
            type => 'String',

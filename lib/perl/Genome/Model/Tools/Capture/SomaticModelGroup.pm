@@ -45,7 +45,7 @@ class Genome::Model::Tools::Capture::SomaticModelGroup {
 		output_maf_file	=> 	{ is => 'Text', doc => "Output a MAF file for downstream analysis" , is_optional => 1},
 		uhc_filter	=> 	{ is => 'Text', doc => "If set to 1, apply ultra-high-conf filter to SNV calls" , is_optional => 1},
 		uhc_indels	=> 	{ is => 'Text', doc => "If set to 1, pass hc indels for MAF inclusion" , is_optional => 1},
-		reference	=> 	{ is => 'Text', doc => "Reference to use for bam-readcounts-based filters; defaults to build 37" , is_optional => 1, example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa']},
+		reference	=> 	{ is => 'Text', doc => "Reference to use for bam-readcounts-based filters; defaults to build 37" , is_optional => 1, example_values => ['/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa']},
 		reference_transcripts	=> 	{ is => 'Text', doc => "Transcripts to use for variant annotation " , example_values => ['NCBI-human.combined-annotation/58_37c_v2']},
 		review_database_snvs	=> 	{ is => 'Text', doc => "If provided, use to exclude already-reviewed sites" , is_optional => 1},
 		review_database_indels	=> 	{ is => 'Text', doc => "If provided, use to exclude already-reviewed indels" , is_optional => 1},
