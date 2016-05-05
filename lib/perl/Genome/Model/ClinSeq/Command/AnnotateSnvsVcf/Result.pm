@@ -16,13 +16,13 @@ class Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result {
             is => 'Text',
             doc => 'Vcf File containing annotation',
         },
+    ],
+    has_optional_input => [
         info_fields => {
             is => 'Text',
             doc => 'Field ids to embed from the annotation VCF. Use colons to separate multiple field descriptors.',
             #doing the above because UR autosplits on commas with is_many, but joinx uses commas in its field descriptors
         },
-    ],
-    has_optional_input => [
         identifiers => {
             is => 'Boolean',
             doc => 'copy identifiers from the annotation file',
@@ -42,7 +42,7 @@ sub _run {
         annotation_file => $self->annotation_file,
         output_file => $self->_temp_staging_file_path,
         use_bgzip => $self->use_bgzip,
-        info_fields => $self->info_fields || "",
+        info_fields => $self->info_fields,
         info => $self->info,
         use_version => Genome::Model::Tools::Joinx->get_default_version,
     );

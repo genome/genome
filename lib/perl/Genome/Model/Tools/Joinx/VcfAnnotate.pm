@@ -21,13 +21,13 @@ class Genome::Model::Tools::Joinx::VcfAnnotate {
             doc => 'Vcf File containing annotation',
             shell_args_position => 2,
         },
+    ],
+    has_optional_input => [
         info_fields => {
             is => 'Text',
             doc => 'Field ids to embed from the annotation VCF. Use colons to separate multiple field descriptors.',
             #doing the above because UR autosplits on commas with is_many, but joinx uses commas in its field descriptors
         },
-    ],
-    has_optional_input => [
         output_file => {
             is => 'Text',
             is_output => 1,

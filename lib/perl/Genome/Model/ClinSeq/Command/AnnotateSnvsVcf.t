@@ -24,7 +24,6 @@ my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash;
 my $cmd = $pkg->create(
     input_file => $input_file,
     annotation_file => $annotation_file,
-    info_fields => "",
     info => 0,
     result_users => $result_users,
 );
