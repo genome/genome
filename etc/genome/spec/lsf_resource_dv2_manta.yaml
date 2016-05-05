@@ -1,0 +1,3 @@
+---
+default_value: "-R 'select[tmp>=10000 && mem>=24000] rusage[tmp=10000, mem=24000] span[hosts=1]' -M 24000000 -n 12"
+env: XGENOME_LSF_RESOURCE_DV2_MANTA
