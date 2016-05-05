@@ -1,11 +1,11 @@
-package Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result;
+package Genome::Model::ClinSeq::Command::AnnotateVcf::Result;
 
 use strict;
 use warnings;
 use Genome;
 use File::Basename qw(basename);
 
-class Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result {
+class Genome::Model::ClinSeq::Command::AnnotateVcf::Result {
     is => 'Genome::SoftwareResult::StageableSimple::SingleFile',
     has_input => [
         input_file => {
