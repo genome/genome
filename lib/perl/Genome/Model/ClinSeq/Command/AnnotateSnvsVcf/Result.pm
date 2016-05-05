@@ -3,7 +3,7 @@ package Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result;
 use strict;
 use warnings;
 use Genome;
-use File::Basename qw(fileparse);
+use File::Basename qw(basename);
 
 class Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result {
     is => 'Genome::SoftwareResult::StageableSimple::SingleFile',
@@ -65,8 +65,7 @@ sub use_bgzip {
 
 sub _file_name {
     my $self = shift;
-    my ($filename, $dirs, $suffix) = fileparse($self->input_file, qr/(\.[^.]*)*/);
-    return "$filename.annotated$suffix";
+    return basename($self->input_file);
 }
 
 1;
