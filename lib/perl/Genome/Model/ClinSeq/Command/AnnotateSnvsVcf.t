@@ -12,18 +12,44 @@ use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw (compare_ok);
 use Genome::Test::Factory::SoftwareResult::User;
+use Genome::Test::Factory::Model::SomaticValidation;
+use Genome::Test::Factory::Model::ImportedVariationList;
+use Genome::Test::Factory::Build;
+use Sub::Override;
 
 my $pkg = 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf';
 use_ok($pkg);
 
 my $test_dir = __FILE__.'.d';
-my $input_file = File::Spec->join($test_dir, 'snvs.vcf');
+
+my $dbsnp_model = Genome::Test::Factory::Model::ImportedVariationList->setup_object();
+my $dbsnp_build = Genome::Test::Factory::Build->setup_object(
+    model_id => $dbsnp_model->id,
+    version  => "fake",
+);
+
 my $annotation_file = File::Spec->join($test_dir, 'annotation.vcf');
+my $override2 = Sub::Override->new(
+    'Genome::Model::Build::ImportedVariationList::snvs_vcf',
+    sub { return $annotation_file }
+);
+
+my $somatic_model = Genome::Test::Factory::Model::SomaticValidation->setup_object();
+my $somatic_build = Genome::Test::Factory::Build->setup_object(
+    model_id                               => $somatic_model->id,
+    previously_discovered_variations_build => $dbsnp_build,
+);
+
+my $input_file = File::Spec->join($test_dir, 'snvs.vcf');
+my $override = Sub::Override->new(
+    'Genome::Model::Build::SomaticInterface::snvs_variants_vcf_file',
+    sub { return $input_file }
+);
+
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash;
 
 my $cmd = $pkg->create(
-    input_file => $input_file,
-    annotation_file => $annotation_file,
+    somatic_build => $somatic_build,
     info => 0,
     result_users => $result_users,
 );

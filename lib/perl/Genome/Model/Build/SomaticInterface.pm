@@ -34,6 +34,11 @@ sub individual_common_name {
     return $self->individual->common_name;
 }
 
+sub snvs_variants_vcf_file {
+    my $self = shift;
+    return File::Spec->join($self->data_directory, 'variants', 'snvs.vcf.gz');
+}
+
 sub snvs_annotated_variants_vcf_file {
     my $self = shift;
     $self->fatal_message('Abstract: (snvs_annotated_variants_vcf_file) needs to be defined on class (%s)', $self->class);

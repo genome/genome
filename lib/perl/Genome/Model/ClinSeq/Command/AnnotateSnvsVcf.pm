@@ -7,13 +7,9 @@ use Genome;
 class Genome::Model::ClinSeq::Command::AnnotateSnvsVcf {
     is => 'Genome::Command::DelegatesToResult',
     has => [
-        input_file => {
-            is => 'Text',
-            doc => 'Vcf File to filter',
-        },
-        annotation_file => {
-            is => 'Text',
-            doc => 'Vcf File containing annotation',
+        somatic_build => {
+            is => 'Genome::Model::Build::SomaticInterface',
+            doc => 'The somatic build with the snvs vcf to annotate',
         },
     ],
     has_optional_input => [
@@ -37,6 +33,16 @@ class Genome::Model::ClinSeq::Command::AnnotateSnvsVcf {
 
 sub result_class {
     return 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result';
+}
+
+sub input_hash {
+    my $self = shift;
+
+    my %input_hash = $self->SUPER::input_hash;
+    $input_hash{input_file}      = $self->somatic_build->snvs_variants_vcf_file;
+    $input_hash{annotation_file} = $self->somatic_build->previously_discovered_variations_build->snvs_vcf;
+
+    return %input_hash;
 }
 
 1;
