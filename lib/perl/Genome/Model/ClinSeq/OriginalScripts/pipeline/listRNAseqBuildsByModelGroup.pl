@@ -77,9 +77,9 @@ foreach my $m (@models){
 
   #print "$common_name\t$subject_name\t$sample_name\t$model_name\t$sample_common_name\t$data_directory\n";
 
-  #LUC9	Tumor	RNAseq	/gscmnt/gc7001/info/model_data/2880886936/build116090927/alignments/accepted_hits.bam	/gscmnt/gc7001/info/model_data/2880886936/build116090927/	/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa	GRCh37-lite-build37	
+  #LUC9	Tumor	RNAseq	/gscmnt/gc7001/info/model_data/2880886936/build116090927/alignments/accepted_hits.bam	/gscmnt/gc7001/info/model_data/2880886936/build116090927/	/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa	GRCh37-lite-build37	
   if ($m->_last_complete_build_id){
-    print "$common_name\t$sample_common_name\tRNAseq\t$data_directory"."/alignments/accepted_hits.bam\t$data_directory/\t/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa\tGRCh37-lite-build37\n";
+    print "$common_name\t$sample_common_name\tRNAseq\t$data_directory"."/alignments/accepted_hits.bam\t$data_directory/\t/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa\tGRCh37-lite-build37\n";
   }
 
 

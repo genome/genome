@@ -5,7 +5,7 @@ aligned_bam_result_id:
 feature_list_ids:
     ON_TARGET: a2733b8111c24110805025137c878e13
     SEG_DUP: 4e77d10f29f44a0792ebc8d6ea0c4a2b
-reference_fasta: /gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa
+reference_fasta: /gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa
 discovery_tumor: H_KA-220882-1309235
 normal: H_KA-220882-1222132
 followup_tumor: H_KA-220882-1309236

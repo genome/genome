@@ -48,7 +48,7 @@ class Genome::Model::Tools::Validation::BuildRemappingContigs {
         reference_sequence => {
             type => 'String',
             is_optional => 0,
-            example_values => ['"/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa" (GC standard Build36)'],
+            example_values => ['"/gscmnt/gc4096/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa" (GC standard Build36)'],
             doc => 'The samtools indexed fasta sequence of the reference the indels were predicted against.'
         },
         output_file => {

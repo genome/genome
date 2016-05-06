@@ -15,7 +15,7 @@ my $start_point = resolve_start_point();
 my @files_to_compile = files_to_compile($start_point);;
 plan tests => scalar(@files_to_compile) + 1;
 
-ok(@files_to_compile >= 0); # have to have at least one test for this to pass when there is nothing to compile
+ok(@files_to_compile >= 0, 'checked files to compile'); # have to have at least one test with a message for this to pass when there is nothing to compile
 
 for my $file (@files_to_compile) {
     my $pid = fork();
@@ -60,7 +60,10 @@ sub resolve_start_point {
         return $ENV{JENKINS_STABLE_REVISION};
     }
 
-    if (system(q(git rev-parse '@{u}' 2> /dev/null)) == 0) {
+    # Redirect the standard output and error to the /dev/null.
+    # Otherwise, the standard output will interfere with the
+    # TAP output.
+    if (system(q(git rev-parse '@{u}' 2>&1 > /dev/null)) == 0) {
         return '@{u}';
     }
 

@@ -32,7 +32,7 @@ class Genome::Model::Tools::Capture::ExomeCopyNumber {
 		group_id		=> { is => 'Text', doc => "ID of somatic-variation model group" , is_optional => 0},
 		output_dir	=> { is => 'Text', doc => "An output directory to hold copy number results" , is_optional => 1},
 		varscan_params	=> { is => 'Text', doc => "Parameters to pass to VarScan copynumber" , is_optional => 1, default => '--min-coverage 20 --min-segment-size 25 --max-segment-size 100'},
-		reference	=> 	{ is => 'Text', doc => "Reference to use for bam-readcounts-based filters" , is_optional => 1, example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa']},
+		reference	=> 	{ is => 'Text', doc => "Reference to use for bam-readcounts-based filters" , is_optional => 1, example_values => ['/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa']},
 		test_only	=> { is => 'Text', doc => "Set to 1 to see how the command would run without doing anything" , is_optional => 1},
 		run_limit	=> { is => 'Text', doc => "If specified, will only launch this many copy number in parallel jobs" , is_optional => 1},		
 	],

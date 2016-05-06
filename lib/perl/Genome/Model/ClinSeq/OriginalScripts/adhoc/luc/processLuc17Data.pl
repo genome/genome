@@ -744,7 +744,7 @@ foreach my $c (sort {$infiles{$a}->{patient} cmp $infiles{$b}->{patient}} keys %
     print YELLOW, "\n\tTophat summary dir already exists - skipping this step", RESET;    
   }else{
     mkdir($tophat_summary_dir);
-    my $summary_cmd = "/gscmnt/sata206/techd/git/genome/lib/perl/Genome/Model/ClinSeq/original-scripts/qc/tophatAlignmentSummary.pl  --reference_fasta_file='/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'  --reference_annotations_dir='/gscmnt/sata132/techd/mgriffit/reference_annotations/hg19/'  --working_dir=$tophat_summary_dir  --tophat_alignment_dir='$rnaseq_alignments_dir'  --verbose=1";
+    my $summary_cmd = "/gscmnt/sata206/techd/git/genome/lib/perl/Genome/Model/ClinSeq/original-scripts/qc/tophatAlignmentSummary.pl  --reference_fasta_file='/gscmnt/gc4096/info/model_data/2857786885/build102671028/all_sequences.fa'  --reference_annotations_dir='/gscmnt/sata132/techd/mgriffit/reference_annotations/hg19/'  --working_dir=$tophat_summary_dir  --tophat_alignment_dir='$rnaseq_alignments_dir'  --verbose=1";
     print YELLOW, "\n\t$summary_cmd", RESET;
     Genome::Sys->shellcmd(cmd => $summary_cmd);
   }

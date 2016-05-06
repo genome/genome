@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Genome::Utility::Text;
+
 class Genome::Model::Build::SingleSampleGenotype {
     is => ['Genome::Model::Build'],
     has_output => [
@@ -69,6 +71,66 @@ sub reference_being_replaced_for_input {
     }
 
     return;
+}
+
+sub _symlink_results {
+    my $self = shift;
+    my $destination = shift;
+
+    my $top_directory = File::Spec->join($destination, $self->id);
+    Genome::Sys->create_directory($top_directory);
+
+    my $alignment = $self->merged_alignment_result;
+    $self->_symlink_result($alignment, $top_directory, 'alignments');
+
+    my $qc = $self->qc_result;
+    $self->_symlink_result($qc, $top_directory, 'qc');
+
+    $self->_symlink_haplotype_caller_results($top_directory);
+
+    return $top_directory;
+}
+
+sub _symlink_result {
+    my $self = shift;
+    my $result = shift;
+    my $location = shift;
+    my $symlink_name = shift;
+
+    my $symlink_location = File::Spec->join($location, $symlink_name);
+    Genome::Sys->create_symlink($result->output_dir, $symlink_location);
+}
+
+sub _symlink_haplotype_caller_results {
+    my $self = shift;
+    my $top_directory = shift;
+
+    my $variant_dir = File::Spec->join($top_directory, 'variants');
+    Genome::Sys->create_directory($variant_dir);
+
+    for my $hc_result ($self->haplotype_caller_result) {
+        my $hc_basename = Genome::Utility::Text::sanitize_string_for_filesystem(
+            join('-', $hc_result->intervals, $hc_result->id)
+        );
+        $self->_symlink_result($hc_result, $variant_dir, $hc_basename);
+    }
+
+    return $variant_dir;
+}
+
+sub _compare_output_files {
+    my ($self, $other_build) = @_;
+
+    my $temp = Genome::Sys->create_temp_directory();
+    my $directory = $self->symlink_results($temp);
+    my $other_directory = $other_build->symlink_results($temp);
+
+    return $self->_compare_output_directories(
+        $directory,
+        $other_directory,
+        $self->id,
+        $other_build->id,
+    );
 }
 
 1;

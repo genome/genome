@@ -1,0 +1,200 @@
+##fileformat=VCFv4.1
+##source=Samtools
+##reference=ftp://ftp.ensembl.org/pub/release-76/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz
+##phasing=none
+##center=genome.wustl.edu
+##FILTER=<ID=PASS,Description="Passed all filters">
+##FILTER=<ID=VarFilterSnv,Description="Filter description">
+##FILTER=<ID=FalsePositiveVcf,Description="Filter description">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth at this position in the sample">
+##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Depth of reads supporting alleles 0/1/2/3...">
+##FORMAT=<ID=DP4,Number=4,Type=Integer,Description="Number of high-quality ref-forward, ref-reverse, alt-forward and alt-reverse bases">
+##FORMAT=<ID=BQ,Number=.,Type=Integer,Description="Average base quality for reads supporting alleles">
+##FORMAT=<ID=SS,Number=1,Type=Integer,Description="Variant status relative to non-adjacent Normal,0=wildtype,1=germline,2=somatic,3=LOH,4=post-transcriptional modification,5=unknown">
+##FORMAT=<ID=GQ,Number=.,Type=Integer,Description="Conditional Phred-scaled genotype quality">
+##FORMAT=<ID=MQ,Number=1,Type=Integer,Description="Phred style probability score that the variant is novel with respect to the genome's ancestor">
+##FORMAT=<ID=FA,Number=1,Type=Float,Description="Fraction of reads supporting ALT">
+##FORMAT=<ID=VAQ,Number=1,Type=Integer,Description="Variant allele quality">
+##FORMAT=<ID=FT,Number=1,Type=String,Description="Sample genotype filter">
+##source=Sniper
+##FILTER=<ID=FalsePositive,Description="Filter description">
+##FILTER=<ID=SomaticScoreMappingQuality,Description="Filter description">
+##FORMAT=<ID=AMQ,Number=.,Type=Integer,Description="Average mapping quality for each allele present in the genotype">
+##FORMAT=<ID=IGT,Number=1,Type=String,Description="Genotype when called independently (only filled if called in joint prior mode)">
+##FORMAT=<ID=BCOUNT,Number=4,Type=Integer,Description="Occurrence count for each base at this site (A,C,G,T)">
+##FORMAT=<ID=JGQ,Number=1,Type=Integer,Description="Joint genotype quality (only filled if called in join prior mode)">
+##FORMAT=<ID=SSC,Number=1,Type=Integer,Description="Somatic score between 0 and 255">
+##FILTER=<ID=IntersectionFailure,Description="Variant callers do not agree on this position">
+##source=Strelka
+##FORMAT=<ID=FDP,Number=1,Type=Integer,Description="Number of basecalls filtered from original read depth for tier1">
+##FORMAT=<ID=SDP,Number=1,Type=Integer,Description="Number of reads with deletions spanning this site at tier1">
+##FORMAT=<ID=SUBDP,Number=1,Type=Integer,Description="Number of reads below tier1 mapping quality threshold aligned across this site">
+##FORMAT=<ID=AU,Number=2,Type=Integer,Description="Number of 'A' alleles used in tiers 1,2">
+##FORMAT=<ID=CU,Number=2,Type=Integer,Description="Number of 'C' alleles used in tiers 1,2">
+##FORMAT=<ID=GU,Number=2,Type=Integer,Description="Number of 'G' alleles used in tiers 1,2">
+##FORMAT=<ID=TU,Number=2,Type=Integer,Description="Number of 'T' alleles used in tiers 1,2">
+##INFO=<ID=QSS,Number=1,Type=Integer,Description="Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal">
+##INFO=<ID=TQSS,Number=1,Type=Integer,Description="Data tier used to compute QSS">
+##INFO=<ID=NT,Number=1,Type=String,Description="Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.">
+##INFO=<ID=QSS_NT,Number=1,Type=Integer,Description="Quality score reflecting the joint probability of a somatic variant and NT">
+##INFO=<ID=TQSS_NT,Number=1,Type=Integer,Description="Data tier used to compute QSS_NT">
+##INFO=<ID=SGT,Number=1,Type=String,Description="Most likely somatic genotype excluding normal noise states">
+##FILTER=<ID=BCNoise,Description="Fraction of basecalls filtered at this site in either sample is at or above 0.4">
+##FILTER=<ID=SpanDel,Description="Fraction of reads crossing site with spanning deletions in either sample exceeeds 0.75">
+##FILTER=<ID=QSS_ref,Description="Normal sample is not homozygous ref or ssnv Q-score < 15, ie calls with NT!=ref or QSS_NT < 15">
+##FILTER=<ID=DP,Description="Greater than 3x chromosomal mean depth in Normal sample">
+##source=muTect
+##FORMAT=<ID=TLOD,Number=.,Type=Float,Description="Log of (likelihood tumor event is real / likelihood event is sequencing error)">
+##FILTER=<ID=REJECT,Description="Rejected as a confident somatic mutation by MuTect">
+##source=VarscanSomatic
+##FILTER=<ID=VarscanHighConfidence,Description="Filter description">
+##fileDate=20160331
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	H_NJ-HCC1395-HCC1395	H_NJ-HCC1395-HCC1395_BL
+1	10015	.	A	G,C	5.46	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:30:12:29:6,0,1,2:0.5004:.:.:FalsePositiveVcf;IntersectionFailure	.
+1	10027	.	a	C	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA	0/1:0/1:14:6,0,1,1:9,2,0,0:42:.:18:25,39:30:24,40:2:15:FalsePositiveVcf;IntersectionFailure:0.5	0/0:0/0:12:7,4,0,1:11,1,0,0:48:.:0:33:21:21:0:.:FalsePositive;IntersectionFailure:.
+1	10051	.	A	C,G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:IGT:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SSC	0/1:20:2,0:0.5:2:0:FalsePositiveVcf;IntersectionFailure:0/1:7,2,4,5:6,7,0,0:48:.:52:36,41:25:18,28:24	0/0:16:14,3:0.18:0:.:FalsePositive;IntersectionFailure:0/0:8,3,2,3:11,3,0,0:21:.:0:35:21:25:.
+1	10057	.	A	C,G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:IGT:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SSC	0/1:20:2,0:0.5:2:0:FalsePositiveVcf;IntersectionFailure:0/1:7,1,4,5:7,6,0,0:46:.:53:33,39:25:22,26:41	0/0:16:14,2:0.12:0:.:FalsePositive;IntersectionFailure:0/0:7,4,3,2:11,1,0,0:16:.:0:33:21:22:.
+1	10063	.	A	C,G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:IGT:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SSC	0/1:23:2,0:0.502:2:0:FalsePositiveVcf;IntersectionFailure:0/1:7,2,3,5:9,6,0,0:24:.:39:31,36:22:16,32:47	0/0:17:15,2:0.12:0:.:FalsePositive;IntersectionFailure:0/0:9,4,2,2:13,1,0,0:29:.:0:32:21:23:.
+1	10069	.	A	C,G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:IGT:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SSC	0/1:26:2,0:0.5:2:0:FalsePositiveVcf;IntersectionFailure:0/1:9,3,3,6:10,6,0,0:40:.:58:30,35:20:15,32:31	0/0:17:16,1:0.06:0:.:FalsePositive;IntersectionFailure:0/0:9,3,2,3:12,2,0,0:22:.:0:35:21:24:.
+1	10234	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:2,0:0:2:0:REJECT	0/0:23:23,0:0:.:.:REJECT
+1	10248	.	A	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:0:0,0:0:2:0:REJECT	0/0:17:16,1:0.06:.:.:REJECT
+1	10250	.	a	C	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA	0/1:0/1:11:5,2,2,1:5,2,0,0:43:.:31:30,39:24:22,41:2:28:FalsePositiveVcf;IntersectionFailure:0.5	0/0:0/0:18:10,5,1,2:15,1,0,0:53:.:0:29:18:20:0:.:FalsePositive;IntersectionFailure:.
+1	10261	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:3:3,0:0:2:0:REJECT	0/0:25:25,0:0:.:.:REJECT
+1	10327	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:3:3,0:0:2:0:REJECT	0/0:18:17,1:0.06:.:.:REJECT
+1	10333	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:3:3,0:0:2:0:REJECT	0/0:17:17,0:0:.:.:REJECT
+1	10339	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:2,0:0:2:0:REJECT	0/0:16:16,0:0:.:.:REJECT
+1	10342	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:1,0:0:2:0:REJECT	0/0:13:13,0:0:.:.:REJECT
+1	10348	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:2,0:0:2:0:REJECT	0/0:11:11,0:0:.:.:REJECT
+1	10351	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:2,0:0:2:0:REJECT	0/0:12:12,0:0:.:.:REJECT
+1	10356	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:2,0:0:2:0:REJECT	0/0:19:19,0:0:.:.:REJECT
+1	10383	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:3:3,0:0:2:0:REJECT	0/0:19:17,2:0.11:.:.:REJECT
+1	14522	.	G	A	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	1/1:1/1:7:3,0,4,0:4,0,0,0:7:.:39:36:16:21:2:22:FalsePositiveVcf;IntersectionFailure:1:0,1:2.67437	0/0:0/0:8:5,1,2,0:2,0,6,0:9:.:0:38:30:32:0:.:FalsePositive;IntersectionFailure:0.22:7,2:.
+1	14542	.	A	G	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	1/1:1/1:11:4,0,4,0:0,0,4,0:6:.:39:38:15:21:2:26:FalsePositiveVcf;IntersectionFailure:1:0,1:3.67685	0/0:0/0:15:11,1,3,0:12,0,3,0:13:.:0:34:27:29:0:.:FalsePositive;IntersectionFailure:0.19:13,3:.
+1	14574	.	A	G	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	1/1:1/1:12:5,0,6,0:0,0,4,0:8:.:39:39:13:21:2:38:FalsePositiveVcf;IntersectionFailure:1:0,1:3.67685	0/0:0/0:31:21,6,4,0:27,0,4,0:44:.:0:36:32:34:0:.:FalsePositive;IntersectionFailure:0.19:22,5:.
+1	14590	.	G	A	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA	1/1:1/1:13:5,0,7,0:3,0,0,0:7:.:36:37:11:21:2:24:FalsePositiveVcf;IntersectionFailure:1	0/0:0/0:35:23,8,4,0:4,0,31,0:57:.:0:36:33:35:0:.:FalsePositive;IntersectionFailure:.
+1	14599	.	T	A	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA	1/1:1/1:16:5,0,8,1:4,0,0,0:14:.:39:36:12:21:2:45:FalsePositiveVcf;IntersectionFailure:1	0/0:0/0:41:26,9,5,1:4,0,0,35:72:.:0:36:35:36:0:.:FalsePositive;IntersectionFailure:.
+1	14604	.	A	G	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA	1/1:1/1:16:3,0,11,1:0,0,4,0:32:.:39:39:11:21:2:45:FalsePositiveVcf;IntersectionFailure:1	0/0:0/0:46:29,12,5,0:41,0,5,0:79:.:0:33:35:36:0:.:FalsePositive;IntersectionFailure:.
+1	14610	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:IGT:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SSC	1/1:17:0,1:1:2:4.17704:FalsePositiveVcf;IntersectionFailure:1/1:4,0,11,1:0,5,0,0:27:.:42:37:12:22:58	0/0:50:30,10:0.25:0:.:FalsePositive;IntersectionFailure:0/0:29,14,7,0:0,6,0,43:65:.:0:36:35:36:.
+1	14653	.	C	T	.	.	.	GT:DP:DP4:BQ:FA:VAQ:SS:FT:AD:TLOD:GQ:MQ	1/1:59:15,5,22,13:.:1:103:2:IntersectionFailure:3,20:79.4484:29:27	0/0:77:.,.,.,.:.:0.35:.:.:REJECT:50,27:.:.:.
+1	14752	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:47:42,5:0.11:2:10.9342:REJECT	0/0:169:155,14:0.08:.:.:REJECT
+1	14932	.	G	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:3:0,3:1:2:12.531:REJECT	0/0:98:89,9:0.09:.:.:REJECT
+1	14937	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:3.67685:REJECT	0/0:94:82,12:0.13:.:.:REJECT
+1	15820	.	G	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:4:0,4:1:2:15.5725:REJECT	0/0:17:3,14:0.82:.:.:REJECT
+1	16257	.	G	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:4:2,2:0.5:2:4.02633:REJECT	0/0:1:1,0:0:.:.:REJECT
+1	16298	.	C	T	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	1/1:8:2:20:0,0,1,1:1:.:2:FalsePositiveVcf;IntersectionFailure:0,2:8.35394	0/0:.:1:.:.:1:.:.:REJECT:0,1:.
+1	16378	.	T	C	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	0/1:41:9:22:5,0,2,2:0.5:.:2:IntersectionFailure:6,3:10.5434	0/0:.:4:.:.:0.25:.:.:REJECT:3,1:.
+1	16495	.	G	C	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:VAQ:AD:TLOD	1/1:37:38:15:12,0,22,4:1:.:2:IntersectionFailure:20:0,16:68.6971	0/0:.:36:.:.,.,.,.:0.58:.:.:REJECT:.:15,21:.
+1	16725	.	T	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:43:40,3:0.07:2:1.05171:REJECT	0/0:181:144,37:0.2:.:.:REJECT
+1	16949	.	A	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:41:38,3:0.07:2:7.37229:REJECT	0/0:184:176,8:0.04:.:.:REJECT
+1	16957	.	G	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:40:17,23:0.57:2:82.643:REJECT	0/0:185:152,33:0.18:.:.:REJECT
+1	16996	.	T	C	.	.	.	GT:DP:DP4:BQ:FA:VAQ:SS:FT:AD:TLOD	0/1:20:2,12,4,1:.:0.25:13:2:REJECT:15,5:18.5018	0/0:177:.,.,.,.:.:0.06:.:.:REJECT:166,11:.
+1	17172	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:6:4,2:0.33:2:6.69557:REJECT	0/0:140:130,10:0.07:.:.:REJECT
+1	17538	.	C	A	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	0/1:0/1:76:30,24,9,13:22,54,0,0:65:.:65:35,38:37:20,44:2:62:IntersectionFailure;SomaticScoreMappingQuality:0.31:40,18:59.482	0/0:0/0:133:62,51,9,11:19,113,0,0:72:.:0:36:41:44:0:.:SomaticScoreMappingQuality:0.11:135,16:.
+1	19172	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:1,1:0.5:2:4.07505:REJECT	0/0:5:5,0:0:.:.:REJECT
+1	19322	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:3:2,1:0.33:2:3.84786:REJECT	0/0:10:7,3:0.3:.:.:REJECT
+1	19506	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.67709:REJECT	0/0:2:2,0:0:.:.:REJECT
+1	19508	.	C	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.67709:REJECT	0/0:2:2,0:0:.:.:REJECT
+1	29153	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:1,0:0:2:0:REJECT	0/0:22:22,0:0:.:.:REJECT
+1	29155	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:1,0:0:2:0:REJECT	0/0:22:22,0:0:.:.:REJECT
+1	29190	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:1.54118:REJECT	0/0:26:22,4:0.15:.:.:REJECT
+1	29443	.	A	G	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	1/1:17:4:15:0,0,0,4:1:.:2:FalsePositiveVcf;IntersectionFailure:0,3:12.0309	0/0:.:14:.:.:1:.:.:REJECT:0,14:.
+1	39185	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.17704:REJECT	0/0:4:3,1:0.25:.:.:REJECT
+1	39261	.	T	C	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	1/1:16:3:38:0,0,1,2:1:.:2:FalsePositiveVcf;IntersectionFailure:0,1:4.67709	0/0:.:3:.:.:0.67:.:.:REJECT:1,2:.
+1	47119	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.67709:REJECT	0/0:0:0,0:0:.:.:REJECT
+1	87303	.	G	A	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	1/1:6:2:18:0,0,1,1:1:.:2:FalsePositiveVcf;IntersectionFailure:0,1:4.67709	0/0:.:0:.:.:0:.:.:REJECT:0,0:.
+1	104033	.	t	C	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	1/1:1/1:5:0,0,5,0:0,5,0,0:27:.:42:39:35:35:2:31:FalsePositiveVcf;IntersectionFailure:1:0,5:21.8846	0/0:0/0:2:1,0,1,0:0,1,0,1:8:.:0:32:21:25:0:.:FalsePositive;IntersectionFailure:0.5:1,1:.
+1	104108	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:5:3,2:0.4:2:7.90105:REJECT	0/0:5:4,1:0.2:.:.:REJECT
+1	113451	.	G	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:1,1:0.5:2:4.07505:REJECT	0/0:1:1,0:0:.:.:REJECT
+1	113682	.	A	G	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	1/1:6:2:20:0,0,0,2:1:.:2:FalsePositiveVcf;IntersectionFailure:0,2:8.85413	0/0:.:0:.:.:0:.:.:REJECT:0,0:.
+1	118617	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.67709:REJECT	0/0:0:0,0:0:.:.:REJECT
+1	127491	.	T	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.67709:REJECT	0/0:1:0,1:1:.:.:REJECT
+1	129285	.	G	A	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	1/1:81:14:32:0,0,6,8:1:.:2:IntersectionFailure:0,8:36.4165	0/0:.:16:.:.:0.62:.:.:REJECT:6,10:.
+1	135982	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:0,2:1:2:9.35419:REJECT	0/0:2:0,2:1:.:.:REJECT
+1	136040	.	C	A	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA	0/1:0/1:8:4,2,1,1:2,6,0,0:56:.:26:39,42:36:40,31:2:23:FalsePositiveVcf;IntersectionFailure:0.5	0/0:0/0:4:3,1,0,0:0,4,0,0:39:.:0:38:29:29:0:.:FalsePositive;IntersectionFailure:.
+1	136048	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:GQ:MQ:DP4:BQ	1/1:8:0,5:1:2:22.8854:IntersectionFailure:45:36:0,0,5,3:.	0/0:5:0,5:1:.:.:REJECT:.:.:.:.
+1	136603	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:3:2,1:0.33:2:3.34781:REJECT	0/0:6:6,0:0:.:.:REJECT
+1	136645	.	g	C	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	1/1:1/1:7:2,0,4,1:0,5,2,0:29:.:42:34:29:37:2:42:FalsePositive;IntersectionFailure:1:0,2:5.21802	0/0:0/0:3:2,1,0,0:0,0,3,0:36:.:0:30:41:41:0:.:FalsePositive;IntersectionFailure:0:4,0:.
+1	136652	.	A	G	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	0/1:62:15:40:5,2,3,2:0.5:.:2:IntersectionFailure:2,3:9.08549	0/0:.:4:.:.:0.5:.:.:REJECT:2,2:.
+1	136817	.	t	C,G	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	0/1:0/1:22:3,3,7,9:0,15,0,6:104:.:104:28,34:27:20,44:2:30:FalsePositive;IntersectionFailure:0.5:3,7:22.0028	0/0:0/0:9:4,4,1,0:0,1,0,8:27:.:0:32:31:28:0:.:FalsePositive;IntersectionFailure:0.09:10,1:.
+1	136962	.	c	T	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	1/1:1/1:10:0,2,2,6:0,2,0,8:13:.:51:26:35:38:2:26:IntersectionFailure;SomaticScoreMappingQuality:0.5008:0,3:12.0308	0/0:0/0:3:0,2,0,1:0,2,0,1:23:.:0:37:27:35:0:.:IntersectionFailure;SomaticScoreMappingQuality:0.2:4,1:.
+1	137032	.	g	A	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	1/1:1/1:4:0,0,0,3:3,0,0,0:15:.:36:34:35:28:2:25:FalsePositiveVcf;IntersectionFailure:1:0,1:3.67685	0/0:0/0:1:1,0,0,0:0,0,1,0:30:.:0:42:40:40:0:.:FalsePositive;IntersectionFailure:0:0,0:.
+1	137287	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:0,2:1:2:8.35407:REJECT	0/0:6:6,0:0:.:.:REJECT
+1	137622	.	G	A	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:VAQ:AD:TLOD	1/1:10:35:10:12,6,10,7:1:.:2:IntersectionFailure:14:0,10:45.2708	0/0:.:24:.:.,.,.,.:0.21:.:.:REJECT:.:19,5:.
+1	137825	.	G	A	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:VAQ:AD:FDP:SDP:SUBDP:AU:CU:GU:TU:TLOD	1/1:99:70:36:0,0,31,34:1:.:2:IntersectionFailure:156:0,68:0:0:0:68,69:0,0:0,0:0,0:180.58	0/1:.:61:.:.,.,.,.:0.37:.:.:QSS_ref:.:37,20:3:0:0:20,22:1,1:37,38:0,0:.
+1	138156	.	G	T	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	1/1:19:97:13:29,21,20,23:1:.:2:IntersectionFailure:0,27:114.274	0/0:.:74:.:.:0.46:.:.:REJECT:40,34:.
+1	138593	.	G	T	.	.	NT=het;QSS=88;QSS_NT=56;SGT=GT->GG;TQSS=1;TQSS_NT=2	GT:AD:BQ:SS:DP:FDP:SDP:SUBDP:AU:CU:GU:TU:FT	0/0:106,1:.:2:112:5:0:0:0,1:0,1:106,113:1,1:QSS_ref	0/1:72,44:.:.:120:4:0:0:0,0:0,0:72,79:44,48:QSS_ref
+1	139213	.	A	G	.	.	NT=het;QSS=65;QSS_NT=3;SGT=AG->AA;TQSS=1;TQSS_NT=1	GT:AD:BQ:SS:DP:FDP:SDP:SUBDP:AU:CU:GU:TU:FT	0/0:198,1:.:2:202:2:0:0:198,207:1,1:1,1:0,0:QSS_ref	0/1:104,36:.:.:142:2:0:0:104,106:0,0:36,38:0,0:QSS_ref
+1	139233	.	C	A	.	.	NT=het;QSS=108;QSS_NT=5;SGT=AC->CC;TQSS=1;TQSS_NT=1	GT:AD:BQ:SS:DP:FDP:SDP:SUBDP:AU:CU:GU:TU:FT	0/0:218,0:.:2:222:4:0:0:0,0:218,230:0,0:0,0:QSS_ref	0/1:116,45:.:.:164:1:0:0:45,46:116,117:2,2:0,0:QSS_ref
+1	139307	.	G	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:191:189,2:0.01:2:4.53194:REJECT	0/0:162:162,0:0:.:.:REJECT
+1	139428	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:184:182,2:0.01:2:4.06663:REJECT	0/0:176:176,0:0:.:.:REJECT
+1	139460	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:170:168,2:0.01:2:3.63789:REJECT	0/0:178:173,5:0.03:.:.:REJECT
+1	139781	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:0,2:1:2:5.71821:REJECT	0/0:3:0,3:1:.:.:REJECT
+1	173098	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:0,2:1:2:8.85413:REJECT	0/0:2:2,0:0:.:.:REJECT
+1	181583	.	C	G	15.1	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:48:7:44:3,0,0,2:0.5:.:.:FalsePositiveVcf;IntersectionFailure	.
+1	183685	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:GQ:MQ:DP4:BQ	1/1:3:0,2:1:2:8.85413:FalsePositiveVcf;IntersectionFailure:10:34:0,0,1,1:.	0/0:4:3,1:0.25:.:.:REJECT:.:.:.:.
+1	183875	.	C	N,T	.	.	.	GT:AD:BQ:SS:DP:FDP:SDP:SUBDP:AU:CU:GU:TU:FT:IGT:DP4:BCOUNT:GQ:JGQ:VAQ:MQ:AMQ:SSC:FA	0/2:.:39,39:2:9:0:0:0:0,0:6,6:0,0:2,2:FalsePositiveVcf;IntersectionFailure:0/1:3,4,1,1:0,6,0,2:55:.:28:40:41,44:25:0.5	0/0:.:38:0:13:0:0:0:0,0:11,13:0,0:0,0:FalsePositive;IntersectionFailure:0/0:7,6,0,0:0,13,0,0:66:.:0:37:37:.:.
+1	185131	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:20:18,2:0.1:2:5.53422:REJECT	0/0:61:46,15:0.25:.:.:REJECT
+1	185194	.	G	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:64:52,12:0.19:2:40.216:REJECT	0/0:157:116,41:0.26:.:.:REJECT
+1	185336	.	C	T	.	.	.	GT:DP:DP4:BQ:FA:VAQ:SS:FT:AD:TLOD	0/1:86:24,56,5,16:.:0.23:17:2:REJECT:66,20:54.0059	0/0:238:.,.,.,.:.:0.1:.:.:REJECT:215,23:.
+1	185428	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:29:23,6:0.21:2:21.1455:REJECT	0/0:136:97,39:0.29:.:.:REJECT
+1	185451	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:16:11,5:0.31:2:19.076:REJECT	0/0:98:59,39:0.4:.:.:REJECT
+1	185453	.	G	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:14:12,2:0.14:2:5.3616:REJECT	0/0:97:91,6:0.06:.:.:REJECT
+1	186338	.	T	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:72:65,7:0.1:2:16.2901:REJECT	0/0:123:100,23:0.19:.:.:REJECT
+1	186536	.	C	T,G	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	0/1:99:130:33:34,53,20,15:0.5:.:2:IntersectionFailure:49,13:39.385	0/0:.:128:.:.:0.42:.:.:REJECT:74,54:.
+1	186810	.	C	G	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	0/1:33:4:37:0,1,1,2:0.5002:.:2:FalsePositiveVcf;IntersectionFailure:1,3:11.5542	0/0:.:7:.:.:0.71:.:.:REJECT:2,5:.
+1	186835	.	A	G	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	0/1:20:5:40:0,1,1,3:0.505:.:2:FalsePositiveVcf;IntersectionFailure:1,4:14.6194	0/0:.:4:.:.:0.75:.:.:REJECT:1,3:.
+1	187019	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:34:29,5:0.15:2:13.1514:REJECT	0/0:50:33,17:0.34:.:.:REJECT
+1	187102	.	C	G	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	0/1:99:131:46:54,31,23,15:0.5:.:2:IntersectionFailure:64,30:98.4247	0/0:.:133:.:.:0.32:.:.:REJECT:91,42:.
+1	187153	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:82:78,4:0.05:2:10.2723:REJECT	0/0:166:148,18:0.11:.:.:REJECT
+1	187210	.	G	A	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	0/1:99:85:32:29,32,5,10:0.5:.:2:IntersectionFailure:35,8:24.946	0/0:.:120:.:.:0.22:.:.:REJECT:94,26:.
+1	187241	.	t	A	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	0/1:0/1:48:4,14,0,4:8,0,0,13:48:.:69:25,29:27:34,33:2:16:FalsePositiveVcf;IntersectionFailure:0.5:9,3:7.00087	0/0:0/0:31:2,18,2,9:3,0,0,20:13:.:0:27:27:28:0:.:FalsePositive;IntersectionFailure:0.13:55,8:.
+1	187247	.	T	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:11:10,1:0.09:2:-0.104908:REJECT	0/0:77:61,16:0.21:.:.:REJECT
+1	187253	.	C	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:10:9,1:0.1:2:0.233496:REJECT	0/0:68:57,11:0.16:.:.:REJECT
+1	187256	.	T	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:9:9,0:0:2:0:REJECT	0/0:71:56,15:0.21:.:.:REJECT
+1	187264	.	G	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:7:7,0:0:2:0:REJECT	0/0:76:71,5:0.07:.:.:REJECT
+1	187302	.	A	G	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	1/1:75:19:24:1,0,7,9:1:.:2:IntersectionFailure:0,5:17.8814	0/0:.:22:.:.:0.91:.:.:REJECT:2,20:.
+1	187352	.	C	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:49:39,10:0.2:2:27.9183:REJECT	0/0:78:71,7:0.09:.:.:REJECT
+1	187447	.	G	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:155:153,2:0.01:2:4.71441:REJECT	0/0:183:183,0:0:.:.:REJECT
+1	187485	.	G	A,C	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	0/1:99:345:36:51,53,126,97:0.5:.:2:IntersectionFailure:63,133:524.572	0/0:.:206:.:.:0.73:.:.:REJECT:56,150:.
+1	187497	.	G	A	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:VAQ:AD:TLOD	0/1:99:342:37:93,100,71,62:0.5:.:2:IntersectionFailure:16:129,80:297.046	0/0:.:212:.:.,.,.,.:0.33:.:.:REJECT:.:143,69:.
+1	187744	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:15:5,10:0.67:2:31.9157:REJECT	0/0:166:134,32:0.19:.:.:REJECT
+1	188006	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:14:13,1:0.07:2:3.11368:REJECT	0/0:48:47,1:0.02:.:.:REJECT
+1	188016	.	A	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:8:5,3:0.38:2:9.23321:REJECT	0/0:40:39,1:0.03:.:.:REJECT
+1	188062	.	A	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:37:34,3:0.08:2:8.01289:REJECT	0/0:29:19,10:0.34:.:.:REJECT
+1	188087	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:43:41,2:0.05:2:4.84497:REJECT	0/0:75:67,8:0.11:.:.:REJECT
+1	188118	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:55:48,7:0.13:2:19.1413:REJECT	0/0:105:66,39:0.37:.:.:REJECT
+1	188240	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:94:93,1:0.01:2:2.27365:REJECT	0/0:127:108,19:0.15:.:.:REJECT
+1	188254	.	C	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:97:96,1:0.01:2:2.25942:REJECT	0/0:123:107,16:0.13:.:.:REJECT
+1	188329	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:71:67,4:0.06:2:12.0274:REJECT	0/0:44:38,6:0.14:.:.:REJECT
+1	190334	.	G	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.67709:REJECT	0/0:2:2,0:0:.:.:REJECT
+1	190881	.	T	C	4.77	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:33:3:50:2,0,1,0:0.4999:.:.:IntersectionFailure;VarFilterSnv	.
+1	191114	.	G	A	4.13	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:3:1:60:0,0,0,1:1:.:.:IntersectionFailure;VarFilterSnv	.
+1	191870	.	C	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:GQ:MQ:DP4:BQ	0/1:30:14,2:0.5:2:6.23635:IntersectionFailure:99:42:11,12,3,3:.	0/0:11:9,2:0.18:.:.:REJECT:.:.:.:.
+1	191910	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:GQ:MQ:DP4:BQ	0/1:28:11,1:0.5:2:3.18244:IntersectionFailure:99:40:10,10,3,3:.	0/0:9:7,2:0.22:.:.:REJECT:.:.:.:.
+1	191944	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:GQ:MQ:DP4:BQ	0/1:18:5,5:0.5:2:19.3874:IntersectionFailure:99:37:2,4,5,6:.	0/0:9:1,8:0.89:.:.:REJECT:.:.:.:.
+1	205992	.	T	G	36.4	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:10:5:30:0,2,1,1:0.5554:.:.:FalsePositiveVcf;IntersectionFailure	.
+1	205999	.	T	C	24	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:28:5:29:1,2,1,1:0.5008:.:.:FalsePositiveVcf;IntersectionFailure	.
+1	206031	.	T	C	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:GQ:MQ:DP4:BQ	0/1:4:1,0:0.5064:2:0:FalsePositiveVcf;IntersectionFailure:19:36:0,1,1,1:.	0/0:0:0,0:0:.:.:REJECT:.:.:.:.
+1	206059	.	G	A	20.1	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:19:4:36:0,1,1,1:0.5064:.:.:FalsePositiveVcf;IntersectionFailure	.
+1	206817	.	G	T	6.02	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:5:4:27:0,2,1,0:1:.:.:IntersectionFailure;VarFilterSnv	.
+1	206849	.	C	G	8.75	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:3:3:33:0,1,1,0:1:.:.:IntersectionFailure;VarFilterSnv	.
+1	206863	.	T	C	8.75	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:3:2:33:0,1,1,0:1:.:.:IntersectionFailure;VarFilterSnv	.
+1	258168	.	A	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.67709:REJECT	0/0:0:0,0:0:.:.:REJECT
+1	264627	.	A	G	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	0/1:0/1:9:1,2,2,4:3,0,6,0:25:.:70:32,38:42:43,42:2:33:FalsePositive;IntersectionFailure:0.5:2,4:15.5496	0/0:0/0:1:0,1,0,0:1,0,0,0:27:.:0:42:27:27:0:.:FalsePositive;IntersectionFailure:0:1,0:.
+1	264730	.	T	A	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	0/1:36:3:48:0,1,0,2:0.5001:.:2:IntersectionFailure;VarFilterSnv:1,2:7.52481	0/0:.:0:.:.:0:.:.:REJECT:0,0:.
+1	268130	.	G	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:1,1:0.5:2:4.07505:REJECT	0/0:6:2,4:0.67:.:.:REJECT
+1	269190	.	T	C	3.54	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:30:3:42:1,1,1,0:0.4998:.:.:IntersectionFailure;VarFilterSnv	.
+1	271147	.	T	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.67709:REJECT	0/0:0:0,0:0:.:.:REJECT
+1	272164	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.67709:REJECT	0/0:0:0,0:0:.:.:REJECT
+1	277677	.	G	T	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	0/1:36:2:53:0,1,0,1:0.5:.:2:IntersectionFailure;VarFilterSnv:1,1:4.07505	0/0:.:1:.:.:0:.:.:REJECT:1,0:.
+1	278988	.	T	A	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	1/1:4:1:40:0,0,1,0:1:.:2:IntersectionFailure;VarFilterSnv:0,1:4.17704	0/0:.:0:.:.:0:.:.:REJECT:0,0:.
+1	279165	.	T	C	4.13	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:3:1:42:0,0,0,1:1:.:.:IntersectionFailure;VarFilterSnv	.
+1	280805	.	C	T	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA	0/1:0/1:11:3,3,1,1:0,7,0,2:51:.:18:24,37:35:34,41:2:15:FalsePositiveVcf;IntersectionFailure:0.5	0/0:0/0:7:2,5,0,0:0,7,0,0:48:.:0:38:43:43:0:.:FalsePositive;IntersectionFailure:.
+1	284929	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT:GQ:MQ:DP4:BQ	1/1:2:0,1:1:2:4.67709:FalsePositiveVcf;IntersectionFailure:10:23:0,0,1,1:.	0/0:2:1,1:0.5:.:.:REJECT:.:.:.:.
+1	414574	.	A	G	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:1,0:0:2:0:REJECT	0/0:5:4,1:0.2:.:.:REJECT
+1	414665	.	C	T	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:2:1,1:0.5:2:4.07505:REJECT	0/0:8:6,2:0.25:.:.:REJECT
+1	489319	.	G	A	.	.	.	GT:DP:AD:FA:SS:TLOD:FT	0/1:1:0,1:1:2:4.17704:REJECT	0/0:7:7,0:0:.:.:REJECT
+1	505172	.	T	G	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA:AD:TLOD	1/1:1/1:2:0,0,1,1:0,0,2,0:10:.:33:39:40:40:2:37:FalsePositiveVcf;IntersectionFailure:1:0,1:4.67709	0/0:0/0:1:0,1,0,0:0,0,0,1:22:.:0:42:22:22:0:.:FalsePositive;IntersectionFailure:0:2,0:.
+1	505678	.	C	A	.	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT:AD:TLOD	1/1:5:1:40:0,0,0,1:1:.:2:IntersectionFailure;VarFilterSnv:0,1:4.67709	0/0:.:0:.:.:0:.:.:REJECT:0,0:.
+1	505782	.	C	T	4.13	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:3:1:40:0,0,0,1:1:.:.:IntersectionFailure;VarFilterSnv	.
