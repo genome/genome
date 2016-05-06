@@ -50,7 +50,7 @@
 ##source=VarscanSomatic
 ##FILTER=<ID=VarscanHighConfidence,Description="Filter description">
 ##fileDate=20160331
-##annotation=Model/ClinSeq/Command/AnnotateVcf.t.d/annotation.vcf
+##annotation=Model/ClinSeq/Command/AnnotateSnvsVcf.t.d/annotation.vcf
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	H_NJ-HCC1395-HCC1395	H_NJ-HCC1395-HCC1395_BL
 1	10015	.	A	G,C	5.46	.	.	GT:GQ:DP:MQ:DP4:FA:BQ:SS:FT	0/1:30:12:29:6,0,1,2:0.5004:.:.:FalsePositiveVcf;IntersectionFailure	.
 1	10027	.	a	C	.	.	.	GT:IGT:DP:DP4:BCOUNT:GQ:JGQ:VAQ:BQ:MQ:AMQ:SS:SSC:FT:FA	0/1:0/1:14:6,0,1,1:9,2,0,0:42:.:18:25,39:30:24,40:2:15:FalsePositiveVcf;IntersectionFailure:0.5	0/0:0/0:12:7,4,0,1:11,1,0,0:48:.:0:33:21:21:0:.:FalsePositive;IntersectionFailure:.

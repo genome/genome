@@ -1,10 +1,10 @@
-package Genome::Model::ClinSeq::Command::AnnotateVcf;
+package Genome::Model::ClinSeq::Command::AnnotateSnvsVcf;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::Model::ClinSeq::Command::AnnotateVcf {
+class Genome::Model::ClinSeq::Command::AnnotateSnvsVcf {
     is => 'Genome::Command::DelegatesToResult',
     has => [
         input_file => {
@@ -36,7 +36,7 @@ class Genome::Model::ClinSeq::Command::AnnotateVcf {
 };
 
 sub result_class {
-    return 'Genome::Model::ClinSeq::Command::AnnotateVcf::Result';
+    return 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result';
 }
 
 1;

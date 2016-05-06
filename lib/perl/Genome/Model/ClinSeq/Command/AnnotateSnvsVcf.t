@@ -13,7 +13,7 @@ use Test::More;
 use Genome::Utility::Test qw (compare_ok);
 use Genome::Test::Factory::SoftwareResult::User;
 
-my $pkg = 'Genome::Model::ClinSeq::Command::AnnotateVcf';
+my $pkg = 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf';
 use_ok($pkg);
 
 my $test_dir = __FILE__.'.d';
@@ -31,7 +31,7 @@ isa_ok($cmd, $pkg);
 ok($cmd->execute, 'Command executes correctly');
 
 my $result = $cmd->output_result;
-isa_ok($result, 'Genome::Model::ClinSeq::Command::AnnotateVcf::Result');
+isa_ok($result, 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result');
 compare_ok($result->file_path, File::Spec->join($test_dir, 'expected', 'snvs.annotated.vcf'), 'File content as expected');
 
 done_testing;
