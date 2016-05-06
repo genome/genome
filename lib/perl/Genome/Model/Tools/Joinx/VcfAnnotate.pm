@@ -21,13 +21,13 @@ class Genome::Model::Tools::Joinx::VcfAnnotate {
             doc => 'Vcf File containing annotation',
             shell_args_position => 2,
         },
+    ],
+    has_optional_input => [
         info_fields => {
             is => 'Text',
             doc => 'Field ids to embed from the annotation VCF. Use colons to separate multiple field descriptors.',
             #doing the above because UR autosplits on commas with is_many, but joinx uses commas in its field descriptors
         },
-    ],
-    has_optional_input => [
         output_file => {
             is => 'Text',
             is_output => 1,
@@ -112,9 +112,9 @@ sub execute {
         $cmd .= " --no-info";
     }
 
-    if(defined($self->output_file) && not defined($self->use_bgzip)){
+    if(defined($self->output_file) && not $self->use_bgzip){
         $cmd .= " --output-file $output" if defined($self->output_file);
-    } elsif ( defined($self->use_bgzip) && defined($self->output_file) ){
+    } elsif ( $self->use_bgzip && defined($self->output_file) ){
         $cmd .= " | bgzip -c > $output";
         $cmd = "bash -c \"$cmd\"";
     }
