@@ -451,11 +451,6 @@ sub get_feature_list_from_reference {
     return $self->tumor_build->reference_sequence_build->get_feature_list($feature_list_accessor);
 }
 
-sub snvs_annotated_variants_vcf_file {
-    my $self = shift;
-    return File::Spec->join($self->data_directory, 'variants', 'snvs.annotated.vcf.gz');
-}
-
 sub indels_effects_file {
     my $self = shift;
     my $tier = shift;

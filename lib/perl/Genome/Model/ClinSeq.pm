@@ -780,6 +780,17 @@ sub _resolve_workflow_for_build {
     #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
     my ($best_converge_snv_indel_report_op, $best_mq_bq_sum) = (undef, -Inf);
     if ($build->wgs_build || $build->exome_build) {
+        my ($wgs_annotate_snvs_vcf_op, $exome_annotate_snvs_vcf_op);
+        unless (-e $build->wgs_build->snvs_annotated_variants_vcf_file) {
+            $wgs_annotate_snvs_vcf_op = $self->annotate_snvs_vcf_op($workflow, 'wgs');
+        }
+        unless (-e $build->exome_build->snvs_annotated_variants_vcf_file) {
+            $exome_annotate_snvs_vcf_op = $self->annotate_snvs_vcf_op($workflow, 'exome');
+        }
+        my %annotate_snvs_vcf_ops = (
+            exome => $exome_annotate_snvs_vcf_op,
+            wgs   => $wgs_annotate_snvs_vcf_op,
+        );
         my %variant_sources_ops = (
             exome => $exome_variant_sources_op,
             wgs   => $wgs_variant_sources_op,
@@ -797,6 +808,14 @@ sub _resolve_workflow_for_build {
                             source_property      => "${variant_type}_variant_sources_file",
                             destination          => $converge_snv_indel_report_op,
                             destination_property => "_${sequencing_type}_${variant_type}_variant_sources_file",
+                        );
+                    }
+                    if ($annotate_snvs_vcf_ops{$sequencing_type}) {
+                        $workflow->create_link(
+                            source               => $annotate_snvs_vcf_ops{$sequencing_type},
+                            source_property      => 'output_result',
+                            destination          => $converge_snv_indel_report_op,
+                            destination_property => "_${sequencing_type}_annotated_snvs_vcf_result",
                         );
                     }
                     my $create_mutation_spectrum_op = $self->create_mutation_spectrum_op($workflow, $sequencing_type, $i);
@@ -1020,6 +1039,30 @@ sub variant_sources_op {
     );
 
     return $variant_sources_op;
+}
+
+sub annotate_snvs_vcf_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $type = shift;
+
+    my $annotate_snvs_vcf_op = Genome::WorkflowBuilder::Command->create(
+        name    => "Annotate the $type snvs vcf with dbsnp ids",
+        command => 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf',
+    );
+    $workflow->add_operation($annotate_snvs_vcf_op);
+    $workflow->connect_input(
+        input_property       => "${type}_build",
+        destination          => $annotate_snvs_vcf_op,
+        destination_property => 'somatic_build',
+    );
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $annotate_snvs_vcf_op,
+        destination_property => 'requestor',
+    );
+
+    return $annotate_snvs_vcf_op;
 }
 
 sub mutation_diagram_op {

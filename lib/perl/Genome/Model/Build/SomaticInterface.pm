@@ -41,7 +41,7 @@ sub snvs_variants_vcf_file {
 
 sub snvs_annotated_variants_vcf_file {
     my $self = shift;
-    $self->fatal_message('Abstract: (snvs_annotated_variants_vcf_file) needs to be defined on class (%s)', $self->class);
+    return File::Spec->join($self->data_directory, 'variants', 'snvs.annotated.vcf.gz');
 }
 
 sub indels_detailed_variants_vcf_file {

@@ -128,6 +128,12 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
         _exome_snv_variant_sources_file   => {is => 'FilesystemPath',},
         _wgs_indel_variant_sources_file   => {is => 'FilesystemPath',},
         _exome_indel_variant_sources_file => {is => 'FilesystemPath',},
+        _wgs_annotated_snvs_vcf_result    => {
+            is => 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result',
+        },
+        _exome_annotated_snvs_vcf_result    => {
+            is => 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result',
+        },
     ],
     has_param => [
         lsf_resource => {
@@ -463,11 +469,19 @@ sub gather_variants {
             unless (-e $indels_file) {
                 die $self->error_message("Could not find expected file:\n$indels_file");
             }
+            my $vcf_result_accessor = "_${somatic_build_type}_annotated_snvs_vcf_result";
+            my $vcf_file;
+            if (my $result = $self->$vcf_result_accessor) {
+                $vcf_file = $result->file_path;
+            }
+            else {
+                $vcf_file = $somatic_build->snvs_annotated_variants_vcf_file;
+            }
             $bed_files{$snvs_file}{somatic_build_id}   = $somatic_build_id;
             $bed_files{$snvs_file}{var_type}           = "snv";
             $bed_files{$snvs_file}{data_type}          = $somatic_build_type;
             $bed_files{$snvs_file}{tier}               = $tier;
-            $bed_files{$snvs_file}{vcf_file}           = $somatic_build->snvs_annotated_variants_vcf_file;
+            $bed_files{$snvs_file}{vcf_file}           = $vcf_file;
             $bed_files{$indels_file}{somatic_build_id} = $somatic_build_id;
             $bed_files{$indels_file}{var_type}         = "indel";
             $bed_files{$indels_file}{data_type}        = $somatic_build_type;
