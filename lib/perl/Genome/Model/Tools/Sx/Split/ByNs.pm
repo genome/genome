@@ -41,12 +41,18 @@ sub _split_and_write_seq {
     my $n = $self->number_of_ns;
     my $remaining_bases = $seq->{seq};
     my $cnt = 0;
+    my $start = 0;
     while ( $remaining_bases && length $remaining_bases ) {
         ($split_bases, $ns, $remaining_bases) = split(/(n{$n,})/i, $remaining_bases, 2);
-        $self->_writer->write([{
+        my %split_seq = (
             id => join('.', $seq->{id}, ++$cnt),
             seq => $split_bases,
-        }]);
+        );
+        $split_seq{qual} = substr($seq->{qual}, $start, length($split_bases)) if $seq->{qual};
+
+        $self->_writer->write([ \%split_seq ]);
+        $start += length($split_bases);
+        $start += length($ns) if $ns;
     }
 
     return 1;

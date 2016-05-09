@@ -9,7 +9,7 @@ use Genome::Sys;
 use Genome::Utility::Test;
 use File::Spec;
 use File::Temp;
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 my $pkg = 'Genome::Model::Tools::Sx::Split::ByNs';
 use_ok($pkg);
@@ -36,6 +36,27 @@ subtest 'fasta' => sub{
     my $expected_fasta = File::Spec->join($dir, 'expected.fasta');
     ok(-s $expected_fasta, 'expected fasta');
     Genome::Utility::Test::compare_ok($out_fasta, $expected_fasta, 'output fasta matches expected');
+
+};
+
+subtest 'fastq' => sub{
+    plan tests => 4;
+
+    my $in_fastq = File::Spec->join($dir, 'in.fastq');
+    ok(-s $in_fastq, 'in fastq');
+
+    my $out_fastq = File::Spec->join($tmp_dir, 'out.fastq');
+
+    my $splitter = $pkg->execute(
+        input  => [ $in_fastq ],
+        output => [ $out_fastq ],
+        number_of_ns => 10,
+    );
+    ok($splitter->result, 'execute');
+
+    my $expected_fastq = File::Spec->join($dir, 'expected.fastq');
+    ok(-s $expected_fastq, 'expected fastq exists');
+    Genome::Utility::Test::compare_ok($out_fastq, $expected_fastq, 'output fastq matches expected');
 
 };
 
