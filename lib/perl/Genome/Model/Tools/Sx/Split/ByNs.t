@@ -5,6 +5,7 @@ use warnings;
 
 use above 'Genome';
 
+use Genome::Sys;
 use Genome::Utility::Test;
 use File::Spec;
 use File::Temp;
@@ -19,7 +20,7 @@ ok(-s $in_fasta, 'in fasta');
 my $expected_fasta = File::Spec->join($dir, 'expected.fasta');
 ok(-s $expected_fasta, 'expected fasta');
 
-my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
+my $tmp_dir = Genome::Sys->create_temp_directory;
 my $out_fasta = File::Spec->join($tmp_dir, 'out.fasta');
 
 my $splitter = $pkg->execute(
