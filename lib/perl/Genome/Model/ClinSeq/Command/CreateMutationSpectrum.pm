@@ -304,7 +304,7 @@ sub generate_mutation_rate_result {
     my $tier3_snvs               = shift;
     my $sub_outdir4              = shift;
     my $data_type                = $self->datatype;
-    my $reference_annotation_dir = $self->somatic_build->model->annotation_build->data_directory;
+    my $reference_annotation_dir = $self->somatic_build->annotation_build->data_directory;
     #Get tier bed files from annotation dir
     my $tier1_bed = $reference_annotation_dir . "/annotation_data/tiering_bed_files_v3/tier1.bed";
     my $tier2_bed = $reference_annotation_dir . "/annotation_data/tiering_bed_files_v3/tier2.bed";

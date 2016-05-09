@@ -3,6 +3,8 @@ use strict;
 use warnings;
 
 use Genome;
+use List::MoreUtils qw(uniq);
+
 class Genome::Model::Build::ClinSeq {
     is => ['Genome::Model::Build',
            'Genome::Model::Build::ClinSeq::FileAccessors',
@@ -49,7 +51,23 @@ sub input_builds {
 
 sub reference_sequence_build {
     my $self = shift;
-    return $self->model->_resolve_reference;
+    my @references = $self->_infer_references_from_input_builds;
+    if (scalar(@references) == 0) {
+        $self->fatal_message("No reference builds on input models?");
+    }
+    return $references[0];
+}
+
+sub _infer_references_from_input_builds {
+    my $self = shift;
+
+    my @references;
+    for my $input_build ($self->input_builds) {
+        if ($input_build->can('reference_sequence_build')) {
+            push @references, $input_build->reference_sequence_build;
+        }
+    }
+    return sort {$a->id cmp $b->id} uniq @references;
 }
 
 sub best_somatic_build {
