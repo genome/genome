@@ -1,0 +1,14 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="test inner pipeline" executor="Workflow::Executor::SerialDeferred" logDir="/tmp/">
+    <operation name="dummy">
+         <operationtype commandClass="Genome::WorkflowBuilder::Test::DummyCommand" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <link fromOperation="input connector" fromProperty="input" toOperation="dummy" toProperty="input" />
+    <link fromOperation="dummy" fromProperty="single_output" toOperation="output connector" toProperty="single_output" />
+
+     <operationtype typeClass="Workflow::OperationType::Model">
+        <inputproperty>input</inputproperty>
+        <outputproperty>single_output</outputproperty>
+    </operationtype>
+</workflow>

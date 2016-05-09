@@ -12,7 +12,7 @@ use Carp qw(confess);
 use Data::Dumper qw();
 use List::MoreUtils qw(firstval);
 use Params::Validate qw(validate_pos :types);
-
+use Path::Class qw();
 
 class Genome::WorkflowBuilder::Detail::Operation {
     is => 'Genome::WorkflowBuilder::Detail::Element',
@@ -59,8 +59,18 @@ sub from_xml_element {
                 "from_xml_element not implemented in subclass %s", $class));
     }
 
-    my $subclass = $class->_get_subclass_from_element($element);
-    return $subclass->from_xml_element($element, @rest);
+    my $has_file = $element->hasAttribute('workflowFile');
+    if ($has_file) {
+        my $file = $class->_find_inner_workflow_file_for_element($element);
+        my $result = $class->from_xml_filename($file);
+        if ($element->hasAttribute('name')) {
+            $result->name($element->getAttribute('name'));
+        }
+        return $result;
+    } else {
+        my $subclass = $class->_get_subclass_from_element($element);
+        return $subclass->from_xml_element($element, @rest);
+    }
 }
 
 sub input_properties {}
@@ -94,8 +104,8 @@ sub from_xml_file {
 sub from_xml_filename {
     my ($class, $filename) = @_;
 
-    my $fh = Genome::Sys->open_file_for_reading($filename);
-    return $class->from_xml_file($fh);
+    my $doc = XML::LibXML->load_xml(location => $filename);
+    return $class->from_xml_element($doc->documentElement);
 }
 
 sub operation_type {
@@ -220,6 +230,35 @@ sub _add_property_xml_element {
     $element->addChild($inner_element);
 
     return;
+}
+
+sub _find_inner_workflow_file_for_element {
+    my ($class, $element) = @_;
+
+    my $file = $element->getAttribute('workflowFile');
+    unless ($file) {
+        $class->fatal_message('No workflow file set on element.');
+    }
+
+    my $path = Path::Class::file($file);
+
+    unless ($path->is_absolute()) {
+        #relative paths should be relative to the current WF file, rather than the CWD.
+        my $current_file = $element->ownerDocument->URI;
+        if (defined $current_file and -e $current_file) {
+            my $current_path = Path::Class::file($current_file);
+            $path = $current_path->dir->file($file);
+            $file = $path->stringify();
+        } else {
+            $class->fatal_message('Cannot resolve relative path <%s> in inner workflow.', $file);
+        }
+    }
+
+    unless (-e $file) {
+        $class->fatal_message('Inner workflow file <%s> not found!', $file);
+    }
+
+    return $file;
 }
 
 sub _get_subclass_from_element {
