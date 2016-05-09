@@ -24,8 +24,6 @@
   <link fromOperation="input connector" fromProperty="annotation_name" toOperation="AnnotateCluster" toProperty="annotation_name" />
   <link fromOperation="input connector" fromProperty="output_tsv_file" toOperation="AnnotateCluster" toProperty="output_tsv_file" />
 
-  <link fromOperation="input connector" fromProperty="output_stats_file" toOperation="Spreadsheet" toProperty="input_stats_file" />
-  <link fromOperation="input connector" fromProperty="output_tsv_file" toOperation="Spreadsheet" toProperty="input_intersect_file" />
   <link fromOperation="input connector" fromProperty="output_spreadsheet" toOperation="Spreadsheet" toProperty="output_spreadsheet" />
   <link fromOperation="input connector" fromProperty="input_cluster_number" toOperation="Spreadsheet" toProperty="input_cluster_number" />
 
