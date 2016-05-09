@@ -17,7 +17,7 @@ class Genome::Model::Tools::Sx::Split::ByNs {
 
 sub help_brief { 'Split sequences by Ns' }
 
-sub help_detail { 'Split sequences by a set number of Ns. Does not support splitting qualites.' }
+sub help_detail { 'Split sequences by a set number of Ns.' }
     
 sub execute {
     my $self = shift;
