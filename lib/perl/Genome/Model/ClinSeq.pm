@@ -182,12 +182,12 @@ sub _resolve_subject {
             @subjects = ($subjects[0]);
         }
         else {
-            die $self->error_message(
+            $self->fatal_message(
                 "Conflicting subjects on input models!:\n\t" . join("\n\t", map {$_->__display_name__} @subjects));
         }
     }
     elsif (@subjects == 0) {
-        die $self->error_message("No subjects on input models?");
+        $self->fatal_message("No subjects on input models?");
     }
     return $subjects[0];
 }
@@ -200,12 +200,12 @@ sub _resolve_annotation {
             @annotations = ($annotations[0]);
         }
         else {
-            die $self->error_message("Conflicting annotations on input models!:\n\t"
+            $self->fatal_message("Conflicting annotations on input models!:\n\t"
                     . join("\n\t", map {$_->__display_name__} @annotations));
         }
     }
     elsif (@annotations == 0) {
-        die $self->error_message("No annotation builds on input models?");
+        $self->fatal_message("No annotation builds on input models?");
     }
     return $annotations[0];
 }
@@ -218,12 +218,12 @@ sub _resolve_reference {
             @references = ($references[0]);
         }
         else {
-            die $self->error_message("Conflicting reference sequence builds on input models!:\n\t"
+            $self->fatal_message("Conflicting reference sequence builds on input models!:\n\t"
                     . join("\n\t", map {$_->__display_name__} @references));
         }
     }
     elsif (@references == 0) {
-        die $self->error_message("No reference builds on input models?");
+        $self->fatal_message("No reference builds on input models?");
     }
     return $references[0];
 }
@@ -1973,11 +1973,11 @@ sub files_ignored_by_build_diff {
 sub patient_dir {
     my ($self, $build) = @_;
     unless ($build->common_name) {
-        die $self->error_message("Common name is not defined.");
+        $self->fatal_message("Common name is not defined.");
     }
     my $patient_dir = $build->data_directory . "/" . $build->common_name;
     unless (-d $patient_dir) {
-        die $self->error_message("ClinSeq patient directory not found. Expected: $patient_dir");
+        $self->fatal_message("ClinSeq patient directory not found. Expected: $patient_dir");
     }
     return $patient_dir;
 }
@@ -2034,7 +2034,7 @@ sub clonality_dir {
     my $clonality_dir = $patient_dir . "/clonality";
 
     unless (-d $clonality_dir) {
-        die $self->error_message("Clonality directory does not exist. Expected: $clonality_dir");
+        $self->fatal_message("Clonality directory does not exist. Expected: $clonality_dir");
     }
     return $clonality_dir;
 }
@@ -2044,7 +2044,7 @@ sub varscan_formatted_readcount_file {
     my $clonality_dir  = $self->clonality_dir($build);
     my $readcount_file = $clonality_dir . "/allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan";
     unless (-e $readcount_file) {
-        die $self->error_message("Unable to find varscan formatted readcount file. Expected: $readcount_file");
+        $self->fatal_message("Unable to find varscan formatted readcount file. Expected: $readcount_file");
     }
     return $readcount_file;
 }
@@ -2054,7 +2054,7 @@ sub cnaseq_hmm_file {
     my $clonality_dir = $self->clonality_dir($build);
     my $hmm_file      = $clonality_dir . "/cnaseq.cnvhmm";
     unless (-e $hmm_file) {
-        die $self->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
+        $self->fatal_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
     }
     return $hmm_file;
 }
