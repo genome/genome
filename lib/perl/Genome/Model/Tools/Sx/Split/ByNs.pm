@@ -37,15 +37,16 @@ sub execute {
 sub _split_and_write_seq {
     my ($self, $seq) = @_;
 
-    my $cnt = 0;
+    my ($split_bases, $ns);
     my $n = $self->number_of_ns;
-    for my $bases ( split(/n{$n,}/i, $seq->{seq}) ) {
-        $self->_writer->write([
-            {
-                id => join('.', $seq->{id}, ++$cnt),
-                seq => $bases,
-            }
-        ]);
+    my $remaining_bases = $seq->{seq};
+    my $cnt = 0;
+    while ( $remaining_bases && length $remaining_bases ) {
+        ($split_bases, $ns, $remaining_bases) = split(/(n{$n,})/i, $remaining_bases, 2);
+        $self->_writer->write([{
+            id => join('.', $seq->{id}, ++$cnt),
+            seq => $split_bases,
+        }]);
     }
 
     return 1;
