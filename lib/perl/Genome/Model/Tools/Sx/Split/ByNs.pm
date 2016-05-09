@@ -22,34 +22,33 @@ sub help_detail { 'Split sequences by a set number of Ns. Does not support split
 sub execute {
     my $self = shift;
 
-    my $init = $self->_init;
-    return if not $init;
+    return if not $self->_init;
 
     my $reader = $self->_reader;
-    my $writer = $self->_writer;
     while ( my $seqs = $reader->read ) {
         for my $seq ( @$seqs ) {
-            $writer->write( $self->_split_seq($seq) );
+            $self->_split_and_write_seq($seq);
         }
     }
 
     return 1;
 }
 
-sub _split_seq {
+sub _split_and_write_seq {
     my ($self, $seq) = @_;
 
-    my @seqs;
     my $cnt = 0;
     my $n = $self->number_of_ns;
     for my $bases ( split(/n{$n,}/i, $seq->{seq}) ) {
-        push @seqs, {
-            id => join('.', $seq->{id}, ++$cnt),
-            seq => $bases,
-        };
+        $self->_writer->write([
+            {
+                id => join('.', $seq->{id}, ++$cnt),
+                seq => $bases,
+            }
+        ]);
     }
 
-    return \@seqs;
+    return 1;
 }
 
 1;
