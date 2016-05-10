@@ -11,20 +11,24 @@ BEGIN {
 use above "Genome";
 use Test::More;
 
-use_ok('Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport') or die;
+use Genome::Utility::Test;
+
+use Genome::Model::ClinSeq::TestData;
+
+my $pkg = 'Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport';
+use_ok($pkg) or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir =
-    Genome::Config::get('test_inputs') . "Genome-Model-ClinSeq-Command-Converge-SummarizeSnvIndelReport/2014-10-16/";
-ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
+my $expected_output_dir = Genome::Utility::Test->data_dir_ok($pkg, '2016-05-10');
 
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir") or die;
 
-#Run GenerateSciclone on the 'apipe-test-clinseq-wer' model
-my $clinseq_build = Genome::Model::Build->get(id => '84b87bb59d994a48a7bb1bee785b4ccd');
+#Load the test model
+my $data = Genome::Model::ClinSeq::TestData->load();
+my $clinseq_build = Genome::Model::Build->get(id => $data->{CLINSEQ_BUILD});
 ok($clinseq_build, "Found clinseq build.");
-my $run_summarize_sireport = Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport->create(
+my $run_summarize_sireport = $pkg->create(
     outdir        => $temp_dir,
     clinseq_build => $clinseq_build,
     min_bq        => 20,
