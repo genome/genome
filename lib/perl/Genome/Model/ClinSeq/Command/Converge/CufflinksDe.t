@@ -16,7 +16,8 @@ use above "Genome";
 use Test::More tests => 8;  #One per 'ok', 'is', etc. statement below
 use Data::Dumper;
 
-use_ok('Genome::Model::ClinSeq::Command::Converge::CufflinksDe') or die;
+my $pkg = 'Genome::Model::ClinSeq::Command::Converge::CufflinksDe';
+use_ok($pkg) or die;
 
 #Define the test where expected results are stored
 my $expected_output_dir =
@@ -38,7 +39,7 @@ ok($build2, "obtained a clinseq build from the database for clinseq build id: $b
 #Create converge cufflinks-de command and execute
 #genome model clin-seq converge cufflinks-de --builds='id in [133577030,133611960]' --outdir=/tmp/converge_de/ --fc-cutoff=3
 
-my $converge_cufflinks_de_cmd = Genome::Model::ClinSeq::Command::Converge::CufflinksDe->create(
+my $converge_cufflinks_de_cmd = $pkg->create(
     outdir                => $temp_dir,
     builds                => [$build1, $build2],
     fc_cutoff             => 3,
