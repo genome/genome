@@ -104,10 +104,6 @@ sub run_and_diff {
     my $prefix = UR::Util::used_libs_perl5lib_prefix();
     ok($prefix, "using local directory $prefix") or die "quitting..";
 
-    # TODO: these values are clinseq-specific, though the module in overall general-purpose
-    # Remove these after converting the last scripts and files into regular modules and file-based-databases.
-    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__)) . '/../Model/ClinSeq/OriginalScripts/';
-    my $annotation_dir = '/gscmnt/sata132/techd/mgriffit/reference_annotations/';
 
     # If the synopsis contains a /tmp/output_dir, swap it for the one we have dynamically created
     $command =~ s|/tmp/output_dir|$output_dir|g;
@@ -115,7 +111,7 @@ sub run_and_diff {
 
     my $command_translated = eval qq{"$command"};
     if ($@) {
-        fail "failed to translate $command.  Use \$script_dir, \$output_dir, \$annotation_dir: $@";
+        fail "failed to translate $command.  Use \$output_dir: $@";
     }
 
     my $cmd = "PERL5LIB=$prefix:\$PERL5LIB genome-perl -S " . $command_translated . " 2>/dev/null 1>/dev/null";
