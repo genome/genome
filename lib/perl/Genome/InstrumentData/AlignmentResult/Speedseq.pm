@@ -177,6 +177,7 @@ sub bwa_version {
         'test' => '0.7.10',
         '0.0.3a-gms' => '0.7.10',
         '0.1.0-gms' => '0.7.10',
+        '0.1.1-gms-test' => '0.7.12', #hacky version where the only difference from 0.1.1 is that bwa is upgraded to 0.7.12
     );
     my $bwa_version = $speedseq_version_to_bwa_version{$speedseq_version};
     unless ($bwa_version) {

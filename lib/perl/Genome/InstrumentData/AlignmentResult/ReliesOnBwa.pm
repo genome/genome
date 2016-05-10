@@ -23,6 +23,11 @@ sub prepare_reference_sequence_index {
 
     Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary('sam'), File::Spec->join($staging_dir, 'all_sequences.dict'));
 
+    if (-e $refindex->reference_build->full_consensus_path('fa.alt')) {
+        # An alt file exists so BWA-mem post 0.7.11 can perform alt-aware mapping
+        Genome::Sys->create_symlink($refindex->reference_build->full_consensus_path('fa.alt'), File::Spec->join($staging_dir, 'all_sequences.fa.alt'));
+    }
+
     my $users = $refindex->_user_data_for_nested_results;
     $users->{uses} = $refindex;
     my $bwa_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(
@@ -37,6 +42,7 @@ sub prepare_reference_sequence_index {
         my $filename = File::Basename::fileparse($filepath);
         next if $filename eq 'all_sequences.fa';
         next if $filename eq 'all_sequences.dict';
+        next if $filename eq 'all_sequences.fa.alt';
         Genome::Sys->create_symlink($filepath, File::Spec->join($staging_dir, $filename));
     }
 
