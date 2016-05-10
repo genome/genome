@@ -89,7 +89,7 @@ sub resolve_clinseq_subject_labels {
     foreach my $build (@builds) {
 
         #Patient common names. e.g. PNC6
-        my $patient_common_name = $self->get_final_common_name('-clinseq_build' => $build);
+        my $patient_common_name = $build->subject->common_name;
         $patient_common_names{$patient_common_name} = $build->id if $patient_common_name;
 
         #Patient common name combined with dna sample type.  e.g. PNC6_tumor
@@ -175,76 +175,6 @@ sub resolve_clinseq_subject_labels {
     return (\%labels2);
 }
 
-sub get_final_common_name {
-    my $self          = shift;
-    my %args          = @_;
-    my $clinseq_build = $args{'-clinseq_build'};
-
-    my $final_name;
-
-    my $wgs_build           = $clinseq_build->wgs_build;
-    my $exome_build         = $clinseq_build->exome_build;
-    my $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
-    my $tumor_rnaseq_build  = $clinseq_build->tumor_rnaseq_build;
-
-    my @builds = ($clinseq_build, $wgs_build, $exome_build, $normal_rnaseq_build, $tumor_rnaseq_build);
-
-    my %names;
-    foreach my $build (@builds) {
-        next unless $build;
-        if ($build->subject->class eq 'Genome::Individual') {
-            my $common_name = $build->subject->common_name;
-            $names{$common_name} = 1 if $common_name;
-            $final_name = $common_name if $common_name;
-        }
-        elsif ($build->subject->class eq 'Genome::Sample') {
-            my $common_name = $build->subject->individual->common_name;
-            $names{$common_name} = 1 if $common_name;
-            $final_name = $common_name if $common_name;
-        }
-    }
-    if (scalar(keys %names) > 1) {
-        $self->warning_message("Found multiple patient common names for clin-seq build: " . $clinseq_build->id);
-    }
-
-    return ($final_name);
-}
-
-sub get_final_name {
-    my $self          = shift;
-    my %args          = @_;
-    my $clinseq_build = $args{'-clinseq_build'};
-
-    my $final_name;
-
-    my $wgs_build           = $clinseq_build->wgs_build;
-    my $exome_build         = $clinseq_build->exome_build;
-    my $normal_rnaseq_build = $clinseq_build->normal_rnaseq_build;
-    my $tumor_rnaseq_build  = $clinseq_build->tumor_rnaseq_build;
-
-    my @builds = ($clinseq_build, $wgs_build, $exome_build, $normal_rnaseq_build, $tumor_rnaseq_build);
-
-    my %names;
-    foreach my $build (@builds) {
-        next unless $build;
-        if ($build->subject->class eq 'Genome::Individual') {
-            my $name = $build->subject->name;
-            $names{$name} = 1 if $name;
-            $final_name = $name if $name;
-        }
-        elsif ($build->subject->class eq 'Genome::Sample') {
-            my $name = $build->subject->individual->name;
-            $names{$name} = 1 if $name;
-            $final_name = $name if $name;
-        }
-    }
-    if (scalar(keys %names) > 1) {
-        $self->warning_message("Found multiple patient names for clin-seq build: " . $clinseq_build->id);
-    }
-
-    return ($final_name);
-}
-
 sub get_dna_sample_type {
     my $self          = shift;
     my %args          = @_;
@@ -317,61 +247,25 @@ sub get_dna_subject_name {
     return ($final_name);
 }
 
-sub resolve_input_builds {
-    my $self = shift;
-    my %args = @_;
-
-    #Get all underlying builds that could make up a single clinseq model/build
-    my $clinseq_build               = $args{'-clinseq_build'};
-    my $wgs_build                   = $clinseq_build->wgs_build;
-    my $exome_build                 = $clinseq_build->exome_build;
-    my $tumor_rnaseq_build          = $clinseq_build->tumor_rnaseq_build;
-    my $normal_rnaseq_build         = $clinseq_build->normal_rnaseq_build;
-    my $wgs_normal_refalign_build   = $wgs_build->normal_build if ($wgs_build);
-    my $wgs_tumor_refalign_build    = $wgs_build->tumor_build if ($wgs_build);
-    my $exome_normal_refalign_build = $exome_build->normal_build if ($exome_build);
-    my $exome_tumor_refalign_build  = $exome_build->tumor_build if ($exome_build);
-    my @builds                      = (
-        $wgs_build, $exome_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build,
-        $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build
-    );
-    my @defined_builds;
-
-    foreach my $build (@builds) {
-        next unless $build;
-        push(@defined_builds, $build);
-    }
-    return (\@defined_builds);
-}
-
 sub resolve_clinseq_reference_build {
     my $self           = shift;
     my @clinseq_builds = $self->builds;
 
     $self->debug_message(
         "Attempting to resolve a distinct reference sequence build from the input models of all clinseq builds");
-    my $reference_build;
-    my %reference_builds;
 
+    my @reference_builds;
     foreach my $clinseq_build (@clinseq_builds) {
-        my @builds = @{$self->resolve_input_builds('-clinseq_build' => $clinseq_build)};
-        foreach my $build (@builds) {
-            my $m = $build->model;
-            if ($m->can("reference_sequence_build")) {
-                $reference_build = $m->reference_sequence_build;
-                my $rb_id = $reference_build->id;
-                $reference_builds{$rb_id} = 1;
-            }
-        }
+        push @reference_builds, $clinseq_build->reference_sequence_build;
     }
-    my $rb_count = keys %reference_builds;
-    unless ($rb_count == 1) {
-        print Dumper %reference_builds;
-        die $self->error_message("Found $rb_count reference builds for this group of input builds - must be only one");
+    my $reference_build_count = scalar(uniq @reference_builds);
+    if ($reference_build_count > 1) {
+        print Dumper @reference_builds;
+        $self->fatal_message("Found $reference_build_count reference builds for this group of input builds - must be only one");
     }
-    $self->debug_message("Found 1: " . $reference_build->__display_name__);
+    $self->debug_message("Found 1: " . $reference_builds[0]->__display_name__);
 
-    return ($reference_build);
+    return $reference_builds[0];
 }
 
 sub resolve_clinseq_annotation_build {
@@ -384,8 +278,7 @@ sub resolve_clinseq_annotation_build {
     my %annotation_builds;
 
     foreach my $clinseq_build (@clinseq_builds) {
-        my @builds = @{$self->resolve_input_builds('-clinseq_build' => $clinseq_build)};
-        foreach my $build (@builds) {
+        foreach my $build ($clinseq_build->input_builds) {
             my $m = $build->model;
             if ($m->can("annotation_build")) {
                 $annotation_build = $m->annotation_build;
@@ -617,7 +510,7 @@ sub get_case_name {
     my %common_names;
     my $final_common_name;
     foreach my $build (@builds) {
-        my $name = $self->get_final_common_name('-clinseq_build' => $build);
+        my $name = $build->subject->common_name;
         $common_names{$name} = 1 if $name;
         $final_common_name = $name;
     }
@@ -631,7 +524,7 @@ sub get_case_name {
     my %names;
     my $final_name;
     foreach my $build (@builds) {
-        my $name = $self->get_final_name('-clinseq_build' => $build);
+        my $name = $build->subject->name;
         $names{$name} = 1 if $name;
         $final_name = $name;
     }
@@ -878,19 +771,6 @@ sub parseKnownDruggableFiles {
     return (\%result);
 }
 
-sub get_somatic_subject_common_name {
-    my $self                = shift;
-    my $b                   = shift;
-    my $subject_common_name = "null";
-    if ($b->model->wgs_model) {
-        $subject_common_name = $b->model->wgs_model->last_succeeded_build->subject->common_name;
-    }
-    elsif ($b->model->exome_model) {
-        my $subject_common_name = $b->model->exome_model->last_succeeded_build->subject->common_name;
-    }
-    return $subject_common_name;
-}
-
 #Get input files to be parsed
 sub getFiles {
     my $self   = shift;
@@ -902,7 +782,7 @@ sub getFiles {
     foreach my $b (@$builds) {
         my $build_directory     = $b->data_directory;
         my $subject_common_name = $b->subject->common_name;
-        my $subject_name        = $self->get_somatic_subject_common_name($b);
+        my $subject_name        = $b->best_somatic_build_subject_common_name;
         $subject_name =~ s/[\s-]/_/g;
         my $build_id = $b->id;
 

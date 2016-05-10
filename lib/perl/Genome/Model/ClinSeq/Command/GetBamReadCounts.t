@@ -72,8 +72,8 @@ my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-
 #Running a test of get-bam-read-counts by calling the code method looks something like this:
 my $verbose = 0;
 my @params = ('positions_file' => $input_positions_file);
-push(@params, ('wgs_som_var_build'    => $wgs_som_var_build));
-push(@params, ('exome_som_var_build'  => $exome_som_var_build));
+push(@params, ('wgs_somatic_build'    => $wgs_som_var_build));
+push(@params, ('exome_somatic_build'  => $exome_som_var_build));
 push(@params, ('rna_seq_tumor_build'  => $rna_seq_tumor_build));
 push(@params, ('output_file'          => $output_file));
 push(@params, ('verbose'              => $verbose));

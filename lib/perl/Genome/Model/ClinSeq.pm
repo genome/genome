@@ -3,7 +3,7 @@ package Genome::Model::ClinSeq;
 use strict;
 use warnings;
 use Genome;
-use List::MoreUtils;
+use List::MoreUtils qw(uniq);
 
 # these are used below, and are also used in the documentation on commands in the tree
 # to provide the most useful examples possible
@@ -96,28 +96,12 @@ class Genome::Model::ClinSeq {
             calculate      => q|
               my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
               if ($wgs_model) {
-                  my $wgs_model_subject = $wgs_model->subject;
-                  my $wgs_model_individual;
-                  if ($wgs_model_subject->class eq 'Genome::Individual') {
-                      $wgs_model_individual = $wgs_model_subject;
-                  }
-                  else {
-                      $wgs_model_individual = $wgs_model->subject->individual;
-                  }
-                  $wgs_common_name = $wgs_model_individual->common_name;
-                  $wgs_name = $wgs_model_individual->name;
+                  $wgs_common_name = $wgs_model->individual_common_name;
+                  $wgs_name = $wgs_model->individual->name;
               }
               if ($exome_model) {
-                  my $exome_model_subject = $exome_model->subject;
-                  my $exome_model_individual;
-                  if ($exome_model_subject->class eq 'Genome::Individual') {
-                      $exome_model_individual = $exome_model_subject;
-                  }
-                  else {
-                      $exome_model_individual = $exome_model->subject->individual;
-                  }
-                  $exome_common_name = $exome_model_individual->common_name;
-                  $exome_name = $exome_model_individual->name;
+                  $exome_common_name = $exome_model->individual_common_name;
+                  $exome_name = $exome_model->individual->name;
               }
               if ($tumor_rnaseq_model) {
                   $tumor_rnaseq_common_name = $tumor_rnaseq_model->subject->individual->common_name;
@@ -198,12 +182,12 @@ sub _resolve_subject {
             @subjects = ($subjects[0]);
         }
         else {
-            die $self->error_message(
+            $self->fatal_message(
                 "Conflicting subjects on input models!:\n\t" . join("\n\t", map {$_->__display_name__} @subjects));
         }
     }
     elsif (@subjects == 0) {
-        die $self->error_message("No subjects on input models?");
+        $self->fatal_message("No subjects on input models?");
     }
     return $subjects[0];
 }
@@ -216,12 +200,12 @@ sub _resolve_annotation {
             @annotations = ($annotations[0]);
         }
         else {
-            die $self->error_message("Conflicting annotations on input models!:\n\t"
+            $self->fatal_message("Conflicting annotations on input models!:\n\t"
                     . join("\n\t", map {$_->__display_name__} @annotations));
         }
     }
     elsif (@annotations == 0) {
-        die $self->error_message("No annotation builds on input models?");
+        $self->fatal_message("No annotation builds on input models?");
     }
     return $annotations[0];
 }
@@ -234,12 +218,12 @@ sub _resolve_reference {
             @references = ($references[0]);
         }
         else {
-            die $self->error_message("Conflicting reference sequence builds on input models!:\n\t"
+            $self->fatal_message("Conflicting reference sequence builds on input models!:\n\t"
                     . join("\n\t", map {$_->__display_name__} @references));
         }
     }
     elsif (@references == 0) {
-        die $self->error_message("No reference builds on input models?");
+        $self->fatal_message("No reference builds on input models?");
     }
     return $references[0];
 }
@@ -249,6 +233,19 @@ sub _resolve_reference {
 sub __errors__ {
     my $self   = shift;
     my @errors = $self->SUPER::__errors__;
+
+    for my $model (qw(wgs_model exome_model)) {
+        if ($self->$model) {
+            unless ($self->$model->isa('Genome::Model::SomaticVariation') || $self->$model->isa('Genome::Model::SomaticValidation')) {
+                push @errors, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => [$model],
+                    desc => "$model must be of type (Genome::Model::SomaticVariation) or (Genome::Model::SomaticValidation)",
+                );
+            }
+        }
+    }
+
     return @errors;
 }
 
@@ -438,7 +435,7 @@ sub map_workflow_inputs {
     }
 
     #Make base-dir for CNV's
-    if ($wgs_build or $exome_build or $self->has_microarray_build()) {
+    if ($wgs_build or $exome_build or $build->has_microarray_build) {
         my $cnv_dir = $patient_dir . "/cnv/";
         push @dirs, $cnv_dir;
         push @inputs, cnv_dir => $cnv_dir;
@@ -452,7 +449,7 @@ sub map_workflow_inputs {
     }
 
     #RunMicroArrayCnView
-    if ($self->has_microarray_build()) {
+    if ($build->has_microarray_build) {
         my $microarray_cnv_dir = $patient_dir . "/cnv/microarray_cnv/";
         push @dirs, $microarray_cnv_dir;
         push @inputs, microarray_cnv_dir => $microarray_cnv_dir;
@@ -673,7 +670,7 @@ sub _resolve_workflow_for_build {
 
     #RunMicroarrayCNV - produce cnv plots using microarray results
     my $microarray_cnv_op;
-    if ($self->has_microarray_build()) {
+    if ($build->has_microarray_build) {
         $microarray_cnv_op = $self->microarray_cnv_op($workflow);
     }
 
@@ -783,6 +780,17 @@ sub _resolve_workflow_for_build {
     #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
     my ($best_converge_snv_indel_report_op, $best_mq_bq_sum) = (undef, -Inf);
     if ($build->wgs_build || $build->exome_build) {
+        my ($wgs_annotate_snvs_vcf_op, $exome_annotate_snvs_vcf_op);
+        unless (-e $build->wgs_build->snvs_annotated_variants_vcf_file) {
+            $wgs_annotate_snvs_vcf_op = $self->annotate_snvs_vcf_op($workflow, 'wgs');
+        }
+        unless (-e $build->exome_build->snvs_annotated_variants_vcf_file) {
+            $exome_annotate_snvs_vcf_op = $self->annotate_snvs_vcf_op($workflow, 'exome');
+        }
+        my %annotate_snvs_vcf_ops = (
+            exome => $exome_annotate_snvs_vcf_op,
+            wgs   => $wgs_annotate_snvs_vcf_op,
+        );
         my %variant_sources_ops = (
             exome => $exome_variant_sources_op,
             wgs   => $wgs_variant_sources_op,
@@ -800,6 +808,14 @@ sub _resolve_workflow_for_build {
                             source_property      => "${variant_type}_variant_sources_file",
                             destination          => $converge_snv_indel_report_op,
                             destination_property => "_${sequencing_type}_${variant_type}_variant_sources_file",
+                        );
+                    }
+                    if ($annotate_snvs_vcf_ops{$sequencing_type}) {
+                        $workflow->create_link(
+                            source               => $annotate_snvs_vcf_ops{$sequencing_type},
+                            source_property      => 'output_result',
+                            destination          => $converge_snv_indel_report_op,
+                            destination_property => "_${sequencing_type}_annotated_snvs_vcf_result",
                         );
                     }
                     my $create_mutation_spectrum_op = $self->create_mutation_spectrum_op($workflow, $sequencing_type, $i);
@@ -833,7 +849,7 @@ sub _resolve_workflow_for_build {
                         destination_property => 'exome_cnv_result',
                     );
                 }
-                if ($self->has_microarray_build()) {
+                if ($build->has_microarray_build) {
                     $workflow->create_link(
                         source               => $microarray_cnv_op,
                         source_property      => 'result',
@@ -1025,6 +1041,30 @@ sub variant_sources_op {
     return $variant_sources_op;
 }
 
+sub annotate_snvs_vcf_op {
+    my $self = shift;
+    my $workflow = shift;
+    my $type = shift;
+
+    my $annotate_snvs_vcf_op = Genome::WorkflowBuilder::Command->create(
+        name    => "Annotate the $type snvs vcf with dbsnp ids",
+        command => 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf',
+    );
+    $workflow->add_operation($annotate_snvs_vcf_op);
+    $workflow->connect_input(
+        input_property       => "${type}_build",
+        destination          => $annotate_snvs_vcf_op,
+        destination_property => 'somatic_build',
+    );
+    $workflow->connect_input(
+        input_property       => 'build',
+        destination          => $annotate_snvs_vcf_op,
+        destination_property => 'requestor',
+    );
+
+    return $annotate_snvs_vcf_op;
+}
+
 sub mutation_diagram_op {
     my $self = shift;
     my $workflow = shift;
@@ -1161,6 +1201,11 @@ sub cufflinks_differential_expression_op {
     );
     $workflow->add_operation($cufflinks_differential_expression_op);
     $workflow->connect_input(
+        input_property       => 'cancer_annotation_db',
+        destination          => $cufflinks_differential_expression_op,
+        destination_property => 'cancer_annotation_db',
+    );
+    $workflow->connect_input(
         input_property       => 'normal_rnaseq_build',
         destination          => $cufflinks_differential_expression_op,
         destination_property => 'control_build',
@@ -1267,7 +1312,7 @@ sub clonality_op {
     $workflow->connect_input(
         input_property       => 'wgs_build',
         destination          => $clonality_op,
-        destination_property => 'somatic_var_build',
+        destination_property => 'somatic_build',
     );
     $workflow->connect_input(
         input_property       => 'clonality_dir',
@@ -1365,6 +1410,11 @@ sub exome_cnv_op {
         command => 'Genome::Model::Tools::CopyNumber::Cnmops',
     );
     $workflow->add_operation($exome_cnv_op);
+    $workflow->connect_input(
+        input_property       => 'cancer_annotation_db',
+        destination          => $exome_cnv_op,
+        destination_property => 'cancer_annotation_db',
+    );
     $workflow->connect_input(
         input_property       => 'exome_cnv_dir',
         destination          => $exome_cnv_op,
@@ -1700,7 +1750,7 @@ sub create_mutation_spectrum_op {
     $workflow->connect_input(
         input_property       => "${sequencing_type}_build",
         destination          => $create_mutation_spectrum_op,
-        destination_property => 'somvar_build',
+        destination_property => 'somatic_build',
     );
     $workflow->connect_input(
         input_property       => "${sequencing_type}_mutation_spectrum_outdir$index",
@@ -1818,24 +1868,8 @@ sub _infer_candidate_subjects_from_input_models {
 
     my %subjects;
     for my $input_model ($self->_input_models) {
-        next unless $input_model;
-        my $patient;
-        if ($input_model->subject->isa("Genome::Individual")) {
-            $patient = $input_model->subject;
-        }
-        else {
-            $patient = $input_model->subject->individual;
-        }
+        my $patient = $input_model->individual;
         $subjects{$patient->id} = $patient;
-
-        if ($input_model->can("tumor_model")) {
-            $subjects{ $input_model->tumor_model->subject->individual->id } =
-                $input_model->tumor_model->subject->individual;
-        }
-        if ($input_model->can("normal_model")) {
-            $subjects{ $input_model->normal_model->subject->individual->id } =
-                $input_model->normal_model->subject->individual;
-        }
     }
     my @subjects = sort {$a->id cmp $b->id} values %subjects;
     return @subjects;
@@ -1846,14 +1880,11 @@ sub _infer_annotations_from_input_models {
 
     my %annotations;
     for my $input_model ($self->_input_models) {
-        next unless $input_model;
-        if ($input_model->can("annotation_build")) {
-            my $annotation_build = $input_model->annotation_build;
-            $annotations{$annotation_build->id} = $annotation_build;
-        }
-        if ($input_model->can("annotation_reference_build")) {
-            my $annotation_build = $input_model->annotation_reference_build;
-            $annotations{$annotation_build->id} = $annotation_build;
+        for my $accessor (qw(annotation_build annotation_reference_build)) {
+            if ($input_model->can($accessor)) {
+                my $annotation_build = $input_model->$accessor;
+                $annotations{$annotation_build->id} = $annotation_build;
+            }
         }
     }
     my @annotations = sort {$a->id cmp $b->id} values %annotations;
@@ -1863,38 +1894,31 @@ sub _infer_annotations_from_input_models {
 sub _infer_references_from_input_models {
     my $self = shift;
 
-    my %references;
+    my @references;
     for my $input_model ($self->_input_models) {
-        next unless $input_model;
-        if ($input_model->can("reference_sequence_build")) {
-            my $reference_build = $input_model->reference_sequence_build;
-            $references{$reference_build->id} = $reference_build;
+        if ($input_model->can('reference_sequence_build')) {
+            push @references, $input_model->reference_sequence_build;
         }
     }
-    my @references = sort {$a->id cmp $b->id} values %references;
-    return @references;
-}
-
-sub _infer_input_models_for_somatic_model {
-    my $self = shift;
-    my $input_models = shift;
-    my $somatic_model = shift;
-
-    if ($somatic_model->class eq 'Genome::Model::SomaticValidation') { return; }
-
-    push (@$input_models, $somatic_model->normal_model);
-    push (@$input_models, $somatic_model->tumor_model);
+    return sort {$a->id cmp $b->id} uniq @references;
 }
 
 sub _input_models {
     my $self = shift;
 
-    my @input_models = ( $self->wgs_model, $self->exome_model, $self->tumor_rnaseq_model, $self->normal_rnaseq_model );
+    my @input_models = ( $self->tumor_rnaseq_model, $self->normal_rnaseq_model );
+    for my $accessor (qw(wgs_model exome_model)) {
+        if (my $input_model = $self->$accessor) {
+            push @input_models, $input_model;
+            for my $model (qw(tumor_model normal_model)) {
+                if ($input_model->can($model)) {
+                    push @input_models, $input_model->$model;
+                }
+            }
+        }
+    }
 
-    $self->_infer_input_models_for_somatic_model(\@input_models,$self->wgs_model) if $self->wgs_model;
-    $self->_infer_input_models_for_somatic_model(\@input_models,$self->exome_model) if $self->exome_model;
-
-    return @input_models;
+    return grep {defined($_)} @input_models;
 }
 
 sub _resolve_resource_requirements_for_build {
@@ -1949,11 +1973,11 @@ sub files_ignored_by_build_diff {
 sub patient_dir {
     my ($self, $build) = @_;
     unless ($build->common_name) {
-        die $self->error_message("Common name is not defined.");
+        $self->fatal_message("Common name is not defined.");
     }
     my $patient_dir = $build->data_directory . "/" . $build->common_name;
     unless (-d $patient_dir) {
-        die $self->error_message("ClinSeq patient directory not found. Expected: $patient_dir");
+        $self->fatal_message("ClinSeq patient directory not found. Expected: $patient_dir");
     }
     return $patient_dir;
 }
@@ -2010,7 +2034,7 @@ sub clonality_dir {
     my $clonality_dir = $patient_dir . "/clonality";
 
     unless (-d $clonality_dir) {
-        die $self->error_message("Clonality directory does not exist. Expected: $clonality_dir");
+        $self->fatal_message("Clonality directory does not exist. Expected: $clonality_dir");
     }
     return $clonality_dir;
 }
@@ -2020,7 +2044,7 @@ sub varscan_formatted_readcount_file {
     my $clonality_dir  = $self->clonality_dir($build);
     my $readcount_file = $clonality_dir . "/allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan";
     unless (-e $readcount_file) {
-        die $self->error_message("Unable to find varscan formatted readcount file. Expected: $readcount_file");
+        $self->fatal_message("Unable to find varscan formatted readcount file. Expected: $readcount_file");
     }
     return $readcount_file;
 }
@@ -2030,37 +2054,9 @@ sub cnaseq_hmm_file {
     my $clonality_dir = $self->clonality_dir($build);
     my $hmm_file      = $clonality_dir . "/cnaseq.cnvhmm";
     unless (-e $hmm_file) {
-        die $self->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
+        $self->fatal_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
     }
     return $hmm_file;
-}
-
-sub has_microarray_build {
-    my $self = shift;
-    my $base_model;
-    if ($self->exome_model) {
-        $base_model = $self->exome_model;
-    }
-    elsif ($self->wgs_model) {
-        $base_model = $self->wgs_model;
-    }
-    else {
-        return 0;
-    }
-    if ($base_model->class eq 'Genome::Model::SomaticValidation') { return 0; }
-    if ($base_model->tumor_model->genotype_microarray && $base_model->normal_model->genotype_microarray) {
-        if (   $base_model->tumor_model->genotype_microarray->last_succeeded_build
-            && $base_model->normal_model->genotype_microarray->last_succeeded_build)
-        {
-            return 1;
-        }
-        else {
-            return 0;
-        }
-    }
-    else {
-        return 0;
-    }
 }
 
 sub _get_docm_variants_file {

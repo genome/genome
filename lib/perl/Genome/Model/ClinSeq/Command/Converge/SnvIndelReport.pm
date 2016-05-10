@@ -128,6 +128,12 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
         _exome_snv_variant_sources_file   => {is => 'FilesystemPath',},
         _wgs_indel_variant_sources_file   => {is => 'FilesystemPath',},
         _exome_indel_variant_sources_file => {is => 'FilesystemPath',},
+        _wgs_annotated_snvs_vcf_result    => {
+            is => 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result',
+        },
+        _exome_annotated_snvs_vcf_result    => {
+            is => 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result',
+        },
     ],
     has_param => [
         lsf_resource => {
@@ -245,7 +251,7 @@ sub execute {
     $self->status_message("Producing report for individual: $case_name");
 
     #Gather variants for the tiers specified by the user from each build. Note which build each came from.
-    #Get these from the underlying somatic-variation builds.
+    #Get these from the underlying somatic builds.
     #Annotate all variants (gmt annotate transcript-variants --help)
     my @clinseq_builds = $self->builds;
     my (%somatic_builds, %rnaseq_builds);
@@ -453,24 +459,34 @@ sub gather_variants {
     foreach my $somatic_build_id (sort keys %{$somatic_builds}) {
         my $somatic_build      = $somatic_builds->{$somatic_build_id}->{build};
         my $somatic_build_type = $somatic_builds->{$somatic_build_id}->{type};
-        my $somatic_build_dir  = $somatic_build->data_directory;
 
         foreach my $tier (@tiers) {
-            my $snvs_file   = "$somatic_build_dir/effects/snvs.hq.novel.$tier.v2.bed";
-            my $indels_file = "$somatic_build_dir/effects/indels.hq.novel.$tier.v2.bed";
-            unless (-e $snvs_file && -e $indels_file) {
-                die $self->error_message("Could not find expected file:\n$snvs_file\n$indels_file");
+            my $snvs_file   = $somatic_build->snvs_effects_file($tier);
+            my $indels_file = $somatic_build->indels_effects_file($tier);
+            unless (-e $snvs_file) {
+                die $self->error_message("Could not find expected file:\n$snvs_file");
+            }
+            unless (-e $indels_file) {
+                die $self->error_message("Could not find expected file:\n$indels_file");
+            }
+            my $vcf_result_accessor = "_${somatic_build_type}_annotated_snvs_vcf_result";
+            my $vcf_file;
+            if (my $result = $self->$vcf_result_accessor) {
+                $vcf_file = $result->file_path;
+            }
+            else {
+                $vcf_file = $somatic_build->snvs_annotated_variants_vcf_file;
             }
             $bed_files{$snvs_file}{somatic_build_id}   = $somatic_build_id;
             $bed_files{$snvs_file}{var_type}           = "snv";
             $bed_files{$snvs_file}{data_type}          = $somatic_build_type;
             $bed_files{$snvs_file}{tier}               = $tier;
-            $bed_files{$snvs_file}{vcf_file}           = "$somatic_build_dir/variants/snvs.annotated.vcf.gz";
+            $bed_files{$snvs_file}{vcf_file}           = $vcf_file;
             $bed_files{$indels_file}{somatic_build_id} = $somatic_build_id;
             $bed_files{$indels_file}{var_type}         = "indel";
             $bed_files{$indels_file}{data_type}        = $somatic_build_type;
             $bed_files{$indels_file}{tier}             = $tier;
-            $bed_files{$indels_file}{vcf_file}         = "$somatic_build_dir/variants/indels.detailed.vcf.gz";
+            $bed_files{$indels_file}{vcf_file}         = $somatic_build->indels_detailed_variants_vcf_file;
         }
     }
 

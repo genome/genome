@@ -135,12 +135,12 @@ sub get_levels {
 }
 
 sub determine_genome_build {
-  my $self = shift;
-  my $supplied_build_name = shift;
-  my $igv_name = Genome::Model::Tools::Analysis::ResolveIgvReferenceName::resolve_igv_reference_name($supplied_build_name) ||
-    $self->fatal_message("Unrecognized reference genome name " .
+    my $self = shift;
+    my $supplied_build_name = shift;
+    my $igv_name = Genome::Model::Tools::Analysis::ResolveIgvReferenceName::resolve_igv_reference_name($supplied_build_name) ||
+        $self->fatal_message("Unrecognized reference genome name " .
                              "($supplied_build_name) supplied to DumpIgvXml.pm");
-  return $igv_name;
+    return $igv_name;
 }
 
 sub execute {
@@ -161,7 +161,7 @@ sub execute {
     foreach my $clinseq_build (@clinseq_builds) {
         my $clinseq_build_id = $clinseq_build->id;
 
-        my $reference_build       = Genome::Model::ClinSeq::Util::resolve_reference_sequence_build($clinseq_build);
+        my $reference_build       = $clinseq_build->reference_sequence_build;
         my $reference_genome_name = $reference_build->name;
 
         #Hardcoded list of allowed reference builds and their mappings to names used in IGV
@@ -190,70 +190,76 @@ sub execute {
         my $extra_features_track_xml = "";
 
         if ($clinseq_build->wgs_build) {
-            #WGS somvar build - source of wgs SNV/Indel BED feature tracks
-            my $wgs_somvar_build = $clinseq_build->wgs_build;
+            #WGS build - source of wgs SNV/Indel BED feature tracks
+            my $wgs_build = $clinseq_build->wgs_build;
 
             #WGS normal refalign build - source of normal WGS BAMs track
-            my $wgs_normal_refalign_build = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
-            my $wgs_normal_track = $self->generate_track_xml(
-                '-build'         => $wgs_normal_refalign_build,
-                '-resource_type' => 'bam'
-            );
-            my $wgs_normal_xml = $wgs_normal_track->{xml};
-            $wgs_normal_xml = $self->generate_panel_xml(
-                '-track_xml'   => $wgs_normal_xml,
-                '-panel_count' => $panel_count++
-            );
-            push(@resources, $wgs_normal_track->{resource});
-            $main_features_track_xml .= $wgs_normal_xml;
+            if ($wgs_build->can('normal_build')) {
+                my $wgs_normal_refalign_build = $wgs_build->normal_build;
+                my $wgs_normal_track = $self->generate_track_xml(
+                    '-build'         => $wgs_normal_refalign_build,
+                    '-resource_type' => 'bam'
+                );
+                my $wgs_normal_xml = $wgs_normal_track->{xml};
+                $wgs_normal_xml = $self->generate_panel_xml(
+                    '-track_xml'   => $wgs_normal_xml,
+                    '-panel_count' => $panel_count++
+                );
+                push(@resources, $wgs_normal_track->{resource});
+                $main_features_track_xml .= $wgs_normal_xml;
+            }
 
             #WGS tumor refalign build - source of tumor WGS BAMs track
-            my $wgs_tumor_refalign_build = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
-            my $wgs_tumor_track = $self->generate_track_xml(
-                '-build'         => $wgs_tumor_refalign_build,
-                '-resource_type' => 'bam'
-            );
-            my $wgs_tumor_xml = $wgs_tumor_track->{xml};
-            $wgs_tumor_xml = $self->generate_panel_xml(
-                '-track_xml'   => $wgs_tumor_xml,
-                '-panel_count' => $panel_count++
-            );
-            push(@resources, $wgs_tumor_track->{resource});
-            $main_features_track_xml .= $wgs_tumor_xml;
-
+            if ($wgs_build->can('tumor_build')) {
+                my $wgs_tumor_refalign_build = $wgs_build->tumor_build;
+                my $wgs_tumor_track = $self->generate_track_xml(
+                    '-build'         => $wgs_tumor_refalign_build,
+                    '-resource_type' => 'bam'
+                );
+                my $wgs_tumor_xml = $wgs_tumor_track->{xml};
+                $wgs_tumor_xml = $self->generate_panel_xml(
+                    '-track_xml'   => $wgs_tumor_xml,
+                    '-panel_count' => $panel_count++
+                );
+                push(@resources, $wgs_tumor_track->{resource});
+                $main_features_track_xml .= $wgs_tumor_xml;
+            }
         }
         if ($clinseq_build->exome_build) {
-            #Exome somvar build - source of exome SNV/Indel BED feature tracks
-            my $exome_somvar_build = $clinseq_build->exome_build;
+            #Exome build - source of exome SNV/Indel BED feature tracks
+            my $exome_build = $clinseq_build->exome_build;
 
             #Exome normal refalign build - source of normal Exome BAMs track
-            my $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
-            my $exome_normal_track = $self->generate_track_xml(
-                '-build'         => $exome_normal_refalign_build,
-                '-resource_type' => 'bam'
-            );
-            my $exome_normal_xml = $exome_normal_track->{xml};
-            $exome_normal_xml = $self->generate_panel_xml(
-                '-track_xml'   => $exome_normal_xml,
-                '-panel_count' => $panel_count++
-            );
-            push(@resources, $exome_normal_track->{resource});
-            $main_features_track_xml .= $exome_normal_xml;
+            if ($exome_build->can('normal_build')) {
+            my $exome_normal_refalign_build = $exome_build->normal_build;
+                my $exome_normal_track = $self->generate_track_xml(
+                    '-build'         => $exome_normal_refalign_build,
+                    '-resource_type' => 'bam'
+                );
+                my $exome_normal_xml = $exome_normal_track->{xml};
+                $exome_normal_xml = $self->generate_panel_xml(
+                    '-track_xml'   => $exome_normal_xml,
+                    '-panel_count' => $panel_count++
+                );
+                push(@resources, $exome_normal_track->{resource});
+                $main_features_track_xml .= $exome_normal_xml;
+            }
 
             #Exome tumor refalign build - source of tumor Exome BAMs track
-            my $exome_tumor_refalign_build = $exome_somvar_build->tumor_build if ($exome_somvar_build);
-            my $exome_tumor_track = $self->generate_track_xml(
-                '-build'         => $exome_tumor_refalign_build,
-                '-resource_type' => 'bam'
-            );
-            my $exome_tumor_xml = $exome_tumor_track->{xml};
-            $exome_tumor_xml = $self->generate_panel_xml(
-                '-track_xml'   => $exome_tumor_xml,
-                '-panel_count' => $panel_count++
-            );
-            push(@resources, $exome_tumor_track->{resource});
-            $main_features_track_xml .= $exome_tumor_xml;
-
+            if ($exome_build->can('tumor_build')) {
+                my $exome_tumor_refalign_build = $exome_build->tumor_build;
+                my $exome_tumor_track = $self->generate_track_xml(
+                    '-build'         => $exome_tumor_refalign_build,
+                    '-resource_type' => 'bam'
+                );
+                my $exome_tumor_xml = $exome_tumor_track->{xml};
+                $exome_tumor_xml = $self->generate_panel_xml(
+                    '-track_xml'   => $exome_tumor_xml,
+                    '-panel_count' => $panel_count++
+                );
+                push(@resources, $exome_tumor_track->{resource});
+                $main_features_track_xml .= $exome_tumor_xml;
+            }
         }
         if ($clinseq_build->normal_rnaseq_build) {
             #RNAseq normal RNA build - source of normal RNAseq BAMs track
@@ -314,10 +320,10 @@ sub execute {
             my @bed_files = @{$levels->{$l}};
             foreach my $bed_file (@bed_files) {
                 if ($clinseq_build->wgs_build) {
-                    #WGS somvar build - source of wgs SNV/Indel BED feature tracks
-                    my $wgs_somvar_build = $clinseq_build->wgs_build;
+                    #WGS build - source of wgs SNV/Indel BED feature tracks
+                    my $wgs_build = $clinseq_build->wgs_build;
                     my $extra_track      = $self->generate_track_xml(
-                        '-build'         => $wgs_somvar_build,
+                        '-build'         => $wgs_build,
                         '-resource_type' => 'bed',
                         '-bed_file'      => $bed_file,
                         '-bed_data_type' => 'WGS'
@@ -329,10 +335,10 @@ sub execute {
                     }
                 }
                 if ($clinseq_build->exome_build) {
-                    #Exome somvar build - source of exome SNV/Indel BED feature tracks
-                    my $exome_somvar_build = $clinseq_build->exome_build;
+                    #Exome build - source of exome SNV/Indel BED feature tracks
+                    my $exome_build = $clinseq_build->exome_build;
                     my $extra_track        = $self->generate_track_xml(
-                        '-build'         => $exome_somvar_build,
+                        '-build'         => $exome_build,
                         '-resource_type' => 'bed',
                         '-bed_file'      => $bed_file,
                         '-bed_data_type' => 'Exome'
@@ -401,20 +407,14 @@ sub generate_track_xml {
     my $bed_file      = $args{'-bed_file'};
     my $bed_data_type = $args{'-bed_data_type'};
 
-    #Input build could be a 'reference alignment', 'rna seq', or 'somatic variation'
+    #Input build could be a 'reference alignment', 'rna seq', 'somatic
+    #variation', or 'somatic validation'
 
     my $build_id = $build->id;
-    my $model    = $build->model;
-    my $model_id = $model->id;
-    my $pp_id    = $model->processing_profile_id;
-    my $pp       = Genome::ProcessingProfile->get($pp_id);
+    my $pp       = $build->processing_profile;
     my $pp_name  = $pp->name;
     my $pp_type  = $pp->type_name;
-    my $ref_name = "n/a";
-    if ($model->can("reference_sequence_build")) {
-        my $rb = $model->reference_sequence_build;
-        $ref_name = $rb->name;
-    }
+    my $ref_name = $build->reference_sequence_build->name;
 
     my $subject         = $build->subject;
     my $subject_name    = $subject->name;
@@ -459,7 +459,7 @@ sub generate_track_xml {
     if ($pp_type eq "reference alignment") {
         $data_type = $sequence_type;
     }
-    elsif ($pp_type eq "somatic variation") {
+    elsif ($pp_type eq 'somatic variation' || $pp_type eq 'somatic validation') {
         $data_type = "Unknown";
         if ($pp_name =~ /exome/i) {
             $data_type = "Exome";
@@ -477,7 +477,7 @@ sub generate_track_xml {
 
     #Determine the tissue description: ('normal', 'tumor', 'somatic')
     #Should be defined for most samples but for somatic variation results, change it to 'somatic' to indicate a comparison of tissues
-    if ($pp_type eq "somatic variation") {
+    if ($pp_type eq 'somatic variation' || $pp_type eq 'somatic validation') {
         $tissue_desc = "somatic";
     }
 
@@ -497,13 +497,13 @@ sub generate_track_xml {
         }
         else {
             $self->fatal_message(
-                "Could not find BAM file for build: $build_id\tmodel: $model_id - did you specify the correct resource type?"
+                "Could not find BAM file for build: $build_id - did you specify the correct resource type?"
             );
         }
         $resource_file = $bam_file;
 
     }
-    elsif ($resource_type eq 'bed' && $pp_type eq 'somatic variation') {
+    elsif ($resource_type eq 'bed' && ($pp_type eq 'somatic variation' || $pp_type eq 'somatic validation')) {
         #User specifies actual file name - will be used to find file in a somatic variation result
         unless ($bed_file) {
             $self->fatal_message(
@@ -513,7 +513,7 @@ sub generate_track_xml {
 
         #Unless this file is actually present.  Print a warning and return
         unless (-e $resource_file) {
-            $self->status_message("BED file not found for this somatic variation build:\n$bed_file\n");
+            $self->status_message("BED file not found for this somatic build:\n$bed_file\n");
             return (0);
         }
     }

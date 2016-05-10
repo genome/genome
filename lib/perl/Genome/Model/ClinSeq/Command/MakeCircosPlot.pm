@@ -388,7 +388,7 @@ sub execute {
         #TODO tidy this section, superfluous since exome or WGS has already been defined
 
         ### Tier1 SNVs and INDELs
-        #decides which somatic variation model to use
+        #decides which somatic model to use
         my $snv_data_dir;
         my $indel_data_dir;
         if ($wgs_build && $exo_build) {
@@ -654,7 +654,7 @@ EOS
         #TODO tidy this section, superfluous since exome or WGS has already been defined
 
         ### Tier1 SNVs and INDELs
-        #decides which somatic variation model to use
+        #decides which somatic model to use
         my $snv_data_dir;
         my $indel_data_dir;
         if ($wgs_build && $exo_build) {

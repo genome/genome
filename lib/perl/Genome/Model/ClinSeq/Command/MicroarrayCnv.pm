@@ -114,26 +114,15 @@ sub get_annotation_db {
     return $cancer_annotation_db;
 }
 
-sub get_microarray_models {
+sub get_microarray_builds {
     my $self = shift;
     if ($self->microarray_model_tumor and $self->microarray_model_tumor) {
-        return ($self->microarray_model_tumor, $self->microarray_model_normal);
+        return ($self->microarray_model_tumor->last_succeeded_build, $self->microarray_model_normal->last_succeeded_build);
     }
-    elsif ($self->clinseq_model) {
-        my $base_model;
-        if ($self->clinseq_model->exome_model) {
-            $base_model = $self->clinseq_model->exome_model;
-        }
-        elsif ($self->clinseq_model->wgs_model) {
-            $base_model = $self->clinseq_model->wgs_model;
-        }
-        else {
-            die $self->error_message("Please specify a clinseq model with either an exome-sv [or] wgs-sv model");
-        }
-        if ($base_model->tumor_model->genotype_microarray && $base_model->normal_model->genotype_microarray) {
-            my $microarray_model_tumor  = $base_model->tumor_model->genotype_microarray;
-            my $microarray_model_normal = $base_model->normal_model->genotype_microarray;
-            return $microarray_model_tumor, $microarray_model_normal;
+    elsif (my $clinseq_model = $self->clinseq_model) {
+        my $clinseq_build = $clinseq_model->last_succeeded_build;
+        if ($clinseq_build->has_microarray_build) {
+            return ($clinseq_build->tumor_microarray_build, $clinseq_build->normal_microarray_build);
         }
         else {
             die $self->error_message(
@@ -159,18 +148,18 @@ sub get_copynumber_files {
         }
     }
     else {
-        my ($microarray_tumor, $microarray_normal) = $self->get_microarray_models();
-        if (-e $microarray_tumor->last_succeeded_build->original_genotype_file_path) {
-            $copynumber_tumor = $microarray_tumor->last_succeeded_build->original_genotype_file_path;
+        my ($microarray_tumor, $microarray_normal) = $self->get_microarray_builds;
+        if (-e $microarray_tumor->original_genotype_file_path) {
+            $copynumber_tumor = $microarray_tumor->original_genotype_file_path;
         }
         else {
-            die $self->error_message("Unable to find copynumber file for " . $microarray_tumor->name);
+            die $self->error_message("Unable to find copynumber file for " . $microarray_tumor->model->name);
         }
-        if (-e $microarray_normal->last_succeeded_build->original_genotype_file_path) {
-            $copynumber_normal = $microarray_normal->last_succeeded_build->original_genotype_file_path;
+        if (-e $microarray_normal->original_genotype_file_path) {
+            $copynumber_normal = $microarray_normal->original_genotype_file_path;
         }
         else {
-            die $self->error_message("Unable to find copynumber file for " . $microarray_normal->name);
+            die $self->error_message("Unable to find copynumber file for " . $microarray_normal->model->name);
         }
     }
     my $copynumber_tumor_copy  = $self->outdir . "/tumor.copynumber.original";

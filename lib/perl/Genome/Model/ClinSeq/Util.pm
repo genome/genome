@@ -2,7 +2,7 @@ package Genome::Model::ClinSeq::Util;
 use strict;
 use warnings;
 use Data::Dumper;
-use List::MoreUtils qw/ uniq /;
+use List::MoreUtils qw/ uniq each_array /;
 
 #Written by Malachi Griffith
 class Genome::Model::ClinSeq::Util {};
@@ -1192,44 +1192,6 @@ sub getFilePathBase {
     return (\%fb);
 }
 
-#Given a clinseq object, resolve to a single reference sequence object based on the inputs
-sub resolve_reference_sequence_build {
-    my $clinseq_build = shift;
-    my ($wgs_somvar_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build,
-        $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build);
-    $wgs_somvar_build            = $clinseq_build->wgs_build;
-    $exome_somvar_build          = $clinseq_build->exome_build;
-    $tumor_rnaseq_build          = $clinseq_build->tumor_rnaseq_build;
-    $normal_rnaseq_build         = $clinseq_build->normal_rnaseq_build;
-    $wgs_normal_refalign_build   = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
-    $wgs_tumor_refalign_build    = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
-    $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
-    $exome_tumor_refalign_build  = $exome_somvar_build->tumor_build if ($exome_somvar_build);
-
-    my @input_builds = (
-        $wgs_normal_refalign_build,   $wgs_tumor_refalign_build,   $wgs_somvar_build,
-        $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build,
-        $tumor_rnaseq_build,          $normal_rnaseq_build,        $clinseq_build
-    );
-
-    my %rb_names;
-    for my $build (@input_builds) {
-        next unless $build;
-        my $m = $build->model;
-        if ($m->can("reference_sequence_build")) {
-            my $rb      = $m->reference_sequence_build;
-            my $rb_name = $rb->name;
-            $rb_names{$rb_name} = $rb;
-        }
-    }
-    my @rb_names = keys %rb_names;
-    if (scalar(@rb_names) > 1 || scalar(@rb_names) == 0) {
-        die $clinseq_build->error_message(
-            "Did not find a single distinct Reference alignment build for ClinSeq build: " . $clinseq_build->id);
-    }
-    return $rb_names{$rb_names[0]};
-}
-
 sub _get_si_report_tumor_prefix {
     my $self          = shift;
     my $clinseq_build = shift;
@@ -1241,22 +1203,20 @@ sub _get_si_report_tumor_prefix {
         '-rnaseq_builds'  => \%rnaseq_builds
     );
     my @prefixes = $self->get_header_prefixes('-align_builds' => $align_builds);
-    my (@tumor_refalign_names, $somatic_build, $tumor_build);
+    my (@tumor_refalign_names, $somatic_build);
     my ($tumor_subject_name, $tumor_subject_common_name);
     $self->status_message("keys " . keys %somatic_builds);
 
     foreach my $somatic_build_id (keys %somatic_builds) {
         $somatic_build             = $somatic_builds{$somatic_build_id}{build};
-        $tumor_build               = $somatic_build->tumor_build;
-        $tumor_subject_name        = $tumor_build->subject->name;
-        $tumor_subject_common_name = $tumor_build->subject->common_name;
+        $tumor_subject_name        = $somatic_build->model->experimental_subject->name;
+        $tumor_subject_common_name = $somatic_build->model->experimental_subject->common_name;
         $tumor_subject_common_name =~ s/\,//g;
         $tumor_subject_common_name =~ s/\s+/\_/g;
     }
     foreach my $prefix (@prefixes) {
         if (   ($prefix =~ /$tumor_subject_name/)
-            or ($prefix =~ /$tumor_subject_common_name/)
-            or ($prefix =~ /$tumor_build/))
+            or ($prefix =~ /$tumor_subject_common_name/))
         {
             push @tumor_refalign_names, $prefix;
         }
@@ -1275,22 +1235,22 @@ sub get_ref_align_builds {
     my $sort_on_time_point = 0;
 
     foreach my $somatic_build_id (keys %{$somatic_builds}) {
-        my $build_type    = $somatic_builds->{$somatic_build_id}->{type}           || "NA";
-        my $somatic_build = $somatic_builds->{$somatic_build_id}->{build}          || "NA";
-        my $subject_icn   = $somatic_build->model->subject->individual_common_name || "NA";
-        my @builds = ($somatic_build->normal_build, $somatic_build->tumor_build);
-        foreach my $build (@builds) {
-            my $subject_name        = $build->subject->name        || "NA";
-            my $subject_common_name = $build->subject->common_name || "NA";
+        my $build_type    = $somatic_builds->{$somatic_build_id}->{type}  || "NA";
+        my $somatic_build = $somatic_builds->{$somatic_build_id}->{build} || "NA";
+        my $subject_icn   = $somatic_build->individual_common_name        || "NA";
+        my @subjects = ($somatic_build->model->control_subject, $somatic_build->model->experimental_subject);
+        my @bam_path_accessors = qw(normal_bam tumor_bam);
+        my $it = each_array(@subjects, @bam_path_accessors);
+        while ( my ($subject, $bam_path_accessor) = $it->() ) {
+            my $subject_name = $subject->name || "NA";
+            my $subject_common_name = $subject->common_name || "NA";
             $subject_common_name =~ s/\,//g;
             $subject_common_name =~ s/\s+/\_/g;
             my $refalign_name = join("_", ($subject_name, $build_type, $subject_common_name));
-            my $bam_path = $build->whole_rmdup_bam_file || "NA";
-            my @timepoints = $build->subject->attributes(
-                attribute_label => "timepoint",
-                nomenclature    => "caTissue"
-            );
-            my $tissue_desc = $build->subject->tissue_desc || "NA";
+            my $bam_path = 'NA';
+            eval { $bam_path = $somatic_build->$bam_path_accessor; };
+            my @timepoints = $subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+            my $tissue_desc = $subject->tissue_desc || "NA";
             $tissue_desc =~ s/\s+/\-/g;
             $tissue_desc =~ s/\,//g;
 
@@ -1313,9 +1273,9 @@ sub get_ref_align_builds {
                 join("_", ($subject_common_name, $build_type, $tissue_desc, $time_point));
             $ref_builds{$refalign_name}{time_point_string} = $time_point;
             $ref_builds{$refalign_name}{tissue_desc}       = $tissue_desc;
-            $ref_builds{$refalign_name}{tissue_label}      = $build->subject->tissue_label || '';
-            $ref_builds{$refalign_name}{extraction_type}   = $build->subject->extraction_type;
-            $ref_builds{$refalign_name}{extraction_label}  = $build->subject->extraction_label;
+            $ref_builds{$refalign_name}{tissue_label}      = $subject->tissue_label || '';
+            $ref_builds{$refalign_name}{extraction_type}   = $subject->extraction_type;
+            $ref_builds{$refalign_name}{extraction_label}  = $subject->extraction_label;
         }
     }
 
@@ -1521,35 +1481,6 @@ sub create_copycat_cnvhq_file {
         . "$rd_bins > $copycat_cnvhmm";
     Genome::Sys->shellcmd(cmd => $awk_cmd);
     return $copycat_cnvhmm;
-}
-
-sub _is_copycat_somvar {
-    my $self              = shift;
-    my $somatic_var_build = shift;
-    if (not -s $somatic_var_build->data_directory . "/variants/cnvs.hq"
-        and glob($somatic_var_build->data_directory . "/variants/cnv/copy-cat*"))
-    {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
-sub get_best_somvar_build {
-    my $self          = shift;
-    my $clinseq_build = shift;
-    my $somvar_build  = $clinseq_build->wgs_build;
-    unless ($somvar_build) {
-        $somvar_build = $clinseq_build->exome_build;
-        $self->status_message("Using exome somvvar build.");
-    }
-    else {
-        $self->status_message("Using WGS somvvar build.");
-    }
-    unless ($somvar_build) {
-        die $self->error_message("Unable to find exome or wgs somvar build for clinseq model");
-    }
 }
 
 sub create_igv_link {

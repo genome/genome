@@ -10,6 +10,7 @@ use Genome::Utility::List;
 use Genome::Utility::Text;
 
 use Cwd;
+use List::MoreUtils qw(uniq);
 
 class Genome::Model::ClinSeq::Command::SummarizeBuilds {
     is        => 'Command::V2',
@@ -154,47 +155,27 @@ sub summarize_clinseq_build {
     open(my $stats_fh, ">$stats_file") || die "\n\nCould not open output file: $stats_file\n\n";
     print $stats_fh "Question\tAnswer\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\n";
 
-    my $model = $clinseq_build->model;
-
     $self->status_message("\n***** " . $clinseq_build->__display_name__ . " ****");
-
-    #Get build objects for all builds that might underly a clinseq model (Ref Align, Somatic variation, RNA-seq)
-    my ($wgs_somvar_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build,
-        $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build);
-
-    $wgs_somvar_build            = $clinseq_build->wgs_build;
-    $exome_somvar_build          = $clinseq_build->exome_build;
-    $tumor_rnaseq_build          = $clinseq_build->tumor_rnaseq_build;
-    $normal_rnaseq_build         = $clinseq_build->normal_rnaseq_build;
-    $wgs_normal_refalign_build   = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
-    $wgs_tumor_refalign_build    = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
-    $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
-    $exome_tumor_refalign_build  = $exome_somvar_build->tumor_build if ($exome_somvar_build);
 
     #set the build types
     my %data_types;
     $self->_set_data_types($clinseq_build, \%data_types);
 
     #Gather all builds into a single array
-    my @builds = (
-        $wgs_normal_refalign_build,   $wgs_tumor_refalign_build,   $wgs_somvar_build,
-        $exome_normal_refalign_build, $exome_tumor_refalign_build, $exome_somvar_build,
-        $tumor_rnaseq_build,          $normal_rnaseq_build,        $clinseq_build
-    );
-    @builds = grep {$_} @builds;
+    my @builds = ($clinseq_build->input_builds, $clinseq_build);
+    my @ref_align_builds = grep {$_->isa('Genome::Model::Build::ReferenceAlignment')} @builds;
+    my @rna_seq_builds = grep {$_->isa('Genome::Model::Build::RnaSeq')} @builds;
+    my @somatic_builds = grep {$_->isa('Genome::Model::Build::SomaticInterface')} @builds;
 
     #Get a list of sample names for samples associated with this clinseq build
-    my %model_samples;
     my @model_samples;
     for my $build (@builds) {
-        next unless ($build->model->subject->class eq "Genome::Sample");
-        $model_samples{$build->model->subject->id}{sample} = $build->model->subject;
-    }
-    foreach my $sample_id (keys %model_samples) {
-        push(@model_samples, $model_samples{$sample_id}{sample});
+        if ($build->subject->class->isa('Genome::Sample')) {
+            push(@model_samples, $build->subject);
+        }
     }
 
-    my $individual = $model->subject;
+    my $individual = $clinseq_build->subject;
     $self->summarize_individual($individual);
 
     #Display instrument data counts for each sample/build actually associated with the clinseq model
@@ -206,7 +187,7 @@ sub summarize_clinseq_build {
         for my $type ('dna', 'rna') {$instdata_counts{$tn . $type} = 'n/a';}
     }
 
-    for my $sample (@model_samples) {
+    for my $sample (uniq @model_samples) {
         my ($key, $value) = $self->summarize_sample($sample);
         $instdata_counts{$key} = $value;
     }
@@ -237,19 +218,10 @@ sub summarize_clinseq_build {
         my $instdata_count = scalar(@instdata);
 
         if ($instdata_count > 0) {
-            $self->status_message("\nbuild "
-                    . $build->__display_name__
-                    . " ($build_type)"
-                    . " uses "
-                    . $instdata_count
-                    . " instrument data");
+            $self->status_message("\nbuild %s (%s) uses %s instrument data", $build->__display_name__, $build_type, $instdata_count);
             foreach my $instdata (@instdata) {
                 my $run_name = $instdata->run_name || "[UNDEF run_name]";
-                $self->status_message("\t"
-                        . $instdata->id . "\t"
-                        . $run_name . "\t"
-                        . $instdata->library_name . "\t"
-                        . $instdata->sample_name);
+                $self->status_message("\t%s\t%s\t%s\t%s", $instdata->id, $run_name, $instdata->library_name, $instdata->sample_name);
             }
         }
     }
@@ -257,7 +229,7 @@ sub summarize_clinseq_build {
     #Summarize the build IDs and status of each build comprising the ClinSeq model
     $self->status_message("\n\nBuilds and status of each");
     for my $build (@builds) {
-        $self->status_message("build '" . $build->__display_name__ . "' has status " . $build->status);
+        $self->status_message("build '%s' has status %s", $build->__display_name__, $build->status);
     }
 
     #List the build dirs for each build
@@ -272,85 +244,52 @@ sub summarize_clinseq_build {
     #Summarize the processing profiles associated with each model
     $self->status_message("\n\nProcessing profiles associated with each model");
     for my $build (@builds) {
-        my $m       = $build->model;
-        my $pp      = $m->processing_profile;
-        my $pp_type = $pp->type_name;
-        $self->status_message(
-            "model '" . $m->id . "' used processing profile '" . $pp->__display_name__ . "' ($pp_type)");
+        my $pp      = $build->processing_profile;
+        $self->status_message("model '%s' used processing profile '%s' (%s)", $build->model->id, $pp->__display_name__, $pp->type_name);
     }
 
     #Summarize the reference sequence build associated with each model
     $self->status_message("\n\nReference sequence build associated with each model");
     for my $build (@builds) {
-        my $m          = $build->model;
-        my $build_type = $build->type_name;
-        if ($m->can("reference_sequence_build")) {
-            my $rb = $m->reference_sequence_build;
-            $self->status_message("model '"
-                    . $m->__display_name__
-                    . " ($build_type)"
-                    . "' used reference sequence build "
-                    . $rb->__display_name__);
-        }
+        my $rb = $build->reference_sequence_build;
+        $self->status_message("model '%s (%s)' used reference sequence build %s", $build->model->__display_name__, $build->type_name, $rb->__display_name__);
     }
 
     #Summarize the annotation reference build associated with each model
     $self->status_message("\n\nAnnotation reference build associated with each model");
     for my $build (@builds) {
-        my $m          = $build->model;
         my $build_type = $build->type_name;
-        if ($m->can("annotation_reference_build")) {
-            my $ab = $m->annotation_reference_build;
+        if ($build->can("annotation_reference_build")) {
+            my $ab = $build->annotation_reference_build;
             if ($ab) {
                 my $ab_name  = $ab->name             || "[UNDEF annotation_name]";
                 my $ab_dname = $ab->__display_name__ || "[UNDEF annotation_reference_build]";
-                $self->status_message("model '"
-                        . $m->__display_name__
-                        . " ($build_type)"
-                        . "' used annotation reference build "
-                        . $ab_dname
-                        . " ($ab_name)");
+                $self->status_message("model '%s (%s)' used annotation reference build %s (%s)", $build->model->__display_name__, $build_type, $ab_dname, $ab_name);
             }
             else {
-                $self->status_message("model '"
-                        . $m->__display_name__
-                        . " ($build_type)"
-                        . "' did NOT have an annotation reference build defined!");
+                $self->status_message("model '%s (%s)' did NOT have an annotation reference build defined", $build->model->__display_name__, $build_type);
             }
         }
-        elsif ($m->can("annotation_build")) {
-            my $ab       = $m->annotation_build;
+        elsif ($build->can("annotation_build") && defined($build->annotation_build)) {
+            my $ab       = $build->annotation_build;
             my $ab_name  = $ab->name || "[UNDEF annotation_name]";
             my $ab_dname = $ab->__display_name__ || "[UNDEF annotation_reference_build]";
-            $self->status_message("model '"
-                    . $m->__display_name__
-                    . " ($build_type)"
-                    . "' used annotation reference build "
-                    . $ab_dname
-                    . " ($ab_name)");
+            $self->status_message("model '%s (%s)' used annotation reference build %s (%s)", $build->model->__display_name__, $build_type, $ab_dname, $ab_name);
         }
     }
 
     #Summarize the genotype microarray build used with each model
     $self->status_message("\n\nGenotype microarray build associated with each model");
     for my $build (@builds) {
-        my $m          = $build->model;
         my $build_type = $build->type_name;
         if ($build->can("genotype_microarray_build")) {
             my $gb = $build->genotype_microarray_build;
             if ($gb) {
                 my $gb_name = $gb->__display_name__ || "[UNDEF genotype_microarray_build]";
-                $self->status_message("model '"
-                        . $m->__display_name__
-                        . " ($build_type)"
-                        . "' used genotype microarray build "
-                        . $gb_name);
+                $self->status_message("model '%s (%s)' used genotype microarray build %s", $build->model->__display_name__, $build_type, $gb_name);
             }
             else {
-                $self->status_message("model '"
-                        . $m->__display_name__
-                        . " ($build_type)"
-                        . "' did NOT have an associated microarray build ");
+                $self->status_message("model '%s (%s)' did NOT have an associated microarray build", $build->model->__display_name__, $build_type);
             }
         }
     }
@@ -358,17 +297,15 @@ sub summarize_clinseq_build {
     #Summarize the dbsnp build used with each model
     $self->status_message("\n\ndbSNP build associated with each model");
     for my $build (@builds) {
-        my $m          = $build->model;
         my $build_type = $build->type_name;
-        if ($m->can("dbsnp_build")) {
+        if ($build->can("dbsnp_build")) {
             my $db      = $build->dbsnp_build;
-            my $dm      = $m->dbsnp_model;
+            my $dm      = $db->model;
             my $db_name = $db->__display_name__ || "[UNDEF dbsnp_build]";
             my $dm_name = $dm->__display_name__ || "[UNDEF dbsnp_model]";
             my $dm_id   = $dm->id || "[UNDEF dbsnp_model]";
 
-            $self->status_message(
-                "model '" . $m->__display_name__ . " ($build_type)" . "' used dbSNP build " . $db_name . " ($dm_id)");
+            $self->status_message("model '%s (%s)' used dbSNP build %s (%s)", $build->model->__display_name__, $build_type, $db_name, $dm_id);
         }
     }
 
@@ -388,7 +325,7 @@ sub summarize_clinseq_build {
                 build_id)
         )
     );
-    for my $build (@builds) {
+    for my $build (@ref_align_builds) {
         $self->summarize_haploid_coverage_for_build($build, $stats_fh);
     }
 
@@ -405,15 +342,14 @@ sub summarize_clinseq_build {
                 sample_properly_paired_read_percent sample_duplicate_read_percent)
         )
     );
-    for my $build (@builds) {
+    for my $build (@ref_align_builds) {
         $self->summarize_sample_and_library_metrics_for_build($build, $stats_fh);
     }
 
-    $self->generate_APIPE_reports(\@builds, $build_outdir, $stats_fh);
+    $self->generate_APIPE_reports(\@ref_align_builds, $build_outdir, $stats_fh);
 
     #Get BAMQC results for all ref-align builds
-    for my $build (@builds) {
-        next unless $self->_is_reference_alignment_build($build);
+    for my $build (@ref_align_builds) {
         $self->get_bamqc_results($build, $build_outdir, \%data_types);
         $self->get_perlane_bamqc_results($build, $build_outdir, \%data_types);
     }
@@ -422,9 +358,7 @@ sub summarize_clinseq_build {
     # cd /gscmnt/gc8001/info/model_data/2882774248/build120412367/reference_coverage/wingspan_0
     my %exome_builds_with_coverage;
     $self->status_message("\n\nExome coverage values for each WGS/Exome reference alignment build");
-    for my $build (@builds) {
-        next unless $self->_is_reference_alignment_build($build);
-
+    for my $build (@ref_align_builds) {
         my $build_dir       = $build->data_directory;
         my $tissue_desc     = "[UNDEF tissue_desc]";
         my $extraction_type = "[UNDEF extraction_type]";
@@ -520,26 +454,22 @@ sub summarize_clinseq_build {
     #$build_dir/bam-qc/*.pdf (NEW)
     #$build_dir/bam-qc/*.html (NEW)
 
-    for my $build (@builds) {
-        next unless $self->_is_rna_seq_build($build);
+    for my $build (@rna_seq_builds) {
         #Summarize RNA-seq metrics for each build
         $self->get_rnaseq_metrics($build, $build_outdir, $stats_fh);
     }
 
-    #Summarize basic stats for the WGS and Exome somatic variation models - try using metrics object of somatic variation build?
+    #Summarize basic stats for the WGS and Exome somatic models - try using metrics object of somatic build?
     #e.g. number of tier 1,2,3,4 SNVs and InDels (both 'novel' and 'previously known')
     #e.g. number of SVs
-    $self->status_message("\n\nGet basic somatic variation stats");
+    $self->status_message("\n\nGet basic somatic stats");
     $self->status_message(
         "pp_name\ttier1_snv_count\ttier2_snv_count\ttier3_snv_count\ttier4_snv_count\ttier1_indel_count\ttier2_indel_count\ttier3_indel_count\ttier4_indel_count\tsv_count\tbuild_id"
     );
-    for my $build (@builds) {
-        my $m         = $build->model;
-        my $pp        = $m->processing_profile;
+    for my $build (@somatic_builds) {
+        my $pp        = $build->processing_profile;
         my $pp_name   = $pp->name;
         my $data_type = $self->_determine_wgs_or_exome_for_build($build, \%data_types);
-
-        next unless $self->_is_somatic_variation_build($build);
 
         my $build_id        = $build->id;
         my $tissue_desc     = "[UNDEF tissue_desc]";
@@ -602,34 +532,33 @@ sub summarize_clinseq_build {
         );
 
         print $stats_fh
-            "SomVar Tier1 SNV Count\t$tier1_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 1 SNV count for $common_name $extraction_type data\n";
+            "SomVar Tier1 SNV Count\t$tier1_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 1 SNV count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier2 SNV Count\t$tier2_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 2 SNV count for $common_name $extraction_type data\n";
+            "SomVar Tier2 SNV Count\t$tier2_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 2 SNV count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier3 SNV Count\t$tier3_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 3 SNV count for $common_name $extraction_type data\n";
+            "SomVar Tier3 SNV Count\t$tier3_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 3 SNV count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier4 SNV Count\t$tier4_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 4 SNV count for $common_name $extraction_type data\n";
+            "SomVar Tier4 SNV Count\t$tier4_snv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 4 SNV count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier1 INDEL Count\t$tier1_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 1 INDEL count for $common_name $extraction_type data\n";
+            "SomVar Tier1 INDEL Count\t$tier1_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 1 INDEL count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier2 INDEL Count\t$tier2_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 2 INDEL count for $common_name $extraction_type data\n";
+            "SomVar Tier2 INDEL Count\t$tier2_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 2 INDEL count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier3 INDEL Count\t$tier3_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 3 INDEL count for $common_name $extraction_type data\n";
+            "SomVar Tier3 INDEL Count\t$tier3_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 3 INDEL count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar Tier4 INDEL Count\t$tier4_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation tier 4 INDEL count for $common_name $extraction_type data\n";
+            "SomVar Tier4 INDEL Count\t$tier4_indel_count\t$data_type\tClinseq Build Summary\tCount\tSomatic tier 4 INDEL count for $common_name $extraction_type data\n";
         print $stats_fh
-            "SomVar SV Count\t$sv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic variation SV count for $common_name $extraction_type data\n";
+            "SomVar SV Count\t$sv_count\t$data_type\tClinseq Build Summary\tCount\tSomatic SV count for $common_name $extraction_type data\n";
     }
 
-    #Summarize SV annotation file from somatic variation results
+    #Summarize SV annotation file from somatic results
     $self->status_message("\n\nGet more detailed merged somatic SV stats");
     $self->status_message("pp_name\tsv_count\tctx_count\tdel_count\tinv_count\titx_count\tbuild_id");
-    for my $build (@builds) {
-        my $m         = $build->model;
-        my $pp        = $m->processing_profile;
+    for my $build (@somatic_builds) {
+        my $pp        = $build->processing_profile;
         my $pp_name   = $pp->name;
         my $data_type = $self->_determine_wgs_or_exome_for_build($build, \%data_types);
-        next unless ($self->_is_somatic_variation_build($build) && $data_type eq "WGS");
+        next unless $data_type eq 'WGS';
 
         my $build_id  = $build->id;
         my $build_dir = $build->data_directory;
@@ -678,18 +607,15 @@ sub summarize_clinseq_build {
         }
     }
 
-    #Summarize SV annotation file from somatic variation results
+    #Summarize SV annotation file from somatic results
     $self->status_message("\n\nGet basic expression count from RNA-seq");
     $self->status_message("pp_name\tgenes_fpkm_greater_1\ttranscripts_fpkm_greater_1\tbuild_id");
-    for my $build (@builds) {
-        my $m            = $build->model;
-        my $pp           = $m->processing_profile;
+    for my $build (@rna_seq_builds) {
+        my $pp           = $build->processing_profile;
         my $pp_name      = $pp->name;
         my $subject      = $build->subject;
         my $subject_name = $subject->name;
         my $common_name  = $self->_get_subject_common_name($subject);
-
-        next unless $self->_is_rna_seq_build($build);
 
         my $build_id                   = $build->id;
         my $build_dir                  = $build->data_directory;
@@ -740,9 +666,7 @@ sub summarize_clinseq_build {
 
     #Print BAMs for all reference alignment and RNA-seq builds
     $self->status_message("\n\nGet all BAM file locations");
-    for my $build (@builds) {
-        next unless ($self->_is_reference_alignment_build($build) or $self->_is_rna_seq_build($build));
-
+    for my $build (@ref_align_builds, @rna_seq_builds) {
         my $build_id        = $build->id;
         my $build_dir       = $build->data_directory;
         my $tissue_desc     = "[UNDEF tissue_desc]";
@@ -816,11 +740,7 @@ sub summarize_sample {
     my $scn             = $sample->common_name || "[UNDEF sample common_name]";
     my $tissue_desc     = $sample->tissue_desc || "[UNDEF sample tissue_desc]";
     my $extraction_type = $sample->extraction_type || "[UNDEF sample extraction_type]";
-    $self->status_message("sample "
-            . $sample->__display_name__
-            . " ($tissue_desc - $extraction_type) has "
-            . scalar(@instdata)
-            . " instrument data");
+    $self->status_message("sample %s (%s - %s) has %s instrument data", $sample->__display_name__, $tissue_desc, $extraction_type, scalar(@instdata));
     my $normal_sample_common_names = $self->normal_sample_common_names;
     my $tumor_sample_common_names  = $self->tumor_sample_common_names;
 
@@ -848,9 +768,6 @@ sub summarize_haploid_coverage_for_build {
     my $self     = shift;
     my $build    = shift;
     my $stats_fh = shift;
-
-    #Only perform the following for reference alignment builds!
-    return unless $self->_is_reference_alignment_build($build);
 
     my $build_type      = $build->type_name;
     my $build_dir       = $build->data_directory;
@@ -1004,8 +921,6 @@ sub summarize_sample_and_library_metrics_for_build {
     my $self     = shift;
     my $build    = shift;
     my $stats_fh = shift;
-
-    return unless $self->_is_reference_alignment_build($build);
 
     my $build_type      = $build->type_name;
     my $build_dir       = $build->data_directory;
@@ -1384,23 +1299,23 @@ sub copy_from_rnaseq_build {
 #e.g. illumina_info --sample H_KA-306905-S.4294 --report library --format tsvsub
 sub generate_LIMS_reports {
     my $self              = shift;
-    my $builds            = shift;
+    my $ref_align_builds  = shift;
     my $build_outdir      = shift;
     my %samples_processed = ();
     $self->status_message("\n\nSample sequencing metrics from LIMS");
     #$self->status_message("See results files in: $build_outdir\n");
-    for my $build (@$builds) {
-        next unless ($build->model->subject->class eq "Genome::Sample");
+    for my $build (@$ref_align_builds) {
+        next unless ($build->subject->class eq "Genome::Sample");
         my $subject      = $build->subject;
         my $subject_name = $subject->name;
         my $common_name  = $self->_get_subject_common_name($subject);
         #Only process each sample once
         unless ($samples_processed{$subject_name}) {
-            $samples_processed{$subject_name} = 1;
             my $lims_sample_outdir = $build_outdir . "/LIMS_reports/$common_name/";
             $lims_sample_outdir =~ s/ /_/g;
             Genome::Sys->shellcmd(cmd => "mkdir -p $lims_sample_outdir");
             $self->summarize_library_quality_reports_for_build($build, $lims_sample_outdir);
+            $samples_processed{$subject_name} = 1;
         }
     }
 }
@@ -1408,25 +1323,25 @@ sub generate_LIMS_reports {
 #Generate APIPE instrument data reports (including quality metrics) for each sample
 #e.g. genome instrument-data list solexa --filter sample_name='H_LF-10-0372-09-131-1135122'  --show='id,flow_cell_id,lane,sample_name,library_name,read_length,is_paired_end,clusters,median_insert_size,sd_above_insert_size,target_region_set_name,fwd_filt_error_rate_avg,rev_filt_error_rate_avg' --style=csv
 sub generate_APIPE_reports {
-    my $self         = shift;
-    my $builds       = shift;
-    my $build_outdir = shift;
-    my $stats_fh     = shift;
+    my $self             = shift;
+    my $ref_align_builds = shift;
+    my $build_outdir     = shift;
+    my $stats_fh         = shift;
 
     $self->status_message("\n\nSample sequencing metrics from APIPE");
     my %samples_processed;
-    for my $build (@$builds) {
-        next unless ($build->model->subject->class eq "Genome::Sample");
+    for my $build (@$ref_align_builds) {
+        next unless ($build->subject->class eq "Genome::Sample");
         my $subject      = $build->subject;
         my $subject_name = $subject->name;
         my $common_name  = $self->_get_subject_common_name($subject);
         #Only process each sample once
         unless ($samples_processed{$subject_name}) {
-            $samples_processed{$subject_name} = 1;
             my $apipe_sample_outdir = $build_outdir . "/APIPE_reports/$common_name/";
             $apipe_sample_outdir =~ s/ /_/g;
             Genome::Sys->shellcmd(cmd => "mkdir -p $apipe_sample_outdir");
             $self->summarize_apipe_instrument_data_reports($build, $apipe_sample_outdir, $stats_fh);
+            $samples_processed{$subject_name} = 1;
         }
     }
 }
@@ -1436,8 +1351,6 @@ sub summarize_apipe_instrument_data_reports {
     my $build        = shift;
     my $build_outdir = shift;
     my $stats_fh     = shift;
-
-    return unless $self->_is_reference_alignment_build($build);
 
     my $build_dir       = $build->data_directory;
     my $tissue_desc     = "[UNDEF tissue_desc]";
@@ -1577,7 +1490,6 @@ sub summarize_library_quality_reports_for_build {
     my $build  = shift;
     my $outdir = shift;
 
-    return unless $self->_is_reference_alignment_build($build);
     return if $self->skip_lims_reports;
 
     my @formats = qw (csv tsv html);
@@ -1665,31 +1577,21 @@ sub _set_data_types {
     my $self                        = shift;
     my $clinseq_build               = shift;
     my $data_types                  = shift;
-    my $wgs_somvar_build            = $clinseq_build->wgs_build;
-    my $exome_somvar_build          = $clinseq_build->exome_build;
-    my $tumor_rnaseq_build          = $clinseq_build->tumor_rnaseq_build;
-    my $normal_rnaseq_build         = $clinseq_build->normal_rnaseq_build;
-    my $wgs_normal_refalign_build   = $wgs_somvar_build->normal_build if ($wgs_somvar_build);
-    my $wgs_tumor_refalign_build    = $wgs_somvar_build->tumor_build if ($wgs_somvar_build);
-    my $exome_normal_refalign_build = $exome_somvar_build->normal_build if ($exome_somvar_build);
-    my $exome_tumor_refalign_build  = $exome_somvar_build->tumor_build if ($exome_somvar_build);
-    if ($wgs_tumor_refalign_build) {
-        $data_types->{$wgs_tumor_refalign_build->id} = "WGS";
-    }
-    if ($wgs_normal_refalign_build) {
-        $data_types->{$wgs_normal_refalign_build->id} = "WGS";
-    }
-    if ($exome_tumor_refalign_build) {
-        $data_types->{$exome_tumor_refalign_build->id} = "Exome";
-    }
-    if ($exome_normal_refalign_build) {
-        $data_types->{$exome_normal_refalign_build->id} = "Exome";
-    }
-    if ($tumor_rnaseq_build) {
-        $data_types->{$tumor_rnaseq_build->id} = "RNAseq";
-    }
-    if ($normal_rnaseq_build) {
-        $data_types->{$normal_rnaseq_build->id} = "RNAseq";
+
+    my $wgs_build            = $clinseq_build->wgs_build;
+    my $exome_build          = $clinseq_build->exome_build;
+    for my $type (qw(normal tumor)) {
+        my $refalign_accessor = "${type}_build";
+        if ($wgs_build && $wgs_build->can($refalign_accessor)) {
+            $data_types->{$wgs_build->$refalign_accessor->id} = 'WGS';
+        }
+        if ($exome_build && $exome_build->can($refalign_accessor)) {
+            $data_types->{$exome_build->$refalign_accessor->id} = 'Exome';
+        }
+        my $rnaseq_accessor = "${type}_rnaseq_build";
+        if ($clinseq_build->$rnaseq_accessor) {
+            $data_types->{$clinseq_build->$rnaseq_accessor->id} = 'RNAseq';
+        }
     }
 }
 
@@ -1697,13 +1599,12 @@ sub _determine_wgs_or_exome_for_build {
     my $self       = shift;
     my $build      = shift;
     my $data_types = shift;
-    my $m          = $build->model;
     my $id         = $build->id;
     if (defined $data_types->{$id}) {
         return $data_types->{$id};
     }
 
-    my $pp        = $m->processing_profile;
+    my $pp        = $build->processing_profile;
     my $pp_name   = $pp->name;
     my $data_type = "Unknown";
     if ($pp_name =~ /wgs/i) {
@@ -1740,27 +1641,6 @@ sub _determine_wgs_or_exome_for_instrument_data {
     }
 
     return $sequence_type;
-}
-
-sub _is_reference_alignment_build {
-    my $self  = shift;
-    my $build = shift;
-
-    return $build->type_name eq 'reference alignment';
-}
-
-sub _is_rna_seq_build {
-    my $self  = shift;
-    my $build = shift;
-
-    return $build->type_name eq 'rna seq';
-}
-
-sub _is_somatic_variation_build {
-    my $self  = shift;
-    my $build = shift;
-
-    return $build->type_name eq 'somatic variation';
 }
 
 1;

@@ -842,5 +842,10 @@ EOS
   return $desc;
 }
 
+sub individual {
+    my $self = shift;
+    return $self->subject->individual;
+}
+
 1;
 

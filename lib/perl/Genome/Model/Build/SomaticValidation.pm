@@ -9,7 +9,9 @@ class Genome::Model::Build::SomaticValidation {
     is => [
         'Genome::Model::Build',
         'Genome::Model::Build::RunsDV2',
-        'Genome::Model::Build::HasFeatureLists'],
+        'Genome::Model::Build::HasFeatureLists',
+        'Genome::Model::Build::SomaticInterface',
+    ],
     has_optional => [
         reference_sequence_build => {
             is => 'Genome::Model::Build::ReferenceSequence', via => 'inputs', to => 'value', where => [name => 'reference_sequence_build'],
@@ -319,4 +321,14 @@ sub get_feature_list_from_reference {
     return $self->reference_sequence_build->get_feature_list($feature_list_accessor);
 }
 
+sub indels_effects_file {
+    my $self = shift;
+    my $tier = shift;
+    return File::Spec->join($self->data_directory, 'effects', "indels.hq.$tier.bed");
+}
+
+sub has_microarray_build {
+    my $self = shift;
+    return 0;
+}
 1;

@@ -10,7 +10,9 @@ class Genome::Model::Build::SomaticVariation {
     is => [
         'Genome::Model::Build',
         'Genome::Model::Build::RunsDV2',
-        'Genome::Model::Build::HasFeatureLists'],
+        'Genome::Model::Build::HasFeatureLists',
+        'Genome::Model::Build::SomaticInterface',
+    ],
     has => [
         snv_detection_strategy => {
             is => 'Text',
@@ -447,6 +449,33 @@ sub get_target_region_feature_list {
 sub get_feature_list_from_reference {
     my ($self, $feature_list_accessor) = @_;
     return $self->tumor_build->reference_sequence_build->get_feature_list($feature_list_accessor);
+}
+
+sub indels_effects_file {
+    my $self = shift;
+    my $tier = shift;
+    return File::Spec->join($self->data_directory, 'effects', "indels.hq.novel.$tier.v2.bed");
+}
+
+sub has_microarray_build {
+    my $self = shift;
+
+    if ($self->tumor_microarray_build && $self->normal_microarray_build) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+sub tumor_microarray_build {
+    my $self = shift;
+    return $self->tumor_build->genotype_microarray_build;
+}
+
+sub normal_microarray_build {
+    my $self = shift;
+    return $self->normal_build->genotype_microarray_build;
 }
 
 1;

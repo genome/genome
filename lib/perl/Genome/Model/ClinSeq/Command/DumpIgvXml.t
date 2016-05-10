@@ -40,7 +40,7 @@ my $igv_class = 'Genome::Model::ClinSeq::Command::DumpIgvXml';
 use_ok($igv_class) or die;
 
 #Define the test where expected results are stored
-my $test_data_dir = Genome::Utility::Test->data_dir_ok($igv_class, '2014-12-05');
+my $test_data_dir = Genome::Utility::Test->data_dir_ok($igv_class, '2016-04-25');
 my $expected_output_dir = File::Spec->join($test_data_dir, 'expected');
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 

@@ -636,7 +636,7 @@ sub map_workflow_inputs {
     $inputs{log_directory} = $build->log_directory;
     $inputs{merged_maf_path} = $base_dir."/final.maf";
     $inputs{create_maf_output_dir} = $base_dir;
-    $inputs{reference_sequence_build} = Genome::Model::ClinSeq::Util::resolve_reference_sequence_build($builds[0]);
+    $inputs{reference_sequence_build} = $builds[0]->reference_sequence_build;
     $inputs{reference_sequence} = $inputs{reference_sequence_build}->full_consensus_path('fa');
     $inputs{output_dir} = $base_dir;
     $inputs{bam_list} = $base_dir."/bam_list.txt";

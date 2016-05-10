@@ -9,10 +9,9 @@ use Genome;
 class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
     is        => ['Command::V2', 'Genome::Model::ClinSeq::Util'],
     has_input => [
-        somatic_var_build => {
-            is          => 'Genome::Model::Build::SomaticVariation',
-            id_by       => 'somatic_var_build_id',
-            doc         => 'Build ID for a somatic variation model',
+        somatic_build => {
+            is          => 'Genome::Model::Build::SomaticInterface',
+            doc         => 'Build ID for a somatic model',
             is_optional => 1
         },
 
@@ -106,12 +105,12 @@ sub execute {
     my $self = shift;
 
     #This script running a series of commands obtained from Nate Dees that results in the creation of a clonality plot (.pdf)
-    my $somatic_var_build = $self->somatic_var_build;
-    my $output_dir        = $self->output_dir;
-    my $common_name       = $self->common_name;
-    my $verbose           = $self->verbose;
-    my $limit             = $self->limit;
-    my $chromosome        = $self->chromosome;
+    my $somatic_build = $self->somatic_build;
+    my $output_dir    = $self->output_dir;
+    my $common_name   = $self->common_name;
+    my $verbose       = $self->verbose;
+    my $limit         = $self->limit;
+    my $chromosome    = $self->chromosome;
 
     if (not defined $limit) {
         $self->debug_message("limit is not defined");
@@ -132,10 +131,10 @@ sub execute {
     #TODO: Replace all of this with a new process that gets variants from a unified clin-seq BAM read counts result
     #TODO: This step should just run the clonality tool in different ways on different input files.  All of this hacky file manipulation should be removed
 
-    #Get somatic variation effects dir, tumor bam and normal bam from a somatic variation model ID
+    #Get somatic effects dir, tumor bam and normal bam from a somatic model ID
     my %data_paths;
-    my $is_copycat = $self->_is_copycat_somvar($somatic_var_build);
-    $self->get_data_paths(\%data_paths, $somatic_var_build, $is_copycat, $output_dir);
+    my $is_copycat = $somatic_build->ran_copycat;
+    $self->get_data_paths(\%data_paths, $somatic_build, $is_copycat, $output_dir);
     my $somatic_effects_dir = $data_paths{effects_dir};
 
     #Make sure the specified parameters are correct
@@ -210,7 +209,7 @@ sub execute {
         my $read_counts_cmd = Genome::Model::ClinSeq::Command::GenerateClonalityPlots::Readcounts->create(
             sites_file            => $adapted_file,
             bam_files             => ["Tumor:$tumor_bam", "Normal:$normal_bam"],
-            reference_build       => $somatic_var_build->reference_sequence_build,
+            reference_build       => $somatic_build->reference_sequence_build,
             output_file           => $readcounts_outfile,
             bam_readcount_version => $self->bam_readcount_version,
         );
@@ -235,7 +234,7 @@ sub execute {
     #my $prepare_cmd = Genome::Model::Tools::Validation::PrepareWgsForClonalityPlot->create(output_file=>$readcounts_clonality_outfile, snv_file=>$adapted_file, bam_file=>$tumor_bam, genome_build=>$data_paths{reference_fasta}, output_readcounts_file=>$readcounts_formatted_outfile);
     #$prepare_cmd->execute();
 
-    #Step 6 - Take the cnvs.hq file from the somatic-variation build, and run the cna-seg tool to create known regions of copy-number
+    #Step 6 - Take the cnvs.hq file from the somatic build, and run the cna-seg tool to create known regions of copy-number
     #Specify config file paths for hg19/build37
     #gmt copy-number cna-seg --copy-number-file=/gscmnt/ams1184/info/model_data/2875816457/build111674790/variants/cnvs.hq  --min-markers=4  --detect-somatic  --centromere-file=/gscmnt/sata186/info/medseq/kchen/work/SolexaCNV/scripts/centromere.hg19.csv  --gap-file=/gscmnt/sata186/info/medseq/kchen/work/SolexaCNV/scripts/hg19gaps.csv  --output-file=hg1.cnvhmm
 
@@ -388,7 +387,7 @@ sub execute {
     }
     else {
         my $copycat_cnvhmm_file = $output_dir . "cnaseq.cnvhmm";
-        $self->create_copycat_cnvhmm_file($somatic_var_build, $copycat_cnvhmm_file);
+        $self->create_copycat_cnvhmm_file($somatic_build, $copycat_cnvhmm_file);
         $self->cnv_hmm_file($copycat_cnvhmm_file);
     }
     $self->cnv_hq_file($cnvs_output_path);
@@ -397,22 +396,22 @@ sub execute {
 }
 
 sub get_data_paths {
-    my $self              = shift;
-    my $data_paths        = shift;
-    my $somatic_var_build = shift;
-    my $is_copycat        = shift;
-    my $output_dir        = shift;
-    $data_paths->{root_dir}    = $somatic_var_build->data_directory . "/";
+    my $self          = shift;
+    my $data_paths    = shift;
+    my $somatic_build = shift;
+    my $is_copycat    = shift;
+    my $output_dir    = shift;
+    $data_paths->{root_dir}    = $somatic_build->data_directory . "/";
     $data_paths->{effects_dir} = $data_paths->{root_dir} . "effects/";
     if (not $is_copycat) {
         $data_paths->{cnvs_hq} = $data_paths->{root_dir} . "variants/cnvs.hq";
     }
     else {
-        $data_paths->{cnvs_hq} = $self->create_copycat_cnvhq_file($somatic_var_build, $output_dir);
+        $data_paths->{cnvs_hq} = $self->create_copycat_cnvhq_file($somatic_build, $output_dir);
     }
-    $data_paths->{normal_bam} = $somatic_var_build->normal_bam;
-    $data_paths->{tumor_bam}  = $somatic_var_build->tumor_bam;
-    my $reference_build = $somatic_var_build->reference_sequence_build;
+    $data_paths->{normal_bam} = $somatic_build->normal_bam;
+    $data_paths->{tumor_bam}  = $somatic_build->tumor_bam;
+    my $reference_build = $somatic_build->reference_sequence_build;
     $data_paths->{reference_fasta} = $reference_build->full_consensus_path('fa');
     $data_paths->{display_name}    = $reference_build->__display_name__;
 }

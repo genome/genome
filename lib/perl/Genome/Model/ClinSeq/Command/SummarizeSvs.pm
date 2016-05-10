@@ -10,11 +10,11 @@ class Genome::Model::ClinSeq::Command::SummarizeSvs {
     is        => ['Command::V2', 'Genome::Model::ClinSeq::Util'],
     has_input => [
         builds => {
-            is                  => 'Genome::Model::Build::SomaticVariation',
+            is                  => 'Genome::Model::Build::SomaticInterface',
             is_many             => 1,
             shell_args_position => 1,
             require_user_verify => 0,
-            doc                 => 'somatic variation build(s) to summarize SVs from',
+            doc                 => 'somatic build(s) to summarize SVs from',
         },
         cancer_annotation_db => {
             is             => 'Genome::Db::Tgi::CancerAnnotation',
@@ -32,7 +32,7 @@ class Genome::Model::ClinSeq::Command::SummarizeSvs {
             doc => 'Path to output file',
         },
     ],
-    doc => 'summarize the SVs of somatic variation build',
+    doc => 'summarize the SVs of somatic build',
 };
 
 sub help_synopsis {
@@ -53,7 +53,7 @@ EOS
 
 sub help_detail {
     return <<EOS
-Summarize structural variants for one or more somatic variation builds
+Summarize structural variants for one or more somatic builds
 
 (put more content here)
 EOS
@@ -106,7 +106,7 @@ sub execute {
     my $somatic_build_count = scalar(@builds);
     for my $somatic_build (@builds) {
 
-        #If there is more than one somatic variation build supplied... create sub-directories for each
+        #If there is more than one somatic build supplied... create sub-directories for each
         my $build_outdir;
         if ($somatic_build_count > 1) {
             $build_outdir = $outdir . $somatic_build->id . "/";
@@ -360,7 +360,7 @@ sub create_pairoscope_plots {
         my $transcript2 = $data->{$l}{transcript2};
 
         #TODO: Figure out with Dave L. how this transcript option works.  Need to specify an Exons BAM with -g option?
-        #TODO: Where do the annotations in the sv.annot file in somatic variation results come from
+        #TODO: Where do the annotations in the sv.annot file in somatic results come from
         my $transcript_string = '';
         if ($transcript1 && $transcript2) {
             $transcript_string = "-t $transcript1,$transcript2";

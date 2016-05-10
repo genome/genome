@@ -7,11 +7,11 @@ class Genome::Model::ClinSeq::Command::RunCnView {
     is        => ['Command::V2', 'Genome::Model::ClinSeq::Util'],
     has_input => [
         build => {
-            is                  => 'Genome::Model::Build::SomaticVariation',
+            is                  => 'Genome::Model::Build::SomaticInterface',
             is_many             => 0,
             shell_args_position => 1,
             require_user_verify => 0,
-            doc                 => 'somatic variation model to be used for CnView runs'
+            doc                 => 'somatic build to be used for CnView runs'
         },
         cancer_annotation_db => {
             is             => 'Genome::Db',
@@ -30,7 +30,7 @@ class Genome::Model::ClinSeq::Command::RunCnView {
         cnv_hq_file => {
             is          => 'FilesystemPath',
             is_optional => 1,
-            doc         => 'cnv_hq file from clonality analysis.' . 'if not provided file from wgs_somvar build is used'
+            doc         => 'cnv_hq file from clonality analysis. if not provided file from wgs somatic build is used'
         },
         test => {
             is          => 'Boolean',
@@ -92,13 +92,12 @@ sub execute {
         unless (-e $gene_symbol_lists_dir);
     my $annotation_build_id = $build->annotation_build->id;
     my ($cnv_data_file, $cnv_hmm_file);
-    my $is_copycat = $self->_is_copycat_somvar($build);
 
     if ($self->cnv_hq_file and $self->cnv_hmm_file) {
         $cnv_data_file = $self->cnv_hq_file;
         $cnv_hmm_file  = $self->cnv_hmm_file;
     }
-    elsif ($is_copycat) {
+    elsif ($build->ran_copycat) {
         $cnv_data_file = $self->create_copycat_cnvhq_file($build, $outdir);
         $cnv_hmm_file = $outdir . "cnvs.hmm";
         $self->create_copycat_cnvhmm_file($build, $cnv_hmm_file);
