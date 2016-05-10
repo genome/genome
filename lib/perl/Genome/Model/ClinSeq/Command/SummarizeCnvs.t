@@ -33,7 +33,7 @@ ok($temp_dir, "created temp directory: $temp_dir") or die;
 my $data = Genome::Model::ClinSeq::TestData->load();
 my $clinseq_build_id = $data->{CLINSEQ_BUILD};
 my $clinseq_build    = Genome::Model::Build->get($clinseq_build_id);
-ok($clinseq_build, "obtained a clinseq build from the database for build id: $clinseq_build_id") or die;
+ok($clinseq_build, "obtained a clinseq build for build id: $clinseq_build_id") or die;
 my $clinseq_dir = $clinseq_build->data_directory;
 ok(-e $clinseq_dir && -d $clinseq_dir, "clinseq dir exists and is a valid directory: $clinseq_dir") or die;
 
