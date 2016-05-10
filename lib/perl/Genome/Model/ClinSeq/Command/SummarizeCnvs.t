@@ -14,30 +14,32 @@ BEGIN {
 
 use above "Genome";
 use Test::More tests => 12;  #One per 'ok', 'is', etc. statement below
-use Genome::Model::ClinSeq::Command::SummarizeCnvs;
+use Genome::Model::ClinSeq::TestData;
 use Data::Dumper;
 
-use_ok('Genome::Model::ClinSeq::Command::SummarizeCnvs') or die;
+use Genome::Utility::Test;
+
+my $pkg = 'Genome::Model::ClinSeq::Command::SummarizeCnvs';
+use_ok($pkg) or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir =
-    Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-SummarizeCnvs/2013-02-07/";
-ok(-e $expected_output_dir, "found test dir: $expected_output_dir") or die;
+my $expected_output_dir = Genome::Utility::Test->data_dir_ok($pkg, '2016-05-10');
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Get a clin-seq build
-my $clinseq_build_id = 126680687;
+my $data = Genome::Model::ClinSeq::TestData->load();
+my $clinseq_build_id = $data->{CLINSEQ_BUILD};
 my $clinseq_build    = Genome::Model::Build->get($clinseq_build_id);
 ok($clinseq_build, "obtained a clinseq build from the database for build id: $clinseq_build_id") or die;
 my $clinseq_dir = $clinseq_build->data_directory;
 ok(-e $clinseq_dir && -d $clinseq_dir, "clinseq dir exists and is a valid directory: $clinseq_dir") or die;
 
-my $cnv_hmm_file  = $clinseq_dir . "/AML103/clonality/cnaseq.cnvhmm";
-my $gene_amp_file = $clinseq_dir . "/AML103/cnv/cnv.AllGenes_Ensembl58.amp.tsv";
-my $gene_del_file = $clinseq_dir . "/AML103/cnv/cnv.AllGenes_Ensembl58.del.tsv";
+my $cnv_hmm_file  = $clinseq_dir . "/FAKE1/clonality/cnaseq.cnvhmm";
+my $gene_amp_file = $clinseq_dir . "/FAKE1/cnv/cnview/cnv.All_genes.amp.tsv";
+my $gene_del_file = $clinseq_dir . "/FAKE1/cnv/cnview/cnv.All_genes.del.tsv";
 
 ok(-e $cnv_hmm_file,  "found cnv hmm file: $cnv_hmm_file")   or die;
 ok(-e $gene_amp_file, "found gene amp file: $gene_amp_file") or die;
@@ -49,7 +51,7 @@ ok($wgs_build, "obtained a wgs_build from the clinseq build: $clinseq_build_id")
 
 #Create summarize-cnvs command and execute
 #genome model clin-seq summarize-cnvs --outdir=/tmp/  --cnv-hmm-file=? --gene-amp-file=? --gene-del-file=? 119390903
-my $summarize_cnvs_cmd = Genome::Model::ClinSeq::Command::SummarizeCnvs->create(
+my $summarize_cnvs_cmd = $pkg->create(
     outdir        => $temp_dir,
     cnv_hmm_file  => $cnv_hmm_file,
     gene_amp_file => $gene_amp_file,
