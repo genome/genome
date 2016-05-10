@@ -16,13 +16,13 @@ use above "Genome";
 use Test::More tests => 8;  #One per 'ok', 'is', etc. statement below
 use Data::Dumper;
 
+use Genome::Utility::Test;
+
 my $pkg = 'Genome::Model::ClinSeq::Command::Converge::CufflinksDe';
 use_ok($pkg) or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir =
-    Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-Coverge-CufflinksDe/2013-02-10/";
-ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
+my $expected_output_dir =  Genome::Utility::Test->data_dir_ok($pkg, '2016-05-10-expected');
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
