@@ -14,7 +14,6 @@ BEGIN {
 
 use above "Genome";
 use Test::More tests => 8;  #One per 'ok', 'is', etc. statement below
-use Genome::Model::ClinSeq::Command::Converge::CufflinksDe;
 use Data::Dumper;
 
 use_ok('Genome::Model::ClinSeq::Command::Converge::CufflinksDe') or die;
