@@ -14,34 +14,33 @@ BEGIN {
 
 use above "Genome";
 use Test::More tests => 8;  #One per 'ok', 'is', etc. statement below
-use Genome::Model::ClinSeq::Command::Converge::CufflinksDe;
 use Data::Dumper;
 
-use_ok('Genome::Model::ClinSeq::Command::Converge::CufflinksDe') or die;
+use Genome::Utility::Test;
+
+use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Model::ClinSeq;
+use Genome::Test::Factory::Model::RnaSeq;
+
+my $pkg = 'Genome::Model::ClinSeq::Command::Converge::CufflinksDe';
+use_ok($pkg) or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir =
-    Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-Coverge-CufflinksDe/2013-02-10/";
-ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
+my $expected_output_dir =  Genome::Utility::Test->data_dir_ok($pkg, '2016-05-10-expected');
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Get a pair of rna-seq builds
-my $build_id1 = 133577030;
-my $build1    = Genome::Model::Build->get($build_id1);
-ok($build1, "obtained a clinseq build from the database for clinseq build id: $build_id1") or die;
-my $build_id2 = 133611960;
-my $build2    = Genome::Model::Build->get($build_id2);
-ok($build2, "obtained a clinseq build from the database for clinseq build id: $build_id2") or die;
+my @builds = _prepare_clinseq_builds();
 
 #Create converge cufflinks-de command and execute
 #genome model clin-seq converge cufflinks-de --builds='id in [133577030,133611960]' --outdir=/tmp/converge_de/ --fc-cutoff=3
 
-my $converge_cufflinks_de_cmd = Genome::Model::ClinSeq::Command::Converge::CufflinksDe->create(
+my $converge_cufflinks_de_cmd = $pkg->create(
     outdir                => $temp_dir,
-    builds                => [$build1, $build2],
+    builds                => \@builds,
     fc_cutoff             => 3,
     bam_readcount_version => 0.6
 );
@@ -70,4 +69,36 @@ unless ($ok) {
     print "\n\nFound $diff_line_count differing lines\n\n";
     Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-converge-cufflinks-de/");
     Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-converge-cufflinks-de");
+}
+
+
+
+sub _prepare_clinseq_builds {
+    my $test_data_dir = Genome::Utility::Test->data_dir($pkg, '2016-05-10-test_data');
+
+    my @builds;
+    for my $i (1..2) {
+        my $rna_model = Genome::Test::Factory::Model::RnaSeq->setup_object(
+            name => 'rna test ' . $i,
+        );
+        $rna_model->subject->common_name('tumor');
+        my $model = Genome::Test::Factory::Model::ClinSeq->setup_object(
+            name => 'clinseq test ' . $i,
+            tumor_rnaseq_model => $rna_model,
+            subject => $rna_model->subject->source,
+        );
+        my $common_name = 'COMMON' . $i;
+        $model->subject->common_name($common_name);
+
+        my $rna_build = Genome::Test::Factory::Build->setup_object(model_id => $rna_model->id);
+        $rna_build->status('Succeeded');
+
+        my $dir = File::Spec->join($test_data_dir, $i);
+        my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id, data_directory => $dir);
+
+        isa_ok($build, 'Genome::Model::Build', 'created a test build');
+        push @builds, $build;
+    }
+
+    return @builds;
 }

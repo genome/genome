@@ -196,7 +196,7 @@ sub converge_de_data {
     #ensembl_id	*gene_annotations* SubjectCount	SubjectList	*de values, one column per subject*
 
     my $gene_col;
-    foreach my $build_id (keys %{$files}) {
+    foreach my $build_id (sort keys %{$files}) {
         my $label = $labels->{$build_id}->{name};
         my $path  = $files->{$build_id}->{path};
 
@@ -268,7 +268,7 @@ sub converge_de_data {
     my $header_line =
         "tracking_id\tmapped_gene_name\t$gene_col\tbiotype\tde_subject_count\tde_subject_list\t$labels_list_string\n";
     print OUT $header_line;
-    foreach my $tracking_id (keys %data) {
+    foreach my $tracking_id (sort keys %data) {
         my $subjects               = $data{$tracking_id}{subjects};
         my @subject_list           = keys %{$subjects};
         my @subject_list_sorted    = sort {$a cmp $b} @subject_list;
