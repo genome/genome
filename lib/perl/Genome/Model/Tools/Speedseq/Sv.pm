@@ -105,7 +105,12 @@ class Genome::Model::Tools::Speedseq::Sv {
                         is_optional => 1,
                         tool_param_name => 'k',
                 },
-		
+		probability_curves => {
+                    is => 'Boolean',
+                    doc => 'output LUMPY probability curves in VCF',
+                    is_optional => 1,
+                    tool_param_name => 'P',
+                }
 
 	],
 };

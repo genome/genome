@@ -36,7 +36,7 @@ symlink($reference_fasta_index,$reference_build->data_directory .'/all_sequences
 
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(reference_sequence_build_id => $reference_build->id,);
 
-my $params = "-g,-d,-o:Hello";
+my $params = '-P,-g,-d';
 
 my $command2 = $pkg2->create(
    output_directory => $output,
@@ -49,7 +49,7 @@ my $command2 = $pkg2->create(
 );
 
 ok($command2->execute, 'Executed `gmt detect-variants2 Speedseq` command');
-
+$DB::single=1;
 my $differ = Genome::File::Vcf::Differ->new("$output/svs.hq.sv.vcf.gz", "$test_dir/svs.hq.sv.vcf.gz");
 my $diff = $differ->diff;
 is($diff, undef, "Found No differences between $output/svs.hq.sv.vcf.gz and (expected) $test_dir/svs.hq.sv.vcf.gz") ||	diag $diff->to_string;
