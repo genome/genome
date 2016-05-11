@@ -21300,6 +21300,28 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>split',
+    [
+      '>by-ns',
+      [
+        'number-of-ns=s',
+        undef,
+        'debug!',
+        undef,
+        'input=s@',
+        'files',
+        'input-metrics=s',
+        'files',
+        'output=s@',
+        'files',
+        'output-metrics=s',
+        'files',
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>trim',
     [
       '>remove',
