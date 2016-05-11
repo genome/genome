@@ -27,7 +27,7 @@ class Genome::Db::Ensembl::Command::Run::Base {
         reference_version => {
             is => 'Text',
             is_optional => 1,
-            valid_values => [qw(GRCh37 GRCh38 GRCm38)],
+            valid_values => [qw(GRCh37 GRCh38 GRCm38 CanFam3.1)],
         },
         input_file => {
             is => 'String',
