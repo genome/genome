@@ -6,6 +6,7 @@ use strict;
 use Sys::Hostname;
 use List::Util qw( first );
 use List::MoreUtils qw( each_array );
+use Data::Dumper;
 
 class Genome::Model::Build::ReferenceSequence::Converter {
     is => ['Genome::SoftwareResult'],
@@ -150,6 +151,9 @@ sub chr_md5 {
 
     my $chr_map = $self->get_or_create_chr_map_hash_ref();
     my $new_chrom = $chr_map->{$chrom};
+    unless ($new_chrom) {
+        $self->fatal_message('Failed to convert '. $chrom .':'. $start .'-'. $stop .' with chromosome map: '. Data::Dumper::Dumper($chr_map));
+    }
     return ($new_chrom, $start, $stop);
 }
 
