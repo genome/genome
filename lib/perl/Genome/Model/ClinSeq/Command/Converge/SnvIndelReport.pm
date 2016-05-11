@@ -486,7 +486,7 @@ sub gather_variants {
             $bed_files{$indels_file}{var_type}         = "indel";
             $bed_files{$indels_file}{data_type}        = $somatic_build_type;
             $bed_files{$indels_file}{tier}             = $tier;
-            $bed_files{$indels_file}{vcf_file}         = $somatic_build->indels_detailed_variants_vcf_file;
+            $bed_files{$indels_file}{vcf_file}         = $somatic_build->get_detailed_indels_vcf;
         }
     }
 

@@ -42,7 +42,7 @@ my $somatic_build = Genome::Test::Factory::Build->setup_object(
 
 my $input_file = File::Spec->join($test_dir, 'snvs.vcf');
 my $override = Sub::Override->new(
-    'Genome::Model::Build::SomaticInterface::snvs_variants_vcf_file',
+    'Genome::Model::Build::RunsDV2::get_snvs_vcf',
     sub { return $input_file }
 );
 
