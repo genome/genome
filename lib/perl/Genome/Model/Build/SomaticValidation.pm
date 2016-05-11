@@ -331,4 +331,10 @@ sub has_microarray_build {
     my $self = shift;
     return 0;
 }
+
+sub has_snvs_annotated_variants_vcf_file {
+    my $self = shift;
+    return 0;
+}
+
 1;

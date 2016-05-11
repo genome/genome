@@ -478,4 +478,14 @@ sub normal_microarray_build {
     return $self->normal_build->genotype_microarray_build;
 }
 
+sub snvs_annotated_variants_vcf_file {
+    my $self = shift;
+    return File::Spec->join($self->variants_directory, 'snvs.annotated.vcf.gz');
+}
+
+sub has_snvs_annotated_variants_vcf_file {
+    my $self = shift;
+    return (-e $self->snvs_annotated_variants_vcf_file);
+}
+
 1;
