@@ -37,7 +37,7 @@ my $feature_list = Genome::FeatureList->__define__(
     name => 'test',
     reference => $reference_sequence,
     format => 'multi-tracked',
-    file_content_hash => '7c380705ec8a78a0e2fa2e0e147c5b80',
+    file_content_hash => '3649dadff905b037028c25d1bc1fb0ae',
 );
 my $override_file_path = Sub::Override->new(
     'Genome::FeatureList::file_path',
