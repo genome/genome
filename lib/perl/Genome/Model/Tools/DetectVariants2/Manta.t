@@ -11,6 +11,7 @@ use Genome::SoftwareResult;
 
 use Test::More;
 use Test::Exception;
+use File::Spec qw(join);
 use File::Compare qw(compare);
 use File::Basename qw(basename);
 use Genome::Utility::Test qw(compare_ok);
@@ -21,15 +22,17 @@ use Genome::Test::Data qw(get_test_file);
 my $test_dir = __FILE__.".d";
 my $version = '0.29.6';
 
-my $output = Genome::Sys->create_temp_directory();
+my $output_directory = Genome::Sys->create_temp_directory();
 
-my $tumor_bam = get_test_file('HCC1395', 'H_NJ-HCC1395-HCC1395.20_42220611-42542245.realigned.bam');
-my $normal_bam = get_test_file('HCC1395', 'H_NJ-HCC1395-HCC1395_BL.20_42220611-42542245.realigned.bam');
+my $test_region = '20_44860117-44863487';
+
+my $tumor_bam = get_test_file('HCC1395', 'H_NJ-HCC1395-HCC1395.'. $test_region .'.realigned.bam');
+my $normal_bam = get_test_file('HCC1395', 'H_NJ-HCC1395-HCC1395_BL.'. $test_region .'.realigned.bam');
  
 my $pkg = 'Genome::Model::Tools::DetectVariants2::Manta';
 	
-my $reference_fasta = get_test_file('HCC1395', '20_42220611-42542245.fa');
-my $reference_fasta_index = get_test_file('HCC1395', '20_42220611-42542245.fa.fai');
+my $reference_fasta = get_test_file('HCC1395', $test_region .'.fa');
+my $reference_fasta_index = get_test_file('HCC1395', $test_region .'.fa.fai');
 
 my $reference_build = Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build($reference_fasta);
 symlink($reference_fasta,$reference_build->data_directory .'/all_sequences.fa');
@@ -38,7 +41,7 @@ symlink($reference_fasta_index,$reference_build->data_directory .'/all_sequences
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(reference_sequence_build_id => $reference_build->id,);
 
 my $command = $pkg->create(
-   output_directory => $output,
+   output_directory => $output_directory,
    reference_build_id => $reference_build->id,
    result_users => $result_users,
    aligned_reads_input => $tumor_bam,
@@ -48,12 +51,16 @@ my $command = $pkg->create(
 
 ok ($command->execute, 'Executed `gmt detect-variants2 manta` command');
 
-my $differ = Genome::File::Vcf::Differ->new("$output/svs.hq.vcf.gz", "$test_dir/svs.hq.vcf.gz");
+my $output_file_basename = 'svs.hq.vcf.gz';
+my $test_output_file = File::Spec->join($output_directory,$output_file_basename);
+my $expected_output_file = File::Spec->join($test_dir,$output_file_basename);
+
+my $differ = Genome::File::Vcf::Differ->new($test_output_file,$expected_output_file);
 my $diff = $differ->diff;
-is ($diff, undef, "Found No differences between $output/svs.hq.sv.vcf.gz and (expected) $test_dir/svs.hq.sv.vcf.gz") ||	diag $diff->to_string;
+is ($diff, undef, 'Found No differences between '. $test_output_file .' and (expected) '. $expected_output_file) ||	diag $diff->to_string;
 
 my $commandDie = $pkg->create(
-   output_directory => $output,
+   output_directory => $output_directory,
    reference_build_id => $reference_build->id,
    result_users => $result_users,
    aligned_reads_input => "Bad.bam",
