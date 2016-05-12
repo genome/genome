@@ -254,10 +254,17 @@ sub processed_bed_file_content {
     unless (defined($track_name)) {
         $track_name = 'target_region';
     }
+
     my $short_name = delete($args{short_name});
     unless (defined($short_name)) {
         $short_name = 1;
     }
+
+    my $strip_chr = delete($args{strip_chr});
+    unless (defined($strip_chr)) {
+        $strip_chr = 1;
+    }
+
     if($self->format eq 'unknown'){
         $self->error_message('Cannot process BED file with unknown format');
         die $self->error_message;
@@ -314,7 +321,7 @@ sub processed_bed_file_content {
             if (!defined($entry[3])) {
                 $entry[3] = $entry[0] .':'. $entry[1] .'-'. $entry[2];
             }
-            $entry[0] =~ s/chr//g;
+            if ($strip_chr) { $entry[0] =~ s/chr//g; }
             if ($entry[0] =~ /random/) { next; }
 
             # Correct for 1-based start positions in imported BED files,
@@ -414,6 +421,11 @@ sub generate_converted_bed_file {
     my $merge = delete($args{merge});
     my $reference = delete($args{reference});
 
+    # Allow the reference sequence converter to handle the removal of chr if necessary
+    if (!defined($args{strip_chr})) {
+        $args{strip_chr} = 0;
+    }
+    
     my $original_file_path;
     if ($merge) {
         $original_file_path = $self->merged_bed_file(%args);
