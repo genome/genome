@@ -14,7 +14,6 @@ BEGIN {
 
 use above "Genome";
 use Test::More tests => 6;  #One per 'ok', 'is', etc. statement below
-use Genome::Model::ClinSeq::Command::SummarizeModels;
 use Data::Dumper;
 
 use_ok('Genome::Model::ClinSeq::Command::SummarizeModels') or die;
