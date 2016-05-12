@@ -28,17 +28,17 @@ sub _detect_variants {
 
     my $aligned_bams = join(',',@fullBam);
 
-    my %library = $self->get_parameter_hash();
+    my %tool_param_to_property_name = $self->get_tool_parameter_hash();
 
-    while (my ($key, $value) = each(%library)){
-        $self->debug_message("$key => $value");
+    while (my ($param_name, $property_name) = each(%tool_param_to_property_name)){
+        $self->debug_message($param_name .' => '. $property_name);
     }
     my %final_cmd = ();
 
-    my %list_params = $self->split_params_to_letter();
+    my %dv2_params = $self->split_params_to_letter();
 
-    while (my ($key, $value) = each(%library)) {
-        $final_cmd{$value} = $list_params{$key} if exists $list_params{$key};
+    while (my ($param_name, $property_name) = each(%tool_param_to_property_name)) {
+        $final_cmd{$property_name} = $dv2_params{$param_name} if exists $dv2_params{$param_name};
     }
 
     %final_cmd = (
@@ -83,24 +83,26 @@ sub find_file {
 
 sub split_params_to_letter {
     my $self = shift;
-    my $parms = $self->params;
+
+    my $params = $self->params;
+    
     my %params_hash = ();
-    my @params = split(',',$parms);
+    my @params = split(',',$params);
     foreach (@params){
         if ($_ =~ /:/){
-            my ($num, $value) = split(':',$_, 2);
-            $num =~ s/-//gi;
-            $params_hash{$num} = $value; 
+            my ($letter, $value) = split(':',$_, 2);
+            $letter =~ s/-//gi;
+            $params_hash{$letter} = $value;
         }
         else {
-            my $num = substr($_,1,1);
-            $params_hash{$num} = 'true'; 
+            my $letter = substr($_,1,1);
+            $params_hash{$letter} = 1;
         }
     }
     return %params_hash;
 }
 
-sub get_parameter_hash {
+sub get_tool_parameter_hash {
     my $self = shift;
     my @meta_array = Genome::Model::Tools::Speedseq::Sv-> _tool_param_metas();
 
