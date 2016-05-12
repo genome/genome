@@ -34,19 +34,9 @@ sub individual_common_name {
     return $self->individual->common_name;
 }
 
-sub snvs_variants_vcf_file {
+sub has_snvs_annotated_variants_vcf_file {
     my $self = shift;
-    return File::Spec->join($self->data_directory, 'variants', 'snvs.vcf.gz');
-}
-
-sub snvs_annotated_variants_vcf_file {
-    my $self = shift;
-    return File::Spec->join($self->data_directory, 'variants', 'snvs.annotated.vcf.gz');
-}
-
-sub indels_detailed_variants_vcf_file {
-    my $self = shift;
-    return File::Spec->join($self->data_directory, 'variants', 'indels.detailed.vcf.gz');
+    $self->fatal_message('Abstract: (has_snvs_annotated_variants_vcf_file) needs to be defined on class (%s)', $self->class);
 }
 
 sub indels_effects_file {

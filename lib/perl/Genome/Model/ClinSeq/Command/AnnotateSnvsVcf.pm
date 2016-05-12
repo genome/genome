@@ -39,7 +39,7 @@ sub input_hash {
     my $self = shift;
 
     my %input_hash = $self->SUPER::input_hash;
-    $input_hash{input_file}      = $self->somatic_build->snvs_variants_vcf_file;
+    $input_hash{input_file}      = $self->somatic_build->get_snvs_vcf;
     $input_hash{annotation_file} = $self->somatic_build->previously_discovered_variations_build->snvs_vcf;
 
     return %input_hash;
