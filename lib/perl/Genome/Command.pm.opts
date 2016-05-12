@@ -750,7 +750,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'GRCh37',
             'GRCh38',
-            'GRCm38'
+            'GRCm38',
+            'CanFam3.1'
           ],
           'gtf-cache!',
           undef,
@@ -854,7 +855,8 @@ $Genome::Command::OPTS_SPEC = [
           [
             'GRCh37',
             'GRCh38',
-            'GRCm38'
+            'GRCm38',
+            'CanFam3.1'
           ],
           'gtf-cache!',
           undef,
@@ -961,7 +963,8 @@ $Genome::Command::OPTS_SPEC = [
         [
           'GRCh37',
           'GRCh38',
-          'GRCm38'
+          'GRCm38',
+          'CanFam3.1'
         ],
         'gtf-cache!',
         undef,
