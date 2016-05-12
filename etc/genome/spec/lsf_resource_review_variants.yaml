@@ -1,0 +1,3 @@
+---
+default_value: "-M 4000000 -R 'select[mem>=4000 && tmp>=2000] rusage[mem=4000,tmp=2000]'"
+env: XGENOME_LSF_RESOURCE_REVIEW_VARIANTS
