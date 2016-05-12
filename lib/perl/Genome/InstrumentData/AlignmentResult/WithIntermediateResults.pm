@@ -17,7 +17,7 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    my $rm_iar_ok = $self->remove_intemediate_results;
+    my $rm_iar_ok = $self->remove_intermediate_results;
     return if not $rm_iar_ok;
 
     return $self;
@@ -73,7 +73,7 @@ sub get_or_create_intermediate_result_for_params {
     return $intermediate_result;
 }
 
-sub remove_intemediate_results {
+sub remove_intermediate_results {
     my $self = shift;
 
     my $result_users = $self->_user_data_for_nested_results;
