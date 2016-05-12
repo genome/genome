@@ -85,7 +85,7 @@ sub remove_intermediate_results {
 
         if($result_users) {
             while(my ($label, $user) = each %$result_users) {
-                my @using = $iar->users(user => $user, label => $label);
+                my @using = $iar->users(user => $user);
                 map $_->active(0), @using;
             }
         }
