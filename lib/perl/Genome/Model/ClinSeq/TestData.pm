@@ -115,12 +115,7 @@ sub load {
     $ids{NORMAL_REFALIGN_MODEL} = $normal_model->id;
     my $normal_build = Genome::Test::Factory::Build->setup_object(model_id => $normal_model->id, status => "Succeeded");
 
-    my $normal_perlane_result = Genome::InstrumentData::AlignmentResult::Bwa->__define__(
-        instrument_data => $normal_inst_data,
-    );
-    $normal_perlane_result->add_user(label => 'uses', user => $normal_build);
-    my $normal_result = Genome::InstrumentData::AlignmentResult::Merged->__define__();
-    $normal_result->add_user(label => 'uses', user => $normal_build);
+    _create_alignment_results($normal_build, $normal_inst_data);
 
     my $tumor_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
         reference_sequence_build => $ref_seq_build,
@@ -133,13 +128,7 @@ sub load {
     $ids{TUMOR_REFALIGN_MODEL} = $tumor_model->id;
     my $tumor_build = Genome::Test::Factory::Build->setup_object(model_id => $tumor_model->id, status => 'Succeeded');
 
-    my $tumor_perlane_result = Genome::InstrumentData::AlignmentResult::Bwa->__define__(
-        instrument_data => $tumor_inst_data,
-    );
-    $tumor_perlane_result->add_user(label => 'uses', user => $tumor_build);
-    my $tumor_result = Genome::InstrumentData::AlignmentResult::Merged->__define__(
-    );
-    $tumor_result->add_user(label => 'uses', user => $tumor_build);
+    _create_alignment_results($tumor_build, $tumor_inst_data);
 
     my %clinseq_model_params;
     unless ($params{exclude_wgs_model}) {
@@ -199,13 +188,7 @@ sub load {
                                                                         status => "Succeeded",
                                                                         data_directory => "$base_dir/rnaseq_dir");
 
-        my $perlane_result = Genome::InstrumentData::AlignmentResult::PerLaneTophat->__define__(
-            instrument_data => $normal_rna_inst_data,
-        );
-        $perlane_result->add_user(label => 'uses', user => $rna_seq_build);
-        my $normal_rna_result = Genome::InstrumentData::AlignmentResult::Merged->__define__(
-        );
-        $normal_rna_result->add_user(label => 'uses', user => $rna_seq_build);
+        _create_alignment_results($rna_seq_build, $normal_rna_inst_data);
 
         $ids{RNASEQ_MODEL} = $rna_seq_model->id;
         $clinseq_model_params{normal_rnaseq_model} = $rna_seq_model;
@@ -224,13 +207,9 @@ sub load {
                                                                         status => 'Succeeded',
                                                                         data_directory => "$base_dir/tumor_rnaseq_dir");
 
-        my $perlane_result = Genome::InstrumentData::AlignmentResult::PerLaneTophat->__define__(
-            instrument_data => $rna_inst_data,
-        );
-        $perlane_result->add_user(label => 'uses', user => $rna_seq_build);
-        my $tumor_rna_result = Genome::InstrumentData::AlignmentResult::Merged->__define__(
-        );
-        $tumor_rna_result->add_user(label => 'uses', user => $rna_seq_build);
+
+        _create_alignment_results($rna_seq_build, $rna_inst_data);
+
         $clinseq_model_params{tumor_rnaseq_model} = $rna_seq_model;
     }
     my $diff_ex_pp = Genome::Test::Factory::ProcessingProfile::DifferentialExpression->setup_object;
@@ -273,6 +252,35 @@ sub create_instrument_data_from_sample {
     );
     my $inst_data = Genome::InstrumentData::Solexa->create(library => $lib);
     return $inst_data;
+}
+
+sub _create_alignment_results {
+    my ($build, $instrument_data) = @_;
+
+    #gymnastics to make sure these objects don't throw errors during a UR::Context->commit()
+    my $perlane_result = Genome::InstrumentData::AlignmentResult::Bwa->__define__();
+    map { $_->delete } $perlane_result->params;
+    Genome::SoftwareResult::Input->__define__(
+        software_result => $perlane_result,
+        name => 'instrument_data_id',
+        value_id => $instrument_data->id,
+        value_class_name => 'UR::Value::Number',
+    );
+    Genome::SoftwareResult::User->__define__(
+        software_result => $perlane_result,
+        label => 'uses',
+        user_id => $build->id,
+        user_class_name => $build->class,
+    );
+    my $result = Genome::InstrumentData::AlignmentResult::Merged->__define__();
+    Genome::SoftwareResult::User->__define__(
+        software_result => $result,
+        label => 'uses',
+        user_id => $build->id,
+        user_class_name => $build->class,
+    );
+
+    return ($perlane_result, $result);
 }
 
 1;
