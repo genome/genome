@@ -36,7 +36,7 @@ symlink($reference_fasta_index,$reference_build->data_directory .'/all_sequences
 
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(reference_sequence_build_id => $reference_build->id,);
 
-my $params = '-P,-g,-d';
+my $params = '-P,-g,-d,-m:4';
 
 my $command2 = $pkg2->create(
    output_directory => $output,
