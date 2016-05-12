@@ -16,11 +16,22 @@ use above "Genome";
 use Test::More tests => 6;  #One per 'ok', 'is', etc. statement below
 use Data::Dumper;
 
+use Sub::Override;
+use feature qw(state);
+
+use Genome::Model::ClinSeq::TestData;
+
+#so we get consistent IDs for the diffs
+my $override = Sub::Override->new('UR::Object::Type::autogenerate_new_object_id_uuid' => sub {
+    state $next = 1;
+    return 'deadbeef' x 2 . '00' . $next++;
+});
+
 use_ok('Genome::Model::ClinSeq::Command::SummarizeModels') or die;
 
 #Define the test where expected results are stored
 my $expected_output_dir =
-    Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-SummarizeModels/2016-04-18/";
+    Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-SummarizeModels/2016-05-12/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
@@ -28,7 +39,8 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
 #Get a clin-seq build
-my $clinseq_model_id1 = 2882726707;
+my $test_data = Genome::Model::ClinSeq::TestData->load();
+my $clinseq_model_id1 = $test_data->{CLINSEQ_MODEL};
 my $clinseq_model1    = Genome::Model->get($clinseq_model_id1);
 
 #Create summarize-models command and execute
