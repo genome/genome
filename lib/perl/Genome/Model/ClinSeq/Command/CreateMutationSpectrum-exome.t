@@ -14,27 +14,35 @@ BEGIN {
 
 use above "Genome";
 use Test::More tests => 11;  #One per 'ok', 'is', etc. statement below
-use Genome::Model::ClinSeq::Command::CreateMutationSpectrum;
 use Data::Dumper;
+use Genome::Model::ClinSeq::TestData;
+use Genome::Utility::Test;
+use Sub::Override;
 
-use_ok('Genome::Model::ClinSeq::Command::CreateMutationSpectrum') or die;
+my $pkg = 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum';
+use_ok($pkg);
+
+use Genome::Model::Build::ReferenceSequence;
+my $override = Sub::Override->new(
+    'Genome::Model::Build::ReferenceSequence::full_consensus_path',
+    sub { return '/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa'; }
+);
 
 #Define the test where expected results are stored
-my $expected_output_dir =
-    Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-CreateMutationSpectrum/exome/2014-10-10/";
-ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
+my $expected_output_dir = Genome::Utility::Test->data_dir_ok($pkg, 'exome/2016-05-13');
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
-#Get a wgs somatic variation build
-my $clinseq_build_id = "27b94a6da5a44520bf7816ac26650f6e";
+#Get a clinseq build
+my $test_data = Genome::Model::ClinSeq::TestData->load();
+my $clinseq_build_id = $test_data->{CLINSEQ_BUILD};
 my $clinseq_build    = Genome::Model::Build->get($clinseq_build_id);
 ok($clinseq_build, "obtained clinseq build from db") or die;
 
 #Get a wgs somatic variation build
-my $somvar_build_id = 129399487;
+my $somvar_build_id = $test_data->{WGS_BUILD};
 my $somvar_build    = Genome::Model::Build->get($somvar_build_id);
 ok($somvar_build, "obtained somatic variation build from db") or die;
 
@@ -48,7 +56,7 @@ ok($final_name, "got final name from build object") or die;
 #Create create-mutation-spectrum command and execute
 #genome model clin-seq create-mutation-spectrum --outdir=/tmp/create_mutation_spectrum/ --datatype=exome --max-snvs=100 129346170
 
-my $mutation_spectrum_cmd = Genome::Model::ClinSeq::Command::CreateMutationSpectrum->create(
+my $mutation_spectrum_cmd = $pkg->create(
     outdir        => $temp_dir,
     datatype      => "exome",
     clinseq_build => $clinseq_build,
