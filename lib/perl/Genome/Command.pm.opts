@@ -32606,6 +32606,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'keep-temp-files!',
         undef,
+        'probability-curves!',
+        undef,
         'discordant-read-bam-file=s',
         'files',
         'verbose!',
