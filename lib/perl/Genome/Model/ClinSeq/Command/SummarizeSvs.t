@@ -14,28 +14,30 @@ BEGIN {
 
 use above "Genome";
 use Test::More tests => 7;
-use Genome::Model::ClinSeq::Command::SummarizeSvs;
 use Data::Dumper;
+use Genome::Model::ClinSeq::TestData;
+use Genome::Utility::Test;
 
-use_ok('Genome::Model::ClinSeq::Command::SummarizeSvs') or die;
+my $pkg = 'Genome::Model::ClinSeq::Command::SummarizeSvs';
+use_ok($pkg);
 
 #Define the test where expected results are stored
-my $expected_output_dir = Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-SummarizeSvs/2014-07-02/";
-ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
+my $expected_output_dir = Genome::Utility::Test->data_dir_ok($pkg, '2016-05-13');
 
 #Create a temp dir for results
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir");
 
-#Get a clin-seq build
-my $somvar_build_id1 = 119390903;
+#Get a som-var build
+my $test_data = Genome::Model::ClinSeq::TestData->load();
+my $somvar_build_id1 = $test_data->{WGS_BUILD};
 my $somvar_build1    = Genome::Model::Build->get($somvar_build_id1);
 
 #Create summarize-svs command and execute
 #genome model clin-seq summarize-svs --outdir=/tmp/summarize_svs/ 126680687
 
 my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1");
-my $summarize_svs_cmd    = Genome::Model::ClinSeq::Command::SummarizeSvs->create(
+my $summarize_svs_cmd    = $pkg->create(
     outdir               => $temp_dir,
     builds               => [$somvar_build1],
     cancer_annotation_db => $cancer_annotation_db,
