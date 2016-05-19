@@ -1,0 +1,4 @@
+# Specifies the LSB_SUB_ADDITIONAL to specify the docker image.
+--- 
+env: XGENOME_LSB_SUB_ADDITIONAL
+default_value: ''
