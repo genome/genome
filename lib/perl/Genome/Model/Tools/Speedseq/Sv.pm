@@ -112,7 +112,7 @@ class Genome::Model::Tools::Speedseq::Sv {
                 },
                 verbose => {
                     is => 'Boolean',
-                    doc => 'verbose',
+                    doc => 'run speedseq-sv in verbose mode',
                     is_optional => 1,
                     tool_param_name => 'v',
                 },
