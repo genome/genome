@@ -11,23 +11,30 @@ use warnings;
 
 use above 'Genome';
 
-use Test::More;
+use Genome::Test::Factory::Model::ReferenceSequence;
+use Genome::Test::Factory::InstrumentData::Solexa;
 
-if (Genome::Sys->arch_os ne 'x86_64') {
-    plan skip_all => 'requires 64-bit machine';
-} elsif(not $ENV{UR_RUN_LONG_TESTS}) {
-    plan skip_all => 'This test usually takes 2-3 minutes but can time out in jenkins.  Use `ur test run --long` to enable.';
-} else {
-    plan tests => 18;
-}
-
+use Test::More tests => 11;
 
 use_ok('Genome::Model::Tools::DetectVariants2::::Polymutt');
 my $version = "0.02";
 
-# TODO This test should define alignment results rather than relying on existing ones
-my @test_alignment_result_ids = qw(121781692 121781691 121781695);
-my @test_alignment_results = Genome::InstrumentData::AlignmentResult::Merged->get(\@test_alignment_result_ids);
+my $refseq = Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build;
+my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object;
+my @test_alignment_results;
+for my $i (-3..-1) {
+    my $result = Genome::InstrumentData::AlignmentResult::Merged->__define__(
+        id => $_,
+        reference_build => $refseq,
+    );
+    Genome::SoftwareResult::Input->create(
+        software_result => $result,
+        name => 'instrument_data_id-0',
+        value_id => $instrument_data->id,
+        value_class_name => 'UR::Value::Number',
+    );
+    push @test_alignment_results, $result;
+}
 is(scalar(@test_alignment_results), 3, "Got 3 test alignment results");
 
 my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Polymutt';
@@ -63,37 +70,13 @@ my $detector_command = Genome::Model::Tools::DetectVariants2::Polymutt->create(
     output_directory => $output_dir,
     reference_build_id => $reference->id,
     pedigree_file_path => $ped_file,
+    params => '',
 );
-
-$detector_command->dump_status_messages(1);
 isa_ok($detector_command, 'Genome::Model::Tools::DetectVariants2::Polymutt', 'created detector command');
-ok($detector_command->execute(), 'executed detector command');
-ok(-s $output_denovo_vcf, "denovo vcf output exists and has size");
-ok(-s $output_standard_vcf, "standard vcf output exists and has size");
-ok(-s $output_dat , "dat output exists and has size");
-ok(-s $output_glfindex , "glfindex output exists and has size");
-ok(-s $output_merged_vcf, "(denovo + standard) merged vcf output exists and has size");
 
+my $wf = $detector_command->_create_workflow();
+isa_ok($wf, 'Genome::WorkflowBuilder::DAG', 'created workflow');
 
-my $expected_denovo_text = `zcat $expected_denovo_vcf_file | grep -v '^##fileDate'`;
-my $test_denovo_text = `zcat $output_denovo_vcf | grep -v '^##fileDate'`;
+my ($glfs_wf) = $detector_command->_create_glfs_workflow(@test_alignment_results);
+isa_ok($glfs_wf, 'Genome::WorkflowBuilder::DAG', 'created glf workflow');
 
-my $output_denovo_diff = Genome::Sys->diff_text_vs_text($expected_denovo_text, $test_denovo_text);
-ok(!$output_denovo_diff, 'denovo output file matches expected result')
-    or diag("diff:\n" . $output_denovo_diff);
-
-my $expected_standard_text = `zcat $expected_standard_vcf_file | grep -v '^##fileDate'`;
-my $test_standard_text = `zcat $output_standard_vcf | grep -v '^##fileDate'`;
-
-my $output_standard_diff = Genome::Sys->diff_text_vs_text($expected_standard_text, $test_standard_text);
-ok(!$output_standard_diff, 'standard output file matches expected result')
-    or diag("diff:\n" . $output_standard_diff);
-
-
-my $expected_merged_text = `zcat $expected_merged_vcf | grep -v '^##fileDate'`;
-my $test_merged_text = `zcat $output_merged_vcf | grep -v '^##fileDate'`;
-
-
-my $output_merged_diff = Genome::Sys->diff_text_vs_text($expected_merged_text, $test_merged_text);
-ok(!$output_merged_diff, 'merged output file matches expected result')
-    or diag("diff:\n" . $output_merged_diff);
