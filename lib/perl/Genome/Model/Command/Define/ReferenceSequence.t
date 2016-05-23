@@ -15,6 +15,8 @@ use File::Spec;
 
 Genome::Report::Email->silent();
 
+my $guard = Genome::Config::set_env('workflow_builder_backend', 'inline');
+
 if(Genome::Sys->arch_os() =~ '64') {
     plan tests => 27;
 } else {
@@ -38,8 +40,6 @@ my $first_define_command = Genome::Model::Command::Define::ImportedReferenceSequ
     prefix => 'imported_reference_testsuite',
     species_name => 'none',
     on_warning => 'exit',
-    job_dispatch => 'inline', # can't spawn off LSF jobs with UR_DBI_NO_COMMIT enabled
-    server_dispatch => 'inline',
     version => '42mb',
     sequence_uri => 'http://foo.bar.com',
     skip_bases_files => 0, # force creation of bases files
@@ -123,8 +123,6 @@ my $second_define_command = Genome::Model::Command::Define::ImportedReferenceSeq
     prefix => 'imported_reference_testsuite',
     species_name => 'none',
     on_warning => 'exit',
-    job_dispatch => 'inline', #can't spawn off LSF jobs with UR_DBI_NO_COMMIT enabled
-    server_dispatch => 'inline',
     version => 't1',
     sequence_uri => 'http://foo.bar.com',
     skip_bases_files => 0,
@@ -162,8 +160,6 @@ my $third_define_command = Genome::Model::Command::Define::ImportedReferenceSequ
     prefix => 'imported_reference_testsuite',
     species_name => 'none',
     on_warning => 'exit',
-    job_dispatch => 'inline', #can't spawn off LSF jobs with UR_DBI_NO_COMMIT enabled
-    server_dispatch => 'inline',
     version => 't1',
     sequence_uri => 'http://foo.bar.com',
 );
@@ -176,8 +172,6 @@ my $fourth_define_command = Genome::Model::Command::Define::ImportedReferenceSeq
     prefix => 'imported_reference_testsuite',
     species_name => 'nonexistent_species_name_for_testcase',
     on_warning => 'exit',
-    job_dispatch => 'inline', #can't spawn off LSF jobs with UR_DBI_NO_COMMIT enabled
-    server_dispatch => 'inline',
     version => 't4',
     sequence_uri => 'http://foo.bar.com',
 );
@@ -191,8 +185,6 @@ my $fifth_define_command = Genome::Model::Command::Define::ImportedReferenceSequ
     prefix => 'apipe',
     species_name => 'none',
     on_warning => 'exit',
-    job_dispatch => 'inline', #can't spawn off LSF jobs with UR_DBI_NO_COMMIT enabled
-    server_dispatch => 'inline',
     model_name => 'apipe-test-somatic-variation',
     sequence_uri => 'http://foo.bar.com',
 );

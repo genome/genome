@@ -133,13 +133,13 @@ sub execute {
         version => '500bp_assembled_contigs',
         fasta_file => $contigs_file,
         prefix => $sample_id,
-        server_dispatch => 'inline',
         is_rederivable => 1,
     );
     if ($self->build->model->analysis_project) {
         $import_params{analysis_project} = $self->build->model->analysis_project;
     }
 
+    my $guard = Genome::Config::set_env('workflow_builder_backend', 'inline');
     my $new_ref_cmd = Genome::Model::Command::Define::ImportedReferenceSequence->create(%import_params);
     unless ($new_ref_cmd->execute) {
         $self->error_message('Failed to execute the definition of the new reference sequence with added contigs.');
