@@ -50,6 +50,10 @@ sub execute {
     Genome::Sys->create_directory($self->log_directory);
     validate_environment();
 
+    if(Genome::Config::get('lsb_sub_additional')) {
+        $ENV{LSB_SUB_ADDITIONAL} = Genome::Config::get('lsb_sub_additional');
+    }
+
     $self->execution(Ptero::Proxy::Workflow::Execution->new(
         $ENV{PTERO_WORKFLOW_EXECUTION_URL}));
 
