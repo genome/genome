@@ -23,9 +23,11 @@ my $pkg = 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum';
 use_ok($pkg);
 
 use Genome::Model::Build::ReferenceSequence;
+my $reference = Genome::Model::Build::ReferenceSequence->get(name => 'GRCh37-lite-build37');
+my $full_consensus_path = $reference->full_consensus_path('fa');
 my $override = Sub::Override->new(
     'Genome::Model::Build::ReferenceSequence::full_consensus_path',
-    sub { return '/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa'; }
+    sub { return $full_consensus_path; }
 );
 
 #Define the test where expected results are stored
