@@ -152,6 +152,11 @@ class Genome::Model::SomaticValidation::Command::ReviewVariants {
             is_optional => 1,
             doc => 'queue to use when running in a workflow',
         },
+        lsf_resource => {
+            default => Genome::Config::get('lsf_resource_review_variants'),
+            is_optional => 1,
+            doc => 'LSF resource requirements when running in a workflow.',
+        },
     ],
 };
 
