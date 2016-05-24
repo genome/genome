@@ -8,7 +8,6 @@ use Genome;
 class Genome::Model::Tools::Speedseq::Sv {
 	is => 'Genome::Model::Tools::Speedseq::Base',
 	has_param => [
-
 		full_bam_file => {
 			is => 'Text',
 			doc => 'full BAM file(s) (comma separated list)',
@@ -110,8 +109,13 @@ class Genome::Model::Tools::Speedseq::Sv {
                     doc => 'output LUMPY probability curves in VCF',
                     is_optional => 1,
                     tool_param_name => 'P',
-                }
-
+                },
+                verbose => {
+                    is => 'Boolean',
+                    doc => 'run speedseq-sv in verbose mode',
+                    is_optional => 1,
+                    tool_param_name => 'v',
+                },
 	],
 };
 
