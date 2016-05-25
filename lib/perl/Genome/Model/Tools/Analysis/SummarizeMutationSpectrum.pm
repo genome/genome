@@ -125,7 +125,6 @@ EOS
 
 sub execute {
     my $self = shift;
-    $DB::single = 1;
 
 
     my $input_file = $self->input_file;

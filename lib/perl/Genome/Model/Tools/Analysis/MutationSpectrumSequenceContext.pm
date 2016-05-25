@@ -95,7 +95,6 @@ EOS
 
 sub execute {
     my $self = shift;
-    $DB::single = 1;
 
 
     my $ROI_file = $self->roi_file;
