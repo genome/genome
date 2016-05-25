@@ -450,38 +450,34 @@ sub _resolve_workflow_for_build {
 sub _resolve_workflow_for_import {
     my ($self, $build, $lsf_queue, $lsf_project) = @_;
 
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $build->workflow_name,
-        input_properties => ['build'],
-        output_properties => ['build'],
-        log_dir => $build->log_directory);
-
-    my $input_connector = $workflow->get_input_connector();
-    my $output_connector = $workflow->get_output_connector();
+    );
 
     my $import_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::Import', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
-    $workflow->add_link(
-        left_operation => $input_connector, left_property => 'build',
-        right_operation => $import_op, right_property => 'build');
+    $workflow->connect_input(
+        input_property => 'build',
+        destination => $import_op, destination_property => 'build');
 
     if ($self->post_assemble) {
         my $post_assemble_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::PostAssemble', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
-        $workflow->add_link(
-            left_operation => $import_op, left_property => 'build',
-            right_operation => $post_assemble_op, right_property => 'build');
-        $workflow->add_link(
-            left_operation => $post_assemble_op, left_property => 'build',
-            right_operation => $output_connector, right_property => 'build');
+        $workflow->create_link(
+            source => $import_op, source_property => 'build',
+            destination => $post_assemble_op, destination_property => 'build');
+        $workflow->connect_output(
+            source => $post_assemble_op, source_property => 'build',
+            output_property => 'build');
     } else {
-        $workflow->add_link(
-            left_operation => $import_op, left_property => 'build',
-            right_operation => $output_connector, right_property => 'build');
+        $workflow->connect_output(
+            source => $import_op, source_property => 'build',
+            output_property => 'build');
     }
 
+    $workflow->recursively_set_log_dir($build->log_directory);
     return $workflow;
 }
 
@@ -510,14 +506,9 @@ sub _resolve_workflow_for_normal_assembly {
             # if post_assemble: PostAssemble
             # Report
 
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $build->workflow_name,
-        input_properties => ['build', 'instrument_data'],
-        output_properties => ['report_directory'],
-        log_dir => $build->log_directory);
-
-    my $input_connector = $workflow->get_input_connector();
-    my $output_connector = $workflow->get_output_connector();
+    );
 
     my $assemble_op = $self->_add_assembler($workflow, $build, $lsf_queue,
         $lsf_project);
@@ -526,45 +517,45 @@ sub _resolve_workflow_for_normal_assembly {
     if ($self->process_instrument_data_can_parallelize) {
         $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
-        $workflow->add_link(
-            left_operation => $input_connector, left_property => 'instrument_data',
-            right_operation => $id_op, right_property => 'instrument_data');
+        $workflow->connect_input(
+            input_property => 'instrument_data',
+            destination => $id_op, destination_property => 'instrument_data');
 
         $id_op->parallel_by('instrument_data');
 
         my $merge_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
-        $workflow->add_link(
-            left_operation => $id_op, left_property => 'build',
-            right_operation => $merge_op, right_property => 'build');
+        $workflow->create_link(
+            source => $id_op, source_property => 'build',
+            destination => $merge_op, destination_property => 'build');
 
-        $workflow->add_link(
-            left_operation => $merge_op, left_property => 'output_build',
-            right_operation => $assemble_op, right_property => 'build');
-        $workflow->add_link(
-            left_operation => $merge_op, left_property => 'sx_results',
-            right_operation => $assemble_op, right_property => 'sx_results');
+        $workflow->create_link(
+            source => $merge_op, source_property => 'output_build',
+            destination => $assemble_op, destination_property => 'build');
+        $workflow->create_link(
+            source => $merge_op, source_property => 'sx_results',
+            destination => $assemble_op, destination_property => 'sx_results');
     } else {
         $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
-        $workflow->add_link(
-            left_operation => $id_op, left_property => 'build',
-            right_operation => $assemble_op, right_property => 'build');
+        $workflow->create_link(
+            source => $id_op, source_property => 'build',
+            destination => $assemble_op, destination_property => 'build');
     }
 
-    my $lsf_resource = $id_op->operation_type->command_class_name->lsf_resource;
+    my $lsf_resource = $id_op->command->lsf_resource;
     my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
         processor => $build->processing_profile->read_processor
     );
     if ( $sx_processor->number_of_threads_required > 1 ) {
         $lsf_resource .= ' -n '.$sx_processor->number_of_threads_required;
     }
-    $id_op->operation_type->lsf_resource($lsf_resource);
+    $id_op->lsf_resource($lsf_resource);
 
-    $workflow->add_link(
-        left_operation => $input_connector, left_property => 'build',
-        right_operation => $id_op, right_property => 'build');
+    $workflow->connect_input(
+        input_property => 'build',
+        destination => $id_op, destination_property => 'build');
 
 
     my $report_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::Report', {
@@ -573,22 +564,23 @@ sub _resolve_workflow_for_normal_assembly {
         my $post_assemble_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::PostAssemble', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
-        $workflow->add_link(
-            left_operation => $assemble_op, left_property => 'build',
-            right_operation => $post_assemble_op, right_property => 'build');
-        $workflow->add_link(
-            left_operation => $post_assemble_op, left_property => 'build',
-            right_operation => $report_op, right_property => 'build');
+        $workflow->create_link(
+            source => $assemble_op, source_property => 'build',
+            destination => $post_assemble_op, destination_property => 'build');
+        $workflow->create_link(
+            source => $post_assemble_op, source_property => 'build',
+            destination => $report_op, destination_property => 'build');
     } else {
-        $workflow->add_link(
-            left_operation => $assemble_op, left_property => 'build',
-            right_operation => $report_op, right_property => 'build');
+        $workflow->create_link(
+            source => $assemble_op, source_property => 'build',
+            destination => $report_op, destination_property => 'build');
     }
 
-    $workflow->add_link(
-        left_operation => $report_op, left_property => 'report_directory',
-        right_operation => $output_connector, right_property => 'report_directory');
+    $workflow->connect_output(
+        source => $report_op, source_property => 'report_directory',
+        output_property => 'report_directory');
 
+    $workflow->recursively_set_log_dir($build->log_directory);
     return $workflow;
 }
 
@@ -614,27 +606,24 @@ sub _add_operation {
     my $name = $command_class_name;
     $name =~ s/Genome::Model::DeNovoAssembly::(Build|Command):://;
 
-    my $operation_type = Workflow::OperationType::Command->create(
-        command_class_name => $command_class_name);
+    my $operation = Genome::WorkflowBuilder::Command->create(
+        name => $name,
+        command => $command_class_name
+    );
 
     for my $key (keys %{$options}) {
-        unless ($operation_type->can($key)) {
-            die "Illegal parameter specified for Workflow::OperationType::Command";
+        unless ($operation->can($key)) {
+            die "Illegal parameter specified for operation";
         }
         my $value = $options->{$key};
         if ($value) {
-            $operation_type->$key($value);
+            $operation->$key($value);
         }
     }
 
-    unless (defined $operation_type) {
-        die "Workflow::OperationType undefined for params: "
-            . "command_class_name = '$command_class_name', "
-            . "options -> " . YAML::Dump($options);
-    }
+    $workflow->add_operation($operation);
 
-    return $workflow->add_operation(
-        name => $name, operation_type => $operation_type);
+    return $operation;
 }
 
 1;
