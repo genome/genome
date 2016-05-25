@@ -26,7 +26,6 @@ my @sub_commands_expected = qw/
   imported-variation-list
   metagenomic-composition16s
   mutational-significance
-  phenotype-correlation
   protein-annotation
   reference-alignment
   reference-sequence
