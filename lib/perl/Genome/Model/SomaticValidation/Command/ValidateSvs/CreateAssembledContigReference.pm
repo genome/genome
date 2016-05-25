@@ -109,10 +109,11 @@ sub execute {
         version => $version,
         fasta_file => $contigs_file,
         prefix => $prefix,
-        server_dispatch => 'inline',
         is_rederivable => 1,
         analysis_project => $build->model->analysis_project,
     );
+
+    my $guard = Genome::Config::set_env('workflow_builder_backend', 'inline');
     unless ($new_ref_cmd->execute) {
         $self->error_message('Failed to execute the definition of the new reference sequence with added contigs.');
         return;
