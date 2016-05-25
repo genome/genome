@@ -15,8 +15,6 @@ Genome::Report::Email->silent();
 
 use_ok('Genome::Model::Build::Command::Start') or die;
 
-delete $ENV{NO_LSF};
-
 class Genome::Model::Tester { is => 'Genome::ModelDeprecated', };
 class Genome::Model::Build::Tester { is => 'Genome::Model::Build', };
 sub  Genome::Model::Build::Tester::start { return 1; };
