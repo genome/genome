@@ -12,6 +12,7 @@ apipe-test-refalign-germline-short: 4beb0bea46f544409c8c6119b6145359
 apipe-test-reference-alignment-lane-qc: a030a7d4d4dd46e698dffcd18b788652
 apipe-test-reference-alignment: dc0be865a3f64f58ae6762e6d3bab3bc
 apipe-test-rnaseq: f7c55980a3d3484f9f895834d22fe721
+apipe-test-single-sample-genotype: adbc003ccb3a4af89770731db5959076
 apipe-test-somatic-validation-sv: fca9bd3a029d48099f07092c19989d16
 apipe-test-somatic-validation: 750be33ae59f4a588b87a587d9df22bb
 apipe-test-somatic-variation-short: e1c9bd1b11a94d55855d2d9ad6fedc0b
