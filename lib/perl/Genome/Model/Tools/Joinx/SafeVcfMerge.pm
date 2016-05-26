@@ -4,8 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow;
-use Workflow::Simple;
 use YAML;
 
 class Genome::Model::Tools::Joinx::SafeVcfMerge {
