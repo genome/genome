@@ -128,7 +128,8 @@ sub _tool_input_file_metas {
 # formatting (argname=argvalue).
 sub _format_tool_arg {
     my ($type, $name, $value) = @_;
-    return '-'. $name if ($type eq 'Boolean');
+    return '-'. $name if ($type eq 'Boolean' and $value);
+    return "" if ($type eq 'Boolean');
     $value = qq{"$value"} if $type eq 'Text';
     return sprintf '-%s %s', $name, $value;
 }

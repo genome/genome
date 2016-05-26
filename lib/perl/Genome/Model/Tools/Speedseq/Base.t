@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 3;
+use Test::More tests => 5;
 
 my $pkg = 'Genome::Model::Tools::Speedseq::Base';
 use_ok ($pkg);
@@ -21,4 +21,7 @@ $path = undef;
 eval {
      $path = $pkg->path_for_version('foo');
 };
-ok(!$path,'no path for version');      
+ok(!$path,'no path for version');
+
+is(Genome::Model::Tools::Speedseq::Base::_format_tool_arg('Boolean', 'test', 0), '', "False boolean argument formats as an empty string");
+is(Genome::Model::Tools::Speedseq::Base::_format_tool_arg('Boolean', 'test', 1), '-test', "True boolean argument formats as a dash with the arg name");
