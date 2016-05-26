@@ -114,9 +114,11 @@ sub _get_ptero_shortcut_method {
 sub _get_ptero_execute_method {
     require Ptero::Builder::Job;
 
-
     my $self = shift;
     my $log_dir = shift;
+
+    local $ENV{LSB_SUB_ADDITIONAL} = Genome::Config::get('lsb_sub_additional') // $ENV{LSB_SUB_ADDITIONAL};
+
     my $ptero_lsf_parameters = $self->_get_ptero_lsf_parameters();
     $ptero_lsf_parameters->{command} = sprintf(
         'genome ptero wrapper --command-class %s '
