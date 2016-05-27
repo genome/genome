@@ -54,7 +54,7 @@ sub _detect_variants {
 
     unless (defined($final_cmd{config_file})) {
         my $config_file = Genome::Model::Tools::Speedseq::ConfigFile->get_or_create(
-            reference_build => $self->reference_build,
+            reference_sequence_build => $self->reference_build,
             speedseq_version => $self->version,
             users => $self->result_users,
         );
