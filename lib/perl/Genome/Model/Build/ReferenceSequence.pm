@@ -180,7 +180,7 @@ sub check_derived_from_links {
     return @tags;
 }
 
-sub get{
+sub get {
     my $self = shift;
     my @results = $self->SUPER::get(@_);
     return $self->SUPER::get(@_) if @results;
@@ -1062,6 +1062,17 @@ sub combined_references {
     }
 
     return @exact_combined_references;
+}
+
+sub per_chromosome_fastas {
+    my $self = shift;
+    my $users = shift;
+
+    my $per_chromosome_fastas = Genome::Model::Build::ReferenceSequence::PerChromosomeFastas->get_or_create(
+        reference_sequence_build => $self,
+        users => $users || Genome::SoftwareResult::User->user_hash_for_build($self),
+    );
+    return $per_chromosome_fastas;
 }
 
 1;
