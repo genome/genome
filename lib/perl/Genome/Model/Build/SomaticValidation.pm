@@ -337,4 +337,14 @@ sub has_snvs_annotated_variants_vcf_file {
     return 0;
 }
 
+sub build_for_normal_bam {
+    my $self = shift;
+    return $self;
+}
+
+sub build_for_tumor_bam {
+    my $self = shift;
+    return $self;
+}
+
 1;

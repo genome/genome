@@ -194,7 +194,7 @@ sub execute {
             my $wgs_build = $clinseq_build->wgs_build;
 
             #WGS normal refalign build - source of normal WGS BAMs track
-            my $wgs_normal_build = $wgs_build->can('normal_build') ? $wgs_build->normal_build : $wgs_build;
+            my $wgs_normal_build = $wgs_build->build_for_normal_bam;
             my $wgs_normal_track = $self->generate_track_xml(
                 '-build'         => $wgs_normal_build,
                 '-resource_type' => 'bam',
@@ -209,7 +209,7 @@ sub execute {
             $main_features_track_xml .= $wgs_normal_xml;
 
             #WGS tumor refalign build - source of tumor WGS BAMs track
-            my $wgs_tumor_build = $wgs_build->can('tumor_build') ? $wgs_build->tumor_build : $wgs_build;
+            my $wgs_tumor_build = $wgs_build->build_for_tumor_bam;
             my $wgs_tumor_track = $self->generate_track_xml(
                 '-build'         => $wgs_tumor_build,
                 '-resource_type' => 'bam',
@@ -228,7 +228,7 @@ sub execute {
             my $exome_build = $clinseq_build->exome_build;
 
             #Exome normal refalign build - source of normal Exome BAMs track
-            my $exome_normal_build = $exome_build->can('normal_build') ? $exome_build->normal_build : $exome_build;
+            my $exome_normal_build = $exome_build->build_for_normal_bam;
             my $exome_normal_track = $self->generate_track_xml(
                 '-build'         => $exome_normal_build,
                 '-resource_type' => 'bam',
@@ -243,7 +243,7 @@ sub execute {
             $main_features_track_xml .= $exome_normal_xml;
 
             #Exome tumor refalign build - source of tumor Exome BAMs track
-            my $exome_tumor_build = $exome_build->can('tumor_build') ? $exome_build->tumor_build : $exome_build;
+            my $exome_tumor_build = $exome_build->build_for_tumor_bam;
             my $exome_tumor_track = $self->generate_track_xml(
                 '-build'         => $exome_tumor_build,
                 '-resource_type' => 'bam',
