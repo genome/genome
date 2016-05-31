@@ -38,7 +38,7 @@ class Genome::Model::Tools::Predictor::Ber {
         },
         ber_source_path => {
             is => 'DirectoryPath',
-            value => '/gscmnt/gc9002/info/annotation/BER/autoannotate_v2.5',
+            value => '/gscmnt/gc3009/info/annotation/personal_dirs/jmartin/BER/autoannotate_v2.5',
             doc => 'Source of BER',
         },
         lsf_queue => {
