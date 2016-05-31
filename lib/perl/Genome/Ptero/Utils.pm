@@ -13,6 +13,7 @@ our @EXPORT_OK = qw(
     ptero_proxy
     ptero_workflow_url
     test_data_directory
+    get_all_executions_for_proxy
     get_test_inputs
     get_test_outputs
     get_test_xml_filename
@@ -33,6 +34,21 @@ sub ptero_proxy {
             ptero_workflow_url($workflow_name));
     };
     return $proxy;
+}
+
+sub get_all_executions_for_proxy {
+    my ($workflow) = validate_pos(@_, {isa => 'Ptero::Proxy::Workflow'});
+
+    my @executions = @{$workflow->workflow_executions};
+    my @child_executions;
+
+    for my $e (@executions) {
+        for my $child (@{ $e->child_workflow_proxies }) {
+            push @child_executions, get_all_executions_for_proxy($child);
+        }
+    }
+
+    return (@executions, @child_executions);
 }
 
 sub get_test_xml_filename {
