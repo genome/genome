@@ -43,7 +43,7 @@ my $annotation_model = Genome::Model::ImportedAnnotation->create(
 my $annotation_build = Genome::Model::Build::ImportedAnnotation->__define__(
     version => 'v1',
     model => $annotation_model,
-    data_directory => '/gscmnt/gc8002/info/model_data/2772828715/build125092315', #65_37j_v6
+    data_directory => '/gscmnt/ams1180/info/model_data/2772828715/build131029280',
 );
 
 #hack to shorten results

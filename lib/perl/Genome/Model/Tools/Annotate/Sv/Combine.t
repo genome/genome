@@ -16,7 +16,7 @@ my $class = "Genome::Model::Tools::Annotate::Sv::Combine";
 use_ok($class);
 
 my $base_dir = Genome::Utility::Test->data_dir($class);
-my $version  = 6;
+my $version  = 7;
 my $data_dir = "$base_dir/v$version";
 
 #2 add cancer_gene_list to transcripts for human
@@ -29,7 +29,7 @@ my $temp_file = Genome::Sys->create_temp_file_path;
 my $cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
     input_file => "$data_dir/in.svs",
     output_file => $temp_file,
-    annotation_build_id => 131184146,
+    annotation_build_id => 131029280,
     annotator_list      => ['Transcripts', 'Dbsnp', 'Segdup', 'Dbvar'],
     transcripts_print_flanking_genes => 1,
     transcripts_cancer_gene_list     => join("/",Genome::Sys->dbpath("cancer-gene-list/human",1),"Cancer_genes.csv"),
