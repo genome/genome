@@ -1,3 +1,3 @@
 ---
-default_value: "-R 'select[tmp>=10000 && mem>=12000] rusage[tmp=10000, mem=12000]' -M 12000000"
+default_value: "-R 'select[tmp>=10000 && mem>=16000] rusage[tmp=10000, mem=16000]' -M 16000000"
 env: XGENOME_LSF_RESOURCE_DV2_SPEEDSEQ_SV
