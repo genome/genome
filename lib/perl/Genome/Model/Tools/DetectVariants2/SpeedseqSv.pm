@@ -52,6 +52,15 @@ sub _detect_variants {
         $self->find_file("discordants","discordant_read_bam_file",@fullBam),
     );
 
+    unless (defined($final_cmd{config_file})) {
+        my $config_file = Genome::Model::Tools::Speedseq::ConfigFile->get_or_create(
+            reference_sequence_build => $self->reference_build,
+            speedseq_version => $self->version,
+            users => $self->result_users,
+        );
+        $final_cmd{config_file} = $config_file->config_file_path;
+    }
+    
     my $set = Genome::Model::Tools::Speedseq::Sv->create(%final_cmd);
     $set->execute();
 

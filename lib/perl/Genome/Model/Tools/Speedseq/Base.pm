@@ -71,12 +71,25 @@ sub available_versions {
 
 sub path_for_version {
     my ($class, $version) = @_;
-    unless ($version) {
-        die('No version defined!');
+
+    unless ( defined($version) ) {
+        $class->fatal_message('No version defined!');
     }
+
     my $path = $TOOL_VERSIONS{$version};
     return $path if defined $path;
-    die 'No path found for version: '. $version;
+
+    $class->fatal_message('No path found for version: '. $version);
+}
+
+sub config_path_for_version {
+    my ($class, $version) = @_;
+
+    unless ( defined($version) ) {
+        $class->fatal_message('No version defined!');
+    }
+
+    return $class->path_for_version($version) .'.config';
 }
 
 sub tool_path {
