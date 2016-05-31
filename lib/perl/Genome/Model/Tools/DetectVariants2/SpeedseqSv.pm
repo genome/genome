@@ -136,5 +136,10 @@ sub has_version {
     }
 }
 
+sub _sort_detector_output {
+    # This command does not produce a BED output file
+    return 1;
+}
+
 
 1;
