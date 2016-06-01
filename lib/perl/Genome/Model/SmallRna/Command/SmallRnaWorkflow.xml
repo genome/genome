@@ -10,7 +10,6 @@
   <link fromOperation="input connector" fromProperty="stats_file" toOperation="ClusterCoverage" toProperty="stats_file" />
   <link fromOperation="input connector" fromProperty="bed_file" toOperation="ClusterCoverage" toProperty="bed_file" />
 
-  <link fromOperation="input connector" fromProperty="stats_file" toOperation="StatsGenerator" toProperty="coverage_stats_file" />
   <link fromOperation="input connector" fromProperty="output_stats_file" toOperation="StatsGenerator" toProperty="output_stats_file" />
 
   <link fromOperation="input connector" fromProperty="output_clusters_file" toOperation="StatsGenerator" toProperty="output_clusters_file" />
@@ -20,7 +19,6 @@
   <link fromOperation="input connector" fromProperty="subcluster_min_mapzero" toOperation="StatsGenerator" toProperty="subcluster_min_mapzero" />
 
   <link fromOperation="input connector" fromProperty="annotation_bed_file" toOperation="AnnotateCluster" toProperty="annotation_bed_file" />
-  <link fromOperation="input connector" fromProperty="output_clusters_file" toOperation="AnnotateCluster" toProperty="cluster_bed_file" />
   <link fromOperation="input connector" fromProperty="annotation_name" toOperation="AnnotateCluster" toProperty="annotation_name" />
   <link fromOperation="input connector" fromProperty="output_tsv_file" toOperation="AnnotateCluster" toProperty="output_tsv_file" />
 
