@@ -13,6 +13,9 @@ class Genome::Model::ReferenceAlignment::Command::AnnotateVariants {
         lsf_queue => {
             default => Genome::Config::get('lsf_queue_build_worker_alt'),
         },
+        lsf_resource => {
+            default => Genome::Config::get('lsf_resource_annotate_variants'),
+        },
     ],
 };
 
