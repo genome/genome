@@ -1878,23 +1878,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>imported-assembly',
-      [
-        'name=s',
-        'files',
-        'assembler-version=s',
-        'files',
-        'assembly-description=s',
-        'files',
-        'based-on=s',
-        undef,
-        'assembler-name=s',
-        'files',
-        'describe!',
-        undef,
-        'help!',
-        undef
-      ],
       '>metagenomic-composition16s',
       [
         'name=s',
@@ -2582,31 +2565,6 @@ $Genome::Command::OPTS_SPEC = [
         undef
       ],
       '>protein-annotation',
-      [
-        'show=s',
-        'files',
-        'style=s',
-        [
-          'text',
-          'csv',
-          'tsv',
-          'pretty',
-          'html',
-          'xml',
-          'newtext'
-        ],
-        'csv-delimiter=s',
-        'files',
-        'noheaders!',
-        undef,
-        'order-by=s',
-        'files',
-        'filter=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>imported-assembly',
       [
         'show=s',
         'files',
