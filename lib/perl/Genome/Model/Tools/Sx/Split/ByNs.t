@@ -9,7 +9,7 @@ use Genome::Sys;
 use Genome::Utility::Test;
 use File::Spec;
 use File::Temp;
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 my $pkg = 'Genome::Model::Tools::Sx::Split::ByNs';
 use_ok($pkg);
@@ -78,6 +78,29 @@ subtest 'buncha ns' => sub{
     my $expected_fasta = File::Spec->join($dir, 'expected.buncha-ns.fasta');
     ok(-s $expected_fasta, 'expected fasta exists');
     Genome::Utility::Test::compare_ok($out_fasta, $expected_fasta, 'output fasta matches expected');
+
+};
+
+subtest 'gap seq' => sub{
+    plan tests => 5;
+
+    my $splitter = $pkg->create(
+        number_of_ns => 5,
+    );
+    ok($splitter, 'create splitter');
+
+    my $seq = {
+        id => 'chr7',
+        seq => 'ANNNNNNTNNNNNNNGNNC',
+    };
+    my $it = $splitter->iterator_to_split_sequence($seq);
+    ok($it, 'create splitting iterator');
+
+    my $split_seq = $it->();
+    is_deeply($split_seq, { id => 'chr7.1', seq => 'A' }, 'got split seq 1');
+    my ($split_seq2, $gap_info) = $it->();
+    is_deeply($split_seq2, { id => 'chr7.2', seq => 'T' }, 'got split seq 2');
+    is_deeply($gap_info, { scaff => 'chr7', num => 2, len => 7 }, 'got gap info');
 
 };
 

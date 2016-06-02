@@ -71,7 +71,9 @@ sub iterator_to_split_sequence {
                 substr($remaining_quals, 0, length($ns), '');
             }
 
-            return \%split_seq;
+            return \%split_seq unless wantarray;
+            # Return gap info
+            return ( \%split_seq, { scaff => $seq->{id}, num => $cnt, len => length($ns), } );
         }
     };
 }
