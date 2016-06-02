@@ -35,6 +35,9 @@ class Genome::Model::SomaticValidation::Command::AnnotateVariants {
         lsf_queue => {
             default => Genome::Config::get('lsf_queue_build_worker_alt'),
         },
+        lsf_resource => {
+            default => Genome::Config::get('lsf_resource_annotate_variants'),
+        },
         snv_tiers_to_annotate => {
             is => 'Array',
             is_input => 1,
