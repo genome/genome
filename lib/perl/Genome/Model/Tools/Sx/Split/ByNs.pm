@@ -38,22 +38,38 @@ sub execute {
 sub iterator_to_split_sequence {
     my ($self, $seq) = @_;
 
-    my ($split_bases, $ns);
-    my $n = $self->number_of_ns;
-    my $remaining_bases = $seq->{seq};
+    my ($pos, $split_bases, $ns);
+    my $string_o_ns = 'N' x $self->number_of_ns;
+    my $remaining_bases = uc($seq->{seq});
+    my $remaining_quals = $seq->{qual};
     my $cnt = 0;
-    my $start = 0;
     return sub{
         while ( $remaining_bases && length $remaining_bases ) {
-            ($split_bases, $ns, $remaining_bases) = split(/(n{$n,})/i, $remaining_bases, 2);
+            my $pos = index($remaining_bases, $string_o_ns);
+            if ( $pos == -1 ) { # not enough Ns, use full sequence
+                $split_bases = $remaining_bases;
+                $ns = '';
+                $remaining_bases = undef;
+            }
+            else { # match
+                # Remove the split bases using the position of the index match
+                $split_bases = substr($remaining_bases, 0, $pos, '');
+                # Get the Ns using regex
+                ($ns) = $remaining_bases =~ /^(N+)/;
+                # Remove Ns
+                substr($remaining_bases, 0, length($ns), '');
+            }
+
             my %split_seq = (
                 id => join('.', $seq->{id}, ++$cnt),
                 seq => $split_bases,
             );
-            $split_seq{qual} = substr($seq->{qual}, $start, length($split_bases)) if $seq->{qual};
-
-            $start += length($split_bases);
-            $start += length($ns) if $ns;
+            if ( $remaining_quals ) {
+                # Get the split quals
+                $split_seq{qual} = substr($remaining_quals, 0, length($split_seq{seq}), '');
+                # Remove the quals for the Ns
+                substr($remaining_quals, 0, length($ns), '');
+            }
 
             return \%split_seq;
         }
