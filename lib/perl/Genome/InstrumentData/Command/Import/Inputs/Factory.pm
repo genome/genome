@@ -114,6 +114,8 @@ sub entity_types {
 sub resolve_sep_char_from_file_extension {
     my ($class, $file) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
 
+    return "\t" if $file eq '-';
+
     my ($dir, $basename, $ext) = File::Basename::fileparse($file, 'csv', 'tsv');
     die $class->error_message("Cannot determine type for file: %s. It needs to end with .csv or .tsv.", $file) if not $ext;
 
