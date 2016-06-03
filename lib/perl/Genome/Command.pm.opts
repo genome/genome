@@ -4239,6 +4239,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'lsf-queue=s',
         'files',
+        'lsf-resource=s',
+        'files',
         'build=s',
         undef,
         'help!',
@@ -7069,6 +7071,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'build=s',
         undef,
+        'lsf-resource=s',
+        'files',
         'annotator-version=s',
         'files',
         'snv-tiers-to-annotate=s',
