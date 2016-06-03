@@ -306,10 +306,9 @@ sub _resolve_names_for_entities {
     $entity_params->{individual}->{upn} = $individual_name_part if not $entity_params->{individual}->{upn};
     
     # library name - add ext or use default if name not given/set
+    my $ext = delete $entity_params->{library}->{ext} || 'extlibs';
     if ( not $entity_params->{library}->{name} ) {
-        $entity_params->{library}->{name} = $sample_name.( 
-            $entity_params->{library}->{ext} ? $entity_params->{library}->{ext} : '-extlibs'
-        );
+        $entity_params->{library}->{name} = join('-', $sample_name, $ext);
     }
 
     return 1;
