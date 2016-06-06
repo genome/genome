@@ -10,6 +10,7 @@ use Data::UUID;
 use Carp qw();
 use Data::Dump qw(pp);
 use Try::Tiny;
+use File::Spec;
 
 
 class Genome::WorkflowBuilder::Command {
@@ -164,7 +165,7 @@ sub _get_ptero_lsf_parameters {
     );
     $set_lsf_option->('jobGroup', $default_job_group);
 
-    my ($stderr, $stdout, $postexec) = _get_lsf_log_paths();
+    my ($stderr, $stdout, $postexec) = $self->_get_lsf_log_paths();
     $lsf_params->{options}->{errFile} = $stderr;
     $lsf_params->{options}->{outFile} = $stdout;
 
@@ -186,11 +187,14 @@ sub _get_ptero_lsf_parameters {
 
 #FIXME This is not unique within parallel_by operations.
 sub _get_lsf_log_paths {
+    my $self = shift;
+    my $log_dir = $self->log_dir();
+
     my $ug = Data::UUID->new();
     my $uuid = $ug->create();
     my $uuid_str = $ug->to_string($uuid);
 
-    my $base = sprintf("/tmp/ptero-lsf-logfile-%s", $uuid_str);
+    my $base = File::Spec->join($log_dir, sprintf("ptero-lsf-logfile-%s", $uuid_str));
     return ($base . '.err', $base . '.out', $base . "-postexec.log");
 }
 
