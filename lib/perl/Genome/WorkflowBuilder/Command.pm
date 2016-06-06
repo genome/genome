@@ -184,6 +184,7 @@ sub _get_ptero_lsf_parameters {
     return $lsf_params;
 }
 
+#FIXME This is not unique within parallel_by operations.
 sub _get_lsf_log_paths {
     my $ug = Data::UUID->new();
     my $uuid = $ug->create();
