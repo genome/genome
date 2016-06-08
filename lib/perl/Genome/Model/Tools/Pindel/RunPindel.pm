@@ -465,7 +465,7 @@ sub _run_pindel_for_region {
     my $window_size     = $self->window_size;
     my $ref_seq         = $self->reference_sequence_input;
 
-    my $cmd = $self->pindel_path . " -f ".$ref_seq. " -i " . $self->_config_file . " -o ". $output_basename . " -j ".$region_file . " -w ".$window_size." -b /dev/null";
+    my $cmd = [$self->pindel_path, "-f", $ref_seq, "-i", $self->_config_file, "-o", $output_basename, "-j", $region_file, "-w", $window_size, "-b", "/dev/null"];
     Genome::Sys->shellcmd(cmd => $cmd);
 
     #collect all pindel output, not just insertion and deletion
