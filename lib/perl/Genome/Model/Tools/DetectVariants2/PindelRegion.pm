@@ -63,7 +63,7 @@ sub has_version {
     my ($self, $version) = @_;
 
     $version = $self->version unless defined $version;
-    my @versions = Genome::Model::Tools::Pindel::RunPindel->available_pindel_versions;
+    my @versions = Genome::Model::Tools::Pindel::RunPindel->pindel_region_compatible_versions;
 
     return 1 if grep{$version eq $_}@versions;
     return 0;
