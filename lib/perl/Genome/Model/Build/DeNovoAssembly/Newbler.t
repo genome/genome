@@ -11,7 +11,6 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Workflow::Simple;
 
 use File::Compare;
 use File::Temp;
@@ -114,7 +113,6 @@ ok($example_build, 'create example build');
 
 my $workflow = $model->_resolve_workflow_for_build($build);
 $workflow->validate();
-ok($workflow->is_valid, 'workflow validated');
 
 my %workflow_inputs = $model->map_workflow_inputs($build);
 my %expected_workflow_inputs = (
@@ -125,8 +123,7 @@ is_deeply(\%workflow_inputs, \%expected_workflow_inputs,
     'map_workflow_inputs succeeded');
 
 
-my $workflow_xml = $workflow->save_to_xml();
-my $success = Workflow::Simple::run_workflow($workflow_xml, %workflow_inputs);
+my $success = $workflow->execute_inline(\%workflow_inputs);
 ok($success, 'workflow completed');
 
 

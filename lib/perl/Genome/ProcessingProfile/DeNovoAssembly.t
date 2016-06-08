@@ -99,33 +99,54 @@ my @params_and_xml_list = (
             assembler_version => 'allpaths test version',
         },
         workflow_xml_template => <<EOS
-<?xml version='1.0' standalone='yes'?>
-<workflow name="%s all stages" executor="Workflow::Executor::SerialDeferred" logDir="%s">
-  <link fromOperation="input connector" fromProperty="instrument_data" toOperation="ProcessInstrumentData" toProperty="instrument_data" />
-  <link fromOperation="ProcessInstrumentData" fromProperty="build" toOperation="MergeAndLinkSxResults" toProperty="build" />
-  <link fromOperation="MergeAndLinkSxResults" fromProperty="output_build" toOperation="Assemble" toProperty="build" />
-  <link fromOperation="MergeAndLinkSxResults" fromProperty="sx_results" toOperation="Assemble" toProperty="sx_results" />
-  <link fromOperation="input connector" fromProperty="build" toOperation="ProcessInstrumentData" toProperty="build" />
-  <link fromOperation="Assemble" fromProperty="build" toOperation="Report" toProperty="build" />
-  <link fromOperation="Report" fromProperty="report_directory" toOperation="output connector" toProperty="report_directory" />
-  <operation name="Assemble">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::Assemble" lsfProject="build%s" lsfQueue="$lsf_queue_alignment_default" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;61440] rusage[mem=61440]' -M 63963136" typeClass="Workflow::OperationType::Command" />
-  </operation>
-  <operation name="ProcessInstrumentData" parallelBy="instrument_data">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData" lsfProject="build%s" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000 -n 4" typeClass="Workflow::OperationType::Command" />
-  </operation>
-  <operation name="MergeAndLinkSxResults">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults" lsfProject="build%s" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-R 'select[gtmp&gt;1000] rusage[gtmp=1000] span[hosts=1]'" typeClass="Workflow::OperationType::Command" />
-  </operation>
-  <operation name="Report">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s" lsfQueue="$lsf_queue_build_worker_alt" typeClass="Workflow::OperationType::Command" />
-  </operation>
+<?xml version="1.0"?>
+<operation name="%s all stages" logDir="%s">
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>build</inputproperty>
     <inputproperty>instrument_data</inputproperty>
     <outputproperty>report_directory</outputproperty>
   </operationtype>
-</workflow>
+  <operation name="Assemble">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="alignment" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;61440] rusage[mem=61440]' -M 63963136" commandClass="Genome::Model::DeNovoAssembly::Build::Assemble" lsfProject="build%s">
+      <inputproperty>build</inputproperty>
+      <inputproperty>sx_results</inputproperty>
+      <outputproperty>build</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="MergeAndLinkSxResults">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[gtmp&gt;1000] rusage[gtmp=1000] span[hosts=1]'" commandClass="Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults" lsfProject="build%s">
+      <inputproperty>build</inputproperty>
+      <outputproperty>output_build</outputproperty>
+      <outputproperty>result</outputproperty>
+      <outputproperty>sx_results</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="ProcessInstrumentData" parallelBy="instrument_data">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000 -n 4" commandClass="Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData" lsfProject="build%s">
+      <inputproperty>build</inputproperty>
+      <inputproperty>instrument_data</inputproperty>
+      <outputproperty>build</outputproperty>
+      <outputproperty>result</outputproperty>
+      <outputproperty>sx_result</outputproperty>
+      <outputproperty>sx_result_id</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="Report">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s">
+      <inputproperty>build</inputproperty>
+      <outputproperty>report_directory</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="Assemble" fromProperty="build" toOperation="Report" toProperty="build"/>
+  <link fromOperation="MergeAndLinkSxResults" fromProperty="output_build" toOperation="Assemble" toProperty="build"/>
+  <link fromOperation="MergeAndLinkSxResults" fromProperty="sx_results" toOperation="Assemble" toProperty="sx_results"/>
+  <link fromOperation="ProcessInstrumentData" fromProperty="build" toOperation="MergeAndLinkSxResults" toProperty="build"/>
+  <link fromOperation="Report" fromProperty="report_directory" toOperation="output connector" toProperty="report_directory"/>
+  <link fromOperation="input connector" fromProperty="build" toOperation="ProcessInstrumentData" toProperty="build"/>
+  <link fromOperation="input connector" fromProperty="instrument_data" toOperation="ProcessInstrumentData" toProperty="instrument_data"/>
+</operation>
 EOS
     },
 
@@ -136,31 +157,46 @@ EOS
             post_assemble => 'metrics'
         },
         workflow_xml_template => <<EOS
-<?xml version='1.0' standalone='yes'?>
-<workflow name="%s all stages" executor="Workflow::Executor::SerialDeferred" logDir="%s">
-  <link fromOperation="PrepareInstrumentData" fromProperty="build" toOperation="Assemble" toProperty="build" />
-  <link fromOperation="input connector" fromProperty="build" toOperation="PrepareInstrumentData" toProperty="build" />
-  <link fromOperation="Assemble" fromProperty="build" toOperation="PostAssemble" toProperty="build" />
-  <link fromOperation="PostAssemble" fromProperty="build" toOperation="Report" toProperty="build" />
-  <link fromOperation="Report" fromProperty="report_directory" toOperation="output connector" toProperty="report_directory" />
-  <operation name="Assemble">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Assemble" lsfProject="build%s" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;30000] rusage[mem=30000]' -M 30000000" typeClass="Workflow::OperationType::Command" />
-  </operation>
-  <operation name="PrepareInstrumentData">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData" lsfProject="build%s" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
-  </operation>
-  <operation name="Report">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s" lsfQueue="$lsf_queue_build_worker_alt" typeClass="Workflow::OperationType::Command" />
-  </operation>
-  <operation name="PostAssemble">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::PostAssemble" lsfProject="build%s" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-R 'select[mem&gt;30000] rusage[mem=30000] span[hosts=1]' -M 30000000" typeClass="Workflow::OperationType::Command" />
-  </operation>
+<?xml version="1.0"?>
+<operation name="%s all stages" logDir="%s">
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>build</inputproperty>
-    <inputproperty>instrument_data</inputproperty>
     <outputproperty>report_directory</outputproperty>
   </operationtype>
-</workflow>
+  <operation name="Assemble">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;30000] rusage[mem=30000]' -M 30000000" commandClass="Genome::Model::DeNovoAssembly::Command::Assemble" lsfProject="build%s">
+      <inputproperty>build</inputproperty>
+      <outputproperty>build</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="PostAssemble">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;30000] rusage[mem=30000] span[hosts=1]' -M 30000000" commandClass="Genome::Model::DeNovoAssembly::Command::PostAssemble" lsfProject="build%s">
+      <inputproperty>build</inputproperty>
+      <outputproperty>build</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="PrepareInstrumentData">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000" commandClass="Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData" lsfProject="build%s">
+      <inputproperty>build</inputproperty>
+      <outputproperty>build</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="Report">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s">
+      <inputproperty>build</inputproperty>
+      <outputproperty>report_directory</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="Assemble" fromProperty="build" toOperation="PostAssemble" toProperty="build"/>
+  <link fromOperation="PostAssemble" fromProperty="build" toOperation="Report" toProperty="build"/>
+  <link fromOperation="PrepareInstrumentData" fromProperty="build" toOperation="Assemble" toProperty="build"/>
+  <link fromOperation="Report" fromProperty="report_directory" toOperation="output connector" toProperty="report_directory"/>
+  <link fromOperation="input connector" fromProperty="build" toOperation="PrepareInstrumentData" toProperty="build"/>
+</operation>
 EOS
     }
 
@@ -189,14 +225,11 @@ for my $params_and_xml (@params_and_xml_list) {
         model => $model, data_directory => $tmp_dir);
 
     my $workflow = $pp->_resolve_workflow_for_build($build);
-    my @validation_results = $workflow->validate;
-    ok($workflow->is_valid, sprintf("validated workflow for '%s'",
-            $params_and_xml->{'params'}->{'name'}));
-    print Data::Dumper::Dumper(\@validation_results) if not $workflow->is_valid;
+    $workflow->validate;
 
     my @operations = $workflow->operations;
 
-    my $actual_xml = $workflow->save_to_xml();
+    my $actual_xml = $workflow->get_xml();
 
     my $expected_xml = sprintf($params_and_xml->{'workflow_xml_template'},
         $build->id, $build->data_directory . '/logs/', $build->id,

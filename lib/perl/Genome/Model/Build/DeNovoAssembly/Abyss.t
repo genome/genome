@@ -10,8 +10,6 @@ use warnings;
 
 use above 'Genome';
 
-use Workflow::Simple;
-
 require File::Compare;
 use File::Temp;
 use Test::More;
@@ -111,7 +109,6 @@ ok($example_build, 'create example build');
 
 my $workflow = $pp->_resolve_workflow_for_build($build);
 $workflow->validate();
-ok($workflow->is_valid, 'workflow validated');
 
 my %workflow_inputs = $model->map_workflow_inputs($build);
 my %expected_workflow_inputs = (
@@ -121,9 +118,7 @@ my %expected_workflow_inputs = (
 is_deeply(\%workflow_inputs, \%expected_workflow_inputs,
     'map_workflow_inputs succeeded');
 
-
-my $workflow_xml = $workflow->save_to_xml();
-my $success = Workflow::Simple::run_workflow($workflow_xml, %workflow_inputs);
+my $success = eval { $workflow->execute_inline(\%workflow_inputs) };
 SKIP: {
     skip("Abyss refactor passes old tests, but workflow does not succeed.", 1, 0);
     ok($success, 'workflow completed');
