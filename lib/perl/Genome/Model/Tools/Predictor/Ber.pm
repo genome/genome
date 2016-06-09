@@ -89,7 +89,7 @@ sub run_predictor {
     }
 
     $self->status_message("Starting BER");
-   
+
     my ($blastp_fasta_files, $hmmpfam_fasta_files) = $self->setup or croak "failed to setup BER config";
 
     my %inputs = (
@@ -133,7 +133,7 @@ sub generate_work_flow {
     my $blastp_operation;
     if ($blastp) {
         $self->status_message("create workflow operation for blastp\n");
-    
+
         $blastp_operation = Genome::WorkflowBuilder::Command->create(
             name => 'BER blastp',
             command => 'Genome::Model::Tools::Predictor::Ber::Blastp',
@@ -146,7 +146,7 @@ sub generate_work_flow {
             destination => $blastp_operation,
             destination_property => 'input_fasta_file',
         );
-        
+
         for my $property (qw(output_directory ber_source_path lsf_queue lsf_resource)) {
             $workflow->connect_input(
                 input_property => $property,
@@ -159,7 +159,7 @@ sub generate_work_flow {
     my $hmmpfam_operation;
     if ($hmmpfam) {
         $self->status_message("create workflow operation for hmmpfam\n");
-    
+
         $hmmpfam_operation = Genome::WorkflowBuilder::Command->create(
             name => 'BER hmmpfam',
             command => 'Genome::Model::Tools::Predictor::Ber::Hmmpfam',
@@ -171,7 +171,7 @@ sub generate_work_flow {
             destination => $hmmpfam_operation,
             destination_property => 'input_fasta_file',
         );
-        
+
         for my $property (qw(output_directory ber_source_path lsf_queue lsf_resource)) {
             $workflow->connect_input(
                 input_property => $property,
@@ -250,15 +250,15 @@ sub locus_id {
 
 sub _get_locus_from_fasta_header {
     my $self = shift;
-    
+
     #get headers
-    my $output_fh = Genome::Sys->open_file_for_reading($self->input_fasta_file) 
+    my $output_fh = Genome::Sys->open_file_for_reading($self->input_fasta_file)
         or die "Could not get file handle for " . $self->input_fasta_file;
-    
+
     my $fasta_header = $output_fh->getline;
     chomp $fasta_header;
-    
-    #check header format 
+
+    #check header format
     my ($locus_id) = $fasta_header =~ /^\>\w*?\-?(\w+)_Contig/;
 
     $self->_locus_id($locus_id);
@@ -285,19 +285,19 @@ sub setup {
 
     my $asm_file = $locusid.'_asm_feature';
     unlink $config_dir.$asm_file if(-e $config_dir.$asm_file);
-    my $asm_fh = Genome::Sys->open_file_for_writing($config_dir.$asm_file) 
+    my $asm_fh = Genome::Sys->open_file_for_writing($config_dir.$asm_file)
         or croak "cann't open the file:$!.";
     my $asmbl_file = $locusid.'_asmbl_data';
     unlink $config_dir.$asmbl_file if(-e $config_dir.$asmbl_file);
-    my $asmbl_fh = Genome::Sys->open_file_for_writing($config_dir.$asmbl_file) 
+    my $asmbl_fh = Genome::Sys->open_file_for_writing($config_dir.$asmbl_file)
         or croak "cann't open the file:$!.";
     my $ident2_file = $locusid.'_ident2';
     unlink $config_dir.$ident2_file if(-e $config_dir.$ident2_file);
-    my $ident2_fh = Genome::Sys->open_file_for_writing($config_dir.$ident2_file) 
+    my $ident2_fh = Genome::Sys->open_file_for_writing($config_dir.$ident2_file)
         or croak "cann't open the file:$!.";
-    my $stan_file = $locusid.'_stan';    
+    my $stan_file = $locusid.'_stan';
     unlink $config_dir.$stan_file if(-e $config_dir.$stan_file);
-    my $stan_fh = Genome::Sys->open_file_for_writing($config_dir.$stan_file) 
+    my $stan_fh = Genome::Sys->open_file_for_writing($config_dir.$stan_file)
         or croak "cann't open the file:$!.";
 
     $asm_fh->print(join("\t", qw(asmbl_id end3 end5 feat_name feat_type))."\r\n");
@@ -347,8 +347,8 @@ sub setup {
     Genome::Sys->create_symlink($config_dir.$asm_file, $ber_db_csv_dir.$asm_file) unless(-l $ber_db_csv_dir.$asm_file);
     Genome::Sys->create_symlink($config_dir.$asmbl_file, $ber_db_csv_dir.$asmbl_file) unless(-l $ber_db_csv_dir.$asmbl_file);
     Genome::Sys->create_symlink($config_dir.$ident2_file, $ber_db_csv_dir.$ident2_file) unless(-l $ber_db_csv_dir.$ident2_file);
-    Genome::Sys->create_symlink($config_dir.$stan_file, $ber_db_csv_dir.$stan_file) unless(-l $ber_db_csv_dir.$stan_file); 
-    
+    Genome::Sys->create_symlink($config_dir.$stan_file, $ber_db_csv_dir.$stan_file) unless(-l $ber_db_csv_dir.$stan_file);
+
     return (\@blastp_files, \@hmmpfam_files);
 }
 
@@ -385,7 +385,7 @@ sub write_final_report {
                                  );
         $total_genes++;
     }
-    
+
     my $final_fh = Genome::Sys->open_file_for_writing($self->final_report_file);
     $final_fh->print("BER Final Report for ".$self->locus_id."\n");
     $final_fh->print("number of input sequences: $total_genes\n");
@@ -393,7 +393,7 @@ sub write_final_report {
     $final_fh->print("number of sequences with no hmmpfam hits: $no_domain_hits or ". sprintf("%.2f", $no_domain_hits/$total_genes *100)."\n");
     $final_fh->print("number of sequences in BER annotation output: $dat_line_count or ". sprintf("%.2f", $dat_line_count/$total_genes *100)."\n");
     $final_fh->close;
-    
+
     return;
 }
 
@@ -434,7 +434,7 @@ sub cleanup_files {
                              $self->hmm_dir,
                              $self->log_directory);
     croak "failed to remove directories" unless($error);
-    
+
     return 1;
 }
 
