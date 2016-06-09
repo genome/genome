@@ -173,7 +173,7 @@ sub _get_ptero_lsf_parameters {
 
     # Redirect stdout/err of post-exec command to file for debugging.
     # Clean up that file if post-exec exits normally.
-    my $postexec_cmd = "ptero-lsf-post-exec --stderr $stderr --stdout $stdout";
+    my $postexec_cmd = "/usr/bin/ptero-lsf-post-exec --stderr $stderr --stdout $stdout";
     if ($docker) {
         $postexec_cmd = join(' ', $docker_run, $postexec_cmd);
     } else {
@@ -187,7 +187,7 @@ sub _get_ptero_lsf_parameters {
     # Unlike post-exec, stdout/err of pre-exec command gets written to
     # errFile or outFile by lsf.  We want to exit 0 no matter what so
     # that the job doesn't get caught in a PEND->RUN->PEND loop.
-    my $preexec_cmd = 'ptero-lsf-pre-exec; exit 0;';
+    my $preexec_cmd = '/usr/bin/ptero-lsf-pre-exec; exit 0;';
     if ($docker) {
         $preexec_cmd = join(' ', $docker_run, $preexec_cmd);
     }
