@@ -5,9 +5,6 @@ use warnings;
 
 use Genome;
 
-use Workflow;
-use Workflow::Simple;
-
 my $DEFAULT_OUTPUT_FORMAT = 'gtf';
 my $DEFAULT_VERSION = '54_36p_v2';
 my $DEFAULT_ANNO_DB = 'NCBI-human.combined-annotation';
@@ -92,19 +89,12 @@ sub execute {
     my $module_path = $self->__meta__->module_path;
     my $xml_path = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
-    my $workflow = Workflow::Operation->create_from_xml($xml_path);
+
+    my $workflow = Genome::WorkflowBuilder::DAG->from_xml_filename($xml_path);
     Genome::Sys->create_directory($dirname."/annotate_reference_genome_logs");
-    $workflow->log_dir($dirname."/annotate_reference_genome_logs");
-    my @errors = $workflow->validate;
-    unless ($workflow->is_valid) {
-        die('Errors encountered while validating workflow '. $xml_path ."\n". join("\n", @errors));
-    }
-    my $output = Workflow::Simple::run_workflow_lsf($workflow, %params);
+    $workflow->recursively_set_log_dir($dirname."/annotate_reference_genome_logs");
+    my $output = $workflow->execute(inputs => \%params);
     unless (defined $output) {
-        @errors = @Workflow::Simple::ERROR;
-        for (@errors) {
-            print STDERR $_->error ."\n";
-        }
         return;
     }
     return 1;
