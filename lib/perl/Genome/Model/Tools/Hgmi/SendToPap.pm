@@ -12,7 +12,6 @@ use File::Temp qw/ tempfile tempdir /;
 use DateTime;
 use List::MoreUtils qw/ uniq /;
 use IPC::Run;
-use Workflow::Simple;
 use PAP;
 
 use Bio::Seq;
@@ -158,7 +157,7 @@ sub do_pap_workflow {
         $output = resume_lsf($previous_workflow_id);
     }
     else {
-        my $workflow = Workflow::Operation->create_from_xml($xml_file);
+        my $workflow = Genome::WorkflowBuilder::DAG->from_xml_filename($xml_file);
         confess "Could not create workflow!" unless $workflow;
 
         # FIXME Temp directory shouldn't be hard-coded
@@ -167,7 +166,7 @@ sub do_pap_workflow {
             DIR => '/gscmnt/temp212/info/annotation/pap_workflow_logs/',
         );
         chmod(0750, $tempdir);
-        $workflow->log_dir($tempdir);
+        $workflow->recursively_set_log_dir($tempdir);
 
         # TODO Implement dynamic workflow generation to allow an arbitrary combo of tools to be used
         my %workflow_params = (
@@ -187,9 +186,8 @@ sub do_pap_workflow {
 
         $self->debug_message("Kicking off PAP workflow!");
 
-        $output = run_workflow_lsf(
-            $workflow,
-            %workflow_params,
+        $output = $workflow->execute(
+            inputs => \%workflow_params,
         );
     }
 
@@ -197,13 +195,6 @@ sub do_pap_workflow {
         $self->debug_message("Protein annotation workflow completed successfully!");
     }
     else {
-        for my $error (@Workflow::Simple::ERROR) {
-            my @attributes = grep { defined $error->$_ } qw/ dispatch_identifier name start_time end_time exit_code /;
-            $self->error_message(join("\t", @attributes));
-            $self->error_message(join("\t", map {$error->$_} @attributes));
-            $self->error_message($error->stdout);
-            $self->error_message($error->stderr);
-        }
         confess 'Protein annotation workflow errors encountered, see above error messages!';
     }
     return 1;
