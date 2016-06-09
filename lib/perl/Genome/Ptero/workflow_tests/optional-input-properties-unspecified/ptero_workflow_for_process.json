@@ -154,8 +154,8 @@
                                                                   "errFile" : "/tmp/ptero-lsf-logfile-b9704d30-f4ca-48f8-bc8c-a8f9af610a73.err",
                                                                   "jobGroup" : "/genome/dmorton",
                                                                   "outFile" : "/tmp/ptero-lsf-logfile-b9704d30-f4ca-48f8-bc8c-a8f9af610a73.out",
-                                                                  "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-b9704d30-f4ca-48f8-bc8c-a8f9af610a73.err --stdout /tmp/ptero-lsf-logfile-b9704d30-f4ca-48f8-bc8c-a8f9af610a73.out",
-                                                                  "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                                                                  "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-c9490262-d50a-47e1-a273-093dd9b3b795.err --stdout /tmp/ptero-lsf-logfile-c9490262-d50a-47e1-a273-093dd9b3b795.out' > /tmp/ptero-lsf-logfile-c9490262-d50a-47e1-a273-093dd9b3b795-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-c9490262-d50a-47e1-a273-093dd9b3b795-postexec.log",
+                                                                  "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
                                                                   "queue" : "long"
                                                                },
                                                                "pollingInterval" : 300,
