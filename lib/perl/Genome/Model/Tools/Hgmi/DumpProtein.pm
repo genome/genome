@@ -17,7 +17,6 @@ use File::Temp qw/ tempfile tempdir /;
 use DateTime;
 use List::MoreUtils qw/ uniq /;
 use IPC::Run;
-use Workflow::Simple;
 use Data::Dumper;
 
 
