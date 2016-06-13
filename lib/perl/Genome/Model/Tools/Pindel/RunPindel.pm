@@ -68,6 +68,12 @@ class Genome::Model::Tools::Pindel::RunPindel {
             shell_args_position => '2',
             is_input => 1,
         },
+        region_file => {
+            is => 'FilePath',
+            is_input => 1,
+            is_optional => 1,
+            doc => 'Run pindel with this region bed file. format: chr start end. pindel version must be 0.2.5 or newer',
+        },
         _temp_long_insertion_output => {
             calculate_from => ['output_directory'],
             calculate => q{ join("/", $output_directory, "all_sequences_LI"); },
@@ -334,7 +340,11 @@ sub _detect_variants {
     $self->_generate_config_file;
 
     my $result = undef;
-    if ($self->chromosome) {
+
+    if ($self->region_file) {
+        $result = $self->_run_pindel_for_region($self->region_file);
+    }
+    elsif ($self->chromosome) {
         $result  = $self->_run_pindel_for_chromosome($self->chromosome);
 
         ## this is a hack, because the rest of the DetectVariants wants things to
@@ -362,7 +372,8 @@ sub _detect_variants {
             $self->error_message("Problem running $cmd");
             die;
         }
-    } else {
+    } 
+    else {
         $result = $self->_run_pindel($self->output_directory);
     }
     
@@ -447,6 +458,25 @@ sub _run_pindel_for_chromosome {
     return $result;
 }
 
+sub _run_pindel_for_region {
+    my ($self, $region_file) = @_;
+    
+    my $output_basename = join '/', $self->output_directory, 'all_sequences';
+    my $window_size     = $self->window_size;
+    my $ref_seq         = $self->reference_sequence_input;
+
+    my $cmd = [$self->pindel_path, "-f", $ref_seq, "-i", $self->_config_file, "-o", $output_basename, "-j", $region_file, "-w", $window_size, "-b", "/dev/null"];
+    Genome::Sys->shellcmd(cmd => $cmd);
+
+    #collect all pindel output, not just insertion and deletion
+    my $files_to_cat = join ' ', $self->_temp_short_insertion_output, $self->_temp_deletion_output, $self->_temp_long_insertion_output, $self->_temp_tandem_duplication_output, $self->_temp_inversion_output;
+    my $cat = "cat $files_to_cat > " . $self->output_directory."/indels.hq";
+    Genome::Sys->shellcmd(cmd => $cat);
+    
+    return 1;
+}
+
+
 sub pindel_path {
     my $self = $_[0];
     return $self->path_for_pindel_version($self->version);
@@ -455,6 +485,10 @@ sub pindel_path {
 sub available_pindel_versions {
     my $self = shift;
     return keys %PINDEL_VERSIONS;
+}
+
+sub pindel_region_compatible_versions {
+    return ('0.2.5'); 
 }
 
 sub path_for_pindel_version {
