@@ -74,13 +74,6 @@ class Genome::Model::Tools::Predictor::WorkflowGenerator {
             default_value => 0,
             doc => 'If set, a workflow xml file is dumped in the output directory',
         },
-        dump_workflow_png_file => {
-            is => 'Boolean',
-            is_input => 1,
-            is_optional => 1,
-            default_value => 0,
-            doc => 'If set, a workflow png file is dumped in the output directory',
-        },
         run_inline => {
             is => 'Boolean',
             is_input => 1,
@@ -246,10 +239,6 @@ sub generate_workflow {
         $xml_fh->close;
     }
 
-    if ($self->dump_workflow_png_file) {
-        $workflow->as_png($self->workflow_png_file_path);
-    }
-
     $self->_workflow($workflow);
     return $self->_workflow;
 }
@@ -257,11 +246,6 @@ sub generate_workflow {
 sub workflow_xml_file_path {
     my $self = shift;
     return join('/', $self->output_directory, 'workflow.xml');
-}
-
-sub workflow_png_file_path {
-    my $self = shift;
-    return join('/', $self->output_directory, 'workflow.png');
 }
 
 sub log_directory {
