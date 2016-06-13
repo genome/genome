@@ -49,7 +49,11 @@ class Genome::Model::ReferenceSequence::Command::CreateAlignerIndex {
         lsf_resource => {
             is => 'Text',
             value => "-R 'select[mem>16000 && tmp>150000] span[hosts=1] rusage[tmp=150000, mem=16000]' -M 16000000",
-        }
+        },
+        lsf_queue => {
+            is => 'Text',
+            value => Genome::Config::get('lsf_queue_build_worker'),
+        },
     ],
 };
 
