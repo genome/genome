@@ -37,7 +37,7 @@ sub load_positions {
         $class->fatal_message('Duplicate sequence id in trim positions! %s', $seq_id) if $trim_positions{$seq_id};
         
         if ( not $positions ) {
-            push @{$trim_positions{$seq_id}}, [qw/ 1 end /];
+            $trim_positions{$seq_id} = 'ALL';
             next;
         }
 
@@ -54,6 +54,38 @@ sub load_positions {
     $fh->close;
 
     return \%trim_positions;
+}
+
+sub keep_positions_for_sequence {
+    my ($self, $seq) = @_;
+
+    # Look up by id
+    my $trim_positions = $self->trim_positions->{ $seq->{id} };
+    if ( not $trim_positions ) {
+        # Look up by orig seq id
+        $trim_positions = $self->trim_positions->{ $seq->{orig_seq_id} } if $seq->{orig_seq_id};
+        if ( not $trim_positions ) {
+            # pcap naming
+            my $pcap_seq_id = $seq->{id};
+            $pcap_seq_id =~ s/scaffold/Contig/g;
+            $trim_positions = $self->trim_positions->{$pcap_seq_id};
+            return 'ALL' if not $trim_positions; # keep it!
+        }
+    }
+
+    return if not ref $trim_positions; # trim all
+
+    my @keep_positions;
+    my $current_pos = 0;
+    for my $set ( @$trim_positions ) {
+        push @keep_positions, [ $current_pos, ( $set->[0] - $current_pos - 1 ) ];
+        $current_pos = $set->[1];
+    }
+
+    # keep the last part
+    push @keep_positions, [ $current_pos, ( length($seq->{seq}) - $current_pos ) ];
+
+    return \@keep_positions;
 }
 
 1;
