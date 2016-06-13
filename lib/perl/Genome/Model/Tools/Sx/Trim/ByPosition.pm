@@ -88,5 +88,31 @@ sub keep_positions_for_sequence {
     return \@keep_positions;
 }
 
+sub trim_sequence {
+    my ($self, $seq) = @_;
+
+    my $keep_positions = $self->keep_positions_for_sequence($seq);
+    if ( not $keep_positions ) { # remove
+        $seq->{seq} = '';
+        $seq->{qual} = '' if $seq->{qual};
+        return 1;
+    }
+    elsif ( $keep_positions eq 'ALL' ) {
+        return 1;
+    }
+
+    my ($bases, $quals);
+    my $has_qual = exists $seq->{qual};
+    for my $set ( @$keep_positions ) {
+        $bases .= substr($seq->{seq}, $set->[0], $set->[1]);
+        $quals .= substr($seq->{qual}, $set->[0], $set->[1]) if $has_qual;
+    }
+
+    $seq->{seq} = $bases;
+    $seq->{qual} = $quals if $has_qual;
+
+    return 1;
+}
+
 1;
 

@@ -8,7 +8,7 @@ use above "Genome";
 use File::Temp;
 use Genome::Utility::Test 'compare_ok';
 use Test::Exception;
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 my $pkg = 'Genome::Model::Tools::Sx::Trim::ByPosition';
 use_ok($pkg) or die;
@@ -91,6 +91,65 @@ subtest 'keep positions' => sub{
         $trimmer->keep_positions_for_sequence($seq),
         [ [0,2], [6,9], ],
         'trim_positions for Contig1.1',
+    );
+
+};
+
+subtest 'trim sequence' => sub{
+    plan tests => 8;
+
+    my $trimmer = $pkg->create;
+    ok($trimmer, 'create trimmer');
+
+    my $positions = $trimmer->trim_positions(
+        {
+            TRIM_ALL => 'ALL',
+            TRIM_SEVERAL => [ [2,4], [6,8], [11,13] ],
+        },
+    );
+    ok($trimmer->trim_positions, 'set positions');
+
+    my $seq = {
+        seq => 'A' x 15,
+        qual => '#' x 15,
+    };
+    $seq->{id} = 'KEEP_ALL';
+    ok($trimmer->trim_sequence($seq), 'keep sequence');
+    is_deeply(
+        $seq,
+        {
+            id => 'KEEP_ALL',
+            seq => 'A' x 15,
+            qual => '#' x 15,
+        },
+        'sequence matches for KEEP_ALL',
+    );
+
+    $seq->{id} = 'TRIM_ALL';
+    ok($trimmer->trim_sequence($seq), 'trim entire sequence');
+    is_deeply(
+        $seq,
+        {
+            id => 'TRIM_ALL',
+            seq => '',
+            qual => '',
+        },
+        'sequence matches for TRIM_ALL',
+    );
+
+    $seq->{id} = 'TRIM_SEVERAL';
+    $seq->{seq} = 'A' x 15;
+    delete $seq->{qual};
+    #$seq->{qual} = '#' x 15;
+    ok($trimmer->trim_sequence($seq), 'trim_sequence for TRIM_SEVERAL');
+    is_deeply(
+        $seq,
+        {
+            id => 'TRIM_SEVERAL',
+            seq => 'A' x 6,
+            #       qual => '#' x 6,
+        },
+        'sequence matches for TRIM_SEVERAL',
     );
 
 };
