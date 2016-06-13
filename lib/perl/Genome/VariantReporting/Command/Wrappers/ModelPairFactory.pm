@@ -125,13 +125,13 @@ sub get_model_pairs {
             my %params = (
                 common_translations => $self->get_common_translations(),
                 discovery => $discovery_build,
-                plan_file_basename => "cle_docm_report_TYPE.yaml",
                 label => $other_input_vcf_pair,
                 other_snvs_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[0],
                 other_indels_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[1],
             );
             if ($validation_build) {
-                $params{followup} = $validation_build
+                $params{followup} = $validation_build;
+                $params{plan_file_basename} = "cle_docm_report_TYPE.yaml";
             }
             else { # case for no followup
                 $params{plan_file_basename} = "cle_somatic_docm_report_TYPE.yaml";
