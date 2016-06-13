@@ -79,13 +79,12 @@ sub get_model_pairs {
                 label => 'discovery',
             );
         }
+        elsif (@models != 2) { 
+            $self->warning_message("Skipping models for ROI %s because there are not either one or two models: %s",
+                $roi, join(", ", map {$_->__display_name__} @models));
+            next;
+        }
         else {
-            unless (@models == 2) {
-                $self->warning_message("Skipping models for ROI %s because there are not exactly two models: %s",
-                    $roi, join(", ", map {$_->__display_name__} @models));
-                next;
-            }
-
             my @discovery_models = grep { $self->is_model_discovery($_) } @models;
             my @validation_models = grep { $self->is_model_followup($_) } @models;
 

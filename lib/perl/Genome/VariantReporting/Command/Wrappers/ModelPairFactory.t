@@ -39,7 +39,7 @@ subtest "Three models for an roi" => sub {
 
     my @pairs = @{$factory->get_model_pairs};
     ok(@pairs == 0, "Factory with three model returned no pairs");
-    ok($factory->warning_message =~ /Skipping models for ROI $roi_name because there are not exactly two models/,
+    ok($factory->warning_message =~ /Skipping models for ROI $roi_name because there are not either one or two models/,
         "Warning message set correctly");
 
 };
