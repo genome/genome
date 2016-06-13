@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use Genome;
 
-use Workflow::Model;
-use Workflow::Simple;
 use lib '/gsc/scripts/opt/bacterial-bioperl';
 
 class Genome::Model::Tools::Predictor::WorkflowGenerator {
@@ -93,7 +91,7 @@ class Genome::Model::Tools::Predictor::WorkflowGenerator {
             is => 'Genome::Model::Tools::Predictor::StrategyParser',
         },
         _workflow => {
-            is => 'Workflow::Model',
+            is => 'Genome::WorkflowBuilder::DAG',
         },
         _result => {
             is => 'HASH',
@@ -122,13 +120,13 @@ sub start {
 
         my $result;
         if ($self->run_inline) {
-            $result = Workflow::Simple::run_workflow($workflow, %inputs);
+            $result = $workflow->execute_inline(\%inputs);
         }
         else {
-            $result = Workflow::Simple::run_workflow_lsf($workflow, %inputs);
+            $result = $workflow->execute(inputs => \%inputs);
         }
         unless ($result) {
-            die "Error running prediction workflow\n" . join("\n", map { $_->name . ": " . $_->error } @Workflow::Simple::ERROR);
+            die "Error running prediction workflow";
         }
 
         $self->_result($result);
@@ -191,15 +189,9 @@ sub generate_workflow {
     my @inputs = $self->_get_unique_values(%input_mapping);
     my @outputs = $self->_get_unique_values(%output_mapping);
 
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $self->workflow_name,
-        input_properties => \@inputs,
-        output_properties => ['bio_seq_features', 'result'],
     );
-    unless (-d $self->log_directory) {
-        Genome::Sys->create_directory($self->log_directory);
-    }
-    $workflow->log_dir($self->log_directory);
 
     # Create fasta chunking operation, if necessary
     my $fasta_chunk_operation = $self->_make_fasta_chunk_operation($workflow);
@@ -233,11 +225,14 @@ sub generate_workflow {
     }
 
     if ($self->dump_workflow_xml_file) {
-        my $xml = $workflow->save_to_xml;
-        my $xml_fh = Genome::Sys->open_file_for_writing($self->workflow_xml_file_path);
-        $xml_fh->print($xml);
-        $xml_fh->close;
+        my $xml = $workflow->get_xml;
+        my $xml_fh = Genome::Sys->write_file($self->workflow_xml_file_path, $xml);
     }
+
+    unless (-d $self->log_directory) {
+        Genome::Sys->create_directory($self->log_directory);
+    }
+    $workflow->recursively_set_log_dir($self->log_directory);
 
     $self->_workflow($workflow);
     return $self->_workflow;
@@ -328,26 +323,19 @@ sub _make_fasta_chunk_operation {
 
     my $fasta_chunk_operation;
     if (grep { $_->requires_chunking } @predictors) {
-        $fasta_chunk_operation = $workflow->add_operation(
+        $fasta_chunk_operation = Genome::WorkflowBuilder::Command->create(
             name => 'chunk fasta sequences',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::Tools::Predictor::FastaChunker',
-            ),
+            command => 'Genome::Model::Tools::Predictor::FastaChunker',
         );
+        $workflow->add_operation($fasta_chunk_operation);
 
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'chunk_size',
-            right_operation => $fasta_chunk_operation,
-            right_property => 'chunk_size',
-        );
-
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'input_fasta_file',
-            right_operation => $fasta_chunk_operation,
-            right_property => 'input_fasta_file',
-        );
+        for my $property (qw(chunk_size input_fasta_file)) {
+            $workflow->connect_input(
+                input_property => $property,
+                destination => $fasta_chunk_operation,
+                destination_property => $property,
+            );
+        }
     }
 
     return $fasta_chunk_operation;
@@ -359,13 +347,12 @@ sub _make_predictor_operations {
     my @predictors = $self->_get_or_create_parser->predictor_classes;
     my @predictor_operations;
     for my $predictor (@predictors) {
-        my $predictor_operation = $workflow->add_operation(
+        my $predictor_operation = Genome::WorkflowBuilder::Command->create(
             name => $predictor->class_to_short_name,
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => $predictor,
-            ),
+            command => $predictor,
             ($predictor->requires_chunking ? (parallel_by => 'input_fasta_file') : () ),
         );
+        $workflow->add_operation($predictor_operation);
         push @predictor_operations, $predictor_operation;
     }
     return @predictor_operations;
@@ -388,16 +375,16 @@ sub _link_inputs_to_predictors {
     
     my %input_mapping = $self->_gather_properties_of_type('input', @predictors);
     for my $predictor_operation (@predictor_operations) {
-        my $predictor = $predictor_operation->operation_type->command_class_name;
+        my $predictor = $predictor_operation->command;
         my @predictor_inputs = @{$input_mapping{$predictor}};
         my $predictor_name = $predictor->class_to_short_name;
         for my $input (@predictor_inputs) {
             if ($input =~ /input_fasta_file/ and $predictor->requires_chunking) {
-                $workflow->add_link(
-                    left_operation => $fasta_chunk_operation,
-                    left_property => 'fasta_files',
-                    right_operation => $predictor_operation,
-                    right_property => 'input_fasta_file',
+                $workflow->create_link(
+                    source => $fasta_chunk_operation,
+                    source_property => 'fasta_files',
+                    destination => $predictor_operation,
+                    destination_property => 'input_fasta_file',
                 );
             }
             # For predictor specific inputs, need to strip out the leading predictor name
@@ -406,19 +393,17 @@ sub _link_inputs_to_predictors {
                 my $actual_input = $input;
                 my $string_to_remove = $predictor_name . '_';
                 $actual_input =~ s/$string_to_remove//;
-                $workflow->add_link(
-                    left_operation => $workflow->get_input_connector,
-                    left_property => $input,
-                    right_operation => $predictor_operation,
-                    right_property => $actual_input,
+                $workflow->connect_input(
+                    input_property => $input,
+                    destination => $predictor_operation,
+                    destination_property => $actual_input,
                 );
             }
             else {
-                $workflow->add_link(
-                    left_operation => $workflow->get_input_connector,
-                    left_property => $input,
-                    right_operation => $predictor_operation,
-                    right_property => $input,
+                $workflow->connect_input(
+                    input_property => $input,
+                    destination => $predictor_operation,
+                    destination_property => $input,
                 );
             }
         }
@@ -445,29 +430,27 @@ sub _create_converge_and_link_to_predictors {
         $predictor_converge_mapping{$predictor} = [$output, join('_', $predictor->class_to_short_name, $output)];
     }
 
-    my $converge_operation = $workflow->add_operation(
+    my $converge_operation = Genome::WorkflowBuilder::Converge->create(
         name => 'converge',
-        operation_type => Workflow::OperationType::Converge->create(
-            input_properties => [map { $predictor_converge_mapping{$_}->[1] } sort keys %predictor_converge_mapping],
-            output_properties => ['features'],
-        ),
+        input_properties => [map { $predictor_converge_mapping{$_}->[1] } sort keys %predictor_converge_mapping],
+        output_properties => ['features'],
     );
+    $workflow->add_operation($converge_operation);
 
     for my $predictor_operation (@predictor_operations) {
-        my $predictor = $predictor_operation->operation_type->command_class_name;
-        $workflow->add_link(
-            left_operation => $predictor_operation,
-            left_property => $predictor_converge_mapping{$predictor}->[0],
-            right_operation => $converge_operation,
-            right_property => $predictor_converge_mapping{$predictor}->[1],
+        my $predictor = $predictor_operation->command;
+        $workflow->create_link(
+            source => $predictor_operation,
+            source_property => $predictor_converge_mapping{$predictor}->[0],
+            destination => $converge_operation,
+            destination_property => $predictor_converge_mapping{$predictor}->[1],
         );
     }
 
-    $workflow->add_link(
-        left_operation => $converge_operation,
-        left_property => 'features',
-        right_operation => $workflow->get_output_connector,
-        right_property => 'bio_seq_features',
+    $workflow->connect_output(
+        source => $converge_operation,
+        source_property => 'features',
+        output_property => 'bio_seq_features',
     );
 
     return $converge_operation;
@@ -487,32 +470,29 @@ sub _create_merge_ace_file_operation {
         for my $predictor (@predictors) {
             my ($operation) = grep { $_->name eq $predictor->class_to_short_name } @predictor_operations;
             
-            $merge_operation = $workflow->add_operation(
+            $merge_operation = Genome::WorkflowBuilder::Command->create(
                 name => 'merge_ace_files',
-                operation_type => Workflow::OperationType::Command->create(
-                    command_class_name => 'Genome::Model::Tools::MergeFiles',
-                ),
+                command => 'Genome::Model::Tools::MergeFiles',
+            );
+            $workflow->add_operation($merge_operation);
+
+            $workflow->create_link(
+                source => $operation,
+                source_property => 'ace_file',
+                destination => $merge_operation,
+                destination_property => 'input_files',
             );
 
-            $workflow->add_link(
-                left_operation => $operation,
-                left_property => 'ace_file',
-                right_operation => $merge_operation,
-                right_property => 'input_files',
+            $workflow->connect_input(
+                input_property => join('_', $predictor->class_to_short_name, 'output_directory'),
+                destination => $merge_operation,
+                destination_property => 'output_directory',
             );
 
-            $workflow->add_link(
-                left_operation => $workflow->get_input_connector,
-                left_property => join('_', $predictor->class_to_short_name, 'output_directory'),
-                right_operation => $merge_operation,
-                right_property => 'output_directory',
-            );
-
-            $workflow->add_link(
-                left_operation => $merge_operation,
-                left_property => 'result',
-                right_operation => $workflow->get_output_connector,
-                right_property => 'result',
+            $workflow->connect_output(
+                source => $merge_operation,
+                source_property => 'result',
+                output_property => 'result',
             );
         }
     }
