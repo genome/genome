@@ -96,10 +96,12 @@ sub bed_file_label {
 
     my %labels = (
         docm      => 'Recurrent AML Variants',
-        followup  => sprintf('Followup(%s) Variants', $process->followup_sample->name),
         discovery => sprintf('Discovery(%s) Variants', $process->tumor_sample->name),
         germline  => sprintf('Germline(%s) Variants', $process->normal_sample->name)
     );
+
+    $labels{followup} = sprintf('Followup(%s) Variants', $process->followup_sample->name)
+        if $process->followup_sample;
 
     return $labels{$category};
 }

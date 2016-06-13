@@ -22,6 +22,7 @@ class Genome::VariantReporting::Process::Trio {
         },
         followup_sample => {
             is => 'Genome::Sample',
+            is_optional => 1,
         },
         normal_sample => {
             is => 'Genome::Sample',

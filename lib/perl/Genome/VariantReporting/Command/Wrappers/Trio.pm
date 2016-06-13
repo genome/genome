@@ -37,6 +37,7 @@ class Genome::VariantReporting::Command::Wrappers::Trio {
         },
         followup_sample => {
             is => 'Genome::Sample',
+            is_optional => 1,
             doc => 'Additional sample to report readcounts on at discovery variant positions',
         },
         normal_sample => {
@@ -67,13 +68,14 @@ sub execute {
 
 sub process_params {
     my $self = shift;
-    return (
+    my %params = (
         builds => [$self->builds],
         coverage_builds => [$self->coverage_builds],
         tumor_sample => $self->tumor_sample,
-        followup_sample => $self->followup_sample,
         normal_sample => $self->normal_sample,
     );
+    $params{followup_sample} = $self->followup_sample if $self->followup_sample;
+    return %params;
 }
 
 sub builds {
@@ -109,8 +111,10 @@ sub dag {
         $self->add_reports_to_workflow($dag, $model_pair);
     }
 
-    $self->add_merge_discovery_and_followup_reports_to_workflow(
-        $dag, keys %{$models_for_roi});
+    if ($self->followup_sample) {
+        $self->add_merge_discovery_and_followup_reports_to_workflow(
+            $dag, keys %{$models_for_roi});
+    }
     $self->add_igv_xml_to_workflow($dag, $model_pairs, keys %{$models_for_roi});
 
     return $dag;
@@ -121,6 +125,9 @@ sub add_igv_xml_to_workflow {
     my $dag = shift;
     my $model_pairs = shift;
     my @roi_names = @_;
+
+    my @category_list = qw(discovery germline);
+    splice(@category_list, 1, 0, 'followup') if $self->followup_sample;
 
     # If we include the followup model pair then the labels will get assigned incorrectly
     my %bams = map { $_->get_sample_and_bam_map } grep { $_->label eq 'germline' || $_->label eq 'discovery' } @$model_pairs;
@@ -137,7 +144,7 @@ sub add_igv_xml_to_workflow {
         );
         $dag->add_operation($converge);
 
-        for my $category (qw(discovery followup germline), keys %{$self->other_input_vcf_pairs}) {
+        for my $category (@category_list, keys %{$self->other_input_vcf_pairs}) {
             my $sub_dag = $dag->operation_named(sub_dag_name($roi_name, $category));
             my $output_name = "merged_result (bed)";
 
@@ -275,13 +282,14 @@ sub other_input_vcf_pairs {
 
 sub get_model_pairs_and_models_for_roi {
     my $self = shift;
-    my $factory = Genome::VariantReporting::Command::Wrappers::ModelPairFactory->create(
+    my %params = (
         models => [$self->models],
         discovery_sample => $self->tumor_sample,
-        followup_sample => $self->followup_sample,
         normal_sample => $self->normal_sample,
         other_input_vcf_pairs => $self->other_input_vcf_pairs,
     );
+    $params{followup_sample} = $self->followup_sample if $self->followup_sample;
+    my $factory = Genome::VariantReporting::Command::Wrappers::ModelPairFactory->create(%params);
     return $factory->get_model_pairs, $factory->get_models_for_roi;
 }
 
