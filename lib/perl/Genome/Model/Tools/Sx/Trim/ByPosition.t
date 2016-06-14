@@ -8,7 +8,7 @@ use above "Genome";
 use File::Temp;
 use Genome::Utility::Test 'compare_ok';
 use Test::Exception;
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 my $pkg = 'Genome::Model::Tools::Sx::Trim::ByPosition';
 use_ok($pkg) or die;
@@ -148,6 +148,25 @@ subtest 'trim sequence' => sub{
         },
         'sequence matches for TRIM_SEVERAL',
     );
+
+};
+
+subtest 'execute' => sub{
+    plan tests => 3;
+
+    my $positions_path = File::Spec->join($dir, 'trim-positions.txt');
+    my $in_fasta = File::Spec->join($dir, 'input.fasta');
+    my $out_fasta = File::Spec->join($tmp_dir, 'out.fasta');
+    my $trimmer = $pkg->create(
+        positions_path => $positions_path,
+        input => $in_fasta,
+        output => $out_fasta,
+    );
+    ok($trimmer, 'create trimmer');
+    ok($trimmer->execute, 'execute');
+
+    my $expected_fasta = File::Spec->join($dir, 'expected.fasta');
+    compare_ok($out_fasta, $expected_fasta, 'out fasta matches');
 
 };
 

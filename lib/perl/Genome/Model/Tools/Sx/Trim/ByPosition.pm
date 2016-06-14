@@ -26,6 +26,28 @@ class Genome::Model::Tools::Sx::Trim::ByPosition {
 sub help_brief { "Trim sequences by positions" }
 sub help_detail { help_brief() }
 
+sub execute {
+    my $self = shift;
+
+    my $trim_positions = $self->load_positions( $self->positions_path );
+    $self->trim_positions($trim_positions);
+
+    $self->_init;
+
+    my ($seqs, @seqs_to_write);
+    while ( $seqs = $self->_reader->read ) {
+        for my $seq ( @$seqs ) {
+            $self->trim_sequence($seq);
+            push @seqs_to_write, $seq if length($seq->{seq});
+        }
+        next if not @seqs_to_write;
+        $self->_writer->write(\@seqs_to_write);
+        @seqs_to_write = ();
+    }
+
+    return 1;
+}
+
 sub load_positions {
     my ($class, $positions_path) = validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
 
@@ -35,7 +57,7 @@ sub load_positions {
         chomp $line;
         my ($seq_id, $positions) = split(/\s+/, $line, 2);
         $class->fatal_message('Duplicate sequence id in trim positions! %s', $seq_id) if $trim_positions{$seq_id};
-        
+
         if ( not $positions ) {
             $trim_positions{$seq_id} = 'ALL';
             next;
