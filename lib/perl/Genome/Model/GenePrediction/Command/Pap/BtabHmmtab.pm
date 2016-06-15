@@ -82,7 +82,7 @@ sub help_brief
 sub help_synopsis
 {
     return <<"EOS"
-    my \$w = Workflow::Model->create_from_xml("some xml...");
+    my \$w = Genome::WorkflowBuilder::DAG->from_xml("some xml...");
     my \$result = \$w->execute( 'locus tag'       => "locustag",
                               'fastadir'        => \$self->fastadirpath,
                               'berdirpath'      => \$self->berdirpath,
