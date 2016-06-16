@@ -13,7 +13,7 @@ class Genome::VariantReporting::Command::Wrappers::ModelPairFactory {
             is_many => 1,
         },
         discovery_sample => { is => 'Genome::Sample', },
-        followup_sample => { is => 'Genome::Sample', },
+        followup_sample => { is => 'Genome::Sample', is_optional => 1},
         normal_sample => { is => 'Genome::Sample',},
         other_input_vcf_pairs => { is => 'Hashref', default_value => {}},
     },
@@ -68,58 +68,75 @@ sub get_model_pairs {
     my %models_for_roi = %{$self->get_models_for_roi};
     while (my ($roi, $model_list) = each %models_for_roi) {
         my @models = grep {!$self->is_single_bam($_)} @{$model_list};
+        my ($discovery_build, $validation_build);
 
-        unless (@models == 2) {
-            $self->warning_message("Skipping models for ROI %s because there are not exactly two models: %s",
+        if (@models == 1) {#case for no followup
+            $discovery_build = $models[0]->last_succeeded_build;
+            push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
+                common_translations => $self->get_common_translations(),
+                plan_file_basename => "cle_somatic_TYPE_report.yaml",
+                discovery => $discovery_build,
+                label => 'discovery',
+            );
+        }
+        elsif (@models != 2) { 
+            $self->warning_message("Skipping models for ROI %s because there are not either one or two models: %s",
                 $roi, join(", ", map {$_->__display_name__} @models));
             next;
         }
+        else {
+            my @discovery_models = grep { $self->is_model_discovery($_) } @models;
+            my @validation_models = grep { $self->is_model_followup($_) } @models;
 
-        my @discovery_models = grep { $self->is_model_discovery($_) } @models;
-        my @validation_models = grep { $self->is_model_followup($_) } @models;
+            if ( @discovery_models != 1 or @validation_models != 1 ) {
+                $self->warning_message("Incorrect discovery/followup pairing for models for ROI (%s). One of each is required!\nDiscovery:%s\nFollowup:%s\n", $roi, join(", ", map {$_->__display_name__} @discovery_models),
+                    join(", ", map {$_->__display_name__} @validation_models));
+                next;
+            }
 
-        if ( @discovery_models != 1 or @validation_models != 1 ) {
-            $self->warning_message("Incorrect discovery/followup pairing for models for ROI (%s). One of each is required!\nDiscovery:%s\nFollowup:%s\n", $roi, join(", ", map {$_->__display_name__} @discovery_models),
-            join(", ", map {$_->__display_name__} @validation_models));
-            next;
-        }
+            $discovery_build = $discovery_models[0]->last_succeeded_build;
+            if ( not $discovery_build ) {
+                $self->warning_message('No last succeeded build for discovery model (%s). Skipping ROI %s.', $discovery_models[0]->__display_name__, $roi);
+                next;
+            }
 
-        my $discovery_build = $discovery_models[0]->last_succeeded_build;
-        if ( not $discovery_build ) {
-            $self->warning_message('No last succeeded build for discovery model (%s). Skipping ROI %s.', $discovery_models[0]->__display_name__, $roi);
-            next;
-        }
+            $validation_build = $validation_models[0]->last_succeeded_build;
+            if ( not $validation_build ) {
+                $self->warning_message('No last succeeded build for followup model (%s). Skipping ROI %s.', $validation_models[0]->__display_name__, $roi);
+                next;
+            }
 
-        my $validation_build = $validation_models[0]->last_succeeded_build;
-        if ( not $validation_build ) {
-            $self->warning_message('No last succeeded build for followup model (%s). Skipping ROI %s.', $validation_models[0]->__display_name__, $roi);
-            next;
-        }
-
-        push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
-            common_translations => $self->get_common_translations(),
-            discovery => $discovery_build,
-            followup => $validation_build,
-            label => "discovery",
-        );
-
-        push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
-            common_translations => $self->get_common_translations(),
-            discovery => $validation_build,
-            followup => $discovery_build,
-            label => "followup",
-        );
-
-        for my $other_input_vcf_pair (keys %{$self->other_input_vcf_pairs}) {
-            push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPairWithInput->create(
+            push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
                 common_translations => $self->get_common_translations(),
                 discovery => $discovery_build,
                 followup => $validation_build,
-                plan_file_basename => "cle_docm_report_TYPE.yaml",
+                label => "discovery",
+            );
+
+            push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
+                common_translations => $self->get_common_translations(),
+                discovery => $validation_build,
+                followup => $discovery_build,
+                label => "followup",
+            );
+        }
+
+        for my $other_input_vcf_pair (keys %{$self->other_input_vcf_pairs}) {
+            my %params = (
+                common_translations => $self->get_common_translations(),
+                discovery => $discovery_build,
                 label => $other_input_vcf_pair,
                 other_snvs_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[0],
                 other_indels_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[1],
             );
+            if ($validation_build) {
+                $params{followup} = $validation_build;
+                $params{plan_file_basename} = "cle_docm_report_TYPE.yaml";
+            }
+            else { # case for no followup
+                $params{plan_file_basename} = "cle_somatic_docm_report_TYPE.yaml";
+            }
+            push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPairWithInput->create(%params);
         }
     }
 
@@ -129,20 +146,23 @@ sub get_model_pairs {
 sub get_common_translations {
     my $self = shift;
 
+    my $sample_translations  = {
+        $self->discovery_sample->name => sprintf('Discovery(%s)', $self->discovery_sample->name),
+        $self->normal_sample->name    => sprintf('Normal(%s)', $self->normal_sample->name),
+    };
+
+    my $library_translations = {
+        $self->get_library_name_labels('discovery', $self->discovery_sample, [$self->models]),
+        $self->get_library_name_labels('normal', $self->normal_sample, [$self->models]),
+    };
+
+    if ($self->followup_sample) {
+        $sample_translations->{$self->followup_sample->name} = sprintf('Followup(%s)', $self->followup_sample->name);
+        %$library_translations = (%$library_translations, $self->get_library_name_labels('followup', $self->followup_sample, [$self->models]));
+    }
     return {
-        sample_name_labels => {
-            $self->discovery_sample->name =>
-                sprintf('Discovery(%s)', $self->discovery_sample->name),
-            $self->followup_sample->name =>
-                sprintf('Followup(%s)', $self->followup_sample->name),
-            $self->normal_sample->name =>
-                sprintf('Normal(%s)', $self->normal_sample->name),
-        },
-        library_name_labels => {
-            $self->get_library_name_labels('discovery', $self->discovery_sample, [$self->models]),
-            $self->get_library_name_labels('followup', $self->followup_sample, [$self->models]),
-            $self->get_library_name_labels('normal', $self->normal_sample, [$self->models]),
-        },
+        sample_name_labels  => $sample_translations,
+        library_name_labels => $library_translations,
     };
 }
 

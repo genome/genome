@@ -1,0 +1,166 @@
+experts:
+    'bam-readcount':
+        aligned_bam_result_id: [aligned_bam_result_id]
+        version: 0.7
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 1
+    vep:
+        ensembl_version: 75
+        reference_version: GRCh37
+        custom_annotation_tags:
+            - ON_TARGET
+            - SEG_DUP
+            - AML_RMG
+        feature_list_ids: feature_list_ids
+        reference_fasta: reference_fasta
+        species: 'homo-sapiens'
+        plugins:
+            - Condel@PLUGIN_DIR@b@2
+        plugins_version: 1
+        joinx_version: 1.9
+        short_name: 0
+        allow_same_file: 0
+    dbsnp:
+        joinx_version: 1.10
+        info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+        vcf: dbsnp_vcf
+    homopolymer:
+        joinx_version: 1.9
+        max_length: 2
+        info_string: 'HOMP_FILTER'
+        homopolymer_list_id: homopolymer_list_id
+reports:
+    'full':
+        filters:
+            'allele-in-genotype':
+                sample_name: discovery_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: discovery_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
+        interpreters:
+            position: {}
+            'variant-type': {}
+            vep: {}
+            'info-tags': {}
+            rsid: {}
+            caf: {}
+            'min-coverage':
+                min_coverage: 10
+                sample_name: discovery_tumor
+            'min-coverage-observed':
+                sample_name_labels: sample_name_labels
+                sample_names:
+                    - discovery_tumor
+                    - normal
+            'max-vaf-observed':
+                tumor_sample_names:
+                    - discovery_tumor
+                normal_sample_names:
+                    - normal
+            'variant-callers':
+                valid_callers:
+                    - VarscanSomatic
+                    - Sniper
+                    - Strelka
+                    - Pindel
+                    - GatkSomaticIndel
+                sample_name: discovery_tumor
+            vaf:
+                sample_name_labels: sample_name_labels
+                sample_names:
+                    - discovery_tumor
+                    - normal
+            'per-library-vaf':
+                sample_name_labels: sample_name_labels
+                sample_names:
+                    - discovery_tumor
+                    - normal
+                library_name_labels: library_name_labels
+                library_names: [library_names]
+        params:
+            sample_name_labels: sample_name_labels
+            sample_names:
+                - discovery_tumor
+                - normal
+            library_name_labels: library_name_labels
+            library_names: [library_names]
+    'simple':
+        filters:
+            'allele-in-genotype':
+                sample_name: discovery_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: discovery_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
+        interpreters:
+            position: {}
+            vep: {}
+            'variant-type': {}
+    'vcf':
+        filters: {}
+        interpreters:
+            'vcf-entry': {}
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: discovery_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER  
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
+    'bed':
+        filters:
+            'allele-in-genotype':
+                sample_name: discovery_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: discovery_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
+        interpreters:
+            'bed-entry': {}
+        params:
+            generate_legend_file: 0

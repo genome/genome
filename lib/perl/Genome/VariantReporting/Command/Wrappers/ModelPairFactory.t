@@ -29,19 +29,6 @@ my $build3 = get_build($roi_name, $tumor_sample2, $normal_sample1);
 my $build4 = get_build($roi2, $tumor_sample1, $normal_sample1);
 my $build5 = get_build($roi2, $tumor_sample2, $normal_sample1);
 
-subtest "Only one model for an roi" => sub {
-
-    my $factory = $pkg->create(models => [$build1->model],
-        discovery_sample => $tumor_sample1,
-        followup_sample => $tumor_sample2,
-        normal_sample => $normal_sample1,
-    );
-
-    my @pairs = @{$factory->get_model_pairs};
-    ok(@pairs == 0, "Factory with only one model returned no pairs");
-    ok($factory->warning_message =~ /Skipping models for ROI $roi_name because there are not exactly two models/,
-        "Warning message set correctly");
-};
 
 subtest "Three models for an roi" => sub {
     my $factory = $pkg->create(models => [$build1->model, $build2->model, $build3->model],
@@ -51,8 +38,8 @@ subtest "Three models for an roi" => sub {
     );
 
     my @pairs = @{$factory->get_model_pairs};
-    ok(@pairs == 0, "Factory with only one model returned no pairs");
-    ok($factory->warning_message =~ /Skipping models for ROI $roi_name because there are not exactly two models/,
+    ok(@pairs == 0, "Factory with three models returned no pairs");
+    ok($factory->warning_message =~ /Skipping models for ROI $roi_name because there are not either one or two models/,
         "Warning message set correctly");
 
 };
@@ -66,7 +53,7 @@ subtest "Models for an roi don't have the right samples" => sub {
     );
 
     my @pairs = @{$factory->get_model_pairs};
-    ok(@pairs == 0, "Factory with only one model returned no pairs");
+    ok(@pairs == 0, "Factory with wrong samples returned no pairs");
     ok($factory->warning_message =~ /Incorrect discovery\/followup pairing for models for ROI \($roi_name\)/,
         "Warning message set correctly");
 };
@@ -79,14 +66,25 @@ subtest "One model doesn't have last succeeded build" => sub {
     );
 
     my @pairs = @{$factory->get_model_pairs};
-    ok(@pairs == 0, "Factory with only one model returned no pairs");
+    ok(@pairs == 0, "Factory with model that does not have succeeded build returned no pairs");
     ok($factory->warning_message =~ /No last succeeded build for discovery model/,
 
         "Warning message set correctly");
 };
 
-subtest "Two valid model pairs" => sub {
+subtest "one discovery model for an roi" => sub {
     succeed_build($build1);
+
+    my $factory = $pkg->create(models => [$build1->model],
+        discovery_sample => $tumor_sample1,
+        normal_sample    => $normal_sample1,
+    );
+
+    my @pairs = @{$factory->get_model_pairs};
+    ok(@pairs == 1, "Factory with only one discovery model returned ok");
+};
+
+subtest "Two valid model pairs" => sub {
     succeed_build($build2);
     succeed_build($build4);
     succeed_build($build5);
