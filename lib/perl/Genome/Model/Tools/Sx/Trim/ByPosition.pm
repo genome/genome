@@ -15,7 +15,7 @@ class Genome::Model::Tools::Sx::Trim::ByPosition {
     has => {
         positions_path => {
             is => 'File',
-            doc => 'Path to he file of positions to trim.',
+            doc => 'Path to the file of positions to trim.',
         },    
     },
     has_transient_optional => {
@@ -24,7 +24,23 @@ class Genome::Model::Tools::Sx::Trim::ByPosition {
 };
 
 sub help_brief { "Trim sequences by positions" }
-sub help_detail { help_brief() }
+sub help_detail {
+    <<HELP;
+    The positions file is formatted with one sequence with multiple positions to trim per line. If no positions are given for a sequence, the sequence will be removed. A space follows the sequence name then the positions. Start and stop separated by a dash. Separate multiple trim positions by commas.
+
+    Examples:
+
+    # Trim (remove) entire SEQ1
+    SEQ1
+
+    # Trim bases 1000 to 2000 from SEQ2
+    SEQ2 1000-2000
+
+    # Trim several positions from SEQ3
+    SEQ3 100-200,400-500,600-800
+
+HELP
+}
 
 sub execute {
     my $self = shift;
