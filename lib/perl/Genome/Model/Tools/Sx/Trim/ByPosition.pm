@@ -121,8 +121,7 @@ sub keep_positions_for_sequence {
     }
 
     # keep the last part
-    push @keep_positions, [ $current_pos, ( length($seq->{seq}) - $current_pos ) ];
-
+    push @keep_positions, [ $current_pos, ( length($seq->{seq}) - $current_pos ) ] if length($seq->{seq}) - $current_pos > 0;
     return \@keep_positions;
 }
 
