@@ -17,7 +17,7 @@ my $dir = File::Spec->join( Genome::Config::get('test_inputs'), 'Genome-Model-To
 my $tmp_dir = Genome::Sys->create_temp_directory;
 
 my %expected_positions = (
-    TRIM_ALL => 'ALL',
+    TRIM_ALL => [],
     TRIM_LEFT => [ [1,60] ],
     TRIM_MIDDLE => [ [121,180] ],
     TRIM_RIGHT => [ [241,300] ],
@@ -57,7 +57,7 @@ subtest 'keep positions' => sub{
     $seq->{id} = 'KEEP_ALL';
     is_deeply(
         $trimmer->keep_positions_for_sequence($seq),
-        'ALL',
+        [ [0, 300] ],
         'trim_positions for '.$seq->{id},
     );
 
@@ -100,7 +100,7 @@ subtest 'trim sequence' => sub{
 
     my $positions = $trimmer->trim_positions(
         {
-            TRIM_ALL => 'ALL',
+            TRIM_ALL => [],
             TRIM_SEVERAL => [ [2,4], [6,8], [11,13] ],
         },
     );

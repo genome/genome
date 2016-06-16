@@ -75,7 +75,7 @@ sub load_positions {
         $class->fatal_message('Duplicate sequence id in trim positions! %s', $seq_id) if $trim_positions{$seq_id};
 
         if ( not $positions ) {
-            $trim_positions{$seq_id} = 'ALL';
+            $trim_positions{$seq_id} = [];
             next;
         }
 
@@ -107,11 +107,11 @@ sub keep_positions_for_sequence {
             my $pcap_seq_id = $seq->{id};
             $pcap_seq_id =~ s/scaffold/Contig/g;
             $trim_positions = $self->trim_positions->{$pcap_seq_id};
-            return 'ALL' if not $trim_positions; # keep it!
+            return [ [ 0, length($seq->{seq})] ] if not $trim_positions; # keep it!
         }
     }
 
-    return if not ref $trim_positions; # trim all
+    return if not @$trim_positions; # sequence indicated, but no trim positions given means trim all/keep none
 
     my @keep_positions;
     my $current_pos = 0;
@@ -133,9 +133,6 @@ sub trim_sequence {
     if ( not $keep_positions ) { # remove
         $seq->{seq} = '';
         $seq->{qual} = '' if $seq->{qual};
-        return 1;
-    }
-    elsif ( $keep_positions eq 'ALL' ) {
         return 1;
     }
 
