@@ -34683,11 +34683,11 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'tumor-sample=s',
         undef,
-        'followup-sample=s',
-        undef,
         'normal-sample=s',
         undef,
         'coverage-models=s@',
+        undef,
+        'followup-sample=s',
         undef,
         'help!',
         undef
