@@ -59,9 +59,6 @@ sub execute
                 if ($self->exon_file){
                         $exon_file=$self->exon_file;
                 }
-                else{
-                        $exon_file="/gscmnt/gc2108/info/medseq/ckandoth/bed_maker/NCBI-human.combined-annotation_58_37c_v2/all_CDS_and_ncRNA_24Chroms_Contigs_1BasedStart_2bpFlanks_MergedExons";
-                }
                 my %exon_hash;
                 my $exon_fh=new FileHandle($exon_file);
                 while(<$exon_fh>){
