@@ -124,8 +124,6 @@ sub execute {
 
     return 1;
 }
-1;
-
 
 sub dbsnp_lookup {
     my $self=shift;
@@ -150,4 +148,5 @@ sub dbsnp_lookup {
     }
     return $dbsnp_id;
 }
-;
+
+1;
