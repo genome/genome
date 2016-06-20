@@ -23,7 +23,6 @@ class Genome::Model::Tools::Somatic::FilterMouseBases {
            is_input => 1,
            is_output => 1,
            doc => 'UCSC liftover chain file for human to mouse',
-           example_values => ['/gscmnt/sata112/info/medseq/reference_sequences/Homo_sapiens/liftOver_files/hg19_GRCh37_Build-37/hg19ToMm9.over.chain.gz'],
        },
        'human_reference' => {
            type => 'String',
