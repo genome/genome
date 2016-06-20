@@ -69,7 +69,6 @@ sub _run_aligner {
 
     #my $reference_index_directory = $reference_index->data_directory(); # better way to do this?
     #print "Ref index dir: $reference_index_directory\n";
-    # example dir /gscmnt/sata921/info/medseq/cmiller/methylSeq/bratIndex
 
     # This is your scratch directory.  Whatever you put here will be wiped when the alignment
     # job exits.
