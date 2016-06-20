@@ -62,8 +62,8 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 This runs pindel version .4 with the Fisher's Exact test germline filter at the conclusion.  It is implemented inside the DetectVariants API so this wrapper makes it easier to use.  This new version of pindel allows more reads into consideration which should generate more events and also filter out more germline events.  The new filter does a FET between the distribution of reads mapping with an insertion/deletion vs normally mapped reads at the site in tumor and normal.  If the p-value is .15 or below that they are different, we keep the site under consideration.  The idea here is that GATK will resolve similar indel distribution sites more accurately than pindel has been able to do.  In addition, pindel recovers some reads that are unmapped previously and we attempt to pass any of these  sites through the filter.  That 'override' condition is: Tumor reads at site < 10 and pindel_reads > indel mapping reads in tumor
 EOS
 }
@@ -72,18 +72,18 @@ sub execute {
     my $self = shift;
     my $normal_bam = $self->normal_bam;
     my $tumor_bam = $self->tumor_bam;
-    if($self->normal_build && $self->tumor_build) { 
+    if($self->normal_build && $self->tumor_build) {
         my $normal_build = Genome::Model::Build::ReferenceAlignment->get($self->normal_build);
         my $tumor_build = Genome::Model::Build::ReferenceAlignment->get($self->tumor_build);
          $normal_bam = $normal_build->whole_rmdup_bam_file;
          $tumor_bam = $tumor_build->whole_rmdup_bam_file;
     }
-    Genome::Sys->validate_file_for_reading($normal_bam); 
+    Genome::Sys->validate_file_for_reading($normal_bam);
     Genome::Sys->validate_file_for_reading($tumor_bam);
 
     my $output = $self->output_dir;
     Genome::Sys->create_directory($output);  #this seems to be a no op if it exists
-    
+
         my $email_address = Genome::Utility::Email::construct_address($ENV{'LOGNAME'});
         $self->debug_message("sending a completion mail to: $email_address");
         my $include;

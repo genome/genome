@@ -54,8 +54,8 @@ gmt somatic filter-pindel --output-dir=/path/to/info/medseq/testing_launch_pinde
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 The temporary pipeline to run pindel removed dbsnp filtering, tiering, and annotation so this replaces that until DetectVariants2 is ready.  Supply a bed input and an output directory and it will filter out dbsnp sites, tier the remaining, and annotate them
 EOS
 }
@@ -88,7 +88,7 @@ sub execute {
     Genome::Sys->validate_file_for_reading($self->variant_bed_file);
     my $output = $self->output_dir;
     Genome::Sys->create_directory($output);  #this seems to be a no op if it exists
- 
+
     my $vfh = Genome::Sys->open_file_for_reading($self->variant_bed_file);
     my $output_file_name = $self->output_dir ."/" .  File::Basename::basename($self->variant_bed_file);
     my $novel_file_name = $output_file_name . ".novel";
@@ -141,12 +141,12 @@ sub dbsnp_lookup {
             }
         }
     }
-    else {        
+    else {
         if(exists($deletions{$chr}{$start}{$stop}{'allele'})) {
             if ($ref eq $deletions{$chr}{$start}{$stop}{'allele'}) {
                 $dbsnp_id=$deletions{$chr}{$start}{$stop}{'id'};
             }
-        } 
+        }
     }
     return $dbsnp_id;
 }
