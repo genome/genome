@@ -98,7 +98,6 @@ sub execute {
     print `$cmd`;
 
     #create an annotate-able list of somatic calls, getting ref and var bases from the contigs
-    #gmt annotate adaptor indel-contig --contig-count-file /gscmnt/sata204/info/medseq/prc1/validation/Indel_analysis/lcm3/long_indels/combined_counts_somatic.csv --contig-fasta-file /gscmnt/sata204/info/medseq/prc1/validation/Indel_analysis/lcm3/long_indels/contigs.fa --output-file /gscmnt/sata204/info/medseq/prc1/validation/Indel_analysis/lcm3/long_indels/combined_counts_somatic.csv.indel.contig
     my $adapted_somatic_calls = $somatic_calls_file . ".adapted";
     $self->debug_message("Running gmt annotate adaptor indel-contig");
     my $adaptor_cmd = Genome::Model::Tools::Annotate::Adaptor::IndelContig->create(

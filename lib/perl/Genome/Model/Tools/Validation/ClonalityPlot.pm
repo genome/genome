@@ -139,7 +139,6 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    #gmt validation clonality-plot --cnvhmm-file /gscmnt/sata872/info/medseq/luc_wgs/CNV/cnaseg/LUC1.cnaseg --output-image LUC1.clonality.pdf --analysis-type capture --r-script-output-file LUC1.R --varscan-file /gscmnt/sata872/info/medseq/luc_wgs/LUC1/validation/varscan/t123_targeted.pvalue_filtered.somatic --sample-id "LUC1" --positions-highlight test.X.sites
     return <<EOS
         Inputs of Varscan and copy-number segmentation data, Output of R plots.
 EXAMPLE:	gmt validation clonality-plot --analysis-type 'capture' --varscan-file snvs.txt --cnvhmm-file cnaseg.txt --output-image clonality.pdf --sample-id 'Sample'
