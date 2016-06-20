@@ -199,7 +199,7 @@ sub get_or_create_ucsc_tiering_directory {
     my $self = shift;
 
     my %tiering_dirs = (
-        '10194788' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/hg18_build36_ucsc_files',
+        '101947881' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/hg18_build36_ucsc_files',
         '106942997' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-human-build37/hg19_files',
         '107494762' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-mouse-build37/mm9',
         '3ca0ea4786dd4ebebaf3935f3d3ccab8' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-mouse-build38/mm10',
@@ -217,7 +217,7 @@ sub get_or_create_ucsc_tiering_directory {
 #TODO: figure out how to get this and make it a real result
 sub get_or_create_ucsc_conservation_directory {
     my $self = shift;
-    if ($self->id eq "10194788") {
+    if ($self->id eq "101947881") {
         return "/gscmnt/ams1161/info/model_data/2771411739/build113115679/annotation_data/ucsc_conservation/";
     }
     elsif ($self->id eq "106942997") {
