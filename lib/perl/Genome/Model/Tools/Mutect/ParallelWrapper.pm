@@ -34,6 +34,11 @@ class Genome::Model::Tools::Mutect::ParallelWrapper {
             is_optional => 1,
         },
     ],
+    has_param => [
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_dv2_worker'),
+        },
+    ],
 };
 
 sub help_short {

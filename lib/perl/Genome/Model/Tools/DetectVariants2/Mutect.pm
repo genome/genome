@@ -21,6 +21,9 @@ class Genome::Model::Tools::DetectVariants2::Mutect {
         lsf_resource => {
             default_value => Genome::Config::get('lsf_resource_dv2_mutect'),
         },
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_dv2_workflow'),
+        },
     ],
 };
 
