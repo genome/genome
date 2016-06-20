@@ -17,7 +17,6 @@ eval
 
     # checks test data files
     my $data_dir = Genome::Utility::Test->data_dir($class);
-    # $data_dir = './3.test_suite_data';     # temporarily switched for debug
     ok(-d $data_dir, "data_dir exists: $data_dir") or die;
 
 
@@ -38,7 +37,6 @@ eval
 
     #create temp directory for merging
     my $tempdir = Genome::Sys->create_temp_directory();
-    #$tempdir = '/gscmnt/gc3037/info/medseq/gchang/work2/09_OTHERS/14-24-MergeReadcount-upgrade1';       # for debug
     ok(-s $tempdir, 'temporary directory created') or die;
 
 

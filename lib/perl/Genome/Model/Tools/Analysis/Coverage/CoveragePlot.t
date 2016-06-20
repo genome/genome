@@ -36,7 +36,6 @@ eval
 
     #create temp directory for merging
     my $tempdir = Genome::Sys->create_temp_directory();
-    #$tempdir = '/gscmnt/gc3037/info/medseq/gchang/work2/01_EXOME-SEQ/13-26-CoveragePlot';       # for debug
     ok(-d $tempdir, 'temporary directory created') or die;
 
     # creates and executes a command
