@@ -50,7 +50,7 @@ sub help_brief {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-gmt somatic filter-pindel --output-dir=/gscmnt/sata921/info/medseq/testing_launch_pindel/MEL_calls/filtering_results --variant-bed-file=/gscmnt/sata921/info/medseq/testing_launch_pindel/MEL_calls/indels.hq.bed
+gmt somatic filter-pindel --output-dir=/path/to/info/medseq/testing_launch_pindel/MEL_calls/filtering_results --variant-bed-file=/path/to/info/medseq/testing_launch_pindel/MEL_calls/indels.hq.bed
 EOS
 }
 

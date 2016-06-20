@@ -58,7 +58,7 @@ sub help_brief {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
- gmt somatic launch-pindel --normal-bam=/gscmnt/sata921/info/medseq/indel_validation_bams/true_positive_normal_validation.bam  --tumor-bam=/gscmnt/sata921/info/medseq/indel_validation_bams/true_positive_normal_validation.bam --output-dir=/gscmnt/sata921/info/medseq/testing_launch_pindel
+ gmt somatic launch-pindel --normal-bam=/path/to/info/medseq/indel_validation_bams/true_positive_normal_validation.bam  --tumor-bam=/path/to/info/medseq/indel_validation_bams/true_positive_normal_validation.bam --output-dir=/path/to/info/medseq/testing_launch_pindel
 EOS
 }
 
