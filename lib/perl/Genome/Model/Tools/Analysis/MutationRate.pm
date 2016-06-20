@@ -32,9 +32,9 @@ class Genome::Model::Tools::Analysis::MutationRate {
 		tier1_file	=> { is => 'Text', doc => "List of high-confidence tier 1 mutations" , is_optional => 0},
 		tier2_file	=> { is => 'Text', doc => "List of high-confidence tier 2 mutations" , is_optional => 1},
 		tier3_file	=> { is => 'Text', doc => "List of high-confidence tier 3 mutations" , is_optional => 1},
-		tier1_space	=> { is => 'Text', doc => "BED file of tier 1 space" , is_optional => 0, default => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-human-build36/tier1.bed'},
-		tier2_space	=> { is => 'Text', doc => "BED file of tier 2 space" , is_optional => 0, default => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-human-build36/tier2.bed'},
-		tier3_space	=> { is => 'Text', doc => "BED file of tier 3 space" , is_optional => 0, default => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-human-build36/tier3.bed'},
+		tier1_space	=> { is => 'Text', doc => "BED file of tier 1 space" , is_optional => 0},
+		tier2_space	=> { is => 'Text', doc => "BED file of tier 2 space" , is_optional => 0},
+		tier3_space	=> { is => 'Text', doc => "BED file of tier 3 space" , is_optional => 0},
 		coverage_factor	=> { is => 'Text', doc => "Fraction of space covered for mutation detection" , is_optional => 0, default => 1},
     outfile => {is => 'FilesystemPath', doc => "Write output to this file instead of stdout", is_optional => 1},
 	],
@@ -80,18 +80,13 @@ sub execute {                               # replace with real execution logic.
         
         my $total_bases = my $total_mutations = 0;
 
-        ## Use known values whenever possible ##
-        my $tier1_bases = 43884962 if($self->tier1_space eq '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-human-build36/tier1.bed');
-        my $tier2_bases = 248205479 if($self->tier2_space eq '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-human-build36/tier2.bed');
-        my $tier3_bases = 1198993777 if($self->tier3_space eq '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-human-build36/tier3.bed');
-
         my $mutation_string = my $rate_string = "";
 
         ## If other files were provided, calculate bases within them ##        
         
-        $tier1_bases = parse_regions_file($self->tier1_space) if(!$tier1_bases);
-        $tier2_bases = parse_regions_file($self->tier2_space) if(!$tier2_bases);
-        $tier3_bases = parse_regions_file($self->tier3_space) if(!$tier3_bases);
+        my $tier1_bases = parse_regions_file($self->tier1_space);
+        my $tier2_bases = parse_regions_file($self->tier2_space);
+        my $tier3_bases = parse_regions_file($self->tier3_space);
         my $non_tier1_bases = $tier2_bases + $tier3_bases;
 
         ## Load the tier 1 mutations and calculate its rate ##
