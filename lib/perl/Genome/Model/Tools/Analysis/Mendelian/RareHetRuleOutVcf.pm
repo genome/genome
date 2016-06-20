@@ -27,7 +27,7 @@ class Genome::Model::Tools::Analysis::Mendelian::RareHetRuleOutVcf {
 		min_affected_variant	=> { is => 'Text', doc => "Minimum number of affecteds with variant to include", is_optional => 1, is_input => 1, default => 1},
 		max_unaffected_variant	=> { is => 'Text', doc => "Maximum number of unaffecteds with variant to include", is_optional => 1, is_input => 1, default => 0},
 		plot_results	=> { is => 'Text', doc => "If set to 1, generate per-chromosome plots of results", is_optional => 1, is_input => 1, default => 0},
-		centromere_file	=> { is => 'Text', doc => "A UCSC 0-based BED file of centromere locations per chromosome", is_optional => 0, is_input => 1, default => '/gscmnt/sata809/info/medseq/dkoboldt/SNPseek2/ucsc/hg19/gapTable.centromere.nochr.txt'},
+		centromere_file	=> { is => 'Text', doc => "A UCSC 0-based BED file of centromere locations per chromosome", is_optional => 0, is_input => 1},
 	],
 };
 
