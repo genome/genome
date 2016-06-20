@@ -200,7 +200,7 @@ sub get_or_create_ucsc_tiering_directory {
 
     my %tiering_dirs = (
         '10194788' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/hg18_build36_ucsc_files',
-        '106942997' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/hg18_build36_ucsc_files',
+        '106942997' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-human-build37/hg19_files',
         '107494762' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-mouse-build37/mm9',
         '3ca0ea4786dd4ebebaf3935f3d3ccab8' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-mouse-build38/mm10',
         '4ec1c5bd1f6941b8a99f2e230217cb91' => '/gscmnt/gc13001/info/model_data/jwalker_scratch/GRCh38',
