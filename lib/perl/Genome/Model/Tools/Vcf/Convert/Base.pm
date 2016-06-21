@@ -389,10 +389,9 @@ sub query_tcga_barcode_error_template {
 
 sub query_tcga_barcode {
     my $self = shift;
-    my $barcode_str = shift;
+    my $barcodes = shift;
     my %argv = @_;
 
-    my $url = delete $argv{url} || 'https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch';
     my $sleep = delete $argv{sleep} || 10;
 
     my $agent = LWP::UserAgent->new();
@@ -400,9 +399,11 @@ sub query_tcga_barcode {
     # based on instrumentation the upper bound on response times is 700 ms
     $agent->timeout(5);
 
-    my $request = HTTP::Request->new(POST => $url);
-    $request->content_type('text/plain');
-    $request->content($barcode_str);
+    my $query = join('%2C', map { '%22' . $_ . '%22' } @$barcodes);
+    my $filters = '%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22samples.portions.analytes.aliquots.submitter_id%22%2C%22value%22%3A%5B' . $query. '%5D%7D%7D';
+    my $url = 'https://gdc-api.nci.nih.gov/cases?filters=' . $filters . '&fields=samples.portions.analytes.aliquots.submitter_id,samples.portions.analytes.aliquots.aliquot_id';
+
+    my $request = HTTP::Request->new(GET => $url);
 
     my @prefix = qw(gmt vcf convert query_tcga_barcode);
     my $response;
@@ -423,11 +424,45 @@ sub query_tcga_barcode {
     } else {
         Genome::Utility::Instrumentation::inc(join('.', @prefix, 'retry_failure'));
         my $message = $response->message;
+        my $barcode_str = join(',', @$barcodes);
         my $error_message = sprintf(query_tcga_barcode_error_template, $barcode_str, $message);
         die $self->error_message($error_message);
     }
 
-    return $response->content;
+    return $self->_parse_tcga_response($barcodes, $response->content);
+}
+
+sub _parse_tcga_response {
+    my $self = shift;
+    my $barcodes = shift;
+    my $content = shift;
+
+    my $json = new JSON;
+    my $json_text = $json->allow_nonref->utf8->relaxed->decode($content);
+
+    if ($json_text->{data}{pagination}{count} == 0) {
+        my $barcode_str = join(',', @$barcodes);
+        $self->fatal_message(query_tcga_barcode_error_template, $barcode_str, 'No results found for query');
+    }
+
+    if ($json_text->{warnings} and keys %{$json_text->{warnings}}) {
+        $self->warning_message(Data::Dumper::Dumper($json_text->{warnings}));
+    }
+
+    my %uuids;
+    for my $hit (@{$json_text->{data}{hits}}) {
+        for my $sample (@{$hit->{samples}}) {
+            for my $portion (@{$sample->{portions}}) {
+                for my $analyte (@{$portion->{analytes}}) {
+                    for my $aliquot (@{$analyte->{aliquots}}) {
+                        $uuids{$aliquot->{submitter_id}} = $aliquot->{aliquot_id};
+                    }
+                }
+            }
+        }
+    }
+
+    return \%uuids;
 }
 
 #For TCGA vcf
@@ -439,23 +474,17 @@ sub get_sample_meta {
         my ($n_sample, $t_sample) = ($self->control_aligned_reads_sample, $self->aligned_reads_sample);
         push @tcga_barcodes, $n_sample if $n_sample and $n_sample =~ /^TCGA\-/;
         push @tcga_barcodes, $t_sample if $t_sample and $t_sample =~ /^TCGA\-/;
-        my $barcode_str = join ',', @tcga_barcodes;
 
-        my $content = $self->query_tcga_barcode($barcode_str);
-        my $json = new JSON;
-        my $json_text = $json->allow_nonref->utf8->relaxed->decode($content);
+        my $uuids = $self->query_tcga_barcode(\@tcga_barcodes);
 
-        my %uuids;
         my @lines;
-        if (@tcga_barcodes == 2) {
-            for my $pair (@{$json_text->{uuidMapping}}){
-                my ($id, $uuid) = ($pair->{barcode}, $pair->{uuid});
-                push @lines, '##SAMPLE=<ID='.$id.',SampleUUID='.$uuid.',SampleTCGABarcode='.$id.',File='."$id.bam".',Platform=Illumina,Source=dbGap,Accession=phs000178>';
+        for my $id (@tcga_barcodes) {
+            my $uuid = $uuids->{$id};
+            unless ($uuid) {
+                $self->fatal_message(query_tcga_barcode_error_template, $id, 'No match found in results');
             }
-        }
-        else {#if get only one request $json_text->{uuidMapping} is a hash ref not array ref
-            my ($id, $uuid) = ($json_text->{uuidMapping}->{barcode}, $json_text->{uuidMapping}->{uuid});
-            @lines = ('##SAMPLE=<ID='.$id.',SampleUUID='.$uuid.',SampleTCGABarcode='.$id.',File='."$id.bam".',Platform=Illumina,Source=dbGap,Accession=phs000178>');
+
+            push @lines, '##SAMPLE=<ID='.$id.',SampleUUID='.$uuid.',SampleTCGABarcode='.$id.',File='."$id.bam".',Platform=Illumina,Source=dbGap,Accession=phs000178>';
         }
         return @lines;
     }
