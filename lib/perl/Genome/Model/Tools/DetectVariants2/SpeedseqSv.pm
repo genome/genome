@@ -7,7 +7,6 @@ use Genome;
 
 use File::Basename qw(fileparse);
 use File::Spec;
-use Cwd;
 
 class Genome::Model::Tools::DetectVariants2::SpeedseqSv {
     is => 'Genome::Model::Tools::DetectVariants2::Detector',
@@ -68,12 +67,9 @@ sub _detect_variants {
     # Make a symlink to the actual VCF as the DV2 Dispatcher expects an output of svs.hq rather than BED or VCF output
     my ($vcf_file) = glob($self->_sv_staging_output .'*.vcf.gz');
     if ($vcf_file) {
-        my $cwd = getcwd();
-        chdir($self->_temp_staging_directory);
         my $rel_path = File::Spec->abs2rel( $vcf_file, $self->_temp_staging_directory ) ;
-        symlink($rel_path,$self->_sv_base_name .'.vcf.gz');
-        symlink($rel_path,$self->_sv_base_name .'.vcf.gz.tbi');
-        chdir($cwd);
+        symlink($rel_path,$self->_sv_staging_output .'.vcf.gz');
+        symlink($rel_path,$self->_sv_staging_output .'.vcf.gz.tbi');
     }
 }
 
