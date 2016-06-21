@@ -69,7 +69,7 @@ sub _detect_variants {
     if ($vcf_file) {
         my $rel_path = File::Spec->abs2rel( $vcf_file, $self->_temp_staging_directory ) ;
         Genome::Sys->create_symlink($rel_path,$self->_sv_staging_output .'.vcf.gz');
-        Genome::Sys->create_symlink($rel_path,$self->_sv_staging_output .'.vcf.gz.tbi');
+        Genome::Sys->create_symlink($rel_path .'.tbi',$self->_sv_staging_output .'.vcf.gz.tbi');
     }
 }
 
