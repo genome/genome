@@ -83,7 +83,7 @@ sub load_positions {
             my ($start, $stop) = split(/\-/, $set);
             if ( $RE{num}{int}->matches($stop) ) {
                 $class->fatal_message('Invalid positions for %s! %s', $seq_id, $set) if $start == $stop or $start > $stop;
-            } elsif ( $stop ne 'end' ) {
+            } else {
                 $class->fatal_message('Invalid stop position for %s! %s', $seq_id, $stop);
             }
             push @{$trim_positions{$seq_id}}, [ $start, $stop ];
