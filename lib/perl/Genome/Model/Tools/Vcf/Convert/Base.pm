@@ -11,6 +11,7 @@ use Params::Validate qw(validate CODEREF SCALAR);
 use POSIX 'strftime';
 use LWP::UserAgent;
 use Carp qw(croak);
+use URI::Escape qw(uri_escape);
 
 class Genome::Model::Tools::Vcf::Convert::Base {
     is => 'Command',
@@ -399,9 +400,16 @@ sub query_tcga_barcode {
     # based on instrumentation the upper bound on response times is 700 ms
     $agent->timeout(5);
 
-    my $query = join('%2C', map { '%22' . $_ . '%22' } @$barcodes);
-    my $filters = '%7B%22op%22%3A%22in%22%2C%22content%22%3A%7B%22field%22%3A%22samples.portions.analytes.aliquots.submitter_id%22%2C%22value%22%3A%5B' . $query. '%5D%7D%7D';
-    my $url = 'https://gdc-api.nci.nih.gov/cases?filters=' . $filters . '&fields=samples.portions.analytes.aliquots.submitter_id,samples.portions.analytes.aliquots.aliquot_id';
+    my $filters = {
+        'op' => 'in',
+        'content' => {
+            field => 'samples.portions.analytes.aliquots.submitter_id',
+            value => $barcodes,
+        },
+    };
+    my $json = new JSON;
+    my $filter_json = $json->encode($filters);
+    my $url = 'https://gdc-api.nci.nih.gov/cases?filters=' . uri_escape($filter_json) . '&fields=samples.portions.analytes.aliquots.submitter_id,samples.portions.analytes.aliquots.aliquot_id';
 
     my $request = HTTP::Request->new(GET => $url);
 
