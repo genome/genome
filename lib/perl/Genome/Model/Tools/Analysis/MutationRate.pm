@@ -33,8 +33,8 @@ class Genome::Model::Tools::Analysis::MutationRate {
 		tier2_file	=> { is => 'Text', doc => "List of high-confidence tier 2 mutations" , is_optional => 1},
 		tier3_file	=> { is => 'Text', doc => "List of high-confidence tier 3 mutations" , is_optional => 1},
 		tier1_space	=> { is => 'Text', doc => "BED file of tier 1 space" , is_optional => 0},
-		tier2_space	=> { is => 'Text', doc => "BED file of tier 2 space" , is_optional => 0},
-		tier3_space	=> { is => 'Text', doc => "BED file of tier 3 space" , is_optional => 0},
+		tier2_space	=> { is => 'Text', doc => "BED file of tier 2 space" , is_optional => 1},
+		tier3_space	=> { is => 'Text', doc => "BED file of tier 3 space" , is_optional => 1},
 		coverage_factor	=> { is => 'Text', doc => "Fraction of space covered for mutation detection" , is_optional => 0, default => 1},
     outfile => {is => 'FilesystemPath', doc => "Write output to this file instead of stdout", is_optional => 1},
 	],
@@ -82,15 +82,8 @@ sub execute {                               # replace with real execution logic.
 
         my $mutation_string = my $rate_string = "";
 
-        ## If other files were provided, calculate bases within them ##
-
-        my $tier1_bases = parse_regions_file($self->tier1_space);
-        my $tier2_bases = parse_regions_file($self->tier2_space);
-        my $tier3_bases = parse_regions_file($self->tier3_space);
-        my $non_tier1_bases = $tier2_bases + $tier3_bases;
-
         ## Load the tier 1 mutations and calculate its rate ##
-
+        my $tier1_bases = parse_regions_file($self->tier1_space);
         my $tier1_mutations = parse_mutations_file($self->tier1_file);
         my $tier1_rate = ($tier1_mutations / $coverage_factor) / ($tier1_bases / 1000000);
 
@@ -102,13 +95,19 @@ sub execute {                               # replace with real execution logic.
         $total_mutations = $tier1_mutations;
         $total_bases = $tier1_bases;
 
-        my $tier2_mutations = my $tier3_mutations = 0;
+        my $non_tier1_bases = 0;
+        my $non_tier1_mutations = 0;
 
         if($self->tier2_file)
         {
-            $tier2_mutations = parse_mutations_file($self->tier2_file);
+            my $tier2_bases = parse_regions_file($self->tier2_space);
+            $non_tier1_bases += $tier2_bases;
             $total_bases += $tier2_bases;
+
+            my $tier2_mutations = parse_mutations_file($self->tier2_file);
             $total_mutations += $tier2_mutations;
+            $non_tier1_mutations += $tier2_mutations;
+
             my $tier2_rate = ($tier2_mutations / $coverage_factor) / ($tier2_bases / 1000000);
 #            print join("\t", "2", $tier2_mutations, commify($tier2_bases), $tier2_rate)  . "\n";
             $mutation_string .= "\t$tier2_mutations";
@@ -118,9 +117,14 @@ sub execute {                               # replace with real execution logic.
 
         if($self->tier3_file)
         {
-            $tier3_mutations = parse_mutations_file($self->tier3_file);
-            $total_mutations += $tier3_mutations;
+            my $tier3_bases = parse_regions_file($self->tier3_space);
+            $non_tier1_bases += $tier3_bases;
             $total_bases += $tier3_bases;
+
+            my $tier3_mutations = parse_mutations_file($self->tier3_file);
+            $total_mutations += $tier3_mutations;
+            $non_tier1_mutations += $tier3_mutations;
+
             my $tier3_rate = ($tier3_mutations / $coverage_factor) / ($tier3_bases / 1000000);
 #            print join("\t", "3", $tier3_mutations, commify($tier3_bases), $tier3_rate)  . "\n";
             $mutation_string .= "\t$tier3_mutations";
@@ -129,10 +133,14 @@ sub execute {                               # replace with real execution logic.
         }
 
         ## Calculate non-tier1 rate ##
-        my $non_tier1_mutations = $tier2_mutations + $tier3_mutations;
-        my $non_tier1_rate = ($non_tier1_mutations / $coverage_factor) / ($non_tier1_bases / 1000000);
-        $mutation_string .= "\t$non_tier1_mutations";
-        $rate_string .= "\t$non_tier1_rate";
+        if ($non_tier1_bases) {
+            my $non_tier1_rate = ($non_tier1_mutations / $coverage_factor) / ($non_tier1_bases / 1000000);
+            $mutation_string .= "\t$non_tier1_mutations";
+            $rate_string .= "\t$non_tier1_rate";
+        } else {
+            $mutation_string .= "\t0";
+            $rate_string .= "\t0";
+        }
 
         ## Calculate overall mutation rate ##
 
