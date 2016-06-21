@@ -478,7 +478,7 @@ sub get_sample_meta {
         my $uuids = $self->query_tcga_barcode(\@tcga_barcodes);
 
         my @lines;
-        for my $id (@tcga_barcodes) {
+        for my $id (sort { $uuids->{$b} cmp $uuids->{$a} } @tcga_barcodes) {
             my $uuid = $uuids->{$id};
             unless ($uuid) {
                 $self->fatal_message(query_tcga_barcode_error_template, $id, 'No match found in results');
