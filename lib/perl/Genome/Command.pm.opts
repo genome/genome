@@ -30702,6 +30702,23 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>trim',
       [
+        '>by-position',
+        [
+          'positions-path=s',
+          'files',
+          'debug!',
+          undef,
+          'input=s@',
+          'files',
+          'input-metrics=s',
+          'files',
+          'output=s@',
+          'files',
+          'output-metrics=s',
+          'files',
+          'help!',
+          undef
+        ],
         '>remove',
         [
           'length=s',
