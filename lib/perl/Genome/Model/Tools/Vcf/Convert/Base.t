@@ -10,7 +10,7 @@ my $class = 'Genome::Model::Tools::Vcf::Convert::Base';
 use_ok($class);
 
 subtest 'query_tcga_barcode' => sub {
-    plan tests => 5;
+    plan tests => 4;
 
     my $test_class = join('::', $class, 'Test');
     UR::Object::Type->define(
@@ -23,23 +23,14 @@ subtest 'query_tcga_barcode' => sub {
 
     {
         my $barcode = 'TCGA-A2-A25B-01A-11R-A169-07';
-        my $content = $self->query_tcga_barcode($barcode, sleep => 1);
+        my $content = $self->query_tcga_barcode([$barcode], sleep => 1);
         ok($content, qq(received content for barcode: $barcode));
+        ok(exists $content->{$barcode}, 'found a response for query');
     }
 
     {
         my $barcode = 'NOT-A-BARCODE';
-        my $content = eval { $self->query_tcga_barcode($barcode, sleep => 1) };
-        my $error = $@;
-        ok(!$content, qq(did not receive content for barcode: $barcode));
-        my $error_re = sprintf($class->query_tcga_barcode_error_template, '.*', '.*');
-        like($error, qr/$error_re/, qq(expected exception thrown for barcode: $barcode));
-    }
-
-    {
-        my $barcode = 'TCGA-A2-A25B-01A-11R-A169-07';
-        my $bad_URL = 'https://tcga-data.nci.nih.gov/XXX/uuidws/mapping/json/barcode/batch';
-        my $content = eval { $self->query_tcga_barcode($barcode, sleep => 1, url => $bad_URL) };
+        my $content = eval { $self->query_tcga_barcode([$barcode], sleep => 1) };
         my $error = $@;
         ok(!$content, qq(did not receive content for barcode: $barcode));
         my $error_re = sprintf($class->query_tcga_barcode_error_template, '.*', '.*');
