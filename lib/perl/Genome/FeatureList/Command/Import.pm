@@ -165,6 +165,8 @@ sub validate_and_sanitize_bed {
         next if $line =~ /^browser/;
         $line =~ s/\015$//; #remove CRs if BED came from Windows
 
+        next if $line =~ /^\s*$/; #skip blank lines
+
         if($line =~ /^track/) {
             $self->is_multitracked(1);
             my %track_attrs = Genome::FeatureList->parse_track_definition($line);
