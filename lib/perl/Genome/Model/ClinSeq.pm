@@ -781,10 +781,10 @@ sub _resolve_workflow_for_build {
     my ($best_converge_snv_indel_report_op, $best_mq_bq_sum) = (undef, -Inf);
     if ($build->wgs_build || $build->exome_build) {
         my ($wgs_annotate_snvs_vcf_op, $exome_annotate_snvs_vcf_op);
-        unless ($build->wgs_build->has_snvs_annotated_variants_vcf_file) {
+        if ($build->wgs_build && !$build->wgs_build->has_snvs_annotated_variants_vcf_file) {
             $wgs_annotate_snvs_vcf_op = $self->annotate_snvs_vcf_op($workflow, 'wgs');
         }
-        unless ($build->exome_build->has_snvs_annotated_variants_vcf_file) {
+        if ($build->exome_build && !$build->exome_build->has_snvs_annotated_variants_vcf_file) {
             $exome_annotate_snvs_vcf_op = $self->annotate_snvs_vcf_op($workflow, 'exome');
         }
         my %annotate_snvs_vcf_ops = (
