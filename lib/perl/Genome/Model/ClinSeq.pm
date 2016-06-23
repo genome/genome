@@ -780,17 +780,6 @@ sub _resolve_workflow_for_build {
     #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
     my ($best_converge_snv_indel_report_op, $best_mq_bq_sum) = (undef, -Inf);
     if ($build->wgs_build || $build->exome_build) {
-        my ($wgs_annotate_snvs_vcf_op, $exome_annotate_snvs_vcf_op);
-        unless ($build->wgs_build->has_snvs_annotated_variants_vcf_file) {
-            $wgs_annotate_snvs_vcf_op = $self->annotate_snvs_vcf_op($workflow, 'wgs');
-        }
-        unless ($build->exome_build->has_snvs_annotated_variants_vcf_file) {
-            $exome_annotate_snvs_vcf_op = $self->annotate_snvs_vcf_op($workflow, 'exome');
-        }
-        my %annotate_snvs_vcf_ops = (
-            exome => $exome_annotate_snvs_vcf_op,
-            wgs   => $wgs_annotate_snvs_vcf_op,
-        );
         my %variant_sources_ops = (
             exome => $exome_variant_sources_op,
             wgs   => $wgs_variant_sources_op,
@@ -801,7 +790,7 @@ sub _resolve_workflow_for_build {
             my $converge_snv_indel_report_op = $self->converge_snv_indel_report_op($workflow, $i);
             for my $sequencing_type (qw(exome wgs)) {
                 my $build_accessor = "${sequencing_type}_build";
-                if ($build->$build_accessor) {
+                if (my $build_for_sequencing_type = $build->$build_accessor) {
                     for my $variant_type (qw(snv indel)) {
                         $workflow->create_link(
                             source               => $variant_sources_ops{$sequencing_type},
@@ -810,9 +799,9 @@ sub _resolve_workflow_for_build {
                             destination_property => "_${sequencing_type}_${variant_type}_variant_sources_file",
                         );
                     }
-                    if ($annotate_snvs_vcf_ops{$sequencing_type}) {
+                    unless ($build_for_sequencing_type->has_snvs_annotated_variants_vcf_file) {
                         $workflow->create_link(
-                            source               => $annotate_snvs_vcf_ops{$sequencing_type},
+                            source               => $self->annotate_snvs_vcf_op($workflow, $sequencing_type),
                             source_property      => 'output_result',
                             destination          => $converge_snv_indel_report_op,
                             destination_property => "_${sequencing_type}_annotated_snvs_vcf_result",
