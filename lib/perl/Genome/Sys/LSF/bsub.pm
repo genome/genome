@@ -20,6 +20,8 @@ sub run {
         $executable = [$executable];
     }
 
+    local $ENV{LSB_SUB_ADDITIONAL} = Genome::Config::get('lsb_sub_additional') || $ENV{LSB_SUB_ADDITIONAL};
+
     my @output = Genome::Sys->capture(@$executable, @args);
 
     my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
