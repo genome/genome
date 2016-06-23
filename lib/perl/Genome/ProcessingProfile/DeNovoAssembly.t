@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 
 use Test::More;
+use Genome::Utility::Test qw(compare_ok);
 
 use_ok('Genome::ProcessingProfile::DeNovoAssembly') or die;
 
@@ -235,12 +236,18 @@ for my $params_and_xml (@params_and_xml_list) {
         $build->id, $build->data_directory . '/logs/', $build->id,
         $build->id, $build->id, $build->id);
 
-    my $diff = Genome::Sys->diff_text_vs_text($actual_xml,
-        $expected_xml);
-        print "Expected: $expected_xml\n";
-        print "Actual: $actual_xml\n";
-    ok(!$diff, sprintf("workflow xml diffs for '%s'",
-            $params_and_xml->{'params'}->{'name'}));
+    my $expected_file = Genome::Sys->create_temp_file_path;
+    my $actual_file = Genome::Sys->create_temp_file_path;
+
+    Genome::Sys->write_file($expected_file, $expected_xml);
+    Genome::Sys->write_file($actual_file, $actual_xml);
+    compare_ok($expected_file, $actual_file,
+        name => sprintf("workflow xml diffs for '%s'", $params_and_xml->{'params'}->{'name'}),
+        replace => [
+            [qr(lsfQueue="[^"]+"), q(lsfQueue="LSF_QUEUE")],
+            [qr(lsfResource="[^"]+"), q(lsfResource="LSF_RESOURCE")],
+        ],
+    );
 }
 
 done_testing();
