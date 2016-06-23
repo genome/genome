@@ -60,6 +60,7 @@ ok(-s $xml_file, "Current xml file exists at $xml_file");
 compare_ok($expected_xml_file, $xml_file, name => "Xml file is as expected for the workflow",
     replace => [
         [qr(lsfQueue="[^"]+"), q(lsfQueue="GENOME_LSF_QUEUE_BUILD_WORKER_ALT")],
+        [qr(lsfResource="[^"]+"), q(lsfResource="LSF_RESOURCE")],
     ],
 );
 
