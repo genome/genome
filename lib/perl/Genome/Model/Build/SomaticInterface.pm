@@ -69,4 +69,24 @@ sub has_microarray_build {
     $self->fatal_message('Abstract: (has_microarray_build) needs to be defined on class (%s)', $self->class);
 }
 
+sub normal_bam {
+    my $self = shift;
+    $self->fatal_message('Abstract: (normal_bam) needs to be defined on class (%s)', $self->class);
+}
+
+sub tumor_bam {
+    my $self = shift;
+    $self->fatal_message('Abstract: (tumor_bam) needs to be defined on class (%s)', $self->class);
+}
+
+sub build_for_normal_bam {
+    my $self = shift;
+    $self->fatal_message('Abstract: (build_for_normal_bam) needs to be defined on class (%s)', $self->class);
+}
+
+sub build_for_tumor_bam {
+    my $self = shift;
+    $self->fatal_message('Abstract: (build_for_tumor_bam) needs to be defined on class (%s)', $self->class);
+}
+
 1;

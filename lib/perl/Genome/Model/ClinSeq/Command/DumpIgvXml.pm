@@ -194,79 +194,76 @@ sub execute {
             my $wgs_build = $clinseq_build->wgs_build;
 
             #WGS normal refalign build - source of normal WGS BAMs track
-            if ($wgs_build->can('normal_build')) {
-                my $wgs_normal_refalign_build = $wgs_build->normal_build;
-                my $wgs_normal_track = $self->generate_track_xml(
-                    '-build'         => $wgs_normal_refalign_build,
-                    '-resource_type' => 'bam'
-                );
-                my $wgs_normal_xml = $wgs_normal_track->{xml};
-                $wgs_normal_xml = $self->generate_panel_xml(
-                    '-track_xml'   => $wgs_normal_xml,
-                    '-panel_count' => $panel_count++
-                );
-                push(@resources, $wgs_normal_track->{resource});
-                $main_features_track_xml .= $wgs_normal_xml;
-            }
+            my $wgs_normal_build = $wgs_build->build_for_normal_bam;
+            my $wgs_normal_track = $self->generate_track_xml(
+                '-build'         => $wgs_normal_build,
+                '-resource_type' => 'bam',
+                '-bam_file'      => $wgs_build->normal_bam,
+            );
+            my $wgs_normal_xml = $wgs_normal_track->{xml};
+            $wgs_normal_xml = $self->generate_panel_xml(
+                '-track_xml'   => $wgs_normal_xml,
+                '-panel_count' => $panel_count++
+            );
+            push(@resources, $wgs_normal_track->{resource});
+            $main_features_track_xml .= $wgs_normal_xml;
 
             #WGS tumor refalign build - source of tumor WGS BAMs track
-            if ($wgs_build->can('tumor_build')) {
-                my $wgs_tumor_refalign_build = $wgs_build->tumor_build;
-                my $wgs_tumor_track = $self->generate_track_xml(
-                    '-build'         => $wgs_tumor_refalign_build,
-                    '-resource_type' => 'bam'
-                );
-                my $wgs_tumor_xml = $wgs_tumor_track->{xml};
-                $wgs_tumor_xml = $self->generate_panel_xml(
-                    '-track_xml'   => $wgs_tumor_xml,
-                    '-panel_count' => $panel_count++
-                );
-                push(@resources, $wgs_tumor_track->{resource});
-                $main_features_track_xml .= $wgs_tumor_xml;
-            }
+            my $wgs_tumor_build = $wgs_build->build_for_tumor_bam;
+            my $wgs_tumor_track = $self->generate_track_xml(
+                '-build'         => $wgs_tumor_build,
+                '-resource_type' => 'bam',
+                '-bam_file'      => $wgs_build->tumor_bam,
+            );
+            my $wgs_tumor_xml = $wgs_tumor_track->{xml};
+            $wgs_tumor_xml = $self->generate_panel_xml(
+                '-track_xml'   => $wgs_tumor_xml,
+                '-panel_count' => $panel_count++
+            );
+            push(@resources, $wgs_tumor_track->{resource});
+            $main_features_track_xml .= $wgs_tumor_xml;
         }
         if ($clinseq_build->exome_build) {
             #Exome build - source of exome SNV/Indel BED feature tracks
             my $exome_build = $clinseq_build->exome_build;
 
             #Exome normal refalign build - source of normal Exome BAMs track
-            if ($exome_build->can('normal_build')) {
-            my $exome_normal_refalign_build = $exome_build->normal_build;
-                my $exome_normal_track = $self->generate_track_xml(
-                    '-build'         => $exome_normal_refalign_build,
-                    '-resource_type' => 'bam'
-                );
-                my $exome_normal_xml = $exome_normal_track->{xml};
-                $exome_normal_xml = $self->generate_panel_xml(
-                    '-track_xml'   => $exome_normal_xml,
-                    '-panel_count' => $panel_count++
-                );
-                push(@resources, $exome_normal_track->{resource});
-                $main_features_track_xml .= $exome_normal_xml;
-            }
+            my $exome_normal_build = $exome_build->build_for_normal_bam;
+            my $exome_normal_track = $self->generate_track_xml(
+                '-build'         => $exome_normal_build,
+                '-resource_type' => 'bam',
+                '-bam_file'      => $exome_build->normal_bam,
+            );
+            my $exome_normal_xml = $exome_normal_track->{xml};
+            $exome_normal_xml = $self->generate_panel_xml(
+                '-track_xml'   => $exome_normal_xml,
+                '-panel_count' => $panel_count++
+            );
+            push(@resources, $exome_normal_track->{resource});
+            $main_features_track_xml .= $exome_normal_xml;
 
             #Exome tumor refalign build - source of tumor Exome BAMs track
-            if ($exome_build->can('tumor_build')) {
-                my $exome_tumor_refalign_build = $exome_build->tumor_build;
-                my $exome_tumor_track = $self->generate_track_xml(
-                    '-build'         => $exome_tumor_refalign_build,
-                    '-resource_type' => 'bam'
-                );
-                my $exome_tumor_xml = $exome_tumor_track->{xml};
-                $exome_tumor_xml = $self->generate_panel_xml(
-                    '-track_xml'   => $exome_tumor_xml,
-                    '-panel_count' => $panel_count++
-                );
-                push(@resources, $exome_tumor_track->{resource});
-                $main_features_track_xml .= $exome_tumor_xml;
-            }
+            my $exome_tumor_build = $exome_build->build_for_tumor_bam;
+            my $exome_tumor_track = $self->generate_track_xml(
+                '-build'         => $exome_tumor_build,
+                '-resource_type' => 'bam',
+                '-bam_file'      => $exome_build->tumor_bam,
+            );
+            my $exome_tumor_xml = $exome_tumor_track->{xml};
+            $exome_tumor_xml = $self->generate_panel_xml(
+                '-track_xml'   => $exome_tumor_xml,
+                '-panel_count' => $panel_count++
+            );
+            push(@resources, $exome_tumor_track->{resource});
+            $main_features_track_xml .= $exome_tumor_xml;
         }
         if ($clinseq_build->normal_rnaseq_build) {
             #RNAseq normal RNA build - source of normal RNAseq BAMs track
             my $rnaseq_normal_build = $clinseq_build->normal_rnaseq_build;
             my $rnaseq_normal_track = $self->generate_track_xml(
                 '-build'         => $rnaseq_normal_build,
-                '-resource_type' => 'bam'
+                '-resource_type' => 'bam',
+                '-bam_file'      => $rnaseq_normal_build->alignment_result->bam_file,
             );
             my $rnaseq_normal_xml = $rnaseq_normal_track->{xml};
             $rnaseq_normal_xml = $self->generate_panel_xml(
@@ -290,7 +287,8 @@ sub execute {
             my $rnaseq_tumor_build = $clinseq_build->tumor_rnaseq_build;
             my $rnaseq_tumor_track = $self->generate_track_xml(
                 '-build'         => $rnaseq_tumor_build,
-                '-resource_type' => 'bam'
+                '-resource_type' => 'bam',
+                '-bam_file'      => $rnaseq_tumor_build->alignment_result->bam_file,
             );
             my $rnaseq_tumor_xml = $rnaseq_tumor_track->{xml};
             $rnaseq_tumor_xml = $self->generate_panel_xml(
@@ -405,6 +403,7 @@ sub generate_track_xml {
     my $build         = $args{'-build'};
     my $resource_type = $args{'-resource_type'};
     my $bed_file      = $args{'-bed_file'};
+    my $bam_file      = $args{'-bam_file'};
     my $bed_data_type = $args{'-bed_data_type'};
 
     #Input build could be a 'reference alignment', 'rna seq', 'somatic
@@ -485,23 +484,11 @@ sub generate_track_xml {
     my $resource_file;
     my $resource_file_url;
     if ($resource_type eq 'bam') {
-        my $bam_file;
-        if ($build->can("whole_rmdup_bam_file")) {
-            $bam_file = $build->whole_rmdup_bam_file;
-        }
-        elsif ($build->can("alignment_result")) {
-            my $alignment_result = $build->alignment_result;
-            if ($alignment_result->can("bam_file")) {
-                $bam_file = $alignment_result->bam_file;
-            }
-        }
-        else {
+        unless ($bam_file) {
             $self->fatal_message(
-                "Could not find BAM file for build: $build_id - did you specify the correct resource type?"
-            );
+                "A bam file name must be defined in dump-igv-xml to generate a track of type 'bam'");
         }
         $resource_file = $bam_file;
-
     }
     elsif ($resource_type eq 'bed' && ($pp_type eq 'somatic variation' || $pp_type eq 'somatic validation')) {
         #User specifies actual file name - will be used to find file in a somatic variation result
