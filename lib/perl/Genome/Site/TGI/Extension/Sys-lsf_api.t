@@ -22,7 +22,7 @@ my %expected_job_statuses;
 subtest 'submit job' => sub {
     plan tests => 1;
 
-    my $cmd = 'ls ~';
+    my $cmd = 'echo "#everything is ok"';
     my $job_id = Genome::Sys->bsub(
         queue => Genome::Config::get('lsf_queue_short'),
         cmd => $cmd,
@@ -59,7 +59,7 @@ subtest 'get job statuses' => sub {
 subtest 'bsub_and_wait_for_completion' => sub {
     plan tests => 7;
 
-    my @cmds = (['ls', '~'],
+    my @cmds = (['echo', '#everything is ok'],
                 'exit 1',
                 { cmd => ['cat', '/dev/null'] },
                );
