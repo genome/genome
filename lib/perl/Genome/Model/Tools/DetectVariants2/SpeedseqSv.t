@@ -54,6 +54,9 @@ my $differ = Genome::File::Vcf::Differ->new("$output/svs.hq.sv.vcf.gz", "$test_d
 my $diff = $differ->diff;
 is($diff, undef, "Found No differences between $output/svs.hq.sv.vcf.gz and (expected) $test_dir/svs.hq.sv.vcf.gz") ||	diag $diff->to_string;
 
+ok(-l $command2->sv_output .'.vcf.gz', 'output VCF file symlink exists as expected');
+ok(-l $command2->sv_output .'.vcf.gz.tbi', 'output VCF index symlink exists as expected');
+
 compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed");
 compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt","$test_dir/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt");
 
