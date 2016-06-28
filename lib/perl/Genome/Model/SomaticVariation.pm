@@ -428,14 +428,14 @@ sub _resolve_workflow_for_build {
     my $self = shift;
     my $build = shift;
 
-    my $operation = Workflow::Operation->create_from_xml(__FILE__ . '.xml');
+    my $workflow = Genome::WorkflowBuilder::DAG->from_xml_filename(__FILE__ . '.xml');
 
     my $log_directory = $build->log_directory;
-    $operation->log_dir($log_directory);
+    $workflow->recursively_set_log_dir($log_directory);
 
-    $operation->name($build->workflow_name);
+    $workflow->name($build->workflow_name);
 
-    return $operation;
+    return $workflow;
 }
 
 sub map_workflow_inputs {
