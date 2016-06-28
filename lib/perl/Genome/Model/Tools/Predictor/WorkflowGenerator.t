@@ -43,7 +43,6 @@ my $simple_generator = Genome::Model::Tools::Predictor::WorkflowGenerator->creat
     chunk_size => 10,
     input_fasta_file => $test_fasta_file,
     dump_workflow_xml_file => 1,
-    dump_workflow_png_file => 1,
     gram_stain => 'positive',
     run_inline => 1,
 );
@@ -53,7 +52,6 @@ my $simple_workflow = $simple_generator->generate_workflow;
 ok($simple_workflow, 'created workflow');
 
 ok(-e $simple_generator->workflow_xml_file_path, 'workflow xml file was successfully dumped to ' . $simple_generator->workflow_xml_file_path);
-ok(-e $simple_generator->workflow_png_file_path, 'workflow png file was successfully dumped to ' . $simple_generator->workflow_png_file_path);
 
 ### Attempt to execute the simple workflow
 
@@ -80,7 +78,6 @@ my $two_tool_generator = Genome::Model::Tools::Predictor::WorkflowGenerator->cre
     chunk_size => 10,
     input_fasta_file => $test_fasta_file,
     dump_workflow_xml_file => 1,
-    dump_workflow_png_file => 1,
     gram_stain => 'positive',
     run_inline => 1,
 );
@@ -90,7 +87,6 @@ my $two_tool_workflow = $two_tool_generator->generate_workflow;
 ok($two_tool_workflow, 'created workflow object for two tool strategy');
 
 ok(-e $two_tool_generator->workflow_xml_file_path, 'workflow xml file was successfully dumped');
-ok(-e $two_tool_generator->workflow_png_file_path, 'workflow png file was successfully dumped');
 
 ### Now try to execute the two tool workflow
 

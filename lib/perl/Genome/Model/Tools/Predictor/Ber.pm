@@ -3,7 +3,6 @@ package Genome::Model::Tools::Predictor::Ber;
 use strict;
 use warnings;
 use Genome;
-use Workflow::Simple;
 use Command;
 use Getopt::Long;
 
@@ -90,7 +89,7 @@ sub run_predictor {
     }
 
     $self->status_message("Starting BER");
-   
+
     my ($blastp_fasta_files, $hmmpfam_fasta_files) = $self->setup or croak "failed to setup BER config";
 
     my %inputs = (
@@ -109,9 +108,9 @@ sub run_predictor {
     $self->status_message("found ".@$hmmpfam_fasta_files." fasta files for hmmpfam\n");
     my $workflow = $self->generate_work_flow( (@$blastp_fasta_files != 0 ?  1 : 0), @$hmmpfam_fasta_files != 0 ? 1 : 0);
     $self->status_message("starting workflow\n");
-    my $result = Workflow::Simple::run_workflow_lsf($workflow, %inputs);
+    my $result = $workflow->execute(inputs => \%inputs);
     unless ($result) {
-        croak "Error running BER workflow\n" . join("\n", map { $_->name . ": " . $_->error } @Workflow::Simple::ERROR);
+        croak "Error running BER workflow";
     }
     unlink $self->raw_output_path if(-e $self->raw_output_path);
     Genome::Sys->create_symlink($result->{output_file},$self->raw_output_path);
@@ -127,131 +126,79 @@ sub generate_work_flow {
     my $self = shift;
     my ($blastp, $hmmpfam) = @_;
 
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => 'Predictor::Ber',
-        input_properties => [ 'output_directory', 
-                              'blastp_fasta_files', 
-                              'hmmpfam_fasta_files', 
-                              'gram_stain', 
-                              'ber_source_path', 
-                              'locus_id',
-                              'lsf_queue',
-                              'lsf_resource',
-                          ],
-        output_properties => ['output_file'],
     );
 
-    unless (-d $self->log_directory) {
-        Genome::Sys->create_directory($self->log_directory);
-    }
-    $workflow->log_dir($self->log_directory);
     my $blastp_operation;
     if ($blastp) {
         $self->status_message("create workflow operation for blastp\n");
-    
-        $blastp_operation = $workflow->add_operation(
+
+        $blastp_operation = Genome::WorkflowBuilder::Command->create(
             name => 'BER blastp',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::Tools::Predictor::Ber::Blastp',
-            ),
+            command => 'Genome::Model::Tools::Predictor::Ber::Blastp',
             parallel_by => 'input_fasta_file'
         );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'blastp_fasta_files',
-            right_operation => $blastp_operation,
-            right_property => 'input_fasta_file',
+        $workflow->add_operation($blastp_operation);
+
+        $workflow->connect_input(
+            input_property => 'blastp_fasta_files',
+            destination => $blastp_operation,
+            destination_property => 'input_fasta_file',
         );
-        
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'output_directory',
-            right_operation => $blastp_operation,
-            right_property => 'output_directory',
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'ber_source_path',
-            right_operation => $blastp_operation,
-            right_property => 'ber_source_path',
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'lsf_queue',
-            right_operation => $blastp_operation,
-            right_property => 'lsf_queue',
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'lsf_resource',
-            right_operation => $blastp_operation,
-            right_property => 'lsf_resource',
-        );
+
+        for my $property (qw(output_directory ber_source_path lsf_queue lsf_resource)) {
+            $workflow->connect_input(
+                input_property => $property,
+                destination => $blastp_operation,
+                destination_property => $property,
+            );
+        }
     }
 
     my $hmmpfam_operation;
     if ($hmmpfam) {
         $self->status_message("create workflow operation for hmmpfam\n");
-    
-        $hmmpfam_operation = $workflow->add_operation(
+
+        $hmmpfam_operation = Genome::WorkflowBuilder::Command->create(
             name => 'BER hmmpfam',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::Tools::Predictor::Ber::Hmmpfam',
-            ),
+            command => 'Genome::Model::Tools::Predictor::Ber::Hmmpfam',
             parallel_by => 'input_fasta_file'
         );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'hmmpfam_fasta_files',
-            right_operation => $hmmpfam_operation,
-            right_property => 'input_fasta_file',
+        $workflow->add_operation($hmmpfam_operation);
+        $workflow->connect_input(
+            input_property => 'hmmpfam_fasta_files',
+            destination => $hmmpfam_operation,
+            destination_property => 'input_fasta_file',
         );
-        
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'output_directory',
-            right_operation => $hmmpfam_operation,
-            right_property => 'output_directory',
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'ber_source_path',
-            right_operation => $hmmpfam_operation,
-            right_property => 'ber_source_path',
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'lsf_queue',
-            right_operation => $hmmpfam_operation,
-            right_property => 'lsf_queue',
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'lsf_resource',
-            right_operation => $hmmpfam_operation,
-            right_property => 'lsf_resource',
-        );
+
+        for my $property (qw(output_directory ber_source_path lsf_queue lsf_resource)) {
+            $workflow->connect_input(
+                input_property => $property,
+                destination => $hmmpfam_operation,
+                destination_property => $property,
+            );
+        }
     }
     my $converge_operation;
     if ($blastp_operation and $hmmpfam_operation) {
-        $converge_operation = $workflow->add_operation(
+        $converge_operation = Genome::WorkflowBuilder::Converge->create(
             name => 'converge',
-            operation_type => Workflow::OperationType::Converge->create(
-                input_properties => ['btab_file', 'htab_file'],
-                output_properties => ['result'],
-            ),
+            input_properties => ['btab_file', 'htab_file'],
+            output_properties => ['result'],
         );
-        $workflow->add_link(
-            left_operation => $blastp_operation,
-            left_property => 'btab_file',
-            right_operation => $converge_operation,
-            right_property => 'btab_file',
+        $workflow->add_operation($converge_operation);
+        $workflow->create_link(
+            source => $blastp_operation,
+            source_property => 'btab_file',
+            destination => $converge_operation,
+            destination_property => 'btab_file',
         );
-        $workflow->add_link(
-            left_operation => $hmmpfam_operation,
-            left_property => 'htab_file',
-            right_operation => $converge_operation,
-            right_property => 'htab_file',
+        $workflow->create_link(
+            source => $hmmpfam_operation,
+            source_property => 'htab_file',
+            destination => $converge_operation,
+            destination_property => 'htab_file',
         );
     }
     elsif ($blastp_operation) {
@@ -262,59 +209,37 @@ sub generate_work_flow {
     }
 
     $self->status_message("create workflow operation for annotation\n");
-    my $annotate_operation = $workflow->add_operation(
+    my $annotate_operation = Genome::WorkflowBuilder::Command->create(
         name => 'BER annotation',
-        operation_type => Workflow::OperationType::Command->create(
-            command_class_name => 'Genome::Model::Tools::Predictor::Ber::Annotate',
-        ),
+        command => 'Genome::Model::Tools::Predictor::Ber::Annotate',
     );
-    $workflow->add_link(
-        left_operation => $converge_operation,
-        left_property => 'result',
-        right_operation => $annotate_operation,
-        right_property => 'converge_result',
+    $workflow->add_operation($annotate_operation);
+    $workflow->create_link(
+        source => $converge_operation,
+        source_property => 'result',
+        destination => $annotate_operation,
+        destination_property => 'converge_result',
     ) if($converge_operation);
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'output_directory',
-        right_operation => $annotate_operation,
-        right_property => 'output_directory',
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'ber_source_path',
-        right_operation => $annotate_operation,
-        right_property => 'ber_source_path',
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'ber_source_path',
-        right_operation => $annotate_operation,
-        right_property => 'ber_source_path',
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'locus_id',
-        right_operation => $annotate_operation,
-        right_property => 'locus_id',
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'gram_stain',
-        right_operation => $annotate_operation,
-        right_property => 'gram_stain',
-    );
-    $workflow->add_link(
-        left_operation => $annotate_operation,
-        left_property => 'output_file',
-        right_operation => $workflow->get_output_connector,
-        right_property => 'output_file',
+
+    for my $property (qw(output_directory ber_source_path locus_id gram_stain)) {
+        $workflow->connect_input(
+            input_property => $property,
+            destination => $annotate_operation,
+            destination_property => $property,
+        );
+    }
+
+    $workflow->connect_output(
+        source => $annotate_operation,
+        source_property => 'output_file',
+        output_property => 'output_file',
     );
 
-    my @errors = $workflow->validate;
-    if (@errors) {
-        die "Could not validate workflow:\n" . join("\n", @errors);
+    unless (-d $self->log_directory) {
+        Genome::Sys->create_directory($self->log_directory);
     }
+    $workflow->recursively_set_log_dir($self->log_directory);
+
     return $workflow;
 }
 
@@ -325,15 +250,15 @@ sub locus_id {
 
 sub _get_locus_from_fasta_header {
     my $self = shift;
-    
+
     #get headers
-    my $output_fh = Genome::Sys->open_file_for_reading($self->input_fasta_file) 
+    my $output_fh = Genome::Sys->open_file_for_reading($self->input_fasta_file)
         or die "Could not get file handle for " . $self->input_fasta_file;
-    
+
     my $fasta_header = $output_fh->getline;
     chomp $fasta_header;
-    
-    #check header format 
+
+    #check header format
     my ($locus_id) = $fasta_header =~ /^\>\w*?\-?(\w+)_Contig/;
 
     $self->_locus_id($locus_id);
@@ -360,19 +285,19 @@ sub setup {
 
     my $asm_file = $locusid.'_asm_feature';
     unlink $config_dir.$asm_file if(-e $config_dir.$asm_file);
-    my $asm_fh = Genome::Sys->open_file_for_writing($config_dir.$asm_file) 
+    my $asm_fh = Genome::Sys->open_file_for_writing($config_dir.$asm_file)
         or croak "cann't open the file:$!.";
     my $asmbl_file = $locusid.'_asmbl_data';
     unlink $config_dir.$asmbl_file if(-e $config_dir.$asmbl_file);
-    my $asmbl_fh = Genome::Sys->open_file_for_writing($config_dir.$asmbl_file) 
+    my $asmbl_fh = Genome::Sys->open_file_for_writing($config_dir.$asmbl_file)
         or croak "cann't open the file:$!.";
     my $ident2_file = $locusid.'_ident2';
     unlink $config_dir.$ident2_file if(-e $config_dir.$ident2_file);
-    my $ident2_fh = Genome::Sys->open_file_for_writing($config_dir.$ident2_file) 
+    my $ident2_fh = Genome::Sys->open_file_for_writing($config_dir.$ident2_file)
         or croak "cann't open the file:$!.";
-    my $stan_file = $locusid.'_stan';    
+    my $stan_file = $locusid.'_stan';
     unlink $config_dir.$stan_file if(-e $config_dir.$stan_file);
-    my $stan_fh = Genome::Sys->open_file_for_writing($config_dir.$stan_file) 
+    my $stan_fh = Genome::Sys->open_file_for_writing($config_dir.$stan_file)
         or croak "cann't open the file:$!.";
 
     $asm_fh->print(join("\t", qw(asmbl_id end3 end5 feat_name feat_type))."\r\n");
@@ -422,8 +347,8 @@ sub setup {
     Genome::Sys->create_symlink($config_dir.$asm_file, $ber_db_csv_dir.$asm_file) unless(-l $ber_db_csv_dir.$asm_file);
     Genome::Sys->create_symlink($config_dir.$asmbl_file, $ber_db_csv_dir.$asmbl_file) unless(-l $ber_db_csv_dir.$asmbl_file);
     Genome::Sys->create_symlink($config_dir.$ident2_file, $ber_db_csv_dir.$ident2_file) unless(-l $ber_db_csv_dir.$ident2_file);
-    Genome::Sys->create_symlink($config_dir.$stan_file, $ber_db_csv_dir.$stan_file) unless(-l $ber_db_csv_dir.$stan_file); 
-    
+    Genome::Sys->create_symlink($config_dir.$stan_file, $ber_db_csv_dir.$stan_file) unless(-l $ber_db_csv_dir.$stan_file);
+
     return (\@blastp_files, \@hmmpfam_files);
 }
 
@@ -460,7 +385,7 @@ sub write_final_report {
                                  );
         $total_genes++;
     }
-    
+
     my $final_fh = Genome::Sys->open_file_for_writing($self->final_report_file);
     $final_fh->print("BER Final Report for ".$self->locus_id."\n");
     $final_fh->print("number of input sequences: $total_genes\n");
@@ -468,7 +393,7 @@ sub write_final_report {
     $final_fh->print("number of sequences with no hmmpfam hits: $no_domain_hits or ". sprintf("%.2f", $no_domain_hits/$total_genes *100)."\n");
     $final_fh->print("number of sequences in BER annotation output: $dat_line_count or ". sprintf("%.2f", $dat_line_count/$total_genes *100)."\n");
     $final_fh->close;
-    
+
     return;
 }
 
@@ -509,7 +434,7 @@ sub cleanup_files {
                              $self->hmm_dir,
                              $self->log_directory);
     croak "failed to remove directories" unless($error);
-    
+
     return 1;
 }
 

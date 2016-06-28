@@ -85,7 +85,6 @@ sub map_workflow_inputs {
         # Manually add a few things
         $workflow_inputs{output_directory} = $build->data_directory;
         $workflow_inputs{gram_stain} = $self->subject->gram_stain_category;
-        $workflow_inputs{dump_workflow_png_file} = 1;
         $workflow_inputs{dump_workflow_xml_file} = 1;
         $self->_workflow_inputs(\%workflow_inputs);
     }

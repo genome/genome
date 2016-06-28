@@ -39,7 +39,7 @@ class Genome::Model::Tools::Predictor::FastaChunker {
             default_value => 'rusage[tmp=100]',
         },
         fasta_files => { 
-            is => 'ARRAY',  
+            is_many => 1,
             is_optional => 1,
             is_output => 1,
             doc => 'array of fasta files produced via chunking',
