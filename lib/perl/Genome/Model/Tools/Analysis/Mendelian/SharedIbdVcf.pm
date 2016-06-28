@@ -35,8 +35,8 @@ class Genome::Model::Tools::Analysis::Mendelian::SharedIbdVcf {
 		min_call_rate	=> { is => 'Text', doc => "Minimum callrate for affecteds to include a variant", is_optional => 1, is_input => 1, default => 0.50},
 		plot_resolution	=> { is => 'Text', doc => "Bin size for plotting shared IBD segments", is_optional => 1, is_input => 1, default => 100000},
 		path_to_beagle	=> { is => 'Text', doc => "Path to the BEAGLE executable required for fastIBD, i.e. /gsc/pkg/bio/beagle/beagle-3.3.12/beagle.jar", is_optional => 0, is_input => 1},
-		centromere_file	=> { is => 'Text', doc => "A UCSC 0-based BED file of centromere locations per chromosome", is_optional => 0, is_input => 1, default => '/gscmnt/sata809/info/medseq/dkoboldt/SNPseek2/ucsc/hg19/gapTable.centromere.nochr.txt'},
-		hapmap_file_dir	=> { is => 'Text', doc => "Directory containing genetic distances from HapMap, e.g. /gscmnt/sata809/info/medseq/dkoboldt/SNPseek2/ucsc/geneticMap/", is_optional => 0},
+		centromere_file	=> { is => 'Text', doc => "A UCSC 0-based BED file of centromere locations per chromosome", is_optional => 0, is_input => 1},
+		hapmap_file_dir	=> { is => 'Text', doc => "Directory containing genetic distances from HapMap", is_optional => 0},
 		hapmap_file_name => { is => 'Text', doc => "Search string to use for chromosome file with CHROM to replace chromosome name, e.g. genetic_map_GRCh37_chrCHROM.txt", is_optional => 0},
 	],
 };

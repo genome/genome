@@ -34,7 +34,7 @@ class Genome::Model::Tools::Vcf::ConvertToBeagle {
 		chromosome	=> { is => 'Text', doc => "Output results for a single chromosome" , is_optional => 1},
 		complete_only	=> { is => 'Text', doc => "Only output if all samples have genotypes" , is_optional => 1},
 		min_read_depth	=> { is => 'Text', doc => "Minimum VCF read depth to accept backfilled wildtype genotypes" , is_optional => 0, default => 20},
-		hapmap_file	=> { is => 'Text', doc => "Genetic map distances from HapMap, e.g. /gscmnt/sata809/info/medseq/dkoboldt/SNPseek2/ucsc/geneticMap/genetic_map_GRCh37_chr1.txt" , is_optional => 1},
+		hapmap_file	=> { is => 'Text', doc => "Genetic map distances from HapMap" , is_optional => 1},
 	],
 };
 

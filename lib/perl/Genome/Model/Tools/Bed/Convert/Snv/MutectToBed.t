@@ -13,7 +13,6 @@ use above 'Genome';
 
 use_ok('Genome::Model::Tools::Bed::Convert::Snv::MutectToBed');
 
-#my $test_dir = "/gscmnt/sata831/info/medseq/dlarson/mutect_testing/Genome-Model-Tools-Bed-Convert-Snv-MutectToBed";
 my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Bed-Convert-Snv-MutectToBed";
 
 my $expected_base = "expected.v2";

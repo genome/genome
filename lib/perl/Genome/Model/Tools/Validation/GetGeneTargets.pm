@@ -17,23 +17,23 @@ class Genome::Model::Tools::Validation::GetGeneTargets {
     type => 'String',
     is_optional => 1,
     doc => "output file containing targets information, default is targets.tsv in your working directory",
-    },   
+    },
     exon_file => {
     type => 'String',
     is_optional => 0,
-    doc => "exon bed file with chromosome, start, stop, and gene name, separated by tab.  build37: /gscmnt/gc2108/info/medseq/ckandoth/bed_maker/NCBI-human.combined-annotation_58_37c_v2/all_CDS_and_ncRNA_24Chroms_Contigs_1BasedStart_2bpFlanks_MergedExons",
+    doc => "exon bed file with chromosome, start, stop, and gene name, separated by tab.",
     },
-    ] 
+    ]
 };
 
 sub execute
 {
         my $self=shift;
         $DB::single = 1;
-        
+
         my $gene_file;
         my %genelist_hash;
-        
+
         if ($self->input_file){
                 $gene_file=$self->input_file;
                 my $gene_fh=new FileHandle($gene_file);
@@ -42,7 +42,7 @@ sub execute
                 my ($gene,@others)=split/\t/;
                 $genelist_hash{$gene}=1;
                 }
-                
+
                 my $summary_file;
                 my $output_file;
                 if ($self->output_file){
@@ -54,13 +54,10 @@ sub execute
                         $summary_file="summary";
                 }
                 open OUT, ">$output_file";
-                
+
                 my $exon_file;
                 if ($self->exon_file){
                         $exon_file=$self->exon_file;
-                }
-                else{
-                        $exon_file="/gscmnt/gc2108/info/medseq/ckandoth/bed_maker/NCBI-human.combined-annotation_58_37c_v2/all_CDS_and_ncRNA_24Chroms_Contigs_1BasedStart_2bpFlanks_MergedExons";
                 }
                 my %exon_hash;
                 my $exon_fh=new FileHandle($exon_file);
@@ -69,8 +66,8 @@ sub execute
                         my $line=$_;
                         my ($chr,$start,$stop,$gene)=split/\t/;
                         my $pos=$chr."_".$start."_".$stop;
-#                        if (defined $exon_hash{$gene}){  
-                        if (defined $genelist_hash{$gene}){  
+#                        if (defined $exon_hash{$gene}){
+                        if (defined $genelist_hash{$gene}){
                                 print OUT "$line\n";
                                 push @{$exon_hash{$gene}}, $pos;
                         }
@@ -80,7 +77,7 @@ sub execute
                         }
                }
                close OUT;
-               
+
                open SUM, ">$summary_file";
                my %selected_genes;
 
@@ -92,7 +89,7 @@ sub execute
 
                 foreach my $gene (keys %genelist_hash){
                         if (defined $exon_hash{$gene}){
-                                
+
                                 my $total_bases=0;
                                 my @exons=@{$exon_hash{$gene}};
                                 my $num_exon=@exons;
@@ -107,7 +104,7 @@ sub execute
                                 print SUM "$gene\t$num_exon\t$total_bases\n";
                                 delete $genelist_hash{$gene};
                         }
-                        
+
                 }
 
                 print SUM "\n\n==============================\n";
@@ -125,8 +122,8 @@ sub execute
                 print "Please enter an input file containing gene list, one gene per line\n";
                 return 1;
         }
-        
-        
+
+
         return 1;
 }
 1;
@@ -137,9 +134,9 @@ sub help_brief {
 
 sub help_detail {
     <<'HELP';
-this script will print out the chr,start and end of exons for a given gene list, it will also generate a summary report containing the following: 
+this script will print out the chr,start and end of exons for a given gene list, it will also generate a summary report containing the following:
 1) how many exons and bases per gene were selected
 2) warn you about genes that had no exons in the file.
-The summary file will be named your_output.summary along with your output_file, if output_file is not defined, then the summary file will be in your working directory, and named "summary". 
+The summary file will be named your_output.summary along with your output_file, if output_file is not defined, then the summary file will be in your working directory, and named "summary".
 HELP
 }

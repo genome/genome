@@ -29,7 +29,7 @@ class Genome::Model::Tools::Annotate::RegulatoryFeatures {
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		variant_file	=> { is => 'Text', doc => "A list of variants in annotation format", is_optional => 0, is_input => 1},
-		regfeats_file	=> { is => 'Text', doc => "Path to ENCODE regulatory features file. Feel free to use /gscmnt/sata809/info/medseq/dkoboldt/SNPseek2/encode/release-66/AnnotatedFeatures.gff.nochr.tsv", is_optional => 0, is_input => 1},
+		regfeats_file	=> { is => 'Text', doc => "Path to ENCODE regulatory features file.", is_optional => 0, is_input => 1},
 		output_file	=> { is => 'Text', doc => "Output file for annotation-results", is_optional => 1, is_input => 1},
 	],
 };

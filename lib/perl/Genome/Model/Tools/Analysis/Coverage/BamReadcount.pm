@@ -37,7 +37,7 @@ class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
     genome_build => {
         is => 'String',
         is_optional => 0,
-        doc => 'takes either a string describing the genome build (one of 36, 37, mm9, mus37, mus37wOSK) or a path to the genome fasta file',
+        doc => 'takes either a string describing the genome build (one of 36, 37, mm9, mus37) or a path to the genome fasta file',
     },
 
     min_mapping_quality => {
@@ -151,8 +151,6 @@ sub execute {
     elsif ($genome_build eq "mus37") {
         my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-mouse-build37");
         $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
-    } elsif ($genome_build eq "mus37wOSK") {
-        $fasta = "/gscmnt/sata135/info/medseq/dlarson/iPS_analysis/lentiviral_reference/mousebuild37_plus_lentivirus.fa";
     } elsif ($genome_build eq "mm9") {
         my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "UCSC-mouse-buildmm9");
         $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');

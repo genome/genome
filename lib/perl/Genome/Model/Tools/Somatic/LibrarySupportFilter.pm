@@ -89,8 +89,6 @@ sub execute {
     my $single_lib_output = IO::File->new( $self->single_lib_output_file, '>' )
         || die "Could not open for writing " . $self->single_lib_output_file();
 
-# stuff below from /gscmnt/sata146/info/medseq/charris/GBM/somatic_indel_finder.pl
-
     while ( my $line = $indel_file->getline() ) {
 
         chomp $line;
@@ -183,7 +181,6 @@ sub find_read_support {
     my ( $self, $chr, $pos, $indel_cigar ) = @_;
     my %library_hash; 
 
-    # "/gscmnt/sata821/info/model_data/2774314134/build96520626/alignments/H_GP-0124t_merged_rmdup.bam";
     my $sample_alignment_file = $self->sample_alignment_file();
 
     my @reads = `samtools view $sample_alignment_file $chr:$pos-$pos`;

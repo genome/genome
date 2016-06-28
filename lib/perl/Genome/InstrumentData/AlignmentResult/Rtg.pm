@@ -126,10 +126,6 @@ sub _run_aligner {
         $self->debug_message("Trying: $unmated_cmd");
         Genome::Sys->shellcmd(  cmd => $unmated_cmd, input_files => [$finished_unmated_sam], output_files => [$sam_file], skip_if_output_is_present=>0);
     }
-    
-    #  `cp $sam_file /gscmnt/sata921/info/medseq/rtg_evaluation/`;
-    # `cp $output_dir /gscmnt/sata921/info/medseq/rtg_evaluation/`;
-   
 
     # confirm that at the end we have a nonzero sam file, this is what'll get turned into a bam and
     # copied out.

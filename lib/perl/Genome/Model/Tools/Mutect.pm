@@ -179,9 +179,6 @@ sub execute {
         skip_if_output_is_present => 0,
         allow_zero_size_output_files => 1,
     );
-=cut
-java -Xmx5g -jar /gscuser/dlarson/mutect/muTect-1.1.4.jar --analysis_type MuTect --reference_sequence /gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa --input_file:normal /gscmnt/gc13001/info/model_data/2889433023/build136498879/alignments/136268587.bam --input_file:tumor /gscmnt/gc9006/info/model_data/2891225638/build136025755/alignments/135842703.bam --vcf aml31relapse_mutect_test100.vcf --coverage_file coverage100.txt --out aml31relapse_call_stats100.txt --cosmic /gscmnt/sata135/info/medseq/dlarson/aml31_mutect_manual/b37_cosmic_v54_120711.vcf --dbsnp /gscmnt/sata135/info/medseq/dlarson/aml31_mutect_manual/gatk_bundle_v2.3_b37/dbsnp_137.b37.vcf --intervals Y:34482907-59373566 --intervals MT:1-16569 
-=cut
 }
 
 1;

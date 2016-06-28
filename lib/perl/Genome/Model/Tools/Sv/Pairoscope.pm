@@ -55,7 +55,6 @@ class Genome::Model::Tools::Sv::Pairoscope {
         },
         exon_bam => {
             type => "String",
-            example_values => ["/gscmnt/sata135/info/medseq/dlarson/hg18.NCBI-human.combined-annotation.54_36p_v2.sorted.bam"],
             doc => "bam file of exons to use for displaying gene models", 
             is_optional => 1,
         },
