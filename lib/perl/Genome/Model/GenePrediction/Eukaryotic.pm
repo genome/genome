@@ -192,10 +192,10 @@ sub _resolve_workflow_for_build {
     my $xml = __FILE__ . '.xml';
     confess "Did not find workflow xml file at $xml!" unless -e $xml;
 
-    my $workflow = Workflow::Operation->create_from_xml($xml);
+    my $workflow = Genome::WorkflowBuilder::DAG->from_xml_filename($xml);
     confess "Could not create workflow object from $xml!" unless $workflow;
 
-    $workflow->log_dir($build->log_directory);
+    $workflow->recursively_set_log_dir($build->log_directory);
     $workflow->name($build->workflow_name);
 
     return $workflow;
