@@ -46,6 +46,14 @@ class Genome::Model::Tools::Germline::Filtering {
         is => 'Number',
         doc => "Number of cases in the cohort. This is a required input if --variant-file is a MAF or WU variant file",
     },
+    nhlbi_file => {
+        is => 'FilePath',
+        doc => 'A file with NHLBI-exome variant allele frequencies and dbSNP IDs.',
+    },
+    thousand_genomes_file => {
+        is => 'FilePath',
+        doc => 'A tabix-indexed file containing variant allele frequencies and dbSNP IDs from 1000 Genomes.',
+    },
     ],
     doc => "A germline variant filtering tool",
 };
@@ -126,9 +134,9 @@ sub execute {
 
     $self->debug_message( "\nLoading 1000G and NHLBI data...\n" );
     # Locate the tabix-indexed file containing variant allele frequencies and dbSNP IDs from 1000G
-    my $onekg_file = '/gscmnt/gc6132/info/medseq/1000_genomes/downloads/2012-03-27/ALL.wgs.phase1_release_v3.20101123.snps_indels.sites.vars.gz';
+    my $onekg_file = $self->thousand_genomes_file;
     # Load the NHLBI-exome variant allele frequencies and dbSNP IDs into a hash
-    my $nhlbi_file = '/gscmnt/sata170/info/medseq/NHLBI/ESP5400/NHLBI_ESP5400.snv.vars';
+    my $nhlbi_file = $self->nhlbi_file;
     my %nhlbi_af;
     my $nhlbi_fh = IO::File->new( $nhlbi_file ) or die "Couldn't open $nhlbi_file.";
     $nhlbi_fh->getline; # Skip header line
