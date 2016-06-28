@@ -67,7 +67,9 @@ sub _detect_variants {
     # Make a symlink to the actual VCF as the DV2 Dispatcher expects an output of svs.hq rather than BED or VCF output
     my ($vcf_file) = glob($self->_sv_staging_output .'*.vcf.gz');
     if ($vcf_file) {
-        symlink($vcf_file,$self->_sv_staging_output);
+        my $rel_path = File::Spec->abs2rel( $vcf_file, $self->_temp_staging_directory ) ;
+        Genome::Sys->create_symlink($rel_path,$self->_sv_staging_output .'.vcf.gz');
+        Genome::Sys->create_symlink($rel_path .'.tbi',$self->_sv_staging_output .'.vcf.gz.tbi');
     }
 }
 
@@ -134,6 +136,11 @@ sub has_version {
     else {
         return 0;
     }
+}
+
+sub _sort_detector_output {
+    # This command does not produce a BED output file
+    return 1;
 }
 
 
