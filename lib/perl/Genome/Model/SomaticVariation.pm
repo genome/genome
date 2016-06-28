@@ -433,7 +433,6 @@ sub _resolve_workflow_for_build {
     my $log_directory = $build->log_directory;
     $operation->log_dir($log_directory);
 
-    #I think this ideally should be handled 
     $operation->name($build->workflow_name);
 
     return $operation;
