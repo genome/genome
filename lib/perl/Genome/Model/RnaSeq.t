@@ -50,7 +50,7 @@ my $workflow = $rnaseq_model->_resolve_workflow_for_build($rnaseq_build);
 ok($workflow, "Got a workflow");
 
 # Test expected workflow xml
-my $test_dir = Genome::Utility::Test->data_dir('Genome::Model::RnaSeq', '2015-01-22');
+my $test_dir = __FILE__ . '.d';
 my $xml_file = Genome::Sys->create_temp_file_path;
 my $expected_xml_file = "$test_dir/workflow.xml";
 $workflow->save_to_xml(OutputFile => $xml_file);
