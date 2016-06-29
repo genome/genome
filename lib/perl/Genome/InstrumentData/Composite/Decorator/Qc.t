@@ -9,7 +9,6 @@ BEGIN {
 
 use Test::More tests => 6;
 use above 'Genome';
-use Workflow;
 
 my $pkg = 'Genome::InstrumentData::Composite::Decorator::Qc';
 use_ok($pkg);
