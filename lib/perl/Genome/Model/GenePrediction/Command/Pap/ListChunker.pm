@@ -5,8 +5,6 @@ package Genome::Model::GenePrediction::Command::Pap::ListChunker;
 use strict;
 use warnings;
 
-use Workflow;
-
 use List::MoreUtils qw/part/;
 use English;
 use Carp;

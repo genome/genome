@@ -5,8 +5,6 @@ package Genome::Model::GenePrediction::Command::Pap::DeleteFiles;
 use strict;
 use warnings;
 
-#use Workflow;
-
 use English;
 
 class Genome::Model::GenePrediction::Command::Pap::DeleteFiles {

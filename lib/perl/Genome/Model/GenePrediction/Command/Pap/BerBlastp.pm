@@ -5,8 +5,6 @@ package Genome::Model::GenePrediction::Command::Pap::BerBlastp;
 use strict;
 use warnings;
 
-#use Workflow;
-
 use Bio::Annotation::DBLink;
 use Bio::Seq;
 use Bio::SeqIO;
