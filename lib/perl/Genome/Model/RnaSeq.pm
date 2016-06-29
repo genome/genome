@@ -188,10 +188,10 @@ sub _parse_strategy {
     unless ( ($tool, $version, $x, $params) = ($strategy =~ /^(.+?)\s+(\S+)\s*(|\[(.*)\])\s*$/) ) {
         die "failed to parse strategy: $strategy!";
     }
-   
+
     #Genome::Utility::Text::string_to_camel_case($detector,"-")
     my $cmd_class = 'Genome::Model::Tools::' . join('::', map { ucfirst(lc($_)) } split('-',$tool));
-    
+
     my %params;
     my %params1 = ($params ? split(/\s+/,$params) : ());
     for my $param (keys %params1) {
@@ -299,7 +299,7 @@ sub _resolve_workflow_for_build {
         }
         if ($ensembl_version >= 67) {
             $run_splice_junction_summary = 1;
-        } 
+        }
         else {
             $self->debug_message('Skipping SpliceJunctionSummary for annotation build: '. $self->annotation_build);
         }
@@ -359,7 +359,7 @@ sub _resolve_workflow_for_build {
         right_operation => $alignment_operation,
         right_property => 'build_id'
     );
-   
+
     # Digital expression
     my $digital_expression_detection_operation = undef;
     if (my $strategy = $processing_profile->digital_expression_detection_strategy) {
@@ -383,14 +383,14 @@ sub _resolve_workflow_for_build {
                 right_property => $key,
             );
         }
-        
+
         $link = $workflow->add_link(
             left_operation => $alignment_operation,
             left_property => 'individual_alignment_results',
             right_operation => $digital_expression_detection_operation,
             right_property => 'alignment_results',
         );
-        
+
         $link = $workflow->add_link(
             left_operation => $digital_expression_detection_operation,
             left_property => 'output_result',
@@ -435,7 +435,7 @@ sub _resolve_workflow_for_build {
 
         $bam_qc_operation->operation_type->lsf_queue($lsf_queue);
         $bam_qc_operation->operation_type->lsf_project($lsf_project);
-        
+
         $workflow->add_link(
             left_operation => $alignment_operation,
             left_property => 'build_id',
@@ -457,7 +457,7 @@ sub _resolve_workflow_for_build {
             );
             $splice_junction_operation->operation_type->lsf_queue($lsf_queue);
             $splice_junction_operation->operation_type->lsf_project($lsf_project);
-            
+
             $workflow->add_link(
                 left_operation => $alignment_operation,
                 left_property => 'build_id',
@@ -472,7 +472,7 @@ sub _resolve_workflow_for_build {
             );
         }
     }
-    
+
     # Picard
     my $picard_operation = $workflow->add_operation(
         name => 'RnaSeq Picard Metrics',
@@ -805,7 +805,7 @@ Illumina RNA-seq library.  Reads were initially aligned to the $species
 reference genome using Eland and stored as a BAM file.  These alignments
 were used for basic quality assessment purposes only and no read filtering
 was performed.  Mapping statistics for the BAM file were generated
-using Samtools flagstat (v. $lims_samtools_version) (REF). 
+using Samtools flagstat (v. $lims_samtools_version) (REF).
 The BAM file was converted to FastQ using Picard (v.$picard_version) (REF)
 and all reads were re-aligned to the $alignment_ref
 using $aligner_name (v $aligner_version) (REF).  $aligner_name was run in default mode with
@@ -814,11 +814,11 @@ were estimated prior to run time using the Eland alignments described
 above (elaborate) and specified at run time.  The '-G' option was used
 to specify a GTF file for $aligner_name to generate an exon-exon junction
 database to assist in the mapping of known junctions.  The transcripts
-for this GTF were obtained from $annotation_source.  The 
+for this GTF were obtained from $annotation_source.  The
 resulting $aligner_name BAM file was indexed by $bam_index_tool
-and sorted by chromosome mapping position using $bam_sort_tool. 
+and sorted by chromosome mapping position using $bam_sort_tool.
 Transcript expression values were estimated by Cufflinks (v$cufflinks_version)
-(REF) using default parameters with the following exceptions.  The Cufflinks 
+(REF) using default parameters with the following exceptions.  The Cufflinks
 parameter '-G' was specified to force cufflinks to estimate expression
 for known transcripts provided by the same GTF file that was supplied
 to $aligner_name described above.  A second GTF containing only the
@@ -828,7 +828,7 @@ overall robustness of transcript abundance estimates.  The variant
 and corresponding gene expression status in the transcriptome were
 determined for SNV positions identified as somatic in the WGS
 tumor/normal data.  FPKM values were summarized to the gene level by
-adding Cufflinks FPKMs from alternative transcripts of each Ensembl gene. 
+adding Cufflinks FPKMs from alternative transcripts of each Ensembl gene.
 The variant allele frequencies were determined by counting reads
 supporting reference and variant base counts using the Perl module
 "Bio::DB::Sam".
