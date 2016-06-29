@@ -55,6 +55,11 @@ class Genome::Model::Tools::Gatk::IndelRealigner {
             gatk_param_name => '--targetIntervalsAreNotSorted',
         },
     ],
+    has_param => [
+        lsf_queue => {
+            value => Genome::Config::get('lsf_queue_build_worker_alt'),
+        },
+    ],
 };
 
 sub help_brief {
