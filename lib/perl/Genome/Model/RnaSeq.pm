@@ -629,26 +629,21 @@ sub connect_fusion_detector_to_input_connector {
     my $input_connector = shift;
     my $fusion_detection_operation = shift;
 
-    $workflow->add_link(
-        left_operation => $input_connector,
-        left_property => 'fusion_detector',
-        right_operation => $fusion_detection_operation,
-        right_property => 'detector_name',
+    my %input_properties = (
+        'fusion_detector'           => 'detector_name',
+        'fusion_detector_version'   => 'detector_version',
+        'fusion_detector_params'    => 'detector_params',
     );
 
-    $workflow->add_link(
-        left_operation => $input_connector,
-        left_property => 'fusion_detector_version',
-        right_operation => $fusion_detection_operation,
-        right_property => 'detector_version',
-    );
+    while (my ($input, $destination) = each %input_properties) {
+        $workflow->add_link(
+            left_operation => $input_connector,
+            left_property => $input,
+            right_operation => $fusion_detection_operation,
+            right_property => $destination,
+        );
+    }
 
-    $workflow->add_link(
-        left_operation => $input_connector,
-        left_property => 'fusion_detector_params',
-        right_operation => $fusion_detection_operation,
-        right_property => 'detector_params',
-    );
     return;
 }
 
