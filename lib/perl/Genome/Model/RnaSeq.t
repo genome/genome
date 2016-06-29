@@ -53,7 +53,7 @@ ok($workflow, "Got a workflow");
 my $test_dir = __FILE__ . '.d';
 my $xml_file = Genome::Sys->create_temp_file_path;
 my $expected_xml_file = "$test_dir/workflow.xml";
-$workflow->save_to_xml(OutputFile => $xml_file);
+Genome::Sys->write_file($xml_file, $workflow->get_xml);
 
 ok(-s $expected_xml_file, "Expected xml file exists at $expected_xml_file");
 ok(-s $xml_file, "Current xml file exists at $xml_file");
