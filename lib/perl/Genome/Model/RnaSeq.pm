@@ -353,7 +353,7 @@ sub _resolve_workflow_for_build {
     $alignment_operation->operation_type->lsf_queue($lsf_queue);
     $alignment_operation->operation_type->lsf_project($lsf_project);
 
-    my $link = $workflow->add_link(
+    $workflow->add_link(
         left_operation => $input_connector,
         left_property => 'build_id',
         right_operation => $alignment_operation,
@@ -376,7 +376,7 @@ sub _resolve_workflow_for_build {
         $digital_expression_detection_operation->operation_type->lsf_project($lsf_project);
 
         for my $key (keys %$params, qw/requestor sponsor user label output_dir/) {
-            my $link = $workflow->add_link(
+            $workflow->add_link(
                 left_operation => $input_connector,
                 left_property => 'digital_expression_' . $key,
                 right_operation => $digital_expression_detection_operation,
@@ -384,14 +384,14 @@ sub _resolve_workflow_for_build {
             );
         }
 
-        $link = $workflow->add_link(
+        $workflow->add_link(
             left_operation => $alignment_operation,
             left_property => 'individual_alignment_results',
             right_operation => $digital_expression_detection_operation,
             right_property => 'alignment_results',
         );
 
-        $link = $workflow->add_link(
+        $workflow->add_link(
             left_operation => $digital_expression_detection_operation,
             left_property => 'output_result',
             right_operation => $output_connector,
