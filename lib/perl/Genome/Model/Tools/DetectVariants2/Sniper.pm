@@ -5,7 +5,6 @@ use strict;
 
 use Genome;
 use Genome::Info::IUB;
-use Workflow;
 
 my $DEFAULT_VERSION = '0.7.3';
 my $LEGACY_SNIPER_COMMAND = 'bam-somaticsniper';
