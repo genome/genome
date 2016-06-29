@@ -36,6 +36,11 @@ class Genome::Model::Tools::Validation::LongIndelsParseRemapped {
             default => 0,
         },
     ],
+    has_param => [
+        lsf_queue => {
+            value => Genome::Config::get('lsf_queue_build_worker_alt'),
+        },
+    ],
 };
 
 sub execute {

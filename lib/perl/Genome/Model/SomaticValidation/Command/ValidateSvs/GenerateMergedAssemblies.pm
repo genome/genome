@@ -46,6 +46,12 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::GenerateMergedAsse
         },
     ],
 
+    has_param => [
+       lsf_queue => {
+            value => Genome::Config::get('lsf_queue_build_worker_alt'),
+       },
+    ],
+
     doc => 'generates a merged callset and FASTA for validating by alignment',
 };
 
