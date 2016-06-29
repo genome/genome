@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow;
 use Bio::SeqIO;
 use IO::File;
 use File::Basename;
