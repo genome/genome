@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 use Genome;
-use Workflow;
 
 my $DEFAULT_VERSION = '0.5';
 my $PINDEL_COMMAND = 'pindel';
