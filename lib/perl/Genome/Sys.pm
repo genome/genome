@@ -1372,9 +1372,11 @@ sub user_id {
 sub username {
     my $class = shift;
 
+    return $ENV{'REMOTE_USER'} if $ENV{'REMOTE_USER'};
+
     my $user_id = $class->user_id;
     for my $try (1..5) {
-        my $username = $ENV{'REMOTE_USER'} || getpwuid($user_id);
+        my $username = getpwuid($user_id);
         return $username if $username;
 
         $class->warning_message('Failed attempt %s to resolve username for user ID %s', $try, $user_id);
