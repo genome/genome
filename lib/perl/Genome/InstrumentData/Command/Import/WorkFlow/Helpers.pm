@@ -378,44 +378,6 @@ sub were_original_path_md5s_previously_imported {
     return 1;
 }
 
-sub work_flow_operation_class_from_name {
-    my ($self, $name) = @_;
-    die 'No name given to get work flow operation class!' if not $name;
-    return 'Genome::InstrumentData::Command::Import::WorkFlow::'
-        . join('', map { ucfirst } split(' ', $name));
-}
-
-sub add_operation_to_workflow_by_class {
-    my ($self, $wf, $command_class_name) = @_;
-
-    die 'No work flow given to add opertion!' if not $wf;
-    die 'No class given to add operation to work flow!' if not $command_class_name;
-
-    my $operation_type = Workflow::OperationType::Command->create(command_class_name => $command_class_name);
-    if ( not $operation_type ) {
-        $self->error_message("Failed to create work flow operation for ".$command_class_name);
-        return;
-    }
-
-    my $name = $command_class_name->command_name_brief;
-    $name =~ s/\-/ /g;
-    my $operation = $wf->add_operation(
-        name => $name,
-        operation_type => $operation_type,
-    );
-
-    return $operation;
-}
-
-
-sub add_operation_to_workflow_by_name {
-    my ($self, $wf, $name) = @_;
-
-    die 'No work flow given to add opertion!' if not $wf;
-    die 'No name given to add operation to work flow!' if not $name;
-
-    return $self->add_operation_to_workflow_by_class( $wf, $self->work_flow_operation_class_from_name($name) );
-}
 
 #<VALIDATORS>#
 sub is_downsample_ratio_invalid {
