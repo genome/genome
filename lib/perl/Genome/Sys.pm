@@ -1371,8 +1371,22 @@ sub user_id {
 
 sub username {
     my $class = shift;
-    my $username = $ENV{'REMOTE_USER'} || getpwuid($class->user_id);
-    return $username;
+
+    return $ENV{'REMOTE_USER'} if $ENV{'REMOTE_USER'};
+
+    my $user_id = $class->user_id;
+    for my $try (1..5) {
+        my $username = getpwuid($user_id);
+        return $username if $username;
+
+        #This is a hack!
+        #Sometimes our machines fail to get a result from getpwuid() on the first try.
+        #If we wait a second, it tends to work on subsequent attempts!
+        $class->warning_message('Failed attempt %s to resolve username for user ID %s', $try, $user_id);
+        sleep 1;
+    }
+
+    $class->fatal_message('Could not determine name for user ID %s' , $user_id);
 }
 
 my $sudo_username = undef;
