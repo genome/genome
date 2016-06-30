@@ -1371,8 +1371,18 @@ sub user_id {
 
 sub username {
     my $class = shift;
-    my $username = $ENV{'REMOTE_USER'} || getpwuid($class->user_id);
-    return $username;
+
+    my $user_id = $class->user_id;
+    for my $try (1..5) {
+        my $username = $ENV{'REMOTE_USER'} || getpwuid($user_id);
+        return $username if $username;
+
+        $class->warning_message('Failed attempt %s to resolve username for user ID %s', $try, $user_id);
+        sleep 1;
+    }
+
+    $class->warning_message('Giving up and returning user_id instead of name for %s' , $user_id);
+    return $user_id;
 }
 
 my $sudo_username = undef;
