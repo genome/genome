@@ -1965,6 +1965,11 @@ sub filter_non_matching_results {
         my $name = $param->property_name;
         $params{$name} = $self->$name;
     }
+
+    for my $input (qw(reference_build_id annotation_build_id)) {
+        $params{$input} = $self->$input;
+    }
+
     my $bx = Genome::InstrumentData::AlignmentResult::Merged->define_boolexpr(%params);
 
     my @matching_results;
