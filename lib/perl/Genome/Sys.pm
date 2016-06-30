@@ -1381,8 +1381,7 @@ sub username {
         sleep 1;
     }
 
-    $class->warning_message('Giving up and returning user_id instead of name for %s' , $user_id);
-    return $user_id;
+    $class->fatal_message('Could not determine name for user ID %s' , $user_id);
 }
 
 my $sudo_username = undef;
