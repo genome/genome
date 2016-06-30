@@ -1379,6 +1379,9 @@ sub username {
         my $username = getpwuid($user_id);
         return $username if $username;
 
+        #This is a hack!
+        #Sometimes our machines fail to get a result from getpwuid() on the first try.
+        #If we wait a second, it tends to work on subsequent attempts!
         $class->warning_message('Failed attempt %s to resolve username for user ID %s', $try, $user_id);
         sleep 1;
     }
