@@ -52,6 +52,10 @@ reports:
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal
+            'annotation-category':
+                category_list:
+                    - splice_site
+                    - non_synonymous
         interpreters:
             position: {}
             'variant-type': {}
@@ -118,6 +122,10 @@ reports:
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal
+            'annotation-category':
+                category_list:
+                    - splice_site
+                    - non_synonymous
         interpreters:
             position: {}
             vep: {}
@@ -160,6 +168,10 @@ reports:
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal
+            'annotation-category':
+                category_list:
+                    - splice_site
+                    - non_synonymous
         interpreters:
             'bed-entry': {}
         params:

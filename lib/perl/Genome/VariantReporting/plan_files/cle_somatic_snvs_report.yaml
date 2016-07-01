@@ -45,6 +45,9 @@ reports:
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal
+            'n-callers':
+                min_callers: 2
+                sample_name: discovery_tumor
         interpreters:
             position: {}
             'variant-type': {}
@@ -107,6 +110,9 @@ reports:
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal
+            'n-callers':
+                min_callers: 2
+                sample_name: discovery_tumor
         interpreters:
             position: {}
             vep: {}
@@ -145,6 +151,9 @@ reports:
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal
+            'n-callers':
+                min_callers: 2
+                sample_name: discovery_tumor
         interpreters:
             'bed-entry': {}
         params:
