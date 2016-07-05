@@ -25,6 +25,7 @@ use Params::Validate qw(:types validate_pos);
 use POSIX qw(EEXIST);
 use Set::Scalar;
 use Scalar::Util qw(blessed reftype);
+use feature qw(state);
 
 our @CARP_NOT = qw(Genome::Model::Build::Command::DetermineError);
 
@@ -1372,11 +1373,12 @@ sub user_id {
 sub username {
     my $class = shift;
 
-    return $ENV{'REMOTE_USER'} if $ENV{'REMOTE_USER'};
+    state $username = $ENV{'REMOTE_USER'};
+    return $username if $username;
 
     my $user_id = $class->user_id;
     for my $try (1..5) {
-        my $username = getpwuid($user_id);
+        $username = getpwuid($user_id);
         return $username if $username;
 
         #This is a hack!
