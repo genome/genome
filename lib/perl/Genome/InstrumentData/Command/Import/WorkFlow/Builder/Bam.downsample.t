@@ -30,6 +30,10 @@ ok($wf, 'build_workflow');
 my $expected_xml_file = __FILE__;
 $expected_xml_file =~ s/t$/xml/;
 my $expected_xml = Genome::Sys->read_file($expected_xml_file);
-is($wf->get_xml, $expected_xml, 'xml matches');
+
+my $actual_xml = $wf->get_xml;
+$actual_xml =~ s/lsfQueue="[^"]+"\s+//g;
+
+is($actual_xml, $expected_xml, 'xml matches');
 
 done_testing();
