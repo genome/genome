@@ -30,6 +30,6 @@ ok($wf, 'build_workflow');
 my $expected_xml_file = __FILE__;
 $expected_xml_file =~ s/t$/xml/;
 my $expected_xml = Genome::Sys->read_file($expected_xml_file);
-is($wf->get_xml, $expected_xml, 'xml mathes');
+is($wf->get_xml, $expected_xml, 'xml matches');
 
 done_testing();
