@@ -85,6 +85,7 @@
                      "outFile" : "/tmp/ptero-lsf-logfile-4a3e43b5-7779-4d40-be86-dad0181826f1.out",
                      "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-4a3e43b5-7779-4d40-be86-dad0181826f1.err --stdout /tmp/ptero-lsf-logfile-4a3e43b5-7779-4d40-be86-dad0181826f1.out",
                      "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                     "queue" : "long",
                      "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                   },
                   "pollingInterval" : 300,
@@ -203,6 +204,7 @@
                                                    "outFile" : "/tmp/ptero-lsf-logfile-ddfbc917-694a-480c-a077-33781b39e38f.out",
                                                    "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-ddfbc917-694a-480c-a077-33781b39e38f.err --stdout /tmp/ptero-lsf-logfile-ddfbc917-694a-480c-a077-33781b39e38f.out",
                                                    "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                                                   "queue" : "long",
                                                    "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                                                 },
                                                 "pollingInterval" : 300,

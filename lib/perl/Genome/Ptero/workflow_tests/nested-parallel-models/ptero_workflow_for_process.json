@@ -157,6 +157,7 @@
                                                                   "outFile" : "/tmp/ptero-lsf-logfile-4a4c7f53-c98e-4a64-ac81-d314447a2215.out",
                                                                   "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-4a4c7f53-c98e-4a64-ac81-d314447a2215.err --stdout /tmp/ptero-lsf-logfile-4a4c7f53-c98e-4a64-ac81-d314447a2215.out",
                                                                   "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                                                                  "queue" : "long",
                                                                   "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                                                                },
                                                                "pollingInterval" : 300,
