@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 use Genome;
-use Workflow;
 
 class Genome::Model::Tools::Somatic::PindelToBed {
     is => ['Genome::Model::Tools::Somatic'],

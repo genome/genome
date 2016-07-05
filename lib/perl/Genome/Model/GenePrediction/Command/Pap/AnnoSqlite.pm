@@ -5,8 +5,6 @@ package Genome::Model::GenePrediction::Command::Pap::AnnoSqlite;
 use strict;
 use warnings;
 
-#use Workflow;
-
 use Compress::Bzip2;
 use English;
 use File::Basename;

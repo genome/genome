@@ -5,8 +5,6 @@ package Genome::Model::GenePrediction::Command::Pap::FastaChunker;
 use strict;
 use warnings;
 
-#use Workflow;
-
 use Bio::Seq;
 use Bio::SeqIO;
 

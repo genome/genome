@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 use Genome;
-use Workflow;
 use Genome::Statistics;
 
 class Genome::Model::Tools::Pindel::ProcessPindelReads {

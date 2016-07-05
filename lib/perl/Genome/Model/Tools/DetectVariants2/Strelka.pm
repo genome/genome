@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 use Genome;
-use Workflow;
 
 use Config::IniFiles;
 

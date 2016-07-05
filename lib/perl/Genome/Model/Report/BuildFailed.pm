@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow;
 
 use Data::Dumper 'Dumper';
 require Text::Wrap;

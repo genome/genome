@@ -5,8 +5,6 @@ package Genome::Model::GenePrediction::Command::Pap::InterProScan;
 use strict;
 use warnings;
 
-use Workflow;
-
 use Bio::Seq;
 use Bio::SeqFeature::Generic;
 use Bio::SeqIO;
