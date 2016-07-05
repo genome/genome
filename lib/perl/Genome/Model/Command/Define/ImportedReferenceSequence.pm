@@ -197,12 +197,25 @@ sub execute {
         $taxon = $taxons[0];
     }
 
+    my $fasta_md5;
+    if ($self->is_rederivable) {
+        #check for an existing reference build for our FASTA; shortcut if we can
+        $fasta_md5 = Genome::Sys->md5sum($self->fasta_file);
+        my @input = Genome::Model::Build::Input->get(value_id => $fasta_md5, name => 'fasta_md5');
+        my @existing = Genome::Model::Build::ImportedReferenceSequence->get([map $_->build_id, @input]);
+        if (@existing == 1) {
+            $self->result_model_id($existing[0]->model_id);
+            $self->result_build_id($existing[0]->id);
+            return 1;
+        }
+    }
+
     my $model = $self->_get_or_create_model($taxon);
     return unless $model;
 
     $self->result_model_id($model->id);
 
-    my $build = $self->_create_build($model);
+    my $build = $self->_create_build($model, $fasta_md5);
     return unless $build;
 
     $self->result_build_id($build->id);
@@ -333,12 +346,16 @@ sub _get_or_create_model {
 sub _create_build {
     my $self = shift;
     my $model = shift;
+    my $fasta_md5 = shift;
 
     my @build_parameters = (
         model_id => $model->id,
         fasta_file => $self->fasta_file,
         allosome_names => $self->allosome_names,
     );
+    if ($fasta_md5) {
+        push(@build_parameters, fasta_md5 => $fasta_md5);
+    }
 
     if ($self->use_default_sequence_uri) {
         push(@build_parameters, generate_sequence_uri => 1);
