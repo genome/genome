@@ -249,8 +249,8 @@ sub _generate_operation {
     eval {
         $class_name->__meta__;
     };
-    if($@){
-        $class->error_message("Could not create an instance of " . $class_name);
+    if(my $error = $@){
+        $class->error_message("Could not create an instance of %s: %s", $class_name, $error);
         die $class->error_message;
     }
 
