@@ -148,13 +148,13 @@ sub _create_links_for_subtree {
             my $reference = $input_data->{$tree->{reference}};
             $value = $reference->id;
             unless($value) {
-                die $class->error_message('Found no reference for ' . $tree->{reference});
+                $class->fatal_message('Found no reference for ' . $tree->{reference});
             }
         } elsif ($property eq 'annotation_build_id') {
             my $annotation_build = $input_data->{$tree->{annotation}};
             $value = $annotation_build->id;
             unless($value) {
-                die $class->error_message('Found no annotation build for ' . $tree->{annotation});
+                $class->fatal_message('Found no annotation build for ' . $tree->{annotation});
             }
         } else {
             $value = $tree->{$property};
@@ -250,8 +250,7 @@ sub _generate_operation {
         $class_name->__meta__;
     };
     if(my $error = $@){
-        $class->error_message("Could not create an instance of %s: %s", $class_name, $error);
-        die $class->error_message;
+        $class->fatal_message("Could not create an instance of %s: %s", $class_name, $error);
     }
 
     unless ($_generate_operation_tmpl) {
