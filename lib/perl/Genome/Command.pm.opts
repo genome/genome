@@ -10692,6 +10692,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'genome-build=s',
         'files',
+        'lsf-queue=s',
+        'files',
         'output-pdf=s',
         'files',
         'annotations-bottom=s',
