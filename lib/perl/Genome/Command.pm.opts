@@ -33864,6 +33864,18 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>disk-usage',
+    [
+      'format=s',
+      [
+        'tsv',
+        'fixed'
+      ],
+      'active-only!',
+      undef,
+      'help!',
+      undef
+    ],
     'help!',
     undef
   ],
