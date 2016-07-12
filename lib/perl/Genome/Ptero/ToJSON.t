@@ -15,6 +15,11 @@ use File::Basename qw(dirname basename);
 use File::Spec qw();
 use File::Copy qw(copy);
 
+use Sub::Override;
+use Genome::ConfigValidator::LSFQueue;
+
+#since we kill the environment in this test, the LSFQueue check cannot pass
+my $override = Sub::Override->new('Genome::ConfigValidator::LSFQueue::check', sub { 1 });
 
 for my $test_directory (glob test_data_directory('*')) {
     my $test_name = basename($test_directory);
@@ -47,6 +52,7 @@ for my $test_directory (glob test_data_directory('*')) {
             qr/^.*"outFile" :.*$/,
             qr/^.*"errFile" :.*$/,
             qr/^.*"jobGroup" :.*$/,
+            qr/^.*"queue" :.*$/,
         ],
     );
 }

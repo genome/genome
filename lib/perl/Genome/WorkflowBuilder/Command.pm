@@ -247,6 +247,11 @@ sub operation_type_attributes {
             $attributes{$expected_attributes{$name}} = $value;
         }
     }
+
+    unless (defined $attributes{'lsfQueue'}) {
+        $attributes{'lsfQueue'} = Genome::Config::get('lsf_queue_build_worker');
+    }
+
     return %attributes;
 }
 

@@ -183,7 +183,14 @@ sub test_xml {
     if ($ENV{GENERATE_TEST_DATA}) {
         File::Copy::copy($xml_path, $expected_xml_path);
     }
-    compare_ok($expected_xml_path, $xml_path, "Xml looks as expected");
+    compare_ok(
+        $expected_xml_path, $xml_path,
+        name => "Xml looks as expected",
+        replace => [
+            [qr(lsfQueue="[^"]+"\s+), q()],
+            [qr(lsfResource="[^"]+"\s+), q()],
+        ],
+    );
     return;
 }
 
