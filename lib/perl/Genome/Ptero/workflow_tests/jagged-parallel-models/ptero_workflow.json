@@ -83,8 +83,8 @@
                      "jobGroup" : "/genome/dmorton",
                      "numProcessors" : 1,
                      "outFile" : "/tmp/ptero-lsf-logfile-4a3e43b5-7779-4d40-be86-dad0181826f1.out",
-                     "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-4a3e43b5-7779-4d40-be86-dad0181826f1.err --stdout /tmp/ptero-lsf-logfile-4a3e43b5-7779-4d40-be86-dad0181826f1.out",
-                     "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                     "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-d8099e5e-1c8c-41c7-b174-a28b43b957e7.err --stdout /tmp/ptero-lsf-logfile-d8099e5e-1c8c-41c7-b174-a28b43b957e7.out' > /tmp/ptero-lsf-logfile-d8099e5e-1c8c-41c7-b174-a28b43b957e7-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-d8099e5e-1c8c-41c7-b174-a28b43b957e7-postexec.log",
+                     "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
                      "queue" : "long",
                      "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                   },
@@ -202,8 +202,8 @@
                                                    "jobGroup" : "/genome/dmorton",
                                                    "numProcessors" : 1,
                                                    "outFile" : "/tmp/ptero-lsf-logfile-ddfbc917-694a-480c-a077-33781b39e38f.out",
-                                                   "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-ddfbc917-694a-480c-a077-33781b39e38f.err --stdout /tmp/ptero-lsf-logfile-ddfbc917-694a-480c-a077-33781b39e38f.out",
-                                                   "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                                                   "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-50f63610-176c-4717-a8d7-002161ccc5ba.err --stdout /tmp/ptero-lsf-logfile-50f63610-176c-4717-a8d7-002161ccc5ba.out' > /tmp/ptero-lsf-logfile-50f63610-176c-4717-a8d7-002161ccc5ba-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-50f63610-176c-4717-a8d7-002161ccc5ba-postexec.log",
+                                                   "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
                                                    "queue" : "long",
                                                    "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                                                 },

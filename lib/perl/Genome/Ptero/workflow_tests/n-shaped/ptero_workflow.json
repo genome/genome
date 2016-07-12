@@ -130,8 +130,8 @@
                      "jobGroup" : "/genome/dmorton",
                      "numProcessors" : 4,
                      "outFile" : "/tmp/ptero-lsf-logfile-7ea07b15-32a8-4dd2-8027-060d320021e1.out",
-                     "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-7ea07b15-32a8-4dd2-8027-060d320021e1.err --stdout /tmp/ptero-lsf-logfile-7ea07b15-32a8-4dd2-8027-060d320021e1.out",
-                     "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                     "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-4d81ce4e-850c-42d6-8b0c-25ca76bb22d7.err --stdout /tmp/ptero-lsf-logfile-4d81ce4e-850c-42d6-8b0c-25ca76bb22d7.out' > /tmp/ptero-lsf-logfile-4d81ce4e-850c-42d6-8b0c-25ca76bb22d7-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-4d81ce4e-850c-42d6-8b0c-25ca76bb22d7-postexec.log",
+                     "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
                      "queue" : "short",
                      "resReq" : "rusage[mem=200:gtmp=5]"
                   },
@@ -202,8 +202,8 @@
                      "jobGroup" : "/genome/dmorton",
                      "numProcessors" : 4,
                      "outFile" : "/tmp/ptero-lsf-logfile-8ebb99c5-fe3a-4111-9e4d-817d308db9ea.out",
-                     "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-8ebb99c5-fe3a-4111-9e4d-817d308db9ea.err --stdout /tmp/ptero-lsf-logfile-8ebb99c5-fe3a-4111-9e4d-817d308db9ea.out",
-                     "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                     "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-cea6c9fd-e1c4-415b-855e-0e9abad765b0.err --stdout /tmp/ptero-lsf-logfile-cea6c9fd-e1c4-415b-855e-0e9abad765b0.out' > /tmp/ptero-lsf-logfile-cea6c9fd-e1c4-415b-855e-0e9abad765b0-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-cea6c9fd-e1c4-415b-855e-0e9abad765b0-postexec.log",
+                     "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
                      "queue" : "short",
                      "resReq" : "rusage[mem=200:gtmp=5]"
                   },
@@ -274,8 +274,8 @@
                      "jobGroup" : "/genome/dmorton",
                      "numProcessors" : 4,
                      "outFile" : "/tmp/ptero-lsf-logfile-f7c4af76-6819-4476-82e9-0913c49ca92d.out",
-                     "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-f7c4af76-6819-4476-82e9-0913c49ca92d.err --stdout /tmp/ptero-lsf-logfile-f7c4af76-6819-4476-82e9-0913c49ca92d.out",
-                     "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                     "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-4f5de04c-1795-4a63-a6b9-3721e487446b.err --stdout /tmp/ptero-lsf-logfile-4f5de04c-1795-4a63-a6b9-3721e487446b.out' > /tmp/ptero-lsf-logfile-4f5de04c-1795-4a63-a6b9-3721e487446b-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-4f5de04c-1795-4a63-a6b9-3721e487446b-postexec.log",
+                     "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
                      "queue" : "short",
                      "resReq" : "rusage[mem=200:gtmp=5]"
                   },
@@ -346,8 +346,8 @@
                      "jobGroup" : "/genome/dmorton",
                      "numProcessors" : 4,
                      "outFile" : "/tmp/ptero-lsf-logfile-0f7f699c-eed3-42de-bb92-df193cee8e08.out",
-                     "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-0f7f699c-eed3-42de-bb92-df193cee8e08.err --stdout /tmp/ptero-lsf-logfile-0f7f699c-eed3-42de-bb92-df193cee8e08.out",
-                     "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                     "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-10d1b125-56a2-4ee1-b364-26387ed1d567.err --stdout /tmp/ptero-lsf-logfile-10d1b125-56a2-4ee1-b364-26387ed1d567.out' > /tmp/ptero-lsf-logfile-10d1b125-56a2-4ee1-b364-26387ed1d567-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-10d1b125-56a2-4ee1-b364-26387ed1d567-postexec.log",
+                     "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
                      "queue" : "short",
                      "resReq" : "rusage[mem=200:gtmp=5]"
                   },

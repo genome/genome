@@ -109,8 +109,8 @@
                                     "jobGroup" : "/genome/dmorton",
                                     "numProcessors" : 1,
                                     "outFile" : "/tmp/ptero-lsf-logfile-aa257d34-2f57-45f5-900f-57bb3aa8e4b9.out",
-                                    "postExecCmd" : "ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-aa257d34-2f57-45f5-900f-57bb3aa8e4b9.err --stdout /tmp/ptero-lsf-logfile-aa257d34-2f57-45f5-900f-57bb3aa8e4b9.out",
-                                    "preExecCmd" : "ptero-lsf-pre-exec; exit 0;",
+                                    "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-11641b61-f207-4bd7-94d0-eeb05f2fb808.err --stdout /tmp/ptero-lsf-logfile-11641b61-f207-4bd7-94d0-eeb05f2fb808.out' > /tmp/ptero-lsf-logfile-11641b61-f207-4bd7-94d0-eeb05f2fb808-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-11641b61-f207-4bd7-94d0-eeb05f2fb808-postexec.log",
+                                    "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
                                     "queue" : "long",
                                     "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                                  },
