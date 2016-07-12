@@ -42,6 +42,11 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledCon
             is_optional => 1,
         },
     ],
+    has_param => [
+       lsf_queue => {
+            value => Genome::Config::get('lsf_queue_build_worker_alt'),
+       },
+    ],
     doc => 'creates a reference sequence for validating by alignment',
 };
 

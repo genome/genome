@@ -25,6 +25,11 @@ class Genome::Model::SomaticValidation::Command::ProcessValidation {
             id_by => 'build_id',
         },
     ],
+    has_param => {
+        lsf_queue => {
+            value => Genome::Config::get('lsf_queue_build_worker_alt'),
+        },
+    },
     doc => 'final processing of HQ SNV detection results',
 };
 

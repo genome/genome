@@ -34,6 +34,11 @@ class Genome::Model::SomaticValidation::Command::IdentifyDnp {
             doc => "Somatic Validation build that the DNP result will belong to and which procides the reads and proportion parameters.",
         },
     ],
+    has_param => [
+        lsf_queue => {
+            value => Genome::Config::get('lsf_queue_build_worker_alt'),
+        },
+    ],
     doc => 'identify DNPs',
 };
 
