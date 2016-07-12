@@ -35,7 +35,10 @@ class Genome::Ptero::TestCommand::NullCommand {
     ],
     has => [
         lsf_resource => {
-            default_value => "-M 200000 -n 4 -R 'rusage[mem=200:gtmp=5]' -q short",
+            default_value => "-M 200000 -n 4 -R 'rusage[mem=200:gtmp=5]'",
+        },
+        lsf_queue => {
+            default_value => Genome::Config::get('lsf_queue_short'),
         },
     ]
 };
