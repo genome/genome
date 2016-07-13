@@ -116,7 +116,7 @@ sub get_annotation_db {
 
 sub get_microarray_builds {
     my $self = shift;
-    if ($self->microarray_model_tumor and $self->microarray_model_tumor) {
+    if ($self->microarray_model_tumor and $self->microarray_model_normal) {
         return ($self->microarray_model_tumor->last_succeeded_build, $self->microarray_model_normal->last_succeeded_build);
     }
     elsif (my $clinseq_model = $self->clinseq_model) {
