@@ -23,8 +23,9 @@ subtest "somatic mode" => sub {
     #Run MicroarrayCNV on the 'apipe-test-clinseq-wer' model in somatic-mode
     my $somatic_opdir = Genome::Sys->create_temp_directory();
     ok($somatic_opdir, "created temp directory: $somatic_opdir") or die;
-    my $clinseq_model = Genome::Model->get(name => 'apipe-test-clinseq-wer');
+    my $clinseq_model = Genome::Model->get(name => 'apipe-test-clinseq-wer'); #TODO don't use a live model
     my $clinseq_build = $clinseq_model->last_succeeded_build;
+    $clinseq_build->cancer_annotation_db($clinseq_model->cancer_annotation_db); #make the build current
     my $somatic_microarray_cnv = Genome::Model::ClinSeq::Command::MicroarrayCnv->create(
         outdir        => $somatic_opdir,
         clinseq_build => $clinseq_build,
