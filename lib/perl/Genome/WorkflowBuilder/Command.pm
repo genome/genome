@@ -120,7 +120,7 @@ sub _get_ptero_execute_method {
 
     local $ENV{LSB_SUB_ADDITIONAL} = Genome::Config::get('lsb_sub_additional') || $ENV{LSB_SUB_ADDITIONAL};
 
-    my $ptero_lsf_parameters = $self->_get_ptero_lsf_parameters();
+    my $ptero_lsf_parameters = $self->_get_ptero_lsf_parameters($log_dir);
     $ptero_lsf_parameters->{command} = sprintf(
         'genome ptero wrapper --command-class %s '
         .'--method execute --log-directory %s',
@@ -145,6 +145,8 @@ sub _get_ptero_execute_method {
 
 sub _get_ptero_lsf_parameters {
     my $self = shift;
+    my $log_dir = shift;
+
     my %attributes = $self->operation_type_attributes;
     my $lsf_params = parse_lsf_params( $attributes{lsfResource} );
 
@@ -165,7 +167,7 @@ sub _get_ptero_lsf_parameters {
     );
     $set_lsf_option->('jobGroup', $default_job_group);
 
-    my ($stderr, $stdout, $postexec) = $self->_get_lsf_log_paths();
+    my ($stderr, $stdout, $postexec) = $self->_get_lsf_log_paths($log_dir);
     $lsf_params->{options}->{errFile} = $stderr;
     $lsf_params->{options}->{outFile} = $stdout;
 
@@ -188,7 +190,7 @@ sub _get_ptero_lsf_parameters {
 #FIXME This is not unique within parallel_by operations.
 sub _get_lsf_log_paths {
     my $self = shift;
-    my $log_dir = $self->log_dir();
+    my $log_dir = shift;
 
     my $ug = Data::UUID->new();
     my $uuid = $ug->create();
