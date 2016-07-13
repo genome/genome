@@ -23,10 +23,10 @@ class Genome::Model::ClinSeq::Command::MicroarrayCnv {
             doc         => 'Microarray model of a single sample, not somatic.',
             is_optional => 1,
         },
-        clinseq_model => {
-            is => 'Genome::Model::ClinSeq',
+        clinseq_build => {
+            is => 'Genome::Model::Build::ClinSeq',
             doc =>
-                'Clinseq model(the microarray models will be extracted from the somatic-exome or somatic-wgs models of this model)',
+                'Clinseq build (the microarray models will be extracted from the somatic-exome or somatic-wgs builds of this build)',
             is_optional => 1,
         },
         outdir => {
@@ -101,8 +101,8 @@ sub __errors__ {
 sub get_annotation_db {
     my $self = shift;
     my $cancer_annotation_db;
-    if ($self->clinseq_model) {
-        $cancer_annotation_db = $self->clinseq_model->cancer_annotation_db;
+    if ($self->clinseq_build) {
+        $cancer_annotation_db = $self->clinseq_build->cancer_annotation_db;
     }
     elsif ($self->cancer_annotation_db) {
         $cancer_annotation_db = $self->cancer_annotation_db;
@@ -119,8 +119,7 @@ sub get_microarray_builds {
     if ($self->microarray_model_tumor and $self->microarray_model_normal) {
         return ($self->microarray_model_tumor->last_succeeded_build, $self->microarray_model_normal->last_succeeded_build);
     }
-    elsif (my $clinseq_model = $self->clinseq_model) {
-        my $clinseq_build = $clinseq_model->last_succeeded_build;
+    elsif (my $clinseq_build = $self->clinseq_build) {
         if ($clinseq_build->has_microarray_build) {
             return ($clinseq_build->tumor_microarray_build, $clinseq_build->normal_microarray_build);
         }

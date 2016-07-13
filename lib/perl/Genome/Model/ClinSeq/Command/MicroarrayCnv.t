@@ -24,9 +24,10 @@ subtest "somatic mode" => sub {
     my $somatic_opdir = Genome::Sys->create_temp_directory();
     ok($somatic_opdir, "created temp directory: $somatic_opdir") or die;
     my $clinseq_model = Genome::Model->get(name => 'apipe-test-clinseq-wer');
+    my $clinseq_build = $clinseq_model->last_succeeded_build;
     my $somatic_microarray_cnv = Genome::Model::ClinSeq::Command::MicroarrayCnv->create(
         outdir        => $somatic_opdir,
-        clinseq_model => $clinseq_model,
+        clinseq_build => $clinseq_build,
         test          => 1,
         min_cnv_diff  => 0.1
     );
