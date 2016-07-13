@@ -1034,23 +1034,27 @@ sub annotate_snvs_vcf_op {
     my $workflow = shift;
     my $type = shift;
 
-    my $annotate_snvs_vcf_op = Genome::WorkflowBuilder::Command->create(
-        name    => "Annotate the $type snvs vcf with dbsnp ids",
-        command => 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf',
-    );
-    $workflow->add_operation($annotate_snvs_vcf_op);
-    $workflow->connect_input(
-        input_property       => "${type}_build",
-        destination          => $annotate_snvs_vcf_op,
-        destination_property => 'somatic_build',
-    );
-    $workflow->connect_input(
-        input_property       => 'build',
-        destination          => $annotate_snvs_vcf_op,
-        destination_property => 'requestor',
-    );
+    unless ($self->{annotate_snvs_vcf_op}{$type}) {
+        my $annotate_snvs_vcf_op = Genome::WorkflowBuilder::Command->create(
+            name    => "Annotate the $type snvs vcf with dbsnp ids",
+            command => 'Genome::Model::ClinSeq::Command::AnnotateSnvsVcf',
+        );
+        $workflow->add_operation($annotate_snvs_vcf_op);
+        $workflow->connect_input(
+            input_property       => "${type}_build",
+            destination          => $annotate_snvs_vcf_op,
+            destination_property => 'somatic_build',
+        );
+        $workflow->connect_input(
+            input_property       => 'build',
+            destination          => $annotate_snvs_vcf_op,
+            destination_property => 'requestor',
+        );
 
-    return $annotate_snvs_vcf_op;
+        $self->{annotate_snvs_vcf_op}{$type} = $annotate_snvs_vcf_op;
+    }
+
+    return $self->{annotate_snvs_vcf_op}{$type};
 }
 
 sub mutation_diagram_op {
