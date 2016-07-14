@@ -183,9 +183,28 @@ subtest "Source tags must be defined" => sub {
         "Error if source tag is not defined for one report");
 };
 
-subtest "test one empty file" => sub {
+subtest "test one empty supplemental_report file" => sub {
     my $result_a = get_report_result('report_a.noheader');
     my $result_b = get_report_result('report_empty');
+    my $expected = get_data('report_a.noheader');
+
+    my $cmd = $pkg->create(
+        base_report => $result_a,
+        supplemental_report => $result_b,
+        sort_columns => ['1', '2'],
+        contains_header => 0,
+        process_id => $process->id,
+        label => 'results',
+    );
+    isa_ok($cmd, $pkg);
+
+    ok($cmd->execute, 'Executed the test command');
+    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
+};
+
+subtest "test one empty base_report file" => sub {
+    my $result_a = get_report_result('report_empty');
+    my $result_b = get_report_result('report_a.noheader');
     my $expected = get_data('report_a.noheader');
 
     my $cmd = $pkg->create(
