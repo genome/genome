@@ -48,6 +48,9 @@ reports:
             'n-callers':
                 min_callers: 2
                 sample_name: discovery_tumor
+            'vaf-cutoff':
+                min_vaf: 5
+                sample_name: discovery_tumor
         interpreters:
             position: {}
             'variant-type': {}
@@ -113,6 +116,9 @@ reports:
             'n-callers':
                 min_callers: 2
                 sample_name: discovery_tumor
+            'vaf-cutoff':
+                min_vaf: 5
+                sample_name: discovery_tumor
         interpreters:
             position: {}
             vep: {}
@@ -153,6 +159,9 @@ reports:
                 sample_name: normal
             'n-callers':
                 min_callers: 2
+                sample_name: discovery_tumor
+            'vaf-cutoff':
+                min_vaf: 5
                 sample_name: discovery_tumor
         interpreters:
             'bed-entry': {}
