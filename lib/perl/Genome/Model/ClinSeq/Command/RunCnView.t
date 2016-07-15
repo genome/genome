@@ -36,7 +36,7 @@ my $build_id = 129399487;
 my $build    = Genome::Model::Build->get($build_id);
 
 #Create run-cn-view command and execute
-#genome model clin-seq run-cn-view --outdir=/tmp/cnv/ --cnv-hmm-file=/gscmnt/gc1401/info/model_data/2889933976/build132760359/AML109/clonality/cnaseq.cnvhmm --test 129399487
+#genome model clin-seq run-cn-view --outdir=/tmp/cnv/ --cnv-hmm-file=/path_to_clinseq_build/AML109/clonality/cnaseq.cnvhmm --test 129399487
 
 my $cancer_annotation_db = Genome::Db->get("tgi/cancer-annotation/human/build37-20130401.1");
 my $run_cn_view_cmd      = Genome::Model::ClinSeq::Command::RunCnView->create(

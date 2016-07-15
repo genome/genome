@@ -236,7 +236,7 @@ sub execute {
 
     #Step 6 - Take the cnvs.hq file from the somatic build, and run the cna-seg tool to create known regions of copy-number
     #Specify config file paths for hg19/build37
-    #gmt copy-number cna-seg --copy-number-file=/gscmnt/ams1184/info/model_data/2875816457/build111674790/variants/cnvs.hq  --min-markers=4  --detect-somatic  --centromere-file=/gscmnt/sata186/info/medseq/kchen/work/SolexaCNV/scripts/centromere.hg19.csv  --gap-file=/gscmnt/sata186/info/medseq/kchen/work/SolexaCNV/scripts/hg19gaps.csv  --output-file=hg1.cnvhmm
+    #gmt copy-number cna-seg --copy-number-file=/path_to_somatic_variant_build/variants/cnvs.hq  --min-markers=4  --detect-somatic  --centromere-file=/path_to_misc_annotation_db/centromere.hg19.csv  --gap-file=/path_to_mis_annotation_db/hg19gaps.csv  --output-file=hg1.cnvhmm
 
     #Make a copy of the cnvs.hq file
     my $cnvs_output_path = "${output_dir}cnvs.hq";
@@ -288,9 +288,6 @@ sub execute {
     #my $varscan_file = $readcounts_clonality_outfile;
 
     #Step 7 - then, put the cna-seg and varscan-format snv file together in this clonality tool:
-    #gmt validation clonality-plot     --cnvhmm-file     /gscuser/ndees/103/wgs/SV_somatic/CNV/aml103.cnvhmm     --output-image     aml103.clonality.pdf     --r-script-output-file     clonality.R     --varscan-file     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan     --analysis-type     wgs     --sample-id     'AML103'     --positions-highlight     IL2RA_NF1_positions
-
-    #gmt validation clonality-plot  --cnvhmm-file='/gscmnt/sata132/techd/mgriffit/hg1/clonality/hg1.cnvhmm'  --output-image hg1.clonality.pdf  --r-script-output-file clonality.R  --varscan-file allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan  --analysis-type wgs  --sample-id 'HG1'
 
     #Step 7-A. Without clusters
     my $output_image_file1a = "$output_dir" . "$common_name" . ".clonality.pdf";

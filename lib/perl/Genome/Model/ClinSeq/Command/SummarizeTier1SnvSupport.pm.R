@@ -6,11 +6,11 @@ readcounts_file = args[2]  #snvs.hq.tier1.v1.annotated.compact.readcounts.tsv
 gene_expression_file = args[3]  #isoforms.merged.fpkm.expsort.tsv
 
 #Example execution
-#WGS_vs_Exome_vs_RNAseq_VAF_and_FPKM.R  /gscmnt/sata132/techd/mgriffit/hgs/test/ /gscmnt/sata132/techd/mgriffit/hgs/all1/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv /gscmnt/sata132/techd/mgriffit/hgs/all1/rnaseq/tumor/absolute/isoforms_merged/isoforms.merged.fpkm.expsort.tsv
+#WGS_vs_Exome_vs_RNAseq_VAF_and_FPKM.R  /path_to_output_dir/ /path_to_clinseq_build/all1/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv /path_to_clinseq_build/all1/rnaseq/tumor/absolute/isoforms_merged/isoforms.merged.fpkm.expsort.tsv
 
-#working_dir = "/gscmnt/sata132/techd/mgriffit/luc/rnaseq_vs_snv/readcounts_merge_hg19/LUC1/summary/"
-#readcounts_file = "/gscmnt/sata132/techd/mgriffit/hgs/all1/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv"
-#gene_expression_file = "/gscmnt/sata132/techd/mgriffit/hgs/all1/rnaseq/tumor/absolute/isoforms_merged/isoforms.merged.fpkm.expsort.tsv"
+#working_dir = "/path_to_output_dir/"
+#readcounts_file = "/path_to_clinseq_build/all1/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv"
+#gene_expression_file = "/path_to_clinseq_build/all1/rnaseq/tumor/absolute/isoforms_merged/isoforms.merged.fpkm.expsort.tsv"
 
 #Load libraries
 library(ggplot2)

@@ -32,11 +32,11 @@ if(!is.na(sample3_vaf_cols_string)){ sample3_vaf_cols = as.numeric(strsplit(samp
 if(!is.na(sample4_vaf_cols_string)){ sample4_vaf_cols = as.numeric(strsplit(sample4_vaf_cols_string, " ")[[1]]) }
 
 #Define input variables
-#infile="/gscmnt/sata132/techd/mgriffit/aml_trios/H_KA-174556/H_KA-174556_final_filtered_coding_clean.tsv"
+#infile="/path_to_snv_indel_report_results/H_KA-174556_final_filtered_coding_clean.tsv"
 #sample_names = c("normal", "day0_tumor", "day30_tumor")
 #combined_vaf_cols = c(19,22,25)
 #target_name="AML_RMG"
-#outdir="/gscmnt/sata132/techd/mgriffit/aml_trios/H_KA-174556/"
+#outdir="/path_to_store_summarized_results/H_KA-174556/"
 #sample1_vaf_cols = c(34,37,40)
 #sample2_vaf_cols = c(43,46,49)
 #sample3_vaf_cols = c(52,55,58)

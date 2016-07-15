@@ -6,8 +6,8 @@ working_dir = args[1];              #Expression matrix file of cufflinks express
 images_subdir = args[2];
 fpkm_percent_cutoff = as.numeric(args[3]);
 
-#working_dir = "/gscmnt/sata132/techd/mgriffit/hgs/all1/rnaseq/absolute/"
-#images_subdir = "/gscmnt/sata132/techd/mgriffit/hgs/all1/rnaseq/absolute/images/"
+#working_dir = "/path_to_input_files/"
+#images_subdir = "/path_to_input_files/images/"
 #fpkm_percent_cutoff = 1
 
 if (length(args) < 3){

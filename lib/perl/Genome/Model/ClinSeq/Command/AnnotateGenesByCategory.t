@@ -45,8 +45,6 @@ my $gene_symbol_lists_dir = $cancer_annotation_db->data_directory . "/GeneSymbol
 ok(-e $gene_symbol_lists_dir && -d $gene_symbol_lists_dir, "Found gene symbol lists dir") or die;
 
 #Create annotate-genes-by-category command and execute
-#genome model clin-seq annotate-genes-by-category --infile=example_input.tsv --gene-symbol-lists-dir=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/  --gene-name-column='mapped_gene_name'
-
 my $annotate_genes_cmd = Genome::Model::ClinSeq::Command::AnnotateGenesByCategory->create(
     infile               => $temp_infile,
     cancer_annotation_db => $cancer_annotation_db,

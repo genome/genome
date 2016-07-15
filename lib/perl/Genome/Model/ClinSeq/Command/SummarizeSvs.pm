@@ -121,9 +121,6 @@ sub execute {
         my $normal_bam = $somatic_build->normal_bam;
 
         #Initially all of the following will be based on BreakDancear/SquareDancer output in the SomaticVariation output
-        #e.g. /gscmnt/gc8002/info/model_data/2882679738/build119517041/variants/sv/union-union-sv_breakdancer_1.2__5-sv_breakdancer_1.2__6-sv_squaredancer_0.1__4/
-        #squaredancer.svs.merge.file.annot
-
         my $sv_annot_file = $self->copy_sv_annot($build_outdir, $build_dir);
         my $fusion_candidate_outfile = $build_outdir . "CandidateSvCodingFusions.tsv";
         my %data;

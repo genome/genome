@@ -355,7 +355,7 @@ sub summarize_clinseq_build {
     }
 
     #Summarize exome coverage statistics for each WGS/Exome reference alignment model
-    # cd /gscmnt/gc8001/info/model_data/2882774248/build120412367/reference_coverage/wingspan_0
+    # cd /path_to_ref_align_build/reference_coverage/wingspan_0
     my %exome_builds_with_coverage;
     $self->status_message("\n\nExome coverage values for each WGS/Exome reference alignment build");
     for my $build (@ref_align_builds) {
@@ -831,7 +831,7 @@ sub summarize_haploid_coverage_for_build {
 
     #Obtain the dbSNP concordance metrics for each ref alignment model (these are the SNPs called by WGS compared to publicly known dbSNPS)
     #NOTE: These metrics do not appear to be stored in a metrics object...  Will have to parse from a file routinely created for reference alignment builds
-    #e.g. /gscmnt/gc7001/info/model_data/2879615516/build114445127/reports/dbsnp_concordance.filtered.txt
+    #e.g. /path_to_ref_align_build/reports/dbsnp_concordance.filtered.txt
     #"Overall concordance: 93.6585"  "Total Snvs: 3656996"  "Hits: 3425089"  "Misses: 231907"
     my $total_snp_positions_found_filtered = "n/a";
     my $snp_positions_in_dbsnp             = "n/a";
@@ -1185,7 +1185,7 @@ sub get_cufflinks_metrics {
     my $build_id        = shift;
     my $stats_fh        = shift;
 
-    #/gscmnt/gc2016/info/model_data/2880794613/build115909698/expression/cufflinks.out
+    #/path_to_rnaseq_build/expression/cufflinks.out
     my $cufflinks_out_file = $build_dir . "/expression/cufflinks.out";
     my $frag_size_mean     = "n/a";
     my $frag_size_std      = "n/a";
@@ -1220,7 +1220,7 @@ sub get_picard_metrics {
     my $build_dir       = shift;
     my $build_id        = shift;
     my $stats_fh        = shift;
-    #/gscmnt/gc2016/info/model_data/2880794613/build115909698/metrics/PicardRnaSeqMetrics.txt
+    #/path_to_rnaseq_build/metrics/PicardRnaSeqMetrics.txt
     my $picard_metrics_file  = $build_dir . "/metrics/PicardRnaSeqMetrics.txt";
     my $pct_ribosomal_bases  = "n/a";
     my $pct_coding_bases     = "n/a";

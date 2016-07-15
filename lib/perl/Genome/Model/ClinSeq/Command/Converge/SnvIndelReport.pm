@@ -20,7 +20,6 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
             is => 'FilesystemPath',
             doc =>
                 'Genes of interest to be highlighted (e.g. AML RMG list).  Tab delimited file with ENSGs in first column',
-            default => '/gscmnt/sata132/techd/mgriffit/aml_trios/AML_RMG_List-Ensembl_Gene_IDs.tsv',
         },
         target_gene_list_name => {
             is      => 'Text',
