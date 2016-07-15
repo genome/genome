@@ -2,13 +2,22 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 7;
+use Test::More tests => 8;
 use Genome::Utility::Test;
+use Genome::Model::ClinSeq::TestData;
 
 my $expected_out =
-    Genome::Utility::Test->data_dir_ok('Genome::Model::ClinSeq::Command::Converge::SnvIndelReport', '2016-04-13');
+    Genome::Utility::Test->data_dir_ok('Genome::Model::ClinSeq::Command::Converge::SnvIndelReport', '2016-07-15');
 ok(-d $expected_out, "directory of expected output exists: $expected_out") or die;
 
+#Obtain a target gene list for test purposes (from the test factory clinseq build)
+my $ids = Genome::Model::ClinSeq::TestData::load();
+my $clinseq_build_tf = Genome::Model::Build->get($ids->{CLINSEQ_BUILD});
+ok($clinseq_build_tf, "Got test factor clinseq build") or die;
+my $cancer_annotation_db = $clinseq_build_tf->cancer_annotation_db;
+my $target_gene_list = $cancer_annotation_db->data_directory . "/CancerGeneCensus/cancer_gene_census_ensgs.tsv";
+
+#Obtain the clinseq test build with result to test on (from a 'live' clinseq build)
 my $clinseq_build_id = 'a2eb4f40a47a4dc5ac410c81b3d2fc17';
 my $clinseq_build    = Genome::Model::Build->get($clinseq_build_id);
 ok($clinseq_build, "Got clinseq build from id: $clinseq_build_id") or die;
@@ -29,6 +38,8 @@ my $cmd = Genome::Model::ClinSeq::Command::Converge::SnvIndelReport->create(
     bam_readcount_version => 0.6,
     bq                    => 0,
     mq                    => 1,
+    target_gene_list      => $target_gene_list,
+    target_gene_list_name => 'CancerGeneCensus',
 );
 $cmd->queue_status_messages(1);
 my $r1 = $cmd->execute();
@@ -56,3 +67,5 @@ unless ($ok) {
     Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-snv-indel-report/");
     Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-snv-indel-report");
 }
+
+done_testing()
