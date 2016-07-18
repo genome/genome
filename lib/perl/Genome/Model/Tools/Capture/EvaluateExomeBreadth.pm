@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 my $DEFAULT_DELIMITER = ':';
-my $DEFAULT_ANNOTATION_FILE = '/gscmnt/sata132/techd/solexa/jwalker/RNAseq/annotation/hg18/NCBI-human.combined-annotation-54_36p_v2/NCBI-human.combined-annotation_54_36p_v2.bed';
 
 class Genome::Model::Tools::Capture::EvaluateExomeBreadth {
     is => ['Command'],
@@ -24,9 +23,7 @@ class Genome::Model::Tools::Capture::EvaluateExomeBreadth {
         },
         annotation_bed_file => {
             is => 'Text',
-            is_optional => 1,
             doc => 'The annotation BED format file.  With features named like $GENE:$TRANSCRIPT:$TYPE:$ORDINAL.',
-            default_value => $DEFAULT_ANNOTATION_FILE,
         },
         coverage_of => {
             is => 'Text',

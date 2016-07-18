@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 use Bio::Tools::RepeatMasker;
 
-my $DEFAULT_REPEATS_FILE = '/gscmnt/sata132/techd/solexa/jwalker/RepeatReducedCapture/RepeatMasker/hg18.fa.out';
 class Genome::Model::Tools::BioSamtools::RepeatContent {
     is => ['Genome::Model::Tools::BioSamtools'],
     has_input => [
@@ -15,8 +14,7 @@ class Genome::Model::Tools::BioSamtools::RepeatContent {
         repeats_file => {
             doc => 'A RepeatMasker table of repeats for the genome.',
             is => 'Text',
-            default_value => $DEFAULT_REPEATS_FILE,
-            is_optional => 1,
+            example_values => ['/gscmnt/gc13001/info/model_data/jwalker_scratch/RepeatEval/hg19.fa.out'],
         }
     ],
 };
