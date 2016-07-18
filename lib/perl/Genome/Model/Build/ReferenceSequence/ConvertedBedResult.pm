@@ -49,7 +49,7 @@ sub _generate_result {
 
     unless (-s $converted_bed_file) {
         die $self->error_message("Failed to convert from bed (%s) with reference (%s) to bed (%s) with reference (%s)",
-            $self->source_bed, $self->source_reference, $converted_file_path, $self->target_reference);
+            $self->source_bed, $self->source_reference->__display_name__, $converted_file_path, $self->target_reference->__display_name__);
     }
     return 1;
 }
