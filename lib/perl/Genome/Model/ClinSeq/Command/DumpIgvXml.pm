@@ -735,10 +735,10 @@ sub generate_panel_layout_xml {
 
 #Example IGV XML for 'Resources' section
 # <Resources>
-#   <Resource path="$ENV{XGENOME_SYS_SERVICES_FILES_URL}gscmnt/gc7001/info/model_data/2879615516/build114445127/alignments/114469152.bam"/>
-#   <Resource path="$ENV{XGENOME_SYS_SERVICES_FILES_URL}gscmnt/gc7001/info/model_data/2879616958/build114445247/alignments/114445014.bam"/>
-#   <Resource path="$ENV{XGENOME_SYS_SERVICES_FILES_URL}gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam"/>
-#   <Resource path="$ENV{XGENOME_SYS_SERVICES_FILES_URL}gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/junctions.bed"/>
+#   <Resource path="$ENV{XGENOME_SYS_SERVICES_FILES_URL}$path_to_data/114469152.bam"/>
+#   <Resource path="$ENV{XGENOME_SYS_SERVICES_FILES_URL}$path_to_data/114445014.bam"/>
+#   <Resource path="$ENV{XGENOME_SYS_SERVICES_FILES_URL}$path_to_data/accepted_hits.bam"/>
+#   <Resource path="$ENV{XGENOME_SYS_SERVICES_FILES_URL}$path_to_data/junctions.bed"/>
 # </Resources>
 
 #Example IGV XML for 'Panel' section.  Data panels have these long random seeming numeric names. Each file should also have a Panel with the name 'FeaturePanel'
@@ -764,16 +764,16 @@ sub generate_panel_layout_xml {
 # </Panel>
 
 #Example IGV XML for a reference alignment or RNA-seq BAM 'Track'
-# <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="$ENV{XGENOME_SYS_SERVICES_FILES_URL}gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam_coverage" name="RNA-seq Tumor Coverage" showDataRange="true" visible="true">
+# <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" id="$ENV{XGENOME_SYS_SERVICES_FILES_URL}$path_to_data/accepted_hits.bam_coverage" name="RNA-seq Tumor Coverage" showDataRange="true" visible="true">
 #   <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="273.0" minimum="0.0" type="LINEAR"/>
 # </Track>
-# <Track altColor="0,0,178" color="0,0,178" colorOption="UNEXPECTED_PAIR" displayMode="EXPANDED" featureVisibilityWindow="-1" fontSize="10" id="$ENV{XGENOME_SYS_SERVICES_FILES_URL}gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam" name="RNA-seq Tumor Reads" showDataRange="true" sortByTag="" visible="true"/>
+# <Track altColor="0,0,178" color="0,0,178" colorOption="UNEXPECTED_PAIR" displayMode="EXPANDED" featureVisibilityWindow="-1" fontSize="10" id="$ENV{XGENOME_SYS_SERVICES_FILES_URL}$path_to_data/accepted_hits.bam" name="RNA-seq Tumor Reads" showDataRange="true" sortByTag="" visible="true"/>
 
 #Example IGV XML for a junctions.bed 'Track'.  These tracks will be placed in the 'FeaturePanel'
-# <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="60" id="$ENV{XGENOME_SYS_SERVICES_FILES_URL}gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/junctions.bed" name="RNA-seq Tumor Junctions" showDataRange="true" visible="true" windowFunction="count"/>
+# <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="10" height="60" id="$ENV{XGENOME_SYS_SERVICES_FILES_URL}$path_to_data/junctions.bed" name="RNA-seq Tumor Junctions" showDataRange="true" visible="true" windowFunction="count"/>
 
 #Example IGV XML for a snvs.bed 'Track'
-# <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="12" height="45" id="$ENV{XGENOME_SYS_SERVICES_FILES_URL}gscmnt/gc8002/info/model_data/2882504846/build119390903/effects/snvs.hq.novel.tier1.v2.bed" name="WGS snvs.hq.novel.tier1" renderer="BASIC_FEATURE" showDataRange="true" sortable="false" visible="true" windowFunction="count"/>
+# <Track altColor="0,0,178" color="0,0,178" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="12" height="45" id="$ENV{XGENOME_SYS_SERVICES_FILES_URL}$path_to_data/effects/snvs.hq.novel.tier1.v2.bed" name="WGS snvs.hq.novel.tier1" renderer="BASIC_FEATURE" showDataRange="true" sortable="false" visible="true" windowFunction="count"/>
 
 #Example IGV XML for a 'Regions' of interest section
 # <Regions>

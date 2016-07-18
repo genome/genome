@@ -58,7 +58,7 @@ class Genome::Model::ClinSeq::Command::RunCnView {
 sub help_synopsis {
     return <<EOS
 
-genome model clin-seq run-cn-view --outdir=/tmp/cnv/ --cnv-hmm-file=/gscmnt/gc1401/info/model_data/2889933976/build132760359/AML109/clonality/cnaseq.cnvhmm 129399487 
+genome model clin-seq run-cn-view --outdir=/tmp/cnv/ --cnv-hmm-file=/path_to_clinseq_build/AML109/clonality/cnaseq.cnvhmm 129399487 
 
 EOS
 }

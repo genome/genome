@@ -25,7 +25,7 @@ sub help_synopsis {
     return <<EOS
 genome model clin-seq converge plot-cnvs \\
 --builds='model_groups.id=6fa120dc0afb400596a1e3d6ecf6167d,is_last_complete=1' \\
---outdir=/gscmnt/CNVSummary/ \\
+--outdir=/path_to_results/CNVSummary/ \\
 --calculate-metrics
 EOS
 }

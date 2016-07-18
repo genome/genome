@@ -165,9 +165,9 @@ sub loadEnsemblMap {
     my $self                 = shift;
     my %args                 = @_;
     my $transcript_info_path = $args{'-transcript_info_path'
-        }; #e.g. /gscmnt/gc12001/info/model_data/2772828715/build124434505/annotation_data/rna_annotation/106942997-transcript_info.tsv
+        }; #e.g. /path_to_transcript_annotation_build/annotation_data/rna_annotation/106942997-transcript_info.tsv
     my $gtf_path = $args{'-gtf_path'
-        }; #e.g. /gscmnt/gc12001/info/model_data/2772828715/build124434505/annotation_data/rna_annotation/106942997-all_sequences.gtf
+        }; #e.g. /path_to_transcript_annotation_build/annotation_data/rna_annotation/106942997-all_sequences.gtf
 
     my %ensembl_map;
 
@@ -1019,7 +1019,7 @@ sub memoryUsage {
 }
 
 #Parse import the coordinates of the ideogram file using a subroutine
-#Example input file: /gscmnt/sata132/techd/mgriffit/reference_annotations/hg19/ideogram/ChrBandIdeogram.tsv
+#Example input file: /path_to_misc_annotations/hg19/ideogram/ChrBandIdeogram.tsv
 sub importIdeogramData {
     my $self          = shift;
     my %args          = @_;

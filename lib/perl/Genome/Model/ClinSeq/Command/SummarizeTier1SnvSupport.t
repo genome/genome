@@ -50,7 +50,7 @@ my $output_dir = Genome::Sys->create_temp_directory;
 ok(-d $output_dir, "Created temp output dir: $output_dir") or die;
 
 #Run tool as follows:
-#genome model clin-seq summarize-tier1-snv-support --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130401.1' --exome-build=138012408  --exome-positions-file=/gscmnt/gc12001/info/model_data/2890221854/build1f51d0be09c94b16878b0bbe8c3709be/AML109/snv/exome/snvs.hq.tier1.v1.annotated.compact.tsv  --tumor-fpkm-file=/gscmnt/gc12001/info/model_data/2890221854/build1f51d0be09c94b16878b0bbe8c3709be/AML109/rnaseq/tumor/cufflinks_expression_absolute/isoforms_merged/isoforms.merged.fpkm.expsort.tsv  --output-dir=/tmp/summarize_tier1_snv_support/
+#genome model clin-seq summarize-tier1-snv-support --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130401.1' --exome-build=138012408  --exome-positions-file=/path_to_clinseq_build/AML109/snv/exome/snvs.hq.tier1.v1.annotated.compact.tsv  --tumor-fpkm-file=/path_to_clinseq_build/AML109/rnaseq/tumor/cufflinks_expression_absolute/isoforms_merged/isoforms.merged.fpkm.expsort.tsv  --output-dir=/tmp/summarize_tier1_snv_support/
 my $cmd = Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport->create(
     cancer_annotation_db => $cancer_annotation_db,
     exome_build          => $exome_build,
