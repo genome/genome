@@ -57,6 +57,20 @@ sub _run {
         Genome::Sys->touch($self->_temp_output_file);
         return 1;
     }
+    #refer to CI-178, this will handle the case that one of base and
+    #supplemental report is empty, specifically bed merge
+    elsif (!$self->base_report->has_size or !$self->supplemental_report->has_size) {
+        my $non_zero_size_file;
+        for my $report_name ('base_report', 'supplemental_report') {
+            my $report = $self->$report_name;
+            if ($report->has_size) {
+               $non_zero_size_file = $report->report_path;
+               last;
+            }
+        }
+        Genome::Sys->copy_file($non_zero_size_file, $self->_temp_output_file);
+        return 1;
+    }
 
     $self->validate;
 
