@@ -15752,11 +15752,11 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>evaluate-exome-breadth',
     [
+      'annotation-bed-file=s',
+      'files',
       'exome-bed-file=s',
       'files',
       'output-file=s',
-      'files',
-      'annotation-bed-file=s',
       'files',
       'bedtools-version=s',
       'files',
