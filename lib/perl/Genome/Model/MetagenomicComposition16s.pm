@@ -224,66 +224,68 @@ sub _resolve_workflow_for_build {
     $lsf_queue //= Genome::Config::get('lsf_queue_build_worker_alt');
     $lsf_project //= 'build' . $build->id;
 
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $build->workflow_name,
-        input_properties => [qw/ build input_build instrument_data /],
-        output_properties => [qw/ build /],
-        log_dir => $build->log_directory,
     );
 
-    my $previous_op = $workflow->get_input_connector;
+    my $previous_op = undef;
     my $add_operation = sub{
         my ($name) = @_;
         my $command_class_name = 'Genome::Model::Build::MetagenomicComposition16s::'.join('', map { ucfirst } split(' ', $name));
-        my $operation_type = Workflow::OperationType::Command->create(command_class_name => $command_class_name);
-        if ( not $operation_type ) {
-            $self->error_message("Failed to create work flow operation for $name");
-            return;
-        }
-        $operation_type->lsf_queue($lsf_queue);
-        $operation_type->lsf_project($lsf_project);
 
-        my $operation = $workflow->add_operation(
+        my $operation = Genome::WorkflowBuilder::Command->create(
             name => $name,
-            operation_type => $operation_type,
+            lsf_queue => $lsf_queue,
+            lsf_project => $lsf_project,
+            command => $command_class_name,
         );
 
-        $workflow->add_link(
-            left_operation => $previous_op,
-            left_property => 'build',
-            right_operation => $operation,
-            right_property => 'input_build',
-        );
+        $workflow->add_operation($operation);
+
+        if ($previous_op) {
+            $workflow->create_link(
+                source => $previous_op,
+                source_property => 'build',
+                destination => $operation,
+                destination_property => 'input_build',
+            );
+        } else {
+            $workflow->connect_input(
+                input_property => 'build',
+                destination => $operation,
+                destination_property => 'input_build',
+            );
+        }
 
         return $operation;
     };
 
     if ( $self->sequencing_platform ne 'sanger' ) {
         my $process_instdata_op = $add_operation->('process instrument data');
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'instrument_data',
-            right_operation => $process_instdata_op,
-            right_property => 'instrument_data',
+        $workflow->connect_input(
+            input_property => 'instrument_data',
+            destination => $process_instdata_op,
+            destination_property => 'instrument_data',
         );
         $process_instdata_op->parallel_by('instrument_data');
         $previous_op = $process_instdata_op;
 
-        my $merge_instdata_op = $workflow->add_operation(
+        my $merge_instdata_op = Genome::WorkflowBuilder::Command->create(
             name => 'merge processed instrument data',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::Build::MetagenomicComposition16s::MergeProcessedInstrumentData'));
-        $workflow->add_link(
-            left_operation => $previous_op,
-            right_operation => $merge_instdata_op,
-            left_property => 'result',
-            right_property => 'dummy_input',
+            command => 'Genome::Model::Build::MetagenomicComposition16s::MergeProcessedInstrumentData',
         );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            right_operation => $merge_instdata_op,
-            left_property => 'build',
-            right_property => 'input_build',
+        $workflow->add_operation($merge_instdata_op);
+
+        $workflow->create_link(
+            source => $previous_op,
+            destination => $merge_instdata_op,
+            source_property => 'result',
+            destination_property => 'dummy_input',
+        );
+        $workflow->connect_input(
+            destination => $merge_instdata_op,
+            input_property => 'build',
+            destination_property => 'input_build',
         );
         $previous_op = $merge_instdata_op;
     } else {
@@ -305,12 +307,13 @@ sub _resolve_workflow_for_build {
     my $report_op = $add_operation->('reports');
     $previous_op = $report_op;
 
-    $workflow->add_link(
-        left_operation => $previous_op,
-        left_property => 'build',
-        right_operation => $workflow->get_output_connector,
-        right_property => 'build',
+    $workflow->connect_output(
+        source => $previous_op,
+        source_property => 'build',
+        output_property => 'build',
     );
+
+    $workflow->recursively_set_log_dir($build->log_directory);
 
     return $workflow;
 }
