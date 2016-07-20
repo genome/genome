@@ -171,7 +171,7 @@ sub _get_ptero_lsf_parameters {
     $lsf_params->{options}->{errFile} = $stderr;
     $lsf_params->{options}->{outFile} = $stdout;
 
-    my ($docker) = $ENV{LSB_SUB_ADDITIONAL} =~ /^docker\(([^)]+)\)$/;
+    my ($docker) = $ENV{LSB_SUB_ADDITIONAL} && $ENV{LSB_SUB_ADDITIONAL} =~ /^docker\(([^)]+)\)$/;
     my $docker_run = File::Spec->join($ENV{LSF_BINDIR}, 'docker_run.py');
 
     # Redirect stdout/err of post-exec command to file for debugging.
