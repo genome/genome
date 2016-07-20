@@ -276,8 +276,6 @@ sub _get_sanitized_env {
     while (my($key, $value) = each %ENV) {
         if (defined($value)) {
             $env->{$key} = $value;
-        } else {
-            $self->warning_message("Found Environment variable with no value: %s", $key);
         }
     }
     return $env;
