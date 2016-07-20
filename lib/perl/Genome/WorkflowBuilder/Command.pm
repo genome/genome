@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 use Cwd qw();
 use Genome::Sys::LSF::ResourceParser qw(parse_lsf_params);
-use Data::UUID;
 use Carp qw();
 use Data::Dump qw(pp);
 use Try::Tiny;
@@ -174,7 +173,7 @@ sub _get_ptero_lsf_parameters {
     my ($docker) = $ENV{LSB_SUB_ADDITIONAL} =~ /^docker\(([^)]+)\)$/;
     my $docker_run = File::Spec->join($ENV{LSF_BINDIR}, 'docker_run.py');
 
-    my $postexec_cmd = "/usr/bin/ptero-lsf-post-exec --stderr $stderr --stdout $stdout";
+    my $postexec_cmd = "/usr/bin/ptero-lsf-post-exec";
     if ($docker) {
         $postexec_cmd = join(' ', $docker_run, $postexec_cmd);
     } else {
@@ -196,16 +195,11 @@ sub _get_ptero_lsf_parameters {
     return $lsf_params;
 }
 
-#FIXME This is not unique within parallel_by operations.
 sub _get_lsf_log_paths {
     my $self = shift;
     my $log_dir = shift;
 
-    my $ug = Data::UUID->new();
-    my $uuid = $ug->create();
-    my $uuid_str = $ug->to_string($uuid);
-
-    my $base = File::Spec->join($log_dir, sprintf("ptero-lsf-logfile-%s", $uuid_str));
+    my $base = File::Spec->join($log_dir, "ptero-lsf-logfile-%%JOB_ID%%");
     return ($base . '.err', $base . '.out');
 }
 
