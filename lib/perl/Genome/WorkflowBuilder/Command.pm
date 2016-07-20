@@ -167,15 +167,13 @@ sub _get_ptero_lsf_parameters {
     );
     $set_lsf_option->('jobGroup', $default_job_group);
 
-    my ($stderr, $stdout, $postexec) = $self->_get_lsf_log_paths($log_dir);
+    my ($stderr, $stdout) = $self->_get_lsf_log_paths($log_dir);
     $lsf_params->{options}->{errFile} = $stderr;
     $lsf_params->{options}->{outFile} = $stdout;
 
     my ($docker) = $ENV{LSB_SUB_ADDITIONAL} =~ /^docker\(([^)]+)\)$/;
     my $docker_run = File::Spec->join($ENV{LSF_BINDIR}, 'docker_run.py');
 
-    # Redirect stdout/err of post-exec command to file for debugging.
-    # Clean up that file if post-exec exits normally.
     my $postexec_cmd = "/usr/bin/ptero-lsf-post-exec --stderr $stderr --stdout $stdout";
     if ($docker) {
         $postexec_cmd = join(' ', $docker_run, $postexec_cmd);
@@ -183,9 +181,7 @@ sub _get_ptero_lsf_parameters {
         $postexec_cmd = "bash -c '$postexec_cmd'";
     }
 
-    $lsf_params->{options}->{postExecCmd} = sprintf(
-        "%s > %s 2>&1 && rm -f %s", $postexec_cmd, $postexec, $postexec
-    );
+    $lsf_params->{options}->{postExecCmd} = $postexec_cmd;
 
     # Unlike post-exec, stdout/err of pre-exec command gets written to
     # errFile or outFile by lsf.  We want to exit 0 no matter what so
@@ -210,7 +206,7 @@ sub _get_lsf_log_paths {
     my $uuid_str = $ug->to_string($uuid);
 
     my $base = File::Spec->join($log_dir, sprintf("ptero-lsf-logfile-%s", $uuid_str));
-    return ($base . '.err', $base . '.out', $base . "-postexec.log");
+    return ($base . '.err', $base . '.out');
 }
 
 
