@@ -477,7 +477,9 @@ sub _parse_tcga_response {
 sub get_sample_meta {
     my $self = shift;
 
-    if ($self->_tcga_vcf) {
+    use Net::SSLeay;
+
+    if ($self->_tcga_vcf and $Net::SSLeay::VERSION >= 1.74) {
         my @tcga_barcodes;
         my ($n_sample, $t_sample) = ($self->control_aligned_reads_sample, $self->aligned_reads_sample);
         push @tcga_barcodes, $n_sample if $n_sample and $n_sample =~ /^TCGA\-/;

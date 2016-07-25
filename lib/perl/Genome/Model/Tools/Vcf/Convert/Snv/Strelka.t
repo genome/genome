@@ -48,8 +48,24 @@ $rv = $command->execute;
 ok($rv, 'Command completed successfully');
 ok(-s $output_file2, "TCGA output file created");
 
-compare_file($expected_file2, $output_file2);
+_run_if_ssl_new_enough( sub {
+    compare_file($expected_file2, $output_file2);
+} );
+
 done_testing();
+
+
+sub _run_if_ssl_new_enough {
+    my $sub = shift;
+
+    use Net::SSLeay;
+    SKIP: {
+        if ($Net::SSLeay::VERSION < 1.74) {
+            skip 'SSL is too old', 1;
+        }
+        $sub->();
+    }
+}
 
 # The files will have a timestamp that will differ. Ignore this but check the rest.
 sub compare_file {
