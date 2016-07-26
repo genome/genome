@@ -18,6 +18,12 @@ class Genome::Model::Tools::Sx::Trim::ByPosition {
             doc => 'Path to the file of positions to trim.',
         },    
     },
+    has_optional => {
+        split_by_ns => {
+            is => 'Integer',
+            doc => 'Number of Ns to split sequences. This is used for scaffold/supercontig sequences.',
+        },
+    },
     has_transient_optional => {
         trim_positions => { is => 'HASH', },
     },
@@ -50,11 +56,63 @@ sub execute {
 
     $self->_init;
 
+    if ( $self->split_by_ns ) {
+        return $self->_execute_with_trim_by_ns;
+    }
+    else {
+        return $self->_execute;
+    }
+}
+
+sub _execute {
+    my $self = shift;
+
     my ($seqs, @seqs_to_write);
     while ( $seqs = $self->_reader->read ) {
         for my $seq ( @$seqs ) {
             $self->trim_sequence($seq);
             push @seqs_to_write, $seq if length($seq->{seq});
+        }
+        next if not @seqs_to_write;
+        $self->_writer->write(\@seqs_to_write);
+        @seqs_to_write = ();
+    }
+
+    return 1;
+}
+
+sub _execute_with_trim_by_ns {
+    my $self = shift;
+
+    my $splitter = Genome::Model::Tools::Sx::Split::ByNs->create(number_of_ns => $self->split_by_ns);
+    my ($seqs, @seqs_to_write, $trimmed_seq, @positions, @gaps);
+    while ( $seqs = $self->_reader->read ) {
+        for my $seq ( @$seqs ) {
+            my $it = $splitter->iterator_to_split_sequence($seq);
+            my $trimmed_seq = { id => $seq->{id}, desc => $seq->{desc}, seq => '', qual => '' };
+            (@positions, @gaps) = ( (), (), );
+            my ($split_seq, $gap) = $it->();
+            do {
+                $self->trim_sequence($split_seq);
+                $trimmed_seq->{seq} .= $split_seq->{seq} if $split_seq->{seq};
+                $trimmed_seq->{qual} .= $split_seq->{qual} if $split_seq->{qual};
+                push @positions, length $trimmed_seq->{seq};
+                push @gaps, $gap->{len};
+                ($split_seq, $gap) = $it->();
+            } while $split_seq;
+
+            @positions = grep { $_ != 0 } @positions;
+            @positions = grep { $_ != length($trimmed_seq->{seq}) } @positions;
+
+            my $ns_offset = 0;
+            for ( my $i = 0; $i < @positions; $i++ ) {
+                my $ns =  'N' x $gaps[$i];
+                substr $trimmed_seq->{seq}, ($positions[$i] + $ns_offset), 0, $ns;
+                #substr EXPR,OFFSET,LENGTH,REPLACEMENT
+                $ns_offset = length($ns);
+            }
+
+            push @seqs_to_write, $trimmed_seq if length($trimmed_seq->{seq});
         }
         next if not @seqs_to_write;
         $self->_writer->write(\@seqs_to_write);
@@ -105,7 +163,7 @@ sub keep_positions_for_sequence {
         if ( not $trim_positions ) {
             # pcap naming
             my $pcap_seq_id = $seq->{id};
-            $pcap_seq_id =~ s/scaffold/Contig/g;
+            $pcap_seq_id =~ s/scaffold/Contig/ig;
             $trim_positions = $self->trim_positions->{$pcap_seq_id};
             return [ [ 0, length($seq->{seq})] ] if not $trim_positions; # keep it!
         }

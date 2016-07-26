@@ -8,7 +8,7 @@ use above "Genome";
 use File::Temp;
 use Genome::Utility::Test 'compare_ok';
 use Test::Exception;
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 my $pkg = 'Genome::Model::Tools::Sx::Trim::ByPosition';
 use_ok($pkg) or die;
@@ -166,6 +166,26 @@ subtest 'execute' => sub{
     ok($trimmer->execute, 'execute');
 
     my $expected_fasta = File::Spec->join($dir, 'expected.fasta');
+    compare_ok($out_fasta, $expected_fasta, 'out fasta matches');
+
+};
+
+subtest "execute split by ns" => sub{
+    plan tests => 3;
+
+    my $positions_path = File::Spec->join($dir, 'trim-positions.txt');
+    my $in_fasta = File::Spec->join($dir, 'input.fasta');
+    my $out_fasta = File::Spec->join($tmp_dir, 'out.split-ns.fasta');
+    my $trimmer = $pkg->create(
+        positions_path => $positions_path,
+        input => $in_fasta,
+        split_by_ns => 5,
+        output => $out_fasta,
+    );
+    ok($trimmer, 'create trimmer');
+    ok($trimmer->execute, 'execute');
+
+    my $expected_fasta = File::Spec->join($dir, 'expected.split-ns.fasta');
     compare_ok($out_fasta, $expected_fasta, 'out fasta matches');
 
 };
