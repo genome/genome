@@ -4,7 +4,14 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 2;
+
+use Net::SSLeay;
+use Test::More;
+if ($Net::SSLeay::VERSION < 1.74) {
+    plan skip_all => 'SSL is too old';
+} else {
+    plan tests => 2;
+}
 
 my $class = 'Genome::Model::Tools::Vcf::Convert::Base';
 use_ok($class);
