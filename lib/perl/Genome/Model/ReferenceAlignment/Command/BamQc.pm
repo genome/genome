@@ -15,7 +15,7 @@ class Genome::Model::ReferenceAlignment::Command::BamQc {
     ],
     has_param => [
         lsf_queue => {
-            default => Genome::Config::get('lsf_queue_build_worker_alt'),
+            default => Genome::Config::get('lsf_queue_build_worker'),
         },
     ],
 };
