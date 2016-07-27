@@ -765,7 +765,6 @@ sub iupac_to_base {
 # This method scans the lines of the readcount file until the matching line is found
 sub _get_readcount_line {
     my $self = shift;
-    $DB::single =1 ;
     my ($readcount_fh,$chr,$start) = @_;
     while( my $line = $readcount_fh->getline){
         chomp $line;
