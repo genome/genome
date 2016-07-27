@@ -30370,6 +30370,8 @@ $Genome::Command::OPTS_SPEC = [
           'files',
           'output-metrics=s',
           'files',
+          'split-by-ns=s',
+          undef,
           'help!',
           undef
         ],
