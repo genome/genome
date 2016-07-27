@@ -72,7 +72,11 @@ sub execute {
         die $error;
     };
 
-    $self->_teardown_logging;
+    try {
+        $self->_teardown_logging
+    } catch {
+        $self->warning_message('Failed to tear down logging: %s', $_);
+    };
 
     printf SAVED_STDERR "Setting outputs: %s\n", pp(_get_command_outputs($command, $self->command_class));
     $self->execution->set_outputs(
