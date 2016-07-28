@@ -130,7 +130,9 @@ sub vcf_id {
 
 sub vcf_description {
     my $self = shift;
-    return sprintf("VAF value for sample %s is between %s and %s", $self->sample_name, $self->min_vaf, $self->max_vaf);
+    my $min_vaf = defined $self->min_vaf ? $self->min_vaf : 0;
+    my $max_vaf = defined $self->max_vaf ? $self->max_vaf : 100;
+    return sprintf("VAF value for sample %s is between %s and %s", $self->sample_name, $min_vaf, $max_vaf);
 }
 
 1;
