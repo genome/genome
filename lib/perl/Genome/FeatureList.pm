@@ -376,8 +376,14 @@ sub generate_merged_bed_file {
     my $processed_bed_file = $self->processed_bed_file(%args);
     my $output_file = Genome::Sys->create_temp_file_path( $self->id . '.merged.bed' );
 
+    my $sorted_processed_bed_file = Genome::Sys->create_temp_file_path( $self->id . '.processed.sorted.bed' );
+    Genome::Model::Tools::Joinx::Sort->execute(
+        input_files => [$processed_bed_file],
+        output_file => $sorted_processed_bed_file,
+    );
+
     my %merge_params = (
-        input_file => $processed_bed_file,
+        input_file => $sorted_processed_bed_file,
         output_file => $output_file,
         report_names => 1,
         #All files should have zero-based start postitions at this point
