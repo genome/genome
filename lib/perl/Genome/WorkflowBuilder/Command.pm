@@ -199,7 +199,7 @@ sub _get_lsf_log_paths {
     my $self = shift;
     my $log_dir = shift;
 
-    my $base = File::Spec->join($log_dir, "ptero-lsf-logfile-%%JOB_ID%%");
+    my $base = File::Spec->join($log_dir, "ptero-lsf-logfile-%J");
     return ($base . '.err', $base . '.out');
 }
 
