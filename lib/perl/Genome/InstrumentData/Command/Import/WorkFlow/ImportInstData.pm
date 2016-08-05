@@ -64,7 +64,11 @@ sub execute {
 sub _resolve_working_directory {
     my $self = shift;
 
-    my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
+    my %temp_dir_params = (CLEANUP => 1);
+    if ( $self->work_flow_inputs->base_working_directory ) {
+        $temp_dir_params{DIR} = $self->work_flow_inputs->base_working_directory;
+    }
+    my $tmp_dir = File::Temp::tempdir(%temp_dir_params);
     if ( not $tmp_dir ) {
         $self->error_message('Failed to create tmp dir!');
         return;

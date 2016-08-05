@@ -24,6 +24,7 @@ class Genome::InstrumentData::Command::Import::Inputs {
     },
     has_optional => {
         analysis_project_id => { is => 'Text', },
+        base_working_directory => { is => 'Text' },
     },
     has_transient => {
         format => { via => 'source_files', to => 'format', },

@@ -197,6 +197,10 @@ sub from_params {
         $params->{line_number} = $line_number++;
     }
     
+    if ( $params->{base_working_directory} ) {
+        Genome::Sys->validate_directory_for_write_access( $params->{base_working_directory} );
+    }
+
     # Check cache - get directly with UR::Object
     my $inputs = UR::Object::get(
         'Genome::InstrumentData::Command::Import::Inputs', 
