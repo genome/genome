@@ -126,7 +126,8 @@ sub estimated_gtmp_for_instrument_data {
 
     my $st = stat($bam_path);
     unless ($st) {
-        die $class->error_message('Unable to find bam file at %s', $bam_path);
+        $class->warning_message('Unable to find bam file at %s', $bam_path);
+        return 1; #This job will fail when scheduled if the BAM is missing, so won't need much gtmp!
     }
 
     return 3 * $st->size();
