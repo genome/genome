@@ -178,7 +178,7 @@ sub _ordered_sample_id_iterator {
     my $it = Genome::Config::AnalysisProject::InstrumentDataBridge->create_iterator(
         status => ['new', 'failed'],
         'analysis_project.status' => 'In Progress',
-        -order => ['fail_count'],
+        -order => ['-status', 'fail_count'],
         -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample'],
     );
 
