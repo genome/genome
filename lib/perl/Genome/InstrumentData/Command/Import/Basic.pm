@@ -26,7 +26,7 @@ class Genome::InstrumentData::Command::Import::Basic {
             doc => 'Source files to import. If importing fastqs, put the file containing the forward [read 1] reads first.',
         },
     ],
-    has_optional_input => [
+    has_optional_input => {
         description  => {
             is => 'Text',
             doc => 'Description of the data.',
@@ -36,7 +36,11 @@ class Genome::InstrumentData::Command::Import::Basic {
             is_many => 1,
             doc => 'Name and value pairs to add to the instrument data. Separate name and value with an equals (=) and name/value pairs with a comma (,).',
         },
-    ],
+        base_working_directory => {
+            is => 'Text',
+            doc => 'Base working directory to use when running the import. A temporary directory will be made inside this directory, and removed when the import fails or completes.',
+        },
+    },
     has_optional_transient => [
         _new_instrument_data => {},
     ],
@@ -91,6 +95,7 @@ sub _resolve_work_flow_inputs {
         analysis_project => $self->analysis_project,
     );
     return $factory->from_params({
+            base_working_directory => $self->base_working_directory,
             entity_params => {
                 library => { id => $self->library->id, },
                 instdata => $self->_resolve_instrument_data_properties,

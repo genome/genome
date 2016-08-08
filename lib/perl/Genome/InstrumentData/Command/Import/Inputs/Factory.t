@@ -70,7 +70,7 @@ subtest 'from_line' => sub{
 };
 
 subtest 'from_params' => sub{
-    plan tests => 10;
+    plan tests => 11;
 
     my $sample_name = 'TEST-01-001';
     my $library = Genome::Library->__define__(name => $sample_name.'-libs', sample => Genome::Sample->__define__(name => $sample_name));
@@ -85,6 +85,7 @@ subtest 'from_params' => sub{
     };
 
     my $inputs = $factory->from_params({
+            base_working_directory => '/tmp',
             source_paths => \@source_files,
             entity_params => {
                 individual => { name => 'TEST-01', nomenclature => 'TEST', upn => '01', },
@@ -96,6 +97,7 @@ subtest 'from_params' => sub{
     ok($inputs, 'create inputs');
     is($inputs->format, 'fastq', 'source files format is fastq');
     is($inputs->library, $library, 'library');
+    is($inputs->base_working_directory, '/tmp', 'base_working_directory');
 
     # instrument data
     ok(!$inputs->instrument_data_for_original_data_path, 'no instrument_data_for_original_data_path ... yet');
@@ -144,7 +146,7 @@ subtest 'from_inputs_id' => sub {
 };
 
 subtest 'fails' => sub{
-    plan tests => 8;
+    plan tests => 9;
 
     throws_ok(
         sub{ $class->create(process => $process, file => File::Spec->join($data_dir, 'samples.blah')); },
@@ -194,6 +196,13 @@ subtest 'fails' => sub{
         qr/Invalid individual name: TGI-AAAA\. It must include the first part of the sample name: TGI-AA12345-Z98765\./,
         'failed when sample name does not include individual name',
     );
+
+    throws_ok(
+        sub{ $class->create->from_params({ base_working_directory => '/dev/null', entity_params => {},}); },
+        qr/Can't validate/,
+        'failed when given non writable base_working_directory',
+    );
+
 };
 
 done_testing();
