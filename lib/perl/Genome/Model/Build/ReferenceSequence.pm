@@ -48,6 +48,12 @@ class Genome::Model::Build::ReferenceSequence {
             doc => 'file handle per chromosome for reading sequences so that it does not need to be constantly closed/opened',
         },
         _local_cache_dir_is_verified => { is => 'Boolean', default_value => 0, is_optional => 1, is_transient => 1,},
+        fasta_md5 => {
+            is => 'Text',
+            is_optional => 1,
+            is_input => 1,
+            doc => 'MD5 of the reference FASTA.  Allows for shortcutting of rederivable references.',
+        },
 
     ],
 
