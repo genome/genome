@@ -25,4 +25,6 @@ my $vs = Genome::Model::Tools::ViromeScreening->create(
 
 ok( $vs, "Created virome screening" );
 
+isa_ok( $vs->_construct_workflow, 'Genome::WorkflowBuilder::DAG', 'constructed workflow');
+
 done_testing();

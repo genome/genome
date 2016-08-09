@@ -1,0 +1,61 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="virome_pipeline" executor="Workflow::Executor::SerialDeferred" logDir="/gscmnt/sata835/info/medseq/virome/workflow/tracking2">
+    <link fromOperation="input connector"       fromProperty="dirs"               toOperation="splVrBlX"                toProperty="dir" />
+    <link fromOperation="input connector"       fromProperty="dirs"               toOperation="wait for split"          toProperty="dirs" />
+    <link fromOperation="input connector"       fromProperty="dirs"               toOperation="wait for check output"   toProperty="dirs" />
+
+    <link fromOperation="input connector"       fromProperty="logfile"            toOperation="splVrBlX"                toProperty="logfile" />
+    <link fromOperation="input connector"       fromProperty="logfile"            toOperation="chkVrBlX"                toProperty="logfile" />
+    <link fromOperation="input connector"       fromProperty="logfile"            toOperation="chiVrBlX"                toProperty="logfile" />
+    <link fromOperation="input connector"       fromProperty="logfile"            toOperation="prsVrBlX"                toProperty="logfile" />
+
+    <link fromOperation="input connector"       fromProperty="taxonomy_db"        toOperation="prsVrBlX"                toProperty="taxonomy_db" />
+    <link fromOperation="input connector"       fromProperty="virus_db"           toOperation="chiVrBlX"                toProperty="virus_db" />
+    <link fromOperation="splVrBlX"              fromProperty="result"             toOperation="wait for split"          toProperty="split_complete" />
+
+    <link fromOperation="wait for split"        fromProperty="dirs"               toOperation="chkVrBlX"                toProperty="dir" />
+
+    <link fromOperation="chkVrBlX"              fromProperty="files_for_blast"    toOperation="chiVrBlX"                toProperty="files_to_run"/>
+
+    <link fromOperation="chiVrBlX"              fromProperty="result"             toOperation="wait for check output"   toProperty="check_output_complete"/>
+
+    <link fromOperation="wait for check output" fromProperty="dirs"               toOperation="prsVrBlX"                toProperty="dir"/>
+
+    <link fromOperation="prsVrBlX"              fromProperty="result"             toOperation="output connector"        toProperty="result"/>
+
+    <operation name="splVrBlX" parallelBy="dir">
+        <operationtype commandClass="Genome::Model::Tools::ViromeEvent::BlastX_Viral::PoolAndSplitSequence" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <operation name="wait for split">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>split_complete</property>
+        </operationtype> 
+    </operation>
+
+    <operation name="chkVrBlX" parallelBy="dir">
+        <operationtype commandClass="Genome::Model::Tools::ViromeEvent::BlastX_Viral::OuterCheckOutput" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <operation name="chiVrBlX" workflowFile="inner_bxv_check_output3.xml" parallelBy="files_to_run" />
+
+    <operation name="wait for check output">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>check_output_complete</property>
+        </operationtype>
+    </operation>
+
+    <operation name="prsVrBlX" parallelBy="dir">
+        <operationtype commandClass="Genome::Model::Tools::ViromeEvent::BlastX_Viral::CheckParseOutput" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <operationtype typeClass="Workflow::OperationType::Model">
+        <inputproperty>dirs</inputproperty>
+        <inputproperty>logfile</inputproperty>
+        <inputproperty>virus_db</inputproperty>
+        <inputproperty>taxonomy_db</inputproperty>
+        <outputproperty>result</outputproperty>
+    </operationtype>
+</workflow>

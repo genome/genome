@@ -1,0 +1,62 @@
+<?xml version='1.0' standalone='yes'?>
+<workflow name="virome_pipeline" executor="Workflow::Executor::SerialDeferred" logDir="/gscmnt/sata835/info/medseq/virome/workflow/tracking2">
+    <link fromOperation="input connector"           fromProperty="dirs"                 toOperation="splNTblN"                    toProperty="dir" />
+    <link fromOperation="input connector"           fromProperty="dirs"                 toOperation="wait for split"              toProperty="dirs" />
+    <link fromOperation="input connector"           fromProperty="dirs"                 toOperation="wait for check output"       toProperty="dirs" />
+    <link fromOperation="input connector"           fromProperty="logfile"              toOperation="splNTblN"                    toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"              toOperation="chkNTblN"                    toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"              toOperation="chiNTblN"                    toProperty="logfile" />
+    <link fromOperation="input connector"           fromProperty="logfile"              toOperation="prsNTblN"                    toProperty="logfile" />
+
+    <link fromOperation="input connector"           fromProperty="taxonomy_db"          toOperation="prsNTblN"                    toProperty="taxonomy_db" />
+
+    <link fromOperation="input connector"           fromProperty="nt_db"                toOperation="chiNTblN"                    toProperty="nt_db" />
+
+    <link fromOperation="splNTblN"                  fromProperty="result"               toOperation="wait for split"              toProperty="split_complete" />
+
+    <link fromOperation="wait for split"            fromProperty="dirs"                 toOperation="chkNTblN"                    toProperty="dir" />
+
+    <link fromOperation="chkNTblN"                  fromProperty="files_for_blast"      toOperation="chiNTblN"                    toProperty="files_to_run"/>
+
+    <link fromOperation="chiNTblN"                  fromProperty="result"               toOperation="wait for check output"       toProperty="check_output_complete"/>
+
+    <link fromOperation="wait for check output"     fromProperty="dirs"                 toOperation="prsNTblN"                    toProperty="dir"/>
+
+    <link fromOperation="prsNTblN"                  fromProperty="result"               toOperation="output connector"            toProperty="result"/>
+
+    <operation name="splNTblN" parallelBy="dir">
+        <operationtype commandClass="Genome::Model::Tools::ViromeEvent::BlastN::PoolAndSplitSequence" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <operation name="wait for split">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>split_complete</property>
+        </operationtype> 
+    </operation>
+
+    <operation name="chkNTblN" parallelBy="dir">
+        <operationtype commandClass="Genome::Model::Tools::ViromeEvent::BlastN::OuterCheckOutput" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <operation name="chiNTblN" workflowFile="inner_bn_check_output3.xml" parallelBy="files_to_run" />
+
+    <operation name="wait for check output">
+        <operationtype typeClass="Workflow::OperationType::Block">
+            <property>dirs</property>
+            <property>check_output_complete</property>
+        </operationtype>
+    </operation>
+
+    <operation name="prsNTblN" parallelBy="dir">
+        <operationtype commandClass="Genome::Model::Tools::ViromeEvent::BlastN::CheckParseOutput" typeClass="Workflow::OperationType::Command"/>
+    </operation>
+
+    <operationtype typeClass="Workflow::OperationType::Model">
+        <inputproperty>dirs</inputproperty>
+        <inputproperty>logfile</inputproperty>
+        <inputproperty>nt_db</inputproperty>
+        <inputproperty>taxonomy_db</inputproperty>
+        <outputproperty>result</outputproperty>
+    </operationtype>
+</workflow>
