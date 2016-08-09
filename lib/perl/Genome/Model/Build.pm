@@ -1158,18 +1158,7 @@ sub validate_instrument_data{
         }
         if (my $bam_path = $instrument_data->bam_path) {
             if (! -f $bam_path) {
-                push @tags, UR::Object::Tag->create(
-                    type => 'error',
-                    properties => ['instrument_data'],
-                    desc => 'instrument data (' . $instrument_data->id . ') has bam_path but the file does not exist',
-                );
-
-            } elsif (! -s $bam_path) {
-                push @tags, UR::Object::Tag->create(
-                    type => 'error',
-                    properties => ['instrument_data'],
-                    desc => 'instrument data (' . $instrument_data->id . ') has bam_path but no size',
-                );
+                $self->warning_message('instrument data (%s) has bam_path but the file could not be found', $instrument_data->id);
             }
         }
     }
