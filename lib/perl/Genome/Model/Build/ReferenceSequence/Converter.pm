@@ -119,6 +119,8 @@ sub convert_chrXX_contigs_to_GL {
         $chrom = 'GL' . $1 . '.1';
     }elsif ( $chrom =~ /\d+_GL(\d+)_random$/i) {
         $chrom = "GL" .  $1 . '.1';
+    } elsif ($chrom eq 'M') {
+        $chrom = "MT";
     }
 
     return ($chrom, $start, $stop);
