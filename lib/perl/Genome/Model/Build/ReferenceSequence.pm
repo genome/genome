@@ -204,33 +204,12 @@ sub get {
 sub get_or_create_ucsc_tiering_directory {
     my $self = shift;
 
-    my %tiering_dirs = (
-        '10194788' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/hg18_build36_ucsc_files',
-        '106942997' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/hg18_build36_ucsc_files',
-        '107494762' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-mouse-build37/mm9',
-        '3ca0ea4786dd4ebebaf3935f3d3ccab8' => '/gscmnt/sata921/info/medseq/make_tier_bed_files/NCBI-mouse-build38/mm10',
-        '4ec1c5bd1f6941b8a99f2e230217cb91' => '/gscmnt/gc13001/info/model_data/jwalker_scratch/GRCh38',
-    );
+    my $dir = File::Spec->join($self->data_directory, 'ucsc_tiering_files');
 
-    if ($tiering_dirs{$self->id}) {
-        return $tiering_dirs{$self->id};
+    if (-d $dir) {
+        return $dir;
     } else {
         $self->status_message('UCSC Tiering Directory not currently available for this species: '. $self->species_name);
-        return;
-    }
-}
-
-#TODO: figure out how to get this and make it a real result
-sub get_or_create_ucsc_conservation_directory {
-    my $self = shift;
-    if ($self->id eq "10194788") {
-        return "/gscmnt/ams1161/info/model_data/2771411739/build113115679/annotation_data/ucsc_conservation/";
-    }
-    elsif ($self->id eq "106942997") {
-        return "/gscmnt/ams1102/info/model_data/2771411739/build106409619/annotation_data/ucsc_conservation/"
-    }
-    else {
-        $self->status_message("UCSC conservation scores are not currently available in the system for this species: ".$self->species_name);
         return;
     }
 }

@@ -192,12 +192,6 @@ sub _execute_build {
             }
         }
 
-        my $ucsc_directory = $annotation_directory."/ucsc_conservation";
-        my $original_ucsc_dir = $build->reference_sequence->get_or_create_ucsc_conservation_directory;
-        if ($original_ucsc_dir) {
-            Genome::Sys->create_symlink($original_ucsc_dir, $ucsc_directory);
-        }
-
         #generate the rna seq files
         $self->generate_rna_seq_files($build);
 
