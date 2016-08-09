@@ -12,6 +12,8 @@ use above "Genome";
 use File::Spec;
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Model::ClinSeq::TestData;
+use Genome::Test::Factory::Model::GenotypeMicroarray;
 
 use_ok('Genome::Model::ClinSeq::Command::MicroarrayCnv') or die;
 
@@ -20,12 +22,12 @@ subtest "somatic mode" => sub {
     my $expected_output_dir =
         Genome::Utility::Test->data_dir_ok('Genome::Model::ClinSeq::Command::MicroarrayCnv', '2015-05-28/somatic');
 
+    my $test_data = _prepare_test_data();
+
     #Run MicroarrayCNV on the 'apipe-test-clinseq-wer' model in somatic-mode
     my $somatic_opdir = Genome::Sys->create_temp_directory();
     ok($somatic_opdir, "created temp directory: $somatic_opdir") or die;
-    my $clinseq_model = Genome::Model->get(name => 'apipe-test-clinseq-wer'); #TODO don't use a live model
-    my $clinseq_build = $clinseq_model->last_succeeded_build;
-    $clinseq_build->cancer_annotation_db($clinseq_model->cancer_annotation_db); #make the build current
+    my $clinseq_build = Genome::Model::Build->get($test_data->{CLINSEQ_BUILD});
     my $somatic_microarray_cnv = Genome::Model::ClinSeq::Command::MicroarrayCnv->create(
         outdir        => $somatic_opdir,
         clinseq_build => $clinseq_build,
@@ -63,10 +65,12 @@ subtest "single-sample mode" => sub {
     my $expected_output_dir =
         Genome::Utility::Test->data_dir_ok('Genome::Model::ClinSeq::Command::MicroarrayCnv', '2015-05-28/single');
 
+    my $test_data = _prepare_test_data();
+
     #Run MicroarrayCNV on the 'apipe-test-clinseq-wer' model in single-sample mode
     my $single_opdir = Genome::Sys->create_temp_directory();
     ok($single_opdir, "created temp directory: $single_opdir") or die;
-    my $clinseq_model  = Genome::Model->get(name => 'apipe-test-clinseq-wer');
+    my $clinseq_model  = Genome::Model->get($test_data->{CLINSEQ_MODEL});
     my $ma_model       = $clinseq_model->wgs_model->tumor_model->genotype_microarray_model;
     my $cancer_db      = Genome::Db->get("tgi/cancer-annotation/human/build37-20150205.1");
     my $microarray_cnv = Genome::Model::ClinSeq::Command::MicroarrayCnv->create(
@@ -102,3 +106,46 @@ subtest "single-sample mode" => sub {
 };
 
 done_testing();
+
+
+sub _prepare_test_data {
+
+    my $input_data_dir =
+        Genome::Utility::Test->data_dir_ok('Genome::Model::ClinSeq::Command::MicroarrayCnv', '2016-08-09/inputs');
+
+    my $test_data = Genome::Model::ClinSeq::TestData->load();
+
+    for my $type (qw(tumor normal)) {
+        my $refalign = Genome::Model->get($test_data->{join('_',uc($type), 'REFALIGN_MODEL')});
+
+        my $microarray_model = Genome::Test::Factory::Model::GenotypeMicroarray->setup_object(
+            dbsnp_build => Genome::Model::Build->get($test_data->{DBSNP_BUILD}),
+            subject_id => $refalign->subject_id,
+        );
+
+        my $microarray_input_data = File::Spec->join($input_data_dir, join('_', $type, 'microarray')),
+
+        my $build_data_directory = Genome::Sys->create_temp_directory();
+
+        for my $file (qw(copynumber original)) {
+            Genome::Sys->create_symlink(
+                File::Spec->join($microarray_input_data, $file),
+                File::Spec->join($build_data_directory, join('.', $microarray_model->subject_id, $file)),
+            );
+        }
+
+        my $microarray_build = Genome::Test::Factory::Build->setup_object(
+            model_id => $microarray_model->id,
+            status => 'Succeeded',
+            data_directory => $build_data_directory,
+        );
+
+        $refalign->genotype_microarray_model($microarray_model);
+
+        for my $rab ($refalign->builds) {
+            $rab->genotype_microarray_build($microarray_build);
+        }
+    }
+
+    return $test_data;
+}
