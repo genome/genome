@@ -102,12 +102,20 @@ sub execute {
             push(@tumor_samples,  $individual_dna_sample) if ($dna_sample_common_name =~ /$tumor_sample_common_names/i);
         }
 
-        if (scalar(@normal_samples) > 1) {
+        my $normal_sample_count = scalar(@normal_samples);
+        my $tumor_sample_count = scalar(@tumor_samples);
+        my $labeled_sample_count = $normal_sample_count + $tumor_sample_count;
+
+        if ($normal_sample_count > 1) {
             $self->fatal_message('More than one normal DNA sample was specified for this individual: '. $individual->__display_name__);
         }
-        if (scalar(@tumor_samples) > 1) {
+        if ($tumor_sample_count > 1) {
             $self->fatal_message('More than one tumor DNA sample was specified for this individual: '. $individual->__display_name__);
         }
+        if ($labeled_sample_count ne $individual_dna_sample_count) {
+            $self->fatal_message('Failed to find a tumor/normal label for all DNA samples of individual: '. $individual->__display_name__);
+        }
+
         my %data;
         if (@normal_samples && @tumor_samples) {
             %data = (
