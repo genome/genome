@@ -79,7 +79,7 @@ sub execute {
         push @{$dna_samples_by_individual_id{$dna_sample->individual->id}}, $dna_sample;
     }
     my @individual_ids = sort keys %dna_samples_by_individual_id;
-    $self->status_message('Found '. scalar(@individual_ids) .' indivudals');
+    $self->status_message('Found '. scalar(@individual_ids) .' individuals');
 
     my @subject_mappings;
     for my $individual_id (@individual_ids) {
@@ -89,7 +89,8 @@ sub execute {
         $self->status_message('Found '. $individual_dna_sample_count .' samples for individual '. $individual->__display_name__);
 
         if ( $individual_dna_sample_count > 2) {
-            $self->fatal_message('This command currently does not support more than 2 DNA samples per individual.');
+            $self->warning_message('This command currently does not support more than 2 DNA samples per individual.  Found '. $individual_dna_sample_count .' samples for individual: '. $individual->__display_name__);
+            next;
         }
 
         my @normal_samples;
