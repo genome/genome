@@ -35,7 +35,7 @@ class Genome::Config::AnalysisProject::SubjectMapping::Command::Predict::Somatic
 };
 
 sub help_brief {
-    return 'Predict sample pairings in bulk for an AnalysisProject';
+    return 'Predict the sample pairings needed to create Somatic Validation models for an AnalysisProject';
 }
 
 sub help_synopsis {
@@ -44,7 +44,7 @@ sub help_synopsis {
 
 sub help_detail {
     return <<"EOS"
-This command allows you to predict subject mapping information for an AnalysisProject.
+This command will predict subject mapping for Somatic Validation model types across all samples in an AnalysisProject.
 
 The output file is a 6 column, tab separated format with the following columns:
 
