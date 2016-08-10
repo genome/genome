@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use List::MoreUtils qw(uniq);
 
 class Genome::Config::AnalysisProject::SubjectMapping::Command::Predict::SomaticValidation {
     is => 'Genome::Config::AnalysisProject::Command::Base',
@@ -70,13 +71,11 @@ sub execute {
     my $id_method = $self->sample_identifier;
 
     my @all_dna_samples = grep {$_->sample_type =~ /dna/i} $analysis_project->samples;
-    my %dna_samples = map { $_->id => $_ } @all_dna_samples;
-    my @dna_sample_ids = sort keys %dna_samples;
-    $self->status_message('Found '. scalar(@dna_sample_ids) .' DNA samples');
+    my @dna_samples = List::MoreUtils::uniq(@all_dna_samples);
+    $self->status_message('Found '. scalar(@dna_samples) .' DNA samples');
 
     my %dna_samples_by_individual_id;
-    for my $dna_sample_id (@dna_sample_ids) {
-        my $dna_sample = $dna_samples{$dna_sample_id};
+    for my $dna_sample (@dna_samples) {
         push @{$dna_samples_by_individual_id{$dna_sample->individual->id}}, $dna_sample;
     }
     my @individual_ids = sort keys %dna_samples_by_individual_id;
