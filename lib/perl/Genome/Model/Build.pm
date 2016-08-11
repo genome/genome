@@ -1026,8 +1026,7 @@ sub start {
         $self->schedule;
 
         # Creates a workflow for the build
-        # TODO Initialize workflow shouldn't take arguments
-        my $workflow = $self->_initialize_workflow($params{job_dispatch} || Genome::Config::get('lsf_queue_build_worker_alt'));
+        my $workflow = $self->_initialize_workflow();
         unless ($workflow) {
             Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
@@ -1405,103 +1404,25 @@ sub _launch {
 
     my $build_id_guard = set_build_id($self->id);
 
-    # right now it is "inline" or the name of an LSF queue.
-    # ultimately, it will be the specification for parallelization
-    # including whether the server is inline, forked, or bsubbed, and the
-    # jobs are inline, forked or bsubbed from the server
     my $model = $self->model;
 
-    my $server_dispatch = _server_dispatch($model, \%params);
-    my $job_dispatch = _job_dispatch($model, \%params);
-    my $job_group = _job_group(\%params);
-    my $job_group_spec = _job_group_spec($job_group);
-
     # all params should have been deleted (as they were handled)
-    die "Bad params!  Expected server_dispatch and job_dispatch!" . Data::Dumper::Dumper(\%params) if %params;
+    die "Bad params!" . Data::Dumper::Dumper(\%params) if %params;
 
     my $build_event = $self->the_master_event;
 
-    if ($server_dispatch eq 'inline') {
-        my %args = (
-            model_id => $self->model_id,
-            build_id => $self->id,
-        );
-        if ($job_dispatch eq 'inline') {
-            $args{inline} = 1;
-        }
-
-        my $rv = Genome::Model::Command::Services::Build::Run->execute(%args);
-        return $rv;
-    }
-    else {
-        if ($ENV{UR_DBI_NO_COMMIT}) {
-            $self->warning_message("Skipping launching process when NO_COMMIT is turned on (job will fail)\n");
-            return;
-        }
-
-        my %inputs = $self->model->map_workflow_inputs($self);
-        my $process = Genome::Model::Build::Process->create(build => $self);
-        $process->run(
-            workflow_xml => $workflow_xml,
-            workflow_inputs => \%inputs,
-        );
-        return 1;
-    }
-}
-
-sub _job_dispatch {
-    my $model = shift;
-    my $params = shift;
-    my $job_dispatch;
-    if (exists($params->{job_dispatch})) {
-        $job_dispatch = delete $params->{job_dispatch};
-    } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
-        $job_dispatch = $model->processing_profile->job_dispatch;
-    } else {
-        $job_dispatch = Genome::Config::get('lsf_queue_build_worker_alt');
-    }
-    return $job_dispatch;
-}
-
-sub _server_dispatch {
-    my $model = shift;
-    my $params = shift;
-    my $server_dispatch;
-    if (exists($params->{server_dispatch})) {
-        $server_dispatch = delete $params->{server_dispatch};
-    } elsif ($model->processing_profile->can('server_dispatch') && defined $model->processing_profile->server_dispatch) {
-        $server_dispatch = $model->processing_profile->server_dispatch;
-    } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
-        $server_dispatch = $model->server_dispatch;
-    } else {
-        $server_dispatch = Genome::Config::get('lsf_queue_build_workflow');
-    }
-    return $server_dispatch;
-}
-
-sub _default_job_group {
-    my $user = getpwuid($<);
-    return '/apipe-build/' . $user;
-}
-
-sub _job_group {
-    my $params = shift;
-    my $job_group = _default_job_group();
-    if (exists $params->{job_group}) {
-        $job_group = delete $params->{job_group};
-    }
-    return $job_group;
-}
-
-sub _job_group_spec {
-    my $job_group = shift;
-    return ($job_group ? " -g $job_group" : '');
+    my %inputs = $self->model->map_workflow_inputs($self);
+    my $process = Genome::Model::Build::Process->create(build => $self);
+    $process->run(
+        workflow_xml => $workflow_xml,
+        workflow_inputs => \%inputs,
+    );
+    return 1;
 }
 
 sub _initialize_workflow {
     #     Create the data and log directories and resolve the workflow for this build.
     my $self = shift;
-    my $optional_lsf_queue = shift || Genome::Config::get('lsf_queue_build_worker_alt');
 
     Genome::Sys->create_directory( $self->data_directory )
         or return;
@@ -1511,7 +1432,7 @@ sub _initialize_workflow {
 
     my $model = $self->model;
     my $processing_profile = $self->processing_profile;
-    my $workflow = $model->_resolve_workflow_for_build($self, $optional_lsf_queue);
+    my $workflow = $model->_resolve_workflow_for_build($self);
 
     ## so developers dont fail before the workflow changes get deployed to /gsc/scripts
     # NOTE: Genome::Config is obsolete, so this code must work when it is not installed as well.

@@ -26,12 +26,6 @@ class Genome::Model::Build::Command::Start {
         },
     ],
     has_optional => [
-        job_dispatch => {
-            doc => 'dispatch specification: an LSF queue or "inline"',
-        },
-        server_dispatch => {
-            doc => 'dispatch specification: an LSF queue or "inline"',
-        },
         data_directory => { },
         force => {
             is => 'Boolean',
@@ -78,14 +72,6 @@ sub help_synopsis {
 genome model build start 1234
 
 genome model build start somename
-# default values for dispatching will be either -s workflow -j apipe
-# or come from the processing profile if available as a param
-
-genome model build start somename -s workflow -j apipe
-# run the server in the workflow queue, and jobs in the apipe queue
-
-genome model build start somename -s inline -j inline
-# run the server inline, and the jobs inline
 
 EOS
 }
@@ -103,8 +89,6 @@ sub execute {
     my $self = shift;
 
     $self->_create_params->{data_directory} = $self->data_directory if ($self->data_directory);
-    $self->_start_params->{job_dispatch} = $self->job_dispatch if ($self->job_dispatch);
-    $self->_start_params->{server_dispatch} = $self->server_dispatch if ($self->server_dispatch);
 
     my @models = $self->models;
     for my $model (@models) {

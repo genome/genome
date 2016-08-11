@@ -15,6 +15,8 @@ use Genome::Test::Factory::AnalysisProject;
 
 Genome::Report::Email->silent();
 
+Genome::Config::set_env('workflow_builder_backend', 'inline');
+
 class Genome::ProcessingProfile::Test {
     is => 'Genome::ProcessingProfile',
 };
@@ -93,7 +95,7 @@ my $build1 = Genome::Model::Build->create (
 ok ($build1, 'created build 1') or die;
 
 $model1->build_requested(1);
-ok($build1->start(job_dispatch => 'inline', server_dispatch => 'inline'), 'build started!');
+ok($build1->start(), 'build started!');
 
 is($build1->status, 'Succeeded', 'build completed successfully');
 
@@ -104,7 +106,7 @@ my $build2 = Genome::Model::Build->create (
 ok ($build2, 'created build 2') or die;
 
 $model2->build_requested(1);
-ok($build2->start(job_dispatch => 'inline', server_dispatch => 'inline'), 'build started!');
+ok($build2->start(), 'build started!');
 
 is($build2->status, 'Succeeded', 'build completed successfully');
 
@@ -131,7 +133,7 @@ my $build1a = Genome::Model::Build->create (
 ok ($build1a, 'created build 1a') or die;
 
 $model1->build_requested(1);
-ok($build1a->start(job_dispatch => 'inline', server_dispatch => 'inline'), 'build started');
+ok($build1a->start(), 'build started');
 is($build1a->status, 'Succeeded', 'build completed successfully');
 
 #This build should get the most recent build.

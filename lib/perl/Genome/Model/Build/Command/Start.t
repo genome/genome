@@ -35,14 +35,6 @@ my $m = Genome::Model::Tester->create(
 ok($m, "made a test model");
 my $model_id = $m->id;
 
-reinstall_sub({
-    into => 'Genome::Model::Command::Services::Build::Run',
-    as => 'execute',
-    code => sub {
-        return 1;
-    },
-});
-
 my $cmd = Genome::Model::Build::Command::Start->execute(
     models => [$m],
 );

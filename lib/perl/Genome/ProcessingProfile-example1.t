@@ -134,7 +134,9 @@ my $b = $m->add_build(data_directory => $temp_directory);
 ok($b, "created a new build");
 
 # start it, which in our case will run it completely...
-ok($b->start(server_dispatch => 'inline', job_dispatch => 'inline'), "build started");
+my $guard = Genome::Config::set_env('workflow_builder_backend', 'inline');
+ok($b->start(), "build started");
+undef($guard);
 
 # examine the build
 is($execute_build,$b,"the build execution logic ran");

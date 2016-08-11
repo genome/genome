@@ -371,7 +371,7 @@ sub _resolve_disk_group_name_for_build {
 
 # Override in subclasses
 sub _resolve_workflow_for_build {
-    my ($self, $build, $optional_lsf_queue) = @_;
+    my ($self, $build) = @_;
 
     if ($self->can('_execute_build')) {
         # Create a one-step workflow if '_execute_build' is defined.

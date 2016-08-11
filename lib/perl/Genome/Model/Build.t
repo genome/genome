@@ -139,13 +139,15 @@ is($build->status, 'Unstartable', 'build status set to unstartable');
 # Now remove the build validation fail tags so we can start ok
 @validate_for_start_tags = ();
 $model->build_requested(1);
-ok($build->start(job_dispatch => 'inline', server_dispatch => 'inline'), 'build started!');
+my $guard = Genome::Config::set_env('workflow_builder_backend', 'inline');
+ok($build->start(), 'build started!');
 is($build->status, 'Succeeded', 'build completed successfully');
 ok(!$model->current_running_build_id, 'Current running build id set to undef in success');
 ok(!$model->build_needed, 'This succeeded build satisfies the model');
 ok($build->data_directory, 'data directory resolved');
 ok($build->software_revision, 'software revision set on build');
 is($model->build_requested, 0, 'build requested unset on model');
+undef($guard);
 
 # FAIL
 is($build->the_master_event->user_name('apipe-builder'), 'apipe-builder', 'set user name to apipe-builder');
