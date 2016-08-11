@@ -46,10 +46,6 @@ class Genome::Search {
             is => 'Text',
             calculate => q| return $INC{'UR.pm'}; |,
         },
-        workflow_path => {
-            is => 'Text',
-            calculate => q| return $INC{'Workflow.pm'}; |,
-        }
     ],
 };
 
