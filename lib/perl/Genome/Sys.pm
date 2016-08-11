@@ -239,7 +239,7 @@ sub snapshot_revision {
     # Previously we just used UR::Util::used_libs_perl5lib_prefix but this did not
     # "detect" a software revision when using code from PERL5LIB or compile-time
     # lib paths. Since it is common for developers to run just Genome from a Git
-    # checkout we really want to record what versions of UR, Genome, and Workflow
+    # checkout we really want to record what versions of UR, Genome, etc.
     # were used.
 
     my @orig_inc = @INC;
