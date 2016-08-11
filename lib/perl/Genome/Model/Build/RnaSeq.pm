@@ -320,19 +320,6 @@ sub workflow_name {
     return $self->build_id;
 }
 
-sub workflow_instances {
-    my $self = shift;
-
-    my @instances = $self->SUPER::workflow_instances;
-
-    unless(@instances) {
-        @instances = Workflow::Operation::Instance->get(
-            name => $self->SUPER::workflow_name, #older profiles were staged
-        );
-    }
-    return @instances;
-}
-
 sub ensure_annotation_build_provided {
     my $self = shift;
     my @tags = ();

@@ -315,20 +315,6 @@ sub dirs_ignored_by_diff {
     );
 }
 
-sub workflow_instances {
-    my $self = shift;
-    my @instances = Workflow::Operation::Instance->get(
-        name => $self->workflow_name
-    );
-
-    #older builds used a wrapper workflow
-    unless(scalar @instances) {
-        return $self->SUPER::workflow_instances;
-    }
-
-    return @instances;
-}
-
 sub workflow_name {
     my $self = shift;
     return $self->build_id . ' Somatic Variation Pipeline';

@@ -323,24 +323,6 @@ sub lsf_project_name {
     return $self->workflow_name;
 }
 
-sub newest_workflow_instance {
-    my $self = shift;
-    my @sorted = sort {$b->id <=> $a->id} $self->_workflow_instances;
-    if (@sorted) {
-        return $sorted[0];
-    } else {
-        return;
-    }
-}
-
-sub _workflow_instances {
-    my $self = shift;
-    my @instances = Workflow::Operation::Instance->get(
-        name => $self->workflow_name,
-    );
-    return @instances;
-}
-
 sub environment_file {
     my $self = shift;
     return File::Spec->join($self->metadata_directory, 'environment.json');

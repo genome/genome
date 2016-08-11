@@ -14,7 +14,6 @@ use File::Next;
 use File::Basename qw/ dirname fileparse /;
 use List::MoreUtils qw(uniq);
 use Regexp::Common;
-use Workflow;
 use Date::Manip;
 
 use Genome::Ptero::Utils;
@@ -107,10 +106,6 @@ class Genome::Model::Build {
         },
     ],
     has_optional => [
-        _newest_workflow_instance => {
-            is => 'Workflow::Operation::Instance',
-            calculate => q( return $self->newest_workflow_instance(); ),
-        },
         software_revision => { is => 'Text', len => 1000 },
         process => {
             is_many => 1,
@@ -529,123 +524,6 @@ sub ptero_workflow_proxy {
 
     return unless $self->process;
     return $self->process->ptero_workflow_proxy;
-}
-
-sub workflow_instances {
-    my $self = shift;
-    my @instances = Workflow::Operation::Instance->get(
-        name => $self->workflow_name,
-    );
-    return @instances;
-}
-
-sub newest_workflow_instance {
-    my $self = shift;
-    my @sorted = sort {
-        $b->id <=> $a->id
-    } $self->workflow_instances;
-    if (@sorted) {
-        return $sorted[0];
-    } else {
-        return;
-    }
-}
-
-sub cpu_slot_hours {
-    my $self = shift;
-    my $breakdown = $self->_cpu_slot_usage_breakdown(@_);
-    my $total = 0;
-    for my $step (sort keys %$breakdown) {
-        my $sum     = $breakdown->{$step}{sum};
-        my $count   = $breakdown->{$step}{count};
-        print join("\t","BREAKDOWN:",$self->id,$self->model->name,$step,$sum,$count);
-        $total += $sum;
-    }
-
-    return $total/60;
-}
-
-sub _cpu_slot_usage_breakdown {
-    my $self = shift;
-    my @params = @_;
-
-    my %steps;
-
-    my $workflow_instance = $self->newest_workflow_instance;
-    my $bx;
-    if (@params) {
-        if ($params[0] =~ /event_type/) {
-            $params[0] =~ s/event_type/name/;
-        }
-        $bx = Workflow::Operation::Instance->define_boolexpr(@params);
-    }
-
-
-    my @all_children;
-    my @queue = $workflow_instance;
-
-    while ( my $next = shift @queue ) {
-        my @children = $next->related_instances;
-        push @all_children, @children;
-        push @queue,        @children;
-    }
-
-    for my $op_inst (@all_children) {
-        if ($bx and not $bx->evaluate($op_inst)) {
-            warn "skipping $op_inst $op_inst->{name}...\n";
-            next;
-        }
-        my $op = $op_inst->operation;
-        my $op_name = $op->name;
-        my $op_type = $op->operation_type;
-
-        if ($op_type->class eq 'Workflow::OperationType::Model') {
-            # don't double count
-            next;
-        }
-
-        if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue)
-            and $op_type->lsf_queue eq Genome::Config::get('lsf_queue_build_workflow')
-        ) {
-            # skip jobs which run in workflow because they internally run another workflow
-            next;
-        }
-
-        my $cpus = 1;
-        my $rusage = ($op_type->can('lsf_resource') ? $op_type->lsf_resource : undef);
-        if (defined($rusage)) {
-            if ($rusage =~ /(?<!\S)-n\s+(\S+)/) {
-                $cpus = $1;
-            }
-        }
-
-        my $eclass;
-        if ($op_type->can('command_class_name')) {
-            $eclass = $op_type->command_class_name;
-        }
-
-        my $d1    = Date::Manip::ParseDate( $op_inst->end_time );
-        my $d2    = Date::Manip::ParseDate( $op_inst->start_time );
-        my $delta = Date::Manip::DateCalc( $d2, $d1 );
-        my $value = Date::Manip::Delta_Format( $delta, 1, "%mt" );
-
-        if ($value eq '') {
-            $value = 0; # for crashed/incomplete steps
-        }
-
-        if ($cpus eq '') {
-            die "null cpus??? resource was $rusage\n";
-        }
-
-        my $key         = $op_inst->name;
-        $key =~ s/ \d+$//;
-        $steps{$key}{sum} ||= 0;
-        $steps{$key}{count} ||= 0;
-        $steps{$key}{sum} += $value * $cpus;
-        $steps{$key}{count} += $cpus;
-    }
-
-    return \%steps;
 }
 
 sub calculate_estimated_kb_usage {
@@ -2358,26 +2236,6 @@ sub is_used_as_model_or_build_input {
     return (scalar @inputs) ? 1 : 0;
 }
 
-sub child_workflow_instances {
-    my $self = shift;
-    return $self->_get_workflow_instance_children($self->newest_workflow_instance);
-}
-
-sub child_lsf_jobs {
-    my $self = shift;
-    my @workflow_instances = $self->child_workflow_instances;
-    return unless @workflow_instances;
-    my @dispatch_ids = grep {defined $_} map($_->current->dispatch_identifier, @workflow_instances);
-    my @valid_ids = grep {$_ !~ /^P/} @dispatch_ids;
-    return @valid_ids;
-}
-
-sub _get_workflow_instance_children {
-    my $self = shift;
-    my $parent = shift || return;
-    return $parent, map($self->_get_workflow_instance_children($_), $parent->related_instances);
-}
-
 sub _preprocess_subclass_description {
     my ($class, $desc) = @_;
     my $build_subclass_name = $desc->{class_name};
@@ -2561,114 +2419,7 @@ sub _heartbeat {
         return %heartbeat;
     }
 
-    my $running_lsf_job = $self->_get_running_master_lsf_job;
-    if($running_lsf_job) {
-        return $self->_workflow_heartbeat(%heartbeat);
-    } else {
-        return $self->_ptero_heartbeat(%heartbeat);
-    }
-}
-
-sub _workflow_heartbeat {
-    my $self = shift;
-    my %heartbeat = @_;
-
-    my @wf_instances = ($self->newest_workflow_instance, $self->child_workflow_instances);
-    my @wf_instance_execs = map { $_->current } @wf_instances;
-
-    WF: for my $wf_instance_exec (@wf_instance_execs) {
-        my $lsf_job_id = $wf_instance_exec->dispatch_identifier;
-        my $wf_instance_exec_status = $wf_instance_exec->status;
-        my $wf_instance_exec_id = $wf_instance_exec->execution_id;
-
-        if (grep { $wf_instance_exec_status eq $_ } ('new', 'done')) {
-            next WF;
-        }
-
-        # only certain operation types would have LSF jobs and everything below is inspecting LSF status
-        my $operation_type = $wf_instance_exec->operation_instance->operation_type;
-        unless ( $operation_type and grep { $operation_type->isa($_) } ('Workflow::OperationType::Command', 'Workflow::OperationType::Event') ) {
-            next WF;
-        }
-
-        unless ($lsf_job_id) {
-            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) has no LSF job ID";
-            last WF;
-        }
-
-        if ($lsf_job_id =~ /^P/) {
-            next WF;
-        }
-
-        my $bjobs_output = $self->collect_bjobs_output($lsf_job_id);
-        unless($bjobs_output) {
-            $heartbeat{message} = "Expected bjobs (LSF ID: $lsf_job_id) output but received none.";
-            last WF;
-        }
-
-        my $lsf_status = $self->status_from_bjobs_output($bjobs_output);
-        if ($wf_instance_exec_status eq 'scheduled' && $lsf_status ne 'pend') {
-            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) does not match LSF status ($lsf_status)";
-            last WF;
-        }
-        elsif ($wf_instance_exec_status eq 'scheduled' && $lsf_status eq 'pend') {
-            next WF;
-        }
-
-        if ($wf_instance_exec_status eq 'running' && $lsf_status ne 'run') {
-            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) status ($wf_instance_exec_status) does not match LSF status ($lsf_status)";
-            last WF;
-        }
-
-        if ($wf_instance_exec_status eq 'crashed' && ($lsf_status eq 'done' || $lsf_status eq 'exit')) {
-            $heartbeat{message} = "Workflow Instance Execution (ID: $wf_instance_exec_id) crashed.";
-            last WF;
-        }
-
-        if ($wf_instance_exec_status ne 'running' || $lsf_status ne 'run') {
-            $heartbeat{message} = "Missing state ($wf_instance_exec_status/$lsf_status) condition, only running/run should reach this point";
-            last WF;
-        }
-
-        my @pids = $self->pids_from_bjobs_output($bjobs_output);
-        unless(@pids) {
-            $heartbeat{message} = "No PIDs found in bjobs output (LSF ID: $lsf_job_id). This may be normal if the job just started.";
-            last WF;
-        }
-        my $execution_host = $self->execution_host_from_bjobs_output($bjobs_output);
-        unless ($execution_host) {
-            $heartbeat{message} = 'Expected execution host.';
-            last WF;
-        }
-
-        my $pid_error = $self->check_for_pid_heartbeat_errors($execution_host, @pids);
-        if ($pid_error) {
-            $heartbeat{message} = $pid_error;
-            last WF;
-        }
-
-        my @parents = grep { $_->status eq 'running' } grep { defined($_->parent_execution_id) and $_->parent_execution_id eq $wf_instance_exec_id } @wf_instances;
-        if (@parents > 0) {
-            next WF; #this is a parent, so we wouldn't expect its output to be updated while its children are running.  Let them determine the heartbeat status.
-        }
-
-        my $output_file = $wf_instance_exec->stdout;
-        my $error_file = $wf_instance_exec->stderr;
-        my $op_class = $wf_instance_exec->operation_instance->operation_type->command_class_name;
-        my $max_elapsed_time = ($op_class->can('max_elapsed_log_time')) ? $op_class->max_elapsed_log_time : undef;
-        my $output_error = $self->check_for_output_heartbeat_errors($output_file, $error_file, $max_elapsed_time);
-        if ($output_error) {
-            $heartbeat{message} = $output_error;
-            last WF;
-        }
-    }
-
-    unless ($heartbeat{message}) {
-        $heartbeat{message} = 'OK. Seems to be running!';
-        $heartbeat{is_ok} = 1;
-    }
-
-    return %heartbeat;
+    return $self->_ptero_heartbeat(%heartbeat);
 }
 
 sub _ptero_heartbeat {

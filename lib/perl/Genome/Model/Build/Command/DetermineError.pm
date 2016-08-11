@@ -5,7 +5,6 @@ use strict;
 
 use Genome;
 use Genome::Model::Build::Command::DetermineError::PteroHelper;
-use Genome::Model::Build::Command::DetermineError::WorkflowHelper;
 
 use IPC::System::Simple qw(capture);
 use File::ReadBackwards;
@@ -169,9 +168,7 @@ sub handle_failed {
     $self->error_type("Failed");
 
     try {
-        if (my $workflow = $self->build->newest_workflow_instance) {
-            $self->handle_failed_from_logs($workflow);
-        } elsif (my $ptero_proxy = $self->build->ptero_workflow_proxy) {
+        if (my $ptero_proxy = $self->build->ptero_workflow_proxy) {
             $self->handle_failed_from_ptero($ptero_proxy);
         } else {
             $self->_search_error_logs;

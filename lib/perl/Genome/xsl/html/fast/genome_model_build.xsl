@@ -8,9 +8,6 @@
     <script type="text/javascript">
           window.page_data = function(){
             return {
-                workflow: {
-                "id": "<xsl:value-of select="/object/aspect[@name='_newest_workflow_instance']/object/@id"/>"
-                },
                 stages: {
                     "count": <xsl:value-of select="count(build/stages/stage)"/>
                 }
@@ -131,18 +128,6 @@
                                     </xsl:for-each> 
                                 </xsl:attribute>
                                 <xsl:value-of select="aspect[@name='model']/object/aspect[@name='processing_profile']/object/@id"/>
-                                </a>
-                            </dd>
-
-                            <dt>workflow</dt>
-                            <dd>
-                                <a>
-                                <xsl:attribute name="href">
-                                    <xsl:for-each select="/object/aspect[@name='_newest_workflow_instance']/object">
-                                        <xsl:call-template name="object_link_href"></xsl:call-template>
-                                    </xsl:for-each> 
-                                </xsl:attribute>
-                                <xsl:value-of select="/object/aspect[@name='_newest_workflow_instance']/object/@id"/>
                                 </a>
                             </dd>
 
@@ -311,14 +296,9 @@
 
   <xsl:template name="genome_model_build_tabs">
 
-    <xsl:variable name="workflow" select="/object/aspect[@name='_newest_workflow_instance']/object"/>
-
         <div id="process_tabs" class="span-24 last">
           <ul>
             <li class="tab_header"><h3 class="genome_processingprofile_16">Build Process</h3></li>
-            <li><a><xsl:attribute name="href">/viewajax/workflow/operation/instance/statuspopup.html?id=<xsl:value-of select="$workflow/@id"/></xsl:attribute>
-                    <span class="spinner"><xsl:text> </xsl:text></span>workflow
-            </a></li>
 
             <li><a href="#events">events</a></li>
           </ul>
