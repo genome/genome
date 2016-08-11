@@ -188,10 +188,10 @@ sub _parse_strategy {
     unless ( ($tool, $version, $x, $params) = ($strategy =~ /^(.+?)\s+(\S+)\s*(|\[(.*)\])\s*$/) ) {
         die "failed to parse strategy: $strategy!";
     }
-   
+
     #Genome::Utility::Text::string_to_camel_case($detector,"-")
     my $cmd_class = 'Genome::Model::Tools::' . join('::', map { ucfirst(lc($_)) } split('-',$tool));
-    
+
     my %params;
     my %params1 = ($params ? split(/\s+/,$params) : ());
     for my $param (keys %params1) {
@@ -299,103 +299,70 @@ sub _resolve_workflow_for_build {
         }
         if ($ensembl_version >= 67) {
             $run_splice_junction_summary = 1;
-        } 
+        }
         else {
             $self->debug_message('Skipping SpliceJunctionSummary for annotation build: '. $self->annotation_build);
         }
     }
-    my $output_properties = ['coverage_result','expression_result','metrics_result'];
 
-    push @$output_properties, 'fusion_result'                       if $self->fusion_detector;
-    push @$output_properties, 'annotated_bedpe_file'                if $self->fusion_detector and $self->cancer_annotation_db;
-    push @$output_properties, 'digital_expression_detection_result' if $self->digital_expression_detection_strategy;
-
-    if ($version_number >= 2) {
-        push @$output_properties, 'bam_qc_result';
-        push @$output_properties, 'alignment_stats_result' if $aligner_name eq 'tophat';
-        push @$output_properties, 'splice_junction_result' if $run_splice_junction_summary;
-    }
-
-    my %inputs = $self->map_workflow_inputs($build);
-
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $build->workflow_name,
-        input_properties => [keys %inputs],
-        output_properties => $output_properties,
     );
-
-    my $log_directory = $build->log_directory;
-    $workflow->log_dir($log_directory);
-
-
-    my $input_connector = $workflow->get_input_connector;
-    my $output_connector = $workflow->get_output_connector;
 
     # Alignment
-    my $alignment_operation = undef;
-    if ($version_number < 2){
-        $alignment_operation = $workflow->add_operation(
-            name => 'RnaSeq Tophat Alignment',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::RnaSeq::Command::AlignReads::Tophat',
-            )
-        );
-    }
-    else{
-        $alignment_operation = $workflow->add_operation(
-            name => 'RnaSeq Alignment',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::RnaSeq::Command::AlignReads',
-            )
-        );
-    }
-
-    $alignment_operation->operation_type->lsf_queue($lsf_queue);
-    $alignment_operation->operation_type->lsf_project($lsf_project);
-
-    my $link = $workflow->add_link(
-        left_operation => $input_connector,
-        left_property => 'build_id',
-        right_operation => $alignment_operation,
-        right_property => 'build_id'
+    my %params = ($version_number < 2)? (
+        name => 'RnaSeq Tophat Alignment',
+        command => 'Genome::Model::RnaSeq::Command::AlignReads::Tophat',
+    ) : (
+        name => 'RnaSeq Alignment',
+        command => 'Genome::Model::RnaSeq::Command::AlignReads',
     );
-   
+
+    my $alignment_operation = Genome::WorkflowBuilder::Command->create(%params);
+    $workflow->add_operation($alignment_operation);
+
+    $alignment_operation->lsf_queue($lsf_queue);
+    $alignment_operation->lsf_project($lsf_project);
+
+    $workflow->connect_input(
+        input_property => 'build_id',
+        destination => $alignment_operation,
+        destination_property => 'build_id'
+    );
+
     # Digital expression
     my $digital_expression_detection_operation = undef;
     if (my $strategy = $processing_profile->digital_expression_detection_strategy) {
         my ($class,$params) = $self->_parse_strategy($strategy, $build);
 
-        $digital_expression_detection_operation = $workflow->add_operation(
+        $digital_expression_detection_operation = Genome::WorkflowBuilder::Command->create(
             name => 'RnaSeq Digital Expression Detection',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => $class,
-            )
+            command => $class,
         );
+        $workflow->add_operation($digital_expression_detection_operation);
 
-        $digital_expression_detection_operation->operation_type->lsf_queue($lsf_queue);
-        $digital_expression_detection_operation->operation_type->lsf_project($lsf_project);
+        $digital_expression_detection_operation->lsf_queue($lsf_queue);
+        $digital_expression_detection_operation->lsf_project($lsf_project);
 
         for my $key (keys %$params, qw/requestor sponsor user label output_dir/) {
-            my $link = $workflow->add_link(
-                left_operation => $input_connector,
-                left_property => 'digital_expression_' . $key,
-                right_operation => $digital_expression_detection_operation,
-                right_property => $key,
+            $workflow->connect_input(
+                input_property => 'digital_expression_' . $key,
+                destination => $digital_expression_detection_operation,
+                destination_property => $key,
             );
         }
-        
-        $link = $workflow->add_link(
-            left_operation => $alignment_operation,
-            left_property => 'individual_alignment_results',
-            right_operation => $digital_expression_detection_operation,
-            right_property => 'alignment_results',
+
+        $workflow->create_link(
+            source => $alignment_operation,
+            source_property => 'individual_alignment_results',
+            destination => $digital_expression_detection_operation,
+            destination_property => 'alignment_results',
         );
-        
-        $link = $workflow->add_link(
-            left_operation => $digital_expression_detection_operation,
-            left_property => 'output_result',
-            right_operation => $output_connector,
-            right_property => 'digital_expression_detection_result'
+
+        $workflow->connect_output(
+            source => $digital_expression_detection_operation,
+            source_property => 'output_result',
+            output_property => 'digital_expression_detection_result'
         );
     }
 
@@ -403,131 +370,120 @@ sub _resolve_workflow_for_build {
     # TopHat2 Specific Pipeline Steps
     if ($version_number >= 2) {
         if ($aligner_name eq 'tophat') {
-            my $alignment_metrics_operation = $workflow->add_operation(
+            my $alignment_metrics_operation = Genome::WorkflowBuilder::Command->create(
                 name => 'RnaSeq Alignment Metrics',
-                operation_type => Workflow::OperationType::Command->create(
-                    command_class_name => 'Genome::Model::RnaSeq::Command::Tophat2AlignmentStats',
-                )
+                command => 'Genome::Model::RnaSeq::Command::Tophat2AlignmentStats',
             );
-            $alignment_metrics_operation->operation_type->lsf_queue($lsf_queue);
-            $alignment_metrics_operation->operation_type->lsf_project($lsf_project);
+            $workflow->add_operation($alignment_metrics_operation);
+            $alignment_metrics_operation->lsf_queue($lsf_queue);
+            $alignment_metrics_operation->lsf_project($lsf_project);
 
-            $workflow->add_link(
-                left_operation => $alignment_operation,
-                left_property => 'build_id',
-                right_operation => $alignment_metrics_operation,
-                right_property => 'build_id'
+            $workflow->create_link(
+                source => $alignment_operation,
+                source_property => 'build_id',
+                destination => $alignment_metrics_operation,
+                destination_property => 'build_id'
             );
-            $workflow->add_link(
-                left_operation => $alignment_metrics_operation,
-                left_property => 'result',
-                right_operation => $output_connector,
-                right_property => 'alignment_stats_result'
+            $workflow->connect_output(
+                source => $alignment_metrics_operation,
+                source_property => 'result',
+                output_property => 'alignment_stats_result'
             );
         }
 
-        my $bam_qc_operation = $workflow->add_operation(
+        my $bam_qc_operation = Genome::WorkflowBuilder::Command->create(
             name => 'RnaSeq BamQc',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::RnaSeq::Command::BamQc',
-            )
+            command => 'Genome::Model::RnaSeq::Command::BamQc',
         );
+        $workflow->add_operation($bam_qc_operation);
+        $bam_qc_operation->lsf_queue($lsf_queue);
+        $bam_qc_operation->lsf_project($lsf_project);
 
-        $bam_qc_operation->operation_type->lsf_queue($lsf_queue);
-        $bam_qc_operation->operation_type->lsf_project($lsf_project);
-        
-        $workflow->add_link(
-            left_operation => $alignment_operation,
-            left_property => 'build_id',
-            right_operation => $bam_qc_operation,
-            right_property => 'build_id'
+        $workflow->create_link(
+            source => $alignment_operation,
+            source_property => 'build_id',
+            destination => $bam_qc_operation,
+            destination_property => 'build_id'
         );
-        $workflow->add_link(
-            left_operation => $bam_qc_operation,
-            left_property => 'result',
-            right_operation => $output_connector,
-            right_property => 'bam_qc_result'
+        $workflow->connect_output(
+            source => $bam_qc_operation,
+            source_property => 'result',
+            output_property => 'bam_qc_result'
         );
         if ($run_splice_junction_summary) {
             my $splice_junction_operation = $workflow->add_operation(
                 name => 'RnaSeq Splice Junction Summary',
-                operation_type => Workflow::OperationType::Command->create(
-                    command_class_name => 'Genome::Model::RnaSeq::Command::SpliceJunctionSummary',
-                )
+                command => 'Genome::Model::RnaSeq::Command::SpliceJunctionSummary',
             );
-            $splice_junction_operation->operation_type->lsf_queue($lsf_queue);
-            $splice_junction_operation->operation_type->lsf_project($lsf_project);
-            
-            $workflow->add_link(
-                left_operation => $alignment_operation,
-                left_property => 'build_id',
-                right_operation => $splice_junction_operation,
-                right_property => 'build_id'
+            $workflow->add_operation($splice_junction_operation);
+            $splice_junction_operation->lsf_queue($lsf_queue);
+            $splice_junction_operation->lsf_project($lsf_project);
+
+            $workflow->create_link(
+                source => $alignment_operation,
+                source_property => 'build_id',
+                destination => $splice_junction_operation,
+                destination_property => 'build_id'
             );
-            $workflow->add_link(
-                left_operation => $splice_junction_operation,
-                left_property => 'result',
-                right_operation => $output_connector,
-                right_property => 'splice_junction_result'
+            $workflow->connect_output(
+                source => $splice_junction_operation,
+                source_property => 'result',
+                output_property => 'splice_junction_result'
             );
         }
     }
-    
-    # Picard
-    my $picard_operation = $workflow->add_operation(
-        name => 'RnaSeq Picard Metrics',
-        operation_type => Workflow::OperationType::Command->create(
-            command_class_name => 'Genome::Model::RnaSeq::Command::PicardRnaSeqMetrics',
-        )
-    );
-    $picard_operation->operation_type->lsf_queue($lsf_queue);
-    $picard_operation->operation_type->lsf_project($lsf_project);
 
-    $workflow->add_link(
-        left_operation => $alignment_operation,
-        left_property => 'build_id',
-        right_operation => $picard_operation,
-        right_property => 'build_id'
+    # Picard
+    my $picard_operation = Genome::WorkflowBuilder::Command->create(
+        name => 'RnaSeq Picard Metrics',
+        command => 'Genome::Model::RnaSeq::Command::PicardRnaSeqMetrics',
+    );
+    $workflow->add_operation($picard_operation);
+    $picard_operation->lsf_queue($lsf_queue);
+    $picard_operation->lsf_project($lsf_project);
+
+    $workflow->create_link(
+        source => $alignment_operation,
+        source_property => 'build_id',
+        destination => $picard_operation,
+        destination_property => 'build_id'
     );
 
     # RefCov
-    my $coverage_operation = $workflow->add_operation(
+    my $coverage_operation = Genome::WorkflowBuilder::Command->create(
         name => 'RnaSeq Coverage',
-        operation_type => Workflow::OperationType::Command->create(
-            command_class_name => 'Genome::Model::RnaSeq::Command::Coverage',
-        )
+        command => 'Genome::Model::RnaSeq::Command::Coverage',
     );
-    $coverage_operation->operation_type->lsf_queue($lsf_queue);
-    $coverage_operation->operation_type->lsf_project($lsf_project);
+    $workflow->add_operation($coverage_operation);
+    $coverage_operation->lsf_queue($lsf_queue);
+    $coverage_operation->lsf_project($lsf_project);
 
-    $workflow->add_link(
-        left_operation => $alignment_operation,
-        left_property => 'build_id',
-        right_operation => $coverage_operation,
-        right_property => 'build_id'
+    $workflow->create_link(
+        source => $alignment_operation,
+        source_property => 'build_id',
+        destination => $coverage_operation,
+        destination_property => 'build_id'
     );
 
     # Cufflinks
-    my $cufflinks_operation = $workflow->add_operation(
+    my $cufflinks_operation = Genome::WorkflowBuilder::Command->create(
         name => 'RnaSeq Cufflinks Expression',
-        operation_type => Workflow::OperationType::Command->create(
-            command_class_name => 'Genome::Model::RnaSeq::Command::Expression::Cufflinks',
-        )
+        command => 'Genome::Model::RnaSeq::Command::Expression::Cufflinks',
     );
-    $cufflinks_operation->operation_type->lsf_queue($lsf_queue);
-    $cufflinks_operation->operation_type->lsf_project($lsf_project);
+    $workflow->add_operation($cufflinks_operation);
+    $cufflinks_operation->lsf_queue($lsf_queue);
+    $cufflinks_operation->lsf_project($lsf_project);
 
-    $workflow->add_link(
-        left_operation => $alignment_operation,
-        left_property => 'build_id',
-        right_operation => $cufflinks_operation,
-        right_property => 'build_id'
+    $workflow->create_link(
+        source => $alignment_operation,
+        source_property => 'build_id',
+        destination => $cufflinks_operation,
+        destination_property => 'build_id'
     );
-    $workflow->add_link(
-        left_operation => $input_connector,
-        left_property => 'annotation_reference_transcripts_mode',
-        right_operation => $cufflinks_operation,
-        right_property => 'annotation_reference_transcripts_mode'
+    $workflow->connect_input(
+        input_property => 'annotation_reference_transcripts_mode',
+        destination => $cufflinks_operation,
+        destination_property => 'annotation_reference_transcripts_mode'
     );
 
     $cufflinks_operation->parallel_by('annotation_reference_transcripts_mode');
@@ -536,89 +492,81 @@ sub _resolve_workflow_for_build {
     if($self->fusion_detector){
         my $operation_name = sprintf("RnaSeq Fusion Detection (%s %s)",
             $self->fusion_detector, $self->fusion_detector_version);
-        my $fusion_detection_operation = $workflow->add_operation(
+        my $fusion_detection_operation = Genome::WorkflowBuilder::Command->create(
             name => $operation_name,
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::RnaSeq::Command::DetectFusions',
-            )
+            command => 'Genome::Model::RnaSeq::Command::DetectFusions',
+        );
+        $workflow->add_operation($fusion_detection_operation);
+        $fusion_detection_operation->lsf_queue($lsf_queue);
+        $fusion_detection_operation->lsf_project($lsf_project);
+
+        $workflow->create_link(
+            source => $alignment_operation,
+            source_property => 'build_id',
+            destination => $fusion_detection_operation,
+            destination_property => 'build_id'
         );
 
-        $fusion_detection_operation->operation_type->lsf_queue($lsf_queue);
-        $fusion_detection_operation->operation_type->lsf_project($lsf_project);
-
-        $workflow->add_link(
-            left_operation => $alignment_operation,
-            left_property => 'build_id',
-            right_operation => $fusion_detection_operation,
-            right_property => 'build_id'
-        );
-
-        $self->connect_fusion_detector_to_input_connector($workflow,
-            $input_connector, $fusion_detection_operation);
+        $self->connect_fusion_detector_to_input_connector($workflow, $fusion_detection_operation);
 
         #output connector
-        $workflow->add_link(
-            left_operation => $fusion_detection_operation,
-            left_property => 'result',
-            right_operation => $output_connector,
-            right_property => 'fusion_result'
+        $workflow->connect_output(
+            source => $fusion_detection_operation,
+            source_property => 'result',
+            destination_property => 'fusion_result'
         );
 
         ###Post Fusion Detection Annotation
         if($self->cancer_annotation_db){
-            my $annotation_operation = $workflow->add_operation(
+            my $annotation_operation = Genome::WorkflowBuilder::Command->create(
                 name => 'RnaSeq Fusion Detection Annotation',
-                operation_type => Workflow::OperationType::Command->create(
-                    command_class_name => 'Genome::Model::RnaSeq::Command::AnnotateChimerascan',
-                )
+                command => 'Genome::Model::RnaSeq::Command::AnnotateChimerascan',
+            );
+            $workflow->add_operation($annotation_operation);
+            $annotation_operation->lsf_queue($lsf_queue);
+            $annotation_operation->lsf_project($lsf_project);
+
+            $workflow->create_link(
+                source => $fusion_detection_operation,
+                source_property => 'build_id',
+                destination => $annotation_operation,
+                destination_property => 'build_id',
             );
 
-            $annotation_operation->operation_type->lsf_queue($lsf_queue);
-            $annotation_operation->operation_type->lsf_project($lsf_project);
-
-            $workflow->add_link(
-                left_operation => $fusion_detection_operation,
-                left_property => 'build_id',
-                right_operation => $annotation_operation,
-                right_property => 'build_id',
-            );
-
-            $workflow->add_link(
-                left_operation => $input_connector,
-                left_property => 'cancer_annotation_db',
-                right_operation => $annotation_operation,
-                right_property => 'cancer_annotation_db_id',
+            $workflow->connect_input(
+                input_property => 'cancer_annotation_db',
+                destination => $annotation_operation,
+                destination_property => 'cancer_annotation_db_id',
             );
 
 
-            $workflow->add_link(
-                left_operation => $annotation_operation,
-                left_property => 'annotated_bedpe_file',
-                right_operation => $output_connector,
-                right_property => 'annotated_bedpe_file',
+            $workflow->connect_output(
+                source => $annotation_operation,
+                source_property => 'annotated_bedpe_file',
+                output_property => 'annotated_bedpe_file',
             );
         }
     }
 
     # Define output connector results from coverage and expression
-    $workflow->add_link(
-        left_operation => $picard_operation,
-        left_property => 'result',
-        right_operation => $output_connector,
-        right_property => 'metrics_result'
+    $workflow->connect_output(
+        source => $picard_operation,
+        source_property => 'result',
+        output_property => 'metrics_result'
     );
-    $workflow->add_link(
-        left_operation => $coverage_operation,
-        left_property => 'result',
-        right_operation => $output_connector,
-        right_property => 'coverage_result'
+    $workflow->connect_output(
+        source => $coverage_operation,
+        source_property => 'result',
+        output_property => 'coverage_result'
     );
-    $workflow->add_link(
-        left_operation => $cufflinks_operation,
-        left_property => 'result',
-        right_operation => $output_connector,
-        right_property => 'expression_result'
+    $workflow->connect_output(
+        source => $cufflinks_operation,
+        source_property => 'result',
+        output_property => 'expression_result'
     );
+
+    my $log_directory = $build->log_directory;
+    $workflow->recursively_set_log_dir($log_directory);
 
     return $workflow;
 }
@@ -626,29 +574,22 @@ sub _resolve_workflow_for_build {
 sub connect_fusion_detector_to_input_connector {
     my $self = shift;
     my $workflow = shift;
-    my $input_connector = shift;
     my $fusion_detection_operation = shift;
 
-    $workflow->add_link(
-        left_operation => $input_connector,
-        left_property => 'fusion_detector',
-        right_operation => $fusion_detection_operation,
-        right_property => 'detector_name',
+    my %input_properties = (
+        'fusion_detector'           => 'detector_name',
+        'fusion_detector_version'   => 'detector_version',
+        'fusion_detector_params'    => 'detector_params',
     );
 
-    $workflow->add_link(
-        left_operation => $input_connector,
-        left_property => 'fusion_detector_version',
-        right_operation => $fusion_detection_operation,
-        right_property => 'detector_version',
-    );
+    while (my ($input, $destination) = each %input_properties) {
+        $workflow->connect_input(
+            input_property => $input,
+            destination => $fusion_detection_operation,
+            destination_property => $destination,
+        );
+    }
 
-    $workflow->add_link(
-        left_operation => $input_connector,
-        left_property => 'fusion_detector_params',
-        right_operation => $fusion_detection_operation,
-        right_property => 'detector_params',
-    );
     return;
 }
 
@@ -805,7 +746,7 @@ Illumina RNA-seq library.  Reads were initially aligned to the $species
 reference genome using Eland and stored as a BAM file.  These alignments
 were used for basic quality assessment purposes only and no read filtering
 was performed.  Mapping statistics for the BAM file were generated
-using Samtools flagstat (v. $lims_samtools_version) (REF). 
+using Samtools flagstat (v. $lims_samtools_version) (REF).
 The BAM file was converted to FastQ using Picard (v.$picard_version) (REF)
 and all reads were re-aligned to the $alignment_ref
 using $aligner_name (v $aligner_version) (REF).  $aligner_name was run in default mode with
@@ -814,11 +755,11 @@ were estimated prior to run time using the Eland alignments described
 above (elaborate) and specified at run time.  The '-G' option was used
 to specify a GTF file for $aligner_name to generate an exon-exon junction
 database to assist in the mapping of known junctions.  The transcripts
-for this GTF were obtained from $annotation_source.  The 
+for this GTF were obtained from $annotation_source.  The
 resulting $aligner_name BAM file was indexed by $bam_index_tool
-and sorted by chromosome mapping position using $bam_sort_tool. 
+and sorted by chromosome mapping position using $bam_sort_tool.
 Transcript expression values were estimated by Cufflinks (v$cufflinks_version)
-(REF) using default parameters with the following exceptions.  The Cufflinks 
+(REF) using default parameters with the following exceptions.  The Cufflinks
 parameter '-G' was specified to force cufflinks to estimate expression
 for known transcripts provided by the same GTF file that was supplied
 to $aligner_name described above.  A second GTF containing only the
@@ -828,7 +769,7 @@ overall robustness of transcript abundance estimates.  The variant
 and corresponding gene expression status in the transcriptome were
 determined for SNV positions identified as somatic in the WGS
 tumor/normal data.  FPKM values were summarized to the gene level by
-adding Cufflinks FPKMs from alternative transcripts of each Ensembl gene. 
+adding Cufflinks FPKMs from alternative transcripts of each Ensembl gene.
 The variant allele frequencies were determined by counting reads
 supporting reference and variant base counts using the Perl module
 "Bio::DB::Sam".

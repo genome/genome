@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<operation name="135296493" logDir="/gscmnt/gc8001/info/model_data/2891321785/build135296493/logs/">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>annotation_reference_transcripts_mode</inputproperty>
+    <inputproperty>build_id</inputproperty>
+    <inputproperty>digital_expression_app_version</inputproperty>
+    <inputproperty>digital_expression_blacklist_alignments_flags</inputproperty>
+    <inputproperty>digital_expression_label</inputproperty>
+    <inputproperty>digital_expression_minaqual</inputproperty>
+    <inputproperty>digital_expression_mode</inputproperty>
+    <inputproperty>digital_expression_output_dir</inputproperty>
+    <inputproperty>digital_expression_requestor</inputproperty>
+    <inputproperty>digital_expression_result_version</inputproperty>
+    <inputproperty>digital_expression_sponsor</inputproperty>
+    <inputproperty>digital_expression_user</inputproperty>
+    <outputproperty>alignment_stats_result</outputproperty>
+    <outputproperty>bam_qc_result</outputproperty>
+    <outputproperty>coverage_result</outputproperty>
+    <outputproperty>digital_expression_detection_result</outputproperty>
+    <outputproperty>expression_result</outputproperty>
+    <outputproperty>metrics_result</outputproperty>
+  </operationtype>
+  <operation name="RnaSeq Alignment">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" commandClass="Genome::Model::RnaSeq::Command::AlignReads" lsfProject="build135296493">
+      <inputproperty>build_id</inputproperty>
+      <outputproperty>build_id</outputproperty>
+      <outputproperty>individual_alignment_results</outputproperty>
+      <outputproperty>merged_alignment_result_id</outputproperty>
+      <outputproperty>merged_bam_path</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="RnaSeq Alignment Metrics">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=8000] rusage[mem=8000]' -M 8000000" commandClass="Genome::Model::RnaSeq::Command::Tophat2AlignmentStats" lsfProject="build135296493">
+      <inputproperty>build_id</inputproperty>
+      <outputproperty>build_id</outputproperty>
+      <outputproperty>result</outputproperty>
+      <outputproperty>tophat2_alignment_stats_result_id</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="RnaSeq BamQc">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" commandClass="Genome::Model::RnaSeq::Command::BamQc" lsfProject="build135296493">
+      <inputproperty>build_id</inputproperty>
+      <outputproperty>bam_qc_result_id</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="RnaSeq Coverage">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=32000] rusage[mem=32000]' -M 32000000" commandClass="Genome::Model::RnaSeq::Command::Coverage" lsfProject="build135296493">
+      <inputproperty>build_id</inputproperty>
+      <outputproperty>build_id</outputproperty>
+      <outputproperty>result</outputproperty>
+      <outputproperty>transcriptome_coverage_result_id</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="RnaSeq Cufflinks Expression" parallelBy="annotation_reference_transcripts_mode">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4" commandClass="Genome::Model::RnaSeq::Command::Expression::Cufflinks" lsfProject="build135296493">
+      <inputproperty>build_id</inputproperty>
+      <outputproperty>build_id</outputproperty>
+      <outputproperty>cufflinks_expression_result_id</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="RnaSeq Digital Expression Detection">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" commandClass="Genome::Model::Tools::Htseq::Count" lsfProject="build135296493">
+      <inputproperty>alignment_results</inputproperty>
+      <outputproperty>output_result</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="RnaSeq Picard Metrics">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=8000] rusage[mem=8000]' -M 8000000" commandClass="Genome::Model::RnaSeq::Command::PicardRnaSeqMetrics" lsfProject="build135296493">
+      <inputproperty>build_id</inputproperty>
+      <outputproperty>build_id</outputproperty>
+      <outputproperty>picard_rna_seq_metrics_result_id</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="RnaSeq Alignment Metrics" fromProperty="result" toOperation="output connector" toProperty="alignment_stats_result"/>
+  <link fromOperation="RnaSeq Alignment" fromProperty="build_id" toOperation="RnaSeq Alignment Metrics" toProperty="build_id"/>
+  <link fromOperation="RnaSeq Alignment" fromProperty="build_id" toOperation="RnaSeq BamQc" toProperty="build_id"/>
+  <link fromOperation="RnaSeq Alignment" fromProperty="build_id" toOperation="RnaSeq Coverage" toProperty="build_id"/>
+  <link fromOperation="RnaSeq Alignment" fromProperty="build_id" toOperation="RnaSeq Cufflinks Expression" toProperty="build_id"/>
+  <link fromOperation="RnaSeq Alignment" fromProperty="individual_alignment_results" toOperation="RnaSeq Digital Expression Detection" toProperty="alignment_results"/>
+  <link fromOperation="RnaSeq Alignment" fromProperty="build_id" toOperation="RnaSeq Picard Metrics" toProperty="build_id"/>
+  <link fromOperation="RnaSeq BamQc" fromProperty="result" toOperation="output connector" toProperty="bam_qc_result"/>
+  <link fromOperation="RnaSeq Coverage" fromProperty="result" toOperation="output connector" toProperty="coverage_result"/>
+  <link fromOperation="RnaSeq Cufflinks Expression" fromProperty="result" toOperation="output connector" toProperty="expression_result"/>
+  <link fromOperation="RnaSeq Digital Expression Detection" fromProperty="output_result" toOperation="output connector" toProperty="digital_expression_detection_result"/>
+  <link fromOperation="RnaSeq Picard Metrics" fromProperty="result" toOperation="output connector" toProperty="metrics_result"/>
+  <link fromOperation="input connector" fromProperty="build_id" toOperation="RnaSeq Alignment" toProperty="build_id"/>
+  <link fromOperation="input connector" fromProperty="annotation_reference_transcripts_mode" toOperation="RnaSeq Cufflinks Expression" toProperty="annotation_reference_transcripts_mode"/>
+  <link fromOperation="input connector" fromProperty="digital_expression_app_version" toOperation="RnaSeq Digital Expression Detection" toProperty="app_version"/>
+  <link fromOperation="input connector" fromProperty="digital_expression_blacklist_alignments_flags" toOperation="RnaSeq Digital Expression Detection" toProperty="blacklist_alignments_flags"/>
+  <link fromOperation="input connector" fromProperty="digital_expression_label" toOperation="RnaSeq Digital Expression Detection" toProperty="label"/>
+  <link fromOperation="input connector" fromProperty="digital_expression_minaqual" toOperation="RnaSeq Digital Expression Detection" toProperty="minaqual"/>
+  <link fromOperation="input connector" fromProperty="digital_expression_mode" toOperation="RnaSeq Digital Expression Detection" toProperty="mode"/>
+  <link fromOperation="input connector" fromProperty="digital_expression_output_dir" toOperation="RnaSeq Digital Expression Detection" toProperty="output_dir"/>
+  <link fromOperation="input connector" fromProperty="digital_expression_requestor" toOperation="RnaSeq Digital Expression Detection" toProperty="requestor"/>
+  <link fromOperation="input connector" fromProperty="digital_expression_result_version" toOperation="RnaSeq Digital Expression Detection" toProperty="result_version"/>
+  <link fromOperation="input connector" fromProperty="digital_expression_sponsor" toOperation="RnaSeq Digital Expression Detection" toProperty="sponsor"/>
+  <link fromOperation="input connector" fromProperty="digital_expression_user" toOperation="RnaSeq Digital Expression Detection" toProperty="user"/>
+</operation>
