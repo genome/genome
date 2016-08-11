@@ -12,6 +12,7 @@ use Genome::Utility::Inputs qw(encode decode);
 use Data::Dump qw(pp);
 use File::Spec;
 use Graph::Directed qw();
+use Try::Tiny qw(try catch);
 
 
 class Genome::WorkflowBuilder::DAG {
@@ -72,18 +73,10 @@ sub recursively_set_log_dir {
 sub parent_log_dir {
     my $class = shift;
 
-    my $backend = Genome::Config::get('workflow_builder_backend');
-    if ($backend eq 'ptero' || $backend eq 'inline') {
-        use Try::Tiny qw(try catch);
-        try {
-            return Genome::Config::get('parent_workflow_log_directory');
-        } catch {
-            return;
-        }
-    } elsif ($backend eq 'workflow') {
-        return Workflow::Model->parent_workflow_log_dir();
-    } else {
-        die sprintf("Unknown backend specified: %s", $backend);
+    try {
+        return Genome::Config::get('parent_workflow_log_directory');
+    } catch {
+        return;
     }
 }
 
@@ -130,9 +123,6 @@ sub execute {
     if ($backend eq 'ptero') {
         return $self->_execute_with_ptero($inputs, $p{polling_interval});
 
-    } elsif ($backend eq 'workflow') {
-        return $self->_execute_with_workflow($inputs);
-
     } elsif ($backend eq 'inline') {
         return $self->execute_inline($inputs);
 
@@ -168,24 +158,6 @@ sub submit {
         die sprintf("Only the ptero backend is supported " .
             "for 'submit' not: %s", $backend);
     }
-}
-
-sub _execute_with_workflow {
-    require Workflow::Simple;
-
-    my ($self, $inputs) = @_;
-
-    my $xml = $self->get_xml;
-
-    Genome::Sys->disconnect_default_handles;
-
-    my $result = Workflow::Simple::run_workflow_lsf($xml, %$inputs);
-    unless (defined($result)) {
-        die sprintf("Workflow failed with these errors: %s",
-            Data::Dumper::Dumper(map {$_->error} @Workflow::Simple::ERROR)
-        );
-    }
-    return $result;
 }
 
 sub _execute_with_ptero {
