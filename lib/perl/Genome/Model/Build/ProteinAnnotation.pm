@@ -30,4 +30,8 @@ sub dirs_ignored_by_diff {
     );
 }
 
+sub create {
+    die(__PACKAGE__ . ' is deprecated.');
+}
+
 1;
