@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow;
 use IO::File;
 
 class Genome::Model::Tools::Tcga::MergePerLaneSamFilesWorker {

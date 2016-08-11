@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow;
 
 my $DEFAULT_TRV_TYPE = 'missense';
 

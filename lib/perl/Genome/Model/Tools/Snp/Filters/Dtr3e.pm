@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 use Command;
 use IO::File;
-use Workflow;
 
 class Genome::Model::Tools::Snp::Filters::Dtr3e {
     is => 'Command',

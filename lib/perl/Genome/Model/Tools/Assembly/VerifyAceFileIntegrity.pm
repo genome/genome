@@ -3,7 +3,6 @@ package Genome::Model::Tools::Assembly::VerifyAceFileIntegrity;
 use strict;
 use warnings;
 
-use Workflow;
 use Genome;
 use File::Basename;
 use IO::String;
