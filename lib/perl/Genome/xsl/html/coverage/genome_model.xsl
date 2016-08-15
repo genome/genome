@@ -350,20 +350,20 @@
                     </script>
 
                     <span>Algorithm:</span>
-                    <input name="algorithm_select" value="original" id="original" type="radio" onchange="swap_alignment_algorithm()" checked="checked"/>
+                    <input name="algorithm_select" value="original" id="original" type="radio" onchange="swap_alignment_algorithm()"/>
                         <label for="original">original</label>
-                    <input name="algorithm_select" value="new" id="new" type="radio" onchange="swap_alignment_algorithm()"/>
+                    <input name="algorithm_select" value="new" id="new" type="radio" onchange="swap_alignment_algorithm()" checked="checked"/>
                         <label for="new">new</label>
                 </div>
             </div>
           </div>
           <div class="box_content rounded-bottom span-8 last">
-            <div class="algorithm-swap" style="background: #FFF;padding: 10px;margin-bottom: 10px;border-bottom: 1px solid #C1C1B7;">
+            <div class="algorithm-swap" style="background: #FFF;padding: 10px;margin-bottom: 10px;border-bottom: 1px solid #C1C1B7; display: none">
               <script type="text/javascript">
                 render_alignment_chart(window.aSummary);
               </script>
             </div>
-            <div class="algorithm-swap" style="background: #FFF;padding: 10px;margin-bottom: 10px;border-bottom: 1px solid #C1C1B7; display: none;">
+            <div class="algorithm-swap" style="background: #FFF;padding: 10px;margin-bottom: 10px;border-bottom: 1px solid #C1C1B7;">
                 <script type="text/javascript">
                   render_alignment_chart(window.aSummaryV2);
                 </script>
@@ -376,12 +376,12 @@
             <div class="box_title"><h3 class="nontyped">enrichment</h3></div>
           </div>
           <div class="box_content rounded-bottom span-5 last">
-            <div class="algorithm-swap" style="background: #FFF;padding: 10px;margin-bottom: 10px;border-bottom: 1px solid #C1C1B7;">
+            <div class="algorithm-swap" style="background: #FFF;padding: 10px;margin-bottom: 10px;border-bottom: 1px solid #C1C1B7; display:none">
               <script type="text/javascript">
                 render_enrichment_chart(window.Enrichment);
               </script>
             </div>
-            <div class="algorithm-swap" style="background: #FFF;padding: 10px;margin-bottom: 10px;border-bottom: 1px solid #C1C1B7;display: none">
+            <div class="algorithm-swap" style="background: #FFF;padding: 10px;margin-bottom: 10px;border-bottom: 1px solid #C1C1B7;">
               <script type="text/javascript">
                 render_enrichment_chart(window.EnrichmentV2);
               </script>
@@ -405,7 +405,7 @@
                 <th class="right">unaligned</th>
               </tr>
             </thead>
-            <tbody class="algorithm-swap">
+            <tbody class="algorithm-swap" style="display: none;">
               <xsl:for-each select="alignment-summary/model/wingspan[@size='0']">
                 <xsl:sort select="../@model_name" order="ascending"/>
                 <xsl:sort select="../@lane_count" order="ascending"/>
@@ -441,7 +441,7 @@
                 </tr>
               </xsl:for-each>
             </tbody>
-            <tbody class="algorithm-swap" style="display: none;">
+            <tbody class="algorithm-swap">
               <xsl:for-each select="alignment-summary-v2/model/wingspan[@size='0']">
                 <xsl:sort select="../@model_name" order="ascending"/>
                 <xsl:sort select="../@lane_count" order="ascending"/>

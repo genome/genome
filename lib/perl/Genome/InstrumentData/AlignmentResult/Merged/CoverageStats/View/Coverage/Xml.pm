@@ -73,7 +73,7 @@ sub get_alignment_summary_node {
 
     my $coverage_result = $self->coverage_result;
 
-    my $alignment_summary_hash_ref = $coverage_result->alignment_summary_hash_ref;
+    my $alignment_summary_hash_ref = $coverage_result->alignment_summary_v2_hash_ref;
     my $alignment_summary_node = $xml_doc->createElement('alignment-summary');
     for my $wingspan (keys %{$alignment_summary_hash_ref}) {
         my $wingspan_node = $alignment_summary_node->addChild( $xml_doc->createElement('wingspan') );
