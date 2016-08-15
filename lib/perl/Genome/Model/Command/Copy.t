@@ -80,7 +80,7 @@ is($rv_deprecated, 0, 'command line');
 # Test Model
 
 my $taxon = Genome::Taxon->create(name => '__TEST_SAMPLE_1__');
-my $model = Genome::Model->get(2887424886); # apipe-test-protein-annotation
+my $model = Genome::Model->get('8a175224cae14b80ab36d749216efb2b'); # apipe-test-clinseq-wer
 ok($model, 'model');
 my $copy = Genome::Model::Command::Copy->create( # use 37 instead of 36
     model => $model,
@@ -96,7 +96,7 @@ my $new_model = Genome::Model->get(name => '__COPY_TEST1__');
 ok($new_model, 'copied model');
 is_deeply($new_model->subject, $taxon, 'override subject');
 
-my $rv = system(qq(genome model copy 2887424886 name=__COPY_TEST2__ subject=name='human'));
+my $rv = system(qq(genome model copy 8a175224cae14b80ab36d749216efb2b name=__COPY_TEST2__ subject=name='human'));
 is($rv, 0, 'command line');
 
 done_testing();
