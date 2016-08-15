@@ -10,7 +10,6 @@ use warnings;
 use strict;
 use Math::Round;
 use Genome;
-use Workflow;
 use FileHandle;
 use IO::File;
 use Genome::Info::IUB;

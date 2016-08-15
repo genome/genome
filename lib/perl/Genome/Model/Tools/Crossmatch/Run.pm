@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow;
 use File::Basename;
 
 class Genome::Model::Tools::Crossmatch::Run {

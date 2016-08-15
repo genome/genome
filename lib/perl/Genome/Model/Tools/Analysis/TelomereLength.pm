@@ -4,7 +4,6 @@ package Genome::Model::Tools::Analysis::TelomereLength;
 use warnings;
 use strict;
 use Genome;
-use Workflow;
 use FileHandle;
 use IO::File;
 use Math::Round;

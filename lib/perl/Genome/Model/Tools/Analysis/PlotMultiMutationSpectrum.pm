@@ -16,7 +16,6 @@ use warnings;
 use strict;
 
 use Genome;
-use Workflow;
 use Carp;
 use FileHandle;
 use Data::Dumper;

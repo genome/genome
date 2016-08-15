@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow;
 # added mim depth on Oct 26
 # changed path of ClusterCoverage from GMT biosamtools to GMT RefCov
 

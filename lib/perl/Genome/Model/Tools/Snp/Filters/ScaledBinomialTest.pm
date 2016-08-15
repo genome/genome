@@ -7,7 +7,6 @@ use Genome;
 use Command;
 use IO::File;
 use Statistics::R;
-use Workflow;
 
 class Genome::Model::Tools::Snp::Filters::ScaledBinomialTest
 {

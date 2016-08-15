@@ -6,7 +6,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Workflow;
 
 use Bio::Seq;
 use Bio::SeqIO;
