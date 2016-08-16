@@ -513,7 +513,7 @@ sub _resolve_workflow_for_build {
         $workflow->connect_output(
             source => $fusion_detection_operation,
             source_property => 'result',
-            destination_property => 'fusion_result'
+            output_property => 'fusion_result'
         );
 
         ###Post Fusion Detection Annotation
