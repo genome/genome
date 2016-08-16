@@ -32,11 +32,13 @@ class Genome::Config::AnalysisProject::SubjectMapping::Command::Predict::Somatic
             default => 'name',
             valid_values => ['name','id'],
         },
-        _existing_subject_mapping_set => {
+    ],
+    has_transient_optional => [
+        existing_subject_mapping_set => {
             is => 'Set::Scalar',
             doc => 'The set of existing subject mappings.',
         },
-        _new_subject_mapping_set => {
+        new_subject_mapping_set => {
             is => 'Set::Scalar',
             doc => 'The set of new subject mappings.',
         },
@@ -151,44 +153,43 @@ sub execute {
 sub existing_subject_mapping_set {
     my $self = shift;
 
-    if ($self->_existing_subject_mapping_set) { return $self->_existing_subject_mapping_set; }
+    unless (defined($self->__existing_subject_mapping_set)) {
 
-    my $id_method = $self->sample_identifier;
-    my @subject_mappings;
-    for my $subject_mapping ($self->analysis_project->subject_mappings) {
-
-        my %data;
-        for my $subject_bridge ($subject_mapping->subject_bridges) {
-            $data{$subject_bridge->label} = $subject_bridge->subject->$id_method;
-        }
-
-        for my $input ($subject_mapping->inputs) {
-            $data{$input->key} = $input->value;
-        }
-
-        for my $tag ($subject_mapping->tags) {
-            if (defined($data{tag})) {
-                $self->fatal_message('Unable to handle multiple subject mapping tags!');
+        my $id_method = $self->sample_identifier;
+        my @subject_mappings;
+        for my $subject_mapping ($self->analysis_project->subject_mappings) {
+            my %data;
+            for my $subject_bridge ($subject_mapping->subject_bridges) {
+                $data{$subject_bridge->label} = $subject_bridge->subject->$id_method;
             }
-            $data{tag} = $tag;
+
+            for my $input ($subject_mapping->inputs) {
+                $data{$input->key} = $input->value;
+            }
+
+            for my $tag ($subject_mapping->tags) {
+                if (defined($data{tag})) {
+                    $self->fatal_message('Unable to handle multiple subject mapping tags!');
+                }
+                $data{tag} = $tag;
+            }
+            push @subject_mappings, \%data;
         }
-        push @subject_mappings, \%data;
+
+        my $subject_mapping_set = Set::Scalar->new(@subject_mappings);
+        $self->status_message('Found '. $subject_mapping_set->size .' existing subject mappings.');
+        $self->__existing_subject_mapping_set($subject_mapping_set);
     }
-
-    my $subject_mapping_set = Set::Scalar->new(@subject_mappings);
-    $self->_existing_subject_mapping_set($subject_mapping_set);
-
-    $self->status_message('Found '. $self->existing_subject_mapping_set->size .' existing subject mappings.');
-
-    return $self->_existing_subject_mapping_set;
+    return $self->__existing_subject_mapping_set;
 }
 
 sub new_subject_mapping_set {
     my $self = shift;
-    if ($self->_new_subject_mapping_set) { return $self->_new_subject_mapping_set; }
-    my $new_subject_mapping_set = Set::Scalar->new();
-    $self->_new_subject_mapping_set($new_subject_mapping_set);
-    return $self->_new_subject_mapping_set;
+    unless (defined($self->__new_subject_mapping_set)) {
+        my $new_subject_mapping_set = Set::Scalar->new();
+        $self->__new_subject_mapping_set($new_subject_mapping_set);
+    }
+    return $self->__new_subject_mapping_set;
 }
 
 sub add_subject_mapping {
