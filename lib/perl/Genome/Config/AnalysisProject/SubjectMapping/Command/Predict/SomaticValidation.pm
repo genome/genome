@@ -211,7 +211,7 @@ sub add_subject_mapping {
 sub resolve_samples_by_individual_id {
     my $self = shift;
 
-    my @all_dna_samples = grep {$_->sample_type =~ /dna/i} $self->analysis_project->samples;
+    my @all_dna_samples = grep {$_->sample_type =~ /dna/i && !($_->is_rna) } $self->analysis_project->samples;
     my @dna_samples = List::MoreUtils::uniq(@all_dna_samples);
     $self->status_message('Found '. scalar(@dna_samples) .' DNA samples');
 
