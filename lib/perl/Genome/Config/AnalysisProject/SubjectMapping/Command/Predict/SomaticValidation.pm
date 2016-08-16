@@ -32,6 +32,14 @@ class Genome::Config::AnalysisProject::SubjectMapping::Command::Predict::Somatic
             default => 'name',
             valid_values => ['name','id'],
         },
+        _existing_subject_mapping_set => {
+            is => 'Set::Scalar',
+            doc => 'The set of existing subject mappings.',
+        },
+        _new_subject_mapping_set => {
+            is => 'Set::Scalar',
+            doc => 'The set of new subject mappings.',
+        },
     ],
 };
 
@@ -70,83 +78,81 @@ sub execute {
 
     my $id_method = $self->sample_identifier;
 
-    my @all_dna_samples = grep {$_->sample_type =~ /dna/i} $analysis_project->samples;
-    my @dna_samples = List::MoreUtils::uniq(@all_dna_samples);
-    $self->status_message('Found '. scalar(@dna_samples) .' DNA samples');
-
-    my %dna_samples_by_individual_id;
-    for my $dna_sample (@dna_samples) {
-        push @{$dna_samples_by_individual_id{$dna_sample->individual->id}}, $dna_sample;
-    }
-    my @individual_ids = sort keys %dna_samples_by_individual_id;
+    my $samples_by_individual_id = $self->resolve_samples_by_individual_id;
+    my @individual_ids = sort keys %{$samples_by_individual_id};
     $self->status_message('Found '. scalar(@individual_ids) .' individuals');
 
-    my @subject_mappings;
     for my $individual_id (@individual_ids) {
         my $individual = Genome::Individual->get($individual_id);
-        my @individual_dna_samples = @{$dna_samples_by_individual_id{$individual_id}};
-        my $individual_dna_sample_count = scalar(@individual_dna_samples);
-        $self->status_message('Found '. $individual_dna_sample_count .' samples for individual '. $individual->__display_name__);
 
-        if ( $individual_dna_sample_count > 2) {
-            $self->warning_message('This command currently does not support more than 2 DNA samples per individual.  Found '. $individual_dna_sample_count .' samples for individual: '. $individual->__display_name__);
-            next;
-        }
+        my @samples = @{$samples_by_individual_id->{$individual_id}};
+
+        my $sample_set = Set::Scalar->new(@samples);
+        $self->status_message('Found '. $sample_set->size .' samples for individual '. $individual->__display_name__);
 
         my @normal_samples;
         my @tumor_samples;
 
-        for my $individual_dna_sample (@individual_dna_samples) {
-            my $dna_sample_common_name = $individual_dna_sample->common_name || "NULL";
-            push(@normal_samples, $individual_dna_sample) if ($dna_sample_common_name =~ /$normal_sample_common_names/i);
-            push(@tumor_samples,  $individual_dna_sample) if ($dna_sample_common_name =~ /$tumor_sample_common_names/i);
+        for my $sample ($sample_set->members) {
+            my $sample_common_name = $sample->common_name || 'NULL';
+            push(@normal_samples, $sample) if ($sample_common_name =~ /$normal_sample_common_names/i);
+            push(@tumor_samples,  $sample) if ($sample_common_name =~ /$tumor_sample_common_names/i);
         }
 
-        my $normal_sample_count = scalar(@normal_samples);
-        my $tumor_sample_count = scalar(@tumor_samples);
-        my $labeled_sample_count = $normal_sample_count + $tumor_sample_count;
+        my $normal_sample_set = Set::Scalar->new(@normal_samples);
+        my $tumor_sample_set = Set::Scalar->new(@tumor_samples);
 
-        if ($normal_sample_count > 1) {
-            $self->fatal_message('More than one normal DNA sample was specified for this individual: '. $individual->__display_name__);
+        if ($normal_sample_set->size > 1) {
+            $self->fatal_message('The following samples for individual '. $individual->__display_name__ .' are ALL found to be normal: '. join(',', map {$_->$id_method} $normal_sample_set->members));
         }
-        if ($tumor_sample_count > 1) {
-            $self->fatal_message('More than one tumor DNA sample was specified for this individual: '. $individual->__display_name__);
-        }
-        if ($labeled_sample_count ne $individual_dna_sample_count) {
-            $self->fatal_message('Failed to find a tumor/normal label for all DNA samples of individual: '. $individual->__display_name__);
+        
+        my $unique_sample_set = $sample_set->unique($normal_sample_set,$tumor_sample_set);
+        if ($unique_sample_set) {
+            $self->fatal_message('The following samples for individual: '. $individual->__display_name__ .' do not match either tumor or normal criteria: '. join(',', map{$_->$id_method} $unique_sample_set->members));
         }
 
-        my %data;
-        if (@normal_samples && @tumor_samples) {
-            %data = (
-                tumor_sample => $tumor_samples[0]->$id_method,
-                normal_sample => $normal_samples[0]->$id_method,
-                snv_variant_list_id => '',
-                indel_variant_list_id => '',
-                sv_variant_list_id => '',
-                tag => 'somatic',
-            );
-        } elsif (@normal_samples) {
-            %data = (
-                tumor_sample => $normal_samples[0]->$id_method,
+        my $intersection_sample_set = $normal_sample_set->intersection($tumor_sample_set);
+        if ($intersection_sample_set) {
+            $self->fatal_message('The following samples for individual '. $individual->__display_name__ .' meet both tumor and normal match criteria: '. join(',', map {$_->$id_method} $intersection_sample_set->members));
+        }
+
+        if ($normal_sample_set && $tumor_sample_set) {
+            my ($normal_sample) = $normal_sample_set->members();
+            for my $tumor_sample ($tumor_sample_set->members) {
+                my %data = (
+                    tumor_sample => $tumor_sample->$id_method,
+                    normal_sample => $normal_sample->$id_method,
+                    snv_variant_list_id => '',
+                    indel_variant_list_id => '',
+                    sv_variant_list_id => '',
+                    tag => 'somatic',
+                );
+                $self->add_subject_mapping(\%data);
+            }
+        } elsif ($normal_sample_set) {
+            my ($normal_sample) = $normal_sample_set->members();
+            my %data = (
+                tumor_sample => $normal_sample->$id_method,
                 normal_sample => '',
                 snv_variant_list_id => '',
                 indel_variant_list_id => '',
                 sv_variant_list_id => '',
                 tag => 'germline',
             );
-        } elsif (@tumor_samples) {
-            %data = (
-                tumor_sample => $tumor_samples[0]->$id_method,
-                normal_sample => '',
-                snv_variant_list_id => '',
-                indel_variant_list_id => '',
-                sv_variant_list_id => '',
-                tag => 'tumor-only',
-            );
+            $self->add_subject_mapping(\%data);
+        } elsif ($tumor_sample_set) {
+            for my $tumor_sample ($tumor_sample_set->members) {
+                my %data = (
+                    tumor_sample => $tumor_sample->$id_method,
+                    normal_sample => '',
+                    snv_variant_list_id => '',
+                    indel_variant_list_id => '',
+                    sv_variant_list_id => '',
+                    tag => 'tumor-only',
+                );
+                $self->add_subject_mapping(\%data);
+            }
         }
-        # TODO: See if subject mapping already exists before adding to the list
-        push @subject_mappings, \%data;
     }
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
         output => $self->file_path,
@@ -155,17 +161,87 @@ sub execute {
         print_headers => 0,
     );
 
-    for my $subject_mapping (@subject_mappings) {
+    for my $subject_mapping ($self->new_subject_mapping_set->members) {
         $writer->write_one($subject_mapping);
     }
     $writer->output->close();
 
-    my $count = scalar(@subject_mappings);
-    $self->status_message('Predicted '. $count .' new subject mappings.');
+    $self->status_message('Predicted '. $self->new_subject_mapping_set->size .' new subject mappings.');
 
-    return $count;
+    return $self->new_subject_mapping_set->size;
 }
 
 
+sub existing_subject_mapping_set {
+    my $self = shift;
+
+    if ($self->_existing_subject_mapping_set) { return $self->_existing_subject_mapping_set; }
+
+    my $id_method = $self->sample_identifier;
+    my @subject_mappings;
+    for my $subject_mapping ($self->analysis_project->subject_mappings) {
+
+        my %data;
+        for my $subject_bridge ($subject_mapping->subject_bridges) {
+            $data{$subject_bridge->label} = $subject_bridge->subject->$id_method;
+        }
+
+        for my $input ($subject_mapping->inputs) {
+            $data{$input->key} = $input->value;
+        }
+
+        for my $tag ($subject_mapping->tags) {
+            if (defined($data{tag})) {
+                $self->fatal_message('Unable to handle multiple subject mapping tags!');
+            }
+            $data{tag} = $tag;
+        }
+        push @subject_mappings, \%data;
+    }
+
+    my $subject_mapping_set = Set::Scalar->new(@subject_mappings);
+    $self->_existing_subject_mapping_set($subject_mapping_set);
+
+    $self->status_message('Found '. $self->existing_subject_mapping_set->size .' existing subject mappings.');
+
+    return $self->_existing_subject_mapping_set;
+}
+
+sub new_subject_mapping_set {
+    my $self = shift;
+    if ($self->_new_subject_mapping_set) { return $self->_new_subject_mapping_set; }
+    my $new_subject_mapping_set = Set::Scalar->new();
+    $self->_new_subject_mapping_set($new_subject_mapping_set);
+    return $self->_new_subject_mapping_set;
+}
+
+sub add_subject_mapping {
+    my $self = shift;
+    my $data = shift;
+    if ($self->existing_subject_mapping_set->has($data)) {
+        $self->warning_message('Skipping existing subject mapping betweern tumor \''. $data->{tumor_sample} .'\' and normal \''. $data->{normal_sample} .'\'!');
+        return;
+    }
+    if ($self->new_subject_mapping_set->has($data)) {
+        $self->warning_message('New subject mapping already exists in set, skipping!');
+        return;
+    }
+    $self->new_subject_mapping_set->insert($data);
+    return 1;
+}
+
+sub resolve_samples_by_individual_id {
+    my $self = shift;
+
+    my @all_dna_samples = grep {$_->sample_type =~ /dna/i} $self->analysis_project->samples;
+    my @dna_samples = List::MoreUtils::uniq(@all_dna_samples);
+    $self->status_message('Found '. scalar(@dna_samples) .' DNA samples');
+
+    my %samples_by_individual_id;
+    for my $dna_sample (@dna_samples) {
+        push @{$samples_by_individual_id{$dna_sample->individual->id}}, $dna_sample;
+    }
+    return \%samples_by_individual_id
+}
 
 1;
