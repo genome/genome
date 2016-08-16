@@ -411,7 +411,7 @@ sub _resolve_workflow_for_build {
             output_property => 'bam_qc_result'
         );
         if ($run_splice_junction_summary) {
-            my $splice_junction_operation = $workflow->add_operation(
+            my $splice_junction_operation = Genome::WorkflowBuilder::Command->create(
                 name => 'RnaSeq Splice Junction Summary',
                 command => 'Genome::Model::RnaSeq::Command::SpliceJunctionSummary',
             );
