@@ -1530,6 +1530,13 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>delete',
+      [
+        'subject-mappings=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>export',
       [
         '>somatic-validation',
@@ -1557,6 +1564,31 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        'help!',
+        undef
+      ],
+      '>list',
+      [
+        'show=s',
+        'files',
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'order-by=s',
+        'files',
+        'filter=s',
+        'files',
         'help!',
         undef
       ],
@@ -35105,6 +35137,13 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        '>delete',
+        [
+          'subject-mappings=s@',
+          undef,
+          'help!',
+          undef
+        ],
         '>export',
         [
           '>somatic-validation',
@@ -35132,6 +35171,31 @@ $Genome::Command::OPTS_SPEC = [
             'help!',
             undef
           ],
+          'help!',
+          undef
+        ],
+        '>list',
+        [
+          'show=s',
+          'files',
+          'style=s',
+          [
+            'text',
+            'csv',
+            'tsv',
+            'pretty',
+            'html',
+            'xml',
+            'newtext'
+          ],
+          'csv-delimiter=s',
+          'files',
+          'noheaders!',
+          undef,
+          'order-by=s',
+          'files',
+          'filter=s',
+          'files',
           'help!',
           undef
         ],
