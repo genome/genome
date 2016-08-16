@@ -119,38 +119,14 @@ sub execute {
         if ($normal_sample_set && $tumor_sample_set) {
             my ($normal_sample) = $normal_sample_set->members();
             for my $tumor_sample ($tumor_sample_set->members) {
-                my %data = (
-                    tumor_sample => $tumor_sample->$id_method,
-                    normal_sample => $normal_sample->$id_method,
-                    snv_variant_list_id => '',
-                    indel_variant_list_id => '',
-                    sv_variant_list_id => '',
-                    tag => 'somatic',
-                );
-                $self->add_subject_mapping(\%data);
+                $self->add_subject_mapping($tumor_sample,$normal_sample,'somatic');
             }
         } elsif ($normal_sample_set) {
             my ($normal_sample) = $normal_sample_set->members();
-            my %data = (
-                tumor_sample => $normal_sample->$id_method,
-                normal_sample => '',
-                snv_variant_list_id => '',
-                indel_variant_list_id => '',
-                sv_variant_list_id => '',
-                tag => 'germline',
-            );
-            $self->add_subject_mapping(\%data);
+            $self->add_subject_mapping($normal_sample,undef,'germline');
         } elsif ($tumor_sample_set) {
             for my $tumor_sample ($tumor_sample_set->members) {
-                my %data = (
-                    tumor_sample => $tumor_sample->$id_method,
-                    normal_sample => '',
-                    snv_variant_list_id => '',
-                    indel_variant_list_id => '',
-                    sv_variant_list_id => '',
-                    tag => 'tumor-only',
-                );
-                $self->add_subject_mapping(\%data);
+                $self->add_subject_mapping($tumor_sample,undef,'tumor-only');
             }
         }
     }
@@ -217,7 +193,9 @@ sub new_subject_mapping_set {
 
 sub add_subject_mapping {
     my $self = shift;
-    my $data = shift;
+
+    my $data = $self->_subject_mapping_data_hash(@_);
+    
     if ($self->existing_subject_mapping_set->has($data)) {
         $self->warning_message('Skipping existing subject mapping betweern tumor \''. $data->{tumor_sample} .'\' and normal \''. $data->{normal_sample} .'\'!');
         return;
@@ -242,6 +220,24 @@ sub resolve_samples_by_individual_id {
         push @{$samples_by_individual_id{$dna_sample->individual->id}}, $dna_sample;
     }
     return \%samples_by_individual_id
+}
+
+sub _subject_mapping_data_hash {
+    my $self = shift;
+    my ($tumor, $normal, $tag) = @_;
+
+    my $id_method = $self->sample_identifier;
+
+    my %data = (
+        tumor_sample  => $tumor->$id_method,
+        normal_sample => $normal ? $normal->$id_method : '',
+        snv_variant_list_id => '',
+        indel_variant_list_id => '',
+        sv_variant_list_id => '',
+        tag => $tag,
+    );
+
+    return \%data;
 }
 
 1;
