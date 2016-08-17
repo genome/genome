@@ -16,7 +16,7 @@ require File::Spec;
 require File::Temp;
 require List::MoreUtils;
 use Test::Exception;
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam';
 use_ok($class) or die;
@@ -73,6 +73,20 @@ subtest "_determine_type_and_set_flags" => sub{
         sub{ Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags([]); },
         qr/No reads given to _determine_type_and_set_flags\!/,
         'determine reads fails w/o reads',
+    );
+
+};
+
+subtest '_read_group_id_for_reads' => sub{
+    plan tests => 2;
+
+    is(Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_read_group_id_for_reads([[]]), 'unknown', 'read groupd id is unknown for no read groups');
+    is(
+        Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_read_group_id_for_reads(
+            [ ['RG:Z:ONE'], ['RG:Z:TWO'], ['RG:Z:ONE'] ],
+        ),
+        'ONE',
+        'read group id is ONE when multiple are found',
     );
 
 };
