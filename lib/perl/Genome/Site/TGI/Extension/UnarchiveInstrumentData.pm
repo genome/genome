@@ -16,7 +16,7 @@ Sub::Install::reinstall_sub ({
     code => \&unarchive_lims_data,
 });
 
-__PACKAGE__->__meta__->property('mount_path')->is_optional(0);
+__PACKAGE__->__meta__->property('volume')->is_optional(0);
 
 sub unarchive_lims_data {
     my $self = shift;
@@ -24,7 +24,7 @@ sub unarchive_lims_data {
 
     my $lims_unarchive_script_path = $self->resolve_lims_unarchive_script_path();
 
-    my $dv = $self->mount_path;
+    my $dv = $self->volume;
     if ($instrument_data->class ne 'Genome::InstrumentData::Solexa') { return 1; }
 
     my $bam_path = $instrument_data->bam_path;

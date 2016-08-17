@@ -10,7 +10,7 @@ use feature qw(say);
 class Genome::Config::AnalysisProject::Command::UnarchiveInstrumentData {
     is => 'Genome::Config::AnalysisProject::Command::Base',
     has_input => [
-        mount_path => {
+        volume => {
             is => 'Genome::Disk::Volume',
             doc => 'A location to which scratch allocation information can be stored during unarchiving',
             is_optional => 1,
