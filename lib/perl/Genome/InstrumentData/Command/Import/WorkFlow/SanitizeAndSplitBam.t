@@ -16,7 +16,7 @@ require File::Spec;
 require File::Temp;
 require List::MoreUtils;
 use Test::Exception;
-use Test::More tests => 6;
+use Test::More tests => 5;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam';
 use_ok($class) or die;
@@ -53,26 +53,49 @@ subtest 'separate reads' => sub{
 
 };
 
-subtest "_determine_type_and_set_flags" => sub{
-    plan tests => 7;
+subtest "_sanitize_reads" => sub{
+    plan tests => 4;
 
-    my ($read1, $read2) = ( [], [] );
-    my $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags([$read1, $read2]);
-    is($type, 'paired', 'type is paired for 2 reads');
-    is_deeply([$read1, $read2], [[undef, 77], [undef, 141]], 'correct flags for 2 reads');
+    my $template_id = 'READ';
+    my $seq = 'AATTTCCCGG';
+    my $revcomp_seq = reverse $seq;
+    $revcomp_seq =~ tr/ATCG/TAGC/;
+    my $qual = '0123456789';
+    my $revcomp_qual = reverse $qual;
 
-    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags([$read1]);
-    is($type, 'singleton', 'given read1, type is singleton');
-    is_deeply($read1, [undef, 68], 'correct flags for just read1');
+    # PAIRED w/ READ2 REVCOMP
+    my @separated_reads = (
+        [ $template_id, 99, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual, 'RG:Z:1' ],
+        [ $template_id, 147, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual, 'RG:Z:1' ],
+    );
+    my $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_reads(\@separated_reads);
+    is($type, 'paired', 'correct type when sanitizing 2 reads');
+    is_deeply(
+        \@separated_reads,
+        [
+            [ $template_id, 77, (qw/ * 0 0 * * 0 0 /), $seq, $qual ],
+            [ $template_id, 141, (qw/ * 0 0 * * 0 0 /), $revcomp_seq, $revcomp_qual ]
+        ],
+        'sanitized paired reads',
+    );
 
-    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags([$read2]);
-    is($type, 'singleton', 'given read2, type is singleton');
-    is_deeply($read2, [undef, 68], 'correct flags for just read2');
+    # SINGLETON READ1
+    @separated_reads = (
+        [ $template_id, 72, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual, 'RG:Z:1' ],
+    );
+    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_reads(\@separated_reads);
+    is_deeply(
+        \@separated_reads,
+        [
+            [ $template_id, 68, (qw/ * 0 0 * * 0 0 /), $seq, $qual ],
+        ],
+        'sanitized singleton read',
+    );
 
     throws_ok(
-        sub{ Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags([]); },
-        qr/No reads given to _determine_type_and_set_flags\!/,
-        'determine reads fails w/o reads',
+        sub{ Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_reads([]); },
+        qr/No reads given to _sanitize_reads\!/,
+        'sanitize fails w/o reads',
     );
 
 };
@@ -91,29 +114,10 @@ subtest '_read_group_id_for_reads' => sub{
 
 };
 
-subtest '_sanitize_read' => sub{
-    plan tests => 2;
-
-    my @read_tokens;
-    my $seq = 'AATTTCCCGG';
-    my $revcomp_seq = 'CCGGGAAATT';
-    my $qual = '0123456789';
-    my $revcomp_qual = reverse $qual;
-
-    @read_tokens = ( undef, 0, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual, 'RG:Z:1');
-    Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_read(\@read_tokens);
-    is_deeply(\@read_tokens, [ undef, 0, (qw/ * 0 0 * * 0 0 /), $seq, $qual ], 'sanitized read');
-
-    @read_tokens = ( undef, 16, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual, 'RG:Z:1');
-    Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_read(\@read_tokens);
-    is_deeply(\@read_tokens, [ undef, 16, (qw/ * 0 0 * * 0 0 /), $revcomp_seq, $revcomp_qual ], 'sanitized complemented read');
-
-};
-
 subtest 'execute' => sub{
     plan tests => 18;
 
-    my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v3') or die;
+    my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v4') or die;
     Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
     my $library = Genome::Library->__define__(
         name => 'TEST-SAMPLE-extlibs',
@@ -144,8 +148,6 @@ subtest 'execute' => sub{
         is(File::Compare::compare($output_bam_path, $expected_bam_path), 0, "expected $basename bam path matches");
     }
     ok(!glob($multi_rg_bam_path.'*'), 'removed bam path and auxiliary files after spliting');
-
-    #diag($tmp_dir); <STDIN>;
 
 };
 

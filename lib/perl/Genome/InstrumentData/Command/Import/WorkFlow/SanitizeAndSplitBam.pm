@@ -156,12 +156,10 @@ sub _write_reads {
     my $separated_reads =_separate_reads(@_);
     return 0 if not @$separated_reads;
 
-    my $type = _determine_type_and_set_flags($separated_reads);
     my $rg_id = _read_group_id_for_reads($separated_reads);
+    my $type = _sanitize_reads($separated_reads);
     my $fh = $self->_get_fh_for_read_group_and_type($rg_id, $type);
     for my $read_tokens ( @$separated_reads ) {
-        # Sanitize!
-        _sanitize_read($read_tokens);
         # Add RG tag
         push @$read_tokens, 'RG:Z:'.$self->old_and_new_read_group_ids->{$rg_id}->{$type};
         $fh->print( join( "\t", @$read_tokens)."\n");
@@ -200,9 +198,11 @@ sub _separate_reads {
     return [ grep { defined } $read1s[0], $read2s[0] ];
 }
 
-sub _determine_type_and_set_flags {
+sub _sanitize_reads {
     # Gotta send in reads!
-    die 'No reads given to _determine_type_and_set_flags!' if not @{$_[0]};
+    die 'No reads given to _sanitize_reads!' if not @{$_[0]};
+    # Sanitize...
+    for ( @{$_[0]} ) { _sanitize_read($_); }
     # Determine the type paired/singleton and set the flags accordingly
     my $type;
     # paired will get:
