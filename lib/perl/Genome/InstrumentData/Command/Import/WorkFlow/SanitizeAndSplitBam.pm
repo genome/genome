@@ -159,10 +159,10 @@ sub _write_reads {
     my $rg_id = _read_group_id_for_reads($separated_reads);
     my $type = _sanitize_reads($separated_reads);
     my $fh = $self->_get_fh_for_read_group_and_type($rg_id, $type);
-    for my $read_tokens ( @$separated_reads ) {
-        # Add RG tag
-        push @$read_tokens, 'RG:Z:'.$self->old_and_new_read_group_ids->{$rg_id}->{$type};
-        $fh->print( join( "\t", @$read_tokens)."\n");
+    my $new_rg_id = $self->old_and_new_read_group_ids->{$rg_id}->{$type};
+    for ( @$separated_reads ) {
+        push @{$_}, 'RG:Z:'.$new_rg_id; # add new RG tag
+        $fh->print( join( "\t", @{$_})."\n");
     }
 
     return scalar @$separated_reads;
