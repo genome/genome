@@ -153,14 +153,13 @@ sub _verify_read_count {
 sub _write_reads {
     my $self = shift;
 
-    my ($read1, $read2) =_separate_reads(@_);
-    my @separated_reads = grep { defined } ( $read1, $read2 );
-    return 0 if not @separated_reads;
+    my $separated_reads =_separate_reads(@_);
+    return 0 if not @$separated_reads;
 
-    my $type = _determine_type_and_set_flags($read1, $read2);
-    my $rg_id = _read_group_id_for_reads(@separated_reads);
+    my $type = _determine_type_and_set_flags($separated_reads);
+    my $rg_id = _read_group_id_for_reads($separated_reads);
     my $fh = $self->_get_fh_for_read_group_and_type($rg_id, $type);
-    for my $read_tokens ( @separated_reads ) {
+    for my $read_tokens ( @$separated_reads ) {
         # Sanitize!
         _sanitize_read($read_tokens);
         # Add RG tag
@@ -168,12 +167,12 @@ sub _write_reads {
         $fh->print( join( "\t", @$read_tokens)."\n");
     }
 
-    return @separated_reads;
+    return scalar @$separated_reads;
 }
 
 sub _read_group_id_for_reads {
     my @rg_ids;
-    for ( @_ ) {
+    for ( @{$_[0]} ) {
         my $rg_tag = List::Util::first { $_ =~ m/^RG:/ } @$_;
         next if not defined $rg_tag;
         push @rg_ids, (split(':', $rg_tag))[2];
@@ -198,10 +197,12 @@ sub _separate_reads {
         }
     }
 
-    return ( $read1s[0], $read2s[0] );
+    return [ grep { defined } $read1s[0], $read2s[0] ];
 }
 
 sub _determine_type_and_set_flags {
+    # Gotta send in reads!
+    die 'No reads given to _determine_type_and_set_flags!' if not @{$_[0]};
     # Determine the type paired/singleton and set the flags accordingly
     my $type;
     # paired will get:
@@ -209,25 +210,17 @@ sub _determine_type_and_set_flags {
     # 1      read paired
     # 4      read unmapped
     # 8      mate unmapped
-    if ( defined $_[0] and defined $_[1] ) {
+    if ( defined $_[0]->[0] and defined $_[0]->[1] ) {
         $type = 'paired';
-        $_[0]->[1] = 77;
-        $_[1]->[1] = 141;
+        $_[0]->[0]->[1] = 77;
+        $_[0]->[1]->[1] = 141;
     }
     # sigleton will get:
     # 4  first in pair
     # 64 read unmapped
     elsif ( defined $_[0] ) {
         $type = 'singleton';
-        $_[0]->[1] = 68;
-    }
-    elsif ( defined $_[1] ) {
-        $type = 'singleton';
-        $_[1]->[1] = 68;
-    }
-    # Gotta send in reads!
-    else {
-        die 'No reads given to _determine_type_and_set_flags!';
+        $_[0]->[0]->[1] = 68;
     }
     $type;
 }

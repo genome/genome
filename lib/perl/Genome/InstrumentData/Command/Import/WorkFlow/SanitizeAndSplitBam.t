@@ -30,26 +30,26 @@ subtest 'separate reads' => sub{
     my $read2 = ['read2', 128 ];
     my $supplementary = ['supplementary', 2048 ];
 
-    my @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read);
-    is_deeply(\@r, [$read, undef], 'separate single read w/o flag info');
+    my $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read);
+    is_deeply($r, [$read], 'separate single read w/o flag info');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read1, $read1);
-    is_deeply(\@r, [$read1, undef], 'separate reads when given 2 read1s');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read1, $read1);
+    is_deeply($r, [$read1], 'separate reads when given 2 read1s');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read1, $secondary);
-    is_deeply(\@r, [$read1, undef], 'separate reads when given read1 and secondary');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read1, $secondary);
+    is_deeply($r, [$read1], 'separate reads when given read1 and secondary');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($secondary);
-    is_deeply(\@r, [$secondary, undef], 'separate secondary read');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($secondary);
+    is_deeply($r, [$secondary], 'separate secondary read');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($supplementary);
-    is_deeply(\@r, [undef, undef], 'separate supplementary read');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($supplementary);
+    is_deeply($r, [], 'separate supplementary read');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($secondary, $supplementary, $read1, $read2);
-    is_deeply(\@r, [$secondary, $read2], 'separate secondary, supplementary, read1, and read2');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($secondary, $supplementary, $read1, $read2);
+    is_deeply($r, [$secondary, $read2], 'separate secondary, supplementary, read1, and read2');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read2);
-    is_deeply(\@r, [undef, $read2], 'separate read2');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read2);
+    is_deeply($r, [$read2], 'separate read2');
 
 };
 
@@ -57,20 +57,20 @@ subtest "_determine_type_and_set_flags" => sub{
     plan tests => 7;
 
     my ($read1, $read2) = ( [], [] );
-    my $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags($read1, $read2);
+    my $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags([$read1, $read2]);
     is($type, 'paired', 'type is paired for 2 reads');
     is_deeply([$read1, $read2], [[undef, 77], [undef, 141]], 'correct flags for 2 reads');
 
-    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags($read1, undef);
+    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags([$read1]);
     is($type, 'singleton', 'given read1, type is singleton');
     is_deeply($read1, [undef, 68], 'correct flags for just read1');
 
-    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags(undef, $read2);
+    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags([$read2]);
     is($type, 'singleton', 'given read2, type is singleton');
     is_deeply($read2, [undef, 68], 'correct flags for just read2');
 
     throws_ok(
-        sub{ Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags(undef, undef); },
+        sub{ Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags([]); },
         qr/No reads given to _determine_type_and_set_flags\!/,
         'determine reads fails w/o reads',
     );
