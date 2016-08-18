@@ -27,7 +27,7 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v01');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v02');
 my $source_bam = $test_dir.'/input.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 

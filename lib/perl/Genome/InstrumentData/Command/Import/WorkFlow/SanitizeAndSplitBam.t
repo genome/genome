@@ -117,7 +117,7 @@ subtest '_read_group_id_for_reads' => sub{
 subtest 'execute' => sub{
     plan tests => 18;
 
-    my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v4') or die;
+    my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v02') or die;
     Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
     my $library = Genome::Library->__define__(
         name => 'TEST-SAMPLE-extlibs',
@@ -144,7 +144,7 @@ subtest 'execute' => sub{
         my $output_bam_path = File::Spec::->join($tmp_dir, 'input.rg-multi.'.$basename.'.bam');
         ok((List::MoreUtils::any { $_ eq $output_bam_path } @output_bam_paths), 'expected bam in output bams');
         ok(-s $output_bam_path, 'expected bam path exists');
-        my $expected_bam_path = File::Spec->join($test_dir, 'split-by-rg.'.$basename.'.bam');
+        my $expected_bam_path = File::Spec->join($test_dir, 'sanitize-and-split.'.$basename.'.bam');
         is(File::Compare::compare($output_bam_path, $expected_bam_path), 0, "expected $basename bam path matches");
     }
     ok(!glob($multi_rg_bam_path.'*'), 'removed bam path and auxiliary files after spliting');
