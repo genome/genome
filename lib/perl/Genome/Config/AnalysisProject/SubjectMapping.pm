@@ -51,20 +51,11 @@ class Genome::Config::AnalysisProject::SubjectMapping {
 
 sub delete {
     my $self = shift;
-    eval {
-        for ($self->subject_bridges) {
-            $_->delete();
-        }
-        for ($self->inputs) {
-            $_->delete();
-        }
-        for ($self->tag_bridges) {
-            $_->delete();
-        }
-    };
-    if(my $error = $@) {
-        die($error);
+
+    for my $hangoff (qw(subject_bridges inputs tag_bridges)) {
+        $_->delete foreach $self->$hangoff;
     }
+
     return $self->SUPER::delete();
 }
 
