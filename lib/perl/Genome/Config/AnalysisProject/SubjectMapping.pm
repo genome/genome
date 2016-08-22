@@ -58,6 +58,9 @@ sub delete {
         for ($self->inputs) {
             $_->delete();
         }
+        for ($self->tag_bridges) {
+            $_->delete();
+        }
     };
     if(my $error = $@) {
         die($error);
