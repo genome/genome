@@ -30,76 +30,94 @@ subtest 'separate reads' => sub{
     my $read2 = ['read2', 128 ];
     my $supplementary = ['supplementary', 2048 ];
 
-    my @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read);
-    is_deeply(\@r, [$read, undef], 'separate single read w/o flag info');
+    my $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read);
+    is_deeply($r, [$read], 'separate single read w/o flag info');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read1, $read1);
-    is_deeply(\@r, [$read1, undef], 'separate reads when given 2 read1s');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read1, $read1);
+    is_deeply($r, [$read1], 'separate reads when given 2 read1s');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read1, $secondary);
-    is_deeply(\@r, [$read1, undef], 'separate reads when given read1 and secondary');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read1, $secondary);
+    is_deeply($r, [$read1], 'separate reads when given read1 and secondary');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($secondary);
-    is_deeply(\@r, [$secondary, undef], 'separate secondary read');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($secondary);
+    is_deeply($r, [$secondary], 'separate secondary read');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($supplementary);
-    is_deeply(\@r, [undef, undef], 'separate supplementary read');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($supplementary);
+    is_deeply($r, [], 'separate supplementary read');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($secondary, $supplementary, $read1, $read2);
-    is_deeply(\@r, [$secondary, $read2], 'separate secondary, supplementary, read1, and read2');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($secondary, $supplementary, $read1, $read2);
+    is_deeply($r, [$secondary, $read2], 'separate secondary, supplementary, read1, and read2');
 
-    @r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read2);
-    is_deeply(\@r, [undef, $read2], 'separate read2');
+    $r = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_separate_reads($read2);
+    is_deeply($r, [$read2], 'separate read2');
 
 };
 
-subtest "_determine_type_and_set_flags" => sub{
-    plan tests => 7;
+subtest "_sanitize_reads" => sub{
+    plan tests => 4;
 
-    my ($read1, $read2) = ( [], [] );
-    my $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags($read1, $read2);
-    is($type, 'paired', 'type is paired for 2 reads');
-    is_deeply([$read1, $read2], [[undef, 77], [undef, 141]], 'correct flags for 2 reads');
+    my $template_id = 'READ';
+    my $seq = 'AATTTCCCGG';
+    my $revcomp_seq = reverse $seq;
+    $revcomp_seq =~ tr/ATCG/TAGC/;
+    my $qual = '0123456789';
+    my $revcomp_qual = reverse $qual;
 
-    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags($read1, undef);
-    is($type, 'singleton', 'given read1, type is singleton');
-    is_deeply($read1, [undef, 68], 'correct flags for just read1');
+    # PAIRED w/ READ2 REVCOMP
+    my @separated_reads = (
+        [ $template_id, 99, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual, 'RG:Z:1' ],
+        [ $template_id, 147, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual, 'RG:Z:1' ],
+    );
+    my $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_reads(\@separated_reads);
+    is($type, 'paired', 'correct type when sanitizing 2 reads');
+    is_deeply(
+        \@separated_reads,
+        [
+            [ $template_id, 77, (qw/ * 0 0 * * 0 0 /), $seq, $qual ],
+            [ $template_id, 141, (qw/ * 0 0 * * 0 0 /), $revcomp_seq, $revcomp_qual ]
+        ],
+        'sanitized paired reads',
+    );
 
-    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags(undef, $read2);
-    is($type, 'singleton', 'given read2, type is singleton');
-    is_deeply($read2, [undef, 68], 'correct flags for just read2');
+    # SINGLETON READ1
+    @separated_reads = (
+        [ $template_id, 72, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual, 'RG:Z:1' ],
+    );
+    $type = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_reads(\@separated_reads);
+    is_deeply(
+        \@separated_reads,
+        [
+            [ $template_id, 68, (qw/ * 0 0 * * 0 0 /), $seq, $qual ],
+        ],
+        'sanitized singleton read',
+    );
 
     throws_ok(
-        sub{ Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_determine_type_and_set_flags(undef, undef); },
-        qr/No reads given to _determine_type_and_set_flags\!/,
-        'determine reads fails w/o reads',
+        sub{ Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_reads([]); },
+        qr/No reads given to _sanitize_reads\!/,
+        'sanitize fails w/o reads',
     );
 
 };
 
-subtest '_sanitize_read' => sub{
+subtest '_read_group_id_for_reads' => sub{
     plan tests => 2;
 
-    my @read_tokens;
-    my $seq = 'AATTTCCCGG';
-    my $revcomp_seq = 'CCGGGAAATT';
-    my $qual = '0123456789';
-    my $revcomp_qual = reverse $qual;
-
-    @read_tokens = ( undef, 0, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual, 'RG:Z:1');
-    Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_read(\@read_tokens);
-    is_deeply(\@read_tokens, [ undef, 0, (qw/ * 0 0 * * 0 0 /), $seq, $qual ], 'sanitized read');
-
-    @read_tokens = ( undef, 16, (qw/ RNAME POS MAPQ CIGAR RNEXT PNEXT TLEN /), $seq, $qual, 'RG:Z:1');
-    Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_sanitize_read(\@read_tokens);
-    is_deeply(\@read_tokens, [ undef, 16, (qw/ * 0 0 * * 0 0 /), $revcomp_seq, $revcomp_qual ], 'sanitized complemented read');
+    is(Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_read_group_id_for_reads([[]]), 'unknown', 'read groupd id is unknown for no read groups');
+    is(
+        Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam::_read_group_id_for_reads(
+            [ ['RG:Z:ONE'], ['RG:Z:TWO'], ['RG:Z:ONE'] ],
+        ),
+        'ONE',
+        'read group id is ONE when multiple are found',
+    );
 
 };
 
 subtest 'execute' => sub{
     plan tests => 18;
 
-    my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v3') or die;
+    my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v02') or die;
     Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class($class);
     my $library = Genome::Library->__define__(
         name => 'TEST-SAMPLE-extlibs',
@@ -126,12 +144,10 @@ subtest 'execute' => sub{
         my $output_bam_path = File::Spec::->join($tmp_dir, 'input.rg-multi.'.$basename.'.bam');
         ok((List::MoreUtils::any { $_ eq $output_bam_path } @output_bam_paths), 'expected bam in output bams');
         ok(-s $output_bam_path, 'expected bam path exists');
-        my $expected_bam_path = File::Spec->join($test_dir, 'split-by-rg.'.$basename.'.bam');
+        my $expected_bam_path = File::Spec->join($test_dir, 'sanitize-and-split.'.$basename.'.bam');
         is(File::Compare::compare($output_bam_path, $expected_bam_path), 0, "expected $basename bam path matches");
     }
     ok(!glob($multi_rg_bam_path.'*'), 'removed bam path and auxiliary files after spliting');
-
-    #diag($tmp_dir); <STDIN>;
 
 };
 
