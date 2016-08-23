@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Memoize;
 use List::MoreUtils qw(uniq);
 
 class Genome::Config::AnalysisProject::SubjectMapping::Command::Predict::SomaticValidation {
@@ -107,7 +108,7 @@ sub execute {
         if ($normal_sample_set->size > 1) {
             $self->fatal_message('The following samples for individual '. $individual->__display_name__ .' are ALL found to be normal: '. join(',', map {$_->$id_method} $normal_sample_set->members));
         }
-        
+
         my $unique_sample_set = $sample_set->unique($normal_sample_set,$tumor_sample_set);
         if ($unique_sample_set) {
             $self->fatal_message('The following samples for individual: '. $individual->__display_name__ .' do not match either tumor or normal criteria: '. join(',', map{$_->$id_method} $unique_sample_set->members));
@@ -121,14 +122,14 @@ sub execute {
         if ($normal_sample_set && $tumor_sample_set) {
             my ($normal_sample) = $normal_sample_set->members();
             for my $tumor_sample ($tumor_sample_set->members) {
-                $self->add_subject_mapping($tumor_sample,$normal_sample,'somatic');
+                $self->add_subject_mapping($tumor_sample,$normal_sample,undef,undef,undef,'discovery');
             }
         } elsif ($normal_sample_set) {
             my ($normal_sample) = $normal_sample_set->members();
-            $self->add_subject_mapping($normal_sample,undef,'germline');
+            $self->add_subject_mapping($normal_sample,undef,undef,undef,undef,'germline');
         } elsif ($tumor_sample_set) {
             for my $tumor_sample ($tumor_sample_set->members) {
-                $self->add_subject_mapping($tumor_sample,undef,'tumor-only');
+                $self->add_subject_mapping($tumor_sample,undef,undef,undef,undef,'tumor-only');
             }
         }
     }
@@ -144,9 +145,9 @@ sub execute {
     }
     $writer->output->close();
 
-    $self->status_message('Predicted '. $self->new_subject_mapping_set->size .' new subject mappings.');
+    $self->status_message('Predicted '. $self->new_subject_mapping_set->size .' new subject mappings');
 
-    return $self->new_subject_mapping_set->size;
+    return 1;
 }
 
 
@@ -158,22 +159,34 @@ sub existing_subject_mapping_set {
         my $id_method = $self->sample_identifier;
         my @subject_mappings;
         for my $subject_mapping ($self->analysis_project->subject_mappings) {
-            my %data;
+            my ($tumor_sample, $normal_sample, $snv_id, $indel_id, $sv_id, $tag_name);
             for my $subject_bridge ($subject_mapping->subject_bridges) {
-                $data{$subject_bridge->label} = $subject_bridge->subject->$id_method;
+                if ($subject_bridge->label eq 'tumor_sample') {
+                    $tumor_sample = $subject_bridge->subject;
+                }
+                if ($subject_bridge->label eq 'normal_sample') {
+                    $normal_sample = $subject_bridge->subject;
+                }
             }
-
             for my $input ($subject_mapping->inputs) {
-                $data{$input->key} = $input->value;
+                if ($input->key eq 'snv_variant_list_id') {
+                    $snv_id = $input->value;
+                }
+                if ($input->key eq 'indel_variant_list_id') {
+                    $indel_id = $input->value;
+                }
+                if ($input->key eq 'sv_variant_list_id') {
+                    $sv_id = $input->value;
+                }
             }
-
             for my $tag ($subject_mapping->tags) {
-                if (defined($data{tag})) {
+                if (defined($tag_name)) {
                     $self->fatal_message('Unable to handle multiple subject mapping tags!');
                 }
-                $data{tag} = $tag;
+                $tag_name = $tag->name;
             }
-            push @subject_mappings, \%data;
+            my $data = $self->_subject_mapping_data_hash_ref($tumor_sample,$normal_sample,$snv_id,$indel_id,$sv_id,$tag_name);
+            push @subject_mappings, $data;
         }
 
         my $subject_mapping_set = Set::Scalar->new(@subject_mappings);
@@ -195,13 +208,13 @@ sub new_subject_mapping_set {
 sub add_subject_mapping {
     my $self = shift;
 
-    my $data = $self->_subject_mapping_data_hash(@_);
-    
-    if ($self->existing_subject_mapping_set->has($data)) {
+    my $data = $self->_subject_mapping_data_hash_ref(@_);
+
+    if ($self->existing_subject_mapping_set->element($data)) {
         $self->warning_message('Skipping existing subject mapping betweern tumor \''. $data->{tumor_sample} .'\' and normal \''. $data->{normal_sample} .'\'!');
         return;
     }
-    if ($self->new_subject_mapping_set->has($data)) {
+    if ($self->new_subject_mapping_set->element($data)) {
         $self->warning_message('New subject mapping already exists in set, skipping!');
         return;
     }
@@ -223,21 +236,20 @@ sub resolve_samples_by_individual_id {
     return \%samples_by_individual_id
 }
 
-sub _subject_mapping_data_hash {
+memoize '_subject_mapping_data_hash_ref';
+
+sub _subject_mapping_data_hash_ref {
     my $self = shift;
-    my ($tumor, $normal, $tag) = @_;
-
+    my ($tumor, $normal, $snv_id, $indel_id, $sv_id, $tag_name) = @_;
     my $id_method = $self->sample_identifier;
-
     my %data = (
         tumor_sample  => $tumor->$id_method,
         normal_sample => $normal ? $normal->$id_method : '',
-        snv_variant_list_id => '',
-        indel_variant_list_id => '',
-        sv_variant_list_id => '',
-        tag => $tag,
+        snv_variant_list_id => $snv_id || '',
+        indel_variant_list_id => $indel_id || '',
+        sv_variant_list_id => $sv_id || '',
+        tag => $tag_name,
     );
-
     return \%data;
 }
 
