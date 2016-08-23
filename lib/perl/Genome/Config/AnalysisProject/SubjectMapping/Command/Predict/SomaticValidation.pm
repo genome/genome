@@ -190,7 +190,7 @@ sub existing_subject_mapping_set {
         }
 
         my $subject_mapping_set = Set::Scalar->new(@subject_mappings);
-        $self->status_message('Found '. $subject_mapping_set->size .' existing subject mappings.');
+        $self->status_message('Found '. $subject_mapping_set->size .' existing subject mappings');
         $self->__existing_subject_mapping_set($subject_mapping_set);
     }
     return $self->__existing_subject_mapping_set;
