@@ -1521,6 +1521,29 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>subject-mapping',
     [
+      '>predict',
+      [
+        '>somatic-validation',
+        [
+          'normal-sample-common-names=s',
+          'files',
+          'tumor-sample-common-names=s',
+          'files',
+          'sample-identifier=s',
+          [
+            'name',
+            'id'
+          ],
+          'analysis-project=s',
+          undef,
+          'file-path=s',
+          'files',
+          'help!',
+          undef
+        ],
+        'help!',
+        undef
+      ],
       '>view',
       [
         'color!',
@@ -35128,6 +35151,29 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>subject-mapping',
       [
+        '>predict',
+        [
+          '>somatic-validation',
+          [
+            'normal-sample-common-names=s',
+            'files',
+            'tumor-sample-common-names=s',
+            'files',
+            'sample-identifier=s',
+            [
+              'name',
+              'id'
+            ],
+            'analysis-project=s',
+            undef,
+            'file-path=s',
+            'files',
+            'help!',
+            undef
+          ],
+          'help!',
+          undef
+        ],
         '>view',
         [
           'color!',
