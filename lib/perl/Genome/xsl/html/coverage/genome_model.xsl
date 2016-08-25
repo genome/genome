@@ -393,91 +393,14 @@
           <div class="box_title"><h3 class="nontyped span-24 last">alignment</h3></div>
         </div>
         <div class="box_content rounded-bottom span-24 last">
-
-          <table class="lister datatable" width="100%" cellspacing="0" cellpadding="0" border="0" id="alignment-lister">
-            <thead>
-              <tr>
-                <th>model</th>
-                <th class="right">unique on-target</th>
-                <th class="right">duplicate on-target</th>
-                <th class="right">unique off-target</th>
-                <th class="right">duplicate off-target</th>
-                <th class="right">unaligned</th>
-              </tr>
-            </thead>
-            <tbody class="algorithm-swap" style="display: none;">
-              <xsl:for-each select="alignment-summary/model/wingspan[@size='0']">
-                <xsl:sort select="../@model_name" order="ascending"/>
-                <xsl:sort select="../@lane_count" order="ascending"/>
-                <tr>
-                  <td>
-                    <xsl:attribute name="title"><xsl:value-of select="../@subject_name"/></xsl:attribute>
-                    <xsl:if test="../@result_id">
-                      <xsl:call-template name="object_link_button_tiny">
-                        <xsl:with-param name="icon" select="'sm-icon-extlink'"/>
-                        <xsl:with-param name="id" select="../@result_id"/>
-                        <xsl:with-param name="type" select="'Genome::InstrumentData::AlignmentResult::Merged::CoverageStats'" />
-                        <xsl:with-param name="perspective" select="'coverage'"/>
-                      </xsl:call-template>
-                      <xsl:text> </xsl:text>
-                    </xsl:if>
-                    <xsl:value-of select="../@model_name"/> (<xsl:value-of select="../@lane_count"/> lane<xsl:if test="../@lane_count &gt; 1">s</xsl:if>)
-                  </td>
-                  <td class="right">
-                    <xsl:value-of select="format-number(unique_target_aligned_bp, '###,###')"/>
-                  </td>
-                  <td class="right">
-                    <xsl:value-of select="format-number(duplicate_target_aligned_bp, '###,###')"/>
-                  </td>
-                  <td class="right">
-                    <xsl:value-of select="format-number(unique_off_target_aligned_bp, '###,###')"/>
-                  </td>
-                  <td class="right">
-                    <xsl:value-of select="format-number(duplicate_off_target_aligned_bp, '###,###')"/>
-                  </td>
-                  <td class="right">
-                    <xsl:value-of select="format-number(total_unaligned_bp, '###,###')"/>
-                  </td>
-                </tr>
-              </xsl:for-each>
-            </tbody>
-            <tbody class="algorithm-swap">
-              <xsl:for-each select="alignment-summary-v2/model/wingspan[@size='0']">
-                <xsl:sort select="../@model_name" order="ascending"/>
-                <xsl:sort select="../@lane_count" order="ascending"/>
-                <tr>
-                  <td>
-                    <xsl:attribute name="title"><xsl:value-of select="../@subject_name"/></xsl:attribute>
-                    <xsl:if test="../@result_id">
-                      <xsl:call-template name="object_link_button_tiny">
-                        <xsl:with-param name="icon" select="'sm-icon-extlink'"/>
-                        <xsl:with-param name="id" select="../@result_id"/>
-                        <xsl:with-param name="type" select="'Genome::InstrumentData::AlignmentResult::Merged::CoverageStats'" />
-                        <xsl:with-param name="perspective" select="'coverage'"/>
-                      </xsl:call-template>
-                      <xsl:text> </xsl:text>
-                    </xsl:if>
-                    <xsl:value-of select="../@model_name"/> (<xsl:value-of select="../@lane_count"/> lane<xsl:if test="../@lane_count &gt; 1">s</xsl:if>)
-                  </td>
-                  <td class="right">
-                    <xsl:value-of select="format-number(unique_target_aligned_bp, '###,###')"/>
-                  </td>
-                  <td class="right">
-                    <xsl:value-of select="format-number(duplicate_target_aligned_bp, '###,###')"/>
-                  </td>
-                  <td class="right">
-                    <xsl:value-of select="format-number(unique_off_target_aligned_bp, '###,###')"/>
-                  </td>
-                  <td class="right">
-                    <xsl:value-of select="format-number(duplicate_off_target_aligned_bp, '###,###')"/>
-                  </td>
-                  <td class="right">
-                    <xsl:value-of select="format-number(total_unaligned_bp, '###,###')"/>
-                  </td>
-                </tr>
-              </xsl:for-each>
-            </tbody>
-          </table>
+          <xsl:call-template name="genome_model_set_coverage_alignment_table">
+            <xsl:with-param name="data" select="alignment-summary"/>
+            <xsl:with-param name="hidden" select="false()"/>
+          </xsl:call-template>
+          <xsl:call-template name="genome_model_set_coverage_alignment_table">
+            <xsl:with-param name="data" select="alignment-summary-v2"/>
+            <xsl:with-param name="hidden" select="true()"/>
+          </xsl:call-template>
         </div>
 
         <div class="box_header span-24 last rounded-top">
@@ -671,7 +594,64 @@
         <br/>
       </xsl:with-param>
     </xsl:call-template>
+  </xsl:template>
 
+  <xsl:template name="genome_model_set_coverage_alignment_table">
+    <xsl:param name="data" />
+    <xsl:param name="hidden" />
+
+
+    <table class="lister datatable algorithm-swap" width="100%" cellspacing="0" cellpadding="0" border="0">
+      <xsl:if test="$hidden">
+        <xsl:attribute name="style">display:none</xsl:attribute>
+      </xsl:if>
+      <thead>
+        <tr>
+          <th>model</th>
+          <th class="right">unique on-target</th>
+          <th class="right">duplicate on-target</th>
+          <th class="right">unique off-target</th>
+          <th class="right">duplicate off-target</th>
+          <th class="right">unaligned</th>
+        </tr>
+      </thead>
+      <tbody class="alignment-lister">
+        <xsl:for-each select="$data/model/wingspan[@size='0']">
+          <xsl:sort select="../@model_name" order="ascending"/>
+          <xsl:sort select="../@lane_count" order="ascending"/>
+          <tr>
+            <td>
+              <xsl:attribute name="title"><xsl:value-of select="../@subject_name"/></xsl:attribute>
+              <xsl:if test="../@result_id">
+                <xsl:call-template name="object_link_button_tiny">
+                  <xsl:with-param name="icon" select="'sm-icon-extlink'"/>
+                  <xsl:with-param name="id" select="../@result_id"/>
+                  <xsl:with-param name="type" select="'Genome::InstrumentData::AlignmentResult::Merged::CoverageStats'" />
+                  <xsl:with-param name="perspective" select="'coverage'"/>
+                </xsl:call-template>
+                <xsl:text> </xsl:text>
+              </xsl:if>
+              <xsl:value-of select="../@model_name"/> (<xsl:value-of select="../@lane_count"/> lane<xsl:if test="../@lane_count &gt; 1">s</xsl:if>)
+            </td>
+            <td class="right">
+              <xsl:value-of select="format-number(unique_target_aligned_bp, '###,###')"/>
+            </td>
+            <td class="right">
+              <xsl:value-of select="format-number(duplicate_target_aligned_bp, '###,###')"/>
+            </td>
+            <td class="right">
+              <xsl:value-of select="format-number(unique_off_target_aligned_bp, '###,###')"/>
+            </td>
+            <td class="right">
+              <xsl:value-of select="format-number(duplicate_off_target_aligned_bp, '###,###')"/>
+            </td>
+            <td class="right">
+              <xsl:value-of select="format-number(total_unaligned_bp, '###,###')"/>
+            </td>
+          </tr>
+        </xsl:for-each>
+      </tbody>
+    </table>
 
   </xsl:template>
 </xsl:stylesheet>
