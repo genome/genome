@@ -13,6 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::Model::ClinSeq;
 use Genome::Model::Build::Command::DiffBlessed;
+use Genome::Test::Factory::AnalysisProject;
 
 my $patient = Genome::Individual->get(common_name => "PNC6");
 ok($patient, "got the PNC6 patient");
@@ -60,6 +61,9 @@ my $m = $p->add_model(
     subject         => $patient,
 );
 ok($m, "created a model") or diag(Genome::Model->error_message);
+
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object;
+$anp->add_model_bridge(model_id => $m->id);
 
 my $i1 = $m->add_input(
     name => 'wgs_model',

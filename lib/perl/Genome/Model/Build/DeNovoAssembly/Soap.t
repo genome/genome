@@ -14,6 +14,8 @@ use File::Compare;
 use File::Temp;
 use List::MoreUtils;
 
+use Genome::Test::Factory::AnalysisProject;
+
 use Test::More;
 
 if (Genome::Sys->arch_os ne 'x86_64') {
@@ -100,6 +102,9 @@ my $model = Genome::Model::DeNovoAssembly->create(
 );
 ok($model, 'soap de novo model') or die;
 ok($model->add_instrument_data($instrument_data), 'add inst data to model');
+
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+$anp->add_model_bridge(model_id => $model->id);
 
 my $build = Genome::Model::Build::DeNovoAssembly->create(
     model => $model,

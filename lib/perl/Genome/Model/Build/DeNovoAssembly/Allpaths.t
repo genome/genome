@@ -17,6 +17,8 @@ require File::Compare;
 use File::Temp;
 use Test::More;
 
+use Genome::Test::Factory::AnalysisProject;
+
 if (Genome::Sys->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
@@ -148,6 +150,9 @@ my $model = Genome::Model::DeNovoAssembly->create(
 
 ok($model, 'create allpaths de novo model') or die;
 ok($model->add_instrument_data($jump_inst_data), 'add jump inst data to model');
+
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+$anp->add_model_bridge(model_id => $model->id);
 
 my $bad_build = Genome::Model::Build::DeNovoAssembly->create(
     model => $model,
