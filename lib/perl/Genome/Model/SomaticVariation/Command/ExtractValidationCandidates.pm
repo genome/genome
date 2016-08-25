@@ -22,7 +22,7 @@ class Genome::Model::SomaticVariation::Command::ExtractValidationCandidates {
         },
         build_id => {
             is => 'Text',
-            doc => 'somatic-variation build ID to run commmand on. Specy this OR build, but NOT BOTH!',
+            doc => 'somatic-variation build ID to run command on. Specy this OR build, but NOT BOTH!',
         },
         dbsnp_bed_file => {
             is => 'String',
