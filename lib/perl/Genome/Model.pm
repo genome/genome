@@ -629,9 +629,14 @@ sub build_requested {
     my ($self, $value, $reason) = @_;
     # Writing the if like this allows someone to do build_requested(undef)
     if (@_ > 1) {
-        if($value and $self->status eq 'Disabled') {
-            $self->error_message('Cannot request a build for disabled model %s', $self->__display_name__);
-            return;
+        if ($value) {
+            if ($self->status eq 'Disabled') {
+                $self->error_message('Cannot request a build for disabled model %s', $self->__display_name__);
+                return;
+            } elsif (not $self->analysis_project) {
+                $self->error_message('Cannot request a build for model %s without an analysis project', $self->__display_name__);
+                return;
+            }
         }
 
         $self->_lock();

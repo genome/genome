@@ -17,10 +17,15 @@ use Genome::Model::TestHelpers qw(
     create_test_model
 );
 
+use Genome::Test::Factory::AnalysisProject;
+
 define_test_classes();
 my $sample = create_test_sample('test_sample');
 my $pp = create_test_pp('test_pp');
 my $model = create_test_model($sample, $pp, 'test_model');
+
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object;
+$anp->add_model_bridge(model_id => $model->id);
 
 my $tx = UR::Context::Transaction->begin();
 

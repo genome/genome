@@ -11,6 +11,8 @@ use warnings;
 use above "Genome";
 use Test::More;
 
+use Genome::Test::Factory::AnalysisProject;
+
 Genome::Report::Email->silent();
 
 class Genome::ProcessingProfile::Test {
@@ -48,6 +50,8 @@ my $sample = Genome::Sample->create(
     name => 'test sample',
 );
 
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+
 my $model1 = Genome::Model->create(
     name => 'test model 1',
     subject_id => $sample->id,
@@ -56,6 +60,7 @@ my $model1 = Genome::Model->create(
 );
 
 ok ($model1, 'created test model 1') or die;
+$anp->add_model_bridge(model_id => $model1->id);
 
 my $model2 = Genome::Model->create(
     name => 'test model 2',
@@ -65,6 +70,7 @@ my $model2 = Genome::Model->create(
 );
 
 ok ($model2, 'created test model 2') or die;
+$anp->add_model_bridge(model_id => $model2->id);
 
 my $model3 = Genome::Model::Test->create(
     name => 'test model 3',
@@ -75,6 +81,8 @@ my $model3 = Genome::Model::Test->create(
 );
 
 ok ($model3, 'created test model 3') or die;
+$anp->add_model_bridge(model_id => $model3->id);
+
 my @models = $model3->input_models;
 is (scalar(@models),2, 'test model has 2 input models');
 
