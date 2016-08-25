@@ -27,7 +27,7 @@ unless ($csf_id) {
 }
 
 my $archive = GSC::DiskArchive->get(
-    allocation_path => 'csf_'. $csf_id,
+    allocation_path => { operator => 'LIKE', value => '%csf_'. $csf_id },
     status => 'active',
 );
 unless ($archive) {
