@@ -1,12 +1,5 @@
 #!/usr/bin/env genome-perl
 
-BEGIN {
-    require Genome::Config;
-    if (Genome::Config::get('dev_mode') ne '') {
-        Genome::Config::set_env('dev_mode', 0);
-    }
-}
-
 use Genome;
 use Web::Simple 'Genome::Model::Command::Services::WebApp::Main';
 

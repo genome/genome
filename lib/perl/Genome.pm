@@ -23,8 +23,8 @@ UR::Object::Type->define(
     english_name => 'genome',
 );
 
-# in dev mode we use dev search, dev wiki, dev memcache, etc, but production database still ;)
-my $dev_mode = ( Genome::Config::get('dev_mode') || UR::DBI->no_commit );
+# There is no "dev mode" anymore, but continue to produce a warning if no-commit is on
+my $dev_mode = UR::DBI->no_commit;
 if ($dev_mode) {
     my $h = Sys::Hostname::hostname;
     warn "***** GENOME_DEV_MODE ($h) *****";

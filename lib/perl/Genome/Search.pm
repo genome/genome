@@ -13,13 +13,6 @@ class Genome::Search {
     is => 'UR::Singleton',
     doc => 'This module contains methods for adding and updating objects in the Solr search engine.',
     has => [
-        environment => {
-            is => 'Text',
-            calculate => q|
-                return 'prod' if Genome::Config::get('dev_mode');
-                return 'dev';
-            |,
-        },
         solr_server => {
             is => 'Text',
             default_value => Genome::Config::get('sys_services_solr'),
@@ -88,16 +81,6 @@ sub searchable_classes {
     );
 
     return @ordered_searchable_classes;
-}
-
-sub environment {
-    my $proto = shift;
-    my $self = $proto->_singleton_object;
-
-    if (@_ > 0) {
-        $self->_solr_server(undef);
-    }
-    return $self->__environment(@_);
 }
 
 ###  Index accessors  ###

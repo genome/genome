@@ -20,11 +20,6 @@ BEGIN {
 use lib $plugins_dir;
 
 BEGIN {
-    if (Genome::Config::get('dev_mode')) {
-        Genome::Config::set_env('sys_services_memcache', 'apipe-dev.gsc.wustl.edu:11211');
-        Genome::Config::set_env('sys_services_solr', 'http://solr-dev:8080/solr');
-    }
-
     if ($ENV{UR_DBI_NO_COMMIT}) {
         Genome::Config::set_env('statsd_host', '');
         Genome::Config::set_env('statsd_port', '');
@@ -56,7 +51,7 @@ use Genome::Sys;
 use Genome::Site::TGI::Extension::Sys;      # extensions to Genome::Sys
 
 BEGIN {
-    unless (Genome::Config::get('dev_mode')) {
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
         require Genome::Site::TGI::Extension::Logger;
         Genome::Site::TGI::Extension::Logger->import();
     }
