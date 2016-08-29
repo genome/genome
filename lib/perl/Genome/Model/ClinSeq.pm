@@ -1375,9 +1375,9 @@ sub microarray_cnv_op {
         destination_property => 'outdir',
     );
     $workflow->connect_input(
-        input_property       => 'model',
+        input_property       => 'build',
         destination          => $microarray_cnv_op,
-        destination_property => 'clinseq_model',
+        destination_property => 'clinseq_build',
     );
     $workflow->connect_input(
         input_property       => 'annotation_build',
