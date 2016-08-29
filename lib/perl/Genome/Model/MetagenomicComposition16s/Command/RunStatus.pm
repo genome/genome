@@ -24,7 +24,7 @@ class Genome::Model::MetagenomicComposition16s::Command::RunStatus {
     has_optional => [
         processing_profile => {
             is => 'Genome::ProcessingProfile::MetagenomicComposition16s',
-            doc => 'Limit models to this processing profile. Currently, runs are built with both RDP 2.2 (2571784) and RDP 2.5 (2752939). The default for this commmand is 2571784 (RDP 2.2). Any MC16s processing profile can be specified.'
+            doc => 'Limit models to this processing profile. Currently, runs are built with both RDP 2.2 (2571784) and RDP 2.5 (2752939). The default for this command is 2571784 (RDP 2.2). Any MC16s processing profile can be specified.'
         },
         separator => {
             is => 'Text',

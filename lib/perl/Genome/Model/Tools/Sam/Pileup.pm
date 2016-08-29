@@ -83,7 +83,7 @@ sub execute {
         die $self->error_message("Could not convert region file into view limiting file..");
     }
 
-    #set up the appropriate region/view files for the commmand
+    #set up the appropriate region/view files for the command
     if(defined($self->region_file)){
         if(Genome::Sys->file_is_gzipped($rf)){
             $region_file = "-l <(zcat ".$rf." | awk \'BEGIN { OFS=\\\"\\t\\\"; }  { print \\\$1,\\\$2,\\\$2; }\')";

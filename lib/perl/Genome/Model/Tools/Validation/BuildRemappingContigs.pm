@@ -798,6 +798,6 @@ sub help_brief {
 
 sub help_detail {
     <<'HELP';
-This commmand attempts to generate a reference sequence containing variant contigs appropriate for read remapping to determine validation status
+This command attempts to generate a reference sequence containing variant contigs appropriate for read remapping to determine validation status
 HELP
 }
