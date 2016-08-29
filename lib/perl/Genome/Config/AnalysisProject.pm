@@ -154,4 +154,19 @@ sub environment_config_dir {
     return;
 }
 
+sub system_analysis_project {
+    my $class = shift;
+
+    my $name = Genome::Config::get('system_analysis_project_name');
+    my $anp = $class->get(name => $name);
+
+    unless ($anp) {
+        $class->fatal_message(
+            'No Analysis Project found for system_analysis_project_name: %s', $name
+        );
+    }
+
+    return $anp;
+}
+
 1;

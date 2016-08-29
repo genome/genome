@@ -42,6 +42,15 @@ sub create_name {
     return Genome::Test::Factory::Util::generate_name('analysis_project_name');
 }
 
+sub setup_system_analysis_project {
+    my $class = shift;
+    my $anp = $class->setup_object();
+
+    Genome::Config::set_env('system_analysis_project_name', $anp->name);
+
+    return $anp;
+}
+
 use Genome::Config::Profile::Item;
 use Genome::Config::Parser;
 my $old_file_path_method = \&Genome::Config::Profile::Item::file_path;
