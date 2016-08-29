@@ -395,11 +395,11 @@
         <div class="box_content rounded-bottom span-24 last">
           <xsl:call-template name="genome_model_set_coverage_alignment_table">
             <xsl:with-param name="data" select="alignment-summary"/>
-            <xsl:with-param name="hidden" select="false()"/>
+            <xsl:with-param name="hidden" select="true()"/>
           </xsl:call-template>
           <xsl:call-template name="genome_model_set_coverage_alignment_table">
             <xsl:with-param name="data" select="alignment-summary-v2"/>
-            <xsl:with-param name="hidden" select="true()"/>
+            <xsl:with-param name="hidden" select="false()"/>
           </xsl:call-template>
         </div>
 
