@@ -28,7 +28,16 @@ sub unarchive_lims_data {
     if ($instrument_data->class ne 'Genome::InstrumentData::Solexa') { return 1; }
 
     my $bam_path = $instrument_data->bam_path;
-    if (-e $bam_path) { return 1; }
+    if (defined($bam_path)) {
+        if (-e $bam_path) {
+            return 1;
+        }
+    } else {
+        if (defined($instrument_data->archive_path)) {
+            $self->warning_message('Skipping old data with archive_path: '. $instrument_data->__display_name__);
+            return 1;
+        }
+    }
 
     $self->status_message('Working on missing BAM %s for instrument data %s', $bam_path, $instrument_data->id);
 
