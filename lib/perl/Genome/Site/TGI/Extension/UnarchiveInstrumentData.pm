@@ -46,6 +46,10 @@ sub unarchive_lims_data {
     my @bam_dirnames = File::Spec->splitdir($bam_dirname);
 
     my ($unarchived_bam_path) = glob(File::Spec->join($dv->mount_path,'*','csf_*',$bam_filename));
+    if (!defined($unarchived_bam_path)) {
+        # Try one more tine allowing for an additional directory in the path, ie. "condensed"
+        ($unarchived_bam_path) = glob(File::Spec->join($dv->mount_path,'*','*','csf_*',$bam_filename));
+    }
     unless ($unarchived_bam_path) {
         Genome::Sys->shellcmd(
             cmd => [$lims_unarchive_script_path,$instrument_data->id,$dv->mount_path],
