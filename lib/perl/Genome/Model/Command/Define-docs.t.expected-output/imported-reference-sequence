@@ -5,7 +5,7 @@
     --processing-profile-id=? --species-name=? --allosome-names=? [--add-to-projects=?[,?]]
     [--append-to=?] [--instrument-data=?[,?]] [--subject=?] [--combine=?[,?]] [--groups=?[,?]]
     [--skip-bases-files] [--on-warning=?] [--job-dispatch=?] [--server-dispatch=?]
-    [--is-rederivable] [--build-name=?] [--sequence-uri=?] [--run-as=?]
+    [--is-rederivable] [--analysis-project=?] [--build-name=?] [--sequence-uri=?] [--run-as=?]
     [--use-default-sequence-uri] [--assembly-name=?] [--desc=?] [--derived-from=?] [--prefix=?]
     [--generate-sequence-uri] [--version=?] [--model-name=?] [--subject-name=?]
 
@@ -71,6 +71,8 @@ genome model define imported-reference-sequence --species-name=human --prefix=NC
     Default value 'false' (--nois-rederivable) if not specified
   [1mnois-rederivable[0m
     Make is-rederivable 'false' 
+  [1manalysis-project[0m
+    Analysis Project to which to associate the new model (if any) 
   [1mbuild-name[0m
     human meaningful name of this build 
   [1msequence-uri[0m

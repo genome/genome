@@ -96,15 +96,15 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             default_value => 0,
             doc => 'Indicates if this reference could be rederived from other internal results or if it is an external import',
         },
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'Analysis Project to which to associate the new model (if any)',
+        },
     ],
     has_transient_optional => [
         result_build_id => {
             is => 'Text',
             doc => 'newly created build ID of reference sequence model',
-        },
-        analysis_project => {
-            is => 'Genome::Config::AnalysisProject',
-            doc => 'Analysis Project to which to associate the new model (if any)',
         },
     ],
 };
@@ -323,9 +323,9 @@ sub _get_or_create_model {
             'name' => $self->model_name,
             'is_rederivable' => $self->is_rederivable,
         );
-        if($self->analysis_project) {
-            $model->add_analysis_project_bridge(analysis_project => $self->analysis_project);
-        }
+
+        my $anp = $self->_resolve_analysis_project;
+        $model->add_analysis_project_bridge(analysis_project => $anp);
 
         if($model) {
             if(my @problems = $model->__errors__){
@@ -341,6 +341,12 @@ sub _get_or_create_model {
     }
 
     return $model;
+}
+
+sub _resolve_analysis_project {
+    my $self = shift;
+
+    return $self->analysis_project // Genome::Config::AnalysisProject->system_analysis_project;
 }
 
 sub _create_build {

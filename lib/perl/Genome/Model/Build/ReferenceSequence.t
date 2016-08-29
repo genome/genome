@@ -12,6 +12,7 @@ use above 'Genome';
 use Test::More;
 use Test::Exception;
 use Test::MockObject::Extends;
+use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
 Genome::Report::Email->silent();
@@ -30,6 +31,8 @@ my $taxon = Genome::Taxon->get(name => 'human');
 my $patient = Genome::Individual->create(name => "test-patient", common_name => 'testpat', taxon => $taxon);
 my $sample = Genome::Sample->create(name => "test-patient", common_name => 'tumor', source => $patient);
 ok($sample, 'created sample');
+
+Genome::Test::Factory::AnalysisProject->setup_system_analysis_project;
 
 my $sequence_uri = "http://genome.wustl.edu/foo/bar/test.fa.gz";
 

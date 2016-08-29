@@ -13,6 +13,8 @@ use above 'Genome';
 use Test::More;
 use File::Spec;
 
+use Genome::Test::Factory::AnalysisProject;
+
 Genome::Report::Email->silent();
 
 my $guard = Genome::Config::set_env('workflow_builder_backend', 'inline');
@@ -22,6 +24,8 @@ if(Genome::Sys->arch_os() =~ '64') {
 } else {
     plan skip_all => 'Must be run on a 64-bit machine',
 }
+
+Genome::Test::Factory::AnalysisProject->setup_system_analysis_project;
 
 use_ok('Genome::Model::Command::Define::ImportedReferenceSequence');
 
