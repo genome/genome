@@ -164,13 +164,22 @@ sub lift_over {
         $self->error_message('No chain file resource found for LiftOver.');
         die $self->error_message;
     }
+    my $lifted_bed = Genome::Sys->create_temp_file_path();
     my $lift_over_cmd = Genome::Model::Tools::LiftOver->create(
         source_file => $source_bed,
         chain_file => $chain_file,
-        destination_file => $destination_bed,
+        destination_file => $lifted_bed,
     );
     unless($lift_over_cmd->execute()) {
         die $self->error_message('LiftOver failed: ' . $lift_over_cmd->error_message);
+    }
+
+    my $sort_cmd = Genome::Model::Tools::Joinx::Sort->create(
+        input_files => [$lifted_bed],
+        output_file => $destination_bed,
+    );
+    unless($sort_cmd->execute) {
+        $self->fatal_message('Failed to sort lifted bed.');
     }
 
     return $destination_bed;
