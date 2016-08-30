@@ -5540,7 +5540,7 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'annotation-build-id=s',
         undef,
-        'clinseq-model=s',
+        'clinseq-build=s',
         undef,
         'min-cnv-diff=s',
         undef,
