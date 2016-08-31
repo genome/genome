@@ -60,6 +60,11 @@ class Genome::Model::Command::Define::ImportedVariationList {
             id_by => 'processing_profile_id',
             doc => 'the processing profile to use (normally selected automatically)',
         },
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'Analysis Project to which to associate the new model (if any)',
+        },
+
     ],
     has_transient_optional => [
         _reference => {
@@ -214,9 +219,18 @@ sub _get_or_create_model {
             $self->error_message("Failed to create a new model.");
             return;
         }
+
+        my $anp = $self->_resolve_analysis_project;
+        $model->add_analysis_project_bridge(analysis_project => $anp);
     }
 
     return $model;
+}
+
+sub _resolve_analysis_project {
+    my $self = shift;
+
+    return $self->analysis_project // Genome::Config::AnalysisProject->system_analysis_project;
 }
 
 sub _create_build {

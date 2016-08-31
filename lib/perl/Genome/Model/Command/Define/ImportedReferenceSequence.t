@@ -11,6 +11,8 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 
+use Genome::Test::Factory::AnalysisProject;
+
 Genome::Report::Email->silent();
 
 if (Genome::Sys->arch_os ne 'x86_64') {
@@ -26,6 +28,8 @@ my $taxon = Genome::Taxon->get(name => 'human');
 my $patient = Genome::Individual->create(name => "test-patient", common_name => 'testpat', taxon => $taxon);
 my $sample = Genome::Sample->create(name => "test-patient", common_name => 'tumor', source => $patient);
 ok($sample, 'created sample');
+
+Genome::Test::Factory::AnalysisProject->setup_system_analysis_project;
 
 my $sequence_uri = "http://genome.wustl.edu/foo/bar/test.fa.gz";
 

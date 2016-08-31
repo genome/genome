@@ -9,6 +9,7 @@ BEGIN {
 use above "Genome";
 use Test::More tests => 43;
 use Data::Dumper;
+use Genome::Test::Factory::AnalysisProject;
 
 Genome::Report::Email->silent();
 
@@ -19,6 +20,9 @@ my @species_names = ('human', 'mouse');
 my @versions = ('12_34', '56_78');
 my $ann_pp = Genome::ProcessingProfile::ImportedAnnotation->create(name => 'test_ann_pp', annotation_source => 'test_source');
 my $data_dir = File::Temp::tempdir('ImportedAnnotationTest-XXXXX', CLEANUP => 1, TMPDIR => 1);
+
+Genome::Test::Factory::AnalysisProject->setup_system_analysis_project;
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object;
 
 my %samples;
 for my $sn (@species_names) {
@@ -38,6 +42,7 @@ my $ann_model = Genome::Model::ImportedAnnotation->create(
     reference_sequence  => $rbuilds{'human'}->[0]->model,
 );
 ok($ann_model, "created annotation model");
+$anp->add_model_bridge(model_id => $ann_model->id);
 
 my $abuild = Genome::Model::Build::ImportedAnnotation->create(
     model               => $ann_model,

@@ -2,9 +2,9 @@
 [4mUSAGE[0m
  [1mgenome model define imported-variation-list[0m [--auto-assign-inst-data] [--source-name=?]
     [--auto-build-alignments] [--snv-result=?] [--indel-result=?] [--sv-result=?] [--cnv-result=?]
-    [--job-dispatch=?] [--server-dispatch=?] [--processing-profile=?] --version=?
-    [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--prefix=?]
-    [--model-name=?] [--run-as=?]
+    [--job-dispatch=?] [--server-dispatch=?] [--processing-profile=?] [--analysis-project=?]
+    --version=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
+    [--prefix=?] [--model-name=?] [--run-as=?]
 
 [4mSYNOPSIS[0m
   genome model define imported-variation-list \
@@ -62,6 +62,8 @@
     Default value 'inline' if not specified
   [1mprocessing-profile[0m
     the processing profile to use (normally selected automatically) 
+  [1manalysis-project[0m
+    Analysis Project to which to associate the new model (if any) 
 
 [4mDESCRIPTION[0m
     This defines a new genome model for the specified subject, using the specified processing

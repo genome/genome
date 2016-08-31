@@ -31,6 +31,11 @@ class Genome::Model::Command::Define::ImportedAnnotation {
         annotation_import_version => {
             is => 'Text',
         },
+        analysis_project => {
+            is_optional => 1,
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'An Analysis Project to which to associate the new annotation data (if applicable)',
+        },
     ],
     has_transient => [
         result_build_id => {
@@ -109,7 +114,17 @@ sub _get_or_create_model {
                                                 );
     $model->species_name($self->species_name);
     $model->annotation_import_version($self->annotation_import_version);
+
+    my $anp = $self->_resolve_analysis_project;
+    $model->add_analysis_project_bridge(analysis_project => $anp);
+
     return $model;
+}
+
+sub _resolve_analysis_project {
+    my $self = shift;
+
+    return $self->analysis_project // Genome::Config::AnalysisProject->system_analysis_project;
 }
 
 sub _create_build {

@@ -11,6 +11,7 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 use File::Spec;
+use Genome::Test::Factory::AnalysisProject;
 
 Genome::Report::Email->silent();
 
@@ -27,6 +28,8 @@ my $data_dir = Genome::Sys->create_temp_directory();
 
 my $pp = Genome::ProcessingProfile::ImportedReferenceSequence->create(name => 'test_rederivable_ref_pp');
 my $taxon = Genome::Taxon->get(name => 'human');
+
+Genome::Test::Factory::AnalysisProject->setup_system_analysis_project;
 
 my $fasta_file = File::Spec->join($data_dir, 'test.fa');
 Genome::Sys->write_file($fasta_file,">TEST_1\nNANANANANA\n");

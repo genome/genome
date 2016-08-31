@@ -5,6 +5,8 @@ use warnings;
 use above "Genome";
 use Test::More;
 
+use Genome::Test::Factory::AnalysisProject;
+
 Genome::Report::Email->silent();
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -20,6 +22,7 @@ EOS
 my $pkg = "Genome::Model::ImportedVariationList::Command::ImportVariants";
 use_ok("Genome::Model::ImportedVariationList::Command::ImportDbsnpBuild");
 
+Genome::Test::Factory::AnalysisProject->setup_system_analysis_project;
 my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get_by_name('g1k-human-build37');
 
 my $cmd = $pkg->create(

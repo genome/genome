@@ -12,9 +12,13 @@ use above 'Genome';
 
 use Test::More tests => 8;
 
+use Genome::Test::Factory::AnalysisProject;
+
 Genome::Report::Email->silent();
 
 use_ok('Genome::Model::Command::Define::ImportedVariationList');
+
+Genome::Test::Factory::AnalysisProject->setup_system_analysis_project;
 
 my $ref = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
 my $sample = Genome::Sample->create(
