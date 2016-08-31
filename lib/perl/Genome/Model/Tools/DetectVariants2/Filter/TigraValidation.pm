@@ -87,10 +87,6 @@ class Genome::Model::Tools::DetectVariants2::Filter::TigraValidation {
             is => 'FilePath',
             default => $GENOME_PATH . '/Model/Tools/Sv/MergeAssembledCallsets.pl',
         },
-        sv_annot_path => {
-            is => 'FilePath',
-            default => $GENOME_PATH . '/Model/Tools/Sv/BreakAnnot.pl',
-        },
         # TODO Either point to a specific version of phrap or (even better) use the crossmatch tool
         crossmatch_path => {
             is => 'FilePath',
