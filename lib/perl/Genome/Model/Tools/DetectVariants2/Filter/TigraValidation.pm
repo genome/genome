@@ -492,7 +492,6 @@ sub _filter_variants {
                 sv_format   => 'merged',
                 annot_build => $ref_build_id,
             );
-            $annot_params{repeat_mask} = 1 if $ref_build_id eq '36';
 
             my $annot = Genome::Model::Tools::Sv::SvAnnot->create(%annot_params);
             my $rv = $annot->execute;

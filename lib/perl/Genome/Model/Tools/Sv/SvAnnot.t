@@ -10,7 +10,7 @@ use File::Temp;
 
 use_ok('Genome::Model::Tools::Sv::SvAnnot');
 
-my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sv-SvAnnot/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sv-SvAnnot/v2/';
 my $tmp_dir = Genome::Sys->create_temp_directory();
 
 for my $type (qw(36_standard 37_merged)) {
@@ -25,7 +25,6 @@ for my $type (qw(36_standard 37_merged)) {
         output_file => $out_file,
         annot_build => $build,
     );
-    $params{repeat_mask} = 1 if $build == 36;
 
     my $annot_valid = Genome::Model::Tools::Sv::SvAnnot->create(%params);
    

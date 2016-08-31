@@ -22,11 +22,6 @@ class Genome::Model::Tools::Sv::SvAnnot {
  
     ],
     has_optional => [
-        repeat_mask => {
-            type => 'Boolean',
-            doc  => 'run UCSC repeat masker annotation using mysql DB access for human build36 only',
-            default => 0,
-        },
         sv_format => {
             type => 'String',
             doc  => 'The format of input sv file, chr1, pos1, chr2, pos2. default is standard: 1,2,4,5',
@@ -51,21 +46,6 @@ class Genome::Model::Tools::Sv::SvAnnot {
             type => 'Integer',
             doc  => 'Proximity of breakpoints to segmental duplication (50 bp)',
             default_value => 50,
-        },
-        length_to_repeat => {
-            type => 'Integer',
-            doc  => 'Look for repeat annotation within +- flanking bp of breakpoint (200 bp)',
-            default_value => 200,
-        },
-        overlap_repeat_size => {
-            type => 'Integer',
-            doc  => 'Overlapped size of +- flanking breakpoint and masked repeat (5 bp)',
-            default_value => 5,
-        },
-        masked_repeat_size => {
-            type => 'Integer',
-            doc  => 'size of masked repeat used for overlap_repeat_size (100 bp)',
-            default_value => 100,
         },
         overlap_fraction => {
             type => 'Number',
@@ -140,13 +120,6 @@ sub _get_annot_files {
 sub execute {
     my $self = shift;
     
-    if ($self->repeat_mask) {
-        unless ($self->annot_build eq '36') {
-            $self->error_message('Currently the repeat mask mysql UCSC DB only set for human build 36');
-            die;
-        }
-    }
-
     my $col_index   = $self->_get_column_index;
     my $annot_files = $self->_get_annot_files;
     my $specify_chr = $self->specify_chr;
@@ -291,31 +264,10 @@ sub execute {
                 }
             }
         }
-        #Prepare repeatMasker table
-        if ($self->repeat_mask) {
-            my $db   = "ucsc";
-            my $user = "mgg_admin";
-            my $password = "c\@nc3r";
-            my $dataBase = "DBI:mysql:$db:mysql2";
-            my $dbh = DBI->connect($dataBase, $user, $password) || die "ERROR: Could not connect to database: $! \n";
-
-            my $table = "chr$chr"."_rmsk";
-            my $query = 
-                "SELECT genoStart, genoEnd, repClass
-                FROM $table
-                WHERE genoEnd >= ? && genoStart <= ?
-                ORDER BY genoStart";
-            $RPMK{$chr} = $dbh->prepare($query) || die "Could not prepare statement '$query': $DBI::errstr \n";
-        }
     }
 
     if (defined $header) {
-        if ($self->repeat_mask) {
-            $out_fh->print("$header\tRefseqGene\tDataBases\tSegDup\tRepeat\tShortIndex\n");
-        }
-        else {
-            $out_fh->print("$header\tRefseqGene\tDataBases\tSegDup\tShortIndex\n");
-        }
+        $out_fh->print("$header\tRefseqGene\tDataBases\tSegDup\tShortIndex\n");
     }
 
     for my $sv (@SVs) {
@@ -330,11 +282,9 @@ sub execute {
             my $dbSNPAnnot    = $self->GetVarAnnotation(@pos, \%dbBK2s);
             my $dbVarAnnot    = $self->GetVarAnnotation(@pos, \%dbVarBK2s);
             my $dbSegDupAnnot = $self->GetSegDupAnnotation(@pos, \%SBKs);
-            my $repeatAnnot   = $self->GetRepeatMaskerAnnotation(@pos, \%RPMK) if $self->repeat_mask;
 
             $out_fh->printf("\t%s", join(',', $dbSNPAnnot, $dbVarAnnot));
             $out_fh->printf("\t%s", $dbSegDupAnnot);
-            $out_fh->printf("\t%s", $repeatAnnot) if $self->repeat_mask;
             $out_fh->printf("\tchr%s\:%d\-%d,chr%s\:%d\-%d",$pos[0],$pos[1]-500,$pos[1]+500,$pos[2],$pos[3]-500,$pos[3]+500);
 
             if ($pos[0] eq $pos[2]) { # $chr eq $chr2
@@ -435,54 +385,6 @@ sub GetGeneAnnotation {
     my @cgenes = keys %Cancergenes;
     $gene .= ',Cancer:'.join('|',@cgenes) if $#cgenes >= 0;
     return $gene;
-}
-
-
-sub GetRepeatMaskerAnnotation {
-    my ($self,$chr1,$pos1,$chr2,$pos2,$RPMK)=@_;
-    my ($nbrpt1,$rep1) = $self->GetBKRepeatMaskerAnnotation($chr1, $pos1, $RPMK);
-    my ($nbrpt2,$rep2) = $self->GetBKRepeatMaskerAnnotation($chr2, $pos2, $RPMK);
-    my $repeatannot = '-';
-    my $rm_size = $self->masked_repeat_size;
-
-    if ($nbrpt1>$rm_size || $nbrpt2>$rm_size) {
-        $repeatannot = sprintf "Repeat:%s-%s", $rep1 || 'NA',$rep2 ||'NA';
-    }
-    return $repeatannot;
-}
-
-
-sub GetBKRepeatMaskerAnnotation {
-    my ($self, $chr1, $pos, $RPMK) = @_;
-    if ($chr1 =~ /[MN]/) {#MT, N_xxxx?
-        return (0, undef);
-    }
-
-    my $rp_length  = $self->length_to_repeat;
-    my $rp_overlap = $self->overlap_repeat_size;
-
-    my $start = $pos - $rp_length;
-    my $stop  = $pos + $rp_length;
-    my $db_prepare = $RPMK->{$chr1};
-    $db_prepare->execute($start, $stop) || die "Could not execute statement for repeat masker table with (chr$chr1, $start, $stop): $DBI::errstr \n";
-    
-    my %repCount;
-    while (my ($chrStart, $chrStop, $repClass) = $db_prepare->fetchrow_array()) {
-        my $start_last = $chrStart > $start ? $chrStart : $start;
-        my $stop_last  = $chrStop < $stop   ? $chrStop  : $stop;
-        $repCount{$repClass} = $stop_last-$start_last+1 if $start_last-$rp_overlap <= $pos && $pos <= $stop_last+$rp_overlap;
-    }
-    
-    my @sortedrepClass;
-    my $maxClass;
-    my $maxClassCount=0;
-    for (keys %repCount) {
-        if (defined $repCount{$_} && $repCount{$_}>$maxClassCount) {
-            $maxClass = $_;
-            $maxClassCount = $repCount{$_};
-        }
-    }
-    return ($maxClassCount, $maxClass);
 }
 
 
