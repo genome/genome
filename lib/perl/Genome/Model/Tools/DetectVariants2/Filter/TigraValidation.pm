@@ -87,10 +87,6 @@ class Genome::Model::Tools::DetectVariants2::Filter::TigraValidation {
             is => 'FilePath',
             default => $GENOME_PATH . '/Model/Tools/Sv/MergeAssembledCallsets.pl',
         },
-        sv_annot_path => {
-            is => 'FilePath',
-            default => $GENOME_PATH . '/Model/Tools/Sv/BreakAnnot.pl',
-        },
         # TODO Either point to a specific version of phrap or (even better) use the crossmatch tool
         crossmatch_path => {
             is => 'FilePath',
@@ -492,7 +488,6 @@ sub _filter_variants {
                 sv_format   => 'merged',
                 annot_build => $ref_build_id,
             );
-            $annot_params{repeat_mask} = 1 if $ref_build_id eq '36';
 
             my $annot = Genome::Model::Tools::Sv::SvAnnot->create(%annot_params);
             my $rv = $annot->execute;
