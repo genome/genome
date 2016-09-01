@@ -6,9 +6,6 @@ use warnings;
 use Genome;
 
 my $DEFAULT_VERSION = '58_37c';
-my $DEFAULT_HOSTNAME = 'mysql1.gsc.wustl.edu';
-my $DEFAULT_USERNAME = 'mse';
-my $DEFAULT_PASSWORD = '';
 
 class Genome::Model::Tools::Ensembl::Base {
     is  => 'Command::V2',
@@ -59,15 +56,15 @@ sub default_version {
 }
 
 sub default_hostname {
-    return $DEFAULT_HOSTNAME;
+    return Genome::Config::get('db_ensembl_host');
 }
 
 sub default_username {
-    return $DEFAULT_USERNAME;
+    return Genome::Config::get('db_ensembl_user');
 }
 
 sub default_password {
-    return $DEFAULT_PASSWORD;
+    return Genome::Config::get('db_ensembl_pass');
 }
 
 sub api_version {
