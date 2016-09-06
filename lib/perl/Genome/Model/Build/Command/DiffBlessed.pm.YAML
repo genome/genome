@@ -15,6 +15,6 @@ apipe-test-rnaseq: f7c55980a3d3484f9f895834d22fe721
 apipe-test-single-sample-genotype: adbc003ccb3a4af89770731db5959076
 apipe-test-somatic-validation-sv: fca9bd3a029d48099f07092c19989d16
 apipe-test-somatic-validation: 750be33ae59f4a588b87a587d9df22bb
-apipe-test-somatic-variation-short: e1c9bd1b11a94d55855d2d9ad6fedc0b
+apipe-test-somatic-variation-short: 82be34202d0141f3ae2b2c37e0ec2b7d
 apipe-test-somatic-variation-sv-detection: 2a046f43a086479b9d6c957b9d977312
 apipe-test-somatic-variation: b396a01c42ea42249422e1a69f10195d 
