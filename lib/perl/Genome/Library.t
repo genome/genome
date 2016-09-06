@@ -9,7 +9,7 @@ use warnings;
 
 use above "Genome";
 
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 subtest 'use and roles' => sub{
     plan tests => 2;
@@ -21,9 +21,12 @@ subtest 'use and roles' => sub{
 
 my $library;
 subtest 'create' => sub{
-    plan tests => 5;
+    plan tests => 4;
 
-    my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
+    my $sample = Genome::Sample->create(
+        name => '__TEST_SAMPLE__',
+        extraction_type => 'total rna',
+    );
     ok($sample, 'create sample');
 
     $library = Genome::Library->create(
@@ -32,14 +35,22 @@ subtest 'create' => sub{
         original_insert_size => '1kb',
         library_insert_size => '300-500',
         protocol => 'karate chop',
-        transcript_strand => 'unstranded',
     );
     isa_ok($library, 'Genome::Library');
     is($library->name, $sample->name . "-extlibs", "name is what is expected");
-    ok($library->is_rna, 'is_rna true when transcript strand is set');
 
     my $commit = eval{ UR::Context->commit; };
     ok($commit, 'commit');
+
+};
+
+subtest 'is_rna' => sub{
+    plan tests => 2;
+
+    is($library->is_rna, 0, 'is NOT rna when transcript_strand is NOT set');
+
+    $library->transcript_strand('unstranded');
+    is($library->is_rna, 1, 'is rna when transcript_strand is set');
 
 };
 
