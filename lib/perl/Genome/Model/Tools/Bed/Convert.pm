@@ -199,14 +199,6 @@ sub format_line {
     }
     return join("\t", @values);
 }
-# if (($F[3] =~ /^0/) || ($F[3] =~ /^\-/)){ #indel INS
-#     $F[2] = $F[2]+1;
-#     print join("\t",($F[0],$F[1],$F[2],$a[0],$a[1]));
-# } elsif (($F[3] =~ /0$/) || ($F[3] =~ /\-$/)){ #indel DEL
-#     $F[1] = $F[1]+1;
-#     print join("\t",($F[0],$F[1],$F[2],$a[0],$a[1]));
-# } else { #SNV
-#     $F[1] = $F[1]+1;
 
 # We only need to increment positions when requesting one-based output. DEL or SNP gets start+1, INS gets stop+1
 sub should_increment_start {
