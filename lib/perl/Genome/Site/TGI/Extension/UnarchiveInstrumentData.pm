@@ -84,7 +84,7 @@ sub unarchive_lims_data {
             Genome::Sys::CommitAction->create(
                 on_commit => sub {
                     unless(Genome::Sys->remove_directory_tree($unarchived_bam_dirname)) {
-                        $self->fatal_message('Failed to remove directory: %s', $unarchived_bam_dirname);
+                        $self->warning_message('Failed to remove directory: %s', $unarchived_bam_dirname);
                     }
                 }
             );
