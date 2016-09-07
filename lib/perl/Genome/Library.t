@@ -23,10 +23,7 @@ my $library;
 subtest 'create' => sub{
     plan tests => 4;
 
-    my $sample = Genome::Sample->create(
-        name => '__TEST_SAMPLE__',
-        extraction_type => 'total rna',
-    );
+    my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
     ok($sample, 'create sample');
 
     $library = Genome::Library->create(
@@ -45,12 +42,21 @@ subtest 'create' => sub{
 };
 
 subtest 'is_rna' => sub{
-    plan tests => 2;
+    plan tests => 4;
 
-    is($library->is_rna, 0, 'is NOT rna when transcript_strand is NOT set');
+    $library->sample->extraction_type('dna');
+    is($library->is_rna, 0, 'is NOT rna when extraction_type is dna and transcript_strand is UNDEF');
 
     $library->transcript_strand('unstranded');
-    is($library->is_rna, 1, 'is rna when transcript_strand is set');
+    is($library->is_rna, 1, 'is rna when extraction_type is DNA and transcript_strand is unstranded');
+
+    $library->sample->extraction_type('total rna');
+    $library->transcript_strand(undef);
+    is($library->is_rna, 1, 'is rna when extraction_type is total rna and transcript_strand is UNDEF');
+
+    $library->transcript_strand('unstranded');
+    is($library->is_rna, 1, 'is rna when extraction_type is total rna and transcript_strand is unstranded');
+
 
 };
 
