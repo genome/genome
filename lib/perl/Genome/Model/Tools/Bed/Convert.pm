@@ -185,6 +185,9 @@ sub format_line {
     if ($self->should_increment_start($values[3], $values[4])) {
         $values[1] += 1;
     }
+    if ($self->should_increment_stop($values[3], $values[4])) {
+        $values[2] += 1;
+    }
     splice(@values,3,2, join('/', @values[3,4]));
 
     unless($self->omit_trailing_columns){
@@ -197,16 +200,25 @@ sub format_line {
     return join("\t", @values);
 }
 
-# We only need to increment the start position when requesting one-based output and only for snvs
+# We only need to increment positions when requesting one-based output. DEL or SNP gets start+1, INS gets stop+1
 sub should_increment_start {
     my ($self, $ref, $alt) = @_;
     if ($self->one_based) {
-        if ( (length($ref) == 1) and ($ref ne '*') and
-            (length($alt) == 1) and ($alt ne '*') ) {
+        if ( ($alt eq '*') ||  #DEL
+             (length($alt) == 1 && length($ref) == 1 && ($alt ne '*')  && $ref ne '*') ) { #SNP
             return 1;
         }
     }
+    return 0;
+}
 
+sub should_increment_stop {
+    my ($self, $ref, $alt) = @_;
+    if ($self->one_based) {
+        if ( ($ref eq '*') ){
+            return 1;
+        }
+    }
     return 0;
 }
 

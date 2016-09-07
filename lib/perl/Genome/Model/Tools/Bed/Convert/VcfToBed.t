@@ -40,7 +40,7 @@ subtest 'SNV gt biallelic conversion' => sub {
     is_deeply($result, ['G', 'Y'], "bi-allelic het conversion as expected");
 };
 
-my $base_test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Bed-Convert-Vcf-To-Bed/v1/";
+my $base_test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Bed-Convert-Vcf-To-Bed/v2/";
 my $temp_base_dir = File::Temp::tempdir('VcfToBedXXXXX', CLEANUP => 1, TMPDIR => 1);
 
 subtest 'Indel Integration test' => sub {
