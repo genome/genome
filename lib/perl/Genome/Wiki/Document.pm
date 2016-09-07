@@ -27,9 +27,6 @@ class Genome::Wiki::Document {
         user          => { is => 'Text' },
     },
     has => {
-        environment => {
-             calculate => q{ Genome::Config::get('dev_mode') ? 'dev' : 'prod' },
-        },
         wiki_server_url => {
             calculate => qq{ Genome::Config::get('sys_services_wiki_url') . 'api.php' },
         },

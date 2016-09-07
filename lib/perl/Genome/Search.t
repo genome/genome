@@ -19,8 +19,6 @@ original_tests();
 done_testing();
 
 sub original_tests {
-    is(Genome::Search->environment(), 'dev', 'using dev instance of solr');
-
     my @searchable_classes = Genome::Search->searchable_classes();
     cmp_ok(scalar(@searchable_classes), '>', 1, 'found some searchable classes:');
     print Dumper \@searchable_classes;

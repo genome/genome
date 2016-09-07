@@ -26,7 +26,7 @@ my $MONTH_NAMES = month_names();
 
 
 my $lock_resource = 'gcsearch/mailman_loader';
-if (Genome::Config::get('dev_mode')) {
+if ($ENV{UR_DBI_NO_COMMIT}) {
     $lock_resource .= '_dev';
 }
 
