@@ -11,6 +11,8 @@ use warnings;
 use above "Genome";
 use Test::More;
 
+use Genome::Test::Factory::AnalysisProject;
+
 use_ok("Genome::Model::Build::Command::AbandonAndQueue") or die;
 
 class Genome::Model::Tester { is => 'Genome::ModelDeprecated', };
@@ -31,6 +33,9 @@ my $m = Genome::Model::Tester->create(
 );
 ok($m, "made a test model");
 ok(!$m->build_requested, 'build is not requested');
+
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+$anp->add_model_bridge(model_id => $m->id);
 
 my $b1 = $m->add_build();
 ok($b1, "made test build 1");

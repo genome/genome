@@ -100,7 +100,7 @@ sub execute {
     );
 
     unless($imported_variationlist_definition->execute()){
-        die($self->error_message("ImportedVariationList creation commanad failed"));
+        die($self->error_message("ImportedVariationList creation command failed"));
     }
 
     $self->build($imported_variationlist_definition->build);

@@ -13,6 +13,7 @@ BEGIN {
 use above "Genome";
 use Genome::Model;
 use Genome::Model::Build;
+use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::DiskAllocation;
 
 Genome::Report::Email->silent();
@@ -111,6 +112,9 @@ my $m = $p->add_model(
 );
 ok($m, "made a new model");
 isa_ok($m,'Genome::Model::Foo',"the model is of the correct subclass");
+
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+$anp->add_model_bridge(model_id => $m->id);
 
 # add instrument data
 my $a = $m->add_instrument_data($i);

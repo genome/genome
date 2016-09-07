@@ -10,6 +10,8 @@ use Data::Dumper;
 use Test::More tests => 34;
 use_ok('Genome::Model::Build::ImportedReferenceSequence');
 
+use Genome::Test::Factory::AnalysisProject;
+
 # create a test annotation build and a few reference sequence builds to test compatibility with
 my @species_names = ('human', 'mouse');
 my @versions = (1, 2, 3);
@@ -98,6 +100,9 @@ sub create_reference_builds {
             subject_id          => $samples{$sn}->id,
         );
         ok($ref_model, "created reference sequence model ($sn)");
+
+        my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+        $anp->add_model_bridge(model_id => $ref_model->id);
 
         for my $v (@$versions) {
             my $rs = Genome::Model::Build::ImportedReferenceSequence->create(

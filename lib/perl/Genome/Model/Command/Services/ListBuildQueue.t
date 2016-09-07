@@ -13,6 +13,7 @@ use above 'Genome';
 
 use Genome::Model::Command::Services::ListBuildQueue;
 use Genome::Test::Factory::Model::ReferenceAlignment;
+use Genome::Test::Factory::AnalysisProject;
 
 use List::MoreUtils qw(uniq);
 
@@ -38,8 +39,12 @@ do {
 };
 
 sub setup {
+    my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
     my @m = map { Genome::Test::Factory::Model::ReferenceAlignment->setup_object() } 1..3;
-    for (@m) { $_->build_requested(1) }
+    for (@m) {
+        $anp->add_model_bridge(model_id => $_->id);
+        $_->build_requested(1);
+    }
     my @model_ids = map { $_->id } @m;
     do {
         no warnings qw(once redefine);

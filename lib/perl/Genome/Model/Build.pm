@@ -1080,6 +1080,7 @@ sub validate_for_start_methods {
     # Each method should return tags.
     my @methods = (
         'validate_model_is_not_disabled',
+        'validate_model_has_analysis_project',
         # 'validate_inputs_have_values' should be checked first.
         'validate_inputs_have_values',
         'inputs_have_compatible_reference',
@@ -1119,6 +1120,21 @@ sub validate_model_is_not_disabled {
             desc => 'Model has been disabled.',
         );
     }
+    return @tags;
+}
+
+sub validate_model_has_analysis_project {
+    my $self = shift;
+    my @tags;
+
+    unless ($self->model->analysis_project) {
+        push @tags, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['model.analysis_project'],
+            desc => 'Model has no Analysis Project set.',
+        );
+    }
+
     return @tags;
 }
 

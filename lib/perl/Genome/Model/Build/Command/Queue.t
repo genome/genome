@@ -10,6 +10,8 @@ use warnings;
 use above 'Genome';
 use Test::More;
 
+use Genome::Test::Factory::AnalysisProject;
+
 use_ok('Genome::Model::Build::Command::Queue') or die;
 
 class Genome::Model::Tester { is => 'Genome::ModelDeprecated', };
@@ -29,6 +31,9 @@ my $m = Genome::Model::Tester->create(
 );
 ok($m, "made a test model");
 my $model_id = $m->id;
+
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+$anp->add_model_bridge(model_id => $model_id);
 
 my $reason = 'testing the queue command';
 my $cmd = Genome::Model::Build::Command::Queue->execute(

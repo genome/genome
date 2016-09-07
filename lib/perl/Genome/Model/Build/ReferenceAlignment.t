@@ -8,12 +8,16 @@ use Test::More tests => 5;
 
 use_ok('Genome::Model::Build::ReferenceAlignment');
 
+use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::ReferenceAlignment;
 
 my $model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
 my $other_reference = Genome::Test::Factory::Model::ReferenceAlignment->create_reference_sequence_build();
+
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+$anp->add_model_bridge(model_id => $model->id);
 
 my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 
