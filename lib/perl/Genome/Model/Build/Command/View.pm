@@ -93,7 +93,10 @@ sub write_report {
         }
     }
 
-    $self->_display_ptero_workflow($handle, $self->build->process->workflow_name);
+    my $process = $self->build->process;
+    if ($process) {
+        $self->_display_ptero_workflow($handle, $self->build->process->workflow_name);
+    }
 
     1;
 }
