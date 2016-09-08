@@ -275,8 +275,6 @@ sub input_models {
 
 sub _resolve_workflow_for_build {
     # This is called by Genome::Model::Build::start()
-    # Returns a Workflow::Operation
-    # By default, builds this from stages(), but can be overridden for custom workflow.
     my $self = shift;
     my $build = shift;
     my $lsf_queue = shift; # TODO: the workflow shouldn't need this yet
@@ -289,25 +287,9 @@ sub _resolve_workflow_for_build {
         $lsf_project = 'build' . $build->id;
     }
 
-     my @output_properties = qw/
-                                  transcript_convergence_result
-                                  differential_expression_result
-                              /;
-    if ($self->summarize_differential_expression_name) {
-        push @output_properties, 'summarize_result';
-    };
-    
-    my $workflow = Workflow::Model->create(
+    my $workflow = Genome::WorkflowBuilder::DAG->create(
         name => $build->workflow_name,
-        input_properties => ['build_id',],
-        output_properties => \@output_properties,
     );
-
-    my $log_directory = $build->log_directory;
-    $workflow->log_dir($log_directory);
-
-    my $input_connector = $workflow->get_input_connector;
-    my $output_connector = $workflow->get_output_connector;
 
     #TODO: Validate that all models have a Succeeded build or at minimum an Alignment Result and Cufflinks output
     unless ($self->_validate_rna_seq_succeeded_build) {
@@ -319,53 +301,49 @@ sub _resolve_workflow_for_build {
     my $transcript_convergence_name = $self->transcript_convergence_name;
     my $transcript_convergence_operation;
     if ($self->transcript_convergence_name eq 'cuffcompare') {
-        $transcript_convergence_operation = $workflow->add_operation(
+        $transcript_convergence_operation = Genome::WorkflowBuilder::Command->create(
             name => 'Transcript Convergence',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::DifferentialExpression::Command::Cuffcompare',
-            )
+            command => 'Genome::Model::DifferentialExpression::Command::Cuffcompare',
         );
+        $workflow->add_operation($transcript_convergence_operation);
     } elsif ($self->transcript_convergence_name eq 'cuffmerge') {
-        $transcript_convergence_operation = $workflow->add_operation(
+        $transcript_convergence_operation = Genome::WorkflowBuilder::Command->create(
             name => 'Transcript Convergence',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::DifferentialExpression::Command::Cuffmerge',
-            )
+            command => 'Genome::Model::DifferentialExpression::Command::Cuffmerge',
         );
+        $workflow->add_operation($transcript_convergence_operation);
     } else {
         die('Unsupported transcript_convergence_name: '. $self->transcript_convergence_name);
     }
 
-    $transcript_convergence_operation->operation_type->lsf_queue($lsf_queue);
-    $transcript_convergence_operation->operation_type->lsf_project($lsf_project);
-    $workflow->add_link(
-        left_operation => $input_connector,
-        left_property => 'build_id',
-        right_operation => $transcript_convergence_operation,
-        right_property => 'build_id'
+    $transcript_convergence_operation->lsf_queue($lsf_queue);
+    $transcript_convergence_operation->lsf_project($lsf_project);
+    $workflow->connect_input(
+        input_property => 'build_id',
+        destination => $transcript_convergence_operation,
+        destination_property => 'build_id'
     );
 
     # Differential Expression
     my $differential_expression_name = $self->differential_expression_name;
     my $differential_expression_operation;
     if ($self->differential_expression_name eq 'cuffdiff') {
-        $differential_expression_operation = $workflow->add_operation(
+        $differential_expression_operation = Genome::WorkflowBuilder::Command->create(
             name => 'Differential Expression',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::DifferentialExpression::Command::Cuffdiff',
-            )
+            command => 'Genome::Model::DifferentialExpression::Command::Cuffdiff',
         );
+        $workflow->add_operation($differential_expression_operation);
      } else {
          die('Unsupported differential_expression_name: '. $self->differential_expression_name);
     }
 
-    $differential_expression_operation->operation_type->lsf_queue($lsf_queue);
-    $differential_expression_operation->operation_type->lsf_project($lsf_project);
-    $workflow->add_link(
-        left_operation => $transcript_convergence_operation,
-        left_property => 'build_id',
-        right_operation => $differential_expression_operation,
-        right_property => 'build_id'
+    $differential_expression_operation->lsf_queue($lsf_queue);
+    $differential_expression_operation->lsf_project($lsf_project);
+    $workflow->create_link(
+        source => $transcript_convergence_operation,
+        source_property => 'build_id',
+        destination => $differential_expression_operation,
+        destination_property => 'build_id'
     );
 
     # Summarize Results
@@ -373,43 +351,43 @@ sub _resolve_workflow_for_build {
     if ($summarize_name) {
         my $summarize_operation;
         if ($summarize_name eq 'cummerbund') {
-            $summarize_operation = $workflow->add_operation(
+            $summarize_operation = Genome::WorkflowBuilder::DAG->create(
                 name => 'Summarize Differential Expression',
-                operation_type => Workflow::OperationType::Command->create(
-                    command_class_name => 'Genome::Model::DifferentialExpression::Command::Cummerbund',
-                )
+                command => 'Genome::Model::DifferentialExpression::Command::Cummerbund',
             );
+            $workflow->add_operation($summarize_operation);
         } else {
             die('Unsupported summarize differential_expression_name: '. $summarize_name);
         }
-        $summarize_operation->operation_type->lsf_queue($lsf_queue);
-        $summarize_operation->operation_type->lsf_project($lsf_project);
-        $workflow->add_link(
-            left_operation => $differential_expression_operation,
-            left_property => 'build_id',
-            right_operation => $summarize_operation,
-            right_property => 'build_id'
+        $summarize_operation->lsf_queue($lsf_queue);
+        $summarize_operation->lsf_project($lsf_project);
+        $workflow->create_link(
+            source => $differential_expression_operation,
+            source_property => 'build_id',
+            destination => $summarize_operation,
+            destination_property => 'build_id'
         );
-        $workflow->add_link(
-            left_operation => $summarize_operation,
-            left_property => 'result',
-            right_operation => $output_connector,
-            right_property => 'summarize_result'
+        $workflow->connect_output(
+            source => $summarize_operation,
+            source_property => 'result',
+            output_property => 'summarize_result'
         );
     }
-    
-    $workflow->add_link(
-        left_operation => $transcript_convergence_operation,
-        left_property => 'result',
-        right_operation => $output_connector,
-        right_property => 'transcript_convergence_result'
+
+    $workflow->connect_output(
+        source => $transcript_convergence_operation,
+        source_property => 'result',
+        output_property => 'transcript_convergence_result'
     );
-    $workflow->add_link(
-        left_operation => $differential_expression_operation,
-        left_property => 'result',
-        right_operation => $output_connector,
-        right_property => 'differential_expression_result'
+    $workflow->connect_output(
+        source => $differential_expression_operation,
+        source_property => 'result',
+        output_property => 'differential_expression_result'
     );
+
+    my $log_directory = $build->log_directory;
+    $workflow->recursively_set_log_dir($log_directory);
+
     return $workflow;
 }
 
