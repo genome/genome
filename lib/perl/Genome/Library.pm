@@ -144,15 +144,10 @@ sub is_rna {
 
     #fallback in case above was not set
     return 1 if Genome::Utility::List::in(
-        $self->sample->extraction_type,
-        qw(
-rna
-total rna
-cdna library
-mrna
-pooled rna
-cdna
-cDNA
+        $self->sample->extraction_type, (
+            'rna', 'total rna',
+            'cdna', 'cDNA', 'cdna library',
+            'mrna', 'pooled rna',
         )
     );
 
