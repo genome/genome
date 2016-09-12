@@ -24,7 +24,6 @@ sub unarchive_lims_data {
 
     my $lims_unarchive_script_path = $self->resolve_lims_unarchive_script_path();
 
-    my $dv = $self->volume;
     if ($instrument_data->class ne 'Genome::InstrumentData::Solexa') { return 1; }
 
     my $bam_path = $instrument_data->bam_path;
@@ -41,6 +40,7 @@ sub unarchive_lims_data {
 
     $self->status_message('Working on missing BAM %s for instrument data %s', $bam_path, $instrument_data->id);
 
+    my $dv = $self->volume;
     my ($bam_filename, $bam_dirname) = File::Basename::fileparse($bam_path);
 
     my ($unarchived_bam_path) = glob(File::Spec->join($dv->mount_path,'*','csf_*',$bam_filename));
