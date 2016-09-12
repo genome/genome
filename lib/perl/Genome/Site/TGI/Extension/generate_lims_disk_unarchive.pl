@@ -7,6 +7,11 @@ use Data::Dumper;
 use Carp qw/confess/;
 
 use GSCApp;
+App->init();
+
+unless( defined($ARGV[0]) and defined $ARGV[1] ) {
+    die "usage: $0 <analysis_id> <mount_path>";
+}
 
 my $ii = GSC::IndexIllumina->get(analysis_id => $ARGV[0]);
 unless ($ii) {
