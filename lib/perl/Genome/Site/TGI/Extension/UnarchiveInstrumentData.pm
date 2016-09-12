@@ -42,8 +42,6 @@ sub unarchive_lims_data {
     $self->status_message('Working on missing BAM %s for instrument data %s', $bam_path, $instrument_data->id);
 
     my ($bam_filename, $bam_dirname) = File::Basename::fileparse($bam_path);
-    $bam_dirname =~ s/\/$//;
-    my @bam_dirnames = File::Spec->splitdir($bam_dirname);
 
     my ($unarchived_bam_path) = glob(File::Spec->join($dv->mount_path,'*','csf_*',$bam_filename));
     if (!defined($unarchived_bam_path)) {
@@ -59,7 +57,8 @@ sub unarchive_lims_data {
 
         my ($unarchived_bam_filename,$unarchived_bam_dirname) = File::Basename::fileparse($unarchived_bam_path);
         $unarchived_bam_dirname =~ s/\/$//;
-        my $allocation_bam_dirname = File::Spec->join($allocation->absolute_path,$bam_dirnames[-1]);
+        my @unarchived_bam_dirnames = File::Spec->splitdir($unarchived_bam_dirname);
+        my $allocation_bam_dirname = File::Spec->join($allocation->absolute_path,$unarchived_bam_dirnames[-1]);
         if (-e $allocation_bam_dirname) {
             $self->warning_message('Already found allocated path, skipping: %s', $allocation_bam_dirname);
             $self->warning_message('Please remove the unarchived path: %s', $unarchived_bam_dirname);
