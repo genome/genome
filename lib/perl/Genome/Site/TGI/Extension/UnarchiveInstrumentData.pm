@@ -196,7 +196,7 @@ sub validate_bam_is_complete {
             }
         } else {
             if ($calculated_flagstat->{total_reads} ne $instrument_data->read_count) {
-                $self->fatal_message('BAM file total_reads doe snot match expected instrument data read count: %s', $bam_path);
+                $self->fatal_message('BAM file total_reads does not match expected instrument data read count: %s', $bam_path);
             }
         }
         $self->debug_message('The read count in BAM is confirmed: %s'. $bam_path);
