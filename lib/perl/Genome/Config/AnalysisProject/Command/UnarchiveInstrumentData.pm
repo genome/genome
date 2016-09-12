@@ -25,7 +25,7 @@ sub execute {
 
 
     for my $instrument_data ($anp->instrument_data) {
-        my @allocations = Genome::Disk::Allocation->get(owner_id => $instrument_data->id, owner_class_name => $instrument_data->class);
+        my @allocations = $instrument_data->disk_allocations;
 
         if (@allocations) {
             for my $allocation (@allocations) {
