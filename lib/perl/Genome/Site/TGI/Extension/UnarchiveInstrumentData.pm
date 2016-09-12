@@ -145,7 +145,7 @@ sub validate_bam_is_complete {
     my $instrument_data = shift;
 
     if (-e $bam_path .'.md5') {
-        print STDERR 'Calculating md5 for BAM: '. $bam_path ."\n";
+        $self->status_message('Calculating md5 for BAM: '. $bam_path);
         my $calculated_md5 = Genome::Sys->md5sum($bam_path);
         my $md5_fh = Genome::Sys->open_file_for_reading($bam_path .'.md5');
         my ($actual_md5) = split(/\s+/, $md5_fh->getline);
