@@ -374,4 +374,18 @@ sub is_near_soft_limit {
     return (($self->soft_limit_kb - $kb) < $threshold );
 }
 
+sub _resolve_param_value_from_text_by_name_or_id {
+    my $class = shift;
+    my $param_arg = shift;
+
+    #First try default behaviour of looking up by name or id
+    my @results = Command::V2->_resolve_param_value_from_text_by_name_or_id($class, $param_arg);
+
+    #If that didn't work, see if we were given the path for the volume
+    if(!@results) {
+        @results = $class->get(mount_path => $param_arg);
+    }
+
+    return @results;
+}
 1;
