@@ -1782,6 +1782,15 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>unarchive-instrument-data',
+    [
+      'volume=s',
+      undef,
+      'analysis-project=s',
+      undef,
+      'help!',
+      undef
+    ],
     'help!',
     undef
   ],
@@ -34954,6 +34963,15 @@ $Genome::Command::OPTS_SPEC = [
       '>complete',
       [
         'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>unarchive-instrument-data',
+      [
+        'volume=s',
+        undef,
+        'analysis-project=s',
         undef,
         'help!',
         undef
