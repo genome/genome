@@ -28,7 +28,7 @@ my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbui
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
 my $test_data = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-GatkSomaticIndel/inputs/2013-06-12";
-my $expected_data = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-GatkSomaticIndel/expected_10";
+my $expected_data = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-GatkSomaticIndel/expected_11";
 my $tumor =  $test_data.'/true_positive_tumor_validation.bam';
 my $normal = $test_data.'/true_positive_normal_validation.bam';
 
@@ -46,8 +46,8 @@ my $gatk_somatic_indel = Genome::Model::Tools::DetectVariants2::GatkSomaticIndel
         output_directory => $tmpdir, 
         mb_of_ram => 3500,
         version => 5336,
-        aligned_reads_sample => 'TEST_tumor',
-        control_aligned_reads_sample => 'TEST_normal',
+        aligned_reads_sample => 'H_GV-933124G-S.17384',
+        control_aligned_reads_sample => 'H_HI-933124G-S.9017',
         result_users => $result_users,
 );
 

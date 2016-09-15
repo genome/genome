@@ -13,15 +13,15 @@ if (Genome::Sys->arch_os ne 'x86_64') {
 use_ok('Genome::Model::Tools::Vcf::Convert::Indel::GatkSomaticIndel');
 
 my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Vcf-Convert-Indel-GatkSomaticIndel';
-my $expected_file = "$test_dir/expected.v2/indels.vcf.gz";
+my $expected_file = "$test_dir/expected.v3/indels.vcf.gz";
 my $input_file    = "$test_dir/indels.hq";
 my $output_file   = Genome::Sys->create_temp_file_path;
 
 my $command = Genome::Model::Tools::Vcf::Convert::Indel::GatkSomaticIndel->create( 
     input_file  => $input_file,
     output_file => $output_file,
-    aligned_reads_sample         => "TUMOR_SAMPLE_123",
-    control_aligned_reads_sample => "CONTROL_SAMPLE_123",
+    aligned_reads_sample         => "H_LB-667720-1006021",
+    control_aligned_reads_sample => "H_LB-667720-S.21118",
     reference_sequence_build_id  => 101947881
 );
 

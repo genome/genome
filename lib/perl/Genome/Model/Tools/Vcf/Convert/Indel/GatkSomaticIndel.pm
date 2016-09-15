@@ -10,6 +10,8 @@ class Genome::Model::Tools::Vcf::Convert::Indel::GatkSomaticIndel {
     doc => 'Generate a VCF file from GATK somatic indel output',
 };
 
+our ($N_INDEX, $T_INDEX);
+
 
 sub help_synopsis {
     <<'HELP';
@@ -62,14 +64,28 @@ sub initialize_filehandles {
 
 sub parse_line {
     my ($self, $line) = @_;
-    return if $line =~ /^#/;  #skip the header
+    
+    if ($line =~ /^#CHROM\s/) { #header
+        my @headers = split /\s+/, $line;
+        my %index = (
+            $headers[9]  => 9,
+            $headers[10] => 10,
+        );
+        ($N_INDEX, $T_INDEX) = map{$index{$self->$_}}qw(control_aligned_reads_sample aligned_reads_sample);
+    
+        unless ($N_INDEX and $T_INDEX) {
+            $self->fatal_message("Failed to get correct normal/tumor sample header for: $line");
+        }
+    }
+
+    return if $line =~ /^#/;  #skip the other vcf headers
     return unless $line =~ /SOMATIC;/; #skip non-somatic events
 
     my @columns = split /\s+/, $line;
     my @info    = split /;/, $columns[7];
 
     unless (@info == 15) {
-        die $self->error_message("line: $line got invalid info field");
+        $self->fatal_message("line: $line got invalid info field");
     }
 
     my ($n_dp)  = $info[1]  =~ /N_DP=(\S+)$/;
@@ -83,11 +99,11 @@ sub parse_line {
     $t_dp4 = _rearrange($t_dp4);
 
     unless ($n_dp4 and $t_dp4) {
-        die $self->error_message("Failed to get either normal dp4 or tumor dp4 for line: $line");
+        $self->fatal_message("Failed to get either normal dp4 or tumor dp4 for line: $line");
     }
 
-    my ($t_gt) = $columns[9]  =~ /^(\S+):/;
-    my ($n_gt) = $columns[10] =~ /^(\S+):/;
+    my ($t_gt) = $columns[$T_INDEX] =~ /^(\S+):/;
+    my ($n_gt) = $columns[$N_INDEX] =~ /^(\S+):/;
 
     #Now construct new line
     $columns[6]  = 'PASS';
