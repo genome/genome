@@ -59,7 +59,7 @@ sub parse_line {
     my $format = "GT";
     my $sample = "1";
 
-    my $vcf_line = join("\t", $chr, $pos1, $id, $ref, $alt, $qual, $filter, $info, $format, $sample);
+    my $vcf_line = join("\t", $chr, $pos, $id, $ref, $alt, $qual, $filter, $info, $format, $sample);
 
     return $vcf_line;
 }
