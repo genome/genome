@@ -66,10 +66,6 @@ class Genome::WorkOrder {
             to => 'external_contact_name',
             is_many => 0
         },
-        estimate_id => {
-            is => 'Text',
-            len => 32,
-        },
         is_test => {
             is => 'Integer',
             len => 1,
