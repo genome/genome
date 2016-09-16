@@ -25,11 +25,12 @@ my $refbuild_id = 101947881;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
-my $test_base_dir = Genome::Utility::Test->data_dir($pkg);
-my $region_file   = File::Spec->join($test_base_dir, 'region_file.bed');
+my $test_base_dir  = Genome::Utility::Test->data_dir($pkg);
+my ($test_input_dir, $test_out_dir) = map{$test_base_dir.'/'.$_}qw(input expected_2); 
 
-my $tumor  = File::Spec->join($test_base_dir, 'flank_tumor_sorted.bam');
-my $normal = File::Spec->join($test_base_dir, 'flank_normal_sorted.bam');
+my $region_file = File::Spec->join($test_input_dir, 'region_file.bed');
+my $tumor       = File::Spec->join($test_input_dir, 'flank_tumor_sorted.bam');
+my $normal      = File::Spec->join($test_input_dir, 'flank_normal_sorted.bam');
 
 my $test_working_dir = Genome::Sys->create_temp_directory();
 
@@ -58,13 +59,13 @@ subtest 'execute' => sub {
 
     for my $output_basename qw(indels.hq indels.hq.bed) {
         compare_ok(
-            File::Spec->join($test_base_dir, $output_basename),
+            File::Spec->join($test_out_dir, $output_basename),
             File::Spec->join($test_working_dir, $output_basename),
             "$output_basename as expected"
         );
     }
     my $differ = Genome::File::Vcf::Differ->new(
-        File::Spec->join($test_base_dir, 'indels.vcf.gz'), 
+        File::Spec->join($test_out_dir, 'indels.vcf.gz'), 
         File::Spec->join($test_working_dir, 'indels.vcf.gz')
     );
     my $diff = $differ->diff;
