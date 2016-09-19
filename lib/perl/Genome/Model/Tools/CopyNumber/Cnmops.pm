@@ -261,18 +261,15 @@ sub _resolve_roi_bed_file {
         return $self->roi_bed;
     }
 
+    my $intersected_bed = $self->outdir . "/tumor.normal.ROI.intersect.bed";
+
     my $tumor_roi_bed;
     my $normal_roi_bed;
     if ($self->clinseq_model && $self->clinseq_model->exome_model) {
         my $exome_model = $self->clinseq_model->exome_model;
         if ($exome_model->class eq 'Genome::Model::SomaticValidation') {
-            # Dump Tumor BED
-            $tumor_roi_bed = Genome::Sys->create_temp_file_path();
-            $exome_model->last_succeeded_build->coverage_stats_result->dump_bed_file($tumor_roi_bed);
-
-            # Dump Normal BED
-            $normal_roi_bed = Genome::Sys->create_temp_file_path();
-            $exome_model->last_succeeded_build->control_coverage_stats_result->dump_bed_file($normal_roi_bed);
+            $exome_model->last_succeeded_build->coverage_stats_result->dump_bed_file($intersected_bed);
+            return $intersected_bed;
         }
         elsif ($exome_model->class eq 'Genome::Model::SomaticVariation') {
             $tumor_roi_bed  = $self->_resolve_roi_bed_file_for_refalign($exome_model->tumor_model);
@@ -287,7 +284,7 @@ sub _resolve_roi_bed_file {
             $normal_roi_bed = $self->_resolve_roi_bed_file_for_refalign($self->normal_refalign);
         }
     }
-    my $intersected_bed = $self->outdir . "/tumor.normal.ROI.intersect.bed";
+
     $self->intersect_bed($tumor_roi_bed, $normal_roi_bed, $intersected_bed);
     return $intersected_bed;
 }
