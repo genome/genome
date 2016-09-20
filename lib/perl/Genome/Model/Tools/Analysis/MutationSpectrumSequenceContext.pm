@@ -140,6 +140,9 @@ sub execute {
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R", r_session_info => 1);
     $call->execute;
     unlink("${proportiontestFile}.4type");
+    unless (-e $temp_4type_output) {
+        Genome::Sys->touch($temp_4type_output)
+    }
     Genome::Sys->move_file($temp_4type_output, "${proportiontestFile}.4type");
 
     $self->status_message("step3: Performing proportion test on Mutation vs Background - 2type\n");
