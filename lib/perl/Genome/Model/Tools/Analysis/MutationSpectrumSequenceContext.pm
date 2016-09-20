@@ -149,6 +149,9 @@ sub execute {
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R", r_session_info => 1);
     $call->execute;
     unlink("${proportiontestFile}.2type");
+    unless (-e $temp_2type_output) {
+        Genome::Sys->touch($temp_2type_output)
+    }
     Genome::Sys->move_file($temp_2type_output, "${proportiontestFile}.2type");
 
     $self->status_message("step4: Plotting Mutation Context\n");
