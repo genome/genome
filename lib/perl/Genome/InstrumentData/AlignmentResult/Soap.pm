@@ -22,46 +22,7 @@ sub required_rusage {
 sub _run_aligner {
     my $self = shift;
 
-    my $aligner_params = $self->aligner_params || '';
-    
-    # collect filepaths
-    my $soap_path = Genome::Model::Tools::Soap::Base->path_for_soap_align_version($self->aligner_version);
-    my $ref_index = $self->reference_build->full_consensus_path('fa.index.amb');
-    $ref_index =~ s/\.amb$//; # need the .fa.index ending
-    my $output_aligned = $self->temp_scratch_directory . "/all_sequences.sam";
-    my $output_unaligned = $self->temp_scratch_directory . "/all_sequences_unaligned.fq";
-    my $log_file = $self->temp_staging_directory . "/aligner.log";
-    my @inputs = @_;
-
-    # construct command and run it
-    my $insert = '';
-    if ( @inputs == 2 ) {
-        $insert = "-b $inputs[1] -2 $output_aligned.unpaired.soap"
-    } elsif ( @inputs != 1 ) {
-        $self->error_message("Wrong number of file inputs.");
-        return 0;
-    }
-
-    my $cmd = "$soap_path $aligner_params -a $inputs[0] $insert -D $ref_index -o $output_aligned.soap -u $output_unaligned >>$log_file 2>&1";
-
-    Genome::Sys->shellcmd(
-        cmd          => $cmd,
-        input_files  => [ $ref_index, @inputs ],
-        output_files => [ "$output_aligned.soap",$output_unaligned, $log_file ],
-        skip_if_output_is_present => 0
-    );
-
-    # convert soap outputs to sam
-    my $is_paired = (@inputs == 2);
-    _soap2sam($output_aligned . ".soap", $output_aligned, $is_paired);
-    _soap2sam($output_aligned . ".unpaired.soap", $output_aligned, $is_paired) if $is_paired; # appends to $output_aligned
-
-    unless (-s $output_aligned && -s $output_unaligned){
-        $self->error_message('No aligned or unaligned sam output files were created.');
-        return 0;
-    }
-    $self->debug_message('Soap alignment finished.');
-    return 1;
+    $self->fatal_message('Generating new soap results is no longer supported.');
 }
 
 sub aligner_params_for_sam_header {
