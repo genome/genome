@@ -65,6 +65,8 @@ my $diff = sub {
     my ($line1, $line2) = @_;
     $line1 =~ s/^#Command:.*//;
     $line2 =~ s/^#Command:.*//;
+    $line1 =~ s/^#\S+((?:tumor|normal).bam)/$1/;
+    $line2 =~ s/^#\S+((?:tumor|normal).bam)/$1/;
     return $line1 ne $line2;
 };
 is(compare($expected_output, $test_out, $diff), 0, "svs.hq output as expected");
