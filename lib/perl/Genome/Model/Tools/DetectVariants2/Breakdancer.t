@@ -36,7 +36,7 @@ my $test_working_dir = "$test_base_dir/output";
 
 my $normal_bam = $test_dir . '/normal.bam';
 my $tumor_bam  = $test_dir . '/tumor.bam';
-my $cfg_file   = $test_dir . '/breakdancer_config';
+my $cfg_file   = processed_cfg_file($test_dir, 'breakdancer_config');
 
 my $chromosome = 22;
 my $test_out   = $test_working_dir . '/' . $chromosome . '/svs.hq.'.$chromosome;
@@ -95,7 +95,7 @@ my $no_ctx_working_dir = "$test_base_dir/output2";
 
 my $no_ctx_normal_bam = $test_dir . '/noctx.chr22.tst1_bl.bam';
 my $no_ctx_tumor_bam  = $test_dir . '/noctx.chr22.tst1.bam';
-my $no_ctx_cfg_file   = $test_dir . '/no_ctx_bam_cfg';
+my $no_ctx_cfg_file   = processed_cfg_file($test_dir, 'no_ctx_bam_cfg');
 my $command1 = Genome::Model::Tools::DetectVariants2::Breakdancer->create(
     reference_build_id => $refbuild_id,
     aligned_reads_input => $no_ctx_tumor_bam,
@@ -112,3 +112,26 @@ $command1->dump_status_messages(1);
 ok($command1->execute, 'Executed `gmt detect-variants2 breakdancer` command for ctx');
 
 done_testing();
+
+sub processed_cfg_file {
+    my $test_dir = shift;
+    my $cfg_name = shift;
+
+    my @cfg = Genome::Sys->read_file("$test_dir/$cfg_name");
+
+    my $processed_cfg_path = Genome::Sys->create_temp_file_path;
+    Genome::Sys->write_file(
+        $processed_cfg_path,
+        map { _process_cfg_line($test_dir, $_) } @cfg
+    );
+
+    return $processed_cfg_path;
+}
+
+sub _process_cfg_line {
+    my $test_dir = shift;
+    my $line = shift;
+
+    $line =~ s/^#\S*((?:tumor|normal).bam)/#$test_dir\/$1/;
+    return $line;
+}
