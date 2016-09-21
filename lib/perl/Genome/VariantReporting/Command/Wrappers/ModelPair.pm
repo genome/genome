@@ -178,7 +178,7 @@ sub generate_translations_file {
     # TODO: There has to be a better way...
     $feature_list_ids{AML_RMG} = '0e4973c600244c3f804d54bee6f81145';
     $translations->{feature_list_ids} = \%feature_list_ids;
-    $translations->{homopolymer_list_id} = '696318bab30d47d49fab9afa845691b7';
+    $translations->{homopolymer_list_id} = '7f05e8fad6b6465a9f5bd6155dc88135';
 
     $translations->{reference_fasta} = $self->reference_sequence_build->full_consensus_path("fa");
 
