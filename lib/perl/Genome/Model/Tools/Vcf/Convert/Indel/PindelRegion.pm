@@ -28,13 +28,15 @@ sub execute {
     my $out_vcf = Genome::File::Vcf::Writer->new($self->output_file, $header);
 
     while (my $entry = $in_vcf->next) {
-        $entry->add_format_field('FT');
+        my $ft_str;
         if ($entry->sample_field(0, 'GT') eq '0/0' and $entry->sample_field(1, 'GT') =~ /1/) { #Somatic
-            map{$entry->set_sample_field($_, 'FT', 'PASS')}qw(0 1);
+            $ft_str = 'PASS';
         }
         else {
-            map{$entry->set_sample_field($_, 'FT', '.')}qw(0 1);
+            $ft_str = '.';
         }
+        $entry->add_format_field('FT');
+        map{$entry->set_sample_field($_, 'FT', $ft_str)}qw(0 1);
         $out_vcf->write($entry);
     }
     $out_vcf->close;
