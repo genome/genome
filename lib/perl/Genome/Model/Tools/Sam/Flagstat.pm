@@ -119,8 +119,8 @@ sub parse_file_into_hashref {
         $data{hq_reads_mapped_in_interchromosomal_pairs} = $1 if /^(\d+) (\+\s\d+\s)?with mate mapped to a different chr \(mapQ>=5\)$/;
     }
 
-    if (defined($data{reads_mapped_in_proper_pairs}) && $data{reads_mapped_in_proper_pairs} > 0) {
-        $data{reads_mapped_in_interchromosomal_pairs_percentage} = $data{reads_mapped_in_interchromosomal_pairs} / $data{reads_mapped_in_proper_pairs};
+    if (defined($data{reads_mapped_in_pair}) && $data{reads_mapped_in_pair} > 0) {
+        $data{reads_mapped_in_interchromosomal_pairs_percentage} = $data{reads_mapped_in_interchromosomal_pairs} / $data{reads_mapped_in_pair};
     }
     else {
         $data{reads_mapped_in_interchromosomal_pairs_percentage} = 'nan';
