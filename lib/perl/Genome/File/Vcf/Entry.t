@@ -279,6 +279,16 @@ subtest "add format field" => sub {
         "Expected: " . Dumper($expected_format) . "\nActual: " . Dumper($entry->format);
 };
 
+subtest "add format field (check sample_field)" => sub {
+    my @fields = ('Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', '.', 'GT:DP', '0/0:10', '0/1:20');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+    $entry->add_format_field("FT");
+    is($entry->sample_field(0, "GT"), '0/0', "GT=0/0 for sample #0");
+    is($entry->sample_field(1, "GT"), '0/1', "GT=0/1 for sample #1");
+};
+
 subtest "add format field (GT, special case)" => sub {
     my @fields = ( 'Y', 99, 'rs123', 'CGC', 'CGA,CG', '10.2', 'PASS', '.', 'DP', '10', '20');
     my $entry_txt = join("\t", @fields);
