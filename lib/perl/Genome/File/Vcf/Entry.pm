@@ -593,7 +593,8 @@ sub add_format_field {
         my $idx = scalar @{$self->{_format}};
         push @{$self->{_format}}, $field;
         my $format_idx = $self->format_field_index;
-        $self->{_format_key_to_idx} = {%$format_idx, $field => $idx};
+        $format_idx->{$field} = $idx;
+        $self->{_format_key_to_idx} = $format_idx;
         return $idx;
     }
 }
@@ -624,7 +625,7 @@ sub format_field_index {
     my ($self, $key) = @_;
     my $format_idx = $self->{_format_key_to_idx};
 
-    unless (scalar keys %$format_idx) {
+    unless (defined $format_idx and %$format_idx) {
         my @format = @{$self->{_format}};
         return unless @format;
 
