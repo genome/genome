@@ -20,7 +20,7 @@ else {
 my $pkg = 'Genome::Model::Tools::Sam::Flagstat';
 use_ok($pkg);
 
-my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, 'v3');
+my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, 'v4');
 my $tmp_dir  = Genome::Sys->create_temp_directory(Genome::Sys->username . "Flagstat_XXXXXX");
 
 my $bam_file      = $data_dir.'/test.bam';
