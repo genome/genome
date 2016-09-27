@@ -622,7 +622,9 @@ an example.
 
 sub format_field_index {
     my ($self, $key) = @_;
-    if (!exists $self->{_format_key_to_idx}) {
+    my $format_idx = $self->{_format_key_to_idx};
+
+    unless (scalar keys %$format_idx) {
         my @format = @{$self->{_format}};
         return unless @format;
 
