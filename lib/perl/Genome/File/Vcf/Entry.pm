@@ -592,7 +592,8 @@ sub add_format_field {
     else {
         my $idx = scalar @{$self->{_format}};
         push @{$self->{_format}}, $field;
-        $self->{_format_key_to_idx}{$field} = $idx;
+        my $format_idx = $self->format_field_index;
+        $self->{_format_key_to_idx} = {%$format_idx, $field => $idx};
         return $idx;
     }
 }
