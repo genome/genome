@@ -136,7 +136,7 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
     ],
     has_param => [
         lsf_resource => {
-            value => q{-R 'select[mem>12000] rusage[mem=12000]' -M 12000000},
+            value => q{-R 'select[gtmp>10 && mem>12000] rusage[gtmp=10,mem=12000]' -M 12000000},
         },
     ],
     has_output => [
