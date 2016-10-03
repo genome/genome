@@ -47,6 +47,9 @@ my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
 my $provider = get_translation_provider(version => $RESOURCE_VERSION);
 my $reference_sequence_build => get_reference_build(version => $RESOURCE_VERSION);
 
+my $fl = Genome::FeatureList->get('7f05e8fad6b6465a9f5bd6155dc88135');
+ok($fl, 'Get current homo-polymer feature-list used in trio report');
+
 my $feature_list_cmd = Genome::FeatureList::Command::Create->create(
     reference => $reference_sequence_build,
     file_path => File::Spec->join($test_dir, 'homopolymer_list.bed'),
