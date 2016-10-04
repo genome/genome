@@ -154,11 +154,14 @@ sub purge_one_analysis_project {
     my $unlock_and_print_report = Scope::Guard->new(sub {
         $unlocker->();
         my $format = $self->report
-                      ? '%s in %d software results'
-                      : 'Removed %s from %d software results';
-        $self->status_message($format,
-                              $self->_report_obj->_format_disk_size($total_kb_purged),
-                              $software_result_count);
+                      ? '%s in %d software results for %s'
+                      : 'Removed %s from %d software results for %s';
+        $self->status_message(
+            $format,
+            $self->_report_obj->_format_disk_size($total_kb_purged),
+            $software_result_count,
+            $anp->__display_name__
+        );
     });
 
     $sth->execute($anp->id);
