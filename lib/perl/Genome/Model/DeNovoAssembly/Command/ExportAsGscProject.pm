@@ -7,7 +7,28 @@ use File::Basename;
 
 class Genome::Model::DeNovoAssembly::Command::ExportAsGscProject {
     is => 'Command::V2',
+    has => {
+        directory => {
+            is => 'Text',
+            doc => 'Directory to put the project.',
+        },
+    },
 };
+
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    if ( not - $self->directory ) {
+        return UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ directory /],
+            desc => 'Directory does not exist: '.$self->directory,
+        );
+    }
+}
 
 sub execute {
     my $self = shift;
@@ -19,8 +40,7 @@ sub execute {
     my $gp = Genome::Project->get( $wo_id );
     die "Can't find genome::project for work-order, $wo_id\n" unless $gp;
 
-    my $copy_dir = $ARGV[1];
-    die "Invalid directory to copy builds to, $copy_dir\n" unless -d $copy_dir;
+    my $copy_dir = $self->directory;
 
     my %subjects_to_copy;
     if( $ARGV[2] ) {
