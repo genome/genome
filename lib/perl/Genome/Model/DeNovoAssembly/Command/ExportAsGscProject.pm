@@ -13,6 +13,12 @@ class Genome::Model::DeNovoAssembly::Command::ExportAsGscProject {
             doc => 'Directory to put the project.',
         },
     },
+    has_optional => {
+        project => {
+            is => 'Genome::Project',
+            doc => 'Work Order',
+        },
+    },
 };
 
 sub __errors__ {
@@ -33,21 +39,13 @@ sub __errors__ {
 }
 
 my @project_parts;
+my %subjects_to_copy;
 sub execute {
     my $self = shift;
     return 1;
 
-    my $usage = "$0 <WORK_ORDER_ID> <DIR_TO_COPY_TO> <?LIST_OF_MODEL_SUBJECT_NAMES_TO_COPY .. only copy these models?>"; # TODO <LIST_OF_SAMPLE_NAMES>
-    print "USAGE: $usage\n" and exit unless @ARGV && @ARGV >= 2;
-
-    my $wo_id = $ARGV[0];
-    my $gp = Genome::Project->get( $wo_id );
-
-    die "Can't find genome::project for work-order, $wo_id\n" unless $gp;
-
+    my $gp = $self->project;
     my $copy_dir = $self->directory;
-
-    my %subjects_to_copy;
     if( $ARGV[2] ) {
         die "Can't file of list of samples to copy or file is empty, $ARGV[2]\n" unless -s $ARGV[2];
         my $fh = Genome::Sys->open_file_for_reading( $ARGV[2] );
@@ -58,40 +56,9 @@ sub execute {
         $fh->close;
     }
 
-# project parts
-    my @project_parts = $gp->parts;
-    die "Exiting .. can't find any project parts for work order, $wo_id\n" unless @project_parts;
-#print Dumper \@project_parts; exit;
-
-# display list of samples and inst_data/models available for work-order
-    print "Checking workorder for instrument-data and models\n";
-    &map_inst_data_and_models_to_samples;
-
-    my @models = grep{ $_->entity_class_name eq 'Genome::Model::DeNovoAssembly' } @project_parts;
-    die "Exiting .. didn't find any de-novo assembly project parts\n" unless @models;
-
-    print "Finding succeeded builds\n";
-# find succeeded builds
-    my @succeeded_builds;
-    for my $model_part( @models ) {
-        my $model = Genome::Model->get( $model_part->entity_id );
-        die "Can't find genome::model for model id ".$model_part->entity_id."\n" unless $model;
-
-        next if $ARGV[2] && ! exists $subjects_to_copy{ $model->subject->name };
-        #print "Skipping model, ".$model->name.", which is not found in the input list of subjects to copy\n" and next
-        #if $ARGV[2] && ! exists $subjects_to_copy{ $model->subject->name };
-
-        next if model_is_newbler_assembly_with_multiple_inst_data( $model );
-
-        my $build = $model->last_succeeded_build;
-        print "Skipping model, ".$model->name.", sample ".$model->subject->name.", no succeeded build found\n" and next
-        unless $build;
-
-        push @succeeded_builds, $build;
-    }
-
+    my @succeeded_builds = $self->_resolve_builds;
     print "Found ".scalar( @succeeded_builds )." succeeded builds to copy\n";#.join( "\n", map{ $_->data_directory }  @succeeded_builds ),"\n";
-    exit unless @succeeded_builds > 0;
+    return unless @succeeded_builds > 0;
     for( @succeeded_builds ) {
         print "\t".$_->model->subject->name.' '.$_->data_directory."\n";
     }
@@ -147,6 +114,42 @@ sub execute {
     }
 
     return 1;
+}
+
+sub _resolve_builds {
+    my $self = shift;
+
+    my @project_parts = $self->project->parts;
+    die "Exiting .. can't find any project parts for work order\n" unless @project_parts;
+
+    print "Checking workorder for instrument-data and models\n";
+    &map_inst_data_and_models_to_samples;
+
+    my @models = grep{ $_->entity_class_name eq 'Genome::Model::DeNovoAssembly' } @project_parts;
+    die "Exiting .. didn't find any de-novo assembly project parts\n" unless @models;
+
+    print "Finding succeeded builds\n";
+    my @succeeded_builds;
+    for my $model_part( @models ) {
+        my $model = Genome::Model->get( $model_part->entity_id );
+        die "Can't find genome::model for model id ".$model_part->entity_id."\n" unless $model;
+
+        next if $ARGV[2] && ! exists $subjects_to_copy{ $model->subject->name };
+        #print "Skipping model, ".$model->name.", which is not found in the input list of subjects to copy\n" and next
+        #if $ARGV[2] && ! exists $subjects_to_copy{ $model->subject->name };
+
+        next if model_is_newbler_assembly_with_multiple_inst_data( $model );
+
+        my $build = $model->last_succeeded_build;
+        print "Skipping model, ".$model->name.", sample ".$model->subject->name.", no succeeded build found\n" and next
+        unless $build;
+
+        push @succeeded_builds, $build;
+    }
+
+    print "Found ".scalar( @succeeded_builds )." succeeded builds to copy\n";#.join( "\n", map{ $_->data_directory }  @succeeded_builds ),"\n";
+
+    return @succeeded_builds;
 }
 
 sub model_is_newbler_assembly_with_multiple_inst_data {
