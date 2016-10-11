@@ -122,9 +122,6 @@ sub _resolve_builds {
     my @project_parts = $self->project->parts;
     die "Exiting .. can't find any project parts for work order\n" unless @project_parts;
 
-    print "Checking workorder for instrument-data and models\n";
-    &map_inst_data_and_models_to_samples;
-
     my @models = grep{ $_->entity_class_name eq 'Genome::Model::DeNovoAssembly' } @project_parts;
     die "Exiting .. didn't find any de-novo assembly project parts\n" unless @models;
 
@@ -193,50 +190,6 @@ sub assemblers_edit_dir {
     return 'edit_dir' if uc $assembler eq 'VELVET ONE-BUTTON';
     return 'consed/edit_dir' if uc $assembler eq 'NEWBLER DE-NOVO-ASSEMBLE';
     return;
-}
-
-sub map_inst_data_and_models_to_samples {
-    my %h;
-    # samples should always exist
-    my $sample_parts = get_entity_class_parts( 'Sample' );
-    die "Exiting .. no Genome::Sample project parts found in work-order\n" unless $sample_parts;
-    for my $project_part( @$sample_parts ) {
-        my $genome_obj = get_genome_class_obj( $project_part );
-        # expect this to always exist
-        die "Can't get genome sample for id, ".$project_part->entity_id."\n" unless $genome_obj;
-        my $sample_name = $genome_obj->name;
-        $h{ $sample_name }{ sample_name } = $sample_name;
-    }
-    # inst data may or may not exist
-    my $inst_data = get_entity_class_parts( 'InstrumentData' );
-    for my $project_part( @$inst_data ) {
-        my $genome_obj = get_genome_class_obj( $project_part );
-        # these can exist as wo parts but not actually
-        # exist in GMS db because they haven't synced
-        next unless $genome_obj;
-        my $sample_name = $genome_obj->sample->name;
-        die "Invalid instrument data in project .. found instrument data sample name, $sample_name, but sample does not exist as project part\n" unless
-        exists $h{ $sample_name };
-        push @{$h{ $sample_name }{ inst_data}}, $genome_obj->id;
-    }
-    # models may or may not exist
-    my $models = get_entity_class_parts( 'Model::DeNovoAssembly' );
-    for my $project_part( @$models ) {
-        my $genome_obj = get_genome_class_obj( $project_part );
-        next if model_is_newbler_assembly_with_multiple_inst_data( $genome_obj );
-        die "Can't get genome model for id, ".$project_part->entity_id."\n" unless $genome_obj;
-        # TODO - below could be taxon
-        my $sample_name = $genome_obj->subject->name;
-        next if $sample_name eq 'Unknown';
-        die "Invalid model subject name, $sample_name was found but it does not exist as a project part\n" unless
-        exists $h{ $sample_name };
-        push @{$h{ $sample_name }{ models }}, $genome_obj->name;
-    }
-    #print Dumper \%h;
-
-    print_project_parts( \%h );
-
-    return \%h;
 }
 
 sub print_project_parts {
