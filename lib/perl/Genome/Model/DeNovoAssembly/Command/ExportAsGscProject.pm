@@ -192,31 +192,6 @@ sub assemblers_edit_dir {
     return;
 }
 
-sub print_project_parts {
-    my $parts = shift;
-
-    my $spacing = "%-30s%-30s%-50s";
-    my @headers = (qw/ SAMPLE_NAMES INSTRUMENT_DATA MODELS /);
-    printf("$spacing\n", @headers );
-
-    for my $sample_name( sort keys %$parts ) {
-        my @output = ( $sample_name );
-        if( $parts->{ $sample_name }->{inst_data} ) {
-            push @output, join(',', @{$parts->{$sample_name}->{inst_data}});
-        }
-        else {
-            push @output, 'NA';
-        }
-        if( $parts->{ $sample_name }->{models} ) {
-            push @output, join( ',', @{$parts->{$sample_name}->{models}} );
-        }
-        else {
-            push @output, 'NA';
-        }
-        printf( "$spacing\n", @output );
-    }
-}
-
 sub get_entity_class_parts {
     my $entity_class = shift;
     my @parts = grep{ $_->entity_class_name eq 'Genome::'.$entity_class } @project_parts;
