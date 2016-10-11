@@ -21,23 +21,28 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
 
-    if ( not - $self->directory ) {
+    if ( not -d $self->directory ) {
         return UR::Object::Tag->create(
             type => 'invalid',
             properties => [qw/ directory /],
             desc => 'Directory does not exist: '.$self->directory,
         );
     }
+
+    return;
 }
 
+my @project_parts;
 sub execute {
     my $self = shift;
+    return 1;
 
     my $usage = "$0 <WORK_ORDER_ID> <DIR_TO_COPY_TO> <?LIST_OF_MODEL_SUBJECT_NAMES_TO_COPY .. only copy these models?>"; # TODO <LIST_OF_SAMPLE_NAMES>
     print "USAGE: $usage\n" and exit unless @ARGV && @ARGV >= 2;
 
     my $wo_id = $ARGV[0];
     my $gp = Genome::Project->get( $wo_id );
+
     die "Can't find genome::project for work-order, $wo_id\n" unless $gp;
 
     my $copy_dir = $self->directory;
