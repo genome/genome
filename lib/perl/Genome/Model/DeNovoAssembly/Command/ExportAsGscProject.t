@@ -8,7 +8,7 @@ use above 'Genome';
 use File::Temp;
 use Genome::Test::Factory::Model::ReferenceAlignment;
 use Test::Exception;
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 my %setup;
 subtest 'setup' => sub{
@@ -65,18 +65,17 @@ subtest 'fails when de novo models do not exist' => sub{
 subtest 'add models to project' => sub{
     plan tests => 3;
 
-    my $denovo_newbler_pp = Genome::ProcessingProfile::DeNovoAssembly->__define__(name => 'DE_NOVO_PP', assembler_name => 'newbler');
-    my $denovo_newbler_model = Genome::Model::DeNovoAssembly->__define__(
+    my $denovo_newbler_pp = Genome::ProcessingProfile::DeNovoAssembly->__define__(name => 'DE_NOVO_PP', assembler_name => 'newbler de-novo-assemble');
+    $setup{denovo_model} = Genome::Model::DeNovoAssembly->__define__(
         name => 'DENOVO_NEWBLER_MODEL',
         processing_profile => $denovo_newbler_pp,
     );
-    ok($denovo_newbler_model, 'define newbler model');
+    ok($setup{denovo_model}, 'define newbler model');
 
-    #my $refalign_model = Genome::Test::Factory::Model::ReferenceAlignment->generate_obj;
     my $refalign_model = Genome::Model::ReferenceAlignment->__define__(name => 'REFALIGN_MODEL');
     ok($refalign_model, 'define refalign model');
 
-    for my $m ( $denovo_newbler_model, $refalign_model ) {
+    for my $m ( $setup{denovo_model}, $refalign_model ) {
         $setup{project}->add_part(
             entity_id => $m->id,
             entity_class_name => $m->__meta__->class_name,
@@ -106,6 +105,13 @@ subtest 'fails when no succeeded builds' => sub{
 
 subtest 'execute' => sub{
     plan tests => 1;
+
+    my $data_directory = File::Temp::tempdir(CLEANUP => 1);
+    my $build = Genome::Model::Build::DeNovoAssembly->__define__(
+        model => $setup{denovo_model},
+        data_directory => $data_directory,
+        status => 'Succeeded',
+    );
 
     my $cmd = $setup{pkg}->execute(
         project => $setup{project},
