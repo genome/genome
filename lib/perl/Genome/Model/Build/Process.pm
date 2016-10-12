@@ -73,7 +73,7 @@ sub _before_succeeded {
         return $self->_post_build_failure($msg);
     }
 
-    UR::Context->commit();
+    UR::Context->commit() if Genome::Config::get('workflow_builder_backend') ne 'inline';
 
     require UR::Object::View::Default::Xsl;
 

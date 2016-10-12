@@ -20,14 +20,6 @@ class Genome::Model::Build::View::Status::Xml {
         },
     ],
     has_optional => [
-        instance_id => {
-            is => 'String',
-            doc => 'Optional id of the workflow operation instance to use.'
-        },
-        instance => {
-            is => 'Workflow::Operation::Instance',
-            id_by => 'instance_id',
-        },
         section => {
             is => 'String',
             doc => "NOT IMPLEMENTED YET.  The sub-section of the document to return.  Options are 'all', 'events', etc.",
@@ -58,38 +50,6 @@ sub _generate_content {
     #build node
     my $buildnode = $self->get_build_node();
     $build_status_node->addChild($buildnode);
-
-    ## find the latest workflow for this build
-    unless ($self->instance) {
-        eval { $self->instance($subject->newest_workflow_instance); };
-    }
-    if ($self->instance) {
-=pod
-        # silly UR tricks to get everything i'm interested in loaded into the cache in 2 queries
-
-        #        my @exec_ids = map {
-        #            $_->current_execution_id
-        #        } (Workflow::Operation::Instance->get(
-        #            id => $self->instance->id,
-        #            -recurse => ['parent_instance_id','instance_id']
-        #        ));
-
-        my @ids = map {
-            $_->id
-        } (Workflow::Operation::Instance->get(
-            sql => 'select workflow_instance.workflow_instance_id
-                      from workflow_instance
-                     start with workflow_instance.parent_instance_id = ' . $self->instance->id . '
-                     connect by workflow_instance.parent_instance_id = prior workflow_instance.workflow_instance_id'
-                 ));
-
-        my @ex = Workflow::Operation::InstanceExecution->get(
-            instance_id => { operator => '[]', value=>\@ids }
-        );
-=cut
-
-        $buildnode->addChild( $self->get_workflow_node );
-    }
 
     #processing profile--may fail if error grabbing events, but not critical to the view
     eval { $buildnode->addChild ( $self->get_processing_profile_node() ) };
@@ -283,22 +243,6 @@ sub get_model_node {
     $model_subject_object->addChild( $self->tnode('display_name', $model_subject->__display_name__) );
 
     return $modelnode;
-}
-
-sub get_workflow_node {
-    my $self = shift;
-    my $doc = $self->_doc;
-
-    my $workflownode = $doc->createElement("workflow");
-
-    $workflownode->addChild( $doc->createAttribute("instance-id", $self->instance->id));
-    $workflownode->addChild( $doc->createAttribute("instance-status", $self->instance->status));
-
-    #For generating links
-    $workflownode->addChild( $doc->createAttribute("id", $self->instance->id));
-    $workflownode->addChild( $doc->createAttribute("type", $self->instance->class));
-
-    return $workflownode;
 }
 
 sub get_processing_profile_node {

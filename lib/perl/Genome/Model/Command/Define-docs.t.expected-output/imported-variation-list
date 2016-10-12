@@ -2,9 +2,9 @@
 [4mUSAGE[0m
  [1mgenome model define imported-variation-list[0m [--auto-assign-inst-data] [--source-name=?]
     [--auto-build-alignments] [--snv-result=?] [--indel-result=?] [--sv-result=?] [--cnv-result=?]
-    [--job-dispatch=?] [--server-dispatch=?] [--processing-profile=?] [--analysis-project=?]
-    --version=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]]
-    [--prefix=?] [--model-name=?] [--run-as=?]
+    [--processing-profile=?] [--analysis-project=?] --version=? [--add-to-projects=?[,?]]
+    [--instrument-data=?[,?]] [--subject=?] [--groups=?[,?]] [--prefix=?] [--model-name=?]
+    [--run-as=?]
 
 [4mSYNOPSIS[0m
   genome model define imported-variation-list \
@@ -54,12 +54,6 @@
     The result for svs to import 
   [1mcnv-result[0m
     The result for cnvs to import 
-  [1mjob-dispatch[0m
-    dispatch specification: an LSF queue or "inline" 
-    Default value 'inline' if not specified
-  [1mserver-dispatch[0m
-    dispatch specification: an LSF queue or "inline" 
-    Default value 'inline' if not specified
   [1mprocessing-profile[0m
     the processing profile to use (normally selected automatically) 
   [1manalysis-project[0m

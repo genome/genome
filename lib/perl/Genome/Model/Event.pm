@@ -31,6 +31,7 @@ class Genome::Model::Event {
             is => 'Text',
             len => 11,
             is_optional => 1,
+            is_deprecated => 1,
         },
     ],
     has_optional => [

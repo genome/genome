@@ -55,11 +55,11 @@ sub execute {
     my @models = $self->models;
     my @hide_statuses = $self->hide_statuses;
 
-    my @headers = qw(model_id action latest_build_status first_nondone_step latest_build_rev model_name pp_name fail_count);
+    my @headers = qw(model_id action latest_build_status latest_build_rev model_name pp_name fail_count);
 
     # Header for the report produced at the end of the loop
     $self->print_message(join("\t", @headers));
-    $self->print_message(join("\t", qw(-------- ------ ------------------- ------------------ ---------------- ---------- ------- ----------)));
+    $self->print_message(join("\t", qw(-------- ------ ------------------- ---------------- ---------- ------- ----------)));
 
     my $build_requested_count = 0;
     my %cleanup_rv;
@@ -160,15 +160,6 @@ sub generate_model_summary {
 
     my ($latest_build, $latest_build_status) = $self->_build_and_status_for_model($model);
     $summary{latest_build_status} = $latest_build_status;
-
-    my $first_nondone_step;
-    if ($latest_build) {
-       $first_nondone_step = find_first_nondone_step($latest_build);
-    }
-    $first_nondone_step ||= '-';
-    $first_nondone_step =~ s/^\d+\s+//;
-    $first_nondone_step =~ s/\s+\d+$//;
-    $summary{first_nondone_step} = $first_nondone_step;
 
     my $latest_build_revision = $latest_build->software_revision if $latest_build;
     $latest_build_revision ||= '-';
@@ -328,48 +319,6 @@ sub determine_error_for_build {
     );
 
     return $cmd->get_failed_key;
-}
-
-
-sub find_first_nondone_step {
-    my $build = shift;
-
-    return if grep { $_ eq $build->status } ('Succeeded', 'Scheduled', 'Unstartable', 'New');
-
-    # The following is wrapped in a transaction and try to protect against
-    # "corrupt" Workflow::Models.
-    my $tx = UR::Context::Transaction->begin();
-    my $first_nondone_step = try {
-        my $wf = $build->newest_workflow_instance;
-        my $step =  _find_first_nondone_step_impl($wf);
-        $tx->commit();
-        return $step;
-    } catch {
-        $tx->rollback();
-        return;
-    };
-
-    return $first_nondone_step;
-}
-
-
-sub _find_first_nondone_step_impl {
-    my $parent_workflow_instance = shift;
-    my @child_workflow_instances = $parent_workflow_instance->related_instances;
-
-    my $failed_step;
-    for my $child_workflow_instance (@child_workflow_instances) {
-        $failed_step = _find_first_nondone_step_impl($child_workflow_instance);
-        last if $failed_step;
-    }
-    # detect-variants is skipped because of the way the DV2 dispatcher works, not sure if this will work in general though
-    my $name = $parent_workflow_instance->name;
-    my $is_detect_variants = ($name =~ /^detect-variants/ || $name =~/^Detect\ Variants/);
-    if ($parent_workflow_instance->status ne 'done' and not $failed_step and !$is_detect_variants) {
-        $failed_step = $parent_workflow_instance->name;
-    }
-
-    return $failed_step;
 }
 
 1;

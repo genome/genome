@@ -29,6 +29,7 @@ my $data_dir = Genome::Sys->create_temp_directory();
 my $pp = Genome::ProcessingProfile::ImportedReferenceSequence->create(name => 'test_rederivable_ref_pp');
 my $taxon = Genome::Taxon->get(name => 'human');
 
+Genome::Config::set_env('workflow_builder_backend', 'inline');
 Genome::Test::Factory::AnalysisProject->setup_system_analysis_project;
 
 my $fasta_file = File::Spec->join($data_dir, 'test.fa');

@@ -19,6 +19,8 @@ if (Genome::Sys->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 
+Genome::Config::set_env('workflow_builder_backend', 'inline');
+
 my $cmd_class = 'Genome::Model::Command::Define::ImportedReferenceSequence';
 use_ok($cmd_class);
 

@@ -269,8 +269,6 @@ sub map_workflow_inputs {
 
 sub _resolve_workflow_for_build {
     # This is called by Genome::Model::Build::start()
-    # Returns a Workflow::Operation
-    # By default, builds this from stages(), but can be overridden for custom workflow.
     my $self = shift;
     my $build = shift;
     my $lsf_queue = shift; # TODO: the workflow shouldn't need this yet

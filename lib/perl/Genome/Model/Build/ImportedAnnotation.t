@@ -15,6 +15,8 @@ Genome::Report::Email->silent();
 
 use_ok('Genome::Model::Build::ImportedAnnotation');
 
+Genome::Config::set_env('workflow_builder_backend', 'inline');
+
 # create a test annotation build and a few reference sequence builds to test compatibility with
 my @species_names = ('human', 'mouse');
 my @versions = ('12_34', '56_78');

@@ -25,6 +25,8 @@ if (Genome::Sys->arch_os ne 'x86_64') {
 
 use_ok("Genome::Model::Build::ReferenceSequence");
 
+Genome::Config::set_env('workflow_builder_backend', 'inline');
+
 my $data_dir = File::Temp::tempdir('ImportedAnnotationTest-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $pp = Genome::ProcessingProfile::ImportedReferenceSequence->create(name => 'test_ref_pp');
 my $taxon = Genome::Taxon->get(name => 'human');

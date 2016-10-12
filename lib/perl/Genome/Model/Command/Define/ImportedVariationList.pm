@@ -47,14 +47,6 @@ class Genome::Model::Command::Define::ImportedVariationList {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
             doc => 'The result for cnvs to import',
         },
-        job_dispatch => {
-            default_value => 'inline',
-            doc => 'dispatch specification: an LSF queue or "inline"',
-        },
-        server_dispatch => {
-            default_value => 'inline',
-            doc => 'dispatch specification: an LSF queue or "inline"',
-        },
         processing_profile => {
             is => 'Genome::ProcessingProfile',
             id_by => 'processing_profile_id',
@@ -261,19 +253,8 @@ sub _create_build {
         return;
     }
 
-    my @dispatch_parameters;
-    if(defined($self->server_dispatch)) {
-        push @dispatch_parameters,
-            server_dispatch => $self->server_dispatch;
-    }
-
-    if(defined($self->job_dispatch)) {
-        push @dispatch_parameters,
-            job_dispatch => $self->job_dispatch;
-    }
-
     $self->status_message('Starting build.');
-    if($build->start(@dispatch_parameters)) {
+    if($build->start()) {
         $self->status_message('Started build (build is complete if it was run inline).');
     } else {
         $self->error_message("Failed to start build " . $build->build_id . " for model " . $model->genome_model_id . ".");

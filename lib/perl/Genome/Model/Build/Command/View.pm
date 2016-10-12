@@ -8,7 +8,6 @@ use Genome;
 class Genome::Model::Build::Command::View {
     is => [
         'Genome::Command::Viewer',
-        'Genome::Command::WorkflowMixin',
         'Genome::Command::PteroWorkflowMixin',
     ],
     has => [
@@ -94,11 +93,8 @@ sub write_report {
         }
     }
 
-    my $workflow = $self->build->newest_workflow_instance;
-    if (defined $workflow) {
-        $self->_display_workflow($handle, $workflow);
-        $self->_display_logs($handle, $workflow);
-    } else {
+    my $process = $self->build->process;
+    if ($process) {
         $self->_display_ptero_workflow($handle, $self->build->process->workflow_name);
     }
 

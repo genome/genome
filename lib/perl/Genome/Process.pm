@@ -136,13 +136,13 @@ sub run {
     if ($ENV{UR_DBI_NO_COMMIT}) {
         return $self->_execute_process($transaction);
     } else {
-        if (Genome::Config::get('workflow_builder_backend') eq 'ptero') {
+        my $backend = Genome::Config::get('workflow_builder_backend');
+        if ($backend eq 'ptero') {
             $self->_submit_process($transaction);
+        } elsif ($backend eq 'inline') {
+            $self->_execute_process($transaction);
         } else {
-            local $ENV{WF_USE_FLOW} = 1 unless
-                exists $ENV{WF_USE_FLOW};
-            $self->_schedule_process($transaction);
-            return;
+            $self->fatal_message('Unknown backend chosen to run process: %s', $backend);
         }
     }
 }
@@ -204,29 +204,6 @@ sub _execute_process {
     } else {
         die sprintf("Failed to run process (%s) for some reason",
             $self->id);
-    }
-}
-
-sub _schedule_process {
-    my $self = shift;
-    my $transaction = shift;
-
-    try {
-        my $cmd = Genome::Process::Command::Run->create(process => $self);
-        $cmd->schedule();
-    } catch {
-        my $error = $_;
-        $transaction->rollback();
-        die sprintf("Failed to schedule process (%s): %s",
-            $self->id, $error);
-    };
-    if ($transaction->commit()) {
-        $self->status_message("Successfully launched process (%s)",
-            $self->id);
-    } else {
-        $transaction->rollback();
-        die sprintf("Failed to schedule process (%s): %s",
-            $self->id, $transaction->error_message || 'Reason Unknown');
     }
 }
 
@@ -344,24 +321,6 @@ sub ptero_workflow_proxy {
 sub lsf_project_name {
     my $self = shift;
     return $self->workflow_name;
-}
-
-sub newest_workflow_instance {
-    my $self = shift;
-    my @sorted = sort {$b->id <=> $a->id} $self->_workflow_instances;
-    if (@sorted) {
-        return $sorted[0];
-    } else {
-        return;
-    }
-}
-
-sub _workflow_instances {
-    my $self = shift;
-    my @instances = Workflow::Operation::Instance->get(
-        name => $self->workflow_name,
-    );
-    return @instances;
 }
 
 sub environment_file {

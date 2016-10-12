@@ -6,9 +6,17 @@ use warnings;
 use Term::ReadKey 'GetTerminalSize';
 use IO::Handle;
 
+use Genome::Utility::Text qw(justify);
+
 class Genome::Command::Viewer {
     doc => "Base class for 'view' commands.",
     is => 'Command::V2',
+    has => [
+        COLUMN_WIDTH => {
+            is => 'Number',
+            default_value => 47,
+        }
+    ],
 };
 
 
@@ -94,5 +102,27 @@ sub _software_result_test_names {
     return join(", ", @entries);
 }
 
+sub _clean_up_timestamp {
+    my ($self, $dirty_stamp) = @_;
+
+    unless (defined $dirty_stamp) {
+        return '';
+    }
+
+    my ($clean_stamp) = split('\.', $dirty_stamp);
+    $clean_stamp =~ s/\s$//;
+    return $clean_stamp;
+}
+
+sub _pad_left {
+    my ($self, $arg, $length) = @_;
+    return justify($arg, 'right', $length);
+
+}
+
+sub _pad_right {
+    my ($self, $arg, $length) = @_;
+    return justify($arg, 'left', $length);
+}
 
 1;

@@ -1,3 +1,3 @@
 --- 
 env: XGENOME_WORKFLOW_BUILDER_BACKEND
-default_value: workflow
+default_value: inline

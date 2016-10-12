@@ -156,7 +156,7 @@ sub _create_build {
     $self->status_message('Starting build.');
     my $rv;
     if ($build->processing_profile->rna_seq_only) {
-        $rv = $build->start(server_dispatch => "inline");
+        $rv = $build->start();
     }
     else {
         $rv = $build->start;

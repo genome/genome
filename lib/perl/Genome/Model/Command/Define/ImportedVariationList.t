@@ -18,6 +18,7 @@ Genome::Report::Email->silent();
 
 use_ok('Genome::Model::Command::Define::ImportedVariationList');
 
+Genome::Config::set_env('workflow_builder_backend', 'inline');
 Genome::Test::Factory::AnalysisProject->setup_system_analysis_project;
 
 my $ref = Genome::Model::Build::ReferenceSequence->get_by_name('NCBI-human-build36');
