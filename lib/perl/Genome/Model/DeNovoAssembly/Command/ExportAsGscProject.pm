@@ -67,7 +67,7 @@ sub _resolve_builds {
     $self->fatal_message("No de novo models associated with %s", $self->project->__display_name__) unless @project_parts;
     $self->status_message('Associated Models: %s', scalar(@project_parts));
 
-    my @models = grep { $_->entity_class_name eq 'Genome::Model::DeNovoAssembly' } @project_parts;
+    my @models = map { $_->entity } @project_parts;
     $self->fatal_message("Models associated with %s do not exist!", $self->project->__display_name__) unless @models;
     $self->status_message('Existing Models: %s ', scalar(@models));
 
