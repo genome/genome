@@ -12,8 +12,6 @@ class Genome::Model::DeNovoAssembly::Command::ExportAsGscProject {
             is => 'Text',
             doc => 'Directory to put the project.',
         },
-    },
-    has_optional => {
         project => {
             is => 'Genome::Project',
             doc => 'Work Order',
@@ -42,31 +40,20 @@ my @project_parts;
 my %subjects_to_copy;
 sub execute {
     my $self = shift;
-    return 1;
 
     my $gp = $self->project;
-    my $copy_dir = $self->directory;
-    if( $ARGV[2] ) {
-        die "Can't file of list of samples to copy or file is empty, $ARGV[2]\n" unless -s $ARGV[2];
-        my $fh = Genome::Sys->open_file_for_reading( $ARGV[2] );
-        while( my $line = $fh->getline ) {
-            chomp $line;
-            $subjects_to_copy{ $line } = 1;
-        }
-        $fh->close;
+    my $succeeded_builds = $self->_resolve_builds;
+    return if not $succeeded_builds;
+    for( @$succeeded_builds ) {
+        $self->status_message("\t%s %s", $_->model->subject->name, $_->data_directory);
     }
+    return 1;
 
-    my @succeeded_builds = $self->_resolve_builds;
-    print "Found ".scalar( @succeeded_builds )." succeeded builds to copy\n";#.join( "\n", map{ $_->data_directory }  @succeeded_builds ),"\n";
-    return unless @succeeded_builds > 0;
-    for( @succeeded_builds ) {
-        print "\t".$_->model->subject->name.' '.$_->data_directory."\n";
-    }
-    print "Continue and copy these assemblies? yes/no?\n";
+    $self->status_message("Continue and copy these assemblies? yes/no?");
     my $ans = <STDIN>;
-    exit unless $ans =~ /yes/i;
+    return 1 unless $ans =~ /yes/i;
 
-    for my $build( @succeeded_builds ) {
+    for my $build ( @$succeeded_builds ) {
         $self->_export_build($build);
     }
 
@@ -76,34 +63,35 @@ sub execute {
 sub _resolve_builds {
     my $self = shift;
 
-    my @project_parts = $self->project->parts;
-    die "Exiting .. can't find any project parts for work order\n" unless @project_parts;
+    my @project_parts = $self->project->parts(entity_class_name => 'Genome::Model::DeNovoAssembly');
+    $self->fatal_message("No de novo models associated with %s", $self->project->__display_name__) unless @project_parts;
+    $self->status_message('Associated Models: %s', scalar(@project_parts));
 
-    my @models = grep{ $_->entity_class_name eq 'Genome::Model::DeNovoAssembly' } @project_parts;
-    die "Exiting .. didn't find any de-novo assembly project parts\n" unless @models;
+    my @models = grep { $_->entity_class_name eq 'Genome::Model::DeNovoAssembly' } @project_parts;
+    $self->fatal_message("Models associated with %s do not exist!", $self->project->__display_name__) unless @models;
+    $self->status_message('Existing Models: %s ', scalar(@models));
 
-    print "Finding succeeded builds\n";
-    my @succeeded_builds;
-    for my $model_part( @models ) {
-        my $model = Genome::Model->get( $model_part->entity_id );
-        die "Can't find genome::model for model id ".$model_part->entity_id."\n" unless $model;
+#    if( $ARGV[2] ) {
+#        die "Can't file of list of samples to copy or file is empty, $ARGV[2]\n" unless -s $ARGV[2];
+#        my $fh = Genome::Sys->open_file_for_reading( $ARGV[2] );
+#        while( my $line = $fh->getline ) {
+#            chomp $line;
+#            $subjects_to_copy{ $line } = 1;
+#        }
+#        $fh->close;
+#    }
+#
 
-        next if $ARGV[2] && ! exists $subjects_to_copy{ $model->subject->name };
-        #print "Skipping model, ".$model->name.", which is not found in the input list of subjects to copy\n" and next
-        #if $ARGV[2] && ! exists $subjects_to_copy{ $model->subject->name };
+    my @succeeded_builds = map {
+        $_->last_succeeded_build;
+    } grep {
+        #next if $ARGV[2] && ! exists $subjects_to_copy{ $model->subject->name };
+        ! model_is_newbler_assembly_with_multiple_inst_data($_);
+    } @models;
 
-        next if model_is_newbler_assembly_with_multiple_inst_data( $model );
+    $self->status_message('Succeeded builds: %s', @succeeded_builds);
 
-        my $build = $model->last_succeeded_build;
-        print "Skipping model, ".$model->name.", sample ".$model->subject->name.", no succeeded build found\n" and next
-        unless $build;
-
-        push @succeeded_builds, $build;
-    }
-
-    print "Found ".scalar( @succeeded_builds )." succeeded builds to copy\n";#.join( "\n", map{ $_->data_directory }  @succeeded_builds ),"\n";
-
-    return @succeeded_builds;
+    return \@succeeded_builds;
 }
 
 sub _export_build {
@@ -113,6 +101,7 @@ sub _export_build {
     die "No data directory found, $build_dir\n" unless -d $build_dir;
 
     # project dir
+    my $copy_dir = $self->directory;
     my $output_dir = $copy_dir.'/'.$build->model->subject->name;
     $output_dir =~ s/\s+/_/g;
     Genome::Sys->create_directory( $output_dir ) unless -d $output_dir;
