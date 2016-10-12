@@ -199,19 +199,5 @@ sub assemblers_edit_dir {
     return;
 }
 
-sub get_entity_class_parts {
-    my $entity_class = shift;
-    my @parts = grep{ $_->entity_class_name eq 'Genome::'.$entity_class } @project_parts;
-    return \@parts;
-}
-
-sub get_genome_class_obj {
-    my $project_part = shift;
-    my $genome_class = $project_part->entity_class_name;
-    my $obj = $genome_class->get( $project_part->entity_id );
-    return $obj if $obj;
-    return;
-}
-
 1;
 
