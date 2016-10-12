@@ -967,7 +967,8 @@ sub _promote_staged_data {
                     $source = $vcf_link;
                 }
                 my $link_target = File::Spec->join($self->output_directory,$variant_type .'s.detailed.vcf.gz');
-                my $clipped_vcf = File::Spec->join($self->output_directory, $variant_type .'s.vcf.gz');
+                my $clipped_vcf = File::Spec->join($self->output_directory,$variant_type .'s.vcf.gz');
+                my $pass_vcf    = File::Spec->join($self->output_directory,$variant_type .'s.detailed.pass.vcf.gz');
                 Genome::Model::Tools::Vcf::CleanupVcf->execute(input_file => $source, output_file => $clipped_vcf);
                 if ($variant_type eq 'snv') {
                     $self->_create_bed_from_vcf($clipped_vcf);
@@ -975,6 +976,7 @@ sub _promote_staged_data {
                 # Link both the vcf and the tabix index
                 Genome::Sys->create_symlink($source, $link_target);
                 Genome::Sys->create_symlink($source .'.tbi', $link_target .'.tbi');
+                $self->_create_final_pass_vcf($source, $pass_vcf);
             }
 
             # FIXME refactor this when we refactor versioning. This is pretty awful.
@@ -1025,6 +1027,19 @@ sub _create_bed_from_vcf {
         die $self->error_message();
     }
     return;
+}
+
+sub _create_final_pass_vcf {
+    my ($self, $source_vcf, $pass_vcf) = @_;
+    my $cmd = Genome::Model::Tools::Vcf::FinalPassOnly->create(
+        input_file  => $source_vcf,
+        output_file => $pass_vcf,
+        sample_name => $self->aligned_reads_sample,
+    );
+    unless ($cmd->execute) {
+        $self->fatal_message("Failed to run FinalPassOnly command.");
+    }
+    return 1;
 }
 
 # for each strategy input we look in the workflow result for output_directories which we then turn into relative paths, and then into final full paths
