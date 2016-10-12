@@ -19,6 +19,16 @@ sub get_detailed_snvs_vcf {
     return $self->_get_variant_file("snvs.detailed.vcf.gz");
 }
 
+sub get_detailed_pass_indels_vcf {
+    my $self = shift;
+    return $self->_get_variant_file("indels.detailed.pass.vcf.gz");
+}
+
+sub get_detailed_pass_snvs_vcf {
+    my $self = shift;
+    return $self->_get_variant_file("snvs.detailed.pass.vcf.gz");
+}
+
 sub get_indels_vcf {
     my $self = shift;
     return $self->_get_variant_file("indels.vcf.gz");
