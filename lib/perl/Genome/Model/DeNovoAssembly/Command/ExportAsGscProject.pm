@@ -66,51 +66,8 @@ sub execute {
     my $ans = <STDIN>;
     exit unless $ans =~ /yes/i;
 
-# copy succeeded builds;
     for my $build( @succeeded_builds ) {
-        my $build_dir = $build->data_directory;
-        die "No data directory found, $build_dir\n" unless -d $build_dir;
-
-        # project dir
-        my $output_dir = $copy_dir.'/'.$build->model->subject->name;
-        $output_dir =~ s/\s+/_/g;
-        Genome::Sys->create_directory( $output_dir ) unless -d $output_dir;
-
-        # create build id empty file
-        my $build_id_file = $output_dir."/build_id=".$build->id;
-        Genome::Sys->touch( $build_id_file ) if not -e $build_id_file;
-
-        my $assembler = $build->model->processing_profile->assembler_name;
-        # create subdirs
-        my @sub_dirs = subdirs_for_assembler( $assembler );
-        die "Can't determine which subdirs to create for assembler, $assembler\n" unless @sub_dirs;
-        for my $dir_name( @sub_dirs ) {
-            my $sub_dir = $output_dir."/$dir_name";
-            Genome::Sys->create_directory( $sub_dir ) unless -d $sub_dir;
-        }
-
-        # edit_dir files to copy
-        my $builds_edit_dir = assemblers_edit_dir( $assembler );
-        die "Can't determine locations of builds edit_dir for assembler, $assembler\n" unless $builds_edit_dir;
-        for my $file( glob("$build_dir/$builds_edit_dir/*") ) {
-            my $file_name = basename( $file );
-            my $to = $output_dir.'/edit_dir/'.$file_name;
-            print "skipping, $file already exists\n" and next if -s $to;
-            print "Copying $file to $to\n";
-            Genome::Sys->copy_file( $file, $to );
-        }
-
-        my @addl_files = additional_files_for_assembler( $assembler, $build );
-        if( @addl_files ) {
-            while( @addl_files ) {
-                my( $from, $to ) = split(/\s+/, shift @addl_files);
-                $from = $build_dir.'/'.$from;
-                $to   = $output_dir.'/'.$to;
-                die "Can't find file, $from to link\n" unless -s $from;
-                print "Linking $from to $to\n";
-                Genome::Sys->create_symlink( $from, $to ) if not -l $to;
-            }
-        }
+        $self->_export_build($build);
     }
 
     return 1;
@@ -147,6 +104,56 @@ sub _resolve_builds {
     print "Found ".scalar( @succeeded_builds )." succeeded builds to copy\n";#.join( "\n", map{ $_->data_directory }  @succeeded_builds ),"\n";
 
     return @succeeded_builds;
+}
+
+sub _export_build {
+    my ($self, $build) = @_;
+
+    my $build_dir = $build->data_directory;
+    die "No data directory found, $build_dir\n" unless -d $build_dir;
+
+    # project dir
+    my $output_dir = $copy_dir.'/'.$build->model->subject->name;
+    $output_dir =~ s/\s+/_/g;
+    Genome::Sys->create_directory( $output_dir ) unless -d $output_dir;
+
+    # create build id empty file
+    my $build_id_file = $output_dir."/build_id=".$build->id;
+    Genome::Sys->touch( $build_id_file ) if not -e $build_id_file;
+
+    my $assembler = $build->model->processing_profile->assembler_name;
+    # create subdirs
+    my @sub_dirs = subdirs_for_assembler( $assembler );
+    die "Can't determine which subdirs to create for assembler, $assembler\n" unless @sub_dirs;
+    for my $dir_name( @sub_dirs ) {
+        my $sub_dir = $output_dir."/$dir_name";
+        Genome::Sys->create_directory( $sub_dir ) unless -d $sub_dir;
+    }
+
+    # edit_dir files to copy
+    my $builds_edit_dir = assemblers_edit_dir( $assembler );
+    die "Can't determine locations of builds edit_dir for assembler, $assembler\n" unless $builds_edit_dir;
+    for my $file( glob("$build_dir/$builds_edit_dir/*") ) {
+        my $file_name = basename( $file );
+        my $to = $output_dir.'/edit_dir/'.$file_name;
+        print "skipping, $file already exists\n" and next if -s $to;
+        print "Copying $file to $to\n";
+        Genome::Sys->copy_file( $file, $to );
+    }
+
+    my @addl_files = additional_files_for_assembler( $assembler, $build );
+    if( @addl_files ) {
+        while( @addl_files ) {
+            my( $from, $to ) = split(/\s+/, shift @addl_files);
+            $from = $build_dir.'/'.$from;
+            $to   = $output_dir.'/'.$to;
+            die "Can't find file, $from to link\n" unless -s $from;
+            print "Linking $from to $to\n";
+            Genome::Sys->create_symlink( $from, $to ) if not -l $to;
+        }
+    }
+
+    return 1;
 }
 
 sub model_is_newbler_assembly_with_multiple_inst_data {
