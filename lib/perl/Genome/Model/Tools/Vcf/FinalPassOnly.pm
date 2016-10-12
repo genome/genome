@@ -51,7 +51,8 @@ sub execute {
 
     while (my $entry = $in_vcf->next) {
         next if $entry->is_filtered;
-        if ($entry->sample_field($index, 'FT') eq 'PASS') {
+        my $filters = $entry->filters;
+        if ($entry->sample_field($index, 'FT') eq 'PASS' or $filters ~~ ['PASS']) {
             $out_vcf->write($entry);
         }
     }
