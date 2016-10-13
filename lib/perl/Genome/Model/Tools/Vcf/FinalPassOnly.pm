@@ -7,7 +7,7 @@ use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Writer;
 
 class Genome::Model::Tools::Vcf::FinalPassOnly {
-    is => 'Command',
+    is => 'Command::V2',
     has => [
         output_file => {
             is  => 'Text',
@@ -59,12 +59,17 @@ sub execute {
     $out_vcf->close;
 
     if ($self->tabix_index) {
-        my $cmd = Genome::Model::Tools::Tabix::Index->create(
-            input_file => $out_file,
-            preset => 'vcf',
-        );
-        unless ($cmd->execute) {
-            $self->fatal_message("Could not tabix index $out_file");
+        if (Genome::Sys->file_is_gzipped($out_file)) {
+            my $cmd = Genome::Model::Tools::Tabix::Index->create(
+                input_file => $out_file,
+                preset => 'vcf',
+            );
+            unless ($cmd->execute) {
+                $self->fatal_message("Could not tabix index $out_file");
+            }
+        }
+        else {
+            $self->warning_message("output file $out_file is not a compressed file that tabix requires.");
         }
     }
     return 1;
