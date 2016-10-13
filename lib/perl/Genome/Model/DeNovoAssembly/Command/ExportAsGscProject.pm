@@ -36,24 +36,12 @@ sub __errors__ {
     return;
 }
 
-my @project_parts;
-my %subjects_to_copy;
 sub execute {
     my $self = shift;
 
-    my $gp = $self->project;
     my $succeeded_builds = $self->_resolve_builds;
-    return if not $succeeded_builds;
-    for( @$succeeded_builds ) {
-        $self->status_message("\t%s %s", $_->model->subject->name, $_->data_directory);
-    }
-    return 1;
-
-    $self->status_message("Continue and copy these assemblies? yes/no?");
-    my $ans = <STDIN>;
-    return 1 unless $ans =~ /yes/i;
-
     for my $build ( @$succeeded_builds ) {
+        $self->status_message("Export: %s %s", $build->model->__display_name__, $build->data_directory);
         $self->_export_build($build);
     }
 
@@ -63,24 +51,16 @@ sub execute {
 sub _resolve_builds {
     my $self = shift;
 
-    my @project_parts = $self->project->parts(entity_class_name => 'Genome::Model::DeNovoAssembly');
-    $self->fatal_message("No de novo models associated with %s", $self->project->__display_name__) unless @project_parts;
+    my $project = $self->project;
+    $self->status_message('Resolving builds for project: %s', $project->__display_name__);
+
+    my @project_parts = $project->parts(entity_class_name => 'Genome::Model::DeNovoAssembly');
+    $self->fatal_message("No de novo models associated with %s", $project->__display_name__) unless @project_parts;
     $self->status_message('Associated Models: %s', scalar(@project_parts));
 
     my @models = map { $_->entity } @project_parts;
-    $self->fatal_message("Models associated with %s do not exist!", $self->project->__display_name__) unless @models;
+    $self->fatal_message("Models associated with %s do not exist!", $project->__display_name__) unless @models;
     $self->status_message('Existing Models: %s ', scalar(@models));
-
-#    if( $ARGV[2] ) {
-#        die "Can't file of list of samples to copy or file is empty, $ARGV[2]\n" unless -s $ARGV[2];
-#        my $fh = Genome::Sys->open_file_for_reading( $ARGV[2] );
-#        while( my $line = $fh->getline ) {
-#            chomp $line;
-#            $subjects_to_copy{ $line } = 1;
-#        }
-#        $fh->close;
-#    }
-#
 
     my @succeeded_builds = map {
         $_->last_succeeded_build;
@@ -89,13 +69,15 @@ sub _resolve_builds {
         ! model_is_newbler_assembly_with_multiple_inst_data($_);
     } @models;
 
-    $self->status_message('Succeeded builds: %s', @succeeded_builds);
+    $self->status_message('Succeeded builds: %s', scalar(@succeeded_builds));
+    $self->fatal_message('No succeeded builds found!') if not @succeeded_builds;
 
     return \@succeeded_builds;
 }
 
 sub _export_build {
     my ($self, $build) = @_;
+    return 1;
 
     my $build_dir = $build->data_directory;
     die "No data directory found, $build_dir\n" unless -d $build_dir;
