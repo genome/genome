@@ -55,6 +55,12 @@ sub subdirs_for_assembler {
     @{$supported_assemblers{$_[1]}->{subdirs}};
 }
 
+sub assemblers_edit_dir {
+    my ($self, $assembler) = validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
+    return if not $supported_assemblers{$_[1]};
+    $supported_assemblers{$_[1]}->{edit_dir};
+}
+
 sub execute {
     my $self = shift;
 
@@ -121,7 +127,7 @@ sub _export_build {
     }
 
     # edit_dir files to copy
-    my $builds_edit_dir = assemblers_edit_dir( $assembler );
+    my $builds_edit_dir = $self->assemblers_edit_dir($assembler);
     die "Can't determine locations of builds edit_dir for assembler, $assembler\n" unless $builds_edit_dir;
     for my $file( glob("$build_dir/$builds_edit_dir/*") ) {
         my $file_name = basename( $file );
@@ -173,13 +179,6 @@ sub velvet_input_fastq_files {
     my $build = shift;
     my @input_fastqs = glob( $build->data_directory."/*input.fastq" );
     return @input_fastqs;
-}
-
-sub assemblers_edit_dir {
-    my $assembler = shift;
-    return 'edit_dir' if uc $assembler eq 'VELVET ONE-BUTTON';
-    return 'consed/edit_dir' if uc $assembler eq 'NEWBLER DE-NOVO-ASSEMBLE';
-    return;
 }
 
 1;

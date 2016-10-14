@@ -17,16 +17,18 @@ subtest 'setup' => sub{
     $setup{pkg} = 'Genome::Model::DeNovoAssembly::Command::ExportAsGscProject';
     use_ok($setup{pkg}) or die;
 
-    $setup{tempdir} = File::Temp::tempdir(CLEANUP => 1);
     $setup{project} = Genome::Project->__define__(name => 'DE_NOVO_WO-1999');
+    $setup{tempdir} = File::Temp::tempdir(CLEANUP => 1);
 
 };
 
 subtest 'supported asemblers' => sub{
-    plan tests => 3;
+    plan tests => 5;
 
     ok($setup{pkg}->supported_assemblers, 'supported_assemblers');
     ok($setup{pkg}->subdirs_for_assembler('newbler de-novo-assemble'), 'subdirs_for_assembler');
+    throws_ok(sub{ $setup{pkg}->subdirs_for_assembler}, qr/2 were expected/, 'subdirs_for_assembler w/o assembler');
+    ok($setup{pkg}->assemblers_edit_dir('newbler de-novo-assemble'), 'subdirs_for_assembler');
     throws_ok(sub{ $setup{pkg}->subdirs_for_assembler}, qr/2 were expected/, 'subdirs_for_assembler w/o assembler');
 
 };
