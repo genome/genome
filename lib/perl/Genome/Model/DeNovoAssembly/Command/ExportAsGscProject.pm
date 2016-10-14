@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use File::Basename;
+use Params::Validate qw/ :types validate_pos /;
 
 class Genome::Model::DeNovoAssembly::Command::ExportAsGscProject {
     is => 'Command::V2',
@@ -37,16 +38,22 @@ sub __errors__ {
 }
 
 my %supported_assemblers = (
-    'VELVET ONE-BUTTON' => {
+    'velvet one-button' => {
         subdirs => [qw/ edit_dir chromat_dir phd_dir/],
         edit_dir => 'edit_dir',
     },
-    'NEWBLER DE-NOVO-ASSEMBLE' => {
+    'newbler de-novo-assemble' => {
         subdirs => [qw/ edit_dir chromat_dir phd_dir phdball_dir /],
         edit_dir => File::Spec->join('consed', 'edit_dir'),
     },
 );
 sub supported_assemblers { keys %supported_assemblers }
+
+sub subdirs_for_assembler {
+    my ($self, $assembler) = validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
+    return if not $supported_assemblers{$_[1]};
+    @{$supported_assemblers{$_[1]}->{subdirs}};
+}
 
 sub execute {
     my $self = shift;
@@ -106,7 +113,7 @@ sub _export_build {
 
     my $assembler = $build->model->processing_profile->assembler_name;
     # create subdirs
-    my @sub_dirs = subdirs_for_assembler( $assembler );
+    my @sub_dirs = $self->subdirs_for_assembler( $assembler );
     die "Can't determine which subdirs to create for assembler, $assembler\n" unless @sub_dirs;
     for my $dir_name( @sub_dirs ) {
         my $sub_dir = $output_dir."/$dir_name";
@@ -166,13 +173,6 @@ sub velvet_input_fastq_files {
     my $build = shift;
     my @input_fastqs = glob( $build->data_directory."/*input.fastq" );
     return @input_fastqs;
-}
-
-sub subdirs_for_assembler {
-    my $assembler = shift;
-    return (qw/ edit_dir chromat_dir phd_dir/) if uc $assembler eq 'VELVET ONE-BUTTON';
-    return (qw/ edit_dir chromat_dir phd_dir phdball_dir /) if uc $assembler eq 'NEWBLER DE-NOVO-ASSEMBLE';
-    return;
 }
 
 sub assemblers_edit_dir {

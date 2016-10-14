@@ -23,9 +23,11 @@ subtest 'setup' => sub{
 };
 
 subtest 'supported asemblers' => sub{
-    plan tests => 1;
+    plan tests => 3;
 
     ok($setup{pkg}->supported_assemblers, 'supported_assemblers');
+    ok($setup{pkg}->subdirs_for_assembler('newbler de-novo-assemble'), 'subdirs_for_assembler');
+    throws_ok(sub{ $setup{pkg}->subdirs_for_assembler}, qr/2 were expected/, 'subdirs_for_assembler w/o assembler');
 
 };
 
