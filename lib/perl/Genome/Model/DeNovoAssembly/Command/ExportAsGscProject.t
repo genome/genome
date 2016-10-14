@@ -8,7 +8,7 @@ use above 'Genome';
 use File::Temp;
 use Genome::Test::Factory::Model::ReferenceAlignment;
 use Test::Exception;
-use Test::More tests => 6;
+use Test::More tests => 7;
 
 my %setup;
 subtest 'setup' => sub{
@@ -19,6 +19,13 @@ subtest 'setup' => sub{
 
     $setup{tempdir} = File::Temp::tempdir(CLEANUP => 1);
     $setup{project} = Genome::Project->__define__(name => 'DE_NOVO_WO-1999');
+
+};
+
+subtest 'supported asemblers' => sub{
+    plan tests => 1;
+
+    ok($setup{pkg}->supported_assemblers, 'supported_assemblers');
 
 };
 

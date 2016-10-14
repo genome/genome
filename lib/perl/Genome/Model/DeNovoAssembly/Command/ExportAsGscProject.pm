@@ -36,6 +36,18 @@ sub __errors__ {
     return;
 }
 
+my %supported_assemblers = (
+    'VELVET ONE-BUTTON' => {
+        subdirs => [qw/ edit_dir chromat_dir phd_dir/],
+        edit_dir => 'edit_dir',
+    },
+    'NEWBLER DE-NOVO-ASSEMBLE' => {
+        subdirs => [qw/ edit_dir chromat_dir phd_dir phdball_dir /],
+        edit_dir => File::Spec->join('consed', 'edit_dir'),
+    },
+);
+sub supported_assemblers { keys %supported_assemblers }
+
 sub execute {
     my $self = shift;
 
