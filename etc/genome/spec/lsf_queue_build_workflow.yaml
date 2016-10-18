@@ -1,5 +1,0 @@
-# Specifies the LSF queue to submit build workflow jobs.
---- 
-env: XGENOME_LSF_QUEUE_BUILD_WORKFLOW
-validators:
-  - LSFQueue
