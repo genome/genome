@@ -337,9 +337,16 @@ sub snv_indel_report_clean_unfiltered_file {
   if(-e $snv_indel_report_clean_unfiltered_file) {
     return $snv_indel_report_clean_unfiltered_file;
   } else {
-    $self->warning_message("unable to find " .
-      $snv_indel_report_clean_unfiltered_file);
-    return;
+    my $snv_indel_report_clean_unfiltered_file2 = File::Spec->catfile(
+      $snv_indel_report_dir,
+      $self->subject->name . "_final_unfiltered_clean.tsv");
+    if(-e $snv_indel_report_clean_unfiltered_file2) {
+      return $snv_indel_report_clean_unfiltered_file2;
+    } else {
+      $self->warning_message("unable to find snv_indel_report_clean_unfiltered_file " .
+      "in location $snv_indel_report_clean_unfiltered_file or  $snv_indel_report_clean_unfiltered_file2");
+      return;
+    }
   }
 }
 
@@ -353,10 +360,17 @@ sub snv_indel_report_clean_filtered_file {
     $self->common_name . "_final_filtered_clean.tsv");
   if(-e $snv_indel_report_clean_filtered_file) {
     return $snv_indel_report_clean_filtered_file;
-  } else {
-    $self->warning_message("unable to find " .
-      $snv_indel_report_clean_filtered_file);
-    return;
+  } else{
+    my $snv_indel_report_clean_filtered_file2 = File::Spec->catfile(
+      $snv_indel_report_dir,
+      $self->subject->name . "_final_filtered_clean.tsv");
+    if(-e $snv_indel_report_clean_filtered_file2) {
+      return $snv_indel_report_clean_filtered_file2;
+    }else {
+      $self->warning_message("unable to find snv_indel_report_clean_filtered_file " .
+      "in location $snv_indel_report_clean_filtered_file or  $snv_indel_report_clean_filtered_file2");
+      return;
+    }
   }
 }
 
