@@ -1,5 +1,9 @@
 #!/usr/bin/env genome-perl
 
+BEGIN {
+    $ENV{URI_DBI_NO_COMMIT} = 1;
+}
+
 use strict;
 use warnings;
 
@@ -80,6 +84,7 @@ subtest 'add models to project' => sub{
     $setup{denovo_model} = Genome::Model::DeNovoAssembly->__define__(
         name => 'DENOVO_NEWBLER_MODEL',
         processing_profile => $denovo_newbler_pp,
+        subject => Genome::Sample->create(name => 'HMPB-AAD13A05'),
     );
     ok($setup{denovo_model}, 'define newbler model');
 
@@ -94,7 +99,7 @@ subtest 'add models to project' => sub{
     }
 
     my @parts = $setup{project}->parts;
-    is(@parts, 2, 'add models to proejct');
+    is(@parts, 2, 'add models to project');
 
 };
 
@@ -115,7 +120,7 @@ subtest 'fails when no succeeded builds' => sub{
 };
 
 subtest 'execute' => sub{
-    plan tests => 1;
+    plan tests => 8;
 
     my $data_directory = File::Temp::tempdir(CLEANUP => 1);
     my $build = Genome::Model::Build::DeNovoAssembly->__define__(
@@ -123,12 +128,28 @@ subtest 'execute' => sub{
         data_directory => $data_directory,
         status => 'Succeeded',
     );
+    my $phdball_dir = File::Spec->join($data_directory, 'consed', 'phdball_dir');
+    Genome::Sys->create_directory($phdball_dir);
+    my $phdball_ball_file = File::Spec->join($phdball_dir, 'phd.ball.1');
+    Genome::Sys->write_file($phdball_ball_file, 'PHD');
 
     my $cmd = $setup{pkg}->execute(
         project => $setup{project},
         directory => $setup{tempdir},
     );
     ok($cmd->result, 'execute command');
+
+    my $expected_project_directory = File::Spec->join($setup{tempdir}, $setup{denovo_model}->subject->name);
+    ok(-d $expected_project_directory, 'created project dir');
+    my $build_id_file = File::Spec->join($expected_project_directory, 'build_id='.$setup{denovo_model}->last_succeeded_build->id);
+    ok(-e $build_id_file, 'created build id file');
+    for my $subdir_name ( $cmd->subdirs_for_assembler( $setup{denovo_model}->processing_profile->assembler_name ) ) {
+        my $subdir = File::Spec->join($expected_project_directory, $subdir_name);
+        ok(-d $subdir, "created $subdir_name");
+    }
+    my $expected_phdball_file = File::Spec->join($expected_project_directory, 'phdball_dir', 'phd.ball.1');
+    ok(-l $expected_phdball_file, 'linked phdball file');
+    #diag("$data_directory\n$setup{tempdir}"); <STDIN>;
 
 };
 
