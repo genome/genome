@@ -28763,6 +28763,19 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>final-pass-only',
+      [
+        'output-file=s',
+        'files',
+        'input-file=s',
+        'files',
+        'sample-name=s',
+        'files',
+        'tabix-index!',
+        undef,
+        'help!',
+        undef
+      ],
       '>match-to-annotation',
       [
         'annotation-file=s',
