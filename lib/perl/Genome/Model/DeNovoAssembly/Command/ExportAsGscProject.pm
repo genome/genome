@@ -102,38 +102,37 @@ sub _resolve_builds {
 
 sub _export_build {
     my ($self, $build) = @_;
-    return 1;
 
     my $build_dir = $build->data_directory;
-    die "No data directory found, $build_dir\n" unless -d $build_dir;
+    $self->fatal_message("Build data directory does not exist! $build_dir") unless -d $build_dir;
 
     # project dir
     my $copy_dir = $self->directory;
-    my $output_dir = $copy_dir.'/'.$build->model->subject->name;
+    my $output_dir = File::Spec->join($copy_dir, $build->model->subject->name);
     $output_dir =~ s/\s+/_/g;
-    Genome::Sys->create_directory( $output_dir ) unless -d $output_dir;
+    Genome::Sys->create_directory($output_dir) unless -d $output_dir;
 
     # create build id empty file
-    my $build_id_file = $output_dir."/build_id=".$build->id;
-    Genome::Sys->touch( $build_id_file ) if not -e $build_id_file;
+    my $build_id_file = File::Spec->join($output_dir, "build_id=".$build->id);
+    Genome::Sys->touch($build_id_file) if not -e $build_id_file;
 
-    my $assembler = $build->model->processing_profile->assembler_name;
     # create subdirs
-    my @sub_dirs = $self->subdirs_for_assembler( $assembler );
-    die "Can't determine which subdirs to create for assembler, $assembler\n" unless @sub_dirs;
+    my $assembler = $build->model->processing_profile->assembler_name;
+    my @sub_dirs = $self->subdirs_for_assembler($assembler);
+    $self->fatal_message("Can't determine which subdirs to create for assembler! $assembler") unless @sub_dirs;
     for my $dir_name( @sub_dirs ) {
-        my $sub_dir = $output_dir."/$dir_name";
-        Genome::Sys->create_directory( $sub_dir ) unless -d $sub_dir;
+        my $sub_dir = File::Spec->join($output_dir, $dir_name);
+        Genome::Sys->create_directory($sub_dir) unless -d $sub_dir;
     }
 
     # edit_dir files to copy
     my $builds_edit_dir = $self->assemblers_edit_dir($assembler);
-    die "Can't determine locations of builds edit_dir for assembler, $assembler\n" unless $builds_edit_dir;
-    for my $file( glob("$build_dir/$builds_edit_dir/*") ) {
+    $self->fatal_message("Can't determine locations of builds edit_dir for assembler! $assembler") unless $builds_edit_dir;
+    for my $file( glob( File::Spec->join($build_dir, $builds_edit_dir, '*') ) ) {
         my $file_name = basename( $file );
-        my $to = $output_dir.'/edit_dir/'.$file_name;
-        print "skipping, $file already exists\n" and next if -s $to;
-        print "Copying $file to $to\n";
+        my $to = File::Spec->join($output_dir, 'edit_dir', $file_name);
+        $self->status_message("skipping, $file already exists") and next if -s $to;
+        $self->status_message("Copying $file to $to");
         Genome::Sys->copy_file( $file, $to );
     }
 
@@ -141,10 +140,10 @@ sub _export_build {
     if( @addl_files ) {
         while( @addl_files ) {
             my( $from, $to ) = split(/\s+/, shift @addl_files);
-            $from = $build_dir.'/'.$from;
-            $to   = $output_dir.'/'.$to;
-            die "Can't find file, $from to link\n" unless -s $from;
-            print "Linking $from to $to\n";
+            $from = File::Spec->join($build_dir, $from);
+            $to   = File::Spec->join($output_dir, $to);
+            $self->fatal_message("Can't find file, $from to link") unless -s $from;
+            $self->status_message("Linking $from to $to");
             Genome::Sys->create_symlink( $from, $to ) if not -l $to;
         }
     }
@@ -168,16 +167,16 @@ sub additional_files_for_assembler {
         my @velvet_input_fastqs = velvet_input_fastq_files( $build );
         for( @velvet_input_fastqs ) {
             my $file_name = basename( $_ );
-            push @addl_files, $file_name." edit_dir/$file_name";
+            push @addl_files, join(' ', $file_name, File::Spec->join('edit_dir', $file_name));
         }
-        push @addl_files, 'consed/phdball_dir/phd.ball.1 phdball_dir/phd.ball.1';
+        push @addl_files, join(' ', File::Spec->join('consed', 'phdball_dir', 'phd.ball.1'), File::Spec->join('phdball_dir', 'phd.ball.1'));
     }
     return @addl_files;
 }
 
 sub velvet_input_fastq_files {
     my $build = shift;
-    my @input_fastqs = glob( $build->data_directory."/*input.fastq" );
+    my @input_fastqs = glob( File::Spec->join($build->data_directory, "*input.fastq") );
     return @input_fastqs;
 }
 
