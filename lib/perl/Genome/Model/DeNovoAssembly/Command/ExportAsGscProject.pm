@@ -65,6 +65,20 @@ sub assemblers_edit_dir {
     $supported_assemblers{$_[1]}->{edit_dir};
 }
 
+sub additional_files_for_assembler {
+    my ($self, $build) = validate_pos(@_, {isa => __PACKAGE__}, {isa => 'Genome::Model::Build'});
+
+    my @addl_files;
+    if( $build->model->processing_profile->assembler_name eq 'newbler de-novo-assemble' ) {
+        for my $file ( glob( File::Spec->join($build->data_directory, "*input.fastq")) ) {
+            push @addl_files, [ $file, 'edit_dir' ];
+        }
+        push @addl_files, [ File::Spec->join($build->data_directory, 'consed', 'phdball_dir', 'phd.ball.1'), File::Spec->join('phdball_dir') ];
+    }
+
+    return @addl_files;
+}
+
 sub execute {
     my $self = shift;
 
@@ -141,16 +155,13 @@ sub _export_build {
         Genome::Sys->copy_file( $file, $to );
     }
 
-    my @addl_files = additional_files_for_assembler( $assembler, $build );
-    if( @addl_files ) {
-        while( @addl_files ) {
-            my( $from, $to ) = split(/\s+/, shift @addl_files);
-            $from = File::Spec->join($build_dir, $from);
-            $to   = File::Spec->join($output_dir, $to);
-            $self->fatal_message("Can't find file, $from to link") unless -s $from;
-            $self->status_message("Linking $from to $to");
-            Genome::Sys->create_symlink( $from, $to ) if not -l $to;
-        }
+    for my $files ( $self->additional_files_for_assembler($build) ) {
+        my ($target_path, $destination_subdir) = @$files;
+        $self->fatal_message("Link target does not exist! $target_path") unless -s $target_path;
+        my $destination_name = File::Basename::basename($target_path);
+        my $link_path = File::Spec->join($output_dir, $destination_subdir, $destination_name);
+        $self->status_message("Linking $link_path to $target_path");
+        Genome::Sys->create_symlink($target_path, $link_path) if not -l $link_path;
     }
 
     return 1;
@@ -162,21 +173,6 @@ sub model_is_newbler_assembly_with_multiple_inst_data {
     my $assembler = $model->processing_profile->assembler_name;
     return 1 if $assembler =~ /newbler/i && @inst_data > 1;
     return;
-}
-
-sub additional_files_for_assembler {
-    my $assembler = shift;
-    my $build = shift;
-    my @addl_files;
-    if( uc $assembler eq 'NEWBLER DE-NOVO-ASSEMBLE' ) {
-        my @velvet_input_fastqs = glob( File::Spec->join($build->data_directory, "*input.fastq") );
-        for( @velvet_input_fastqs ) {
-            my $file_name = basename( $_ );
-            push @addl_files, join(' ', $file_name, File::Spec->join('edit_dir', $file_name));
-        }
-        push @addl_files, join(' ', File::Spec->join('consed', 'phdball_dir', 'phd.ball.1'), File::Spec->join('phdball_dir', 'phd.ball.1'));
-    }
-    return @addl_files;
 }
 
 1;

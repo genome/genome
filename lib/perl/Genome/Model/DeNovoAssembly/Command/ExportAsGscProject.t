@@ -140,9 +140,7 @@ subtest 'execute' => sub{
     my $phdball_ball_file = File::Spec->join($phdball_dir, 'phd.ball.1');
     Genome::Sys->write_file($phdball_ball_file, 'PHD');
 
-    my $assembler_edit_dir = File::Spec->join($data_directory, $setup{pkg}->assemblers_edit_dir($build->model->processing_profile->assembler_name));
-    Genome::Sys->create_directory($assembler_edit_dir);
-    my $fastq_file = File::Spec->join($assembler_edit_dir, 'input.fastq');
+    my $fastq_file = File::Spec->join($data_directory, 'input.fastq');
     Genome::Sys->write_file($fastq_file, 'FASTQ');
 
     my $cmd = $setup{pkg}->execute(
