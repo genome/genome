@@ -126,7 +126,7 @@ subtest 'fails when no succeeded builds' => sub{
 };
 
 subtest 'execute' => sub{
-    plan tests => 8;
+    plan tests => 9;
 
     my $data_directory = File::Temp::tempdir(CLEANUP => 1);
     my $build = Genome::Model::Build::DeNovoAssembly->__define__(
@@ -134,10 +134,16 @@ subtest 'execute' => sub{
         data_directory => $data_directory,
         status => 'Succeeded',
     );
+
     my $phdball_dir = File::Spec->join($data_directory, 'consed', 'phdball_dir');
     Genome::Sys->create_directory($phdball_dir);
     my $phdball_ball_file = File::Spec->join($phdball_dir, 'phd.ball.1');
     Genome::Sys->write_file($phdball_ball_file, 'PHD');
+
+    my $assembler_edit_dir = File::Spec->join($data_directory, $setup{pkg}->assemblers_edit_dir($build->model->processing_profile->assembler_name));
+    Genome::Sys->create_directory($assembler_edit_dir);
+    my $fastq_file = File::Spec->join($assembler_edit_dir, 'input.fastq');
+    Genome::Sys->write_file($fastq_file, 'FASTQ');
 
     my $cmd = $setup{pkg}->execute(
         project => $setup{project},
@@ -155,6 +161,8 @@ subtest 'execute' => sub{
     }
     my $expected_phdball_file = File::Spec->join($expected_project_directory, 'phdball_dir', 'phd.ball.1');
     ok(-l $expected_phdball_file, 'linked phdball file');
+    my $expected_fastq_file = File::Spec->join($expected_project_directory, 'edit_dir', 'input.fastq');
+    ok(-l $expected_phdball_file, 'linked fastq file');
     #diag("$data_directory\n$setup{tempdir}"); <STDIN>;
 
 };

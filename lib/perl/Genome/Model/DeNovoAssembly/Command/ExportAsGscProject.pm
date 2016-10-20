@@ -169,7 +169,7 @@ sub additional_files_for_assembler {
     my $build = shift;
     my @addl_files;
     if( uc $assembler eq 'NEWBLER DE-NOVO-ASSEMBLE' ) {
-        my @velvet_input_fastqs = velvet_input_fastq_files( $build );
+        my @velvet_input_fastqs = glob( File::Spec->join($build->data_directory, "*input.fastq") );
         for( @velvet_input_fastqs ) {
             my $file_name = basename( $_ );
             push @addl_files, join(' ', $file_name, File::Spec->join('edit_dir', $file_name));
@@ -177,12 +177,6 @@ sub additional_files_for_assembler {
         push @addl_files, join(' ', File::Spec->join('consed', 'phdball_dir', 'phd.ball.1'), File::Spec->join('phdball_dir', 'phd.ball.1'));
     }
     return @addl_files;
-}
-
-sub velvet_input_fastq_files {
-    my $build = shift;
-    my @input_fastqs = glob( File::Spec->join($build->data_directory, "*input.fastq") );
-    return @input_fastqs;
 }
 
 1;
