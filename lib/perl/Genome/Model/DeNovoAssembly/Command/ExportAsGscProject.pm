@@ -48,9 +48,16 @@ my %supported_assemblers = (
     },
 );
 sub supported_assemblers { keys %supported_assemblers }
-sub is_assembler_supported {
-    my ($self, $assembler) = validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
-    List::MoreUtils::any { $assembler eq $_ } supported_assemblers();
+sub is_model_supported {
+    my ($self, $model) = validate_pos(@_, {isa => __PACKAGE__}, {type => OBJECT});
+
+    my $assembler = $model->processing_profile->assembler_name;
+    return if ! List::MoreUtils::any { $assembler eq $_ } supported_assemblers();
+
+    my @inst_data = $model->instrument_data;
+    return if $assembler =~ /newbler/i && @inst_data > 1;
+    return 1;
+    #return if ! exists $subjects_to_copy{ $model->subject->name };
 }
 
 sub subdirs_for_assembler {
@@ -107,9 +114,7 @@ sub _resolve_builds {
 
     my @succeeded_builds;
     for my $model ( @models ) {
-        next if ! $self->is_assembler_supported( $model->processing_profile->assembler_name );
-        next if model_is_newbler_assembly_with_multiple_inst_data($model);
-        #next if ! exists $subjects_to_copy{ $model->subject->name };
+        next if ! $self->is_model_supported($model);
         push @succeeded_builds, $model->last_succeeded_build;
     }
 
@@ -165,14 +170,6 @@ sub _export_build {
     }
 
     return 1;
-}
-
-sub model_is_newbler_assembly_with_multiple_inst_data {
-    my $model = shift;
-    my @inst_data = $model->instrument_data;
-    my $assembler = $model->processing_profile->assembler_name;
-    return 1 if $assembler =~ /newbler/i && @inst_data > 1;
-    return;
 }
 
 1;

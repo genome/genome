@@ -12,11 +12,12 @@ use above 'Genome';
 use File::Temp;
 use Genome::Test::Factory::Model::ReferenceAlignment;
 use Test::Exception;
+use Test::MockObject;
 use Test::More tests => 7;
 
 my %setup;
 subtest 'setup' => sub{
-    plan tests => 1;
+    plan tests => 3;
 
     $setup{pkg} = 'Genome::Model::DeNovoAssembly::Command::ExportAsGscProject';
     use_ok($setup{pkg}) or die;
@@ -24,22 +25,48 @@ subtest 'setup' => sub{
     $setup{project} = Genome::Project->__define__(name => 'DE_NOVO_WO-1999');
     $setup{tempdir} = File::Temp::tempdir(CLEANUP => 1);
 
+    my $denovo_newbler_pp = Genome::ProcessingProfile::DeNovoAssembly->__define__(name => 'DE_NOVO_PP', assembler_name => 'newbler de-novo-assemble');
+    $setup{denovo_model} = Genome::Model::DeNovoAssembly->__define__(
+        name => 'DENOVO_NEWBLER_MODEL',
+        processing_profile => $denovo_newbler_pp,
+        subject => Genome::Sample->create(name => 'HMPB-AAD13A05'),
+    );
+    ok($setup{denovo_model}, 'define newbler model');
+
+    $setup{refalign_model} = Genome::Model::ReferenceAlignment->__define__(name => 'REFALIGN_MODEL');
+    ok($setup{refalign_model}, 'define refalign model');
+
 };
 
-subtest 'supported asemblers' => sub{
-    plan tests => 8;
+subtest 'supported assemblers' => sub{
+    plan tests => 9;
 
     ok($setup{pkg}->supported_assemblers, 'supported_assemblers');
 
     my $assembler = 'newbler de-novo-assemble';
     ok($setup{pkg}->subdirs_for_assembler($assembler), 'subdirs_for_assembler');
-    throws_ok(sub{ $setup{pkg}->subdirs_for_assembler}, qr/2 were expected/, 'subdirs_for_assembler w/o assembler');
-    ok($setup{pkg}->assemblers_edit_dir($assembler), 'subdirs_for_assembler');
-    throws_ok(sub{ $setup{pkg}->subdirs_for_assembler}, qr/2 were expected/, 'subdirs_for_assembler w/o assembler');
+    throws_ok(sub{ $setup{pkg}->subdirs_for_assembler; }, qr/2 were expected/, 'subdirs_for_assembler w/o assembler');
 
-    ok($setup{pkg}->is_assembler_supported($assembler), "assembler '$assembler' is supported");
-    ok(!$setup{pkg}->is_assembler_supported('blah'), "assembler 'blah' is not supported");
-    throws_ok(sub{ $setup{pkg}->is_assembler_supported}, qr/2 were expected/, 'is_assembler_supported w/o assembler');
+    ok($setup{pkg}->assemblers_edit_dir($assembler), 'assemblers_edit_dir');
+    throws_ok(sub{ $setup{pkg}->assemblers_edit_dir; }, qr/2 were expected/, 'assemblers_edit_dir w/o assembler');
+
+    my $model = Test::MockObject->new();
+    $model->set_always('__display_name__', 'MOCK');
+    $model->set_isa('Genome::Model::DeNovoAssembly');
+    $model->set_always('processing_profile', $setup{denovo_model}->processing_profile);
+    $model->set_list('instrument_data', 'INSTDATA1');
+    ok($setup{pkg}->is_model_supported($model), "model ".$setup{denovo_model}->__display_name__." is supported");
+
+    my $unsupported_denovo_pp = Test::MockObject->new();
+    $unsupported_denovo_pp->set_always('assembler_name', 'unsupported');
+    $model->set_always('processing_profile', $unsupported_denovo_pp);
+    ok(!$setup{pkg}->is_model_supported($model), "model with unsupported assembler is NOT supported");
+
+    $model->set_always('processing_profile', $setup{denovo_model}->processing_profile);
+    $model->set_list('instrument_data', 'INSTDATA1', 'INSTDATA2');
+    ok(!$setup{pkg}->is_model_supported($model), "model with more than one inst data is NOT supported");
+
+    throws_ok(sub{ $setup{pkg}->is_model_supported}, qr/2 were expected/, 'is_model_supported w/o assembler');
 
 };
 
@@ -84,20 +111,9 @@ subtest 'fails when de novo models do not exist' => sub{
 };
 
 subtest 'add models to project' => sub{
-    plan tests => 3;
+    plan tests => 1;
 
-    my $denovo_newbler_pp = Genome::ProcessingProfile::DeNovoAssembly->__define__(name => 'DE_NOVO_PP', assembler_name => 'newbler de-novo-assemble');
-    $setup{denovo_model} = Genome::Model::DeNovoAssembly->__define__(
-        name => 'DENOVO_NEWBLER_MODEL',
-        processing_profile => $denovo_newbler_pp,
-        subject => Genome::Sample->create(name => 'HMPB-AAD13A05'),
-    );
-    ok($setup{denovo_model}, 'define newbler model');
-
-    my $refalign_model = Genome::Model::ReferenceAlignment->__define__(name => 'REFALIGN_MODEL');
-    ok($refalign_model, 'define refalign model');
-
-    for my $m ( $setup{denovo_model}, $refalign_model ) {
+    for my $m ( $setup{denovo_model}, $setup{refalign_model} ) {
         $setup{project}->add_part(
             entity_id => $m->id,
             entity_class_name => $m->__meta__->class_name,
