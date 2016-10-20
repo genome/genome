@@ -91,12 +91,13 @@ sub _resolve_builds {
     $self->fatal_message("Models associated with %s do not exist!", $project->__display_name__) unless @models;
     $self->status_message('Existing Models: %s ', scalar(@models));
 
-    my @succeeded_builds = map {
-        $_->last_succeeded_build;
-    } grep {
-        #next if $ARGV[2] && ! exists $subjects_to_copy{ $model->subject->name };
-        ! model_is_newbler_assembly_with_multiple_inst_data($_);
-    } @models;
+    my @succeeded_builds;
+    for my $model ( @models ) {
+        next if ! $self->is_assembler_supported( $model->processing_profile->assembler_name );
+        next if model_is_newbler_assembly_with_multiple_inst_data($model);
+        #next if ! exists $subjects_to_copy{ $model->subject->name };
+        push @succeeded_builds, $model->last_succeeded_build;
+    }
 
     $self->status_message('Succeeded builds: %s', scalar(@succeeded_builds));
     $self->fatal_message('No succeeded builds found!') if not @succeeded_builds;
