@@ -48,6 +48,10 @@ my %supported_assemblers = (
     },
 );
 sub supported_assemblers { keys %supported_assemblers }
+sub is_assembler_supported {
+    my ($self, $assembler) = validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
+    List::MoreUtils::any { $assembler eq $_ } supported_assemblers();
+}
 
 sub subdirs_for_assembler {
     my ($self, $assembler) = validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});

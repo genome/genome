@@ -27,13 +27,19 @@ subtest 'setup' => sub{
 };
 
 subtest 'supported asemblers' => sub{
-    plan tests => 5;
+    plan tests => 8;
 
     ok($setup{pkg}->supported_assemblers, 'supported_assemblers');
-    ok($setup{pkg}->subdirs_for_assembler('newbler de-novo-assemble'), 'subdirs_for_assembler');
+
+    my $assembler = 'newbler de-novo-assemble';
+    ok($setup{pkg}->subdirs_for_assembler($assembler), 'subdirs_for_assembler');
     throws_ok(sub{ $setup{pkg}->subdirs_for_assembler}, qr/2 were expected/, 'subdirs_for_assembler w/o assembler');
-    ok($setup{pkg}->assemblers_edit_dir('newbler de-novo-assemble'), 'subdirs_for_assembler');
+    ok($setup{pkg}->assemblers_edit_dir($assembler), 'subdirs_for_assembler');
     throws_ok(sub{ $setup{pkg}->subdirs_for_assembler}, qr/2 were expected/, 'subdirs_for_assembler w/o assembler');
+
+    ok($setup{pkg}->is_assembler_supported($assembler), "assembler '$assembler' is supported");
+    ok(!$setup{pkg}->is_assembler_supported('blah'), "assembler 'blah' is not supported");
+    throws_ok(sub{ $setup{pkg}->is_assembler_supported}, qr/2 were expected/, 'is_assembler_supported w/o assembler');
 
 };
 
