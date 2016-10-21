@@ -1079,6 +1079,8 @@ sub execute {
   }
   open(OUTFILE,">$output_dir/$sample_name/snvs.indels.annotated");
   open(OUTFILE2,">$output_dir/$sample_name/snvs.indels.annotated.tmp");
+
+  my $headerAdded=0;
   my $inFh = IO::File->new( $indel_file ) || die "can't open indel file\n";
   while( my $line = $inFh->getline ){
       chomp($line);
@@ -1086,6 +1088,7 @@ sub execute {
 
       if($line =~ /^chrom/){
           print OUTFILE $line . "\tstatus\n";
+          $headerAdded=0;
           next;
       }
       print OUTFILE2 join("\t",(@F,$indel_type)) . "\n";
@@ -1103,7 +1106,14 @@ sub execute {
       $inFh = IO::File->new( $snv_file ) || die "can't open snv file\n";
       while( my $line = $inFh->getline ){
           chomp($line);
-          next if $line =~ /^chrom/;
+          if($line =~ /^chrom/){
+              unless($headerAdded){
+                  print OUTFILE $line . "\tstatus\n";
+                  $headerAdded=1;
+              }
+              next;
+          }
+
           my @F = split("\t",$line);
           print OUTFILE2 join("\t",(@F,$snv_type)) . "\n";
       }
@@ -1148,7 +1158,7 @@ sub execute {
           `grep -w $i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2`;
       }
 
-      `head -n1 $output_dir/$sample_name/snvs.indels.annotated >$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
+      `head -n1 $output_dir/$sample_name/snvs.indels.annotated | grep "chromosome_name" >$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
       `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
       annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2","$output_dir/review/$sample_name.bed");
       `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
