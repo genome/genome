@@ -8,10 +8,17 @@ use File::Basename;
 class Genome::Model::Tools::Vcf::Convert::Indel::GatkSomaticIndel {
     is  => 'Genome::Model::Tools::Vcf::Convert::Base',
     doc => 'Generate a VCF file from GATK somatic indel output',
+    has_transient_optional => [
+        _tumor_index => {
+            is => 'Integer',
+            doc => 'position of the tumor sample in the input file',
+        },
+        _normal_index => {
+            is => 'Integer',
+            doc => 'position of the normal sample in the input file',
+        },
+    ],
 };
-
-our ($N_INDEX, $T_INDEX);
-
 
 sub help_synopsis {
     <<'HELP';
@@ -71,11 +78,13 @@ sub parse_line {
             $headers[9]  => 9,
             $headers[10] => 10,
         );
-        ($N_INDEX, $T_INDEX) = map{$index{$self->$_}}qw(control_aligned_reads_sample aligned_reads_sample);
-    
-        unless ($N_INDEX and $T_INDEX) {
+        my ($normal_index, $tumor_index) = map{$index{$self->$_}}qw(control_aligned_reads_sample aligned_reads_sample);
+
+        unless ($normal_index and $tumor_index) {
             $self->fatal_message("Failed to get correct normal/tumor sample header for: $line");
         }
+        $self->_normal_index($normal_index);
+        $self->_tumor_index($tumor_index);
     }
 
     return if $line =~ /^#/;  #skip the other vcf headers
@@ -102,8 +111,8 @@ sub parse_line {
         $self->fatal_message("Failed to get either normal dp4 or tumor dp4 for line: $line");
     }
 
-    my ($t_gt) = $columns[$T_INDEX] =~ /^(\S+):/;
-    my ($n_gt) = $columns[$N_INDEX] =~ /^(\S+):/;
+    my ($t_gt) = $columns[$self->_tumor_index] =~ /^(\S+):/;
+    my ($n_gt) = $columns[$self->_normal_index] =~ /^(\S+):/;
 
     #Now construct new line
     $columns[6]  = 'PASS';
