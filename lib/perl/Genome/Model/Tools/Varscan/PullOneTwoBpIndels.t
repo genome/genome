@@ -23,7 +23,7 @@ use_ok('Genome::Model::Tools::Varscan::PullOneTwoBpIndels');
 # Inputs
 my $varscan_version = "2.3.2";
 my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Varscan-PullOneTwoBpIndels';
-my $input_indels = "$test_data_dir/indel_files_to_validate";
+my $input_indels = indel_fof($test_data_dir);
 my $tumor_bam = "$test_data_dir/tumor.bam";
 my $normal_bam = "$test_data_dir/normal.bam";
 my $reference_fasta = "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa";
@@ -73,4 +73,16 @@ while (@output_files) {
     my $diff = Genome::Sys->diff_file_vs_file($output_file, $expected_file);
     ok(!$diff, "output matches expected result for $output_file and $expected_file")
         or diag("Diff:\n" . $diff);
+}
+
+sub indel_fof {
+    my $test_data_dir = shift;
+
+    my $fof_path = Genome::Sys->create_temp_file_path;
+
+    Genome::Sys->write_file($fof_path,
+        "$test_data_dir/indels.hq.bed"
+    );
+
+    return $fof_path;
 }
