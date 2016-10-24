@@ -257,8 +257,12 @@ sub parse_error_log {
                         = @+{'date','error_text','error_source_file','error_source_line'};
                     $error_host = $found_host || $+{'host'};
 
-                    last SCAN_FILE if ($error_source_file);
-                    $get_one_more_line = 1;
+                    if ($error_source_file && _is_blacklisted_file($error_source_file)) {
+                        $error_date = $error_text = $error_source_file = $error_source_line = undef;
+                    } else {
+                        last SCAN_FILE if ($error_source_file);
+                        $get_one_more_line = 1;
+                    }
                 },
         );
     }
@@ -318,6 +322,11 @@ sub find_die_or_warn_in_log {
                     unless($error_text) {
                         ($error_date, $error_text, $error_source_file, $error_source_line, $error_host)
                             = @+{'date','error_text','error_source_file','error_source_line','host'};
+
+                        if ($error_source_file && _is_blacklisted_file($error_source_file)) {
+                            $error_date = $error_text = $error_source_file = $error_source_line = $error_host = undef;
+                        }
+
                         last SCAN_FILE if ($error_host);
                     }
                 },
@@ -421,6 +430,16 @@ sub get_unstartable_key {
         }
     }
     return sprintf("Unstartable: %s", $information);
+}
+
+sub _is_blacklisted_file {
+    my $error_source_file = shift;
+
+    for my $blacklist (qw( Genome/Ptero/Wrapper.pm )) {
+        return 1 if index($error_source_file, $blacklist) == (length($error_source_file) - length($blacklist));
+    }
+
+    return;
 }
 
 1;
