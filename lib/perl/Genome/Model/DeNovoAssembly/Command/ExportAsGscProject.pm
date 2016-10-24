@@ -47,17 +47,15 @@ my %supported_assemblers = (
         edit_dir => File::Spec->join('consed', 'edit_dir'),
     },
 );
-sub supported_assemblers { keys %supported_assemblers }
 sub is_model_supported {
     my ($self, $model) = validate_pos(@_, {isa => __PACKAGE__}, {type => OBJECT});
 
     my $assembler = $model->processing_profile->assembler_name;
-    return if ! List::MoreUtils::any { $assembler eq $_ } supported_assemblers();
+    return if ! exists $supported_assemblers{$assembler};
 
     my @inst_data = $model->instrument_data;
     return if $assembler =~ /newbler/i && @inst_data > 1;
     return 1;
-    #return if ! exists $subjects_to_copy{ $model->subject->name };
 }
 
 sub subdirs_for_assembler {
@@ -132,8 +130,7 @@ sub _export_build {
 
     # project dir
     my $copy_dir = $self->directory;
-    my $output_dir = File::Spec->join($copy_dir, $build->model->subject->name);
-    $output_dir =~ s/\s+/_/g;
+    my $output_dir = File::Spec->join($copy_dir, Genome::Utility::Text::sanitize_string_for_filesystem($build->model->subject->name));
     Genome::Sys->create_directory($output_dir) unless -d $output_dir;
 
     # create build id empty file

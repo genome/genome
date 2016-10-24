@@ -39,9 +39,7 @@ subtest 'setup' => sub{
 };
 
 subtest 'supported assemblers' => sub{
-    plan tests => 9;
-
-    ok($setup{pkg}->supported_assemblers, 'supported_assemblers');
+    plan tests => 8;
 
     my $assembler = 'newbler de-novo-assemble';
     ok($setup{pkg}->subdirs_for_assembler($assembler), 'subdirs_for_assembler');
