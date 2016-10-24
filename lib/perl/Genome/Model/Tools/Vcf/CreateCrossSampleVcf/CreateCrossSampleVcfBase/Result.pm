@@ -23,7 +23,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase:
         allow_multiple_processing_profiles => { is => 'Boolean' },
         joinx_version => { is => 'Text' },
     ],
-    has_transient => [
+    has_transient_optional => [
         command => {
             is => 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase',
             doc => 'The command for constructing this result',
