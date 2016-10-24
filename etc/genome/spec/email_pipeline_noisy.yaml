@@ -1,4 +1,0 @@
-# The 'email_pipeline_noisy' configuration variable holds the name of the email
-# alias used as the recepient for many system-generated emails.
---- 
-env: XGENOME_EMAIL_PIPELINE_NOISY
