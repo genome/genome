@@ -1,3 +1,0 @@
---- 
-env: XGENOME_LOG_DIR
-default_value: /var/log/genome/
