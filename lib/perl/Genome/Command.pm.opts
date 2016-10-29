@@ -2881,6 +2881,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>export-as-gsc-project',
+      [
+        'project=s',
+        undef,
+        'directory=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>process-instrument-data',
       [
         'build=s',
