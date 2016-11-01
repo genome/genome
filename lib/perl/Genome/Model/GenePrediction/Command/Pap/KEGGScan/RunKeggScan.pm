@@ -260,7 +260,7 @@ If p_value, bit scores are identical, then choosing any 1 of the hits is equally
  Genome Sequencing Center
  Washington University 
  School of Medicine
- 4444 Forest Park Boulevard
+ 4444 Forest Park Avenue
  St. Louis, MO 63108
 
 CONTACT: twylie@.wustl.edu

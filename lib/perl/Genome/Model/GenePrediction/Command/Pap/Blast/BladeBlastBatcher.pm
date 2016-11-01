@@ -292,7 +292,7 @@ NOTE: The following params are optional: blast_params, mailoptions, mailto. The 
  Genome Sequencing Center
  Washington University
  School of Medicine
- 4444 Forest Park Boulevard
+ 4444 Forest Park Avenue
  St. Louis, MO 63108
 
 CONTACT: twylie@watson.wustl.edu
