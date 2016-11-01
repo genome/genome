@@ -1312,20 +1312,6 @@ sub _initialize_workflow {
     my $processing_profile = $self->processing_profile;
     my $workflow = $model->_resolve_workflow_for_build($self);
 
-    ## so developers dont fail before the workflow changes get deployed to /gsc/scripts
-    # NOTE: Genome::Config is obsolete, so this code must work when it is not installed as well.
-    if ($workflow->can('notify_url') and my $view_url = Genome::Config::get('sys_services_web_view_url')) {
-        require UR::Object::View::Default::Xsl;
-
-        my $cachetrigger = $view_url;
-        $cachetrigger =~ s/view$/cachetrigger/;
-
-        my $url = $cachetrigger . '/' . UR::Object::View::Default::Xsl::type_to_url(ref($self)) . '/status.html?id=' . $self->id;
-        $url .= ' ' . $cachetrigger . '/workflow/operation/instance/statuspopup.html?id=[WORKFLOW_ID]';
-
-        $workflow->notify_url($url);
-    }
-
     Genome::Sys->write_file($self->data_directory . '/build.xml', $workflow->get_xml);
 
     return $workflow;
