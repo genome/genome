@@ -1,6 +1,6 @@
 <?xml version='1.0' standalone='yes'?>
 
-<workflow name="Somatic Variation Pipeline" logDir="/gsc/var/log/genome/somatic_variation_pipeline">
+<workflow name="Somatic Variation Pipeline" logDir="/var/log/genome/somatic_variation_pipeline">
 
   <link fromOperation="input connector" fromProperty="build_id" toOperation="Detect Variants" toProperty="build_id" />
 
