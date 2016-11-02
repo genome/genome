@@ -21,16 +21,20 @@ my $test_data_dir = Genome::Utility::Test->data_dir('Genome::Model::Tools::CopyN
 my $cnv_file = File::Spec->join($test_data_dir, 'cnvs.hq');
 my $segments_file = File::Spec->join($test_data_dir, 'cnaseq.cnvhmm');
 
+my $db_name = 'tgi/cancer-annotation/human/build37-20130401.1';
+my $db = Genome::Db->get($db_name);
+my $targets_file = $db->data_set_path('GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt');
+
 my $cmd = <<EOS;
   gmt copy-number cn-view \\
     --annotation-build=124434505 \\
     --cnv-file=$cnv_file \\
     --segments-file=$segments_file \\
     --output-dir=$actual_results \\
-    --gene-targets-file=/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists/CancerGeneCensusPlus_Sanger.txt \\
+    --gene-targets-file=$targets_file \\
     --name='CancerGeneCensusPlus_Sanger' \\
     --verbose \\
-    --cancer-annotation-db tgi/cancer-annotation/human/build37-20130401.1 \\
+    --cancer-annotation-db $db_name \\
 EOS
 eval { Genome::Sys->shellcmd(cmd => $cmd) };
 ok(!$@, "no exceptions running the tool")
