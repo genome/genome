@@ -9,7 +9,7 @@ use Genome::Info::IUB;
 use Spreadsheet::WriteExcel;
 use File::Basename;
 use File::Path qw(make_path remove_tree);
-
+use Genome::Utility::Text qw(sanitize_string_for_filesystem);
 
 class Genome::Model::Tools::Validation::ProcessSomaticValidation {
   is => 'Command',
@@ -633,6 +633,7 @@ sub execute {
   } else {
       $sample_name = $self->sample_name;
   }
+  $sample_name = Genome::Utility::Text::sanitize_string_for_filesystem($sample_name);
 
   
   $self->status_message("processing model with sample_name: $sample_name\n");
@@ -740,7 +741,7 @@ sub execute {
       if($self->target_regions) {
           $featurelist = $self->target_regions;
       } else { 
-          $featurelist = $model->target_region_set->file_path;
+          $featurelist = $build->target_region_set->file_path;
       }
 
 
@@ -1121,8 +1122,18 @@ sub execute {
   close(OUTFILE);
   close(OUTFILE2);
 
-  `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tmp >>$output_dir/$sample_name/snvs.indels.annotated`;
-  `rm -f $output_dir/$sample_name/snvs.indels.annotated.tmp`;
+  my $result = Genome::Sys->shellcmd(
+      cmd => "joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tmp >>$output_dir/$sample_name/snvs.indels.annotated",
+      );
+  unless($result) {
+      die $self->error_message("Failed to execute joinx: Returned $result");
+  }
+  $result = Genome::Sys->shellcmd(
+      cmd => "rm -f $output_dir/$sample_name/snvs.indels.annotated.tmp"
+      );
+  unless($result) {
+      die $self->error_message("Failed to execute rm: Returned $result");
+  }
 
   # convert master table to excel
   my $workbook  = Spreadsheet::WriteExcel->new("$output_dir/$sample_name/snvs.indels.annotated.xls");
