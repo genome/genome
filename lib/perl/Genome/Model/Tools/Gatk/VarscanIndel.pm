@@ -71,8 +71,6 @@ sub execute {                               # replace with real execution logic.
 
 	my %stats = ();
 
-#	require("/gscuser/dkoboldt/src/perl_modules/trunk/Varscan/Varscan/lib/Varscan/FisherTest.pm");
-
 	open(OUTFILE, ">$output_file") or die "Can't open outfile: $!\n";
 	
 	## Parse the variants file ##
