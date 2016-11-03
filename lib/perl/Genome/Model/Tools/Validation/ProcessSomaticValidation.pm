@@ -9,7 +9,7 @@ use Genome::Info::IUB;
 use Spreadsheet::WriteExcel;
 use File::Basename;
 use File::Path qw(make_path remove_tree);
-
+use Genome::Utility::Text qw(sanitize_string_for_filesystem);
 
 class Genome::Model::Tools::Validation::ProcessSomaticValidation {
   is => 'Command',
@@ -110,13 +110,6 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           is => 'String',
           is_optional => 1,
           doc => "an annotation file (5 col, 1 based) containing sites that will automatically be passed. This is useful when sequencing a relapse - the sites already found in the tumor don't need to be manually reviewed",
-      },
-
-      restrict_to_target_regions =>{
-          is => 'Boolean',
-          is_optional => 1,
-          default => 1,
-          doc => "only keep calls within the target regions. These are pulled from the build if possible",
       },
 
       get_readcounts =>{
@@ -590,8 +583,7 @@ sub execute {
       $model = $build->model;      
   }
 
-
-  #valid target-regions
+  #get the target-region file
   if($self->restrict_to_target_regions){
       unless($model->target_region_set || $self->target_regions){        
           die $self->error_message("No target regions provided and no target_region_set defined on model. Can't use the --restrict-to-target-regions option on this model.");
@@ -641,6 +633,7 @@ sub execute {
   } else {
       $sample_name = $self->sample_name;
   }
+  $sample_name = Genome::Utility::Text::sanitize_string_for_filesystem($sample_name);
 
   
   $self->status_message("processing model with sample_name: $sample_name\n");
@@ -659,11 +652,7 @@ sub execute {
   }
 
 
-
-
-
   my $build_dir = $build->data_directory;
-
 
   # create subdirectories, get files in place
 
@@ -686,55 +675,21 @@ sub execute {
 
 
 
-  my @snv_files = ("$build_dir/validation/snvs/snvs.validated","$build_dir/validation/snvs/snvs.notvalidated");
-  
-  #all newcalls or just on-target?
-  my $newcalls = "$build_dir/validation/snvs/snvs.newcalls";
-  if($self->restrict_to_target_regions){
-      if(defined($self->target_regions)){
-          my $target_regions = $self->target_regions;
-          $self->status_message("joinx sort $target_regions > $output_dir/$sample_name/target_regions");
-          `joinx sort $target_regions > $output_dir/$sample_name/target_regions`;
-          $target_regions = "$output_dir/$sample_name/target_regions";
-          $self->status_message("joinx intersect -a $build_dir/validation/snvs/snvs.newcalls -b $target_regions -o $output_dir/$sample_name/snvs/snvs.newcalls.on_target");
-          `joinx intersect -a $build_dir/validation/snvs/snvs.newcalls -b $target_regions -o $output_dir/$sample_name/snvs/snvs.newcalls.on_target`;
-          $newcalls = "$output_dir/$sample_name/snvs/snvs.newcalls.on_target";
-     } else {
-         if(-s "$build_dir/validation/snvs/snvs.newcalls.on_target"){
-             $newcalls = "$build_dir/validation/snvs/snvs.newcalls.on_target";
-             push(@snv_files,$newcalls);
-         } else {
-             $self->warning_message("No target regions defined on build, can't restrict newcalls to target regions");
-             push(@snv_files,$newcalls);
-         }
-     }
-  } else {
-      push(@snv_files,$newcalls);
-  }
-
-
-  for my $file (@snv_files){
+  #get the files to operate on
+  my @orig_snv_files = ("$build_dir/validation/snvs/snvs.validated","$build_dir/validation/snvs/snvs.notvalidated","$build_dir/validation/snvs/snvs.newcalls");
+  my @snv_files;
+  for my $file (@orig_snv_files){
       unless( -e $file ){
           die $self->error_message("SNV results for $sample_name not found at $file");
       }
       `cp $file $output_dir/$sample_name/snvs/`;
-  }
-
-  
-  my ($small_indel_file, $large_indel_file) = $self->indel_files( $build_dir );
-
-  my $process_svs = $self->process_svs;
-  my $sv_file = "$build_dir/validation/sv/assembly_output.csv.merged.readcounts.somatic.wgs_readcounts.somatic";
-  if($process_svs){
-      unless( -e $sv_file ){
-          $self->warning_message("SV results for $sample_name not found, skipping SVs");
-          $process_svs = 0;
+      #only operate on non-zero files
+      if( -s $file ){
+          push(@snv_files,"$output_dir/$sample_name/snvs/". basename($file));
       }
   }
-
-
-
-  #cat all the indels together (same for indels)
+  my ($small_indel_file, $large_indel_file) = $self->indel_files( $build_dir );
+  #cat all the indels together into one file
   if($large_indel_file =~ /variants/){ #no validated indels, use the bed files
       bedFileToAnnoFile($large_indel_file,"$output_dir/$sample_name/indels/large.indels");
 
@@ -751,23 +706,25 @@ sub execute {
       `grep -w Somatic $small_indel_file | cut -f 1-5 >$output_dir/$sample_name/indels/small.indels`;
       `cat $output_dir/$sample_name/indels/small.indels $output_dir/$sample_name/indels/large.indels | joinx sort >$output_dir/$sample_name/indels/indels.hq`;
   }
+  my $indel_file = "$output_dir/$sample_name/indels/indels.hq";
+  
 
-
-
+  #SVs
+  my $process_svs = $self->process_svs;
+  my $sv_file = "$build_dir/validation/sv/assembly_output.csv.merged.readcounts.somatic.wgs_readcounts.somatic";
+  if($process_svs){
+      unless( -e $sv_file ){
+          $self->warning_message("SV results for $sample_name not found, skipping SVs");
+          $process_svs = 0;
+      }
+  }
   if($process_svs){
       `mkdir $output_dir/$sample_name/svs`;
       `cp $sv_file $output_dir/$sample_name/svs/svs.hq` unless( -e "$output_dir/$sample_name/svs/$sv_file");
   }
 
-  #only need to operate on the non-zero files
-  @snv_files = ();
-  push(@snv_files,"$output_dir/$sample_name/snvs/snvs.validated") if (-s "$output_dir/$sample_name/snvs/snvs.validated");
-  push(@snv_files,"$output_dir/$sample_name/snvs/snvs.notvalidated") if (-s "$output_dir/$sample_name/snvs/snvs.notvalidated");
-  push(@snv_files, "$output_dir/$sample_name/snvs/" . basename($newcalls)) if (-s "$output_dir/$sample_name/snvs/" . basename($newcalls));
 
-  my $indel_file = "$output_dir/$sample_name/indels/indels.hq";
-
-
+  
   #clean the files
   my $i=0;
   for($i=0;$i<@snv_files;$i++){
@@ -775,6 +732,60 @@ sub execute {
   }
   $indel_file = cleanFile($indel_file);
 
+  #-------------------------------------------------
+  #filter out the off-target regions, if target regions are available
+  if($self->restrict_to_target_regions){
+      $self->status_message("Filtering out off-target regions...");
+      
+      my $featurelist;
+      if($self->target_regions) {
+          $featurelist = $self->target_regions;
+      } else { 
+          $featurelist = $build->target_region_set->file_path;
+      }
+
+
+      if(defined($featurelist) && (-s $featurelist)){
+          #clean up feature list
+          open(FEATFILE,">$output_dir/$sample_name/featurelist.tmp");
+          my $inFh = IO::File->new( $featurelist ) || die "can't open file feature file\n";
+          while( my $line = $inFh->getline )
+          {
+              chomp($line);
+              next if $line =~ /^track/;
+              my ( $chr, $start, $stop, @rest) = split( /\t/, $line );
+              #remove chr if present
+              $chr =~ s/^chr//g;
+              print FEATFILE join("\t",( $chr, $start, $stop, @rest)) . "\n";
+          }
+          close($inFh);
+          close(FEATFILE);
+          my $cmd;
+          $cmd = "joinx sort '" . $output_dir . "/" . $sample_name . "/featurelist.tmp'" . " >'" . $output_dir . "/" . $sample_name . "/featurelist'";
+          `$cmd`;
+          $cmd = "rm -f '" . $output_dir . "/" . $sample_name . "/featurelist.tmp'";
+          `$cmd`;
+
+          #do the intersection
+          my @new_snv_files;
+          foreach my $file (@snv_files){
+              my $new_file = addName($file,"ontarget");
+              $cmd = "joinx intersect -a '" . $file . "' -b '" . $output_dir . "/" . $sample_name . "/featurelist' >'" . $new_file . "'";
+              `$cmd`;
+              $file = "$new_file";
+              push(@new_snv_files,$file)
+          }
+          @snv_files = @new_snv_files;
+
+          my $new_file = addName($indel_file,"ontarget");
+          $cmd = "joinx intersect -a '" . $indel_file . "' -b '" . $output_dir . "/" . $sample_name . "/featurelist' >'" . $new_file . "'";
+          `$cmd`;
+          $indel_file = "$new_file";
+
+      } else {
+          $self->warning_message("feature list not found or target regions not specified; No target region filtering being done even though --restrict-to-target-regions set.");
+      }
+  }
 
   #-------------------------------------------------
   #remove filter sites specified by the user
@@ -836,16 +847,6 @@ sub execute {
       my $x=1;
   }
   $indel_file = doAnnotation($indel_file, $annotation_build_name);
-
-
-  # #for testing
-  # for($i=0;$i<@snv_files;$i++){
-  #    $snv_files[$i] =~ s/\.bed//g;
-  #    $snv_files[$i] = $snv_files[$i] . ".anno";
-  # }
-  # $indel_file =~ s/\.bed//g;
-  # $indel_file = $indel_file . ".anno";
-
 
 
   #-------------------------------------------------------
@@ -1079,6 +1080,8 @@ sub execute {
   }
   open(OUTFILE,">$output_dir/$sample_name/snvs.indels.annotated");
   open(OUTFILE2,">$output_dir/$sample_name/snvs.indels.annotated.tmp");
+
+  my $headerAdded=0;
   my $inFh = IO::File->new( $indel_file ) || die "can't open indel file\n";
   while( my $line = $inFh->getline ){
       chomp($line);
@@ -1086,6 +1089,7 @@ sub execute {
 
       if($line =~ /^chrom/){
           print OUTFILE $line . "\tstatus\n";
+          $headerAdded=0;
           next;
       }
       print OUTFILE2 join("\t",(@F,$indel_type)) . "\n";
@@ -1103,7 +1107,14 @@ sub execute {
       $inFh = IO::File->new( $snv_file ) || die "can't open snv file\n";
       while( my $line = $inFh->getline ){
           chomp($line);
-          next if $line =~ /^chrom/;
+          if($line =~ /^chrom/){
+              unless($headerAdded){
+                  print OUTFILE $line . "\tstatus\n";
+                  $headerAdded=1;
+              }
+              next;
+          }
+
           my @F = split("\t",$line);
           print OUTFILE2 join("\t",(@F,$snv_type)) . "\n";
       }
@@ -1111,8 +1122,18 @@ sub execute {
   close(OUTFILE);
   close(OUTFILE2);
 
-  `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tmp >>$output_dir/$sample_name/snvs.indels.annotated`;
-  `rm -f $output_dir/$sample_name/snvs.indels.annotated.tmp`;
+  my $result = Genome::Sys->shellcmd(
+      cmd => "joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tmp >>$output_dir/$sample_name/snvs.indels.annotated",
+      );
+  unless($result) {
+      die $self->error_message("Failed to execute joinx: Returned $result");
+  }
+  $result = Genome::Sys->shellcmd(
+      cmd => "rm -f $output_dir/$sample_name/snvs.indels.annotated.tmp"
+      );
+  unless($result) {
+      die $self->error_message("Failed to execute rm: Returned $result");
+  }
 
   # convert master table to excel
   my $workbook  = Spreadsheet::WriteExcel->new("$output_dir/$sample_name/snvs.indels.annotated.xls");
@@ -1148,7 +1169,8 @@ sub execute {
           `grep -w $i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2`;
       }
 
-      `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
+      `head -n1 $output_dir/$sample_name/snvs.indels.annotated | grep "chromosome_name" >$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
+      `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
       annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2","$output_dir/review/$sample_name.bed");
       `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
       `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp2`;
