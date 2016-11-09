@@ -9,10 +9,13 @@ BEGIN {
 use strict;
 use warnings;
 
+use File::Spec;
 use Test::Exception;
 use Test::More;
 
 use above 'Genome';
+
+use Genome::Utility::Test;
 
 use_ok('Genome::InstrumentData::Solexa') or die;
 
@@ -141,14 +144,16 @@ throws_ok(
     'Old style SX trimmer "foo" w/ INVALID params "num" fails!',
 );
 
+
+my $adapter_file = File::Spec->join(Genome::Utility::Test->data_dir('Genome::InstrumentData::Solexa'), qw(adaptors ADAPTORS.fa));
 is_deeply( # this has a special case that needs to be supported using the real far class
     [$instrument_data->_convert_trimmer_to_sx_commands(
         trimmer_name => 'far',
-        trimmer_params => '--adapters /gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --format blah', 
+        trimmer_params => '--adapters ' . $adapter_file . ' --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --format blah', 
         trimmer_version => '2.17',
     )],
-    ["trim far --adapters /gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --version 2.17"],
-    'converted trimmer FAR params: "--fixed-pre-trim 150 --adapters /gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --format blah"',
+    ["trim far --adapters $adapter_file --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --version 2.17"],
+    'converted trimmer FAR params: "--fixed-pre-trim 150 --adapters ' . $adapter_file . ' --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --format blah"',
 );
 
 # Not SX - return undef
