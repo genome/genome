@@ -1,6 +1,6 @@
 <?xml version='1.0' standalone='yes'?>
 
-<workflow name="Somatic Variant Validation Pipeline" logDir="/gsc/var/log/genome/somatic_variant_validation">
+<workflow name="Somatic Variant Validation Pipeline" logDir="/var/log/genome/somatic_variant_validation">
   <link fromOperation="input connector" fromProperty="build_id" toOperation="Alignments" toProperty="build_id" />
   <link fromOperation="input connector" fromProperty="build_id" toOperation="Detect Variants" toProperty="build_id" />
   <link fromOperation="input connector" fromProperty="tumor_mode" toOperation="Reference Coverage Stats (Tumor)" toProperty="mode" />
