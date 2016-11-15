@@ -600,11 +600,11 @@
     <xsl:param name="data" />
     <xsl:param name="hidden" />
 
-
-    <table class="lister datatable algorithm-swap" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <div class="algorithm-swap">
       <xsl:if test="$hidden">
         <xsl:attribute name="style">display:none</xsl:attribute>
       </xsl:if>
+    <table class="lister datatable alignment-lister" width="100%" cellspacing="0" cellpadding="0" border="0">
       <thead>
         <tr>
           <th>model</th>
@@ -615,7 +615,7 @@
           <th class="right">unaligned</th>
         </tr>
       </thead>
-      <tbody class="alignment-lister">
+      <tbody>
         <xsl:for-each select="$data/model/wingspan[@size='0']">
           <xsl:sort select="../@model_name" order="ascending"/>
           <xsl:sort select="../@lane_count" order="ascending"/>
@@ -652,6 +652,7 @@
         </xsl:for-each>
       </tbody>
     </table>
+    </div>
 
   </xsl:template>
 </xsl:stylesheet>
