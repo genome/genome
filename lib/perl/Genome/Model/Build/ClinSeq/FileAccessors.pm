@@ -326,38 +326,40 @@ sub wgs_exome_snv_summary_dir {
   return $wgs_exome_snv_summary_dir;
 }
 
+
 sub snv_indel_report_clean_unfiltered_file {
-  my $self = shift;
-  my $bq = shift;
-  my $mq = shift;
-  my $snv_indel_report_dir = $self->snv_indel_report_dir($bq, $mq);
-  my $snv_indel_report_clean_unfiltered_file = File::Spec->catfile(
-    $snv_indel_report_dir,
-    $self->common_name . "_final_unfiltered_clean.tsv");
-  if(-e $snv_indel_report_clean_unfiltered_file) {
-    return $snv_indel_report_clean_unfiltered_file;
-  } else {
-    $self->warning_message("unable to find " .
-      $snv_indel_report_clean_unfiltered_file);
-    return;
-  }
+    my $self = shift;
+    return $self->snv_indel_report_clean_file(@_, 'unfiltered');
 }
 
 sub snv_indel_report_clean_filtered_file {
-  my $self = shift;
-  my $bq = shift;
-  my $mq = shift;
-  my $snv_indel_report_dir = $self->snv_indel_report_dir($bq, $mq);
-  my $snv_indel_report_clean_filtered_file = File::Spec->catfile(
-    $snv_indel_report_dir,
-    $self->common_name . "_final_filtered_clean.tsv");
-  if(-e $snv_indel_report_clean_filtered_file) {
-    return $snv_indel_report_clean_filtered_file;
-  } else {
-    $self->warning_message("unable to find " .
-      $snv_indel_report_clean_filtered_file);
-    return;
-  }
+    my $self = shift;
+    return $self->snv_indel_report_clean_file(@_, 'filtered');
+}
+
+sub snv_indel_report_clean_file {
+    my $self = shift;
+    my $bq   = shift;
+    my $mq   = shift;
+    my $type = shift;
+    my $snv_indel_report_dir = $self->snv_indel_report_dir($bq, $mq);
+    my $snv_indel_report_clean_file = File::Spec->catfile($snv_indel_report_dir, $self->common_name . "_final_${type}_clean.tsv");
+    if (-e $snv_indel_report_clean_file) {
+        return $snv_indel_report_clean_file;
+    }
+    else {
+        my $snv_indel_report_clean_file2 = File::Spec->catfile($snv_indel_report_dir, $self->subject->name . "_final_${type}_clean.tsv");
+        if (-e $snv_indel_report_clean_file2) {
+            return $snv_indel_report_clean_file2;
+        }
+        else {
+            $self->warning_message(
+                "unable to find snv_indel_report_clean_${type}_file in location " .
+                "$snv_indel_report_clean_file or $snv_indel_report_clean_file2"
+            );
+            return;
+        }
+    }
 }
 
 sub wgs_cnvhmm_file {

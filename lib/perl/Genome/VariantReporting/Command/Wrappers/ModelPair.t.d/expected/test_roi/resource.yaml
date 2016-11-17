@@ -3,7 +3,7 @@ aligned_bam_result_id:
   - -b52e1b52f81e4541af7f71ce14ca96f6
   - -533e0bb1a99f4fbe9e31cf6e19907133
   - -533e0bb1a99f4fbe9e31cf6e19907133
-dbsnp_vcf: /gscuser/aregier/git/genome/fireteam/lib/perl/Genome/VariantReporting/Framework/Command/Wrappers/TestHelpers.pm.d/dbsnp.vcf
+dbsnp_vcf: Genome/VariantReporting/Framework/Command/Wrappers/TestHelpers.pm.d/dbsnp.vcf
 feature_list_ids:
   ON_TARGET: -1
   SEG_DUP: -1

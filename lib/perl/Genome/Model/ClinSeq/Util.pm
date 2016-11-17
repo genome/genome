@@ -1210,13 +1210,13 @@ sub _get_si_report_tumor_prefix {
     foreach my $somatic_build_id (keys %somatic_builds) {
         $somatic_build             = $somatic_builds{$somatic_build_id}{build};
         $tumor_subject_name        = $somatic_build->model->experimental_subject->name;
-        $tumor_subject_common_name = $somatic_build->model->experimental_subject->common_name;
+        $tumor_subject_common_name = $somatic_build->model->experimental_subject->common_name // '';
         $tumor_subject_common_name =~ s/\,//g;
         $tumor_subject_common_name =~ s/\s+/\_/g;
     }
     foreach my $prefix (@prefixes) {
         if (   ($prefix =~ /$tumor_subject_name/)
-            or ($prefix =~ /$tumor_subject_common_name/))
+            or (length($tumor_subject_common_name) and $prefix =~ /$tumor_subject_common_name/))
         {
             push @tumor_refalign_names, $prefix;
         }

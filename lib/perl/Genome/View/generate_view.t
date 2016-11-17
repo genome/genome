@@ -33,7 +33,7 @@ done_testing();
 
 # why this test? because:
 #
-# started failing here - /gsc/scripts/opt/genome/snapshots/stable/genome-902/lib/perl
+# started failing here - genome-902
 #
 #commit a1c373f3514547c418e0a7c77677c9b62c6d03b1
 #Author: Anthony Brummett <abrummet@genome.wustl.edu>

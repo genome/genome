@@ -12,7 +12,7 @@ class Genome::Model::Tools::Annotate::Sv::RepeatMasker {
         annotation_file => {
             is => 'String',
             doc => 'Path to annotation file',
-            example_values => ["/gscuser/aregier/git/genome/vep/lib/perl/Genome/repeat_masker.tsv"],
+            example_values => ["repeat_masker.tsv"],
         },
         length_to_repeat => {
             type => 'Integer',

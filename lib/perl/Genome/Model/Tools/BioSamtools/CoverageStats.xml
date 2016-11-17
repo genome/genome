@@ -1,5 +1,5 @@
 <?xml version='1.0' standalone='yes'?>
-<workflow name="Coverage Stats" logDir="/gsc/var/log/genome/coverage_stats">
+<workflow name="Coverage Stats" logDir="/var/log/genome/coverage_stats">
     <link fromOperation="input connector" fromProperty="bed_file" toOperation="Coverage" toProperty="bed_file" />
     <link fromOperation="input connector" fromProperty="bam_file" toOperation="Coverage" toProperty="bam_file" />
     <link fromOperation="input connector" fromProperty="minimum_depth" toOperation="Coverage" toProperty="minimum_depth" />

@@ -56,17 +56,6 @@ my $model_pair = $pkg->create(
 is($model_pair->class, $pkg, "Model pair created correctly");
 test_dag_xml($model_pair->dag, __FILE__);
 
-my $expected_params = {
-    snvs_input_vcf => "/gscuser/aregier/git/genome/fix/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/TEST-patient1-somval_tumor1.snvs.vcf.gz",
-    snvs_plan_file => "/gscuser/aregier/git/genome/fix/lib/perl/Genome/VariantReporting/plan_files/cle_snvs_report.yaml",
-    snvs_translations_file => "/tmp/gm-genome_sys-2014-12-03_17_46_01--dy8W/anonymous6",
-    indels_input_vcf => "/gscuser/aregier/git/genome/fix/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/TEST-patient1-somval_tumor1.snvs.vcf.gz",
-    indels_plan_file => "/gscuser/aregier/git/genome/fix/lib/perl/Genome/VariantReporting/plan_files/cle_indels_report.yaml",
-    indels_translations_file => "/tmp/gm-genome_sys-2014-12-03_17_46_01--dy8W/anonymous6",
-    use_header_from => "snvs",
-};
-#TODO compare these in a sensible way
-#is_deeply($expected_params, $model_pair->params_for_dag, "params were created correctly");
 done_testing;
 
 

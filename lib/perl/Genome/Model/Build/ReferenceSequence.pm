@@ -651,6 +651,12 @@ sub chromosome_array_ref {
 sub cached_full_consensus_path {
     my ($self, $format) = @_;
 
+    unless ($self->local_cache_basedir and -e $self->local_cache_basedir) {
+        $self->status_message('Using original full consensus path.');
+
+        return $self->full_consensus_path($format);
+    }
+
     $self->status_message('Using cached full consensus path');
 
     if ( not $format or $format ne 'fa' ) {

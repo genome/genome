@@ -1748,7 +1748,6 @@ sub shellcmd {
 sub capture {
     my $class = shift;
 
-    # lazy load so we don't break /gsc/bin/perl (until we have to)
     require IPC::System::Simple;
     return IPC::System::Simple::capture(@_);
 }
