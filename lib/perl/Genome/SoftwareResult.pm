@@ -672,7 +672,9 @@ sub _auto_unarchive {
 sub _expand_param_and_input_properties {
     my ($class, $desc) = @_;
     for my $t ('input','param','metric') {
-        while (my ($prop_name, $prop_desc) = each(%{ $desc->{has} })) {
+        for my $prop_name (sort keys %{ $desc->{has} }) {
+            my $prop_desc = $desc->{has}{$prop_name};
+
             if (exists $prop_desc->{'is_'.$t} and $prop_desc->{'is_'.$t}) {
                 my $is_many = ($t ne 'metric' and exists $prop_desc->{'is_many'} and $prop_desc->{'is_many'});
 
