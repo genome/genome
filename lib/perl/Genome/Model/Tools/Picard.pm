@@ -13,8 +13,8 @@ use Genome::Utility::Email;
 use List::MoreUtils 'uniq';
 
 my $PICARD_DEFAULT = '1.46';
-my $DEFAULT_MEMORY = 4;
-my $DEFAULT_PERMGEN_SIZE = 64; #Mbytes
+my $DEFAULT_MEMORY = Genome::Config::get('java_heapspace_picard');
+my $DEFAULT_PERMGEN_SIZE = Genome::Config::get('java_permgen_picard'); #Mbytes
 my $DEFAULT_VALIDATION_STRINGENCY = 'SILENT';
 my $DEFAULT_MAX_RECORDS_IN_RAM = 500000;
 

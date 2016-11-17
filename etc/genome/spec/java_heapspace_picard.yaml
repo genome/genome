@@ -1,0 +1,3 @@
+---
+default_value: "4"
+env: XGENOME_JAVA_HEAPSPACE_PICARD
