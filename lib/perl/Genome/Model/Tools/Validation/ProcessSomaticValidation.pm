@@ -137,7 +137,7 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           is => 'Text',
           is_optional => 1,
           doc => "name of the igv reference to use",
-          example_values => ["hg38","reference_build36","b37","mm9","mm10"],
+          example_values => ["hg38","mm10","b37","mm9","reference_build36"],
       },
 
       tiers_to_review => {
