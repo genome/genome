@@ -65,7 +65,7 @@ sub new {
     $jobinfo{__events} = [];
     foreach my $el (@eventlines) {
         if ( $el =~
-            /^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s{1,2}(\d{1,2})\s{1,   2}(\d{1,2}):(\d{2}):(\d{2}):/
+            /^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s{1,2}(\d{1,2})\s{1,2}(\d{1,2}):(\d{2}):(\d{2}):/
         )
         {
 
