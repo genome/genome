@@ -34,6 +34,11 @@ class Genome::Config::AnalysisProject::Command::View {
             default_value => 0,
             doc => 'Whether to display disabled config items',
         },
+        inactive_configs => {
+            is => 'Boolean',
+            default_value => 1,
+            doc => 'Whether to display inactive config items',
+        },
         instrument_data => {
             is => 'Boolean',
             default_value => 1,
@@ -432,13 +437,19 @@ sub _write_terse_config_items {
 sub _config_items {
     my $self = shift;
 
+    my @statuses = ('active');
+
     if ($self->disabled_configs) {
-        return $self->analysis_project->config_items(
-            '-order_by' => 'created_at');
-    } else {
-        return $self->analysis_project->config_items(
-            'status' => 'active', '-order_by' => 'created_at');
+        push @statuses, 'disabled';
     }
+
+    if ($self->inactive_configs) {
+        push @statuses, 'inactive';
+    }
+
+    return $self->analysis_project->config_items(
+        'status' => \@statuses, '-order_by' => 'created_at'
+    );
 }
 
 sub _write_config_item_heading {
