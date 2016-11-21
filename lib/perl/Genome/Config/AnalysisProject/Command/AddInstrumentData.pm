@@ -10,8 +10,8 @@ class Genome::Config::AnalysisProject::Command::AddInstrumentData {
     is => 'Genome::Config::AnalysisProject::Command::Base',
     has_input => [
        instrument_data  => {
-            is                  => 'Genome::InstrumentData::Imported',
-            doc                 => 'imported instrument data to add to this analysis project',
+            is                  => 'Genome::InstrumentData',
+            doc                 => 'instrument data to add to this analysis project',
             is_many             => 1,
             shell_args_position => 2,
        },
@@ -19,7 +19,7 @@ class Genome::Config::AnalysisProject::Command::AddInstrumentData {
 };
 
 sub help_brief {
-    return 'associate imported instrument data with an analysis project';
+    return 'associate instrument data with an analysis project';
 }
 
 sub help_synopsis {
@@ -28,8 +28,7 @@ sub help_synopsis {
 
 sub help_detail {
     return <<"EOS"
-This will associate instrument data with an analysis project. It is limited to working on imported data only
-as data produced in-house will have this information set up in LIMS
+This will associate instrument data with an analysis project.
 EOS
 }
 
