@@ -306,10 +306,16 @@ sub _bam_to_fastq_commands {
     # It does, however, warn about such. We'll juggle file descriptors around a
     # bit to enable detecting these warnings on stderr and failing early.
 
+    my $output_params = '-fq /dev/stdout';
+    if ($self->aligner_params =~ /-p\b/) {
+        $output_params .= ' -fq2 /dev/stdout';
+    }
+
+
     return <<EOS;
 {
     # swap stdin and stderr
-    $bedtools bamtofastq -i /dev/stdin -fq /dev/stdout -fq2 /dev/stdout 3>&1 1>&2 2>&3 \\
+    $bedtools bamtofastq -i /dev/stdin $output_params 3>&1 1>&2 2>&3 \\
         | {
             tee >(
                 if grep -q 'WARNING: Query'
