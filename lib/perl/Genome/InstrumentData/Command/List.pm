@@ -78,8 +78,6 @@ my %DEFAULT_SHOW = (
         read_length
         is_paired_end
         clusters
-        median_insert_size
-        sd_above_insert_size
         target_region_set_name
     )],
 
