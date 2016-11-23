@@ -16,15 +16,15 @@ use_ok($pkg);
 
 my $config = Genome::Site::TGI::CleTest::get_config();
 my $expected_config = {
-    'blessed_process' => '5b1b232f41174e56b9e7125d1f5edd03',
+    'blessed_process' => 'fadeb8545bce48adbc74deb1b5017d56',
     'blessed_builds' => [
-    '185d8bac3d7c4437b7ce9207dfadac7e',
-    '5f57f08a8fd84886b275f0b5571e9fd7',
-    'e02e8a5ccaad458d839de51eb47d8d2c',
+    '3746e84c85054fbeb1ee9adde63fd362',
+    'b1dbade3470b4060b0d8c2d7f3279f38',
+    'f80f173dfc7c4e2a90ddc0f4ff4cbcd4',
     '26e65adaa8034dd99ef92b27f61ad862',
-    '3243f261a8b64c089a5254291f7c2de3',
-    'f87701c292e843958d088e171a65a67a',
-    '301d5d51c96e41308d015008720f3962'
+    '3dd43eb24d0c41dcaddc3747e60260c1',
+    'd57481e2d6f44aaa9e06db71220cf16c',
+    'f26257cefe604b01924ca4e6bf63392e'
     ],
     'tag_to_menu_item' => {
         'germline' => '3770b8510d5a459f9c0bb01fabf56337',
@@ -72,7 +72,7 @@ my $expected_config = {
         '4e77d10f29f44a0792ebc8d6ea0c4a2b'
     ],
     processing_profiles => [
-        'a813f8067a8c4c9791fec53dd29d85ca',
+        '6cb9031627e841b99967202c5155f2a1',
         '6cab54acdf704c7c9e8adc7aa8facff4',
     ],
     misc_software_results => [
