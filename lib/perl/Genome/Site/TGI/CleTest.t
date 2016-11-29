@@ -69,7 +69,8 @@ my $expected_config = {
         '0e4973c600244c3f804d54bee6f81145',
         'ef6583623a614c8ebaea471a4c9748fc',
         '7f05e8fad6b6465a9f5bd6155dc88135',
-        '4e77d10f29f44a0792ebc8d6ea0c4a2b'
+        '4e77d10f29f44a0792ebc8d6ea0c4a2b',
+        '4c782d77d1d54f61819c593ebc720e66'
     ],
     processing_profiles => [
         '6cb9031627e841b99967202c5155f2a1',

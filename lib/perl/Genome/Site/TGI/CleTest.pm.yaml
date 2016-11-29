@@ -52,6 +52,7 @@ feature_lists:
     - ef6583623a614c8ebaea471a4c9748fc #AML Complex Mutation Region ROI
     - 7f05e8fad6b6465a9f5bd6155dc88135 #homopolymer regions from G::VR::C::Wrapper::ModelPair
     - 4e77d10f29f44a0792ebc8d6ea0c4a2b #segdups my $b = Genome::Model::Build->get('26e65adaa8034dd99ef92b27f61ad862'); $b->get_feature_list("segmental_duplications")->id
+    - 4c782d77d1d54f61819c593ebc720e66 #PindelRegion region file list: FLT3_region_build37
 processing_profiles:
     - 6cb9031627e841b99967202c5155f2a1 #somatic CLE PP
     - 6cab54acdf704c7c9e8adc7aa8facff4 #germline CLE PP
