@@ -35,7 +35,7 @@ ok($cmd->result, 'execute');
 my $output_bam_path = $cmd->output_bam_path;
 is($output_bam_path, $tmp_dir.'/'. 'sort-bam.input.sorted.bam', 'sorted bam path named correctly');
 ok(-s $output_bam_path, 'sorted bam path exists');
-my $expected_bam_basename = 'sort-bam.expected.bam';
+my $expected_bam_basename = 'sort-bam.samtools.expected.bam';
 is(File::Compare::compare($output_bam_path, $test_dir.'/'.$expected_bam_basename), 0, 'sorted bam matches');
 ok(-s $output_bam_path.'.flagstat', 'flagstat path exists');
 is(File::Compare::compare($output_bam_path.'.flagstat', $test_dir.'/'.$expected_bam_basename.'.flagstat'), 0, 'flagstat matches');

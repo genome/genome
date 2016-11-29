@@ -66,14 +66,18 @@ sub _sort_bam {
     my $output_bam_path = $self->output_bam_path;
     $self->debug_message("Sorted bam path: $output_bam_path");
 
-    my $cmd = Genome::Model::Tools::Picard::SortSam->execute(
-        input_file => $bam_path,
+    # Picard is throwing an unknown exception when sorting BAM files
+    # Exception in thread "main" java.util.NoSuchElementException
+
+    # Use Samtoools natural sort order instead (NOTE: Picard is sorted lexicographically)
+    my $cmd = Genome::Model::Tools::Sam::SortBam->execute(
+        file_name => $bam_path,
         output_file => $output_bam_path,
-        sort_order => 'queryname',
-        use_version => '1.82',
+        name_sort => 1,
+        use_version => 'r982',
     );
     if ( not $cmd->result or not -s $output_bam_path ) {
-        $self->error_message('Failed to run picard sort sam!');
+        $self->error_message('Failed to sort BAM file!');
         return;
     }
 
