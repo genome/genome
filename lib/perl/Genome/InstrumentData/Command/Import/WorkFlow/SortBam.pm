@@ -75,6 +75,7 @@ sub _sort_bam {
         output_file => $output_bam_path,
         name_sort => 1,
         use_version => 'r982',
+        maximum_memory => 3_000_000_000,
     );
     if ( not $cmd->result or not -s $output_bam_path ) {
         $self->error_message('Failed to sort BAM file!');
