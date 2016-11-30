@@ -33,9 +33,9 @@ my $cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
     annotator_list      => ['Transcripts', 'Dbsnp', 'Segdup', 'Dbvar'],
     transcripts_print_flanking_genes => 1,
     transcripts_cancer_gene_list     => join("/",Genome::Sys->dbpath("cancer-gene-list/human",1),"Cancer_genes.csv"),
-    dbsnp_annotation_file => "/gsc/scripts/share/BreakAnnot_file/human_build37/dbsnp132.indel.named.csv",
-    dbvar_annotation_file => "/gsc/scripts/share/BreakAnnot_file/human_build37/GRCh37.remap.all.germline.ucsc.gff",
-    segdup_annotation_file => "/gsc/scripts/share/BreakAnnot_file/human_build37/Human.Feb2009.SegDups.tab",
+    dbsnp_annotation_file => join("/",Genome::Sys->dbpath("tgi/misc-annotation/human","build37-20130113"),"BreakAnnot/dbsnp132.indel.named.csv"),
+    dbvar_annotation_file => join("/",Genome::Sys->dbpath("tgi/misc-annotation/human","build37-20130113"),"BreakAnnot/GRCh37.remap.all.germline.ucsc.gff"),
+    segdup_annotation_file => join("/",Genome::Sys->dbpath("tgi/misc-annotation/human","build37-20130113"),"BreakAnnot/Human.Feb2009.SegDups.tab"),
     dbsnp_overlap_fraction => 0.8,
     dbvar_overlap_fraction => 1,
 );
