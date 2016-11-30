@@ -76,6 +76,7 @@ sub lock {
         params => \@_,
         spec => Genome::Sys::Lock::PROXY_LOCK_PARAMS_SPEC(),
     );
+    STDERR->say(sprintf 'DEBUG: Attempting to lock (in scope "%s"): %s', $self->scope, $self->resource) if $ENV{UR_DUMP_DEBUG_MESSAGES};
     my $locked = Genome::Sys::Lock->lock_resource(%params,
         resource_lock => $self->resource,
         scope => $self->scope,
