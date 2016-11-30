@@ -50,8 +50,8 @@ class Genome::Model::Tools::Manta::Run {
             doc => 'Do not write any log output to stderr (but still write to workspace/pyflow.data/logs/pyflow_log.txt)',
             tool_arg_name => 'quiet',
         },
-        # The version is not required since the python paths are configured separately
         version => {
+            doc => ' The version is not required since the python paths are configured separately',
         },
         # Ignoring manta param 'queue' for SGE mode
     ],
