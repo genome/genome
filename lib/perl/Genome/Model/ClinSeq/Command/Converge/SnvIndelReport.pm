@@ -468,13 +468,18 @@ sub gather_variants {
             unless (-e $indels_file) {
                 die $self->error_message("Could not find expected file:\n$indels_file");
             }
-            my $vcf_result_accessor = "_${somatic_build_type}_annotated_snvs_vcf_result";
-            my $vcf_file;
-            if (my $result = $self->$vcf_result_accessor) {
-                $vcf_file = $result->file_path;
-            }
-            else {
-                $vcf_file = $somatic_build->snvs_annotated_variants_vcf_file;
+            my $annotated_snvs_vcf_result_cmd = Genome::Model::ClinSeq::Command::AnnotateSnvsVcf->create(somatic_build => $somatic_build);
+            my $users = Genome::SoftwareResult::User->user_hash_for_build($somatic_build);
+            my $annotated_snvs_vcf_result = $annotated_snvs_vcf_result_cmd->shortcut(result_users => $users);
+            my $vcf_file = $annotated_snvs_vcf_result->file_path;
+            unless ($vcf_file) {
+                my $vcf_result_accessor = "_${somatic_build_type}_annotated_snvs_vcf_result";
+                if (my $result = $self->$vcf_result_accessor) {
+                    $vcf_file = $result->file_path;
+                }
+                else {
+                    $vcf_file = $somatic_build->snvs_annotated_variants_vcf_file;
+                }
             }
             $bed_files{$snvs_file}{somatic_build_id}   = $somatic_build_id;
             $bed_files{$snvs_file}{var_type}           = "snv";
