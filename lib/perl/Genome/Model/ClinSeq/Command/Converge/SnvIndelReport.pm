@@ -267,7 +267,6 @@ sub execute {
     );
     my $variants = $result->{'variants'};
     my $header   = $result->{'header'};
-
     #If no variants were found, warn the user and end here end here
     unless (keys %{$variants}) {
         my $rm_cmd = "rm -fr $bed_dir";
@@ -470,19 +469,21 @@ sub gather_variants {
             }
 
             my $vcf_file;
-            if ($somatic_build->has_snvs_annotated_variants_vcf_file) {
-                $vcf_file = $somatic_build->snvs_annotated_variants_vcf_file;
-            } else {
-                my $vcf_result_accessor = "_${somatic_build_type}_annotated_snvs_vcf_result";
-                if (my $result = $self->$vcf_result_accessor) {
-                    $vcf_file = $result->file_path;
-                }
-                else {
+            my $vcf_result_accessor = "_${somatic_build_type}_annotated_snvs_vcf_result";
+            if (my $result = $self->$vcf_result_accessor) {
+                $vcf_file = $result->file_path;
+            }
+            unless ($vcf_file) {
+                if ($somatic_build->has_snvs_annotated_variants_vcf_file) {
+                    $vcf_file = $somatic_build->snvs_annotated_variants_vcf_file;
+                } else {
                     # Ideally this would be the ClinSeq build instead of the somatic_build
                     my $users = Genome::SoftwareResult::User->user_hash_for_build($somatic_build);
                     my $annotated_snvs_vcf_result_cmd = Genome::Model::ClinSeq::Command::AnnotateSnvsVcf->create(somatic_build => $somatic_build,result_users => $users);
                     if ($annotated_snvs_vcf_result_cmd->shortcut) {
                         $vcf_file = $annotated_snvs_vcf_result_cmd->output_result->file_path;
+                    } else {
+                        $self->fatal_message('Failed to resolve an annotated snvs vcf file result!');
                     }
                 }
             }
