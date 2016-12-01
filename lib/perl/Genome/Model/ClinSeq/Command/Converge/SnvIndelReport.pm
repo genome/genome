@@ -14,18 +14,16 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
             is  => 'FilesystemPath',
             doc => 'Directory where output files will be written',
         },
-    ],
-    has_optional_input => [
         target_gene_list => {
             is => 'FilesystemPath',
-            doc =>
-                'Genes of interest to be highlighted (e.g. AML RMG list).  Tab delimited file with ENSGs in first column',
+            doc => 'Genes of interest to be highlighted (e.g. AML RMG list).  Tab delimited file with ENSGs in first column',
         },
         target_gene_list_name => {
             is      => 'Text',
             doc     => 'Human readable name used to refer to the target gene list',
-            default => 'AML_RMG',
         },
+    ],
+    has_optional_input => [
         variant_filter_list => {
             is => 'FileSystemPath',
             doc =>
