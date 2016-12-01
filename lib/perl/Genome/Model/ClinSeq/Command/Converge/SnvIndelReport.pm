@@ -14,18 +14,16 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
             is  => 'FilesystemPath',
             doc => 'Directory where output files will be written',
         },
-    ],
-    has_optional_input => [
         target_gene_list => {
             is => 'FilesystemPath',
-            doc =>
-                'Genes of interest to be highlighted (e.g. AML RMG list).  Tab delimited file with ENSGs in first column',
+            doc => 'Genes of interest to be highlighted (e.g. AML RMG list).  Tab delimited file with ENSGs in first column',
         },
         target_gene_list_name => {
             is      => 'Text',
             doc     => 'Human readable name used to refer to the target gene list',
-            default => 'AML_RMG',
         },
+    ],
+    has_optional_input => [
         variant_filter_list => {
             is => 'FileSystemPath',
             doc =>
@@ -267,7 +265,6 @@ sub execute {
     );
     my $variants = $result->{'variants'};
     my $header   = $result->{'header'};
-
     #If no variants were found, warn the user and end here end here
     unless (keys %{$variants}) {
         my $rm_cmd = "rm -fr $bed_dir";
@@ -468,14 +465,27 @@ sub gather_variants {
             unless (-e $indels_file) {
                 die $self->error_message("Could not find expected file:\n$indels_file");
             }
-            my $vcf_result_accessor = "_${somatic_build_type}_annotated_snvs_vcf_result";
+
             my $vcf_file;
+            my $vcf_result_accessor = "_${somatic_build_type}_annotated_snvs_vcf_result";
             if (my $result = $self->$vcf_result_accessor) {
                 $vcf_file = $result->file_path;
             }
-            else {
-                $vcf_file = $somatic_build->snvs_annotated_variants_vcf_file;
+            unless ($vcf_file) {
+                if ($somatic_build->has_snvs_annotated_variants_vcf_file) {
+                    $vcf_file = $somatic_build->snvs_annotated_variants_vcf_file;
+                } else {
+                    # Ideally this would be the ClinSeq build instead of the somatic_build
+                    my $users = Genome::SoftwareResult::User->user_hash_for_build($somatic_build);
+                    my $annotated_snvs_vcf_result_cmd = Genome::Model::ClinSeq::Command::AnnotateSnvsVcf->create(somatic_build => $somatic_build,result_users => $users);
+                    if ($annotated_snvs_vcf_result_cmd->shortcut) {
+                        $vcf_file = $annotated_snvs_vcf_result_cmd->output_result->file_path;
+                    } else {
+                        $self->fatal_message('Failed to resolve an annotated snvs vcf file result!');
+                    }
+                }
             }
+
             $bed_files{$snvs_file}{somatic_build_id}   = $somatic_build_id;
             $bed_files{$snvs_file}{var_type}           = "snv";
             $bed_files{$snvs_file}{data_type}          = $somatic_build_type;
