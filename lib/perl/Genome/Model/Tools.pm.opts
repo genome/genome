@@ -18388,60 +18388,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>metagenomic-classifier',
   [
-    '>detect-chimeras',
-    [
-      'input-file=s',
-      'files',
-      'arff=s',
-      undef,
-      'debug!',
-      undef,
-      'output-file=s',
-      'files',
-      'training-path=s',
-      'files',
-      'training-set=s',
-      'files',
-      'verbose=s',
-      undef,
-      'help!',
-      undef
-    ],
-    '>filter',
-    [
-      'input-file=s',
-      'files',
-      'debug!',
-      undef,
-      'training-path=s',
-      'files',
-      'training-set=s',
-      'files',
-      'help!',
-      undef
-    ],
-    '>rdp',
-    [
-      '>list-genera',
-      [
-        'debug!',
-        undef,
-        'training-set-name=s',
-        [
-          '4',
-          '6',
-          '9',
-          '10',
-          'broad'
-        ],
-        'training-set-path=s',
-        'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     'help!',
     undef
   ],
