@@ -68,7 +68,7 @@ sub _expand_version_param {
 sub available_versions {
     my $class = shift;
     my %versions = $class->versions;
-    return keys %versions;
+    return sort keys %versions;
 }
 
 sub path_for_version {
