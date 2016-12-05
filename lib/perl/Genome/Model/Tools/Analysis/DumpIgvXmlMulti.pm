@@ -48,7 +48,7 @@ class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
         type => 'String',
         is_optional => 0,
         doc => 'The name of the reference (in IGV) that the bams are aligned to.',
-        example_values => ['b37', 'hg18', 'mm9'],
+        example_values => ['hg38', 'mm10', 'b37', 'mm9', 'hg18'],
     },
     roi => {
         is => 'Text',
