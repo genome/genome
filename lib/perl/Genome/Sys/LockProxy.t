@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Genome;
+use above 'Genome';
 use Test::More tests => 5;
 
 use Genome::Sys::Lock qw();
