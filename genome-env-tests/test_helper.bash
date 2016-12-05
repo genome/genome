@@ -60,7 +60,6 @@ function init_workspace {
     cache_repo genome "$(git rev-parse --git-dir)" "$WORKSPACE"
 
     cache_repo ur https://github.com/genome/UR.git "$WORKSPACE"
-    cache_repo workflow https://github.com/genome/tgi-workflow.git "$WORKSPACE"
     cache_repo genome-sqitch https://github.com/genome/genome-sqitch.git "$WORKSPACE"
 }
 
