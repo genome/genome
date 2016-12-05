@@ -273,6 +273,10 @@ sub is_mounted {
         return 1;
     }
 
+    if (-l $self->mount_path) {
+        return 1; #trust that symlinks are mounted
+    }
+
     # We can't use Filesys::Df::df because it doesn't report the mount path only the stats.
     my $mount_path = $self->mount_path;
     my @df_output = qx(df -P $mount_path 2> /dev/null);
