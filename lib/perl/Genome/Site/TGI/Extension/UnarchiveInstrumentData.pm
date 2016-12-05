@@ -119,7 +119,7 @@ sub get_or_create_allocation {
     my %params = (
         disk_group_name => Genome::Config::get('disk_group_alignments'),
         allocation_path => File::Spec->join('instrument_data',$instrument_data->id),
-        kilobytes_requested => 12642864,
+        kilobytes_requested => $instrument_data->calculate_alignment_estimated_kb_usage,
         owner_class_name => $instrument_data->class,
         owner_id => $instrument_data->id,
     );
