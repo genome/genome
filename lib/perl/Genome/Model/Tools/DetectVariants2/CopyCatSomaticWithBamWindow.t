@@ -27,7 +27,7 @@ my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class), "v$test
 ok(-e $test_dir, "Test directory $test_dir exists");
 
 my $annotation_version = 0;
-my $params = "[--bamwindow-version 0.4 --bamwindow-params {-w 10000 -r -l -s -q 1} --copycat-params {--per-read-length --per-library} --samtools-strategy {samtools r599} --annotation-version $annotation_version ]";
+my $params = "[--bamwindow-version 0.5 --bamwindow-params {-w 10000 -r -l -s -q 1} --copycat-params {--per-read-length --per-library} --samtools-strategy {samtools r599} --annotation-version $annotation_version ]";
 my $refbuild_id = 106942997;
 my $output_directory = Genome::Sys->create_temp_directory();
 
