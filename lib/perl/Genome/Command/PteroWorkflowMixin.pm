@@ -336,7 +336,7 @@ sub _method_is_active {
     my ($method, $color) = @_;
 
     my $execution = $method->{executions}->{$color};
-    return (defined($execution) && $execution->{status} ne 'failed');
+    return (defined($execution) && ($execution->{status} ne 'failed' and $execution->{status} ne 'errored'));
 }
 
 sub _method_is_failed {
@@ -344,7 +344,7 @@ sub _method_is_failed {
     my ($method, $color) = @_;
 
     my $execution = $method->{executions}->{$color};
-    return (defined($execution) && $execution->{status} eq 'failed');
+    return (defined($execution) && ($execution->{status} eq 'failed' or $execution->{status} eq 'errored'));
 }
 
 sub _write_ptero_command_details_shortcut {
