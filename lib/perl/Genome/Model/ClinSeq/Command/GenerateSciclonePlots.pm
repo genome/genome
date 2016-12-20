@@ -106,6 +106,7 @@ sub parse_variant_file {
     my $gender         = $clinseq_build->subject->gender;
     my @headers        = qw/chr pos ref_allele var_allele ref_rc var_rc vaf/;
     my @tumor_prefixes = $self->_get_si_report_tumor_prefix($clinseq_build);
+
     if ($self->test) {
         @tumor_prefixes = $tumor_prefixes[0];
     }
@@ -152,7 +153,7 @@ sub parse_variant_file {
             my $vaf    = $data->{$tumor_prefix . "_VAF"};
 
             if (not $ref_rc and not $var_rc and not $vaf) {
-                die $self->error_message("Unable to find ref, alt readcounts and vaf for " . $tumor_prefix);
+                die $self->error_message("Unable to find ref, alt readcounts and vaf for " . $tumor_prefix. " in file " . $variant_file);
             }
             if ($ref_rc eq "NA") {
                 $ref_rc = 0;
