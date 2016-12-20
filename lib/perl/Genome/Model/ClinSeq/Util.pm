@@ -1259,18 +1259,21 @@ sub get_ref_align_builds {
                 $time_point = $timepoints[0]->attribute_value;
                 $time_point =~ s/\s+//g;
                 $sort_on_time_point = 1;
+
             }
             $refalign_name = join("_", ($refalign_name, $time_point));
-
+            
+            $ref_builds{$refalign_name}{time_point} = 
+                join("_", ($subject_common_name, $build_type, $time_point));
+            $ref_builds{$refalign_name}{time_point_tissue} =
+                join("_", ($subject_common_name, $build_type, $tissue_desc, $time_point));
+            $ref_builds{$refalign_name}{name}        = $refalign_name;
             $ref_builds{$refalign_name}{type}        = $build_type;
             $ref_builds{$refalign_name}{sample_name} = $subject_name;
             $ref_builds{$refalign_name}{sample_name_build_type} =
                 join("_", ($subject_name, $subject_common_name, $subject_icn, $build_type));
             $ref_builds{$refalign_name}{sample_common_name} = $subject_common_name;
             $ref_builds{$refalign_name}{bam_path}           = $bam_path;
-            $ref_builds{$refalign_name}{time_point} = join("_", ($subject_common_name, $build_type, $time_point));
-            $ref_builds{$refalign_name}{time_point_tissue} =
-                join("_", ($subject_common_name, $build_type, $tissue_desc, $time_point));
             $ref_builds{$refalign_name}{time_point_string} = $time_point;
             $ref_builds{$refalign_name}{tissue_desc}       = $tissue_desc;
             $ref_builds{$refalign_name}{tissue_label}      = $subject->tissue_label || '';
@@ -1281,21 +1284,6 @@ sub get_ref_align_builds {
 
     if ($rnaseq_builds) {
         $self->add_rnaseq_ref_builds(\%ref_builds, $rnaseq_builds);
-    }
-
-    #Set an order on refalign builds (use time points if available, otherwise name)
-    my $o = 0;
-    if ($sort_on_time_point) {
-        foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds) {
-            $o++;
-            $ref_builds{$name}{order} = $o;
-        }
-    }
-    else {
-        foreach my $name (sort keys %ref_builds) {
-            $o++;
-            $ref_builds{$name}{order} = $o;
-        }
     }
 
     #Determine the time point position
@@ -1331,39 +1319,47 @@ sub get_ref_align_builds {
     my @time_points_tissue;
     my @samples;
     my @names;
-    foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys %ref_builds) {
+    foreach my $name (sort keys %ref_builds) {
         push(@time_points,        $ref_builds{$name}{time_point});
         push(@time_points_tissue, $ref_builds{$name}{time_point_tissue});
         push(@samples,            $ref_builds{$name}{sample_name_build_type});
-        push(@names,              $name);
+        push(@names,              $ref_builds{$name}{name});
     }
 
     #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
     my @prefixes;
+    my $sort_factor;
     my @unique_time_points        = uniq @time_points;
     my @unique_time_points_tissue = uniq @time_points_tissue;
     my @unique_samples            = uniq @samples;
     my @unique_names              = uniq @names;
     if (scalar(@unique_time_points) == scalar(@time_points)) {
         @prefixes = @time_points;
+        $sort_factor = 'time_point';
     }
     elsif (scalar(@unique_time_points_tissue) == scalar(@time_points_tissue)) {
         @prefixes = @time_points_tissue;
+        $sort_factor = 'time_point_tissue';
     }
     elsif (scalar(@unique_samples) == scalar(@samples)) {
         @prefixes = @samples;
+        $sort_factor = 'sample_name_build_type';
     }
     elsif (scalar(@unique_names) == scalar(@names)) {
         @prefixes = @names;
+        $sort_factor = 'name';
     }
     else {
-        die $self->error_message("could not resolve unique prefixes for add-readcounts");
+        die $self->error_message("could not resolve unique prefixes");
     }
 
-    #Record the header prefix chosen on the ref_builds object
-    foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys %ref_builds) {
-        my $prefix = shift @prefixes;
-        $ref_builds{$name}{prefix} = $prefix;
+    #Set an order on refalign builds (use time points if available, otherwise name)
+    #Also record the corresponding header prefix chosen on the ref_builds object
+    my $o = 0;
+    foreach my $name (sort {$ref_builds{$a}->{$sort_factor} cmp $ref_builds{$b}->{$sort_factor}} keys %ref_builds) {
+        $o++;
+        $ref_builds{$name}{order} = $o;
+        $ref_builds{$name}{prefix} = $ref_builds{$name}{$sort_factor};
     }
 
     return (\%ref_builds);
@@ -1415,7 +1411,6 @@ sub get_header_prefixes {
     my $self         = shift;
     my %args         = @_;
     my $align_builds = $args{'-align_builds'};
-    #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
     my @prefixes;
     foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}) {
         push(@prefixes, $align_builds->{$name}->{prefix});
