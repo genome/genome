@@ -95,7 +95,14 @@ sub lock {
 
         my $target_basename = File::Basename::basename($target);
         $target_basename =~ s/lock-.*?--//; #might not always work if lock name starts with "-" or contains "--"
-        my ($host, $user, $pid, $lsf_id) = split /_/, $target_basename;
+
+        my @data = split /_/, $target_basename;
+        my $junk = pop @data; #the end has random text
+        my $lsf_id = pop @data;
+        my $pid = pop @data;
+        my $host = shift @data;
+        my $user = join("_", @data); #The other fields aren't allowed to have underscores, but the user might.
+
         my $info_content=sprintf("HOST %s\nPID %s\nLSF_JOB_ID %s\nUSER %s",$host,$pid,$lsf_id,$user);
 
         my $time = time;
