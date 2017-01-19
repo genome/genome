@@ -7,7 +7,8 @@ use Genome;
 use Carp;
 use Data::Dumper;
 use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line', 'get_samples_from_header');
-
+use Genome::Utility::Text;
+use File::Spec;
 
 class Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfBase {
     is => 'Genome::Model::Tools::DetectVariants2::Filter::FalsePositive',
@@ -592,7 +593,10 @@ sub add_per_bam_params_to_input {
         my $bam_path = shift @$bam_paths;
 
         $self->debug_message("Running BAM Readcounts for sample $sample_name...");
-        my $readcount_file = $self->_temp_staging_directory . "/$sample_name.readcounts";  #this is suboptimal, but I want to wait until someone tells me a better way...multiple options exist
+        my $readcount_file = File::Spec->join(
+            $self->_temp_staging_directory,
+            Genome::Utility::Text::sanitize_string_for_filesystem("$sample_name.readcounts"),
+        );
         if (-f $bam_path) {
             $inputs{"bam_${sample_name}"} = $bam_path;
         } else {
