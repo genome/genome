@@ -592,16 +592,17 @@ sub add_per_bam_params_to_input {
     for my $sample_name (@$sample_names) {
         my $bam_path = shift @$bam_paths;
 
-        $self->debug_message("Running BAM Readcounts for sample $sample_name...");
-        my $readcount_file = File::Spec->join(
-            $self->_temp_staging_directory,
-            Genome::Utility::Text::sanitize_string_for_filesystem("$sample_name.readcounts"),
-        );
         if (-f $bam_path) {
             $inputs{"bam_${sample_name}"} = $bam_path;
         } else {
             die "bam_file does not exist: $bam_path";
         }
+
+        $self->debug_message("Running BAM Readcounts for sample $sample_name...");
+        my $readcount_file = File::Spec->join(
+            $self->_temp_staging_directory,
+            Genome::Utility::Text::sanitize_string_for_filesystem("$sample_name.readcounts"),
+        );
         $inputs{"readcounts_${sample_name}"} = $readcount_file;
     }
 
