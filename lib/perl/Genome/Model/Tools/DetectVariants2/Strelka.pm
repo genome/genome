@@ -103,8 +103,10 @@ sub _detect_variants {
                            skip_if_output_is_present=>1,
                            allow_zero_size_output_files => 0, );
 
+    my $cpu_count = Genome::SoftwareResult->_available_cpu_count;
+
     #Actually make the Makefile (i.e. run the Strelka workflow)
-    Genome::Sys->shellcmd( cmd=>"make -j 4 -C $output_dir/output/",
+    Genome::Sys->shellcmd( cmd=>"make -j $cpu_count -C $output_dir/output/",
                            input_files=>[$output_dir . "/output/Makefile"],
                            output_files=>[$output_dir . "/output/results/all.somatic.snvs.vcf", $output_dir . "/output/results/all.somatic.indels.vcf", $output_dir . "/output/results/passed.somatic.snvs.vcf", $output_dir . "/output/results/passed.somatic.indels.vcf"],
                            skip_if_output_is_present=>1,
