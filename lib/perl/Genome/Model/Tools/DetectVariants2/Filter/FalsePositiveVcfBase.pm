@@ -694,7 +694,6 @@ sub region_path {
 
 ##########################################################################################
 # Capture filter for high-depth, lower-breadth datasets
-# Contact: Dan Koboldt (dkoboldt@genome.wustl.edu)
 ##########################################################################################
 sub _filter_variants {
     my $self = shift;
