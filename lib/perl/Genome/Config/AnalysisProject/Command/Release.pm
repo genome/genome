@@ -56,7 +56,17 @@ sub __errors__ {
                 desc => "Can't release analysis project " . $anp->__display_name__ . " with status: $status"
             );
         }
+
+        my $config = $anp->environment_config_dir;
+        unless ($config) {
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => ['analysis_projects'],
+                desc => "Can't release analysis project " . $anp->__display_name__ . " until an environment configuration has been set.",
+            );
+        }
     }
+
     return @errors;
 }
 
