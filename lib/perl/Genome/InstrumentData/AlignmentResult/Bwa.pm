@@ -51,7 +51,7 @@ sub required_rusage {
         $host_groups = '';
     }
     else {
-        $host_groups =~ s/\/\s+/\ /;
+        $host_groups =~ s/\/\s+/\ /g;
         $host_groups =~ s/^HOSTS:\s+//;
         $host_groups =~ s/\+\d+//g;
     }

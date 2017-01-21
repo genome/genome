@@ -46,7 +46,7 @@ sub required_rusage {
 
     my $host_groups;
     $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);
-    $host_groups =~ s/\/\s+/\ /;
+    $host_groups =~ s/\/\s+/\ /g;
     $host_groups =~ s/^HOSTS:\s+//;
     $host_groups =~ s/\+\d+//g;
 
