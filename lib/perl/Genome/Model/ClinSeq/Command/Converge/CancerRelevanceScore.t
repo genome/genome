@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More;
+use Test::More skip_all => 'This test is disabled for relying on non-test data.';
 
 my $expected_output_dir =
     Genome::Config::get('test_inputs') . "Genome-Model-ClinSeq-Command-Converge-CancerRelevanceScore/2014-09-04/";

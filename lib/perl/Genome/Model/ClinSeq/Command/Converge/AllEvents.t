@@ -13,7 +13,10 @@ BEGIN {
 }
 
 use above "Genome";
-use Test::More tests => 11;  #One per 'ok', 'is', etc. statement below
+#use Test::More tests => 11;  #One per 'ok', 'is', etc. statement below
+
+use Test::More skip_all => 'This test is disabled for relying on non-test data.';
+
 use Genome::Model::ClinSeq::Command::Converge::AllEvents;
 use Data::Dumper;
 

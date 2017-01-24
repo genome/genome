@@ -4,7 +4,8 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 22;
+#use Test::More tests => 22;
+use Test::More skip_all => 'This test is disabled for relying on non-test data.';
 
 # This test was auto-generated because './Model/ClinSeq/Command/SummarizeTier1SnvSupport.pm'
 # had no '.t' file beside it.  Please remove this test if you believe it was
