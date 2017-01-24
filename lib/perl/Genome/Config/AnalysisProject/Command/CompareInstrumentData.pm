@@ -6,23 +6,24 @@ use warnings;
 use Genome;
 
 use Set::Scalar;
+use Data::Dumper;
 
 class Genome::Config::AnalysisProject::Command::CompareInstrumentData {
     is => ['Command::V2'],
     has => [
-        analysis_project_a => {
+        first_analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             shell_args_position => 1,
         },
-        print_a_diff => {
+        print_first_diff => {
             is => 'Boolean',
             default_value => 0,
         },
-        analysis_project_b => {
+        second_analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             shell_args_position => 2,
         },
-        print_b_diff => {
+        print_second_diff => {
             is => 'Boolean',
             default_value => 0,
         },
@@ -33,30 +34,39 @@ class Genome::Config::AnalysisProject::Command::CompareInstrumentData {
 sub execute {
     my $self = shift;
 
-    my $set_a = Set::Scalar->new($self->analysis_project_a->instrument_data);
-    my $set_b = Set::Scalar->new($self->analysis_project_b->instrument_data);
+    my $first_analysis_project = $self->first_analysis_project;
+    my $second_analysis_project = $self->second_analysis_project;
+    
+    my $first_set = Set::Scalar->new($first_analysis_project->instrument_data);
+    my $second_set = Set::Scalar->new($second_analysis_project->instrument_data);
 
-    $self->status_message('A instrument data: '. $set_a->size);
-    $self->status_message('B instrument data: '. $set_b->size);
+    # Compare sets as a status message
+    $self->status_message($first_analysis_project->__display_name__ .' set is '. $first_set->compare($second_set) .' as compared to set '. $second_analysis_project->__display_name__);
+    $self->status_message($second_analysis_project->__display_name__ .' set is '. $second_set->compare($first_set) .' as compared to set '. $first_analysis_project->__display_name__);
 
-    $self->status_message($set_a->compare($set_b));
+    # show the size of each set 
+    $self->status_message($first_analysis_project->__display_name__ .' instrument data: '. $first_set->size);
+    $self->status_message($second_analysis_project->__display_name__ .' instrument data: '. $second_set->size);
 
-    my $set_a_diff = $set_a->difference($set_b);
-    my $set_b_diff = $set_b->difference($set_a);
+    $self->status_message($first_set->compare($second_set));
 
-    $self->status_message('A - B: '. $set_a_diff->size);
-    if ($self->print_a_diff) {
-         $self->print_diff($set_b_diff);
+    my $first_set_diff = $first_set->difference($second_set);
+    my $second_set_diff = $second_set->difference($first_set);
+
+    $self->status_message($first_analysis_project->__display_name__ .' - '. $second_analysis_project->__display_name__ .': '.  $first_set_diff->size);
+    if ($self->print_first_diff) {
+         $self->print_diff($first_set_diff);
     }
 
-    $self->status_message('B - A: '. $set_b_diff->size);
-    if ($self->print_b_diff) {
-        $self->print_diff($set_b_diff);
+    $self->status_message($second_analysis_project->__display_name__ .' - '. $first_analysis_project->__display_name__  .': '. $second_set_diff->size);
+    if ($self->print_second_diff) {
+        $self->print_diff($second_set_diff);
     }
     return 1;
 }
 
 sub print_diff {
+    my $self = shift;
     my $diff_set = shift;
 
     for my $diff_member ( $diff_set->members) {
