@@ -13,22 +13,31 @@ class Genome::Config::AnalysisProject::Command::CompareInstrumentData {
     has => [
         first_analysis_project => {
             is => 'Genome::Config::AnalysisProject',
+            doc => 'The first Analysis Project to compare Instrument Data.',
             shell_args_position => 1,
-        },
-        print_first_diff => {
-            is => 'Boolean',
-            default_value => 0,
         },
         second_analysis_project => {
             is => 'Genome::Config::AnalysisProject',
+            doc => 'The second Analysis Project to compare Instrument Data.',
             shell_args_position => 2,
+        },
+        print_intersection => {
+            is => 'Boolean',
+            doc => 'Print the instrument data that is shared between Analysis Projects.',
+            default_value => 0,
+        },
+        print_first_diff => {
+            is => 'Boolean',
+            doc => 'Print the Instrument Data that is unique to the first Analysis Project.',
+            default_value => 0,
         },
         print_second_diff => {
             is => 'Boolean',
+            doc => 'Print the instrument data that is unique to the second Analysis Project.',
             default_value => 0,
         },
     ],
-    doc => 'compare instdata between two AnPs.',
+    doc => 'Compare Instrument Data between two Analysis Projects.',
 };
 
 sub execute {
@@ -50,22 +59,29 @@ sub execute {
 
     $self->status_message($first_set->compare($second_set));
 
+    my $set_x = $first_set->intersection($second_set);
+    $self->status_message($first_analysis_project->__display_name__ .' x '. $second_analysis_project->__display_name__ .': '.  $set_x->size);
+    if ($self->print_intersection) {
+        $self->print_set($set_x);
+    }
+
     my $first_set_diff = $first_set->difference($second_set);
     my $second_set_diff = $second_set->difference($first_set);
 
     $self->status_message($first_analysis_project->__display_name__ .' - '. $second_analysis_project->__display_name__ .': '.  $first_set_diff->size);
     if ($self->print_first_diff) {
-         $self->print_diff($first_set_diff);
+         $self->print_set($first_set_diff);
     }
 
     $self->status_message($second_analysis_project->__display_name__ .' - '. $first_analysis_project->__display_name__  .': '. $second_set_diff->size);
     if ($self->print_second_diff) {
-        $self->print_diff($second_set_diff);
+        $self->print_set($second_set_diff);
     }
+
     return 1;
 }
 
-sub print_diff {
+sub print_set {
     my $self = shift;
     my $diff_set = shift;
 
