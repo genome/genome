@@ -21,23 +21,30 @@ class Genome::Config::AnalysisProject::Command::CompareInstrumentData {
             doc => 'The second Analysis Project to compare Instrument Data.',
             shell_args_position => 2,
         },
-        print_intersection => {
+    ],
+    has_optional => [
+        list_intersection => {
             is => 'Boolean',
-            doc => 'Print the instrument data that is shared between Analysis Projects.',
+            doc => 'List the instrument data that is shared between Analysis Projects.',
             default_value => 0,
         },
-        print_first_diff => {
+        list_first_diff => {
             is => 'Boolean',
-            doc => 'Print the Instrument Data that is unique to the first Analysis Project.',
+            doc => 'List the Instrument Data that is unique to the first Analysis Project.',
             default_value => 0,
         },
-        print_second_diff => {
+        list_second_diff => {
             is => 'Boolean',
-            doc => 'Print the instrument data that is unique to the second Analysis Project.',
+            doc => 'List the instrument data that is unique to the second Analysis Project.',
             default_value => 0,
+        },
+        show => {
+            is => 'Text',
+            doc => 'The Instrument Data properties to show when listing. See `genome instrument-data list --help` for more details.',
+            example_values => ['sequencing_platform,sample.name,id,ignored,flow_cell_id,projects.id,analysis_projects.id'],
         },
     ],
-    doc => 'Compare Instrument Data between two Analysis Projects.',
+    doc => 'Compare Instrument Data between two Analysis Projects and optionally list the Instrument Data.',
 };
 
 sub execute {
@@ -45,15 +52,13 @@ sub execute {
 
     my $first_analysis_project = $self->first_analysis_project;
     my $second_analysis_project = $self->second_analysis_project;
-    
+
     my $first_set = Set::Scalar->new($first_analysis_project->instrument_data);
     my $second_set = Set::Scalar->new($second_analysis_project->instrument_data);
 
-    # Compare sets as a status message
     $self->status_message($first_analysis_project->__display_name__ .' set is '. $first_set->compare($second_set) .' as compared to set '. $second_analysis_project->__display_name__);
     $self->status_message($second_analysis_project->__display_name__ .' set is '. $second_set->compare($first_set) .' as compared to set '. $first_analysis_project->__display_name__);
 
-    # show the size of each set 
     $self->status_message($first_analysis_project->__display_name__ .' instrument data: '. $first_set->size);
     $self->status_message($second_analysis_project->__display_name__ .' instrument data: '. $second_set->size);
 
@@ -61,34 +66,52 @@ sub execute {
 
     my $set_x = $first_set->intersection($second_set);
     $self->status_message($first_analysis_project->__display_name__ .' x '. $second_analysis_project->__display_name__ .': '.  $set_x->size);
-    if ($self->print_intersection) {
-        $self->print_set($set_x);
+    if ($self->list_intersection) {
+        $self->list_set($set_x);
     }
 
     my $first_set_diff = $first_set->difference($second_set);
     my $second_set_diff = $second_set->difference($first_set);
 
     $self->status_message($first_analysis_project->__display_name__ .' - '. $second_analysis_project->__display_name__ .': '.  $first_set_diff->size);
-    if ($self->print_first_diff) {
-         $self->print_set($first_set_diff);
+    if ($self->list_first_diff) {
+         $self->list_set($first_set_diff);
     }
 
     $self->status_message($second_analysis_project->__display_name__ .' - '. $first_analysis_project->__display_name__  .': '. $second_set_diff->size);
-    if ($self->print_second_diff) {
-        $self->print_set($second_set_diff);
+    if ($self->list_second_diff) {
+        $self->list_set($second_set_diff);
     }
 
     return 1;
 }
 
-sub print_set {
+sub list_set {
     my $self = shift;
     my $diff_set = shift;
 
-    for my $diff_member ( $diff_set->members) {
-        my @parts = Genome::ProjectPart->get(entity_id => $diff_member->id);
-        my @projects = Genome::Project->get([map $_->project_id, @parts]);
-        print $diff_member->sequencing_platform ."\t". $diff_member->sample->name ."\t". $diff_member->id ."\t". $diff_member->ignored ."\t". $diff_member->flow_cell_id ."\t". join(',',sort(map {$_->id} @projects)) ."\n";
+    my $operator = ':';
+    my $separator = '/';
+
+    my @ids = map {$_->id} $diff_set->members;
+    if (!@ids) {
+        $self->fatal_message('No members in set!');
+    } elsif (@ids == 1) {
+        $operator = '=';
+        $separator = '';
+    }
+    my %lister_params = (
+        filter => 'id'. $operator . join($separator,@ids),
+    );
+    if ($self->show) {
+        $lister_params{'show'} = $self->show;
+    }
+    my $lister = Genome::InstrumentData::Command::List->create(%lister_params);
+    unless ($lister) {
+        $self->fatal_message('Failed to create Instrument Data list command with params: '. Data::Dumper::Dumper(%lister_params));
+    }
+    unless ($lister->execute) {
+        $self->fatal_message('Failed to execute Instrument Data list command!');
     }
     return 1;
 }

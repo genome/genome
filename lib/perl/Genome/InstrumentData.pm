@@ -486,6 +486,18 @@ sub alignment_results_from_analysis_projects {
     return uniq(@alignment_results);
 }
 
+sub projects {
+    my $self = shift;
+
+    my @parts = Genome::ProjectPart->get(
+        entity_id => $self->id,
+        entity_class_name=> 'Genome::InstrumentData',
+        label => 'instrument_data',
+    );
+    my @projects = Genome::Project->get([map $_->project_id, @parts]);
+    return @projects;
+}
+
 sub __display_name__ {
     my $self = shift;
     my $subset_name = $self->subset_name || 'unknown-subset';

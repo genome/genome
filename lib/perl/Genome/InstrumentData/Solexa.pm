@@ -173,11 +173,6 @@ class Genome::InstrumentData::Solexa {
                 return 0;
             |,
         },
-        # TODO Replace with new Genome::Project
-        project => {
-            is => "Genome::Site::TGI::Project",
-            calculate => q|Genome::Site::TGI::Project->get(name => $self->project_name)|
-        },
 
         # TODO: move into the base class (we want to eliminate this subclass and not have the separate Imported subclass
         median_insert_size => {
