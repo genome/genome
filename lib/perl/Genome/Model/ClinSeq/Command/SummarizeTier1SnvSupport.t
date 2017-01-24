@@ -7,10 +7,6 @@ use above 'Genome';
 #use Test::More tests => 22;
 use Test::More skip_all => 'This test is disabled for relying on non-test data.';
 
-# This test was auto-generated because './Model/ClinSeq/Command/SummarizeTier1SnvSupport.pm'
-# had no '.t' file beside it.  Please remove this test if you believe it was
-# created unnecessarily.  This is a bare minimum test that just compiles Perl
-# and the UR class.
 use_ok('Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport');
 
 #Define the location of expected test results and check that it is valid
