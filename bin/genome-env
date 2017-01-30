@@ -54,10 +54,6 @@ function help {
     -u ur_repo
           The path to a UR repo to use instead of the default.
 
-    -W    Disable configuration of Workflow.
-
-    -w workflow_repo
-          The path to a Workflow repo to use instead of the default.
     -t    Enable testing mode.
 EOS
 }
@@ -71,8 +67,8 @@ function main {
         TOP="$PWD"
     fi
 
-    local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF DISABLE_METADB_REBUILD \
-        DB_SNAPSHOT_NAME DB_ID DB_HOST DB_PORT SQITCH_REPO UR_REPO WF_REPO \
+    local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_METADB_REBUILD \
+        DB_SNAPSHOT_NAME DB_ID DB_HOST DB_PORT SQITCH_REPO UR_REPO \
         TESTING_MODE=""
     parse_opts "$@"
     shift $((OPTIND-1))
@@ -167,7 +163,7 @@ function validate_bash {
 }
 
 function parse_opts {
-    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" DB_ID="" DB_HOST="" DB_PORT="" SQITCH_REPO="" UR_REPO="" WF_REPO="" PERSIST_DB="" DISABLE_METADB_REBUILD=""
+    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DB_SNAPSHOT_NAME="" DB_ID="" DB_HOST="" DB_PORT="" SQITCH_REPO="" UR_REPO="" PERSIST_DB="" DISABLE_METADB_REBUILD=""
 
     local opts
     while getopts :hMm:Dd:i:pRUu:Ww:t opts "$@"
@@ -206,12 +202,6 @@ function parse_opts {
                 ;;
             u)
                 UR_REPO="$OPTARG"
-                ;;
-            W)
-                DISABLE_WF="TRUE"
-                ;;
-            w)
-                WF_REPO="$OPTARG"
                 ;;
             t)
                 TESTING_MODE=1
@@ -255,11 +245,6 @@ function validate_opts {
         fatal $OPT_ERR "cannot use -M and -m options together"
     fi
 
-    if test -n "$DISABLE_WF" -a -n "$WF_REPO"
-    then
-        fatal $OPT_ERR "cannot use -W and -w options together"
-    fi
-
     if test -n "$DB_SNAPSHOT_NAME"
     then
         if ! $TESTDB template list | cut -f 1 | $GREP -q "^${DB_SNAPSHOT_NAME}$"
@@ -284,11 +269,6 @@ function validate_opts {
     if test -n "$UR_REPO"
     then
         assert_dir "-u" "$UR_REPO"
-    fi
-
-    if test -n "$WF_REPO"
-    then
-        assert_dir "-w" "$WF_REPO"
     fi
 }
 
@@ -330,16 +310,6 @@ function set_defaults {
         fi
         append_submodule ur
         UR_REPO="$TOP/ur"
-    fi
-
-    if test -z "$WF_REPO" -a -z "$DISABLE_WF"
-    then
-        if test -z "$TOP" -o ! -d "$TOP/workflow"
-        then
-            fatal $OPT_ERR "-w must be specified if not in a Genome repo"
-        fi
-        append_submodule workflow
-        WF_REPO="$TOP/workflow"
     fi
 }
 
@@ -552,13 +522,6 @@ function setup_env {
         assert_module_missing UR
     fi
 
-    if test -z "$DISABLE_WF"
-    then
-        export PATH=$WF_REPO/bin:$PATH
-
-        assert_module_missing Workflow
-    fi
-
     if which genome | $GREP -q "$SNAPSHOT_BIN"
     then
         fatal $BUILD_ERR "genome found in $SNAPSHOT_BIN"
@@ -572,17 +535,6 @@ function setup_env {
         if which ur | $GREP -q "$SNAPSHOT_BIN"
         then
             fatal $BUILD_ERR "ur found in $SNAPSHOT_BIN"
-        fi
-    fi
-
-    if test -z "$DISABLE_WF"
-    then
-        export PERL5LIB=$WF_REPO/lib:$PERL5LIB
-        assert_module_found Workflow
-
-        if which workflow | $GREP -q "$SNAPSHOT_BIN"
-        then
-            fatal $BUILD_ERR "workflow found in $SNAPSHOT_BIN"
         fi
     fi
 

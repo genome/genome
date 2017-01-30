@@ -8,7 +8,7 @@ fi
 
 source "$BATS_TEST_DIRNAME/test_helper.bash"
 
-for M in sqitch/genome ur workflow ; do
+for M in sqitch/genome ur ; do
     submodule_is_clean $M
 done
 submodule_is_not_initialized sqitch/genome
