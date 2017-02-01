@@ -10,6 +10,9 @@ BEGIN {
 use above 'Genome';
 use Test::More tests => 5;
 
+use File::Spec;
+use Genome::Test::Factory::DiskAllocation;
+
 my $class = 'Genome::Config::AnalysisProject::Command::Release';
 use_ok($class);
 
@@ -17,6 +20,11 @@ my $ap = Genome::Config::AnalysisProject->create(
     name => 'Test Project',
     status => 'Hold',
 );
+
+use Genome::Config;
+my $da = Genome::Test::Factory::DiskAllocation->setup_object(owner => $ap);
+Genome::Sys->create_directory(File::Spec->join($da->absolute_path, Genome::Config::config_subpath));
+
 is($ap->status, 'Hold', "AnP status is 'Hold'");
 
 my $cmd = $class->execute(analysis_projects => [$ap]);
