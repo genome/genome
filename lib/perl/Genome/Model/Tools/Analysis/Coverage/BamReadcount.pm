@@ -152,7 +152,7 @@ sub execute {
         my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-mouse-build37");
         $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     } elsif ($genome_build eq "mm9") {
-        my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "UCSC-mouse-buildmm9");
+        my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(id => "107494762");
         $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
     } elsif (-e $genome_build ) {
         $fasta = $genome_build;
