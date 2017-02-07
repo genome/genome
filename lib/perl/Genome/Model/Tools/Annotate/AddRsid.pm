@@ -79,37 +79,56 @@ sub execute {
             my @var_alleles = @tmp1;
             @var_alleles = @tmp2 if (scalar(@tmp2) > scalar(@tmp1));
 
+            my @dbSNPids = split_dbSNPBuildID($INFO);
+            my $RSid_var_allele;
+
             # Gets the list of allele frequencies if CAF nomenclature is used
             if($INFO =~ /(CAF=[0-9.,]+)/) {
                 $caf_string = ($INFO =~ /(CAF=[0-9.,]+)/)[0];
                 @af = split(/,/, $caf_string);
                 # The first allele frequency provided is the reference allele which we don't want so drop it
                 shift @af;
-            }
-
-            my @dbSNPids = split_dbSNPBuildID($INFO);
-
-            for (my $i = 0; $i < @var_alleles; $i++) {
-                # Reassign GMAF value to the CAF value, if one was found. Pull the appropriate var allele
-                if(scalar(@af) > 0){
-                    $GMAF = $af[$i];
-                    unless($GMAF){
-                        $self->warning_message("CAF undefined for allele, i: $i, CAF values undefined: $caf_string, non-reference AFs: @af");
+            
+                for (my $i = 0; $i < @var_alleles; $i++) {
+                    # Reassign GMAF value to the CAF value, if one was found. Pull the appropriate var allele
+                    if(scalar(@af) > 0){
+                        $GMAF = $af[$i];
+                        unless($GMAF){
+                            $self->warning_message("CAF undefined for allele, i: $i, CAF values undefined: $caf_string, non-reference AFs: @af");
+                        }
+                        # Empty allele frequencies are designated with a . instead of our convention - 
+                        if($GMAF eq '.'){
+                            $GMAF = "-";
+                        }   
                     }
-                    if($GMAF eq '.'){
-                        $GMAF = "-";
-                    }   
-                }
 
-                my $RSid_var_allele = $var_alleles[$i];
-                unless($RSid_var_allele){
-                    $self->warning_message("RDis_var_allele undefined, i: $i, var_alleles: @var_alleles");
-                }
+                    $RSid_var_allele = $var_alleles[$i];
+                    unless($RSid_var_allele){
+                        $self->warning_message("RDis_var_allele undefined, i: $i, var_alleles: @var_alleles");
+                    }
 
-                if(defined($annotation->{$key}->{$RSid_var_allele})){
-                    if($annotation->{$key}->{$RSid_var_allele} ne "0"){                    
-                        $vcf_vals{$key}{$RSid_var_allele}{"rsID"} = $rsID;
-                        $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = $GMAF;
+                    if(defined($annotation->{$key}->{$RSid_var_allele})){
+                        if($annotation->{$key}->{$RSid_var_allele} ne "0"){                    
+                            $vcf_vals{$key}{$RSid_var_allele}{"rsID"} = $rsID;
+                            $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = $GMAF;
+                        }
+                    }
+                }
+            } else {
+                for (my $i = 0; $i < @dbSNPids; $i++) {
+
+                    next unless $dbSNPids[$i] =~ /^\d+$/;
+
+                    $RSid_var_allele = $var_alleles[$i];
+                    unless($RSid_var_allele){
+                        $self->warning_message("RDis_var_allele undefined, i: $i, var_alleles: @var_alleles");
+                    }
+
+                    if(defined($annotation->{$key}->{$RSid_var_allele})){
+                        if($annotation->{$key}->{$RSid_var_allele} ne "0"){
+                            $vcf_vals{$key}{$RSid_var_allele}{"rsID"} = $rsID;
+                            $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = $GMAF;
+                        }
                     }
                 }
             }
