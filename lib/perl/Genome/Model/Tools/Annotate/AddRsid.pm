@@ -66,7 +66,6 @@ sub execute {
         }
  
         ## Handles older dbSNP VCF format with GMAF but not CAF (see below)
-#        my $GMAF = ($INFO =~ /(GMAF=[0-9.]+)|(CAF=[0-9.,]+)/)[0] || '-';
         my $GMAF = ($INFO =~ /(GMAF=[0-9.]+)/)[0] || '-';
         my $caf_string;
         my @af;
@@ -80,6 +79,7 @@ sub execute {
             my @var_alleles = @tmp1;
             @var_alleles = @tmp2 if (scalar(@tmp2) > scalar(@tmp1));
 
+            # Gets the list of allele frequencies if CAF nomenclature is used
             if($INFO =~ /(CAF=[0-9.,]+)/) {
                 $caf_string = ($INFO =~ /(CAF=[0-9.,]+)/)[0];
                 @af = split(/,/, $caf_string);
@@ -89,17 +89,17 @@ sub execute {
 
             my @dbSNPids = split_dbSNPBuildID($INFO);
 
-for (my $i = 0; $i < @var_alleles; $i++) {
-#            for (my $i = 0; $i < @dbSNPids; $i++) {
+            for (my $i = 0; $i < @var_alleles; $i++) {
                 # Reassign GMAF value to the CAF value, if one was found. Pull the appropriate var allele
                 if(scalar(@af) > 0){
                     $GMAF = $af[$i];
                     unless($GMAF){
-                        $self->warning_message("CAF undefined for allele, i: $i, CAF values undefined: $caf_string, non-reference AFs: @af\n$INFO\n");
+                        $self->warning_message("CAF undefined for allele, i: $i, CAF values undefined: $caf_string, non-reference AFs: @af");
                     }
+                    if($GMAF eq '.'){
+                        $GMAF = "-";
+                    }   
                 }
-
-#                next unless $dbSNPids[$i] =~ /^\d+$/;
 
                 my $RSid_var_allele = $var_alleles[$i];
                 unless($RSid_var_allele){
