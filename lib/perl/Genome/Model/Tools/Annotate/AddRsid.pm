@@ -43,6 +43,8 @@ sub execute {
     # then re-read the annotation file to append the dbsnp info.  Also has the benefit of 
     # ensuring that the annotation file output is in the same order as the info
 
+    # does not work at all for indels!
+
     my $annotation = store_annotation($anno_file);
 
     #read through the VCF, storing values for any annotation lines that match
@@ -75,7 +77,7 @@ sub execute {
         if($rsID eq '.'){
             $rsID = "-";
         }
- 
+
         ## Handles older dbSNP VCF format with GMAF but not CAF (see below)
         my $GMAF = ($INFO =~ /(GMAF=[0-9.]+)/)[0] || '-';
         my $caf_string;
@@ -90,6 +92,14 @@ sub execute {
             my @var_alleles = @tmp1;
             @var_alleles = @tmp2 if (scalar(@tmp2) > scalar(@tmp1));
 
+            my $is_indel = 0;
+            for (@var_alleles) {
+                $is_indel = 1 if scalar($_) > 1;
+            }
+            if (scalar($ref) > 1 || $is_indel == 1) {
+                next;
+            }
+
             my @dbSNPids = split_dbSNPBuildID($INFO);
 
             if($file_format eq "CAF") {
@@ -100,7 +110,7 @@ sub execute {
                     # The first allele frequency provided is the reference allele which we don't want so drop it
                     shift @af;
                 }
-            
+
                 for (my $i = 0; $i < @var_alleles; $i++) {
                     # Reassign GMAF value to the CAF value, if one was found. Pull the appropriate var allele
                     if(scalar(@af) > 0){
@@ -111,7 +121,7 @@ sub execute {
                         # Empty allele frequencies are designated with a . instead of our convention - 
                         if($GMAF eq '.'){
                             $GMAF = "-";
-                        }   
+                        }
                     }
 
                     my $RSid_var_allele = $var_alleles[$i];
@@ -120,7 +130,7 @@ sub execute {
                     }
 
                     if(defined($annotation->{$key}->{$RSid_var_allele})){
-                        if($annotation->{$key}->{$RSid_var_allele} ne "0"){                    
+                        if($annotation->{$key}->{$RSid_var_allele} ne "0"){
                             $vcf_vals{$key}{$RSid_var_allele}{"rsID"} = $rsID;
                             $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = $GMAF;
                         }
@@ -170,7 +180,6 @@ sub store_annotation{
             next;
         }
 
-        my @list = split(/\t/, $line);
         my ($chr, $pos, $RSid_var_allele) = (split(/\t/, $line))[0, 1, 4];
         my $key = RSid_key($chr, $pos);
 
@@ -184,7 +193,7 @@ sub print_annotation{
     my $anno_file = shift;
     my $output_file = shift;
     my $vcf_vals = shift;
-   
+
     my $output_fh = Genome::Sys->open_file_for_writing($output_file);
 
     my $anno_fh = Genome::Sys->open_file_for_reading($anno_file);
@@ -196,10 +205,9 @@ sub print_annotation{
             next;
         }
 
-        my @list = split(/\t/, $line);
         my ($chr, $pos, $var) = (split(/\t/, $line))[0, 1, 4];
         my $key = RSid_key($chr, $pos);
-        
+
         my $suffix = "-\t-";
         if(defined($vcf_vals->{$key}->{$var})){
             $suffix = $vcf_vals->{$key}->{$var}->{"rsID"} . "\t" . $vcf_vals->{$key}->{$var}->{"GMAF"};
@@ -227,3 +235,4 @@ sub RSid_key {
 }
 
 1;
+
