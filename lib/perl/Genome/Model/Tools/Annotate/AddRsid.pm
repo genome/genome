@@ -91,7 +91,6 @@ sub execute {
             @var_alleles = @tmp2 if (scalar(@tmp2) > scalar(@tmp1));
 
             my @dbSNPids = split_dbSNPBuildID($INFO);
-            my $RSid_var_allele;
 
             if($file_format eq "CAF") {
                 # Gets the list of allele frequencies if CAF nomenclature is used
@@ -115,7 +114,7 @@ sub execute {
                         }   
                     }
 
-                    $RSid_var_allele = $var_alleles[$i];
+                    my $RSid_var_allele = $var_alleles[$i];
                     unless($RSid_var_allele){
                         $self->warning_message("RDis_var_allele undefined, i: $i, var_alleles: @var_alleles");
                     }
@@ -132,7 +131,7 @@ sub execute {
 
                     next unless $dbSNPids[$i] =~ /^\d+$/;
 
-                    $RSid_var_allele = $var_alleles[$i];
+                    my $RSid_var_allele = $var_alleles[$i];
                     unless($RSid_var_allele){
                         $self->warning_message("RDis_var_allele undefined, i: $i, var_alleles: @var_alleles");
                     }
