@@ -11,6 +11,8 @@ use List::Util qw(first);
 use POSIX qw(getgroups);
 use Sub::Install qw(reinstall_sub);
 
+use File::Spec;
+
 use Test::More tests => 3;
 
 subtest 'create_directory preserves setgid' => sub {
@@ -28,10 +30,21 @@ subtest 'create_directory preserves setgid' => sub {
     ok(-g $new_dirname, 'new_dirname has setgid set');
 };
 
+my $nfs_working_dir = File::Spec->join(
+    Genome::Config::get('site_lock_dir'),
+    'temp_for_setgid_test'
+);
+
+
 subtest 'create_directory (on NFS) preserves setgid' => sub {
     plan tests => 2;
 
-    my $base_dir = File::Temp->newdir(DIR => '/gsc/var/tmp');
+    my $dir = File::Spec->join(
+        Genome::Config::get('site_lock_dir'),
+        'temp_for_setgid_test'
+    );
+
+    my $base_dir = File::Temp->newdir(DIR => $nfs_working_dir);
     my $setgid_dirname = File::Spec->join($base_dir->dirname, 'setgid');
     Genome::Sys->create_directory($setgid_dirname);
     my $mode = mode($setgid_dirname);
@@ -63,7 +76,7 @@ subtest 'create_directory (on NFS) preserves setgid even when set_gid is needed'
     my $test_group = first { $_ ne $sys_group } get_group_names();
     ok($test_group, "user belongs to some other group besides sys_group ($sys_group)") or return;
 
-    my $base_dir = File::Temp->newdir(DIR => '/gsc/var/tmp');
+    my $base_dir = File::Temp->newdir(DIR => $nfs_working_dir);
     my $setgid_dirname = File::Spec->join($base_dir->dirname, 'setgid');
     Genome::Sys->create_directory($setgid_dirname);
     chown -1, gidgrnam($test_group), $setgid_dirname;
