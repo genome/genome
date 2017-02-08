@@ -55,9 +55,20 @@ sub execute {
         $vcf_fh = Genome::Sys->open_file_for_reading($vcf_file);
     }
 
+
+    my $file_format;
     while (my $line = $vcf_fh->getline) {
         chomp $line;
-        next if $line =~ /^\#/;
+
+        ## Determine which type of dbSNP VCF file you have, using GMAF or CAF values
+        if ($line =~ /^\#/) {
+            if ($line =~ /INFO=<ID=GMAF/) {
+                $file_format = 'GMAF';
+            } elsif ($line =~ /INFO=<ID=CAF/) {
+                $file_format = 'CAF';
+            }
+            next;
+        }
 
         my ($chr, $pos, $rsID, $ref, $var, $INFO) = (split(/\t/, $line))[0..4, 7];
 
@@ -82,12 +93,14 @@ sub execute {
             my @dbSNPids = split_dbSNPBuildID($INFO);
             my $RSid_var_allele;
 
-            # Gets the list of allele frequencies if CAF nomenclature is used
-            if($INFO =~ /(CAF=[0-9.,]+)/) {
-                $caf_string = ($INFO =~ /(CAF=[0-9.,]+)/)[0];
-                @af = split(/,/, $caf_string);
-                # The first allele frequency provided is the reference allele which we don't want so drop it
-                shift @af;
+            if($file_format eq "CAF") {
+                # Gets the list of allele frequencies if CAF nomenclature is used
+                if($INFO =~ /(CAF=[0-9.,]+)/) {
+                    $caf_string = ($INFO =~ /(CAF=[0-9.,]+)/)[0];
+                    @af = split(/,/, $caf_string);
+                    # The first allele frequency provided is the reference allele which we don't want so drop it
+                    shift @af;
+                }
             
                 for (my $i = 0; $i < @var_alleles; $i++) {
                     # Reassign GMAF value to the CAF value, if one was found. Pull the appropriate var allele
@@ -114,7 +127,7 @@ sub execute {
                         }
                     }
                 }
-            } else {
+            } elsif ($file_format eq "GMAF") {
                 for (my $i = 0; $i < @dbSNPids; $i++) {
 
                     next unless $dbSNPids[$i] =~ /^\d+$/;
@@ -131,6 +144,8 @@ sub execute {
                         }
                     }
                 }
+            } else {
+                die "Allele frequency format type (GMAF vs CAF) not detected, check input vcf";
             }
         }
     }
