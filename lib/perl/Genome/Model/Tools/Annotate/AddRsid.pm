@@ -92,11 +92,12 @@ sub execute {
             my @var_alleles = @tmp1;
             @var_alleles = @tmp2 if (scalar(@tmp2) > scalar(@tmp1));
 
+            # Script not designed to handle indels, ignores them if present
             my $is_indel = 0;
             for (@var_alleles) {
-                $is_indel = 1 if scalar($_) > 1;
+                $is_indel = 1 if length($_) > 1;
             }
-            if (scalar($ref) > 1 || $is_indel == 1) {
+            if (length($ref) > 1 || $is_indel == 1) {
                 next;
             }
 
@@ -205,12 +206,15 @@ sub print_annotation{
             next;
         }
 
-        my ($chr, $pos, $var) = (split(/\t/, $line))[0, 1, 4];
+        my ($chr, $pos, $ref, $var) = (split(/\t/, $line))[0, 1, 3, 4];
         my $key = RSid_key($chr, $pos);
 
         my $suffix = "-\t-";
-        if(defined($vcf_vals->{$key}->{$var})){
-            $suffix = $vcf_vals->{$key}->{$var}->{"rsID"} . "\t" . $vcf_vals->{$key}->{$var}->{"GMAF"};
+
+        unless($ref eq "-" || $var eq "-" ) {       # Indels are not handled correctly so ignores them
+            if(defined($vcf_vals->{$key}->{$var})){
+                $suffix = $vcf_vals->{$key}->{$var}->{"rsID"} . "\t" . $vcf_vals->{$key}->{$var}->{"GMAF"};
+            }
         }
         print $output_fh $line . "\t" . $suffix . "\n";
 
