@@ -1089,7 +1089,7 @@ sub execute {
 
       if($line =~ /^chrom/){
           print OUTFILE $line . "\tstatus\n";
-          $headerAdded=0;
+          $headerAdded=1;
           next;
       }
       print OUTFILE2 join("\t",(@F,$indel_type)) . "\n";
