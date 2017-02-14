@@ -639,16 +639,12 @@ sub get_fh_for_chr {
     my $organism = $self->organism;
     my $model;
 
-    #TODO should this simply check to see if organism eq mouse?
-
-    #if ($dbSNP_path eq "/gsc/var/lib/import/dbsnp/130/tmp/" && $organism eq "mouse") {
     if ($organism eq "mouse") {
         unless($model = Genome::Model::ImportedVariations->get(name => 'dbSNP-mouse-10090')){
             $self->error_message("Could not locate ImportedVariations model with dbSNP-mouse-10090 name");
             die $self->error_message;
         }
-#$dbSNP_path = "/gsc/var/lib/import/dbsnp/mouse/10090/";
-#        $dbSNP_path = $model->data_directory."/ImportedVariations/";
+
         die 'Error: please email ' . Genome::Config::get('email_pipeline') . ' -- mouse dbsnp used to be stored in a model data directory';
         # This will probably work if you just change the dbsnp path? Would have to test it, the files look different
     }
