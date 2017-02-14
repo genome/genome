@@ -96,49 +96,6 @@ class Genome::Disk::Group {
     doc => "Represents a disk group (eg, " . Genome::Config::get('disk_group_dev') . "), which contains any number of disk volumes",
 };
 
-
-sub create {
-    my $class = shift;
-    my $self = $class->SUPER::create(@_);
-
-    if (defined($self)) {
-        $self->validate;
-    }
-
-    return $self;
-}
-
-sub get {
-    my $class = shift;
-    if (wantarray) {
-        return $class->_get_many(@_);
-    } else {
-        return $class->_get_single(@_);
-    }
-}
-
-sub _get_many {
-    my $class = shift;
-
-    my @objs = $class->SUPER::get(@_);
-    for my $obj (@objs) {
-        $obj->validate;
-    }
-
-    return @objs;
-}
-
-sub _get_single {
-    my $class = shift;
-
-    my $self = $class->SUPER::get(@_);
-    if (defined($self)) {
-        $self->validate;
-    }
-
-    return $self;
-}
-
 sub validate {
     my $self = shift;
     my @validators = findsubmod Genome::Disk::Group::Validate;
