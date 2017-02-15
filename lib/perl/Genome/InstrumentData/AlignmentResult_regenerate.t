@@ -94,7 +94,7 @@ subtest 'test per lane bam removal and recreation' => sub {
     my $new_path = $ar2->revivified_alignment_bam_file_path;
     isnt($old_path, $new_path, 'AR2 revivified_alignment_bam_file_path exist and the path has changed');
 
-    for my $extension qw(.bam .bam.bai) {
+    for my $extension (qw(.bam .bam.bai)) {
         my $base = $per_lane_file_basename.$extension;
         my $file = File::Spec->join($ar2->output_dir, $base);
         unlink $file;
