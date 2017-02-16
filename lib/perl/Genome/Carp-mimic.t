@@ -31,7 +31,8 @@ is($croakf_message, $croak_message, 'croakf matches croak');
 my ($die_message, $dief_message) = map {
     exception { $_->() }
 } (sub { Caller::do_die(sprintf($template, @args)) }, sub { Caller::do_dief($template, @args) });
-{ # die/warn end the message with a period
+if ($dief_message !~ /\.\n$/) {
+    # die/warn end the message with a period, but earlier versions of Carp::croak did not.
     chomp $dief_message;
     $dief_message .= ".\n";
 }
