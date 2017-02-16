@@ -199,7 +199,7 @@ sub _get_operation_type_xml_element {
     $self->_add_property_xml_elements($element);
 
     my %attributes = $self->operation_type_attributes;
-    for my $attr_name (keys(%attributes)) {
+    for my $attr_name (sort keys(%attributes)) {
         $element->setAttribute($attr_name, $attributes{$attr_name});
     }
 

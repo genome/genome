@@ -20,7 +20,7 @@ subtest 'Typical Command' => sub {
     my $expected_xml = <<EOS;
 <?xml version="1.0"?>
 <operation name="some op">
-  <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+  <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::WorkflowBuilder::Test::DummyCommand" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'">
     <inputproperty>input</inputproperty>
     <outputproperty>many_output</outputproperty>
     <outputproperty>result</outputproperty>
@@ -37,7 +37,7 @@ subtest 'Command with different attributes in xml than on Command class' => sub 
     my $expected_xml = <<EOS;
 <?xml version="1.0"?>
 <operation name="some op">
-  <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="bob" lsfResource="-M 25000 -R 'select[mem&gt;25] rusage[mem=25]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+  <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::WorkflowBuilder::Test::DummyCommand" lsfQueue="bob" lsfResource="-M 25000 -R 'select[mem&gt;25] rusage[mem=25]'">
     <inputproperty>input</inputproperty>
     <outputproperty>many_output</outputproperty>
     <outputproperty>result</outputproperty>
@@ -60,7 +60,7 @@ subtest 'Parallel-By Command' => sub {
     my $expected_xml = <<EOS;
 <?xml version="1.0"?>
 <operation name="some op" parallelBy="input">
-  <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+  <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::WorkflowBuilder::Test::DummyCommand" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'">
     <inputproperty>input</inputproperty>
     <outputproperty>many_output</outputproperty>
     <outputproperty>result</outputproperty>
@@ -105,7 +105,7 @@ subtest 'XML Round Trip' => sub {
     my $xml = <<EOS;
 <?xml version="1.0"?>
 <operation name="some op" parallelBy="input">
-  <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+  <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::WorkflowBuilder::Test::DummyCommand" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'">
     <inputproperty>input</inputproperty>
     <outputproperty>many_output</outputproperty>
     <outputproperty>result</outputproperty>
@@ -198,7 +198,7 @@ subtest 'command with config (calculated_default)' => sub {
     my $expected_xml = <<EOS;
 <?xml version="1.0"?>
 <operation name="some op">
-  <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="my_dummy_lsf_queue" lsfResource="my_dummy_lsf_resource" commandClass="Genome::WorkflowBuilder::Test::DummyCommandCalculatedDefault">
+  <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::WorkflowBuilder::Test::DummyCommandCalculatedDefault" lsfQueue="my_dummy_lsf_queue" lsfResource="my_dummy_lsf_resource">
     <inputproperty>input</inputproperty>
     <outputproperty>many_output</outputproperty>
     <outputproperty>result</outputproperty>

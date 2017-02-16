@@ -27,7 +27,7 @@ subtest 'Event roundtrip with attributes' => sub {
     my $expected_xml = <<EOS;
 <?xml version="1.0"?>
 <operation name="some other event">
-  <operationtype typeClass="Workflow::OperationType::Event" lsfQueue="bob" lsfResource="baz" eventId="12345" lsfProject="foo-bar">
+  <operationtype typeClass="Workflow::OperationType::Event" eventId="12345" lsfProject="foo-bar" lsfQueue="bob" lsfResource="baz">
     <inputproperty>some_input</inputproperty>
     <outputproperty>some_output</outputproperty>
   </operationtype>
