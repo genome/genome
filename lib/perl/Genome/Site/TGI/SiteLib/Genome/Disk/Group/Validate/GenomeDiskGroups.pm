@@ -6,6 +6,8 @@ use warnings;
 use Carp qw(croak);
 use List::MoreUtils qw(any uniq);
 
+use Try::Tiny qw(try);
+
 sub validate {
     my $class = shift;
     my $disk_group = shift;
@@ -53,12 +55,16 @@ sub genome_disk_group_names {
         'info_genome_models',
         'info_alignments',
         'apipe_ci',
-        Genome::Config::get('disk_group_archive'),
-        Genome::Config::get('disk_group_dev'),
-        Genome::Config::get('disk_group_references'),
-        Genome::Config::get('disk_group_alignments'),
-        Genome::Config::get('disk_group_models'),
-        Genome::Config::get('disk_group_research'),
+        grep { defined $_ }
+            map { try { Genome::Config::get($_) } }
+            (
+                qw(disk_group_archive
+                disk_group_dev
+                disk_group_references
+                disk_group_alignments
+                disk_group_models
+                disk_group_research)
+            )
     );
 }
 
