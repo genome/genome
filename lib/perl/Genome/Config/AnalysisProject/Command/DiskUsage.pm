@@ -12,7 +12,7 @@ class Genome::Config::AnalysisProject::Command::DiskUsage {
     has => [
         analysis_projects => {
             is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis projects to release for processing',
+            doc                 => 'the analysis projects to report disk usage',
             is_many             => 1,
             shell_args_position => 1,
         },
@@ -23,6 +23,11 @@ class Genome::Config::AnalysisProject::Command::DiskUsage {
 sub help_detail {
     return <<EOHELP
 This command will take several minutes to run.
+
+The output is a tab-delimited disk usage summary for each model type and configuration item per analysis project.
+The colums of the output file are:
+analysis project ID, configuration item ID, subclass name, model count, build count, total KB, total base pair, bytes per base
+
 EOHELP
 }
 
