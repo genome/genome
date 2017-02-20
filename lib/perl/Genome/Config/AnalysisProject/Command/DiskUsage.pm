@@ -3,8 +3,6 @@ package Genome::Config::AnalysisProject::Command::DiskUsage;
 use strict;
 use warnings;
 
-use feature qw(say);
-
 use Genome;
 
 class Genome::Config::AnalysisProject::Command::DiskUsage {
