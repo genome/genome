@@ -69,7 +69,7 @@ sub execute {
                 if ($total_bp) {
                     $bytes_per_base = ($total_kb * 1024) / $total_bp;
                 }
-                my %data = [
+                my %data = {
                     'analysis_project' => $anp->id,
                     'config_item' => $config_item->id,
                     'subclass_name' => $model_type,
@@ -78,7 +78,7 @@ sub execute {
                     'total_kb' => $total_kb,
                     'total_bp' => $total_bp,
                     'bytes_per_bp' => $bytes_per_base, 
-                ];
+                };
                 push @data, \%data; 
             }
         }
