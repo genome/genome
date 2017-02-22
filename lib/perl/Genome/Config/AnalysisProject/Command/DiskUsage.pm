@@ -32,21 +32,16 @@ EOHELP
 sub execute {
     my $self = shift;
 
-    my @data;
+    my @lines;
     for my $anp ($self->analysis_projects) {
-        $self->status_message('Working on Analysis Project: '. $anp->__display_name__);
         for my $config_item ($anp->config_items) {
-            $self->status_message('Working on Config Item: '. $config_item->id);
             my %model_type_disk_usage;
-            my $model_count = 0;
-            my $build_count = 0;
             for my $model ($config_item->models) {
-                $self->status_message('Working on Model: '. $model->__display_name__);
                 my $subclass_name = $model->subclass_name;
                 $model_type_disk_usage{$subclass_name}{'model_count'}++;
-                my $build = $model->last_succeeded_build;
-                if ($build) {
-                    $self->status_message('Working on Build: '. $build->id);
+                for my $build ($model->builds) {
+                #my $build = $model->last_succeeded_build;
+                #if ($build) {
                     $model_type_disk_usage{$subclass_name}{'build_count'}++;
                     my @allocations = $build->disk_usage_allocations;
                     for my $allocation (@allocations) {
@@ -69,17 +64,17 @@ sub execute {
                 if ($total_bp) {
                     $bytes_per_base = ($total_kb * 1024) / $total_bp;
                 }
-                my %data = {
+                my $data = {
                     'analysis_project' => $anp->id,
                     'config_item' => $config_item->id,
                     'subclass_name' => $model_type,
-                    'model_count' => $model_type_disk_usage{$model_type}{'model_count'},
-                    'build_count' => $model_type_disk_usage{$model_type}{'build_count'},
+                    'model_count' => $model_type_disk_usage{$model_type}{'model_count'} || 0,
+                    'build_count' => $model_type_disk_usage{$model_type}{'build_count'} || 0,
                     'total_kb' => $total_kb,
                     'total_bp' => $total_bp,
                     'bytes_per_bp' => $bytes_per_base, 
-                };
-                push @data, \%data; 
+                };  
+                push @lines, $data; 
             }
         }
     }
@@ -97,7 +92,7 @@ sub execute {
         separator => "\t",
         headers => \@headers,    
     );
-    for my $data (@data) {
+    for my $data (@lines) {
         $writer->write_one($data);
     }        
     return 1;
