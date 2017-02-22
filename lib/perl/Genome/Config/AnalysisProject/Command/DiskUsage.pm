@@ -34,14 +34,19 @@ sub execute {
 
     my @data;
     for my $anp ($self->analysis_projects) {
+        $self->status_message('Working on Analysis Project: '. $anp->__display_name__);
         for my $config_item ($anp->config_items) {
+            $self->status_message('Working on Config Item: '. $config_item->id);
             my %model_type_disk_usage;
             my $model_count = 0;
             my $build_count = 0;
-            for my $model ($anp->models) {
+            for my $model ($config_item->models) {
+                $self->status_message('Working on Model: '. $model->__display_name__);
                 my $subclass_name = $model->subclass_name;
                 $model_type_disk_usage{$subclass_name}{'model_count'}++;
-                for my $build ($model->builds) {
+                my $build = $model->last_succeeded_build;
+                if ($build) {
+                    $self->status_message('Working on Build: '. $build->id);
                     $model_type_disk_usage{$subclass_name}{'build_count'}++;
                     my @allocations = $build->disk_usage_allocations;
                     for my $allocation (@allocations) {
@@ -60,7 +65,10 @@ sub execute {
                 my $total_bp = 0;
                 map { $total_bp += $_ } values (%{$model_type_disk_usage{$model_type}{'instrument_data'}});
 
-                my $bytes_per_base = ($total_kb * 1024) / $total_bp;
+                my $bytes_per_base = 'na';
+                if ($total_bp) {
+                    $bytes_per_base = ($total_kb * 1024) / $total_bp;
+                }
                 my %data = [
                     'analysis_project' => $anp->id,
                     'config_item' => $config_item->id,
@@ -70,7 +78,7 @@ sub execute {
                     'total_kb' => $total_kb,
                     'total_bp' => $total_bp,
                     'bytes_per_bp' => $bytes_per_base, 
-                ];  
+                ];
                 push @data, \%data; 
             }
         }
