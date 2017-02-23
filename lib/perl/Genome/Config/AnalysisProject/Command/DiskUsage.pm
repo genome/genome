@@ -40,8 +40,6 @@ sub execute {
                 my $subclass_name = $model->subclass_name;
                 $model_type_disk_usage{$subclass_name}{'model_count'}++;
                 for my $build ($model->builds) {
-                #my $build = $model->last_succeeded_build;
-                #if ($build) {
                     $model_type_disk_usage{$subclass_name}{'build_count'}++;
                     my @allocations = $build->disk_usage_allocations;
                     for my $allocation (@allocations) {
