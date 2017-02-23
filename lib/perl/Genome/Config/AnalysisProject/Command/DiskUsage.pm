@@ -27,11 +27,11 @@ Running builds will not be accounted for properly as the allocations are not com
 The output is a tab-delimited disk usage summary for each model type and configuration item per analysis project.
 
 The sum of the model type disk usage is not necessarily the total disk usage for an Analysis Project.  Results can be shared between multiple model types.  
-For instance, alignment files, BAMs, can be shared between SingleSampleGenotype, SomaticValidation and/or ReferenceAlignment depending on the processign profiles used.
+For instance, alignment files, BAMs, can be shared between SingleSampleGenotype, SomaticValidation and/or ReferenceAlignment depending on the processing profiles used.
 The same goes for SomaticVariation and SomaticValidation results. VCF and variant files can be shared between the two model types.
 
-The colums of the output file are:
-analysis project ID, configuration item ID, subclass name, model count, build count, total KB, total base pair, bytes per base
+The columns of the output file are:
+analysis project ID, configuration item ID, subclass name, model count, build count, total KB, total base pairs, bytes per base
 
 EOHELP
 }
