@@ -153,7 +153,7 @@ sub _alignment_metrics_from_result {
             if (@QC_results == 1) {
                 my $error_rate_avg = $self->_get_error_rate_avg($QC_results[0]);
                 if ($error_rate_avg) {
-                    $mismatches += $lane->total_base_count * $error_rate_avg / 100;
+                    $mismatches += $lane->total_base_count * $error_rate_avg;
                 }
                 else {
                     $self->warning_message('Fail to get any PF_MISMATCH_RATE for QC_result '.$QC_results[0]->id);
