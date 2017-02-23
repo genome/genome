@@ -110,7 +110,7 @@ my $expected_metrics = {
         'Total Unique Mapped Bases' => "-20",
         'Aligned %' => "94.82",
         'Unique %' => "94.28",
-        'Error Rate' => "0.04",
+        'Error Rate' => "4.00",
         'Total # Reads' => "4688",
         '%pairs mapping across chromosomes' => "1.64",
 };
