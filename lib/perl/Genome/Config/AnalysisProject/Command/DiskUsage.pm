@@ -22,6 +22,8 @@ sub help_detail {
     return <<EOHELP
 This command will take several minutes to run.
 
+Running builds will not be accounted for properly as the allocations are not complete.
+
 The output is a tab-delimited disk usage summary for each model type and configuration item per analysis project.
 
 The sum of the model type disk usage is not necessarily the total disk usage for an Analysis Project.  Results can be shared between multiple model types.  
