@@ -231,13 +231,13 @@ sub _alignment_metrics_from_result {
 sub _get_error_rate_avg {
     my ($self, $qc_result) = @_;
     my %result_metrics = $qc_result->get_unflattened_metrics;
-    my ($read_1_pct_mismatch, $read_2_pct_mismatch) = ($result_metrics{FIRST_OF_PAIR}->{PF_MISMATCH_RATE}, $result_metrics{SECOND_OF_PAIR}->{PF_MISMATCH_RATE});
+    my ($read_1_mismatch_rate, $read_2_mismatch_rate) = ($result_metrics{FIRST_OF_PAIR}->{PF_MISMATCH_RATE}, $result_metrics{SECOND_OF_PAIR}->{PF_MISMATCH_RATE});
 
-    if (defined $read_1_pct_mismatch and defined $read_2_pct_mismatch) {
-        return ($read_1_pct_mismatch + $read_2_pct_mismatch)/2;
+    if (defined $read_1_mismatch_rate and defined $read_2_mismatch_rate) {
+        return ($read_1_mismatch_rate + $read_2_mismatch_rate)/2;
     }
-    elsif (defined $read_1_pct_mismatch or defined $read_2_pct_mismatch) {
-        return defined $read_1_pct_mismatch ? $read_1_pct_mismatch : $read_2_pct_mismatch;
+    elsif (defined $read_1_mismatch_rate or defined $read_2_mismatch_rate) {
+        return defined $read_1_mismatch_rate ? $read_1_mismatch_rate : $read_2_mismatch_rate;
     }
     else {
         return;
