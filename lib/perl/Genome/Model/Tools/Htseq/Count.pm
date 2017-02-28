@@ -51,6 +51,9 @@ class Genome::Model::Tools::Htseq::Count {
             is_param => 1,
             doc => 'limit the number of alignments to the first N (for testing)',
         },
+        lsf_resource => {
+            default_value => Genome::Config::get('lsf_resource_htseq_count'),
+        },
         #sort_strategy => { 
         #    is => 'Text',
         #    is_optional => 1,
@@ -75,11 +78,6 @@ class Genome::Model::Tools::Htseq::Count {
         output_dir => {
             is => 'FilesystemPath',
             doc => 'Location to symlink the result output_dir',
-        },
-    ],
-    has_param => [
-        lsf_resource => {
-            default_value => Genome::Config::get('lsf_resource_htseq_count'),
         },
     ],
     doc => 'generate htseq results for an (annotation-based) alignment result',
