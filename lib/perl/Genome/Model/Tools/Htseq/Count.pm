@@ -77,6 +77,11 @@ class Genome::Model::Tools::Htseq::Count {
             doc => 'Location to symlink the result output_dir',
         },
     ],
+    has_param => [
+        lsf_resource => {
+            default_value => Genome::Config::get('lsf_resource_htseq_count'),
+        },
+    ],
     doc => 'generate htseq results for an (annotation-based) alignment result',
 };
 
