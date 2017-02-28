@@ -159,13 +159,8 @@ sub _args_spec {
 sub _valid_lsf_queue {
     my $requested_queue = shift;
 
-    return any { $requested_queue eq $_ } _queues();
-}
-
-sub _queues {
-    my @output = Genome::Sys->capture('bqueues', '-l');
-    my @queues = map { (/^QUEUE:\s+(\S+)/)[0] } @output;
-    return @queues;
+    system(qq(bqueues $requested_queue 1> /dev/null 2>&1));
+    return $? == 0;
 }
 
 1;
