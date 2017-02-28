@@ -13,7 +13,8 @@ BEGIN {
 }
 
 use above "Genome";
-use Test::More tests => 6;  #One per 'ok', 'is', etc. statement below
+use Test::More skip_all => 'Test data must be regenerated.';
+#use Test::More tests => 6;  #One per 'ok', 'is', etc. statement below
 use Genome::Model::ClinSeq::Command::GetVariantSources;
 use Data::Dumper;
 
