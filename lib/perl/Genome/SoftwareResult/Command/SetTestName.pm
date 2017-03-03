@@ -20,6 +20,10 @@ class Genome::SoftwareResult::Command::SetTestName {
             is => 'Text',
             doc => 'new test name to set',
         },
+        abandon_builds => {
+            is => 'Boolean',
+            default_value => 0,
+        },
     ],
 };
 
@@ -39,6 +43,22 @@ sub execute {
         } else {
             $self->status_message("    Failed! The test name is still \"" .
                     $software_result->test_name . "\"");
+        }
+        if ($self->abandon_builds) {
+            my @builds = $software_result->builds;
+            my @ids = map{$_->id} @builds;
+            $self->status_message('Abandoning builds: '. join(',',@ids));
+            my $abandon_cmd = Genome::Model::Build::Command::Abandon->create(
+                builds => \@builds,
+                header_text => 'Build Abandoned - SR Test Name',
+                body_text => 'Software result '. $software_result->id .' has new test name '. $self->new_test_name,
+            );
+            unless ($abandon_cmd) {
+                $self->fatal_message('Unable to create abandon builds command!');
+            }
+            unless ($abandon_cmd->execute) {
+                $self->fatal_messaage('Failed to execute abandon builds command!');
+            }
         }
     }
 
