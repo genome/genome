@@ -27,7 +27,7 @@ $expected_xml_file =~ s/t$/xml/;
 my $expected_xml = Genome::Sys->read_file($expected_xml_file);
 
 my $actual_xml = $wf->get_xml;
-$actual_xml =~ s/lsfQueue="[^"]+"\s+//g;
+$actual_xml =~ s/\s+lsfQueue="[^"]+"//g;
 
 is($actual_xml, $expected_xml, 'xml matches');
 

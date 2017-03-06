@@ -108,7 +108,7 @@ my @params_and_xml_list = (
     <outputproperty>report_directory</outputproperty>
   </operationtype>
   <operation name="Assemble">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="alignment" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;61440] rusage[mem=61440]' -M 63963136" commandClass="Genome::Model::DeNovoAssembly::Build::Assemble" lsfProject="build%s">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::DeNovoAssembly::Build::Assemble" lsfProject="build%s" lsfQueue="alignment" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;61440] rusage[mem=61440]' -M 63963136">
       <inputproperty>build</inputproperty>
       <inputproperty>sx_results</inputproperty>
       <outputproperty>build</outputproperty>
@@ -116,7 +116,7 @@ my @params_and_xml_list = (
     </operationtype>
   </operation>
   <operation name="MergeAndLinkSxResults">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[gtmp&gt;1000] rusage[gtmp=1000] span[hosts=1]'" commandClass="Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults" lsfProject="build%s">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[gtmp&gt;1000] rusage[gtmp=1000] span[hosts=1]'">
       <inputproperty>build</inputproperty>
       <outputproperty>output_build</outputproperty>
       <outputproperty>result</outputproperty>
@@ -124,7 +124,7 @@ my @params_and_xml_list = (
     </operationtype>
   </operation>
   <operation name="ProcessInstrumentData" parallelBy="instrument_data">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000 -n 4" commandClass="Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData" lsfProject="build%s">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000 -n 4">
       <inputproperty>build</inputproperty>
       <inputproperty>instrument_data</inputproperty>
       <outputproperty>build</outputproperty>
@@ -134,7 +134,7 @@ my @params_and_xml_list = (
     </operationtype>
   </operation>
   <operation name="Report">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s" lsfQueue="apipe">
       <inputproperty>build</inputproperty>
       <outputproperty>report_directory</outputproperty>
       <outputproperty>result</outputproperty>
@@ -165,28 +165,28 @@ EOS
     <outputproperty>report_directory</outputproperty>
   </operationtype>
   <operation name="Assemble">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;30000] rusage[mem=30000]' -M 30000000" commandClass="Genome::Model::DeNovoAssembly::Command::Assemble" lsfProject="build%s">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::DeNovoAssembly::Command::Assemble" lsfProject="build%s" lsfQueue="apipe" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;30000] rusage[mem=30000]' -M 30000000">
       <inputproperty>build</inputproperty>
       <outputproperty>build</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
   <operation name="PostAssemble">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;30000] rusage[mem=30000] span[hosts=1]' -M 30000000" commandClass="Genome::Model::DeNovoAssembly::Command::PostAssemble" lsfProject="build%s">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::DeNovoAssembly::Command::PostAssemble" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;30000] rusage[mem=30000] span[hosts=1]' -M 30000000">
       <inputproperty>build</inputproperty>
       <outputproperty>build</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
   <operation name="PrepareInstrumentData">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000" commandClass="Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData" lsfProject="build%s">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData" lsfProject="build%s" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000">
       <inputproperty>build</inputproperty>
       <outputproperty>build</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
   <operation name="Report">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s" lsfQueue="apipe">
       <inputproperty>build</inputproperty>
       <outputproperty>report_directory</outputproperty>
       <outputproperty>result</outputproperty>

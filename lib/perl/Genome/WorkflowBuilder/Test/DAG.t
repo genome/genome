@@ -41,7 +41,7 @@ subtest 'Simple DAG' => sub {
     <outputproperty>some_external_output</outputproperty>
   </operationtype>
   <operation name="some op">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::WorkflowBuilder::Test::DummyCommand" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'">
       <inputproperty>input</inputproperty>
       <outputproperty>many_output</outputproperty>
       <outputproperty>result</outputproperty>
@@ -174,7 +174,7 @@ subtest 'XML Round Trip' => sub {
     <outputproperty>some_external_output</outputproperty>
   </operationtype>
   <operation name="some op">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::WorkflowBuilder::Test::DummyCommand" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'">
       <inputproperty>input</inputproperty>
       <outputproperty>many_output</outputproperty>
       <outputproperty>result</outputproperty>
@@ -305,7 +305,7 @@ subtest 'Nested DAG with constant input' => sub {
       <outputproperty>output</outputproperty>
     </operationtype>
     <operation name="some op">
-      <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+      <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::WorkflowBuilder::Test::DummyCommand" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'">
         <inputproperty>input</inputproperty>
         <outputproperty>many_output</outputproperty>
         <outputproperty>result</outputproperty>
