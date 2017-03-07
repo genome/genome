@@ -126,6 +126,10 @@ sub execute {
                         }
                     }
 
+                    unless ($GMAF eq '-') {
+                        $GMAF = "GMAF=$GMAF";
+                    }
+
                     my $RSid_var_allele = $var_alleles[$i];
                     unless($RSid_var_allele){
                         $self->warning_message("RDis_var_allele undefined, i: $i, var_alleles: @var_alleles");
