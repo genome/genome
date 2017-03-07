@@ -118,6 +118,7 @@ sub execute {
                         $GMAF = $af[$i];
                         unless($GMAF){
                             $self->warning_message("CAF undefined for allele, i: $i, CAF values undefined: $caf_string, non-reference AFs: @af");
+                            $GMAF = '-';
                         }
                         # Empty allele frequencies are designated with a . instead of our convention - 
                         if($GMAF eq '.'){
