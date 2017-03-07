@@ -80,8 +80,6 @@ sub execute {
 
         ## Handles older dbSNP VCF format with GMAF but not CAF (see below)
         my $GMAF = ($INFO =~ /(GMAF=[0-9.]+)/)[0] || '-';
-        my $caf_string;
-        my @af;
 
         my $key = RSid_key($chr, $pos);
 
@@ -105,29 +103,34 @@ sub execute {
 
             if($file_format eq "CAF") {
                 # Gets the list of allele frequencies if CAF nomenclature is used
-                if($INFO =~ /(CAF=[0-9.,]+)/) {
-                    $caf_string = ($INFO =~ /(CAF=[0-9.,]+)/)[0];
-                    @af = split(/,/, $caf_string);
+                my $caf_string;
+                my @afs;
+                if (($caf_string) = $INFO =~ /(CAF=[0-9.,]+)/) {
+                    @afs = split(/,/, $caf_string);
                     # The first allele frequency provided is the reference allele which we don't want so drop it
-                    shift @af;
+                    shift @afs;
                 }
 
                 for (my $i = 0; $i < @var_alleles; $i++) {
-                    # Reassign GMAF value to the CAF value, if one was found. Pull the appropriate var allele
-                    if(scalar(@af) > 0){
-                        $GMAF = $af[$i];
-                        unless($GMAF){
-                            $self->warning_message("CAF undefined for allele, i: $i, CAF values undefined: $caf_string, non-reference AFs: @af");
-                            $GMAF = '-';
+                    # Pull the appropriate var allele
+                    my $af;
+                    if(scalar(@afs) > 0){
+                        $af = $afs[$i];
+                        unless($af){
+                            $self->warning_message("CAF undefined for allele, i: $i, CAF values undefined: $caf_string, non-reference AFs: @afs");
+                            $af = '-';
                         }
                         # Empty allele frequencies are designated with a . instead of our convention - 
-                        if($GMAF eq '.'){
-                            $GMAF = "-";
+                        if($af eq '.'){
+                            $af = "-";
                         }
                     }
+                    else {
+                        $af = '-';
+                    }
 
-                    unless ($GMAF eq '-') {
-                        $GMAF = "GMAF=$GMAF";
+                    unless ($af eq '-') {
+                        $af = "GMAF=$af";
                     }
 
                     my $RSid_var_allele = $var_alleles[$i];
@@ -138,7 +141,8 @@ sub execute {
                     if(defined($annotation->{$key}->{$RSid_var_allele})){
                         if($annotation->{$key}->{$RSid_var_allele} ne "0"){
                             $vcf_vals{$key}{$RSid_var_allele}{"rsID"} = $rsID;
-                            $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = $GMAF;
+                            # Reassign GMAF value to be the CAF value
+                            $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = "$af";
                         }
                     }
                 }
