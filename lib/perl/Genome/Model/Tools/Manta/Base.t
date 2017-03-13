@@ -11,7 +11,7 @@ my $pkg = 'Genome::Model::Tools::Manta::Base';
 use_ok ($pkg);
 
 my $version = '0.29.6';
-my $expected_path = '/gscmnt/gc13001/info/model_data/jwalker_scratch/src/manta-0.29.6.centos5_x86_64/bin';
+my $expected_path = '/gscmnt/gc2764/cad/jwalker/scratch/src/manta-0.29.6.centos5_x86_64/bin';
 
 my $path = $pkg->path_for_version($version);
 

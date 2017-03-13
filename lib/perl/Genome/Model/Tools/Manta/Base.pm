@@ -18,7 +18,7 @@ sub help_detail {
 sub versions {
     my $class = shift;
     my %VERSIONS = (
-        '0.29.6'     => '/gscmnt/gc13001/info/model_data/jwalker_scratch/src/manta-0.29.6.centos5_x86_64/bin',
+        '0.29.6'     => '/gscmnt/gc2764/cad/jwalker/scratch/src/manta-0.29.6.centos5_x86_64/bin',
     );
     return %VERSIONS;
 }
