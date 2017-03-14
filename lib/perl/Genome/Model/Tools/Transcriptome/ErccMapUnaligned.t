@@ -22,7 +22,7 @@ SKIP: {
     #my $model = '576d3c68ae574779b92052daead2fa2d'; # Heather's 2nd Model [Mix1]
     my $ercc_dir = Path::Class::Dir->new(
         '/gscmnt/gc2764/cad/',
-        '/jwalker/scratch/ERCC/remap'
+        'jwalker/scratch/ERCC/remap'
     );
 
     my $build = get_build($model);
