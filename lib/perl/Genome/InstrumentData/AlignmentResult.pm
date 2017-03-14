@@ -540,7 +540,7 @@ sub _create_disk_allocation {
         $unallocated_kb += $volume->unallocated_kb;
     }
     $self->debug_message("Available disk: " . $unallocated_kb . " kb");
-    my $factor = 20;
+    my $factor = 2;
     unless ($unallocated_kb > ($factor * $estimated_kb_usage)) {
         $self->error_message("NOT ENOUGH DISK SPACE!  This step requires $factor x as much disk as the job will use to be available before starting.");
         die $self->error_message();
