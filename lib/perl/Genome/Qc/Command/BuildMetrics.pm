@@ -24,11 +24,6 @@ class Genome::Qc::Command::BuildMetrics {
             doc => 'The output file format.',
             valid_values => ['yaml','tsv'],
         },
-        somatic => {
-            is => 'Boolean',
-            doc => 'build is somatic or not',
-            default_value => 0,
-        }
     ],
     has_optional => [
         _tsv_output_profile => {
@@ -82,7 +77,9 @@ sub calculate_qc_metrics_for_build {
 
     my @metrics;
     my $build_instdata_set = Set::Scalar->new($build->instrument_data);
+    my $somatic = $build->type_name =~ /somatic/ ? 1 : 0;
     my @qc_results = grep {$_->isa('Genome::Qc::Result')} $build->results;
+
     for my $qc_result (@qc_results) {
         my $config_type = $qc_result->qc_config->type;
         if (!defined($self->_tsv_output_profile)) {
@@ -93,7 +90,7 @@ sub calculate_qc_metrics_for_build {
         
         my $as = $qc_result->alignment_result;
         my $result_instdata_set = Set::Scalar->new($as->instrument_data);
-        if ($self->somatic or $build_instdata_set->is_equal($result_instdata_set)) {
+        if ($somatic or $build_instdata_set->is_equal($result_instdata_set)) {
             my %result_metrics = $qc_result->get_unflattened_metrics;
             $result_metrics{build_id} = $build->id;
             $result_metrics{instrument_data_count} = $result_instdata_set->size;
