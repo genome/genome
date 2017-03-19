@@ -62,7 +62,7 @@
     </operationtype>
   </operation>
   <operation name="RnaSeq Digital Expression Detection">
-    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::Tools::Htseq::Count" lsfProject="build135296493" lsfQueue="apipe">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::Tools::Htseq::Count" lsfProject="build135296493" lsfQueue="apipe" lsfResource="-R 'select[gtmp&gt;=10 &amp;&amp; mem&gt;=16000] rusage[gtmp=10, mem=16000]' -M 16000000">
       <inputproperty>alignment_results</inputproperty>
       <outputproperty>output_result</outputproperty>
       <outputproperty>result</outputproperty>
