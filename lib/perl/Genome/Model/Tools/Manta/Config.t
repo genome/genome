@@ -18,7 +18,7 @@ my @expected_input_files = (@bams,$fasta);
 my $tmp_dir = Genome::Sys->create_temp_directory();
 
 my @expected_cmdline_array = (
-   '/gscmnt/gc13001/info/model_data/jwalker_scratch/src/manta-'. $version .'.centos5_x86_64/bin/configManta.py',
+   '/gscmnt/gc2764/cad/jwalker/scratch/src/manta-'. $version .'.centos5_x86_64/bin/configManta.py',
    ('--bam', '/tmp/bam1.bam', '--bam', '/tmp/bam 2.bam', '--bam', '/tmp/bam3.bam', '--referenceFasta', '/tmp/ref.fa', '--runDir', $tmp_dir),
 );
 
