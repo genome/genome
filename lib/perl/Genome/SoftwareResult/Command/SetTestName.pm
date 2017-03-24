@@ -31,6 +31,9 @@ sub execute {
     my $self = shift;
 
     my $new_test_name = $self->new_test_name;
+
+    my %builds;
+
     for my $software_result ($self->software_results) {
         my $sr_id = $software_result->id;
         $self->status_message(
@@ -46,19 +49,27 @@ sub execute {
         }
         if ($self->abandon_builds) {
             my @builds = $software_result->builds;
-            my @ids = map{$_->id} @builds;
-            $self->status_message('Abandoning builds: '. join(',',@ids));
-            my $abandon_cmd = Genome::Model::Build::Command::Abandon->create(
-                builds => \@builds,
-                header_text => 'Build Abandoned - SR Test Name',
-                body_text => 'Software result '. $software_result->id .' has new test name '. $self->new_test_name,
-            );
-            unless ($abandon_cmd) {
-                $self->fatal_message('Unable to create abandon builds command!');
+            for my $build (@builds){
+                if (!exists($builds{$build->id})) {
+                    $builds{$build_>id} = $build;
+                }
             }
-            unless ($abandon_cmd->execute) {
-                $self->fatal_messaage('Failed to execute abandon builds command!');
-            }
+        }
+    }
+    if ($self->abandon_builds) {
+        my @ids = keys %builds;
+        my @builds = values %builds;
+        $self->status_message('Abandoning builds: '. join(',',@ids));
+        my $abandon_cmd = Genome::Model::Build::Command::Abandon->create(
+            builds => \@builds,
+            header_text => 'Build Abandoned - SR Test Name',
+            body_text => 'Software result '. $software_result->id .' has new test name '. $self->new_test_name,
+        );
+        unless ($abandon_cmd) {
+            $self->fatal_message('Unable to create abandon builds command!');
+        }
+        unless ($abandon_cmd->execute) {
+            $self->fatal_messaage('Failed to execute abandon builds command!');
         }
     }
 
