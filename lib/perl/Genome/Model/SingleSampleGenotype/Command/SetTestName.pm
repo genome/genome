@@ -21,7 +21,7 @@ class Genome::Model::SingleSampleGenotype::Command::SetTestName {
         },
         abandon_builds => {
             is => 'Boolean',
-            doc => 'attempt to abando all of the builds used by these results',
+            doc => 'attempt to abandon all of the builds used by these results',
             default_value => 0,
         },
     },
