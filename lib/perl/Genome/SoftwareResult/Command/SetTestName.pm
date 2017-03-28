@@ -63,7 +63,7 @@ sub execute {
         my $abandon_cmd = Genome::Model::Build::Command::Abandon->create(
             builds => \@builds,
             header_text => 'Build Abandoned - SR Test Name',
-            body_text => 'Software result '. $software_result->id .' has new test name '. $self->new_test_name,
+            body_text => 'Software results have new test name '. $self->new_test_name,
         );
         unless ($abandon_cmd) {
             $self->fatal_message('Unable to create abandon builds command!');
