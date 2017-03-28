@@ -51,7 +51,7 @@ sub execute {
             my @builds = $software_result->builds;
             for my $build (@builds){
                 if (!exists($builds{$build->id})) {
-                    $builds{$build_>id} = $build;
+                    $builds{$build->id} = $build;
                 }
             }
         }
