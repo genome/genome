@@ -33,8 +33,8 @@ sub execute {
     my $result_classes_to_set_test_name = $self->_result_classes_to_set_test_name;
     my @results_to_set_test_name;
     for my $build ( $self->builds ) {
-        my @results = $build->results;
-        push @results_to_set_test_name, grep { $result_classes_to_set_test_name->{$_->class} } @results;
+        my @disk_usage_results = $build->disk_usage_results;
+        push @results_to_set_test_name, @disk_usage_results;
     }
     my $set_test_name_cmd = Genome::SoftwareResult::Command::SetTestName->create(
         software_results => \@results_to_set_test_name,
@@ -50,18 +50,5 @@ sub execute {
     return 1;
 }
 
-sub _result_classes_to_set_test_name {
-    my $self = shift;
-
-    my %result_class_status = (
-        'Genome::InstrumentData::AlignmentResult::Merged::Speedseq' => 1,
-        'Genome::InstrumentData::AlignmentResult::Speedseq' => 1,
-        'Genome::Qc::Result' => 1,
-        'Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller' => 1,
-        'Genome::Model::Build::ReferenceSequence::AlignerIndex' => 0,
-        'Genome::Model::Build::ReferenceSequence::Buckets' => 0,
-    );
-    return \%result_class_status;
-}
 
 1;

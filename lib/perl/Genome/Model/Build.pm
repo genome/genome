@@ -610,6 +610,18 @@ sub _additional_associated_disk_allocations : Overrides(Genome::Role::ObjectWith
     return @allocations;
 }
 
+sub _disk_usage_result_subclass_names {
+    my $self = shift;
+
+    $self->fatal_message('Please define _disk_usage_result_subclass_names for build type \''. $self->class .'\'!');
+}
+
+sub disk_usage_results {
+    my $self = shift;
+
+    return $self->results(subclass_name => $self->_disk_usage_result_subclass_names);
+}
+
 sub disk_usage_allocations {
     my $self = shift;
 
