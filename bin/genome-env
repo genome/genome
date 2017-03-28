@@ -101,7 +101,7 @@ function main {
     log.info ''
     log.info "Genome Perl: $(genome-perl -e 'printf(qq(%vd\n), $^V)')"
     log.info "Genome Prove: $(genome-prove --version)"
-    for MODULE in UR Workflow Genome
+    for MODULE in UR Genome
     do
         log.info "${MODULE}: $(genome-perl -M$MODULE -e "print \$INC{q(${MODULE}.pm)}, qq(\n)")"
     done
@@ -476,7 +476,7 @@ function cleanup_test_db {
     test-db delete database $TESTDBSERVER_DB_NAME > /dev/null
 }
 
-# assert_module_missing only works with single word module names, e.g. UR, Workflow, and Genome.
+# assert_module_missing only works with single word module names, e.g. UR and Genome.
 function assert_module_missing {
     local MODULE=$1
     local MODULE_PATH="$(genome-perl -M${MODULE} -e "print \$INC{q($MODULE.pm)}, qq(\\n)" 2> /dev/null )"
@@ -486,7 +486,7 @@ function assert_module_missing {
     fi
 }
 
-# assert_module_found only works with single word module names, e.g. UR, Workflow, and Genome.
+# assert_module_found only works with single word module names, e.g. UR and Genome.
 function assert_module_found {
     local MODULE=$1
     local MODULE_PATH="$(genome-perl -M${MODULE} -e "print \$INC{q($MODULE.pm)}, qq(\\n)")"
