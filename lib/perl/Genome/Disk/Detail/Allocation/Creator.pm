@@ -129,19 +129,19 @@ sub candidate_volumes_without_mount_path {
     if (defined $exclude_mount_path) {
         $candidate_volume_params{'exclude'} = $exclude_mount_path;
     }
-    return $self->_get_candidate_volumes(
+    return $self->get_candidate_volumes(
         %candidate_volume_params);
 }
 
 # Returns a list of volumes that meets the given criteria
-sub _get_candidate_volumes {
-    my ($self, %params) = @_;
+sub get_candidate_volumes {
+    my ($class, %params) = @_;
 
     my $disk_group_name = delete $params{disk_group_name};
     my $exclude = delete $params{exclude};
 
     if (%params) {
-        confess "Illegal arguments to _get_candidate_volumes: "
+        confess "Illegal arguments to get_candidate_volumes: "
             . join(', ', keys %params);
     }
 
