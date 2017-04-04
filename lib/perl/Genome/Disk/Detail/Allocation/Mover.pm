@@ -113,6 +113,7 @@ sub move {
     # those files are deleted.
     my $old_mount_path = $allocation_object->mount_path;
     $allocation_object->mount_path($shadow_allocation->mount_path);
+    $allocation_object->group_subdirectory($shadow_allocation->group_subdirectory);
     $shadow_allocation->mount_path($old_mount_path);
 
     # This is here because certain objects (Build & SoftwareResult) don't
