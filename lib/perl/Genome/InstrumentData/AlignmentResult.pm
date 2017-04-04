@@ -1485,8 +1485,14 @@ sub _staging_disk_usage {
 }
 
 sub estimated_kb_usage {
-    30000000;
-    #die "unimplemented method: please define estimated_kb_usage in your alignment subclass.";
+    my $self = shift;
+
+    my $i = $self->instrument_data;
+    if ($i->can('calculate_alignment_estimated_kb_usage')) {
+        return $i->calculate_alignment_estimated_kb_usage;
+    } else {
+        return 30000000;
+    }
 }
 
 sub resolve_allocation_subdirectory {
