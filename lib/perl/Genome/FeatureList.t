@@ -109,7 +109,7 @@ my $single_track_bed = $feature_list_2->get_target_track_only('target_region');
 my $expected_single_track_bed = File::Spec->join($test_dir, "single_track_of_multi_track.bed");
 compare_ok($single_track_bed, $expected_single_track_bed, name => "get_target_track_only returned the expected file");
 
-dies_ok {$feature_list_2->get_target_track_only('does not exist')}, "get_target_track_only dies when provided with a bad track name";
+dies_ok sub {$feature_list_2->get_target_track_only('does not exist')}, "get_target_track_only dies when provided with a bad track name";
 
 my $feature_list_3 = Genome::FeatureList->create(
     name => 'GFL test unknown format feature-list',
@@ -127,7 +127,7 @@ my $processed_bed_file;
 eval{$processed_bed_file = $feature_list_3->processed_bed_file};
 ok(!$processed_bed_file, 'attempt to process bed file did not return a bed file');
 
-lives_ok {$feature_list_3->_check_bed_list_is_on_correct_reference}, "_check_bed_list_is_on_correct_reference worked";
+lives_ok sub {$feature_list_3->_check_bed_list_is_on_correct_reference}, "_check_bed_list_is_on_correct_reference worked";
 
 is_deeply([$feature_list_2->chromosome_list],[qw(1 2 X)], "list_chromosomes returns the expected list");
 
