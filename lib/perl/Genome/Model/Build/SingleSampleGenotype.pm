@@ -133,4 +133,16 @@ sub _compare_output_files {
     );
 }
 
+sub _disk_usage_result_subclass_names {
+    my $self = shift;
+
+    my @disk_usage_result_classes = (
+        'Genome::Qc::Result',
+        'Genome::InstrumentData::AlignmentResult::Speedseq',
+        'Genome::InstrumentData::AlignmentResult::Merged::Speedseq',
+        'Genome::Model::SingleSampleGenotype::Result::HaplotypeCaller',
+    );
+    return \@disk_usage_result_classes;
+}
+
 1;
