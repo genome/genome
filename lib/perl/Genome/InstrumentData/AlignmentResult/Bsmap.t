@@ -242,6 +242,10 @@ sub generate_fake_instrument_data {
     my $instrument_data = Genome::InstrumentData::Solexa->create(
         id => $FAKE_INSTRUMENT_DATA_ID,
         library => $library,
+        fwd_read_length => 100,
+        rev_read_length => 100,
+        fwd_clusters => 10,
+        rev_clusters => 10,
         flow_cell_id => '12345',
         lane => '1',
         median_insert_size => '22',
