@@ -58,6 +58,10 @@ my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_objec
     run_name => 'example',
     id => 'NA12878',
     run_type => 'Paired',
+    fwd_read_length => 100,
+    rev_read_length => 100,
+    fwd_clusters => 10,
+    rev_clusters => 10,
 );
 $instrument_data->bam_path(get_test_file('NA12878', 'NA12878.20slice.30X.bam'));
 

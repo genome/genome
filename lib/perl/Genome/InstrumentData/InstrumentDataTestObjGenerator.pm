@@ -49,6 +49,8 @@ sub create_solexa_instrument_data {
         id => $id,
         sequencing_platform => 'solexa',
         read_length => 101,
+        fwd_read_length => 101,
+        rev_read_length => 101,
         read_count => 89108,
         subset_name => '1-AAAA',
         index_sequence => 'AAAA',
