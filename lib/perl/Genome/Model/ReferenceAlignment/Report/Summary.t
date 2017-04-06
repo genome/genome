@@ -15,7 +15,8 @@ BEGIN {
 }
 
 use above "Genome";
-use Test::More tests => 8;
+use Test::More skip_all => 'Test relies on live data that is no longer available.';
+#use Test::More tests => 8;
 use Genome::Sys;
 
 my $tmp = Genome::Sys->create_temp_directory();
