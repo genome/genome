@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::Unarchive {
-    is => 'Genome::Disk::Command::Allocation::UnarchiveBase',
+    is => 'Genome::Disk::Command::Allocation::ActionBase',
     has => [
         builds => {
             is                  => 'Genome::Model::Build',
@@ -30,6 +30,10 @@ sub help_brief {
 
 sub help_detail {
     return help_brief();
+}
+
+sub disk_allocation_action {
+    return 'unarchive';
 }
 
 sub _execute {
