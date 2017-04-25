@@ -87,6 +87,8 @@ sub execute {
         }
         $move_cmd->execute or
             $self->fatal_message('Failed to move allocations for build %s.', $build->__display_name__);
+
+        $build->relink_symlinked_allocations;
     }
     return 1;
 }
