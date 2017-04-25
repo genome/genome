@@ -27,7 +27,7 @@ $unarchive_observer = UR::Observer->register_callback(
     callback => sub {
         my $meta = shift;
         my $class_name = $meta->class_name;
-        if ($class_name eq 'Genome::Config::AnalysisProject::Command::UnarchiveInstrumentData') {
+        if ($class_name eq 'Genome::InstrumentData::Command::Unarchive') {
             require Genome::Site::TGI::Extension::UnarchiveInstrumentData;
             UR::Observer->unregister_callback(id => $unarchive_observer);
         }
