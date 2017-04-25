@@ -34,6 +34,13 @@ sub execute {
         }
         else {
             map{$entry->set_sample_field($_, 'FT', '.')}qw(0 1);
+            if ($entry->sample_field(1, 'GT') eq '0/0') {
+                my $ad_str = $entry->sample_field(1, 'AD');
+                my ($ref_ct, $var_ct) = split /,/, $ad_str;
+                if ($var_ct/($ref_ct + $var_ct) >= 0.01 and $var_ct >= 5) {
+                    $entry->set_sample_field(1, 'GT', '0/1');
+                }
+            }
         }
         $out_vcf->write($entry);
     }
