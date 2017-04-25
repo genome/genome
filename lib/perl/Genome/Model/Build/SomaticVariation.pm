@@ -488,9 +488,6 @@ sub _disk_usage_result_subclass_names {
     my $self = shift;
 
     my @disk_usage_result_classes = (
-        'Genome::InstrumentData::AlignmentResult::BwamemStream',
-        'Genome::InstrumentData::AlignmentResult::Merged',
-        'Genome::InstrumentData::AlignmentResult::Merged::BamQc',
         'Genome::Model::Tools::DetectVariants2::Classify::Loh',
         'Genome::Model::Tools::DetectVariants2::Classify::PreviouslyDiscovered',
         'Genome::Model::Tools::DetectVariants2::Classify::Tier',
