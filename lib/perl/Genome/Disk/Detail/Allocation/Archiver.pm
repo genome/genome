@@ -95,6 +95,7 @@ sub archive {
             # IDs contain spaces If the command isn't wrapped in quotes, the
             # '&&' is misinterpreted by bash (rather than being "bsub '1 && 2'
             # it is looked at as 'bsub 1' && '2')
+            my $guard = Genome::Config::set_env('lsb_sub_additional', ''); #no docker for archives
             ($job_id, $status) = Genome::Sys->bsub_and_wait(
                 queue => Genome::Config::get('archive_lsf_queue'),
                 job_group => '/archive',

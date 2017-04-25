@@ -956,6 +956,7 @@ sub _cleanup_archive_directory {
     my ($class, $directory) = @_;
     my $cmd = "if [ -d $directory ] ; then rm -rf $directory ; else exit 1; fi";
     unless ($ENV{UR_DBI_NO_COMMIT}) {
+        my $guard = Genome::Config::set_env('lsb_sub_additional', ''); #no docker for archives
         my ($job_id, $status) = Genome::Sys->bsub_and_wait(
             queue => Genome::Config::get('archive_lsf_queue'),
             cmd => "$cmd",
