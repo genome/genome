@@ -10,9 +10,10 @@ use feature qw(say);
 class Genome::Model::Command::UnarchiveInstrumentData {
     is => 'Command::V2',
     has_input => [
-        model => {
+        models => {
             is => 'Genome::Model',
-            doc => 'model to unarchive',
+            doc => 'models to unarchive',
+            is_many => 1,
             shell_args_position => 1,
         },
         volume => {
@@ -27,26 +28,22 @@ class Genome::Model::Command::UnarchiveInstrumentData {
 sub execute {
     my $self = shift;
 
-    my $model = $self->model;
-
-    for my $instrument_data ($model->instrument_data) {
-        my @allocations = Genome::Disk::Allocation->get(owner_id => $instrument_data->id, owner_class_name => $instrument_data->class);
-
-        if (@allocations) {
-            for my $allocation (@allocations) {
-                if ($allocation->is_archived) {
-                    say 'genome disk allocation unarchive --analysis-project ' . $model->analysis_project->id . ' ' . $allocation->id;
-                }
-            }
+    for my $model ($self->models) {
+        my $unarchive_cmd = Genome::InstrumentData::Command::Unarchive->create(
+            instrument_data => [$model->instrument_data],
+            analysis_project => $model->analysis_project,
+            volume => $self->volume,
+        );
+        unless ($unarchive_cmd) {
+            $self->fatal_message('Failed to create unarchive instrument data command!');
         }
-
-        $self->unarchive_additional_data($instrument_data);
+        unless ($unarchive_cmd->execute) {
+            $self->fatal_message('Failed to execute unarchive instrument data command!');
+        }
     }
-}
 
-sub unarchive_additional_data {
-    #this is a hook for overriding--by default do nothing;
     return 1;
 }
+
 
 1;
