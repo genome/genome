@@ -77,6 +77,9 @@ sub execute {
 
         my $disk_group = $self->disk_group // $self->_resolve_disk_group_for_build($build);
 
+        #Don't try to move things that are already in the desired location!
+        @allocations_to_move = grep { $_->disk_group_name ne $disk_group->disk_group_name } @allocations_to_move;
+
         local $ENV{UR_NO_REQUIRE_USER_VERIFY} = ($ENV{UR_NO_REQUIRE_USER_VERIFY} // 1);
         my $move_cmd = Genome::Disk::Command::Allocation::Move->create(
             allocations => \@allocations_to_move,
