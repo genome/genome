@@ -44,10 +44,6 @@ sub execute {
     }
 }
 
-sub valid_statuses {
-    return ('In Progress', 'Hold', 'Pending');
-}
-
 sub unarchive_additional_data {
     #this is a hook for overriding--by default do nothing;
     return 1;
