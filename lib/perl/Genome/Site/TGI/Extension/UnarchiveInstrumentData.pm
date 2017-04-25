@@ -1,10 +1,10 @@
-package Genome::Config::AnalysisProject::Command::UnarchiveInstrumentData;
+package Genome::InstrumentData::Command::Unarchive;
 
 use strict;
 use warnings;
 
 use Genome;
-use Genome::Config::AnalysisProject::Command::UnarchiveInstrumentData; #load real module first
+use Genome::InstrumentData::Command::Unarchive; #load real module first
 
 use File::Basename qw();
 use File::Spec qw();
@@ -117,7 +117,7 @@ sub get_or_create_allocation {
     my $self = shift;
     my $instrument_data = shift;
     my %params = (
-        disk_group_name => 'info_alignments',
+        disk_group_name => Genome::Config::get('disk_group_alignments'),
         allocation_path => File::Spec->join('instrument_data',$instrument_data->id),
         kilobytes_requested => 12642864,
         owner_class_name => $instrument_data->class,
