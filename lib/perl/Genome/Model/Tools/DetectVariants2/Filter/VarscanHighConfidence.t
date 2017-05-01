@@ -73,8 +73,6 @@ my $varscan_high_confidence = Genome::Model::Tools::DetectVariants2::Filter::Var
 ok($varscan_high_confidence, "created VarscanHighConfidence object");
 ok($varscan_high_confidence->execute(), "executed VarscanHighConfidence");
 
-my @list = glob($test_output_dir."/*");
-
 for my $output_file (@expected_output_files){
     my $expected_file = $expected_directory."/".$output_file;
     my $actual_file = $test_output_dir."/".$output_file;
