@@ -30,7 +30,6 @@ class Genome::Model::SingleSampleGenotype::Command::SetTestName {
 sub execute {
     my $self = shift;
 
-    my $result_classes_to_set_test_name = $self->_result_classes_to_set_test_name;
     my @results_to_set_test_name;
     for my $build ( $self->builds ) {
         my @disk_usage_results = $build->disk_usage_results;
