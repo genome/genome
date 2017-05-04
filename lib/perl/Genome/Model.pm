@@ -477,7 +477,7 @@ sub create {
     }
 
     my $tx = UR::Context::Transaction->begin(commit_validator => sub { 1 });
-    my $guard = Scope::Guard->new(sub { $tx->rollback });
+    my $guard = Scope::Guard->new(sub { local $@; $tx->rollback });
 
     my $self = $class->SUPER::create($bx);
     unless ($self) {
