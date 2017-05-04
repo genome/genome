@@ -57,6 +57,7 @@
                                     "test_logs/parallel-model"
                                  ],
                                  "environment" : {
+                                    "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1",
                                     "XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING" : "1"
@@ -83,6 +84,8 @@
                                  "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::ParamAppender --method execute --log-directory test_logs/parallel-model",
                                  "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                  "environment" : {
+                                    "LSB_SUB_ADDITIONAL" : "docker(hello-world)",
+                                    "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
@@ -92,7 +95,7 @@
                                     "numProcessors" : 1,
                                     "outFile" : "/tmp/ptero-lsf-logfile-87718807-3060-4c53-a0a8-f0ec12ea39c8.out",
                                     "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-e230e01c-3d5c-487b-a4eb-4e189e34ea69.err --stdout /tmp/ptero-lsf-logfile-e230e01c-3d5c-487b-a4eb-4e189e34ea69.out' > /tmp/ptero-lsf-logfile-e230e01c-3d5c-487b-a4eb-4e189e34ea69-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-e230e01c-3d5c-487b-a4eb-4e189e34ea69-postexec.log",
-                                    "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
+                                    "preExecCmd" : "/docker_run.py /usr/bin/ptero-lsf-pre-exec; exit 0;",
                                     "queue" : "long",
                                     "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                                  },
