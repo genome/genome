@@ -156,6 +156,7 @@ sub _do_unarchive_cmd {
         };
         local @SIG{'INT','TERM'} = ($sig_handler, $sig_handler);
 
+        my $guard = Genome::Config::set_env('lsb_sub_additional', ''); #no docker for archives
         $job_id = Genome::Sys->bsub(
             queue => Genome::Config::get('archive_lsf_queue'),
             job_group => '/unarchive',
