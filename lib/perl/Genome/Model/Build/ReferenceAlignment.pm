@@ -1297,5 +1297,20 @@ sub regex_files_for_diff {
     );
 }
 
+sub _disk_usage_result_subclass_names {
+    my $self = shift;
+
+    my @classes = $self->_dv2_result_subclass_names, qw(
+        Genome::InstrumentData::AlignmentResult::Bwa
+        Genome::InstrumentData::AlignmentResult::Bwamem
+        Genome::InstrumentData::AlignmentResult::BwamemStream
+        Genome::InstrumentData::AlignmentResult::Merged
+        Genome::InstrumentData::AlignmentResult::Merged::BamQc
+        Genome::InstrumentData::AlignmentResult::Merged::CoverageStats
+    );
+
+    return \@classes;
+}
+
 1;
 

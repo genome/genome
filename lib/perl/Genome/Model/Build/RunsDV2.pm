@@ -94,4 +94,25 @@ sub _get_result_for_file {
     }
 }
 
+sub _dv2_result_subclass_names {
+    my $class = shift;
+
+    return qw(
+        Genome::Model::Tools::DetectVariants2::Classify::Loh
+        Genome::Model::Tools::DetectVariants2::Classify::PreviouslyDiscovered
+        Genome::Model::Tools::DetectVariants2::Classify::Tier
+        Genome::Model::Tools::DetectVariants2::Result
+        Genome::Model::Tools::DetectVariants2::Result::Combine::IntersectSnv
+        Genome::Model::Tools::DetectVariants2::Result::Combine::IntersectIndel
+        Genome::Model::Tools::DetectVariants2::Result::Combine::LqUnion
+        Genome::Model::Tools::DetectVariants2::Result::Combine::UnionSv
+        Genome::Model::Tools::DetectVariants2::Result::Combine::UnionuniqueIndel
+        Genome::Model::Tools::DetectVariants2::Result::Combine::UnionuniqueSnv
+        Genome::Model::Tools::DetectVariants2::Result::Filter
+        Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine
+        Genome::Model::Tools::DetectVariants2::Result::Vcf::Detector
+        Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter
+    );
+}
+
 1;
