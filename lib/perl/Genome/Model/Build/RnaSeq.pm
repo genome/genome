@@ -480,5 +480,24 @@ sub alignment_results_for_instrument_data {
     return @instrument_data_alignment_results;
 }
 
+sub _disk_usage_result_subclass_names {
+    my $self = shift;
+
+    my @disk_usage_result_classes = qw(
+        Genome::InstrumentData::AlignmentResult::Merged
+        Genome::InstrumentData::AlignmentResult::Merged::BamQc
+        Genome::InstrumentData::AlignmentResult::Merged::CufflinksExpression
+        Genome::InstrumentData::AlignmentResult::Merged::PicardRnaSeqMetrics
+        Genome::InstrumentData::AlignmentResult::Merged::SpliceJunctionSummary
+        Genome::InstrumentData::AlignmentResult::Merged::Tophat2AlignmentStats
+        Genome::InstrumentData::AlignmentResult::PerLaneTophat
+        Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Result
+        Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Result
+        Genome::Model::Tools::Htseq::Count::Result
+    );
+
+    return \@disk_usage_result_classes;
+}
+
 1;
 
