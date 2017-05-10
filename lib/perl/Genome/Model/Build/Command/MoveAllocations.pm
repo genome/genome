@@ -81,18 +81,20 @@ sub execute {
         #Don't try to move things that are already in the desired location!
         @allocations_to_move = grep { $_->disk_group_name ne $disk_group->disk_group_name } @allocations_to_move;
 
-        local $ENV{UR_NO_REQUIRE_USER_VERIFY} = ($ENV{UR_NO_REQUIRE_USER_VERIFY} // 1);
-        my $move_cmd = Genome::Disk::Command::Allocation::Move->create(
-            allocations => \@allocations_to_move,
-            target_group => $disk_group,
-        );
-        unless ($move_cmd) {
-            $self->fatal_message('Failed to create move command for build %s.', $build->__display_name__);
-        }
-        $move_cmd->execute or
-            $self->fatal_message('Failed to move allocations for build %s.', $build->__display_name__);
+        if (@allocations_to_move) {
+            local $ENV{UR_NO_REQUIRE_USER_VERIFY} = ($ENV{UR_NO_REQUIRE_USER_VERIFY} // 1);
+            my $move_cmd = Genome::Disk::Command::Allocation::Move->create(
+                allocations => \@allocations_to_move,
+                target_group => $disk_group,
+            );
+            unless ($move_cmd) {
+                $self->fatal_message('Failed to create move command for build %s.', $build->__display_name__);
+            }
+            $move_cmd->execute or
+                $self->fatal_message('Failed to move allocations for build %s.', $build->__display_name__);
 
-        $build->relink_symlinked_allocations;
+            $build->relink_symlinked_allocations;
+        }
     }
     return 1;
 }
