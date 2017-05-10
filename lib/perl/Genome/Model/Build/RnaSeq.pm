@@ -483,7 +483,7 @@ sub alignment_results_for_instrument_data {
 sub _disk_usage_result_subclass_names {
     my $self = shift;
 
-    my @disk_usage_result_classes = qw(
+    my @disk_usage_result_classes = (qw(
         Genome::InstrumentData::AlignmentResult::Merged
         Genome::InstrumentData::AlignmentResult::Merged::BamQc
         Genome::InstrumentData::AlignmentResult::Merged::CufflinksExpression
@@ -494,7 +494,7 @@ sub _disk_usage_result_subclass_names {
         Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Result
         Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Result
         Genome::Model::Tools::Htseq::Count::Result
-    );
+    ));
 
     return \@disk_usage_result_classes;
 }
