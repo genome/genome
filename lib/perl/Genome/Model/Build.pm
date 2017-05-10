@@ -632,7 +632,7 @@ sub disk_usage_allocations {
     push @allocations, $self->symlinked_allocations;
 
     # Build inputs should not be counted toward the disk usage of a build
-    #push @allocations, $self->input_allocations;
+    # push @allocations, $self->input_allocations;
     push @allocations, $self->event_allocations;
 
     my %allocations = map { $_->id => $_ } @allocations;
