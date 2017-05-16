@@ -5,7 +5,6 @@ use warnings FATAL => qw(all);
 use Genome;
 use Data::Dump qw();
 use IO::Handle;
-use Cwd qw(abs_path);
 use Genome::Utility::Text qw(
     sanitize_string_for_filesystem
 );
@@ -97,7 +96,7 @@ sub _stdout_log_path {
     my $self = shift;
 
     my $base_name = $self->execution->name;
-    my $output_log = File::Spec->join(abs_path($self->log_directory),
+    my $output_log = File::Spec->join(Genome::Sys->abs_path($self->log_directory),
         sanitize_string_for_filesystem("$base_name.out"));
 }
 
@@ -105,7 +104,7 @@ sub _stderr_log_path {
     my $self = shift;
 
     my $base_name = $self->execution->name;
-    my $output_log = File::Spec->join(abs_path($self->log_directory),
+    my $output_log = File::Spec->join(Genome::Sys->abs_path($self->log_directory),
         sanitize_string_for_filesystem("$base_name.err"));
 }
 
@@ -153,7 +152,7 @@ sub _log_execution_information {
     $self->status_message("COMMAND: PTERO_WORKFLOW_EXECUTION_URL=%s %s " .
         "ptero wrapper --command-class=\"%s\" --method=\"%s\" --log-directory=\"%s\"",
         $ENV{PTERO_WORKFLOW_EXECUTION_URL}, $0,
-        $self->command_class, $self->method, abs_path($self->log_directory));
+        $self->command_class, $self->method, Genome::Sys->abs_path($self->log_directory));
 }
 
 sub _instantiate_command {

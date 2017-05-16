@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 use Genome;
-use Cwd qw(abs_path);
 use File::Spec;
 use List::Util qw(first);
 use List::MoreUtils qw(any uniq);
@@ -55,7 +54,7 @@ sub final_result_for_variants_directory {
 
     my $file = first { -e $_ } (File::Spec->join($dir, "$variant_type.hq"), File::Spec->join($dir, "$variant_type.hq.bed"));
     if($file) {
-        my $abs_file = abs_path($file);
+        my $abs_file = Genome::Sys->abs_path($file);
         my $alloc = Genome::Disk::Allocation->get_allocation_for_path($abs_file);
         if($alloc) {
             my $owner = $alloc->owner;

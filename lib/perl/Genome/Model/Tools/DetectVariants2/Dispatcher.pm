@@ -10,7 +10,6 @@ use Data::Dumper;
 use JSON;
 use File::Basename;
 use Path::Class;
-use Cwd qw();
 
 class Genome::Model::Tools::DetectVariants2::Dispatcher {
     is => ['Genome::Model::Tools::DetectVariants2::Base'],
@@ -1097,7 +1096,7 @@ sub _resolve_variant_file_full_path {
 
     my $file_base;
     if (-l $file_path) {
-        $file_path = Cwd::abs_path($file_path);
+        $file_path = Genome::Sys->abs_path($file_path);
         $file_base = basename($file_path);
     } else {
         $file_base = basename($file_path);

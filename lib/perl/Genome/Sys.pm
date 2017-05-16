@@ -203,6 +203,12 @@ sub _can_write_to_directory {
     return 1;
 }
 
+sub abs_path {
+    my ($self, $path) = @_;
+
+    return Cwd::abs_path($path);
+}
+
 # MD5
 
 sub md5sum {

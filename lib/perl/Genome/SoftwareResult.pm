@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 use Genome::Sys::LockProxy qw();
 use Digest::MD5 qw(md5_hex);
-use Cwd;
 use File::Basename qw(fileparse);
 use Data::Dumper;
 use Date::Manip;
@@ -1018,7 +1017,7 @@ sub _resolve_param_value_from_text_by_name_or_id {
 
     #If that didn't work, and the argument is a filename, see if it's part of our output directory.
     if(!@results and -f $param_arg) {
-        my $abs_path = Cwd::abs_path($param_arg);
+        my $abs_path = Genome::Sys->abs_path($param_arg);
         my (undef, $dir) = fileparse($abs_path);
         $dir =~ s!/$!!; #remove trailing slash!
         @results = Genome::SoftwareResult->get(output_dir => $dir);

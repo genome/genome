@@ -22,6 +22,7 @@ use File::Find;
 use Params::Validate qw(:types);
 use IO::Socket;
 use Sys::Hostname qw(hostname);
+use Cwd qw();
 #use Archive::Extract;
 
 require MIME::Lite;
@@ -425,6 +426,21 @@ sub open_file_for_overwriting {
 
     Carp::croak("Failed to open file ($file) for over write: $!");
 }
+
+no warnings qw(redefine);
+sub abs_path {
+    my ($self, $path) = @_;
+
+    my $abs_path = Cwd::abs_path($path);
+    return unless defined $abs_path;
+
+    if ($abs_path =~ m!^/vol/aggr\d+/!) {
+        $abs_path =~ s!^/vol/aggr\d+/(?:backup/)?!/gscmnt/!;
+    }
+
+    return $abs_path;
+}
+use warnings qw(redefine);
 
 sub copy_directory {
     my ($self, $source, $dest) = @_;
