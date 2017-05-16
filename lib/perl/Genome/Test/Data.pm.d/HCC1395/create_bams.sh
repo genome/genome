@@ -19,8 +19,8 @@ samtools1.2 faidx ${REF_FASTA} ${TEST_CHR}:${TEST_START}-${TEST_END} > ${TEST_CH
 
 samtools1.2 faidx ${TEST_CHR}_${TEST_START}-${TEST_END}.fa
 
-/gscmnt/sata849/info/speedseq_freeze/v3/speedseq/bin/bwa index ${TEST_CHR}_${TEST_START}-${TEST_END}.fa
+/gscmnt/ams1102/info/speedseq_freeze/v3/speedseq/bin/bwa index ${TEST_CHR}_${TEST_START}-${TEST_END}.fa
 
-/gscmnt/sata849/info/speedseq_freeze/v3/speedseq/bin/speedseq realign -o ${TUMOR_SAMPLE}.${TEST_CHR}_${TEST_START}-${TEST_END}.realigned ${TEST_CHR}_${TEST_START}-${TEST_END}.fa ${TUMOR_SAMPLE}.${TEST_CHR}_${TEST_START}-${TEST_END}.bam
+/gscmnt/ams1102/info/speedseq_freeze/v3/speedseq/bin/speedseq realign -o ${TUMOR_SAMPLE}.${TEST_CHR}_${TEST_START}-${TEST_END}.realigned ${TEST_CHR}_${TEST_START}-${TEST_END}.fa ${TUMOR_SAMPLE}.${TEST_CHR}_${TEST_START}-${TEST_END}.bam
 
-/gscmnt/sata849/info/speedseq_freeze/v3/speedseq/bin/speedseq realign -o ${NORMAL_SAMPLE}.${TEST_CHR}_${TEST_START}-${TEST_END}.realigned ${TEST_CHR}_${TEST_START}-${TEST_END}.fa ${NORMAL_SAMPLE}.${TEST_CHR}_${TEST_START}-${TEST_END}.bam
+/gscmnt/ams1102/info/speedseq_freeze/v3/speedseq/bin/speedseq realign -o ${NORMAL_SAMPLE}.${TEST_CHR}_${TEST_START}-${TEST_END}.realigned ${TEST_CHR}_${TEST_START}-${TEST_END}.fa ${NORMAL_SAMPLE}.${TEST_CHR}_${TEST_START}-${TEST_END}.bam
