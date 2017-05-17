@@ -1,10 +1,10 @@
-package Genome::Config::AnalysisProject::Command::UnarchiveInstrumentData;
+package Genome::InstrumentData::Command::Unarchive;
 
 use strict;
 use warnings;
 
 use Genome;
-use Genome::Config::AnalysisProject::Command::UnarchiveInstrumentData; #load real module first
+use Genome::InstrumentData::Command::Unarchive; #load real module first
 
 use File::Basename qw();
 use File::Spec qw();
