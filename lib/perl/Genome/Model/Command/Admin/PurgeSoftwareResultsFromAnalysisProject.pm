@@ -32,7 +32,7 @@ class Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject {
 };
 
 my $sql = qq(
-    SELECT candidates.result_id, candidates.profile_item_id, candidates.anp_name, candidates.anp_id, candidates.kilobytes_requested
+    SELECT DISTINCT ON (candidates.result_id) candidates.result_id, candidates.profile_item_id, candidates.anp_name, candidates.anp_id, candidates.kilobytes_requested
     FROM (
         SELECT sr.id result_id, sr.class_name, bridge.analysis_project_id anp_id, anp.name anp_name, cpi.id profile_item_id, sr.outputs_path, da.id allocation_id, da.kilobytes_requested, da.status
         FROM result.software_result sr
