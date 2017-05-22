@@ -1301,6 +1301,7 @@ sub _disk_usage_result_subclass_names {
     my $self = shift;
 
     my @classes = ($self->_dv2_result_subclass_names, qw(
+        Genome::InstrumentData::AlignmentResult::Bsmap
         Genome::InstrumentData::AlignmentResult::Bwa
         Genome::InstrumentData::AlignmentResult::Bwamem
         Genome::InstrumentData::AlignmentResult::BwamemStream
