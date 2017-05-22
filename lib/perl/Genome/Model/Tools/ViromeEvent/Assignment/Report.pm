@@ -21,7 +21,7 @@ sub help_brief {
 
 sub help_detail {
     return <<"EOS"
-This script will read corresponding files in the given director and 
+This script will read corresponding files in the given directory and 
 generate a report. It will report in each library, for each category,
 how many total sequence were assigned to this category, how many were 
 assigned by BLASTN, how many were assigned by TBLASTX, the range of 
