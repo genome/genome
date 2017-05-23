@@ -253,7 +253,7 @@ sub snapshot_revision {
     die $class->error_message('Did not find both modules loaded (UR and Genome).') unless @libs == 2;
 
     # assemble list of "important" libs
-    @libs = map { File::Basename::dirname($_) } @libs;
+    @libs = map { File::Basename::dirname($class->abs_path($_)) } @libs;
     push @libs, UR::Util->used_libs;
 
     # remove trailing slashes
@@ -320,7 +320,7 @@ sub _find_in_genome_db_paths {
 
     my @base_dirs = split(':',$base_dirs);
     my @dirs =
-        map { -l $_ ? Cwd::abs_path($_) : ($_) }
+        map { -l $_ ? $class->abs_path($_) : ($_) }
         map {
             my $path = join("/",$_,$subdir);
             (-e $path ? ($path) : ())
