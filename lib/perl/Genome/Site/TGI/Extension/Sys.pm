@@ -27,6 +27,8 @@ use Cwd qw();
 
 require MIME::Lite;
 
+use feature qw(state);
+
 use Genome::Sys::LSF::bsub qw();
 
 #####
@@ -434,10 +436,12 @@ sub abs_path {
     my $abs_path = Cwd::abs_path($path);
     return unless defined $abs_path;
 
+    state $gsc = readlink('/gsc');
+
     if ($abs_path =~ m!^/vol/aggr\d+/!) {
         $abs_path =~ s!^/vol/aggr\d+/(?:backup/)?!/gscmnt/!;
-    } elsif ($abs_path =~ m!^/vol/gpfs-home-app/aggr2-app/applications/!) {
-        $abs_path =~ s!^/vol/gpfs-home-app/aggr2-app/applications/!/gsc/!;
+    } elsif ($gsc and $abs_path =~ m!^$gsc!) {
+        $abs_path =~ s!^$gsc/?!/gsc/!;
     }
 
     return $abs_path;
