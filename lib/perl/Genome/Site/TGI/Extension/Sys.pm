@@ -436,6 +436,8 @@ sub abs_path {
 
     if ($abs_path =~ m!^/vol/aggr\d+/!) {
         $abs_path =~ s!^/vol/aggr\d+/(?:backup/)?!/gscmnt/!;
+    } elsif ($abs_path =~ m!^/vol/gpfs-home-app/aggr2-app/applications/!) {
+        $abs_path =~ s!^/vol/gpfs-home-app/aggr2-app/applications/!/gsc/!;
     }
 
     return $abs_path;
