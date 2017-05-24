@@ -118,12 +118,12 @@ sub validate_existing_directory {
     }
 
     unless ( -e $directory ) {
-        Carp::croak("Can't validate_existing_director: $directory: Path does not exist");
+        Carp::croak("Can't validate_existing_directory: $directory: Path does not exist");
     }
 
 
     unless ( -d $directory ) {
-        Carp::croak("Can't validate_existing_director: $directory: path exists but is not a directory");
+        Carp::croak("Can't validate_existing_directory: $directory: path exists but is not a directory");
     }
 
     return 1;
