@@ -236,7 +236,7 @@ sub _validate_required_for_start_properties {
     my @missing_required_properties;
     push @missing_required_properties, 'reference_sequence_build' unless ($self->reference_sequence_build);
     push @missing_required_properties, 'tumor_sample' unless ($self->tumor_sample);
-    push @missing_required_properties, 'instrument_data' unless (scalar @{[ $self->instrument_data ]} );
+    push @missing_required_properties, 'instrument_data' unless (scalar @{[ $self->instrument_data ]} or scalar @{[$self->prealigned_data]});
 
     my $tag;
     if (@missing_required_properties) {
@@ -253,7 +253,7 @@ sub _validate_required_for_start_properties {
 sub build_needed {
     my $self = shift;
 
-    return $self->SUPER::build_needed && !$self->_validate_instrument_data_present_for_each_sample;
+    return $self->SUPER::build_needed && (@{[$self->prealigned_data]} or !$self->_validate_instrument_data_present_for_each_sample);
 }
 
 sub _validate_instrument_data_present_for_each_sample {
