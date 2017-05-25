@@ -81,26 +81,48 @@ sub execute {
 
     my @results = $result->_merged_results;
 
-    my $build_alignment_dir = join('/', $build->data_directory, 'alignments');
-
     for my $r (@results) {
         my @i = $r->instrument_data;
         my $sample = $i[0]->sample;
         if($sample eq $build->tumor_sample) {
-            $self->merged_alignment_result_id($r->id);
-            $self->merged_bam_path($r->bam_path);
-            $r->add_user(label => 'merged_alignment', user => $build);
-            Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir . '/tumor');
+            $self->_assign_tumor_sample_alignment($r);
         } elsif ($sample eq $build->normal_sample) {
-            $self->control_merged_alignment_result_id($r->id);
-            $self->control_merged_bam_path($r->bam_path);
-            $r->add_user(label => 'control_merged_alignment', user => $build);
-            Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir . '/normal');
+            $self->_assign_normal_sample_alignment($r);
         } else {
             $self->warning_message('Unexpected alignment result encountered! Check samples of instrument data.');
             $r->add_user(label => 'uses', user => $build);
         }
     }
+
+    return 1;
+}
+
+sub _assign_tumor_sample_alignment {
+    my $self = shift;
+    my $alignment = shift;
+
+    my $build = $self->build;
+    my $build_alignment_dir = join('/', $build->data_directory, 'alignments');
+
+    $self->merged_alignment_result_id($alignment->id);
+    $self->merged_bam_path($alignment->bam_path);
+    $alignment->add_user(label => 'merged_alignment', user => $build);
+    Genome::Sys->create_symlink($alignment->output_dir, $build_alignment_dir . '/tumor');
+
+    return 1;
+}
+
+sub _assign_normal_sample_alignment {
+    my $self = shift;
+    my $alignment = shift;
+
+    my $build = $self->build;
+    my $build_alignment_dir = join('/', $build->data_directory, 'alignments');
+
+    $self->control_merged_alignment_result_id($alignment->id);
+    $self->control_merged_bam_path($alignment->bam_path);
+    $alignment->add_user(label => 'control_merged_alignment', user => $build);
+    Genome::Sys->create_symlink($alignment->output_dir, $build_alignment_dir . '/normal');
 
     return 1;
 }
