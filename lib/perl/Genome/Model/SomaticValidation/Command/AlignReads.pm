@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use File::Spec;
+
 class Genome::Model::SomaticValidation::Command::AlignReads {
     is => 'Command::V2',
     has_input => [
@@ -102,12 +104,12 @@ sub _assign_tumor_sample_alignment {
     my $alignment = shift;
 
     my $build = $self->build;
-    my $build_alignment_dir = join('/', $build->data_directory, 'alignments');
+    my $build_alignment_dir = File::Spec->join($build->data_directory, 'alignments');
 
     $self->merged_alignment_result_id($alignment->id);
     $self->merged_bam_path($alignment->bam_path);
     $alignment->add_user(label => 'merged_alignment', user => $build);
-    Genome::Sys->create_symlink($alignment->output_dir, $build_alignment_dir . '/tumor');
+    Genome::Sys->create_symlink($alignment->output_dir, File::Spec->join($build_alignment_dir, 'tumor'));
 
     return 1;
 }
@@ -117,12 +119,12 @@ sub _assign_normal_sample_alignment {
     my $alignment = shift;
 
     my $build = $self->build;
-    my $build_alignment_dir = join('/', $build->data_directory, 'alignments');
+    my $build_alignment_dir = File::Spec->join($build->data_directory, 'alignments');
 
     $self->control_merged_alignment_result_id($alignment->id);
     $self->control_merged_bam_path($alignment->bam_path);
     $alignment->add_user(label => 'control_merged_alignment', user => $build);
-    Genome::Sys->create_symlink($alignment->output_dir, $build_alignment_dir . '/normal');
+    Genome::Sys->create_symlink($alignment->output_dir, File::Spec->join($build_alignment_dir, 'normal'));
 
     return 1;
 }
