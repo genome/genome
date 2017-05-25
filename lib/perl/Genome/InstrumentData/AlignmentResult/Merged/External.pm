@@ -53,6 +53,12 @@ class Genome::InstrumentData::AlignmentResult::Merged::External {
             },
         },
     ],
+    has => [
+        sample_name => {
+            via => 'sample',
+            to => 'name',
+        },
+    ],
 };
 
 sub _run {
