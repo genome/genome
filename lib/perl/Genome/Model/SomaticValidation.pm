@@ -185,6 +185,11 @@ class Genome::Model::SomaticValidation {
             is_many => 1,
             doc => 'Build[s] of known variants to use in when refining with GATK best practices.',
         },
+        prealigned_data => {
+            #is => 'Genome::InstrumentData::AlignedBamResult::Merged',
+            is => 'Genome::SoftwareResult',
+            doc => 'pre-built alignments for skipping the built-in alignment process',
+        },
     ],
     has_optional_mutable => [
         region_of_interest_set_name => {

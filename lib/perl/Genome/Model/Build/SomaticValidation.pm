@@ -93,6 +93,15 @@ class Genome::Model::Build::SomaticValidation {
             is_mutable => 1,
         },
 
+        prealigned_data => {
+            #is => 'Genome::InstrumentData::AlignedBamResult::Merged',
+            is => 'Genome::SoftwareResult',
+            via => 'inputs', to => 'value', where => [ name => 'prealigned_data' ],
+            is_many => 1,
+            is_optional => 1,
+            is_mutable => 1,
+        },
+
         merged_alignment_result => {
             is => 'Genome::InstrumentData::AlignedBamResult::Merged',
             via => 'result_users',

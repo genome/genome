@@ -51,8 +51,18 @@ class Genome::Model::SomaticValidation::Command::AlignReads {
 
 sub sub_command_category { 'pipeline steps' }
 
+sub shortcut {
+    my $self = shift;
+
+    return $self->_find_existing_alignments;
+}
+
+
 sub execute {
     my $self = shift;
+
+    return 1 if $self->_find_existing_alignments;
+
     my $build = $self->build;
 
     my @known_sites_inputs = $build->inputs(name => 'known_sites');
@@ -93,6 +103,37 @@ sub execute {
         } else {
             $self->warning_message('Unexpected alignment result encountered! Check samples of instrument data.');
             $r->add_user(label => 'uses', user => $build);
+        }
+    }
+
+    return 1;
+}
+
+sub _find_existing_alignments {
+    my $self = shift;
+    my $build = $self->build;
+
+    my @existing_alignments = $build->prealigned_data;
+
+    return unless @existing_alignments;
+
+    for my $e (@existing_alignments) {
+        unless ($e->isa('Genome::InstrumentData::AlignedBamResult::Merged')) {
+            $self->fatal_message('Unexpected result type in prealigned data: %s', $e->class);
+        }
+
+        my $sample = $e->sample_name;
+        if ($sample eq $build->tumor_sample->name) {
+            $self->_assign_tumor_sample_alignment($e);
+        } elsif ($sample eq $build->normal_sample->name) {
+            $self->_assign_normal_sample_alignment($e);
+        } else {
+            $self->fatal_message('Found prealigned data that does not match build samples!: %s', $e->id);
+        }
+
+        $e->add_user(label => 'shortcut', user => $build);
+        if (my $anp = $build->model->analysis_project) {
+            $e->add_user(label => 'sponsor', user => $anp);
         }
     }
 
