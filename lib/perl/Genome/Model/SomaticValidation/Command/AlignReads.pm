@@ -137,7 +137,7 @@ sub _find_existing_alignments {
         }
     }
 
-    return 1;
+    return @existing_alignments;
 }
 
 sub _assign_tumor_sample_alignment {
