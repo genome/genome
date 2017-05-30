@@ -74,9 +74,12 @@ sub execute {
         }
 
         my @allocations_to_move = grep { $result_classes{$_->owner_class_name} } @associated_allocations;
-        push @allocations_to_move, $build->disk_allocation;
+        push @allocations_to_move, $build->disk_allocation if $build->disk_allocation;
 
         my $disk_group = $self->disk_group // $self->_resolve_disk_group_for_build($build);
+        unless ($disk_group) {
+            $self->fatal_message('Failed to resolve disk group for build %s.', $build->__display_name__);
+        }
 
         #Don't try to move things that are already in the desired location!
         @allocations_to_move = grep { $_->disk_group_name ne $disk_group->disk_group_name } @allocations_to_move;
