@@ -3,9 +3,10 @@
  [1mgenome model define somatic-validation[0m [--auto-assign-inst-data] [--auto-build-alignments]
     --processing-profile=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]]
     [--snv-variant-list=?] [--subject=?] [--groups=?[,?]] [--indel-variant-list=?] [--model-name=?]
-    [--normal-sample=?] [--known-sites=?[,?]] [--sv-variant-list=?] [--reference-sequence-build=?]
-    [--run-as=?] [--annotation-build=?] [--previously-discovered-variations-build=?]
-    [--target-region-set=?] [--region-of-interest-set=?] [--design-set=?] [--tumor-sample=?]
+    [--normal-sample=?] [--known-sites=?[,?]] [--prealigned-data=?] [--sv-variant-list=?]
+    [--reference-sequence-build=?] [--run-as=?] [--annotation-build=?]
+    [--previously-discovered-variations-build=?] [--target-region-set=?]
+    [--region-of-interest-set=?] [--design-set=?] [--tumor-sample=?]
 
 [4mSYNOPSIS[0m
   genome model define somatic-validation \
@@ -37,6 +38,8 @@
     the control sample 
   [1mknown-sites[0m
     Build[s] of known variants to use in when refining with GATK best practices. 
+  [1mprealigned-data[0m
+    pre-built alignments for skipping the built-in alignment process 
   [1msv-variant-list[0m
     prior SVs to be validated 
   [1mreference-sequence-build[0m
