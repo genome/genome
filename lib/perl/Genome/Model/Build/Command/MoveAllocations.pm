@@ -74,7 +74,7 @@ sub execute {
         }
 
         my @allocations_to_move = grep { $result_classes{$_->owner_class_name} } @associated_allocations;
-        push @allocations_to_move, $build->disk_allocation;
+        push @allocations_to_move, $build->disk_allocation if $build->disk_allocation;
 
         my $disk_group = $self->disk_group // $self->_resolve_disk_group_for_build($build);
 
