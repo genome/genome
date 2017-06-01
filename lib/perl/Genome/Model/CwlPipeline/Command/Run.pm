@@ -38,8 +38,12 @@ sub prepare_yaml {
 
     for my $input ($build->inputs) {
         my $key = $input->name;
-        $inputs{$key} = $build->$key;
-        #TODO handle complex inputs
+        if ($input->value_class_name->isa('UR::Value')) {
+            $inputs{$key} = $input->value_id;
+        } else {
+            #TODO handle complex inputs
+            $self->fatal_message('Cannot handle object inputs yet!');
+        }
     }
 
     my $yaml = File::Spec->join($build->data_directory, 'inputs.yaml');
