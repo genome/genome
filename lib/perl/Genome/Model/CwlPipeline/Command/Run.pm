@@ -34,20 +34,34 @@ sub prepare_yaml {
     my $self = shift;
     my $build = $self->build;
 
-    my %inputs;
+    my $yaml = File::Spec->join($build->data_directory, 'inputs.yaml');
 
-    for my $input ($build->inputs) {
-        my $key = $input->name;
-        if ($input->value_class_name->isa('UR::Value')) {
-            $inputs{$key} = $input->value_id;
-        } else {
-            #TODO handle complex inputs
-            $self->fatal_message('Cannot handle object inputs yet!');
+    my $pp = $build->processing_profile;
+    my $da = Genome::Disk::Allocation->get(owner => $pp);
+    my $dir = $da->absolute_path;
+    my $preprocessing_script = File::Spec->join($dir, 'process_inputs.pl');
+
+    if(-e $preprocessing_script) {
+        Genome::Sys->shellcmd(
+            cmd => [$^X, $preprocessing_script, $build->id],
+            output_files => [$yaml],
+        );
+    } else {
+        my %inputs;
+
+        for my $input ($build->inputs) {
+            my $key = $input->name;
+            if ($input->value_class_name->isa('UR::Value')) {
+                $inputs{$key} = $input->value_id;
+            } else {
+                #TODO handle complex inputs?
+                $self->fatal_message('Cannot handle object inputs yet!');
+            }
         }
+
+        YAML::DumpFile($yaml, \%inputs);
     }
 
-    my $yaml = File::Spec->join($build->data_directory, 'inputs.yaml');
-    YAML::DumpFile($yaml, \%inputs);
     return $yaml;
 }
 
