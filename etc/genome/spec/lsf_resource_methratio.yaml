@@ -1,0 +1,3 @@
+---
+default_value: "-R 'select[mem>4000 && gtmp>1] rusage[mem=4000,gtmp=1]' -g /genome/meth-ratio"
+env: XGENOME_LSF_RESOURCE_METHRATIO
