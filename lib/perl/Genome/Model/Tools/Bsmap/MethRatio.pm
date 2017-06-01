@@ -78,6 +78,11 @@ class Genome::Model::Tools::Bsmap::MethRatio {
 #                         report loci with sequencing depth>=FOLD. [default: 1]
 
     ],
+    has_param => [
+        lsf_resource => {
+            default_value => Genome::Config::get('lsf_resource_methratio'),
+        },
+    ],
 };
 
 sub available_methratio_versions {
