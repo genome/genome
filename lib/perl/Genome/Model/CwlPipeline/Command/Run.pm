@@ -87,10 +87,11 @@ sub run_toil {
     my $results_dir = shift;
 
     my $build = $self->build;
+    my $model = $build->model;
     my $jobstore_dir = File::Spec->join($build->data_directory, 'jobstore');
     my $log_file = File::Spec->join($build->log_directory, 'toil.log');
 
-    my $primary_docker_image = $build->model->primary_docker_image;
+    my $primary_docker_image = $model->primary_docker_image;
     local $ENV{LSB_SUB_ADDITIONAL} = $primary_docker_image;
 
     Genome::Sys->shellcmd(
@@ -102,10 +103,10 @@ sub run_toil {
             "--logFile=$log_file",
             "--outdir=$results_dir",
             '--batchSystem', 'lsf',
-            $build->main_workflow_file,
+            $model->main_workflow_file,
             $yaml
         ],
-        input_files => [$build->main_workflow_file, $yaml],
+        input_files => [$model->main_workflow_file, $yaml],
     );
 }
 
