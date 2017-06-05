@@ -90,6 +90,9 @@ sub run_toil {
     my $jobstore_dir = File::Spec->join($build->data_directory, 'jobstore');
     my $log_file = File::Spec->join($build->log_directory, 'toil.log');
 
+    my $primary_docker_image = $build->model->primary_docker_image;
+    local $ENV{LSB_SUB_ADDITIONAL} = $primary_docker_image;
+
     Genome::Sys->shellcmd(
         cmd => [
             'cwltoil',

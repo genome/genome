@@ -9,6 +9,10 @@ class Genome::Model::CwlPipeline {
         main_workflow_file => {
             is => 'Text',
         },
+        primary_docker_image => {
+            is => 'Text',
+            doc => 'docker image for the main toil worker jobs',
+        },
     },
 };
 
