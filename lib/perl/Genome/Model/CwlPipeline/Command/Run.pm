@@ -94,6 +94,9 @@ sub run_toil {
     my $primary_docker_image = $model->primary_docker_image;
     local $ENV{LSB_SUB_ADDITIONAL} = $primary_docker_image;
 
+    my $default_queue = Genome::Config::get('lsf_queue_build_worker_alt');
+    local $ENV{LSB_DEFAULTQUEUE} = $default_queue;
+
     Genome::Sys->shellcmd(
         cmd => [
             'cwltoil',
