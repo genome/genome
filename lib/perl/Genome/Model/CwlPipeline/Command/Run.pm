@@ -102,6 +102,9 @@ sub run_toil {
     my $default_queue = Genome::Config::get('lsf_queue_build_worker_alt');
     local $ENV{LSB_DEFAULTQUEUE} = $default_queue;
 
+    #toil relies on reading the output from bsub
+    delete local $ENV{BSUB_QUIET};
+
     Genome::Sys->shellcmd(
         cmd => [
             'cwltoil',
