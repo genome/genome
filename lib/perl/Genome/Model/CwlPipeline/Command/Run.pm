@@ -91,6 +91,11 @@ sub run_toil {
     my $jobstore_dir = File::Spec->join($build->data_directory, 'jobstore');
     my $log_file = File::Spec->join($build->log_directory, 'toil.log');
 
+    my @restart;
+    if (-e $jobstore_dir) {
+        push @restart, '--restart';
+    }
+
     my $primary_docker_image = $model->primary_docker_image;
     local $ENV{LSB_SUB_ADDITIONAL} = $primary_docker_image;
 
@@ -101,6 +106,7 @@ sub run_toil {
         cmd => [
             'cwltoil',
             '--disableCaching', '--stats', '--logLevel=DEBUG',
+            @restart,
             '--workDir', $tmp_dir,
             '--jobStore', $jobstore_dir,
             "--logFile=$log_file",
