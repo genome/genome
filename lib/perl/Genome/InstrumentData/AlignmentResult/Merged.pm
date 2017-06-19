@@ -117,6 +117,12 @@ class Genome::InstrumentData::AlignmentResult::Merged {
             doc => 'Segments for individual alignments (if applicable)',
         },
     ],
+    has_optional_metric => [
+        filetype => {
+            is => 'Text',
+            doc => 'the type of alignment file ("bam" assumed if not present")',
+        },
+    ],
     has_transient_optional => [
         temp_staging_directory  => {
             is => 'Text',
@@ -141,7 +147,7 @@ class Genome::InstrumentData::AlignmentResult::Merged {
         },
         merged_alignment_bam_path => {
             is => 'Text', calculate_from => ['output_dir', 'id'],
-            calculate => q{ return join('/', $output_dir, $id . '.bam'); }
+            calculate => q{ return join('/', $output_dir, $id . '.' . ($self->filetype // 'bam')); }
         },
         merged_alignment_bam_flagstat => {
             is => 'Text', calculate_from => ['merged_alignment_bam_path'],
