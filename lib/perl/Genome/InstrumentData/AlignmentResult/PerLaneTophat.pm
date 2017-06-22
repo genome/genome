@@ -28,7 +28,7 @@ sub required_arch_os { 'x86_64' }
 sub required_rusage {
     my $class = shift;
 
-    my $mem_mb = 32000;
+    my $mem_mb = 64000;
     my $mem_kb = $mem_mb*1024;
     my $tmp_gb = 400;
     my $cpus = 4;
