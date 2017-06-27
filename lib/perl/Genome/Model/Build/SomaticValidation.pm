@@ -357,6 +357,9 @@ sub _disk_usage_result_subclass_names {
         Genome::InstrumentData::AlignmentResult::Merged
         Genome::InstrumentData::AlignmentResult::Merged::BamQc
         Genome::InstrumentData::AlignmentResult::Merged::CoverageStats
+        Genome::Qc::Result
+        Genome::InstrumentData::AlignmentResult::Speedseq
+        Genome::InstrumentData::AlignmentResult::Merged::Speedseq
     ));
 
     return \@classes;
