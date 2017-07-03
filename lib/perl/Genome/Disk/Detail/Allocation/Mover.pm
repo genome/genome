@@ -106,7 +106,7 @@ sub move {
                 "Could not move shadow allocation path (%s) to final path (%s)."
                 . "  This should never happen, even when 100%% full.",
                 $shadow_allocation_abs_path,
-                $allocation_object->absolute_path)));
+                $new_volume_final_path)));
     }
 
     # Change the shadow allocation to reserve some disk on the old volume until
