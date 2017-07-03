@@ -19,7 +19,7 @@ class Genome::Model::Build::Command::MoveAllocations {
         disk_group => {
             is                  => 'Genome::Disk::Group',
             is_optional         => 1,
-            doc => 'A specific disk group to move all data to (defaults to AnP configured location)',
+            doc => 'A specific disk group to move all data to. Defaults to AnP configured location unless disk_group_models is already defined in the user\'s environment',
         },
     ],
 };
