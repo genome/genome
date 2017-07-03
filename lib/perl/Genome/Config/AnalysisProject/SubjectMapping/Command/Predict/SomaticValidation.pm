@@ -90,7 +90,7 @@ sub execute {
 
         my @samples = @{$samples_by_individual_id->{$individual_id}};
 
-        my $sample_set = Set::Scalar->new(@samples);
+        my $sample_set = Set::Scalar->new(map $_->id, @samples);
         $self->status_message('Found '. $sample_set->size .' samples for individual '. $individual->__display_name__);
 
         my @normal_samples;
@@ -102,21 +102,21 @@ sub execute {
             push(@tumor_samples,  $sample) if ($sample_common_name =~ /$tumor_sample_common_names/i);
         }
 
-        my $normal_sample_set = Set::Scalar->new(@normal_samples);
-        my $tumor_sample_set = Set::Scalar->new(@tumor_samples);
+        my $normal_sample_set = Set::Scalar->new(map $_->id, @normal_samples);
+        my $tumor_sample_set = Set::Scalar->new(map $_->id, @tumor_samples);
 
         if ($normal_sample_set->size > 1) {
-            $self->fatal_message('The following samples for individual '. $individual->__display_name__ .' are ALL found to be normal: '. join(',', map {$_->$id_method} $normal_sample_set->members));
+            $self->fatal_message('The following samples for individual '. $individual->__display_name__ .' are ALL found to be normal: '. join(',', $self->_sample_ids_for_set($normal_sample_set, $id_method)));
         }
 
         my $unique_sample_set = $sample_set->unique($normal_sample_set,$tumor_sample_set);
         if ($unique_sample_set) {
-            $self->fatal_message('The following samples for individual: '. $individual->__display_name__ .' do not match either tumor or normal criteria: '. join(',', map{$_->$id_method} $unique_sample_set->members));
+            $self->fatal_message('The following samples for individual: '. $individual->__display_name__ .' do not match either tumor or normal criteria: '. join(',', $self->_sample_ids_for_set($unique_sample_set, $id_method)));
         }
 
         my $intersection_sample_set = $normal_sample_set->intersection($tumor_sample_set);
         if ($intersection_sample_set) {
-            $self->fatal_message('The following samples for individual '. $individual->__display_name__ .' meet both tumor and normal match criteria: '. join(',', map {$_->$id_method} $intersection_sample_set->members));
+            $self->fatal_message('The following samples for individual '. $individual->__display_name__ .' meet both tumor and normal match criteria: '. join(',', $self->_sample_ids_for_set($intersection_sample_set, $id_method)));
         }
 
         if ($normal_sample_set && $tumor_sample_set) {
@@ -150,6 +150,14 @@ sub execute {
     return 1;
 }
 
+sub _sample_ids_for_set {
+    my $self = shift;
+    my $set = shift;
+    my $id_method = shift;
+
+    my @samples = Genome::Sample->get([$set->members]);
+    return map $_->$id_method, @samples;
+}
 
 sub existing_subject_mapping_set {
     my $self = shift;
