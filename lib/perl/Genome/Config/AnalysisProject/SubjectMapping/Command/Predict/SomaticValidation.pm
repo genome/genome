@@ -96,7 +96,7 @@ sub execute {
         my @normal_samples;
         my @tumor_samples;
 
-        for my $sample ($sample_set->members) {
+        for my $sample (@samples) {
             my $sample_common_name = $sample->common_name || 'NULL';
             push(@normal_samples, $sample) if ($sample_common_name =~ /$normal_sample_common_names/i);
             push(@tumor_samples,  $sample) if ($sample_common_name =~ /$tumor_sample_common_names/i);
@@ -120,15 +120,15 @@ sub execute {
         }
 
         if ($normal_sample_set && $tumor_sample_set) {
-            my ($normal_sample) = $normal_sample_set->members();
-            for my $tumor_sample ($tumor_sample_set->members) {
+            my $normal_sample = $normal_samples[0];
+            for my $tumor_sample (@tumor_samples) {
                 $self->add_subject_mapping($tumor_sample,$normal_sample,undef,undef,undef,'discovery');
             }
         } elsif ($normal_sample_set) {
-            my ($normal_sample) = $normal_sample_set->members();
+            my $normal_sample = $normal_samples[0];
             $self->add_subject_mapping($normal_sample,undef,undef,undef,undef,'germline');
         } elsif ($tumor_sample_set) {
-            for my $tumor_sample ($tumor_sample_set->members) {
+            for my $tumor_sample (@tumor_samples) {
                 $self->add_subject_mapping($tumor_sample,undef,undef,undef,undef,'tumor-only');
             }
         }
