@@ -18,6 +18,8 @@ class Genome::Model::CwlPipeline::Command::Run {
     doc => 'wrapper command to run "cwltoil"'
 };
 
+sub sub_command_category { 'pipeline steps' }
+
 sub execute {
     my $self = shift;
 
