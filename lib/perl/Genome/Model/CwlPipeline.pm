@@ -19,6 +19,33 @@ class Genome::Model::CwlPipeline {
     },
 };
 
+sub create {
+    my $class = shift;
+
+    # If create is being called directly on this class or on an abstract subclass, SUPER::create will
+    # figure out the correct concrete subclass (if one exists) and call create on it.
+    if ($class->__meta__->is_abstract) {
+        return $class->SUPER::create(@_);
+    }
+
+    my ($bx, %extra) = $class->define_boolexpr(@_);
+
+    my $inputs = delete $extra{input_data};
+    if (%extra) {
+        $bx = $class->define_boolexpr($bx->params_list, %extra); #to throw errors for other extras
+    }
+
+    my $tx = UR::Context::Transaction->begin(commit_validator => sub { 1 });
+    my $guard = Scope::Guard->new(sub { local $@; $tx->rollback });
+
+    my $self = $class->SUPER::create($bx);
+    $self->process_input_data(%$inputs);
+
+    $tx->commit() && $guard->dismiss();
+
+    return $self;
+}
+
 sub map_workflow_inputs {
     my $self = shift;
     my $build = shift;
