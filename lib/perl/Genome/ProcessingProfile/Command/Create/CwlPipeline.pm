@@ -17,6 +17,11 @@ class Genome::ProcessingProfile::Command::Create::CwlPipeline {
             is => 'Text',
             doc => 'name of the main workflow file within the directory',
         },
+        primary_docker_image => {
+            is => 'Text',
+            doc => 'docker image for the main toil worker jobs',
+            example_values => ['docker(mgibio/rnaseq)'],
+        },
     ],
     has_transient_optional => [
         based_on => {
