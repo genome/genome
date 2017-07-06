@@ -10,7 +10,7 @@ BEGIN {
 use above 'Genome';
 use Genome::Test::Factory::InstrumentData::Solexa;
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 my $class = 'Genome::Model::CwlPipeline';
 use_ok($class);
@@ -19,7 +19,7 @@ my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_objec
 
 my $pp = Genome::ProcessingProfile::CwlPipeline->__define__(id => -100);
 
-my $model = $class->create(
+my @params = (
     processing_profile_id => $pp->id,
     subject => $instrument_data->sample,
     input_data => {
@@ -27,6 +27,7 @@ my $model = $class->create(
         awesomeness     => 'lots',
     },
 );
+my $model = $class->create(@params);
 isa_ok($model, $class, 'created model');
 
 my @inputs = $model->inputs;
@@ -37,3 +38,6 @@ is($ii->value, $instrument_data, 'set instrument data input to object');
 
 my ($ai) = grep { $_->name eq 'awesomeness' } @inputs;
 is($ai->value, 'lots', 'created text input');
+
+my $model2 = $class->get(@params);
+is($model2, $model, 'got our model that we created');

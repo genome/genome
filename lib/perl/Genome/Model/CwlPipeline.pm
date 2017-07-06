@@ -6,6 +6,8 @@ use warnings;
 use feature qw(switch);
 use Genome;
 
+use Set::Scalar;
+
 class Genome::Model::CwlPipeline {
     is => 'Genome::Model',
     has_param => {
@@ -44,6 +46,46 @@ sub create {
     $tx->commit() && $guard->dismiss();
 
     return $self;
+}
+
+sub get {
+    my $class = shift;
+
+    my ($bx, %extra) = $class->define_boolexpr(@_);
+
+    my $input_data = delete $extra{input_data};
+    unless($input_data) {
+        return $class->SUPER::get(@_);
+    }
+
+    if (%extra) {
+        $bx = $class->define_boolexpr($bx->params_list, %extra); #to throw errors for other extras
+    }
+
+    my $input_info = $class->determine_input_objects(%$input_data);
+    my @input_values = values %$input_info;
+    for my $v (@input_values) {
+        $bx = $bx->add_filter('inputs.value_id', $v->id);
+    }
+
+    my @candidates = $class->SUPER::get($bx);
+
+    #now check that we match the same value ID and name
+    for my $name (keys %$input_info) {
+        my $value = $input_info->{$name};
+        my $baseline = (ref $value eq 'ARRAY'?
+            Set::Scalar->new(@$value) :
+            Set::Scalar->new($value));
+
+        @candidates = grep {
+            my @in = grep { $_->name eq $name } $_->inputs();
+            my $actual = Set::Scalar->new(map $_->value, @in);
+
+            $baseline->is_subset($actual);
+        } @candidates;
+    }
+
+    return $class->context_return(@candidates);
 }
 
 sub map_workflow_inputs {
@@ -103,8 +145,25 @@ sub process_input_data {
     return 1;
 }
 
+sub determine_input_objects {
+    my $class = shift;
+    my %data = @_;
+
+    my %inputs;
+    for my $name (keys %data) {
+        my $value = $class->determine_input_object($name, $data{$name});
+        unless($value) {
+            $class->fatal_message('Unable to determine input for name "%s" and value "%s".', $name, $data{name});
+        }
+
+        $inputs{$name} = $value;
+    }
+
+    return \%inputs;
+}
+
 sub determine_input_object {
-    my $self = shift;
+    my $class = shift;
     my $name = shift;
     my $value_identifier = shift;
 
