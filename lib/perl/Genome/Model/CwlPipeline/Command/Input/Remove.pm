@@ -26,6 +26,14 @@ class Genome::Model::CwlPipeline::Command::Input::Remove {
 
 sub sub_command_category { 'input tools' }
 
+sub help_detail {
+    return <<EOHELP
+Remove input values from a model.
+
+For simple string inputs, the "value" should be the string itself.  For object inputs, the "value" should be the ID of the object to remove as an input.
+EOHELP
+}
+
 sub execute {
     my $self = shift;
 
