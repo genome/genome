@@ -33,10 +33,6 @@ sub create {
     my ($bx, %extra) = $class->define_boolexpr(@_);
 
     my $inputs = delete $extra{input_data};
-    if (%extra) {
-        $bx = $class->define_boolexpr($bx->params_list, %extra); #to throw errors for other extras
-    }
-
     unless ($inputs) {
         return $class->SUPER::create(@_);
     }
@@ -62,10 +58,6 @@ sub get {
     my $input_data = delete $extra{input_data};
     unless($input_data) {
         return $class->SUPER::get(@_);
-    }
-
-    if (%extra) {
-        $bx = $class->define_boolexpr($bx->params_list, %extra); #to throw errors for other extras
     }
 
     $bx = $bx->remove_filter('input_data');
