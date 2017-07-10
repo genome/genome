@@ -37,6 +37,12 @@ sub create {
         $bx = $class->define_boolexpr($bx->params_list, %extra); #to throw errors for other extras
     }
 
+    unless ($inputs) {
+        return $class->SUPER::create(@_);
+    }
+
+    $bx = $bx->remove_filter('input_data');
+
     my $tx = UR::Context::Transaction->begin(commit_validator => sub { 1 });
     my $guard = Scope::Guard->new(sub { local $@; $tx->rollback });
 
@@ -62,6 +68,7 @@ sub get {
         $bx = $class->define_boolexpr($bx->params_list, %extra); #to throw errors for other extras
     }
 
+    $bx = $bx->remove_filter('input_data');
     my $input_info = $class->determine_input_objects(%$input_data);
     my @input_values = values %$input_info;
     for my $v (@input_values) {
