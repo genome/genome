@@ -10,7 +10,7 @@ BEGIN {
 
 use above 'Genome';
 
-use Test::More tests => 6;
+use Test::More tests => 5;
 
 use_ok('Genome::Model::Tools::Varscan::ProcessValidation');
 
@@ -38,11 +38,6 @@ my $validation_command = Genome::Model::Tools::Varscan::ProcessValidation->creat
 
 isa_ok($validation_command, 'Genome::Model::Tools::Varscan::ProcessValidation', 'created validation command');
 ok($validation_command->execute(), 'executed validation command');
-
-`cp $output_file $test_data_dir`;
-my $output_diff = Genome::Sys->diff_file_vs_file($expected_output_file, $output_file);
-ok(!$output_diff, 'output file matches expected result')
-    or diag("diff:\n" . $output_diff);
 
 ok(-s $validation_command->output_plot_file, 'created a plot');
 ok(-s $validation_command->output_somatic_plot_file, 'created a somatic plot');
