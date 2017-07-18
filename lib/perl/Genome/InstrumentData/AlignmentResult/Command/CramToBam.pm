@@ -18,6 +18,8 @@ sub shortcut {
 sub execute {
     my $self = shift;
 
+    my $guard = $self->_lock()->unlock_guard;
+
     return 1 if $self->_is_currently_bam;
 
     unless($self->_is_currently_cram) {

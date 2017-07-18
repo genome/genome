@@ -17,6 +17,29 @@ class Genome::InstrumentData::AlignmentResult::Command::ConvertBase {
     doc => 'Convert an alignment result.',
 };
 
+sub _lock {
+    my $self = shift;
+
+    my $result = $self->alignment_result;
+
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => 'alignment-result-convert/' . $result->id,
+        scope => 'site'
+    )->lock(
+        max_try => 1,
+    );
+
+    $self->fatal_message('Could not acquire lock for conversion') unless $lock;
+
+    my ($input) = $result->inputs(name => 'filetype');
+    if ($input) {
+        #make sure we get any recent updates after acquiring the lock
+        UR::Context->reload($input);
+    }
+
+    return $lock;
+}
+
 sub _is_currently_bam {
     my $self = shift;
 
