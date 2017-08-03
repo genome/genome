@@ -1,1 +1,2 @@
-../../../../../test-data-relocate-me/lib--perl--Genome--FeatureList--Command--DumpMergedList.t.bed
+1	1	2	feature1-beginning
+1	10	100	another-feature2

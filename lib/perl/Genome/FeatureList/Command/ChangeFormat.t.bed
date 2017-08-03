@@ -1,1 +1,6 @@
-../../../../../test-data-relocate-me/lib--perl--Genome--FeatureList--Command--ChangeFormat.t.bed
+1	0	2	feature1-beginning
+1	10	100	another-feature2
+1	25	26	overlapping-feature2a
+1	1000	1001	feature3-middle
+2	5	6	some-feature4
+X	9	1000	feature5-end
