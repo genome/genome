@@ -81,7 +81,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
         (
             select
                 --Index Illumina
-                to_char(i.analysis_id) id,
+                i.analysis_id::text id,
                 i.library_id library_id,
                 i.index_sequence index_sequence,
                 i.flow_cell_id,
@@ -93,7 +93,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 i.sd_below_insert_size old_sd_below_insert_size,
                 i.filt_clusters clusters,
                 i.analysis_software_version,
-                (case when i.index_sequence is null then to_char(i.lane) else to_char(i.lane) || '-' || i.index_sequence end) subset_name,
+                (case when i.index_sequence is null then i.lane::text else i.lane::text || '-' || i.index_sequence end) subset_name,
 
                 --Constant
                 0 is_external,
@@ -111,7 +111,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 --Fwd
                 r1.sls_seq_id fwd_seq_id,
                 (case when r1.seq_id is not null then 'Paired End Read 1' else null end) fwd_run_type,
-                nvl(r1.read_length,-1) fwd_read_length,
+                coalesce(r1.read_length,-1) fwd_read_length,
                 (case when r1.seq_id is not null then r2.kilobases_read else -1 end) fwd_kilobases_read,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) fwd_clusters,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) fwd_filt_clusters,
