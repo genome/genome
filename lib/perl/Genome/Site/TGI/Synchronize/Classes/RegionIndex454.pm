@@ -47,7 +47,7 @@ class Genome::Site::TGI::Synchronize::Classes::RegionIndex454 {
         (
             select 
                 --ri454
-                to_char(ri454.seq_id) id,
+                ri454.seq_id::text id,
                 ri454.index_sequence index_sequence,
                 ri454.library_id,
                 ri454.region_id,
@@ -59,8 +59,8 @@ class Genome::Site::TGI::Synchronize::Classes::RegionIndex454 {
                 rr454.run_name run_name,
                 ( 
                  case when ri454.index_sequence is null
-                  then to_char(rr454.region_number)
-                  else to_char(rr454.region_number) || '-' || ri454.index_sequence 
+                  then rr454.region_number::text
+                  else rr454.region_number::text || '-' || ri454.index_sequence 
                  end
                 ) subset_name
             from region_index_454 ri454
