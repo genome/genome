@@ -34,7 +34,7 @@ class Genome::Site::TGI::Synchronize::Classes::MiscUpdate {
             doc => 'the column whose value changed' 
         },
         edit_date => { 
-            is => 'Text', 
+            is => 'Date', 
             doc => 'the time of the change' 
         },
     ],
