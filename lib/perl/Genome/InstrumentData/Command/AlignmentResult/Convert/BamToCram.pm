@@ -1,12 +1,12 @@
-package Genome::InstrumentData::AlignmentResult::Command::BamToCram;
+package Genome::InstrumentData::Command::AlignmentResult::Convert::BamToCram;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::InstrumentData::AlignmentResult::Command::BamToCram {
-    is => 'Genome::InstrumentData::AlignmentResult::Command::ConvertBase',
+class Genome::InstrumentData::Command::AlignmentResult::Convert::BamToCram {
+    is => 'Genome::InstrumentData::Command::AlignmentResult::Convert::Base',
 };
 
 sub shortcut {

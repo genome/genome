@@ -1,4 +1,4 @@
-package Genome::InstrumentData::AlignmentResult::Command::ConvertBase;
+package Genome::InstrumentData::Command::AlignmentResult::Convert::Base;
 
 use strict;
 use warnings;
@@ -6,7 +6,8 @@ use warnings;
 use Genome;
 use Genome::Sys::LSF::bsub qw();
 
-class Genome::InstrumentData::AlignmentResult::Command::ConvertBase {
+class Genome::InstrumentData::Command::AlignmentResult::Convert::Base {
+    is_abstract => 1,
     is => 'Command::V2',
     has_input => [
         alignment_result => {
