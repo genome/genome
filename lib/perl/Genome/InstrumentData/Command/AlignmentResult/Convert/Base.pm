@@ -11,12 +11,21 @@ class Genome::InstrumentData::Command::AlignmentResult::Convert::Base {
     is => 'Command::V2',
     has_input => [
         alignment_result => {
-            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            is => 'Genome::SoftwareResult',
             doc => 'result to convert',
         },
     ],
     doc => 'Convert an alignment result.',
 };
+
+sub _is_convertable_result {
+    my $self = shift;
+
+    my $alignment_result = $self->alignment_result;
+
+    return unless $alignment_result->isa('Genome::InstrumentData::AlignedBamResult::Merged');
+    return $alignment_result->can('filetype');
+}
 
 sub _lock {
     my $self = shift;
