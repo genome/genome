@@ -30541,6 +30541,25 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>alignment-result',
     [
+      '>convert',
+      [
+        '>cram-to-bam',
+        [
+          'alignment-result=s',
+          undef,
+          'help!',
+          undef
+        ],
+        '>bam-to-cram',
+        [
+          'alignment-result=s',
+          undef,
+          'help!',
+          undef
+        ],
+        'help!',
+        undef
+      ],
       '>list',
       [
         'filter=s',
