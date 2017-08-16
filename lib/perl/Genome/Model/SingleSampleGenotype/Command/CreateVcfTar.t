@@ -50,7 +50,12 @@ my $tar_path = File::Spec->join($out, $build->id.".tar.gz");
 my $result = `tar -tf $tar_path | wc -l`;
 chomp($result);
 
-is($result, 2, "File created correctly");
+is($result, 3, "File created correctly");
+
+my $includes_manifest = `tar -tf $tar_path | grep manifest.md5`;
+chomp $includes_manifest;
+
+is($includes_manifest, 'manifest.md5', 'tar contains manifest');
 
 done_testing;
 
