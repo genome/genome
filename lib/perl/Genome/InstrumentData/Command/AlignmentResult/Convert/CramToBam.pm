@@ -18,6 +18,13 @@ sub shortcut {
 sub execute {
     my $self = shift;
 
+    unless($self->_is_convertable_result) {
+        $self->fatal_message(
+            "This converter currently does not support results of type %s",
+            $self->alignment_result->class
+        );
+    }
+
     my $guard = $self->_lock()->unlock_guard;
 
     return 1 if $self->_is_currently_bam;
