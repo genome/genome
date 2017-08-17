@@ -50,6 +50,7 @@ sub params_for_create_in_genome {
         else {
             my $value = $self->$name;
             next if not defined $value;
+            next if $value eq '';
             $params{$name} = $value;
         }
     }
