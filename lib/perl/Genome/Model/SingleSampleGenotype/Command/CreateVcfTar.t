@@ -52,10 +52,10 @@ chomp($result);
 
 is($result, 3, "File created correctly");
 
-my $includes_manifest = `tar -tf $tar_path | grep manifest.md5`;
+my $includes_manifest = `tar -tf $tar_path | grep MANIFEST.txt`;
 chomp $includes_manifest;
 
-is($includes_manifest, 'manifest.md5', 'tar contains manifest');
+is($includes_manifest, 'MANIFEST.txt', 'tar contains manifest');
 
 done_testing;
 

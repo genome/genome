@@ -56,14 +56,14 @@ sub build_manifest_file {
     my $self = shift;
     my $build = shift;
 
-    my ($fh, $manifest_file) = Genome::Sys->create_temp_file('manifest.md5');
+    my ($fh, $manifest_file) = Genome::Sys->create_temp_file('MANIFEST.txt');
 
     for my $r ( sort { &result_sorter($a,$b) } $build->haplotype_caller_result ) {
         my $vcf = $r->vcf_file;
         my $filename = $r->_vcf_filename;
 
         my $md5 = Genome::Sys->md5sum($vcf);
-        $fh->say(join("\t", $filename, $md5));
+        $fh->say(join("  ", $md5, $filename));
     }
 
     $fh->close;
