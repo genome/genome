@@ -137,8 +137,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 gerald_bam.path bam_path,
                 collect_gc_bias.path gc_bias_path,
                 fastqc.path fastqc_path,
-                '/gscmnt/sata114/info/medseq/adaptor_sequences/solexa_adaptor_pcr_primer'
-                    || (case when sam.sample_type = 'rna' then '_SMART' else '' end) adaptor_path
+                NULL adaptor_path
 
                 from index_illumina i
                     join flow_cell_illumina fc on fc.flow_cell_id = i.flow_cell_id
@@ -161,8 +160,6 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                         on run_type = 'Paired End'
                         and r1.ii_seq_id = i.seq_id
                         and r1.read_number = 1
-                    join GSC.library_summary lib on lib.library_id = i.library_id
-                    join GSC.organism_sample sam on sam.organism_sample_id = lib.sample_id
         )
         index_illumina
 EOS
