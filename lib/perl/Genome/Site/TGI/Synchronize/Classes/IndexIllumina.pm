@@ -135,8 +135,8 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 --Misc Paths
                 archive2.path archive_path,
                 gerald_bam.path bam_path,
-                collect_gc_bias.path gc_bias_path,
-                fastqc.path fastqc_path,
+                NULL gc_bias_path,
+                NULL fastqc_path,
                 NULL adaptor_path
 
                 from index_illumina i
@@ -152,10 +152,6 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                         and archive2.data_type = 'illumina fastq tgz'
                     left join seq_fs_path gerald_bam on gerald_bam.seq_id = i.seq_id
                         and gerald_bam.data_type = 'gerald bam'
-                    left join seq_fs_path collect_gc_bias on collect_gc_bias.seq_id = i.seq_id
-                        and collect_gc_bias.data_type = 'collect gc bias'
-                    left join seq_fs_path fastqc on fastqc.seq_id = i.seq_id
-                        and fastqc.data_type = 'fastqc'
                     left join read_illumina r1
                         on run_type = 'Paired End'
                         and r1.ii_seq_id = i.seq_id
