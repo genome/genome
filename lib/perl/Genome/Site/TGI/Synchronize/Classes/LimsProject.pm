@@ -24,7 +24,7 @@ class Genome::Site::TGI::Synchronize::Classes::LimsProject {
 SQL
     ,
     id_by => [
-        id => { is => 'Text', },
+        id => { is => 'Number', },
     ],
     has => [
         name => { is => 'Text', },

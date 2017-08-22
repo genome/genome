@@ -30,8 +30,8 @@ class Genome::Site::TGI::Synchronize::Classes::LimsProjectInstrumentData {
 SQL
     ,
     id_by => [
-        project_id => { is => 'Text', },
-        entity_id => { is => 'Text', },
+        project_id => { is => 'Number', },
+        entity_id => { is => 'Number', },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::Oltp',
