@@ -9,13 +9,13 @@ class Genome::Site::TGI::Synchronize::Classes::LimsProject {
     table_name => <<SQL
     (
 		--Administration Project
-		select ap.project_id id, ap.project_name name, 'na' pipeline 
+		select ap.project_id id, ap.project_name as name, 'na' pipeline 
 		from administration_project ap
 		where ap.project_id > 2570000
          and ap.status != 'abandoned'
 		union all
 		--Setup Work Order
-		select wo.setup_wo_id id, s.setup_name name, wo.pipeline pipeline
+		select wo.setup_wo_id id, s.setup_name as name, wo.pipeline pipeline
 		from setup s
 		join setup_work_order wo on wo.setup_wo_id = s.setup_id
 		where s.setup_id > 2570000
