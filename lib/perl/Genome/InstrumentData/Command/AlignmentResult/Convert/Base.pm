@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Config;
 use Genome::Sys::LSF::bsub qw();
 
 class Genome::InstrumentData::Command::AlignmentResult::Convert::Base {
@@ -83,7 +84,7 @@ sub _run_conversion {
 
     my $cmd = ['view', '-T', $fasta, $output_format_flag, '-o', $destination_file, $source_file];
 
-    my $guard = Genome::Config->set_env('lsb_sub_additional', 'mgibio/samtools:1.3.1');
+    my $guard = Genome::Config::set_env('lsb_sub_additional', 'docker(mgibio/samtools:1.3.1)');
     Genome::Sys::LSF::bsub::bsub(
         cmd => $cmd,
         queue => Genome::Config::get('lsf_queue_build_worker'),
