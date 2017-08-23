@@ -79,7 +79,7 @@ sub _run_conversion {
     my $source_file = shift;
     my $destination_file = shift;
 
-    my $reference = $self->result->reference_build;
+    my $reference = $self->alignment_result->reference_build;
     my $fasta = $reference->full_consensus_path('fa');
 
     my $cmd = ['view', '-T', $fasta, $output_format_flag, '-o', $destination_file, $source_file];
