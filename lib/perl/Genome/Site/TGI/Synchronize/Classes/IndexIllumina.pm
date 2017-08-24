@@ -81,7 +81,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
         (
             select
                 --Index Illumina
-                i.analysis_id::text id,
+                i.analysis_id id,
                 i.library_id library_id,
                 i.index_sequence index_sequence,
                 i.flow_cell_id,
@@ -168,7 +168,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
 EOS
     ,
     id_by => [
-        id => { is => 'Text', },
+        id => { is => 'Number', },
     ],
     has => [
         library_id                      => { is => 'Number', },
