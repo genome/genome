@@ -37,6 +37,10 @@ sub execute {
     $self->_import_indexillumina($_) for @ii;
     $self->_import_anp_associations(@ii);
 
+    my @g = Genome::Site::TGI::Synchronize::Classes::Genotyping->get(id => [map $_->entity_id, @to_import]);
+    $self->_import_genotyping($_) for @g;
+    $self->_import_anp_associations(@g);
+
     return 1;
 }
 
@@ -160,6 +164,19 @@ sub _import_anp_associations {
     }
 
     return 1;
+}
+
+sub _import_genotyping {
+    my $self = shift;
+    my $g = shift;
+
+    my $existing_sample = Genome::Sample->get($g->sample_id);
+    unless ($existing_sample) {
+        my $os = Genome::Site::TGI::Synchronize::Classes::OrganismSample->get($g->sample_id);
+        $self->_import_organismsample($os);
+    }
+
+    $g->create_in_genome;
 }
 
 1;

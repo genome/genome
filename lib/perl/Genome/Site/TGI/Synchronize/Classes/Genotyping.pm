@@ -11,7 +11,7 @@ class Genome::Site::TGI::Synchronize::Classes::Genotyping { # EXTERNAL 287713868
     (
         select g.seq_id id, g.status status,
          g.organism_sample_id sample_id, s.full_name sample_name,
-	     lower(p.name) sequencing_platform, p.chip_type chip_name, p.version version,
+	     lower(p.name) sequencing_platform, p.chip_type chip_name, p.version as version,
          'external' import_source_name
 	    from external_genotyping g
         join genotyping_platform p on p.genotyping_platform_id = g.genotyping_platform_id
@@ -19,7 +19,7 @@ class Genome::Site::TGI::Synchronize::Classes::Genotyping { # EXTERNAL 287713868
         union all
         select g.seq_id id, g.status status,
          g.organism_sample_id sample_id, s.full_name sample_name,
-	     lower(p.name) sequencing_platform, p.chip_type chip_name, p.version version,
+	     lower(p.name) sequencing_platform, p.chip_type chip_name, p.version as version,
          'wugc' import_source_name
         from illumina_genotyping g
         join genotyping_platform p on p.genotyping_platform_id = g.genotyping_platform_id
@@ -29,11 +29,11 @@ class Genome::Site::TGI::Synchronize::Classes::Genotyping { # EXTERNAL 287713868
 SQL
     ,
     id_by => [
-        id => { is => 'Text', },
+        id => { is => 'Number', },
     ],
     has => [
         status => { is => 'Text', },
-        sample_id => { is => 'Text', },
+        sample_id => { is => 'Number', },
         sample_name => { is => 'Text', },
         sequencing_platform => { is => 'Text', },
         chip_name => { is => 'Text', },
