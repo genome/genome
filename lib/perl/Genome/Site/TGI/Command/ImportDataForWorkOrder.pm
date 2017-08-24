@@ -35,6 +35,7 @@ sub execute {
 
     my @ii = Genome::Site::TGI::Synchronize::Classes::IndexIllumina->get(id => [map $_->entity_id, @to_import]);
     $self->_import_indexillumina($_) for @ii;
+    $self->_import_anp_associations(@ii);
 
     return 1;
 }
@@ -136,6 +137,29 @@ sub _import_organismtaxon {
     my $ot = shift;
 
     $ot->create_in_genome;
+}
+
+sub _import_anp_associations {
+    my $self = shift;
+    my @data = @_;
+
+    return 1 unless @data;
+
+    my @existing = Genome::Config::AnalysisProject::InstrumentDataBridge->get(instrument_data_id => [map $_->id, @data]);
+    my @potential = Genome::Site::TGI::Synchronize::Classes::InstrumentDataAnalysisProjectBridge->get(instrument_data_id => [map $_->id, @data]);
+
+    my %existing_lookup;
+    for (@existing) {
+        $existing_lookup{$_->instrument_data_id}{$_->analysis_project_id}++
+    }
+
+    for (@potential) {
+        unless ($existing_lookup{$_->instrument_data_id}{$_->analysis_project_id}) {
+            $_->create_in_genome;
+        }
+    }
+
+    return 1;
 }
 
 1;
