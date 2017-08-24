@@ -41,7 +41,7 @@ EOS
             is => 'Number',
         },
         analysis_project_id => {
-            is => 'Number',
+            is => 'Text',
         },
     ],
     data_source => 'Genome::DataSource::Dwrac',
