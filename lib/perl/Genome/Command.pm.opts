@@ -3351,18 +3351,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>protein-annotation',
-    [
-      '>upload-results',
-      [
-        'bio-seq-features=s',
-        undef,
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>rename-to-default',
     [
       'models=s@',
@@ -30444,20 +30432,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>export',
-    [
-      '>samplesheet',
-      [
-        'output-file=s',
-        undef,
-        'instrument-data=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>imported',
     [
       '>blacklist-segments',
@@ -30807,13 +30781,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>calculate-read-count',
-    [
-      'instrument-data=s',
-      undef,
-      'help!',
-      undef
-    ],
     '>align-and-merge',
     [
       'name=s',
@@ -30846,6 +30813,13 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'trimmer-version=s',
       'files',
+      'help!',
+      undef
+    ],
+    '>calculate-read-count',
+    [
+      'instrument-data=s',
+      undef,
       'help!',
       undef
     ],
