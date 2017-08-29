@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Genome::Logger;
 
 use Carp qw(confess);
 use List::Util 'shuffle';
@@ -215,7 +214,7 @@ sub _get_allocation_without_lock_impl {
         ));
     }
 
-    Genome::Logger->debugf("Allocation (%s) created at %s",
+    $self->debug_message("Allocation (%s) created at %s",
         $chosen_allocation->id, $chosen_allocation->absolute_path);
 
     return $chosen_allocation;
@@ -275,7 +274,7 @@ sub _attempt_allocation_creation {
     if ($candidate_volume->is_allocated_over_soft_limit) {
         Genome::Utility::Instrumentation::inc('disk.allocation.'
             . 'get_allocation_without_lock.rollback.over_allocated');
-        Genome::Logger->debugf(
+        $self->debug_message(
                 "%s's allocated_kb exceeded soft limit (%d kB), "
                 . "rolling back allocation.",
                 $candidate_volume->mount_path,
@@ -287,7 +286,7 @@ sub _attempt_allocation_creation {
     } elsif ($candidate_volume->is_used_over_soft_limit) {
         Genome::Utility::Instrumentation::inc('disk.allocation.'
             . 'get_allocation_without_lock.rollback.over_used');
-        Genome::Logger->debugf(
+        $self->debug_message(
                 "%s's used_kb exceeded soft limit (%d %s), "
                 . "rolling back allocation.",
                 $candidate_volume->mount_path,
