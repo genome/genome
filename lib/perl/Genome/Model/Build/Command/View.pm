@@ -93,9 +93,17 @@ sub write_report {
         }
     }
 
-    my $process = $self->build->process;
-    if ($process) {
-        $self->_display_ptero_workflow($handle, $self->build->process->workflow_name);
+    my @process = $self->build->process;
+
+    if (@process > 1) {
+        @process = sort { $a->created_at cmp $b->created_at } @process;
+    }
+
+    for (@process) {
+        if (@process > 1) {
+            $handle->say("\nProcess " . $_->id . ' at ' . $_->created_at . ":");
+        }
+        $self->_display_ptero_workflow($handle, $_->workflow_name);
     }
 
     1;
