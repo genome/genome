@@ -110,7 +110,7 @@ sub run_toil {
     Genome::Sys->shellcmd(
         cmd => [
             'cwltoil',
-            '--disableCaching', '--stats', '--logLevel=DEBUG',
+            '--disableCaching', '--logLevel=DEBUG',
             @restart,
             '--workDir', $tmp_dir,
             '--jobStore', $jobstore_dir,
