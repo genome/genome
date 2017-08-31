@@ -43,11 +43,13 @@ sub execute {
     my $self = shift;
     my $out_file = $self->output_file;
 
+    my $name_in_vcf = Genome::Sample->sample_name_to_name_in_vcf($self->sample_name);
+
     my $in_vcf  = Genome::File::Vcf::Reader->new($self->input_file);
     my $header  = $in_vcf->header;
     my $out_vcf = Genome::File::Vcf::Writer->new($out_file, $header);
 
-    my $index = $header->index_for_sample_name($self->sample_name);
+    my $index = $header->index_for_sample_name($name_in_vcf);
 
     while (my $entry = $in_vcf->next) {
         next if $entry->is_filtered;
