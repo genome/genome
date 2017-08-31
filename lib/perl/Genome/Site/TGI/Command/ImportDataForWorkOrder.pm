@@ -13,6 +13,12 @@ class Genome::Site::TGI::Command::ImportDataForWorkOrder {
             doc => 'The ID of the work order to import',
         },
     ],
+    has_optional_input => [
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'If specified, all found instrument data for the Work Order will be linked to this Analysis Project',
+        },
+    ],
 };
 
 sub execute {
@@ -192,6 +198,17 @@ sub _import_anp_associations {
     for (@potential) {
         unless ($existing_lookup{$_->instrument_data_id}{$_->analysis_project_id}) {
             $_->create_in_genome;
+        }
+    }
+
+    if (my $anp = $self->analysis_project) {
+        my $cmd = Genome::Config::AnalysisProject::Command::AddInstrumentData->create(
+            analysis_project => $anp,
+            instrument_data => \@data,
+        );
+
+        unless ($cmd->execute) {
+            $self->fatal_message('Failed to assign instrument data to analysis project.');
         }
     }
 
