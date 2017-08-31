@@ -46,7 +46,7 @@ sub execute {
     my $should_assign = $desired_assigned - $already_assigned;
     my $previously_assigned = $already_assigned->intersection($desired_assigned);
 
-    $self->status_message('Asked to asssign (%s) of which (%s) were already assigned. Proceeding to assign (%s)',
+    $self->status_message('Asked to assign (%s) of which (%s) were already assigned. Proceeding to assign (%s)',
         $desired_assigned->size, $previously_assigned->size, $should_assign->size);
 
     for my $instrument_data ($should_assign->members) {
