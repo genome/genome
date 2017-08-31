@@ -47,19 +47,17 @@ sub execute {
     # Sanity check
     unless ( $self->to eq $self->from->name ) {
         $self->error_message(
-            sprintf(
-                'Could not rename model (<Id> %s <Name> %s) to new name (%s) for unkown reasons', 
-                $self->from->id, 
-                $self->from->name, 
-                $self->to,
-            )
+            'Could not rename model (<Id> %s <Name> %s) to new name (%s) for unkown reasons',
+            $self->from->id,
+            $self->from->name,
+            $self->to,
         );
         return;
     }
 
-    printf(
-        "Renamed model (<Id> %s) from %s to %s\n",
-        $self->from->id, 
+    $self->status_message(
+        "Renamed model (<Id> %s) from %s to %s",
+        $self->from->id,
         $old_name,
         $self->from->name,
     );
