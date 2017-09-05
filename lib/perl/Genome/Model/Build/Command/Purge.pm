@@ -26,6 +26,8 @@ sub execute {
     for my $build (@builds) {
         $build->purge or $self->fatal_message('Failed to purge build %s', $build->__display_name__);
     }
+
+    return 1;
 }
 
 1;
