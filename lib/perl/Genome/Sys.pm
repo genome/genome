@@ -1761,7 +1761,7 @@ sub capture {
 sub disconnect_default_handles {
     my $class = shift;
 
-    for my $ds (qw(Genome::DataSource::GMSchema)) {
+    for my $ds (qw(Genome::DataSource::GMSchema Genome::DataSource::Oltp)) {
         if($ds->has_default_handle) {
             $class->debug_message("Disconnecting $ds default handle.");
             $ds->disconnect_default_dbh();
