@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Genome::Site::TGI::Synchronize::Classes::Dictionary;
+use Genome::Utility::PluckColumn;
 use Set::Scalar;
 
 class Genome::Site::TGI::Command::DiffLimsAndGenome {
@@ -59,11 +60,21 @@ sub _create_id_set_for_class {
     my ($self, $class) = @_;
     $self->status_message("Getting IDs for $class...");
 
-    my $iterator = $class->create_iterator;
-    my $set = Set::Scalar->new();
-    while ( my $obj = $iterator->next ) {
-        $set->insert($obj->id);
-    };
+    my @id_columns = $class->__meta__->get_all_id_column_names;
+
+    my $set;
+    if(@id_columns == 1) {
+        my $ids = Genome::Utility::PluckColumn::pluck_column_from_class($class, column_name => $id_columns[0]);
+        $set = Set::Scalar->new(@$ids);
+    } else {
+        $set = Set::Scalar->new();
+
+        my $iterator = $class->create_iterator;
+        while ( my $obj = $iterator->next ) {
+            $set->insert($obj->id);
+        }
+    }
+
     $self->status_message("Found ".scalar(@$set)." $class IDs.");
 
     return $set;
