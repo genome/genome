@@ -207,8 +207,10 @@ sub _get_allocation_without_lock_impl {
 
     unless (defined $chosen_allocation) {
         Carp::confess $self->error_message(sprintf(
-            "Could not create allocation in specified disk group (%s), "
+            "Could not create allocation for %s kilobytes at <%s> in specified disk group (%s), "
             . "which contains %d volumes:\n%s\n",
+            $self->parameters->kilobytes_requested,
+            $self->parameters->allocation_path,
             $self->parameters->disk_group_name, scalar(@$candidate_volumes),
             join("\n", map { $_->mount_path } @$candidate_volumes),
         ));
