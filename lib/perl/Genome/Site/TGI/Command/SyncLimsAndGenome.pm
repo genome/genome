@@ -5,6 +5,10 @@ use warnings;
 
 use Genome;
 use Genome::Sys::LockProxy qw();
+use Genome::Utility::PluckColumn;
+
+use Scalar::Util;
+use Set::Scalar;
 
 use constant MAX_GENOTYPE_DATA_TO_PROCESS => 500;
 
@@ -127,12 +131,20 @@ sub _load_successful_pidfas {
         $self->error_message('Failed to get dbh from gm schema!');
         return;
     }
+
+    my $date_clause = '';
+    unless ($self->expunge) {
+        #if we don't need to check for removed data, only grab recent additions
+        my $last_year = 1900 + (localtime)[5] - 1;
+        $date_clause = qq{ and pse.date_scheduled > '$last_year-01-01T00:00:00Z' };
+    }
+
     my $sql = <<SQL;
         select p1.param_value, p2.param_value
         from process_step_executions pse
         inner join pse_param p1 on p1.pse_id = pse.pse_id and p1.param_name = 'instrument_data_id'
         left join pse_param p2 on p2.pse_id = pse.pse_id and p2.param_name = 'pidfa_output'
-        where pse.ps_ps_id = 3870 and pse.pr_pse_result = 'successful'
+        where pse.ps_ps_id = 3870 and pse.pr_pse_result = 'successful' $date_clause
         order by p1.param_value desc
 SQL
 
@@ -170,6 +182,12 @@ sub _update_apipe_classes {
     my @entity_names = $dictionary->entity_names;
     for my $entity_name ( @entity_names ) {
         $self->status_message("Detemine $entity_name IDs to create...");
+
+        if ($entity_name eq 'instrument data solexa') {
+            $self->_update_instrument_data($entity_name);
+            next;
+        }
+
         my $differ = Genome::Site::TGI::Command::DiffLimsAndGenome->create(
             entity_name => $entity_name,
             print_diffs => 0,
@@ -195,6 +213,28 @@ sub _update_apipe_classes {
 
         my $in_genome_not_lims = $differ->in_genome_not_lims;
         $self->_report->{$entity_name}->{'missing'} = [ @$in_genome_not_lims ];
+    }
+
+    return 1;
+}
+
+sub _update_instrument_data {
+    my ($self, $entity_name) = @_;
+
+    my $lims_class = Genome::Site::TGI::Synchronize::Classes::Dictionary->lims_class_for_entity_name($entity_name);
+    my $genome_class_for_create = $lims_class->genome_class_for_create;
+
+    my $ids_in_genome = Genome::Utility::PluckColumn::pluck_column_from_class('Genome::InstrumentData', column_name => Genome::InstrumentData->__meta__->get_all_id_column_names);
+    my @pidfa_ids = grep { Scalar::Util::looks_like_number($_) } keys %{ $self->instrument_data_with_successful_pidfas };
+    my $ids_to_create = Set::Scalar->new(@pidfa_ids);
+    $ids_to_create->delete(@$ids_in_genome);
+
+    if ( not $ids_to_create->is_empty ) {
+        $self->_create_genome_objects_for_lims_objects(
+            ids_to_create => $ids_to_create,
+            lims_class => $lims_class,
+            genome_class => $genome_class_for_create,
+        );
     }
 
     return 1;

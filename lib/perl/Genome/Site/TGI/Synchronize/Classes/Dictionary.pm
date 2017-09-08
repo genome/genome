@@ -17,7 +17,7 @@ our @lims_classes = (
     } (qw/ 
         OrganismTaxon OrganismIndividual PopulationGroup OrganismSample LibrarySummary
         IndexIllumina Genotyping
-        LimsProject LimsProjectSample LimsProjectInstrumentData
+        LimsProject LimsProjectSample
         InstrumentDataAnalysisProjectBridge
     /)
 );
