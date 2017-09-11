@@ -1782,6 +1782,29 @@ sub add_from_build { # rename "add an underlying build" or something...
     return $bridge;
 }
 
+sub purge {
+    my $self = shift;
+
+    $self->_deactivate_software_results;
+
+    my $reason = 'purging build ' . $self->__display_name__;
+
+    for my $result ($self->disk_usage_results) {
+
+        my @active_users = grep { $_->active } $result->users;
+
+        unless (@active_users) { #nothing else still actively uses this, so go ahead and remove
+            $result->disk_allocation->purge($reason);
+        }
+    }
+
+    for my $alloc ($self->disk_allocations) {
+        $alloc->purge($reason);
+    }
+
+    return 1;
+}
+
 sub delete {
     my $self = shift;
 
