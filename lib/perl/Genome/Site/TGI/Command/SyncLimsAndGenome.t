@@ -50,7 +50,7 @@ $DB::single=1;
 ok($sync->execute, 'execute');
 
 my $report = $sync->_report;
-my @missing = map { @{$report->{$_}->{missing}} } keys %$report;
+my @missing = map { @{$report->{$_}->{missing}} } grep { defined $report->{$_}->{missing} } keys %$report;
 is(@missing, 0, 'None missing in LIMS');
 
 ok(verify(), 'verify') or die;
