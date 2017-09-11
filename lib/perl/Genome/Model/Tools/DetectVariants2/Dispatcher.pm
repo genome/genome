@@ -1033,7 +1033,7 @@ sub _create_final_pass_vcf {
     my $cmd = Genome::Model::Tools::Vcf::FinalPassOnly->create(
         input_file  => $source_vcf,
         output_file => $pass_vcf,
-        sample_name => $self->aligned_reads_sample,
+        sample_name => Genome::Sample->sample_name_to_name_in_vcf($self->aligned_reads_sample),
     );
     unless ($cmd->execute) {
         $self->fatal_message("Failed to run FinalPassOnly command.");
