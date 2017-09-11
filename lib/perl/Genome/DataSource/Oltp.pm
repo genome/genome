@@ -14,7 +14,7 @@ class Genome::DataSource::Oltp {
     ],
 };
 
-sub table_and_column_names_are_upper_case { 1; }
+sub table_and_column_names_are_upper_case { 0; }
 
 1;
 
