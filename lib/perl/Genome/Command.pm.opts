@@ -7488,6 +7488,13 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>purge',
+      [
+        'builds=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>queue',
       [
         'reason=s',
