@@ -5,6 +5,7 @@ use strict;
 
 use Genome;
 use Genome::Statistics;
+use IPC::System::Simple qw();
 
 class Genome::Model::Tools::Pindel::ProcessPindelReads {
     is => [ 'Command::V2' ],
@@ -606,8 +607,8 @@ sub parse {
         my $allele_string;
         my $start_for_faidx = $start+1;
         my $sam_default = Genome::Model::Tools::Sam->path_for_samtools_version;
-        my $faidx_cmd = "$sam_default faidx " . $self->_refseq . " $chr:$start_for_faidx-$stop";
-        my @faidx_return= `$faidx_cmd`;
+        my @faidx_cmd = ($sam_default, 'faidx', $self->_refseq, "$chr:$start_for_faidx-$stop");
+        my @faidx_return = IPC::System::Simple::capture(@faidx_cmd);
         shift(@faidx_return);
         chomp @faidx_return;
         $allele_string = join("",@faidx_return);
