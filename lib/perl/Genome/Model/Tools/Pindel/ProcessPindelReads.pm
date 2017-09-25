@@ -344,11 +344,11 @@ sub read_support {
     my $cap = $self->capture_data;
 
     if($cap){
-        my $tsam_cmd = "samtools view $tumor_bam $chr:$stop-$stop > $temp";
-        #Genome::Sys->shellcmd( cmd => $tsam_cmd);
-        if(system($tsam_cmd)){
-            die $self->error_message("Failed to run the command: $tsam_cmd");
-        }
+        my @tsam_cmd = ('samtools', 'view', $tumor_bam, "$chr:$stop-$stop");
+        Genome::Sys->shellcmd(
+            cmd => \@tsam_cmd,
+            redirect_stdout => $temp,
+        );
 
         my $tfh = Genome::Sys->open_file_for_reading($temp);
 
@@ -366,11 +366,12 @@ sub read_support {
         $tfh->close;
 
         # Call samtools over the variant start-stop in the normal bam to get overlapping reads
-        my $nsam_cmd = "samtools view $normal_bam $chr:$stop-$stop > $temp";
-        #Genome::Sys->shellcmd( cmd => $nsam_cmd);
-        if(system($nsam_cmd)){
-            die $self->error_message("Failed to run the command: $nsam_cmd");
-        }
+        my @nsam_cmd = ('samtools', 'view', $normal_bam, "$chr:$stop-$stop");
+        Genome::Sys->shellcmd(
+            cmd => \@nsam_cmd,
+            redirect_stdout => $temp,
+        );
+
         my $nfh = Genome::Sys->open_file_for_reading($temp);
 
         while(my $result = $nfh->getline){
@@ -492,10 +493,11 @@ sub vaf_filter {
     my $cap = $self->capture_data;
 
     if($cap){
-        my $tsam_cmd = "samtools view $tumor_bam $chr:$stop-$stop > $temp";
-        if(system($tsam_cmd)){
-            die $self->error_message("Failed to run the command: $tsam_cmd");
-        }
+        my @tsam_cmd = ('samtools', 'view', $tumor_bam, "$chr:$stop-$stop");
+        Genome::Sys->shellcmd(
+            cmd => \@tsam_cmd,
+            redirect_stdout => $temp,
+        );
         $tumor_read_support = $self->line_count($temp);
     }
     else {
