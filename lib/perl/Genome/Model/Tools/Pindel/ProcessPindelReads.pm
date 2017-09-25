@@ -388,7 +388,7 @@ sub read_support {
         $nfh->close;
     }
     else {
-        my @results = `samtools view $tumor_bam $chr:$stop-$stop`;
+        my @results = IPC::System::Simple::capture('samtools', 'view', $tumor_bam, "$chr:$stop-$stop");
         for my $result (@results){
             chomp $result;
             my @details = split /\t/, $result;
@@ -401,7 +401,7 @@ sub read_support {
             }
         }
 
-        @results = `samtools view $normal_bam $chr:$stop-$stop`;
+        @results = IPC::System::Simple::capture('samtools', 'view', $normal_bam, "$chr:$stop-$stop");
 
         for my $result (@results){
             chomp $result;
@@ -499,7 +499,7 @@ sub vaf_filter {
         $tumor_read_support = $self->line_count($temp);
     }
     else {
-        my @results = `samtools view $tumor_bam $chr:$stop-$stop`;
+        my @results = IPC::System::Simple::capture('samtools', 'view', $tumor_bam, "$chr:$stop-$stop");
         $tumor_read_support = scalar(@results);
     }
 
