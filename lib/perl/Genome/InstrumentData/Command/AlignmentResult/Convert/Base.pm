@@ -90,6 +90,22 @@ sub _run_conversion {
         queue => Genome::Config::get('lsf_queue_build_worker'),
         wait_for_completion => 1,
     );
+
+    $self->_reindex($destination_file);
+}
+
+sub _reindex {
+    my $self = shift;
+    my $file = shift;
+
+    my $cmd = ['index', $file];
+
+    my $guard = Genome::Config::set_env('lsb_sub_additional', 'docker(mgibio/samtools:1.3.1)');
+    Genome::Sys::LSF::bsub::bsub(
+        cmd => $cmd,
+        queue => Genome::Config::get('lsf_queue_build_worker'),
+        wait_for_completion => 1,
+    );
 }
 
 sub _verify_file {
