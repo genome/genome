@@ -92,6 +92,11 @@ sub _run_conversion {
     );
 
     $self->_reindex($destination_file);
+
+    my @alloc = $self->alignment_result->disk_allocations;
+    for (@alloc) {
+        $_->reallocate;
+    }
 }
 
 sub _reindex {
