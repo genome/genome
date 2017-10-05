@@ -1793,6 +1793,14 @@ sub purge {
 
         my @active_users = grep { $_->active } $result->users;
 
+        if(@active_users) {
+            my $anp = $self->model->analysis_project;
+            if ($anp) {
+                #ignore our own AnP when checking for other users
+                @active_users = grep { $_->user_id ne $anp->id } @active_users;
+            }
+        }
+
         unless (@active_users) { #nothing else still actively uses this, so go ahead and remove
             $result->disk_allocation->purge($reason);
         }
