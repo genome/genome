@@ -198,7 +198,7 @@ sub send_mail {
 
         my $sender = Mail::Sender->new(
                     {
-                            smtp => 'gscsmtp.wustl.edu',
+                            smtp => Genome::Config::get('email_smtp_server'),
                             to => $recipients,
                             from => Genome::Config::get('email_pipeline'),
                             subject => $subject,

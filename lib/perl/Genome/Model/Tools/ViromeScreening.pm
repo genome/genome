@@ -141,7 +141,7 @@ sub _send_failed_mail {
     my $mail_dest = Genome::Sys::User->get_current->email;
 
     my $sender = Mail::Sender->new({
-        smtp => 'gscsmtp.wustl.edu',
+        smtp => Genome::Config::get('email_smtp_server'),
         from => Genome::Config::get('email_virome_screening'),
         replyto => Genome::Config::get('email_virome_screening'),
     });
