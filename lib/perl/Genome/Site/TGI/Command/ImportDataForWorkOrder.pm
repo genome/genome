@@ -38,9 +38,10 @@ sub execute {
     $self->_import_indexillumina($_) for @ii;
     $self->_import_anp_associations(@ii);
 
-    my @g = Genome::Site::TGI::Synchronize::Classes::Genotyping->get(id => [map $_->entity_id, @to_import]);
-    $self->_import_genotyping($_) for @g;
-    $self->_import_anp_associations(@g);
+    #disabled for lack of mechanism for getting the genotype file path
+    #my @g = Genome::Site::TGI::Synchronize::Classes::Genotyping->get(id => [map $_->entity_id, @to_import]);
+    #$self->_import_genotyping($_) for @g;
+    #$self->_import_anp_associations(@g);
 
     return 1;
 }
