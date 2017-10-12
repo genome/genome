@@ -63,7 +63,7 @@ sub send_report {
     while ($count++ < $tries and !$success)  {
         eval {
             my $sender = Mail::Sender->new({
-                    smtp => 'gscsmtp.wustl.edu',
+                    smtp => Genome::Config::get('email_smtp_server'),
                     to => $to,
                     from => $from,
                     replyto => $reply_to,
