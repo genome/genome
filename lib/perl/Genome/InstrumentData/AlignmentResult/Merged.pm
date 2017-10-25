@@ -479,7 +479,7 @@ sub _promote_validated_data {
 
     $self->debug_message("Now de-staging data from $staging_dir into $output_dir");
 
-    for my $staged_file (glob("$staging_dir/*")) {
+    for my $staged_file (sort glob("$staging_dir/*")) {
         my $destination = $staged_file;
         $destination =~ s/$staging_dir/$output_dir/;
         Genome::Sys->rename($staged_file, $destination);
