@@ -50,7 +50,7 @@ sub execute {
 
     my @models = $self->models;
     map($_->build_requested(1, $self->reason), @models);
-
+    $self->status_message("Successfully queued " . scalar(@models) . " models.");
     return 1;
 }
 
