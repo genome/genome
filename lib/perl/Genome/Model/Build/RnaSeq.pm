@@ -216,7 +216,7 @@ sub _fetch_alignment_result {
 
 sub delete {
     my $self = shift;
-    
+
     # if we have an alignments directory, nuke it first since it has its own allocation
     if (-e $self->accumulated_alignments_directory ||
         -e $self->accumulated_fastq_directory ||
@@ -231,14 +231,14 @@ sub delete {
             return;
         };
     }
-    
+
     $self->SUPER::delete(@_);
 }
 
 # nuke the accumulated alignment directory
 sub eviscerate {
     my $self = shift;
-    
+
     $self->debug_message('Entering eviscerate for build:' . $self->id);
 
 
