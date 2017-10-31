@@ -25,7 +25,10 @@ class Genome::InstrumentData::AlignedBamResult {
         # from output
         bam_path => { # this is called bam_file in merged
             is_output => 1,
-            calculate => q| return $self->output_dir.'/'.$self->id.'.bam'; |, 
+            calculate => q|
+                return $self->merged_alignment_bam_path if $self->can('merged_alignment_bam_path');
+                return $self->output_dir.'/'.$self->id.'.bam';
+            |,
         },
         bam_file => { # alias
           is => 'Text',
