@@ -166,6 +166,20 @@ sub determine_input_object {
     my $name = shift;
     my $value_identifier = shift;
 
+    if (ref $value_identifier eq 'HASH' and exists $value_identifier->{value_class_name} and exists $value_identifier->{value_id}) {
+        my $value_class = $value_identifier->{value_class_name};
+        unless ($value_class->can('get')) {
+            $class->fatal_message('Unknown class name specification: %s', $value_class);
+        }
+
+        my $object = $value_class->get($value_identifier->{value_id});
+        unless ($object) {
+            $class->fatal_message('No %s found with ID %s.', $value_class, $value_identifier->{value_id});
+        }
+
+        return $object;
+    }
+
     #This could use something like Command::Dispatch::Shell->resolve_param_value_from_text
     #to allow for non-ID values
     for ($name) {
