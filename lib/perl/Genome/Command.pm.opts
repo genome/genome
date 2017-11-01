@@ -10302,36 +10302,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>beagle',
-    [
-      '>phase-vcf',
-      [
-        'chromosome=s',
-        'files',
-        'output-file=s',
-        'files',
-        'vcf-file=s',
-        'files',
-        'version=s',
-        'files',
-        'debug!',
-        undef,
-        'exclude-markers=s',
-        'files',
-        'exclude-samples=s',
-        'files',
-        'impute!',
-        undef,
-        'ped-file=s',
-        'files',
-        'ref-pop=s',
-        'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>bacterial',
     [
       '>core-gene-coverage',
