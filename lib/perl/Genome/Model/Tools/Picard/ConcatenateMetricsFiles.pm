@@ -63,7 +63,7 @@ sub execute {
     for my $metrics_file (@metrics_files) {
          my $metrics_hash_ref = $parser_class_name->parse_file_into_metrics_hashref($metrics_file);
          if (defined($metrics{$metrics_file})) {
-             $self->fatal_error_message('Duplicate metrics file: '. $metrics_file);
+             $self->fatal_message('Duplicate metrics file: '. $metrics_file);
          }
          $metrics_hash_ref->{$self->additional_column_name} = $metrics_file;
          $metrics{$metrics_file} = $metrics_hash_ref;
@@ -80,7 +80,7 @@ sub execute {
         ignore_extra_columns => $self->ignore_extra_columns,
     );
     unless ($writer) {
-        $self->fatal_error_message('Unable to open output writer for file: '. $self->output_file);
+        $self->fatal_message('Unable to open output writer for file: '. $self->output_file);
     }
     for my $metrics_file (@metrics_files) {
         $writer->write_one($metrics{$metrics_file});
