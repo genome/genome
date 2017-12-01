@@ -18,11 +18,6 @@ class Genome::Model::Tools::Picard::ConcatenateMetricsFiles {
             is  => 'String',
             doc => 'The output concatenated metrics file',
         },
-        subclass_name => {
-            is => 'String',
-            is_optional => 1,
-            valid_values => ['CollectRnaSeqMetrics', 'GenotypeConcordance', 'MarkDuplicates'],
-        },
         separator => {
             is => 'String',
             default_value => "\t",
@@ -52,16 +47,11 @@ EOS
 sub execute {
     my $self = shift;
 
-    my $parser_class_name = 'Genome::Model::Tools::Picard';
-    if (defined($self->subclass_name)) {
-        $parser_class_name .= '::'. $self->subclass_name;
-    }
-
     my @metrics_files = sort $self->metrics_files;
 
     my %metrics;
     for my $metrics_file (@metrics_files) {
-         my $metrics_hash_ref = $parser_class_name->parse_file_into_metrics_hashref($metrics_file);
+         my $metrics_hash_ref = Genome::Model::Tools::Picard->parse_file_into_metrics_hashref($metrics_file);
          if (defined($metrics{$metrics_file})) {
              $self->fatal_message('Duplicate metrics file: '. $metrics_file);
          }
