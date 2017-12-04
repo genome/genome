@@ -190,12 +190,15 @@ sub _add_create_instrument_data_op_to_workflow {
             destination_property => $property,
         );
     }
-
+    my $bam_paths_source_property = 'output_bam_paths'; # less than ideal
+    if ($previous_op->name eq 'fastqs to bam') {
+        $bam_paths_source_property = 'output_path';
+    } elsif ($previous_op->name eq 'sort bam') {
+        $bam_paths_source_property = 'output_bam_path';
+    }
     $self->_dag->create_link(
         source => $previous_op,
-        source_property => ( $previous_op->name eq 'sort bam' ) # not ideal...
-        ? 'output_bam_path'
-        : 'output_bam_paths',
+        source_property => $bam_paths_source_property,
         destination => $create_instdata_op,
         destination_property => 'bam_paths',
     );
