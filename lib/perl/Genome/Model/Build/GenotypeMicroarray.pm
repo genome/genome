@@ -176,5 +176,13 @@ sub filtered_snvs_bed {
     shift->data_directory . '/gold_snp.v2.bed';
 }
 
+sub _disk_usage_result_subclass_names {
+    my $self = shift;
+
+    return [qw(
+        Genome::InstrumentData::Microarray::Result::Vcf
+    )];
+}
+
 1;
 
