@@ -20,7 +20,7 @@ use Test::More;
 
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam';
 use_ok($class) or die;
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v5') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 $helpers->overload_uuid_generator_for_class($class);

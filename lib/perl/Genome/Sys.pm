@@ -871,7 +871,12 @@ sub rsync_directory {
 
 sub line_count {
     my ($self, $path) = @_;
-    my ($line_count) = qx(wc -l $path) =~ /^(\d+)/;
+    my $line_count;
+    if ( $path !~ /\.gz$/ ) {
+        ($line_count) = qx(wc -l $path) =~ /^(\d+)/;
+    } else {
+        ($line_count) = qx(zcat $path | wc -l) =~ /^(\d+)/;
+    }
     return $line_count;
 }
 
