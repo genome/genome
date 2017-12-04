@@ -44,7 +44,7 @@ sub execute {
         }
         $self->status_message("Purging allocation %s...", $allocation->id);
 
-        my $rv = $allocation->purge(reason => $self->reason);
+        my $rv = $allocation->purge($self->reason);
         unless ($rv) {
             Carp::confess "Could not purge allocation " . $allocation->id;
         }
