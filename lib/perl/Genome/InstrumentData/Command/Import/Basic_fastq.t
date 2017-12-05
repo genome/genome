@@ -71,7 +71,7 @@ my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');
 is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
 is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-is(File::Compare::compare($bam_path, $test_dir.'/all_sequences.basic-fastq-t.sorted.bam'), 0, 'bam matches');
+is(File::Compare::compare($bam_path, $test_dir.'/all_sequences.basic-fastq-t.bam'), 0, 'bam matches');
 is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/all_sequences.basic-fastq-t.bam.flagstat'), 0, 'flagstat matches');
 
 my $allocation = $instrument_data->disk_allocation;
