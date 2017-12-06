@@ -3,6 +3,7 @@ package Genome::Model::CwlPipeline::Command::PrepForTransfer;
 use strict;
 use warnings;
 
+use File::Spec;
 use Genome;
 
 class Genome::Model::CwlPipeline::Command::PrepForTransfer {
@@ -15,7 +16,7 @@ class Genome::Model::CwlPipeline::Command::PrepForTransfer {
         },
         directory => {
             is => 'Text',
-            doc => 'The diretory to prepare and write symlinks.',
+            doc => 'The directory to prepare and write symlinks.',
         },
         md5sum => {
             is => 'Boolean',
@@ -50,17 +51,17 @@ sub execute {
         Genome::Sys->create_directory($self->directory);
     }
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $self->directory .'/MANIFEST',
+        output => File::Spec->join($self->directory,'MANIFEST'),
         separator => "\t",
         headers => \@headers,
     );
     for my $build ($self->builds) {
-        my $results_directory = $build->data_directory .'/results';
+        my $results_directory = File::Spec->join($build->data_directory,'results');
         my @file_paths = grep {-f $_} glob($results_directory .'/*');
         for my $file_path (@file_paths) {
             my ($file_name, $dir, $suffix) = File::Basename::fileparse($file_path);
             my $symlink_name = $build->id .'.'. $file_name;
-            my $symlink_path = $self->directory .'/'. $symlink_name;
+            my $symlink_path = File::Spec->join($self->directory,$symlink_name);
             my %data = (
                 'subject.name' => $build->model->subject->name,
                 'file.name' => $symlink_name,
