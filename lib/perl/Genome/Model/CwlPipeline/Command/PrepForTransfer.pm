@@ -16,12 +16,12 @@ class Genome::Model::CwlPipeline::Command::PrepForTransfer {
         },
         directory => {
             is => 'Text',
-            doc => 'The directory to prepare and write symlinks.',
+            doc => 'The directory to prepare and write symlinks',
         },
         md5sum => {
             is => 'Boolean',
             is_optional => 1,
-            doc => 'Create a md5sum in the MANIFEST for each file.',
+            doc => 'Create a md5sum in the MANIFEST for each file',
             default_value => 0,
         },
     ],
