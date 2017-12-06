@@ -11,7 +11,7 @@ use above 'Genome';
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Individual;
 
-use Test::More tests => 7;
+use Test::More tests => 9;
 
 my $class = 'Genome::Model::CwlPipeline';
 use_ok($class);
@@ -19,7 +19,11 @@ use_ok($class);
 my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object;
 my $arbitrary_object = Genome::Test::Factory::Individual->setup_object;
 
-my $pp = Genome::ProcessingProfile::CwlPipeline->__define__(id => -100);
+my $pp = Genome::ProcessingProfile::CwlPipeline->__define__(
+    id => -100,
+    type_name => 'cwl pipeline',
+    short_pipeline_name => 'testing'
+);
 
 my @params = (
     processing_profile_id => $pp->id,
@@ -35,6 +39,9 @@ my @params = (
 );
 my $model = $class->create(@params);
 isa_ok($model, $class, 'created model');
+
+like($model->name, qr(cwl(?!_pipeline)), 'model name contains shortened cwl name');
+like($model->name, qr(testing), 'model name contains short pipeline name');
 
 my @inputs = $model->inputs;
 is(scalar(@inputs), 3, 'created inputs with model');

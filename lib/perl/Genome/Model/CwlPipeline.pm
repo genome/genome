@@ -18,6 +18,11 @@ class Genome::Model::CwlPipeline {
             is => 'Text',
             doc => 'docker image for the main toil worker jobs',
         },
+        short_pipeline_name => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'short name for pipeline to include in default model names',
+        },
     },
 };
 
@@ -200,5 +205,15 @@ sub determine_input_object {
     return;
 }
 
+sub _additional_parts_for_default_name {
+    my $self = shift;
+
+    my @parts;
+    my $name = $self->processing_profile->short_pipeline_name;
+
+    push @parts, $name if $name;
+
+    return @parts;
+}
 
 1;
