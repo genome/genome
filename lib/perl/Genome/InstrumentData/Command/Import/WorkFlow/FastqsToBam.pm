@@ -6,8 +6,6 @@ use warnings;
 use Genome;
 
 use Data::Dumper 'Dumper';
-use Archive::Extract
-$Archive::Extract::PREFER_BIN = 1;
 require File::Basename;
 require File::Spec;
 require Genome::Utility::Text;
@@ -48,9 +46,6 @@ sub execute {
     my $self = shift;
     $self->debug_message('Fastqs to bam...');
 
-    my $unarchive_if_necessary = $self->_unarchive_fastqs_if_necessary;
-    return if not $unarchive_if_necessary;
-
     my $get_fastq_read_counts = $self->_get_fastq_read_counts;
     return if not $get_fastq_read_counts;
 
@@ -61,42 +56,6 @@ sub execute {
     return if not $verify_bam_ok;
 
     $self->debug_message('Fastqs to bam...done');
-    return 1;
-}
-
-sub _unarchive_fastqs_if_necessary {
-    my $self = shift;
-    $self->debug_message('Unarchive fastqs if necessary...');
-
-    my @new_fastq_paths;
-    for my $fastq_path ( $self->fastq_paths ) {
-        if ( $fastq_path !~ /\.gz$/ ) {
-            $self->debug_message('Unarchive not necessary for '.$fastq_path);
-            push @new_fastq_paths, $fastq_path;
-            next;
-        }
-
-        $self->debug_message('Unarchiving: %s', $fastq_path);
-        my $unarchived_fastq_path = $self->get_working_path_for_file_path($fastq_path);
-        $unarchived_fastq_path =~ s/\.gz//;
-        $self->debug_message('To: %s', $unarchived_fastq_path);
-        my $extractor = Archive::Extract->new(archive => $fastq_path);
-        if ( not $extractor->extract(to => $unarchived_fastq_path) ) {
-            $self->error_message( $extractor->error ) if $extractor->error;
-            $self->error_message('Archive::Extract failed!');
-            return;
-        }
-
-        if ( not -s $unarchived_fastq_path ) {
-            $self->error_message('Unarchived fastq does not exist!');
-            return;
-        }
-        push @new_fastq_paths, $unarchived_fastq_path;
-        unlink $fastq_path;
-    }
-    $self->fastq_paths(\@new_fastq_paths);
-
-    $self->debug_message('Unarchive fastqs if necessary...done');
     return 1;
 }
 
@@ -127,29 +86,25 @@ sub _fastqs_to_bam {
 
     my @fastqs = $self->fastq_paths;
     $self->debug_message("Fastq 1: $fastqs[0]");
+
     my $output_bam_path = $self->output_path;
-    my %fastq_to_sam_params = (
-        fastq => $fastqs[0],
-        output => $output_bam_path,
-        quality_format => 'Standard',
-        sample_name => $self->library->sample->name,
-        library_name => $self->library->name,
-        read_group_name => UR::Object::Type->autogenerate_new_object_id_uuid,
-        use_version => '1.113',
-    );
+
+    my $cmd = '/gapp/x64linux/opt/java/jre/jre1.8.0_31/bin/java -Xmx16g -jar /gscmnt/gc2560/core/software/picard/2.15.0/picard.jar FastqToSam O='. $output_bam_path .' SM='. $self->library->sample->name .' LB='. $self->library->name .' RG='. UR::Object::Type->autogenerate_new_object_id_uuid .' F1='. $fastqs[0];
     if ( $fastqs[1] ) {
         $self->debug_message("Fastq 2: $fastqs[1]");
-        $fastq_to_sam_params{fastq2} = $fastqs[1];
+        $cmd .= ' F2='. $fastqs[1];
     }
     $self->debug_message("Bam path: $output_bam_path");
-
-    my $cmd = Genome::Model::Tools::Picard::FastqToSam->create(%fastq_to_sam_params);
     if ( not $cmd ) {
         $self->error_message('Failed to create sam to fastq command!');
         return;
     }
     my $success = try {
-        $cmd->execute;
+        Genome::Sys->shellcmd(
+            cmd => $cmd,
+            input_files => \@fastqs,
+            output_files => [ $output_bam_path ],
+        );
     }
     catch {
         $self->error_message($_) if $_;

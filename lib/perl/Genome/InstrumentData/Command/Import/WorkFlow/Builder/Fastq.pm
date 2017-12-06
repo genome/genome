@@ -12,7 +12,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Builder::Fastq {
 };
 
 sub _steps_to_build_workflow {
-    return ( 'verify not imported', 'fastqs to bam', 'sort bam', 'create instrument data' );
+    return ( 'verify not imported', 'fastqs to bam', 'create instrument data' );
 }
 
 sub _add_fastqs_to_bam_op_to_workflow {
