@@ -45,9 +45,10 @@ sub execute {
     if ($self->md5sum) {
         push @headers, 'md5sum';
     }
-    if (-d $self->directory) {
-        $self->fatal_message('Unable to use existing directory: '. $self->directory);
-    } else {
+    if (-e $self->directory && !(Genome::Sys->directory_is_empty($self->directory)) ) {
+        $self->fatal_message('Unable to use existing non-empty directory: '. $self->directory);
+    }
+    unless (-d $self->directory) {
         Genome::Sys->create_directory($self->directory);
     }
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
@@ -71,7 +72,8 @@ sub execute {
                 $data{md5sum} = $md5sum;
             }
             $writer->write_one(\%data);
-            Genome::Sys->create_symlink($file_path,$symlink_path);
+            my $absolute_path = Genome::Sys->abs_path($file_path);
+            Genome::Sys->create_symlink($absolute_path,$symlink_path);
         }
     }
     $writer->output->close();
