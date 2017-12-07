@@ -39,7 +39,7 @@ for my $metrics (@metrics) {
     ok($cmd, "created command");
     ok($cmd->execute, "executed command");
 
-    compare_ok($expected_file, $output_file, filters => ['file:\S*']);
+    compare_ok($expected_file, $output_file, replace => [[$data_dir, 'DIRECTORY']]);
 }
 
 done_testing();
