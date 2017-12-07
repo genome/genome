@@ -47,20 +47,26 @@ EOS
 sub execute {
     my $self = shift;
 
-    my @metrics_files = sort $self->metrics_files;
-
-    my %metrics;
-    for my $metrics_file (@metrics_files) {
-         my $metrics_hash_ref = Genome::Model::Tools::Picard->parse_file_into_metrics_hashref($metrics_file);
-         if (defined($metrics{$metrics_file})) {
-             $self->fatal_message('Duplicate metrics file: '. $metrics_file);
-         }
-         $metrics_hash_ref->{$self->additional_column_name} = $metrics_file;
-         $metrics{$metrics_file} = $metrics_hash_ref;
+    my @metrics;
+    my %metrics_files;
+    for my $metrics_file (sort $self->metrics_files) {
+        if (defined($metrics_files{$metrics_file})) {
+            $self->fatal_message('Duplicate metrics file %s', $metrics_file);
+        }
+        my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+            separator => "\t",
+            ignore_lines_starting_with => '#|(?:^$)',
+            input => $metrics_file,
+        );
+        $self->fatal_message('Failed to generate parser for %s', $metrics_file) unless $reader;
+        while (my $metrics_hash_ref = $reader->next) {
+            $metrics_hash_ref->{$self->additional_column_name} = $metrics_file;
+            push @metrics, $metrics_hash_ref;
+        }
+        $metrics_files{$metrics_file} = 1;
     }
 
-    my $first_metrics_hash_ref = $metrics{$metrics_files[0]};
-
+    my $first_metrics_hash_ref = @metrics[0];
     my @headers = keys %{$first_metrics_hash_ref};
 
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
@@ -70,10 +76,10 @@ sub execute {
         ignore_extra_columns => $self->ignore_extra_columns,
     );
     unless ($writer) {
-        $self->fatal_message('Unable to open output writer for file: '. $self->output_file);
+        $self->fatal_message('Unable to open output writer for %s', $self->output_file);
     }
-    for my $metrics_file (@metrics_files) {
-        $writer->write_one($metrics{$metrics_file});
+    for my $metrics (@metrics) {
+        $writer->write_one($metrics);
     }
     $writer->output->close();
 
