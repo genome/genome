@@ -25,6 +25,11 @@ class Genome::Config::AnalysisProject::Command::CopyConfig {
             doc                 => 'copy tags (if any) that are attached to the configs',
             default_value       => 0,
         },
+        environment => {
+            is                  => 'Boolean',
+            doc                 => q(copy the old project's environment configuration to the new project),
+            default_value       => 1,
+        },
     ],
 };
 
@@ -58,6 +63,10 @@ sub execute {
     my @configs_to_copy = grep { $_->status ne 'disabled' } $from_project->config_items;
     $self->_copy_config_profile_items_to_project($to_project, @configs_to_copy);
 
+    if ($self->environment) {
+        $self->_copy_environment_config($from_project, $to_project);
+    }
+
     return 1;
 }
 
@@ -88,6 +97,35 @@ sub _copy_config_profile_items_to_project {
                 @params,
             );
         }
+    }
+
+    return 1;
+}
+
+sub _copy_environment_config {
+    my $self = shift;
+    my $from_project = shift;
+    my $to_project = shift;
+
+    if ($to_project->environment_config_dir) {
+        $self->warning_message('Project %s already has environment configuration.  Skipping copy.', $to_project->__display_name__);
+        return;
+    }
+
+    my $env = $from_project->environment_config_dir;
+    unless($env) {
+        $self->debug_message('Project %s has no environment configuration.  Nothing to copy.', $from_project->__display_name__);
+        return;
+    }
+
+    my $f = File::Spec->join($env, Genome::Config::config_subpath);
+    my $cmd = Genome::Config::AnalysisProject::Command::AddEnvironmentFile->create(
+        analysis_project => $to_project,
+        environment_file => $f,
+    );
+
+    unless($cmd->execute) {
+        $self->fatal_message('Failed to copy environment configuration.');
     }
 
     return 1;
