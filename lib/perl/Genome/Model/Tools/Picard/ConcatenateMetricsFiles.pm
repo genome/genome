@@ -47,34 +47,39 @@ EOS
 sub execute {
     my $self = shift;
 
-    my @metrics_files = sort $self->metrics_files;
-
-    my %metrics;
-    for my $metrics_file (@metrics_files) {
-         my $metrics_hash_ref = Genome::Model::Tools::Picard->parse_file_into_metrics_hashref($metrics_file);
-         if (defined($metrics{$metrics_file})) {
-             $self->fatal_message('Duplicate metrics file: '. $metrics_file);
-         }
-         $metrics_hash_ref->{$self->additional_column_name} = $metrics_file;
-         $metrics{$metrics_file} = $metrics_hash_ref;
+    my $writer;
+    my %metrics_files;
+    for my $metrics_file (sort $self->metrics_files) {
+        if (defined($metrics_files{$metrics_file})) {
+            $self->fatal_message('Duplicate metrics file %s', $metrics_file);
+        }
+        $metrics_files{$metrics_file} = 1;
+        my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+            separator => "\t",
+            ignore_lines_starting_with => '#|(?:^$)',
+            input => $metrics_file,
+        );
+        $self->fatal_message('Failed to generate parser for %s', $metrics_file) unless $reader;
+        unless ($writer) {
+            my $headers = $reader->headers;
+            my @writer_headers = @$headers;
+            push @writer_headers, $self->additional_column_name;
+            $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+                output => $self->output_file,
+                separator => $self->separator,
+                headers => \@writer_headers,
+                ignore_extra_columns => $self->ignore_extra_columns,
+            );
+            unless ($writer) {
+                $self->fatal_message('Unable to open output writer for %s', $self->output_file);
+            }
+        }
+        while (my $metrics = $reader->next) {
+            $metrics->{$self->additional_column_name} = $metrics_file;
+            $writer->write_one($metrics);
+        }
     }
 
-    my $first_metrics_hash_ref = $metrics{$metrics_files[0]};
-
-    my @headers = keys %{$first_metrics_hash_ref};
-
-    my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $self->output_file,
-        separator => $self->separator,
-        headers => \@headers,
-        ignore_extra_columns => $self->ignore_extra_columns,
-    );
-    unless ($writer) {
-        $self->fatal_message('Unable to open output writer for file: '. $self->output_file);
-    }
-    for my $metrics_file (@metrics_files) {
-        $writer->write_one($metrics{$metrics_file});
-    }
     $writer->output->close();
 
     return 1;
