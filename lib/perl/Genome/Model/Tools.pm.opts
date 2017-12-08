@@ -10556,6 +10556,21 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>concatenate-metrics-files',
+    [
+      'metrics-files=s@',
+      'files',
+      'output-file=s',
+      'files',
+      'separator=s',
+      'files',
+      'ignore-extra-columns!',
+      undef,
+      'additional-column-name=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>create-sequence-dictionary',
     [
       'java-interpreter=s',
