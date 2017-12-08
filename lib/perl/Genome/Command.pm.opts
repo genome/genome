@@ -1461,6 +1461,8 @@ $Genome::Command::OPTS_SPEC = [
     [
       'tags!',
       undef,
+      'environment!',
+      undef,
       'from-project=s',
       undef,
       'to-project=s',
@@ -19475,6 +19477,21 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>concatenate-metrics-files',
+      [
+        'metrics-files=s@',
+        'files',
+        'output-file=s',
+        'files',
+        'separator=s',
+        'files',
+        'ignore-extra-columns!',
+        undef,
+        'additional-column-name=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>create-sequence-dictionary',
       [
         'java-interpreter=s',
@@ -31639,6 +31656,8 @@ $Genome::Command::OPTS_SPEC = [
       '>copy-config',
       [
         'tags!',
+        undef,
+        'environment!',
         undef,
         'from-project=s',
         undef,
