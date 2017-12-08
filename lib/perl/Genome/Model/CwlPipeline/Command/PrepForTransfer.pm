@@ -45,12 +45,15 @@ sub execute {
     if ($self->md5sum) {
         push @headers, 'md5sum';
     }
-    if (-e $self->directory && !(Genome::Sys->directory_is_empty($self->directory)) ) {
-        $self->fatal_message('Unable to use existing non-empty directory: '. $self->directory);
+
+    my $dir = $self->directory;
+    if (-e $dir && !-d $dir) {
+        $self->fatal_message('Existing path %s is not a directory', $dir);
+    } elsif (-d $dir && !Genome::Sys->directory_is_empty($dir)) {
+        $self->fatal_message('Unable to use existing non-empty directory %s', $dir);
     }
-    unless (-d $self->directory) {
-        Genome::Sys->create_directory($self->directory);
-    }
+    Genome::Sys->create_directory($dir);
+
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
         output => File::Spec->join($self->directory,'MANIFEST'),
         separator => "\t",
