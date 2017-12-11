@@ -11,7 +11,7 @@ use File::Spec qw();
 my $pkg = 'Genome::Model::Tools::Picard::ConcatenateMetricsFiles';
 use_ok($pkg);
 
-my $data_dir = sprintf "%s.d", __FILE__;
+my $data_dir = File::Spec->canonpath( sprintf "%s.d", __FILE__ );
 
 my @metrics = qw/
    CollectAlignmentSummaryMetrics
