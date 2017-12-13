@@ -74,7 +74,13 @@ sub execute {
         }
 
         my @allocations_to_move = grep { $result_classes{$_->owner_class_name} } grep {$_->status eq 'active' } @associated_allocations;
-        push @allocations_to_move, $build->disk_allocation if ($build->disk_allocation && $build->disk_allocation->status eq 'active');
+
+        if (my $build_allocation = $build->disk_allocation) {
+            push @allocations_to_move, $build_allocation if $build_allocation->status eq 'active';
+        } else {
+            my $build_dir = $build->data_directory;
+            $self->warning_message('No allocation for build directory %s', $build_dir) if -d $build_dir;
+        }
 
         my $disk_group = $self->disk_group // $self->_resolve_disk_group_for_build($build);
         unless ($disk_group) {
