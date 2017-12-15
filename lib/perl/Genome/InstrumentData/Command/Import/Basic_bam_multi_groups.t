@@ -30,12 +30,15 @@ my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 my $source_bam = $test_dir.'/input.multi-rg.bam';
 ok(-s $source_bam, 'source bam exists') or die;
 
+my $wd = Genome::Sys->create_temp_directory();
+
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
     library => $library,
     source_files => [$source_bam],
     import_source_name => 'broad',
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
+    base_working_directory => $wd,
 );
 ok($cmd, "create import command");
 ok($cmd->execute, "execute import command");

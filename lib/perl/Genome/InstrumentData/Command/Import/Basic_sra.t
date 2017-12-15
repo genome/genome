@@ -30,12 +30,15 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
+my $wd = Genome::Sys->create_temp_directory();
+
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
     library => $library,
     source_files => [$source_sra],
     import_source_name => 'sra',
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
+    base_working_directory => $wd,
 );
 ok($cmd, "create import command");
 ok($cmd->execute, "execute import command") or die;

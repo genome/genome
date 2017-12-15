@@ -25,6 +25,10 @@ class Genome::InstrumentData::Command::Import::Basic {
             is_many => 1,
             doc => 'Source files to import. If importing fastqs, put the file containing the forward [read 1] reads first.',
         },
+        base_working_directory => {
+            is => 'Text',
+            doc => 'Base working directory to use when running the import. A temporary directory will be made inside this directory, and removed when the import fails or completes.',
+        },
     ],
     has_optional_input => {
         description  => {
@@ -35,10 +39,6 @@ class Genome::InstrumentData::Command::Import::Basic {
             is => 'Text',
             is_many => 1,
             doc => 'Name and value pairs to add to the instrument data. Separate name and value with an equals (=) and name/value pairs with a comma (,).',
-        },
-        base_working_directory => {
-            is => 'Text',
-            doc => 'Base working directory to use when running the import. A temporary directory will be made inside this directory, and removed when the import fails or completes.',
         },
     },
     has_optional_transient => [
