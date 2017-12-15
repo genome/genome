@@ -73,9 +73,7 @@ sub run_flagstat {
         bam_file => $bam_path,
         output_file => $flagstat_path,
     );
-    #my @cmd = (qw(samtools flagstat), $bam_path);
     my $rv = eval{ $cmd->execute(); };
-    #Genome::Sys->shellcmd(cmd => \@cmd, redirect_stdout => $flagstat_path); };
     if ( not $rv or not -s $flagstat_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run flagstat!');
