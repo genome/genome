@@ -69,8 +69,11 @@ sub run_flagstat {
     my $flagstat_path = $bam_path.'.flagstat';
     $self->debug_message("Bam path: $bam_path");
     $self->debug_message("Flagstat path: $flagstat_path");
-    my @cmd = (qw(samtools flagstat), $bam_path);
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => \@cmd, redirect_stdout => $flagstat_path); };
+    my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
+        bam_file => $bam_path,
+        output_file => $flagstat_path,
+    );
+    my $rv = eval{ $cmd->execute(); };
     if ( not $rv or not -s $flagstat_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run flagstat!');
