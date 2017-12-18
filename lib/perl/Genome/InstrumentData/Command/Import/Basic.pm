@@ -73,6 +73,14 @@ sub execute {
     my $self = shift;
 
     my $work_flow_inputs = $self->_resolve_work_flow_inputs;
+
+    my $anp = $self->analysis_project;
+    my $config_dir = $anp->environment_config_dir;
+    unless ($config_dir) {
+        $self->fatal_message('No analysis project environment configuration defined for %s!', $anp->__display_name__);
+    }
+    local $ENV{XGENOME_CONFIG_PROJECT_DIR} = $config_dir;
+
     my $run = Genome::InstrumentData::Command::Import::WorkFlow::ImportInstData->create(
         work_flow_inputs => $work_flow_inputs,
     );
