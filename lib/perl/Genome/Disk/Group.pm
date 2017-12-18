@@ -17,6 +17,7 @@ class Genome::Disk::Group {
     ],
     has => [
         disk_group_name => { is => 'Text' },
+        name => { via => '__self__', to => 'disk_group_name' },
         permissions => { is => 'Number' },
         setgid => { is => 'Number', is_transient => 1, is_optional => 1 }, #transient during transition from "sticky" column
         subdirectory => { is => 'Text' },

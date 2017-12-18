@@ -14,8 +14,8 @@ class Genome::Config::AnalysisProject::Command::DiskGroupUsage {
             is_many             => 1,
             shell_args_position => 1,
         },
-        print_allocation_ids_for_disk_group_name => {
-            is => 'Text',
+        print_allocation_ids_for_disk_group => {
+            is => 'Genome::Disk::Group',
             is_optional => 1,
         },
     ],
@@ -69,7 +69,7 @@ sub execute {
                 'total_kb' => $total_kb,
             };
             $writer->write_one($data);
-            if ($self->print_allocation_ids_for_disk_group_name && ($self->print_allocation_ids_for_disk_group_name eq $disk_group_name) ) {
+            if ($self->print_allocation_ids_for_disk_group && ($self->print_allocation_ids_for_disk_group->name eq $disk_group_name) ) {
                 for my $allocation_id (sort keys %{$disk_group_usage{$disk_group_name}} ) {
                     print "\t". $allocation_id ."\n";
                 }
