@@ -50,13 +50,11 @@ sub execute {
     );
     for my $anp ($self->analysis_projects) {
         my %disk_group_usage;
-        for my $config_item ($anp->config_items) {
-            for my $model ($config_item->models) {
-                for my $build ($model->builds) {
-                    my @allocations = $build->disk_usage_allocations;
-                    for my $allocation (@allocations) {
-                        $disk_group_usage{$allocation->disk_group_name}{$allocation->id} = $allocation->kilobytes_used;
-                    }
+        for my $model ($anp->models) {
+            for my $build ($model->builds) {
+                my @allocations = $build->disk_usage_allocations;
+                for my $allocation (@allocations) {
+                    $disk_group_usage{$allocation->disk_group_name}{$allocation->id} = $allocation->kilobytes_used;
                 }
             }
         }
