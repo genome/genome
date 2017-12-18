@@ -110,9 +110,7 @@ sub _resolve_disk_group_for_build {
     unless ($anp) {
         $self->fatal_message('No analysis project defined for build %s and no disk_group specified!', $build->__display_name__);
     }
-
-    my $config_dir = $anp->environment_config_dir;
-    local $ENV{XGENOME_CONFIG_PROJECT_DIR} = $config_dir;
+    my $guard = $anp->set_env;
 
     my $dg = Genome::Config::get('disk_group_models');
 
