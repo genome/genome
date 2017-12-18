@@ -31,7 +31,9 @@ Running builds will not be accounted for properly as the allocations are not com
 The output is a tab-delimited disk usage summary for each disk group used per analysis project.
 
 The columns of the output file are:
-analysis project ID, configuration item ID, subclass name, model count, build count, total KB, total base pairs, bytes per base
+analysis project ID, disk group name, total KB
+
+OPTIONAL: Each allocation ID is printed out, tab indented after the disk group summary line
 
 EOHELP
 }
