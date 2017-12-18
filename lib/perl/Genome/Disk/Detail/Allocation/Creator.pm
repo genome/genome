@@ -202,6 +202,14 @@ sub _get_allocation_without_lock_impl {
                 );
                 last;
             }
+        } else {
+            $self->debug_message(
+                'Insufficient space on <%s>. (%s KB used, %s KB allocated, %s KB soft limit)',
+                $candidate_volume->mount_path,
+                $candidate_volume->used_kb,
+                scalar($candidate_volume->allocated_kb),
+                $candidate_volume->soft_limit_kb,
+            );
         }
     }
 
