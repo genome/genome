@@ -166,7 +166,9 @@ $disk_allocation->kilobytes_requested(2000); # reset
 ok($build->abandon, 'Abandon');
 is($build->status, 'Abandoned', 'Status is Abandoned');
 isnt($model->last_complete_build_id, $build->id, 'Model last complete build is not this build\'s id in abandon');
-isnt($disk_allocation->kilobytes_requested, 2000, 'disk_allocation reallocated');
+
+UR::Context->commit(); # triggers the allocation purge
+is($disk_allocation->status, 'purged', 'disk_allocation purged');
 
 # Init, fail and succeed a abandoned build
 ok(!$build->initialize, 'Failed to initialize an abandoned build');
