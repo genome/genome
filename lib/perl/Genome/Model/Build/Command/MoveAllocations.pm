@@ -63,7 +63,8 @@ sub execute {
         my $class_set_by_results = Set::Scalar->new(sort keys %result_classes);
 
         my $diff_associated_allocations = $class_set_by_associated_allocations->difference($class_set_by_results);
-        $diff_associated_allocations->delete($build->_disk_usage_result_subclass_names); #associated_disk_allocations can pull in allocations for classes we handle, but that are not results for this build. Don't report these classes as skipped.
+        $diff_associated_allocations->delete($build->_disk_usage_result_subclass_names)
+            unless $diff_associated_allocations->is_null; #associated_disk_allocations can pull in allocations for classes we handle, but that are not results for this build. Don't report these classes as skipped.
         if (my @m = $diff_associated_allocations->members) {
             $self->status_message('Skipping the following classes not defined as disk_usage_results: '. "\n". join("\n", grep { $_ ne $build->class } @m));
         }
