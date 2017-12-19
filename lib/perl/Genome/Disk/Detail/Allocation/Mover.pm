@@ -103,14 +103,13 @@ sub move {
             my $diff = `diff -rq $original_absolute_path $new_volume_final_path`;
             if ($diff) {
                 $allocation_lock->unlock();
-                my $shadow_allocation_abs_path = $shadow_allocation->absolute_path;
                 $shadow_allocation->delete;
                 confess(
                     $allocation_object->error_message(
                         sprintf(
                             "Could not move original allocation path (%s) to final path (%s)."
                                 . "  Differences found between directories: %s",
-                            $shadow_allocation_abs_path,
+                            $shadow_absolute_path,
                             $new_volume_final_path,
                             $diff,
                         )
@@ -125,7 +124,6 @@ sub move {
             # No differences detected, remove new path to allow rename of shadow allocation
             unless (Genome::Sys->remove_directory_tree($new_volume_final_path)) {
                 $allocation_lock->unlock();
-                my $shadow_allocation_abs_path = $shadow_allocation->absolute_path;
                 $shadow_allocation->delete;
                 confess(
                     $allocation_object->error_message(
@@ -139,7 +137,6 @@ sub move {
         } else {
             # Something exists, but not a directory
             $allocation_lock->unlock();
-            my $shadow_allocation_abs_path = $shadow_allocation->absolute_path;
             $shadow_allocation->delete;
             confess(
                 $allocation_object->error_message(
@@ -155,14 +152,13 @@ sub move {
     Genome::Sys->create_directory($new_volume_final_path);
     unless (Genome::Sys->rename($shadow_allocation->absolute_path, $new_volume_final_path)) {
         $allocation_lock->unlock();
-        my $shadow_allocation_abs_path = $shadow_allocation->absolute_path;
         $shadow_allocation->delete;
         confess(
             $allocation_object->error_message(
                 sprintf(
                     "Could not move shadow allocation path (%s) to final path (%s)."
                         . "  This should never happen, even when 100%% full.",
-                    $shadow_allocation_abs_path,
+                    $shadow_absolute_path,
                     $new_volume_final_path
                 )
             )
