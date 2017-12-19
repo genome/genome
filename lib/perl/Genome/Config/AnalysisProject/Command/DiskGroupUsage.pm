@@ -14,8 +14,10 @@ class Genome::Config::AnalysisProject::Command::DiskGroupUsage {
             is_many             => 1,
             shell_args_position => 1,
         },
-        print_allocation_ids_for_disk_group => {
-            is => 'Genome::Disk::Group',
+        print_allocation_ids => {
+            is => 'Boolean',
+            doc => 'This option will turn on printing ALL allocation IDs for each disk group as a comma delimited list. BEWARE, this could be a very long list of IDs.',
+            default_value => 0,
             is_optional => 1,
         },
     ],
@@ -31,9 +33,7 @@ Running builds will not be accounted for properly as the allocations are not com
 The output is a tab-delimited disk usage summary for each disk group used per analysis project.
 
 The columns of the output file are:
-analysis project ID, disk group name, total KB
-
-OPTIONAL: Each allocation ID is printed out, tab indented after the disk group summary line
+analysis project ID, disk group name, total KB, allocation IDs (OPTIONAL)
 
 EOHELP
 }
@@ -46,6 +46,9 @@ sub execute {
         disk_group_name
         total_kb
     /;
+    if ($self->print_allocation_ids) {
+        push @headers, 'allocation_ids';
+    }
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
         separator => "\t",
         headers => \@headers,
@@ -68,12 +71,11 @@ sub execute {
                 'disk_group_name' => $disk_group_name,
                 'total_kb' => $total_kb,
             };
-            $writer->write_one($data);
-            if ($self->print_allocation_ids_for_disk_group && ($self->print_allocation_ids_for_disk_group->name eq $disk_group_name) ) {
-                for my $allocation_id (sort keys %{$disk_group_usage{$disk_group_name}} ) {
-                    print "\t". $allocation_id ."\n";
-                }
+            if ($self->print_allocation_ids) {
+                my @allocation_ids = sort keys %{$disk_group_usage{$disk_group_name}};
+                $data->{allocation_ids} = join(',',@allocation_ids);
             }
+            $writer->write_one($data);
         }
     }
     $writer->output->close();
