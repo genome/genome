@@ -94,19 +94,75 @@ sub move {
     my $new_volume_final_path = Genome::Disk::Allocation->_absolute_path(
         $shadow_allocation->mount_path,
         $shadow_allocation->group_subdirectory,
-        $allocation_object->allocation_path);
+        $allocation_object->allocation_path
+    );
 
+    if (-e $new_volume_final_path) {
+        if (-d $new_volume_final_path) {
+            # Recursively compare directory paths, only collecting different file names
+            my $diff = `diff -rq $original_absolute_path $new_volume_final_path`;
+            if ($diff) {
+                $allocation_lock->unlock();
+                $shadow_allocation->delete;
+                confess(
+                    $allocation_object->error_message(
+                        sprintf(
+                            "Could not move original allocation path (%s) to final path (%s)."
+                                . "  Differences found between directories: %s",
+                            $shadow_absolute_path,
+                            $new_volume_final_path,
+                            $diff,
+                        )
+                    )
+                );
+            }
+            $self->warning_message(
+                "removing existing path (%s), confirmed redundant with original path (%s)",
+                $new_volume_final_path,
+                $original_absolute_path
+            );
+            # No differences detected, remove new path to allow rename of shadow allocation
+            unless (Genome::Sys->remove_directory_tree($new_volume_final_path)) {
+                $allocation_lock->unlock();
+                $shadow_allocation->delete;
+                confess(
+                    $allocation_object->error_message(
+                        sprintf(
+                            "Could not remove existing, redundant final path (%s).",
+                            $new_volume_final_path
+                        )
+                    )
+                );
+            }
+        } else {
+            # Something exists, but not a directory
+            $allocation_lock->unlock();
+            $shadow_allocation->delete;
+            confess(
+                $allocation_object->error_message(
+                    sprintf(
+                        "Unexpected non-directory path (%s) already exists!",
+                        $new_volume_final_path
+                    )
+                )
+            );
+        }
+    }
 
     Genome::Sys->create_directory($new_volume_final_path);
     unless (Genome::Sys->rename($shadow_allocation->absolute_path, $new_volume_final_path)) {
         $allocation_lock->unlock();
-        my $shadow_allocation_abs_path = $shadow_allocation->absolute_path;
         $shadow_allocation->delete;
-        confess($allocation_object->error_message(sprintf(
-                "Could not move shadow allocation path (%s) to final path (%s)."
-                . "  This should never happen, even when 100%% full.",
-                $shadow_allocation_abs_path,
-                $new_volume_final_path)));
+        confess(
+            $allocation_object->error_message(
+                sprintf(
+                    "Could not move shadow allocation path (%s) to final path (%s)."
+                        . "  This should never happen, even when 100%% full.",
+                    $shadow_absolute_path,
+                    $new_volume_final_path
+                )
+            )
+        );
     }
 
     # Change the shadow allocation to reserve some disk on the old volume until
