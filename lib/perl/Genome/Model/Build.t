@@ -122,7 +122,13 @@ no warnings;
 };
 use warnings;
 
-my $disk_allocation = Genome::Test::Factory::DiskAllocation->generate_obj(owner => $build);
+my $disk_allocation = Genome::Disk::Allocation->create(
+    kilobytes_requested => 1,
+    owner_id => $build->id,
+    owner_class_name => $build->class,
+    disk_group_name => Genome::Config::get('disk_group_models'),
+    allocation_path => 'temp/Model/Build.t_test/' . $build->id,
+);
 is($build->disk_allocation, $disk_allocation, 'disk_allocation');
 is_deeply([$build->disk_allocations], [$disk_allocation], 'disk_allocations');
 
