@@ -1491,7 +1491,15 @@ sub abandon {
     $self->_abandon_events
         or return;
 
-    $self->reallocate_disk_allocations;
+
+    for my $da ($self->disk_allocations) {
+        Genome::Sys::CommitAction->create(
+            on_commit => sub {
+                $da->purge('abandoning build');
+            },
+        );
+    }
+
     $self->_deactivate_software_results;
 
     my %add_note_args = (header_text => $header_text);
