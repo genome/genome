@@ -19,7 +19,7 @@ use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class('Genome::InstrumentData::Command::Import::WorkFlow::SanitizeAndSplitBam');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v01');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v02');
 my $source_sra = $test_dir.'/input.sra';
 ok(-s $source_sra, 'source sra exists') or die;
 
@@ -29,6 +29,14 @@ my $library = Genome::Library->create(
     name => '__TEST_SAMPLE__-extlibs', sample => Genome::Sample->create(name => '__TEST_SAMPLE__')
 );
 ok($library, 'Create library');
+
+my $environment_file = $test_dir .'/config.yml';
+my $add_env_cmd = Genome::Config::AnalysisProject::Command::AddEnvironmentFile->create(
+   analysis_project => $analysis_project,
+   environment_file => $environment_file,
+);
+ok($add_env_cmd, 'Add ENV command.');
+ok($add_env_cmd->execute, 'Execute Add ENV command');
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,

@@ -33,6 +33,14 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
+my $environment_file = $test_dir .'/config.yml';
+my $add_env_cmd = Genome::Config::AnalysisProject::Command::AddEnvironmentFile->create(
+   analysis_project => $analysis_project,
+   environment_file => $environment_file,
+);
+ok($add_env_cmd, 'Add ENV command.');
+ok($add_env_cmd->execute, 'Execute Add ENV command');
+
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
     library => $library,
