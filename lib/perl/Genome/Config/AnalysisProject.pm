@@ -154,6 +154,37 @@ sub environment_config_dir {
     return;
 }
 
+sub set_env {
+    my $self = shift;
+    my $config_dir = $self->environment_config_dir;
+    unless ($config_dir) {
+        $self->fatal_message(
+            'AnP %s does not have an envrionment configuration set.',
+            $self->__display_name__
+        );
+    }
+
+    my $env_var = 'XGENOME_CONFIG_PROJECT_DIR';
+
+    my $guard_closure;
+    if (exists $ENV{$env_var}) {
+        my $orig_value = $ENV{$env_var};
+        $guard_closure = sub { $ENV{$env_var} = $orig_value };
+    }
+    else {
+        $guard_closure = sub { delete $ENV{$env_var} };
+    }
+
+    $ENV{$env_var} = $config_dir;
+
+    if (defined wantarray) {
+        my $guard = Scope::Guard->new($guard_closure);
+        return $guard;
+    }
+
+    return 1;
+}
+
 sub system_analysis_project {
     my $class = shift;
 
