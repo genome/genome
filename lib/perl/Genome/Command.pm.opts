@@ -1543,6 +1543,15 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>disk-group-usage',
+    [
+      'print-allocation-ids!',
+      undef,
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>subject-mapping',
     [
       '>predict',
@@ -1722,18 +1731,18 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>release',
+    [
+      'analysis-projects=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>replace-model',
     [
       'model=s',
       undef,
       'new-profile-item=s',
-      undef,
-      'help!',
-      undef
-    ],
-    '>release',
-    [
-      'analysis-projects=s@',
       undef,
       'help!',
       undef
@@ -31739,6 +31748,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>disk-group-usage',
+      [
+        'print-allocation-ids!',
+        undef,
+        'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>subject-mapping',
       [
         '>predict',
@@ -31918,18 +31936,18 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>release',
+      [
+        'analysis-projects=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>replace-model',
       [
         'model=s',
         undef,
         'new-profile-item=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>release',
-      [
-        'analysis-projects=s@',
         undef,
         'help!',
         undef
