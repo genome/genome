@@ -501,4 +501,8 @@ sub diff_metrics_files {
 }
 #<>#
 
+sub _disk_usage_result_subclass_names {
+    [qw( Genome::InstrumentData::SxResult )];
+}
+
 1;
