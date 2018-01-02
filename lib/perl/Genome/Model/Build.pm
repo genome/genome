@@ -1799,6 +1799,8 @@ sub purge {
 
     for my $result ($self->disk_usage_results) {
 
+        next unless $result->disk_allocation;
+
         my @active_users = grep { $_->active } $result->users;
 
         if(@active_users) {
