@@ -29,7 +29,10 @@ sub execute {
     my $self = shift;
 
     for my $build ($self->builds) {
-
+        unless ($build->status eq 'Succeeded') {
+            $self->fatal_message("Unable to run cleanup on '%s' build with id '%s'. For Failed builds, please abandon instead once troubleshooting is complete.",$build->status,$build->id);
+        }
+        
         my $data_directory = $build->data_directory;
 
         my $results_dir = File::Spec->join($data_directory, 'results');
