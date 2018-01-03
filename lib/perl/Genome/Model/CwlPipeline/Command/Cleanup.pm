@@ -49,12 +49,7 @@ sub execute {
             $self->fatal_message("Failed to cleanup build tmp dir '%s' and results dir '%s'", $tmp_dir, $results_dir);
         }
 
-        my $allocation_path = File::Spec->join('model_data',$build->model->id,'build'. $build->id);
-        my $allocation = Genome::Disk::Allocation->get(allocation_path => $allocation_path);
-        unless ($allocation) {
-            $self->fatal_message("Failed to find allocation by allocation path '%s'.", $allocation_path);
-        }
-        $allocation->reallocate();
+        $build->reallocate_disk_allocations();
     }
 
     return 1;
