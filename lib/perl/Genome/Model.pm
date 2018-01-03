@@ -867,6 +867,7 @@ sub default_model_name {
         'reference alignment' => 'refalign',
         'de novo assembly' => 'denovo',
         'metagenomic composition 16s' => 'mc16s',
+        'cwl pipeline' => 'cwl',
     );
     $name .= ( exists $short_names{$type_name} )
     ? $short_names{$type_name}
