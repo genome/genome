@@ -40,12 +40,14 @@ sub execute {
         my $results_dir = File::Spec->join($data_directory, 'results');
 
         my $tmp_dir = Genome::Sys->create_temp_directory($build->id);
+
         my $results_dir_mode = mode($results_dir);
         $results_dir_mode->add_user_writable();
+        my $guard = Scope::Guard->new(sub { $results_dir_mode->rm_user_writable(); });
+
         unless (Genome::Model::CwlPipeline::Command::Run->cleanup($tmp_dir, $results_dir)) {
             $self->fatal_message("Failed to cleanup build tmp dir '%s' and results dir '%s'", $tmp_dir, $results_dir);
         }
-        $results_dir_mode->rm_user_writable();
 
         my $allocation_path = File::Spec->join('model_data',$build->model->id,'build'. $build->id);
         my $allocation = Genome::Disk::Allocation->get(allocation_path => $allocation_path);
