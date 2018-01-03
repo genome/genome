@@ -26,8 +26,8 @@ sub execute {
     my $yaml = $self->prepare_yaml;
     my ($tmp_dir, $results_dir) = $self->prepare_directories;
     $self->run_toil($yaml, $tmp_dir, $results_dir);
+    $self->cleanup($tmp_dir, $results_dir);
     $self->preserve_results($results_dir);
-    $self->cleanup($tmp_dir);
 
     return 1;
 }
@@ -138,8 +138,17 @@ sub preserve_results {
 sub cleanup {
     my $self = shift;
     my $tmp_dir = shift;
+    my $results_dir = shift;
 
-    return Genome::Sys->remove_directory_tree($tmp_dir);
+    Genome::Sys->remove_directory_tree($tmp_dir);
+
+    for my $dir (glob("$results_dir/tmp*")) {
+        if (-d $dir) {
+            Genome::Sys->remove_directory_tree($dir);
+        }
+    }
+
+    return 1;
 }
 
 1;
