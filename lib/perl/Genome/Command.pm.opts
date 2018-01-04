@@ -1996,6 +1996,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'primary-docker-image=s',
         'files',
+        'short-pipeline-name=s',
+        'files',
         'help!',
         undef
       ],
