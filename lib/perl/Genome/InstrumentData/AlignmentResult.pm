@@ -533,14 +533,14 @@ sub _create_disk_allocation {
     my $estimated_kb_usage = $self->estimated_kb_usage;
     $self->debug_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
     $self->debug_message("Check for available disk...");
-    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => Genome::Config::get('disk_group_alignments'));
+    my @available_volumes = Genome::Disk::Detail::Allocation::Creator->get_candidate_volumes(disk_group_name => Genome::Config::get('disk_group_alignments'));
     $self->debug_message("Found " . scalar(@available_volumes) . " disk volumes");
     my $unallocated_kb = 0;
     for my $volume (@available_volumes) {
         $unallocated_kb += $volume->unallocated_kb;
     }
     $self->debug_message("Available disk: " . $unallocated_kb . " kb");
-    my $factor = 20;
+    my $factor = 2;
     unless ($unallocated_kb > ($factor * $estimated_kb_usage)) {
         $self->error_message("NOT ENOUGH DISK SPACE!  This step requires $factor x as much disk as the job will use to be available before starting.");
         die $self->error_message();
@@ -1485,8 +1485,14 @@ sub _staging_disk_usage {
 }
 
 sub estimated_kb_usage {
-    30000000;
-    #die "unimplemented method: please define estimated_kb_usage in your alignment subclass.";
+    my $self = shift;
+
+    my $i = $self->instrument_data;
+    if ($i->can('calculate_alignment_estimated_kb_usage')) {
+        return $i->calculate_alignment_estimated_kb_usage;
+    } else {
+        return 30000000;
+    }
 }
 
 sub resolve_allocation_subdirectory {

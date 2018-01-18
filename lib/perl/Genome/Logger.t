@@ -6,6 +6,8 @@ use Test::Fatal qw(exception);
 
 use Memoize qw();
 
+use above 'Genome';
+
 use_ok('Genome::Logger');
 
 subtest 'non-color screen' => sub {

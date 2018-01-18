@@ -80,6 +80,7 @@
                                                    "test_logs/nested-parallel-models"
                                                 ],
                                                 "environment" : {
+                                                   "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1",
                                                    "XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING" : "1"
@@ -106,6 +107,8 @@
                                                 "command" : "genome ptero wrapper --command-class Genome::Ptero::TestCommand::ParamAppender --method execute --log-directory test_logs/nested-parallel-models",
                                                 "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                                 "environment" : {
+                                                   "LSB_SUB_ADDITIONAL" : "docker(hello-world)",
+                                                   "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                                                    "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                    "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                 },
@@ -115,7 +118,7 @@
                                                    "numProcessors" : 1,
                                                    "outFile" : "/tmp/ptero-lsf-logfile-1bc57aae-446f-45bb-b986-5992084488d9.out",
                                                    "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-5df2b662-7929-473d-94b0-6fafaa7f1b9f.err --stdout /tmp/ptero-lsf-logfile-5df2b662-7929-473d-94b0-6fafaa7f1b9f.out' > /tmp/ptero-lsf-logfile-5df2b662-7929-473d-94b0-6fafaa7f1b9f-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-5df2b662-7929-473d-94b0-6fafaa7f1b9f-postexec.log",
-                                                   "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
+                                                   "preExecCmd" : "/docker_run.py /usr/bin/ptero-lsf-pre-exec; exit 0;",
                                                    "queue" : "long",
                                                    "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                                                 },

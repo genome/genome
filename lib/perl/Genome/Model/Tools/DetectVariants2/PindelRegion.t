@@ -26,7 +26,7 @@ my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbui
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
 my $test_base_dir  = Genome::Utility::Test->data_dir($pkg);
-my ($test_input_dir, $test_out_dir) = map{File::Spec->join($test_base_dir, $_)}qw(input expected_2); 
+my ($test_input_dir, $test_out_dir) = map{File::Spec->join($test_base_dir, $_)}qw(input expected_3); 
 
 my $region_file = File::Spec->join($test_input_dir, 'region_file.bed');
 my $tumor       = File::Spec->join($test_input_dir, 'flank_tumor_sorted.bam');

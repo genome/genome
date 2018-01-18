@@ -55,6 +55,12 @@ class Genome::InstrumentData::AlignmentResult::Merged::Speedseq {
             doc=>'Version of picard to use when creating bam files',
         },
     ],
+    has_optional_metric => [
+        filetype => {
+            is => 'Text',
+            doc => 'the type of alignment file ("bam" assumed if not present")',
+        },
+    ],
     has_calculated => [
         _final_bam_file => {
             is => 'Text', calculate_from => ['temp_staging_directory', 'id',],
@@ -62,7 +68,7 @@ class Genome::InstrumentData::AlignmentResult::Merged::Speedseq {
         },
         merged_alignment_bam_path => {
             is => 'Text', calculate_from => ['output_dir', 'id'],
-            calculate => q{ return join('/', $output_dir, $id . '.bam'); }
+            calculate => q{ return join('/', $output_dir, $id . '.' . ($self->filetype // 'bam')); }
         },
     ]
 };

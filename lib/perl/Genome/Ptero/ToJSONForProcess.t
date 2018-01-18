@@ -44,6 +44,7 @@ for my $test_directory (glob test_data_directory('*')) {
         local %ENV; # otherwise the JSON contains the current user's environment.
         Genome::Config::set_env(ptero_shell_command_service_url => 'http://example.com/v1');
         Genome::Config::set_env(ptero_lsf_service_url => 'http://lsf.example.com/v1');
+        Genome::Config::set_env(lsb_sub_additional => 'docker(hello-world)');
         $ENV{FOO} = "bar";
         $ENV{BAZ} = undef;
         my $ptero_builder = $workflow->get_ptero_builder_for_process($process);

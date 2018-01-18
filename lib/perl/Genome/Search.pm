@@ -70,7 +70,6 @@ sub searchable_classes {
         Genome::InstrumentData::FlowCell
         Genome::WorkOrder
         Genome::Site::TGI::Project
-        Genome::Sys::Email
         Genome::InstrumentData::Imported
         Genome::Sys::User
         Genome::Wiki::Document

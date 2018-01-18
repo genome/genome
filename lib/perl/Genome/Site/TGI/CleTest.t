@@ -21,7 +21,7 @@ my $expected_config = {
     '3746e84c85054fbeb1ee9adde63fd362',
     'b1dbade3470b4060b0d8c2d7f3279f38',
     'f80f173dfc7c4e2a90ddc0f4ff4cbcd4',
-    '26e65adaa8034dd99ef92b27f61ad862',
+    'c76affa07169438682544626c70d1d8e',
     '3dd43eb24d0c41dcaddc3747e60260c1',
     'd57481e2d6f44aaa9e06db71220cf16c',
     'f26257cefe604b01924ca4e6bf63392e'

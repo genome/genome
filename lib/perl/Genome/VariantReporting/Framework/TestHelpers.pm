@@ -187,8 +187,8 @@ sub test_xml {
         $expected_xml_path, $xml_path,
         name => "Xml looks as expected",
         replace => [
-            [qr(lsfQueue="[^"]+"\s+), q()],
-            [qr(lsfResource="[^"]+"\s+), q()],
+            [qr(\s*lsfQueue="[^"]+"), q()],
+            [qr(\s*lsfResource="[^"]+"), q()],
         ],
     );
     return;

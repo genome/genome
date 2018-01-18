@@ -23,7 +23,7 @@ class Genome::Model::RnaSeq::Command::ErccSpikeInQc {
         ercc_spike_in_file => {
             is => 'Text',
             doc => 'The control analysis file provided by Agilent for the ERCC spike-in.',
-            example_values => ['/gscmnt/gc13001/info/model_data/jwalker_scratch/ERCC/ERCC_Controls_Analysis.txt'],
+            example_values => ['/gscmnt/gc2764/cad/jwalker/scratch/ERCC/ERCC_Controls_Analysis.txt'],
         },
         output_directory => {
             is => 'Text',

@@ -484,4 +484,12 @@ sub build_for_tumor_bam {
     return $self->tumor_build;
 }
 
+sub _disk_usage_result_subclass_names {
+    my $self = shift;
+
+    my @disk_usage_result_classes = $self->_dv2_result_subclass_names;
+
+    return \@disk_usage_result_classes;
+}
+
 1;

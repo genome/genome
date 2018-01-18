@@ -25,8 +25,17 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
-my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v1') or die;
-my $source_file = File::Spec->join($data_dir, 'input.bam');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v02') or die;
+
+my $environment_file = $test_dir .'/config.yml';
+my $add_env_cmd = Genome::Config::AnalysisProject::Command::AddEnvironmentFile->create(
+   analysis_project => $analysis_project,
+   environment_file => $environment_file,
+);
+ok($add_env_cmd, 'Add ENV command.');
+ok($add_env_cmd->execute, 'Execute Add ENV command'); 
+
+my $source_file = File::Spec->join($test_dir, 'input.bam');
 
 throws_ok(
     sub{

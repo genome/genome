@@ -18,7 +18,7 @@ use_ok('Genome::Model::Tools::DetectVariants2::Result::Combine::LqUnion');
 my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Combine-LqUnion';
 
 #This is from the somatic-variation short test. Consider creating dummy data!
-my $hq_result = Genome::SoftwareResult->get(116186269);
+my $hq_result = Genome::SoftwareResult->get('5d0d3b64692149a99573b3f5d499dbb7');
 
  my %results;
 my @to_process = ($hq_result);
@@ -40,7 +40,7 @@ my $lq = Genome::Model::Tools::DetectVariants2::Result::Combine::LqUnion->create
 );
 isa_ok($lq, 'Genome::Model::Tools::DetectVariants2::Result::Combine::LqUnion', 'generated_result');
 
-my $expected = join('/', $test_dir, 'v2', 'snvs.lq.bed');
+my $expected = join('/', $test_dir, 'v3', 'snvs.lq.bed');
 my $actual = $lq->path('snvs.lq.bed');
 
 ok(!Genome::Sys->diff_file_vs_file($expected, $actual), 'result matches expected output')

@@ -19,7 +19,7 @@ use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 Genome::InstrumentData::Command::Import::WorkFlow::Helpers->overload_uuid_generator_for_class('Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v01');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'v5');
 my @source_files = (
     $test_dir.'/input.1.fastq.gz', 
     $test_dir.'/input.2.fastq',
@@ -32,6 +32,14 @@ my $library = Genome::Library->create(
     name => '__TEST_SAMPLE__-extlibs', sample => Genome::Sample->create(name => '__TEST_SAMPLE__')
 );
 ok($library, 'Create library');
+
+my $environment_file = $test_dir .'/config.yml';
+my $add_env_cmd = Genome::Config::AnalysisProject::Command::AddEnvironmentFile->create(
+   analysis_project => $analysis_project,
+   environment_file => $environment_file,
+);
+ok($add_env_cmd, 'Add ENV command.');
+ok($add_env_cmd->execute, 'Execute Add ENV command');
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
@@ -71,8 +79,11 @@ my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');
 is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
 is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-is(File::Compare::compare($bam_path, $test_dir.'/basic-fastq-t.bam'), 0, 'bam matches');
-is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/basic-fastq-t.bam.flagstat'), 0, 'flagstat matches');
+
+# Rely on flagstat until a better BAM comparison process is defined
+# is(File::Compare::compare($bam_path, $test_dir.'/all_sequences.basic-fastq-t.bam'), 0, 'bam matches');
+
+is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/all_sequences.basic-fastq-t.bam.flagstat'), 0, 'flagstat matches');
 
 my $allocation = $instrument_data->disk_allocation;
 ok($allocation, 'got allocation');

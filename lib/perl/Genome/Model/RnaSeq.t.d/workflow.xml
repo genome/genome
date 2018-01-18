@@ -21,7 +21,7 @@
     <outputproperty>metrics_result</outputproperty>
   </operationtype>
   <operation name="RnaSeq Alignment">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" commandClass="Genome::Model::RnaSeq::Command::AlignReads" lsfProject="build135296493">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::RnaSeq::Command::AlignReads" lsfProject="build135296493" lsfQueue="apipe">
       <inputproperty>build_id</inputproperty>
       <outputproperty>build_id</outputproperty>
       <outputproperty>individual_alignment_results</outputproperty>
@@ -31,7 +31,7 @@
     </operationtype>
   </operation>
   <operation name="RnaSeq Alignment Metrics">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=8000] rusage[mem=8000]' -M 8000000" commandClass="Genome::Model::RnaSeq::Command::Tophat2AlignmentStats" lsfProject="build135296493">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::RnaSeq::Command::Tophat2AlignmentStats" lsfProject="build135296493" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=8000] rusage[mem=8000]' -M 8000000">
       <inputproperty>build_id</inputproperty>
       <outputproperty>build_id</outputproperty>
       <outputproperty>result</outputproperty>
@@ -39,14 +39,14 @@
     </operationtype>
   </operation>
   <operation name="RnaSeq BamQc">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" commandClass="Genome::Model::RnaSeq::Command::BamQc" lsfProject="build135296493">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::RnaSeq::Command::BamQc" lsfProject="build135296493" lsfQueue="apipe">
       <inputproperty>build_id</inputproperty>
       <outputproperty>bam_qc_result_id</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
   <operation name="RnaSeq Coverage">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=32000] rusage[mem=32000]' -M 32000000" commandClass="Genome::Model::RnaSeq::Command::Coverage" lsfProject="build135296493">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::RnaSeq::Command::Coverage" lsfProject="build135296493" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=32000] rusage[mem=32000]' -M 32000000">
       <inputproperty>build_id</inputproperty>
       <outputproperty>build_id</outputproperty>
       <outputproperty>result</outputproperty>
@@ -54,7 +54,7 @@
     </operationtype>
   </operation>
   <operation name="RnaSeq Cufflinks Expression" parallelBy="annotation_reference_transcripts_mode">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4" commandClass="Genome::Model::RnaSeq::Command::Expression::Cufflinks" lsfProject="build135296493">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::RnaSeq::Command::Expression::Cufflinks" lsfProject="build135296493" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4">
       <inputproperty>build_id</inputproperty>
       <outputproperty>build_id</outputproperty>
       <outputproperty>cufflinks_expression_result_id</outputproperty>
@@ -62,14 +62,14 @@
     </operationtype>
   </operation>
   <operation name="RnaSeq Digital Expression Detection">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" commandClass="Genome::Model::Tools::Htseq::Count" lsfProject="build135296493">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::Tools::Htseq::Count" lsfProject="build135296493" lsfQueue="apipe" lsfResource="-R 'select[gtmp&gt;=10 &amp;&amp; mem&gt;=16000] rusage[gtmp=10, mem=16000]' -M 16000000">
       <inputproperty>alignment_results</inputproperty>
       <outputproperty>output_result</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
   <operation name="RnaSeq Picard Metrics">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=8000] rusage[mem=8000]' -M 8000000" commandClass="Genome::Model::RnaSeq::Command::PicardRnaSeqMetrics" lsfProject="build135296493">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::RnaSeq::Command::PicardRnaSeqMetrics" lsfProject="build135296493" lsfQueue="apipe" lsfResource="-R 'select[mem&gt;=8000] rusage[mem=8000]' -M 8000000">
       <inputproperty>build_id</inputproperty>
       <outputproperty>build_id</outputproperty>
       <outputproperty>picard_rna_seq_metrics_result_id</outputproperty>

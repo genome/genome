@@ -72,6 +72,9 @@ HELP
 sub execute {
     my $self = shift;
 
+    my $anp = $self->analysis_project;
+    my $guard = $anp->set_env;
+
     my $work_flow_inputs = $self->_resolve_work_flow_inputs;
     my $run = Genome::InstrumentData::Command::Import::WorkFlow::ImportInstData->create(
         work_flow_inputs => $work_flow_inputs,

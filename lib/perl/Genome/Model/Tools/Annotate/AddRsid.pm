@@ -43,6 +43,8 @@ sub execute {
     # then re-read the annotation file to append the dbsnp info.  Also has the benefit of 
     # ensuring that the annotation file output is in the same order as the info
 
+    # does not work at all for indels!
+
     my $annotation = store_annotation($anno_file);
 
     #read through the VCF, storing values for any annotation lines that match
@@ -55,16 +57,28 @@ sub execute {
         $vcf_fh = Genome::Sys->open_file_for_reading($vcf_file);
     }
 
+
+    my $file_format;
     while (my $line = $vcf_fh->getline) {
         chomp $line;
-        next if $line =~ /^\#/;
+
+        ## Determine which type of dbSNP VCF file you have, using GMAF or CAF values
+        if ($line =~ /^\#/) {
+            if ($line =~ /INFO=<ID=GMAF/) {
+                $file_format = 'GMAF';
+            } elsif ($line =~ /INFO=<ID=CAF/) {
+                $file_format = 'CAF';
+            }
+            next;
+        }
 
         my ($chr, $pos, $rsID, $ref, $var, $INFO) = (split(/\t/, $line))[0..4, 7];
 
         if($rsID eq '.'){
             $rsID = "-";
         }
- 
+
+        ## Handles older dbSNP VCF format with GMAF but not CAF (see below)
         my $GMAF = ($INFO =~ /(GMAF=[0-9.]+)/)[0] || '-';
 
         my $key = RSid_key($chr, $pos);
@@ -76,22 +90,81 @@ sub execute {
             my @var_alleles = @tmp1;
             @var_alleles = @tmp2 if (scalar(@tmp2) > scalar(@tmp1));
 
+            # Script not designed to handle indels, ignores them if present
+            my $is_indel = 0;
+            for (@var_alleles) {
+                $is_indel = 1 if length($_) > 1;
+            }
+            if (length($ref) > 1 || $is_indel == 1) {
+                next;
+            }
+
             my @dbSNPids = split_dbSNPBuildID($INFO);
 
-            for (my $i = 0; $i < @dbSNPids; $i++) {
-                next unless $dbSNPids[$i] =~ /^\d+$/;
-
-                my $RSid_var_allele = $var_alleles[$i];
-                unless($RSid_var_allele){
-                    $self->warning_message("RDis_var_allele undefined, i: $i, var_alleles: @var_alleles");
+            if($file_format eq "CAF") {
+                # Gets the list of allele frequencies if CAF nomenclature is used
+                my $caf_string;
+                my @afs;
+                if (($caf_string) = $INFO =~ /(CAF=[0-9.,]+)/) {
+                    @afs = split(/,/, $caf_string);
+                    # The first allele frequency provided is the reference allele which we don't want so drop it
+                    shift @afs;
                 }
 
-                if(defined($annotation->{$key}->{$RSid_var_allele})){
-                    if($annotation->{$key}->{$RSid_var_allele} ne "0"){                    
-                        $vcf_vals{$key}{$RSid_var_allele}{"rsID"} = $rsID;
-                        $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = $GMAF;
+                for (my $i = 0; $i < @var_alleles; $i++) {
+                    # Pull the appropriate var allele
+                    my $af;
+                    if(scalar(@afs) > 0){
+                        $af = $afs[$i];
+                        unless($af){
+                            $self->warning_message("CAF undefined for allele, i: $i, CAF values undefined: $caf_string, non-reference AFs: @afs");
+                            $af = '-';
+                        }
+                        # Empty allele frequencies are designated with a . instead of our convention - 
+                        if($af eq '.'){
+                            $af = "-";
+                        }
+                    }
+                    else {
+                        $af = '-';
+                    }
+
+                    unless ($af eq '-') {
+                        $af = "GMAF=$af";
+                    }
+
+                    my $RSid_var_allele = $var_alleles[$i];
+                    unless($RSid_var_allele){
+                        $self->warning_message("RDis_var_allele undefined, i: $i, var_alleles: @var_alleles");
+                    }
+
+                    if(defined($annotation->{$key}->{$RSid_var_allele})){
+                        if($annotation->{$key}->{$RSid_var_allele} ne "0"){
+                            $vcf_vals{$key}{$RSid_var_allele}{"rsID"} = $rsID;
+                            # Reassign GMAF value to be the CAF value
+                            $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = "$af";
+                        }
                     }
                 }
+            } elsif ($file_format eq "GMAF") {
+                for (my $i = 0; $i < @dbSNPids; $i++) {
+
+                    next unless $dbSNPids[$i] =~ /^\d+$/;
+
+                    my $RSid_var_allele = $var_alleles[$i];
+                    unless($RSid_var_allele){
+                        $self->warning_message("RDis_var_allele undefined, i: $i, var_alleles: @var_alleles");
+                    }
+
+                    if(defined($annotation->{$key}->{$RSid_var_allele})){
+                        if($annotation->{$key}->{$RSid_var_allele} ne "0"){
+                            $vcf_vals{$key}{$RSid_var_allele}{"rsID"} = $rsID;
+                            $vcf_vals{$key}{$RSid_var_allele}{"GMAF"} = $GMAF;
+                        }
+                    }
+                }
+            } else {
+                die "Allele frequency format type (GMAF vs CAF) not detected, check input vcf";
             }
         }
     }
@@ -117,7 +190,6 @@ sub store_annotation{
             next;
         }
 
-        my @list = split(/\t/, $line);
         my ($chr, $pos, $RSid_var_allele) = (split(/\t/, $line))[0, 1, 4];
         my $key = RSid_key($chr, $pos);
 
@@ -131,7 +203,7 @@ sub print_annotation{
     my $anno_file = shift;
     my $output_file = shift;
     my $vcf_vals = shift;
-   
+
     my $output_fh = Genome::Sys->open_file_for_writing($output_file);
 
     my $anno_fh = Genome::Sys->open_file_for_reading($anno_file);
@@ -143,13 +215,15 @@ sub print_annotation{
             next;
         }
 
-        my @list = split(/\t/, $line);
-        my ($chr, $pos, $var) = (split(/\t/, $line))[0, 1, 4];
+        my ($chr, $pos, $ref, $var) = (split(/\t/, $line))[0, 1, 3, 4];
         my $key = RSid_key($chr, $pos);
-        
+
         my $suffix = "-\t-";
-        if(defined($vcf_vals->{$key}->{$var})){
-            $suffix = $vcf_vals->{$key}->{$var}->{"rsID"} . "\t" . $vcf_vals->{$key}->{$var}->{"GMAF"};
+
+        unless($ref eq "-" || $var eq "-" ) {       # Indels are not handled correctly so ignores them
+            if(defined($vcf_vals->{$key}->{$var})){
+                $suffix = $vcf_vals->{$key}->{$var}->{"rsID"} . "\t" . $vcf_vals->{$key}->{$var}->{"GMAF"};
+            }
         }
         print $output_fh $line . "\t" . $suffix . "\n";
 
@@ -174,3 +248,4 @@ sub RSid_key {
 }
 
 1;
+

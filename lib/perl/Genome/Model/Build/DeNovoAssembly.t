@@ -40,4 +40,7 @@ $id2->original_est_fragment_size(300);
 my $average = Genome::Model::Build::DeNovoAssembly->resolve_average_for_attribute(attribute => "original_est_fragment_size", objects => [$id, $id2]);
 is($average, 250, "Average calculated correctly");
 
+my $disk_usage_result_subclass_names = Genome::Model::Build::DeNovoAssembly->_disk_usage_result_subclass_names;
+is(@$disk_usage_result_subclass_names, 1, 'disk_usage_result_subclass_names');
+
 done_testing();

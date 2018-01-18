@@ -5,6 +5,7 @@ use strict;
 
 use Genome;
 use Genome::Statistics;
+use IPC::System::Simple qw();
 
 class Genome::Model::Tools::Pindel::ProcessPindelReads {
     is => [ 'Command::V2' ],
@@ -343,11 +344,11 @@ sub read_support {
     my $cap = $self->capture_data;
 
     if($cap){
-        my $tsam_cmd = "samtools view $tumor_bam $chr:$stop-$stop > $temp";
-        #Genome::Sys->shellcmd( cmd => $tsam_cmd);
-        if(system($tsam_cmd)){
-            die $self->error_message("Failed to run the command: $tsam_cmd");
-        }
+        my @tsam_cmd = ('samtools', 'view', $tumor_bam, "$chr:$stop-$stop");
+        Genome::Sys->shellcmd(
+            cmd => \@tsam_cmd,
+            redirect_stdout => $temp,
+        );
 
         my $tfh = Genome::Sys->open_file_for_reading($temp);
 
@@ -365,11 +366,12 @@ sub read_support {
         $tfh->close;
 
         # Call samtools over the variant start-stop in the normal bam to get overlapping reads
-        my $nsam_cmd = "samtools view $normal_bam $chr:$stop-$stop > $temp";
-        #Genome::Sys->shellcmd( cmd => $nsam_cmd);
-        if(system($nsam_cmd)){
-            die $self->error_message("Failed to run the command: $nsam_cmd");
-        }
+        my @nsam_cmd = ('samtools', 'view', $normal_bam, "$chr:$stop-$stop");
+        Genome::Sys->shellcmd(
+            cmd => \@nsam_cmd,
+            redirect_stdout => $temp,
+        );
+
         my $nfh = Genome::Sys->open_file_for_reading($temp);
 
         while(my $result = $nfh->getline){
@@ -387,7 +389,7 @@ sub read_support {
         $nfh->close;
     }
     else {
-        my @results = `samtools view $tumor_bam $chr:$stop-$stop`;
+        my @results = IPC::System::Simple::capture('samtools', 'view', $tumor_bam, "$chr:$stop-$stop");
         for my $result (@results){
             chomp $result;
             my @details = split /\t/, $result;
@@ -400,7 +402,7 @@ sub read_support {
             }
         }
 
-        @results = `samtools view $normal_bam $chr:$stop-$stop`;
+        @results = IPC::System::Simple::capture('samtools', 'view', $normal_bam, "$chr:$stop-$stop");
 
         for my $result (@results){
             chomp $result;
@@ -491,14 +493,15 @@ sub vaf_filter {
     my $cap = $self->capture_data;
 
     if($cap){
-        my $tsam_cmd = "samtools view $tumor_bam $chr:$stop-$stop > $temp";
-        if(system($tsam_cmd)){
-            die $self->error_message("Failed to run the command: $tsam_cmd");
-        }
+        my @tsam_cmd = ('samtools', 'view', $tumor_bam, "$chr:$stop-$stop");
+        Genome::Sys->shellcmd(
+            cmd => \@tsam_cmd,
+            redirect_stdout => $temp,
+        );
         $tumor_read_support = $self->line_count($temp);
     }
     else {
-        my @results = `samtools view $tumor_bam $chr:$stop-$stop`;
+        my @results = IPC::System::Simple::capture('samtools', 'view', $tumor_bam, "$chr:$stop-$stop");
         $tumor_read_support = scalar(@results);
     }
 
@@ -606,8 +609,8 @@ sub parse {
         my $allele_string;
         my $start_for_faidx = $start+1;
         my $sam_default = Genome::Model::Tools::Sam->path_for_samtools_version;
-        my $faidx_cmd = "$sam_default faidx " . $self->_refseq . " $chr:$start_for_faidx-$stop";
-        my @faidx_return= `$faidx_cmd`;
+        my @faidx_cmd = ($sam_default, 'faidx', $self->_refseq, "$chr:$start_for_faidx-$stop");
+        my @faidx_return = IPC::System::Simple::capture(@faidx_cmd);
         shift(@faidx_return);
         chomp @faidx_return;
         $allele_string = join("",@faidx_return);

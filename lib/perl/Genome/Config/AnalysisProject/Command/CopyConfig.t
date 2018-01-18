@@ -44,22 +44,29 @@ my $item = Genome::Config::Profile::Item->create_from_file_path(
     analysis_project => $source_project,
 );
 
-subtest 'no tag flag and no tags' => sub { _run_command($source_project, 0, 0); };
-subtest 'tag flag but no tags'    => sub { _run_command($source_project, 1, 0); };
+subtest 'no tag flag and no tags' => sub { _run_command($source_project, 0, 0, 0, 0); };
+subtest 'tag flag but no tags'    => sub { _run_command($source_project, 1, 0, 1, 0); };
 
 Genome::Config::Tag::Profile::Item->create(
     profile_item => $item,
     tag => Genome::Config::Tag->create(name => 'test tag for CopyConfig.t'),
 );
 
-subtest 'tag but no tag flag' => sub { _run_command($source_project, 0, 0); };
-subtest 'tag and tag flag'    => sub { _run_command($source_project, 1, 1); };
+my $env_file = Genome::Sys->create_temp_file_path;
+Genome::Sys->write_file($env_file, 'testing');
+Genome::Config::AnalysisProject::Command::AddEnvironmentFile->execute(
+    analysis_project => $source_project,
+    environment_file => $env_file,
+);
+
+subtest 'tag but no tag flag' => sub { _run_command($source_project, 0, 0, 0, 0); };
+subtest 'tag and tag flag'    => sub { _run_command($source_project, 1, 1, 1, 1); };
 
 
 sub _run_command {
     state $count = 0;
 
-    my ($source_project, $use_tag_flag, $expected_tag_count) = @_;
+    my ($source_project, $use_tag_flag, $expected_tag_count, $use_environment_flag, $expect_environment_config) = @_;
 
     my $target_project = Genome::Config::AnalysisProject->create(
         name => 'Test Target Project ' . $count++,
@@ -69,6 +76,7 @@ sub _run_command {
         to_project => $target_project,
         from_project => $source_project,
         tags => $use_tag_flag,
+        environment => $use_environment_flag,
     );
     ok($cmd->execute(), 'command executed successfully');
 
@@ -81,4 +89,10 @@ sub _run_command {
 
     is((grep { $_->tags } @newly_created_profile_items), $expected_tag_count,
         'Found expected number of tags set');
+
+    if($expect_environment_config) {
+        ok($target_project->environment_config_dir, 'found environment config copied');
+    } else {
+        ok(!$target_project->environment_config_dir, 'found no environment config copied');
+    }
 }

@@ -203,9 +203,12 @@ sub _fetch_alignment_result {
     my @instrument_data_inputs = $self->instrument_data_inputs;
     my ($params) = $self->model->params_for_alignment(@instrument_data_inputs);
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_buld($self);
+
     my $alignment_class = Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($self->model->read_aligner_name);
     my $alignment = join('::', 'Genome::InstrumentData::AlignmentResult', $alignment_class)->$mode(
         %$params,
+        users => $result_users,
     );
 
     return $alignment;
@@ -213,7 +216,7 @@ sub _fetch_alignment_result {
 
 sub delete {
     my $self = shift;
-    
+
     # if we have an alignments directory, nuke it first since it has its own allocation
     if (-e $self->accumulated_alignments_directory ||
         -e $self->accumulated_fastq_directory ||
@@ -228,14 +231,14 @@ sub delete {
             return;
         };
     }
-    
+
     $self->SUPER::delete(@_);
 }
 
 # nuke the accumulated alignment directory
 sub eviscerate {
     my $self = shift;
-    
+
     $self->debug_message('Entering eviscerate for build:' . $self->id);
 
 
@@ -478,6 +481,25 @@ sub alignment_results_for_instrument_data {
     my @alignment_results = $self->alignment_results;
     my @instrument_data_alignment_results = grep { $_->instrument_data_id eq $instrument_data->id } @alignment_results;
     return @instrument_data_alignment_results;
+}
+
+sub _disk_usage_result_subclass_names {
+    my $self = shift;
+
+    my @disk_usage_result_classes = (qw(
+        Genome::InstrumentData::AlignmentResult::Merged
+        Genome::InstrumentData::AlignmentResult::Merged::BamQc
+        Genome::InstrumentData::AlignmentResult::Merged::CufflinksExpression
+        Genome::InstrumentData::AlignmentResult::Merged::PicardRnaSeqMetrics
+        Genome::InstrumentData::AlignmentResult::Merged::SpliceJunctionSummary
+        Genome::InstrumentData::AlignmentResult::Merged::Tophat2AlignmentStats
+        Genome::InstrumentData::AlignmentResult::PerLaneTophat
+        Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Result
+        Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLength::Result
+        Genome::Model::Tools::Htseq::Count::Result
+    ));
+
+    return \@disk_usage_result_classes;
 }
 
 1;

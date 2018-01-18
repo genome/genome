@@ -13,8 +13,8 @@ BEGIN
     use_ok ('Genome::Model::Tools::Fasta::RemoveN');
 }
 
-my $fasta_file = '/gscmnt/temp206/info/seqana/species_independant/edemello/short.fna';
-my $n_removed_file = '/gscmnt/temp206/info/seqana/species_independant/edemello/illumina/illumina_bwa.N_REMOVED.fasta';
+my $fasta_file = File::Spec->join(Genome::Config::get('test_inputs'), 'Genome-Model-Tools-Fasta', 'file.fasta');
+my $n_removed_file = Genome::Sys->create_temp_file_path();
 
 my $n_remover = Genome::Model::Tools::Fasta::RemoveN->create(fasta_file     =>  $fasta_file,
                                                              n_removed_file =>  $n_removed_file,);

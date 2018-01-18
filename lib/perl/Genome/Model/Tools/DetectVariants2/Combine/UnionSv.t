@@ -15,6 +15,8 @@ BEGIN {
     my $archos = `uname -a`;
     if ($archos !~ /64/) {
         plan skip_all => "Must run from 64-bit machine";
+    } else {
+        plan skip_all => 'Test data must be regenerated.';
     }
 };
 

@@ -1,0 +1,3 @@
+---
+default_value: "-R 'select[gtmp>=10 && mem>=16000] rusage[gtmp=10, mem=16000]' -M 16000000"
+env: XGENOME_LSF_RESOURCE_HTSEQ_COUNT

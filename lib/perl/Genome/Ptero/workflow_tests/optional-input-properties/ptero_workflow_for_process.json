@@ -120,6 +120,7 @@
                                                                ],
                                                                "environment" : {
                                                                   "FOO" : "bar",
+                                                                  "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                                                                   "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1",
                                                                   "XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING" : "1"
@@ -147,6 +148,8 @@
                                                                "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                                                "environment" : {
                                                                   "FOO" : "bar",
+                                                                  "LSB_SUB_ADDITIONAL" : "docker(hello-world)",
+                                                                  "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                                                                   "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                                },
@@ -155,7 +158,7 @@
                                                                   "jobGroup" : "/genome/dmorton",
                                                                   "outFile" : "/tmp/ptero-lsf-logfile-2ead1cfb-ee32-4f9c-8d0d-d031a14625c3.out",
                                                                   "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-4e821cb5-2dc9-4179-a3ad-746d891ea5d1.err --stdout /tmp/ptero-lsf-logfile-4e821cb5-2dc9-4179-a3ad-746d891ea5d1.out' > /tmp/ptero-lsf-logfile-4e821cb5-2dc9-4179-a3ad-746d891ea5d1-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-4e821cb5-2dc9-4179-a3ad-746d891ea5d1-postexec.log",
-                                                                  "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
+                                                                  "preExecCmd" : "/docker_run.py /usr/bin/ptero-lsf-pre-exec; exit 0;",
                                                                   "queue" : "long"
                                                                },
                                                                "pollingInterval" : 300,
@@ -202,6 +205,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                      "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
@@ -229,6 +233,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                      "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
@@ -256,6 +261,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                      "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },

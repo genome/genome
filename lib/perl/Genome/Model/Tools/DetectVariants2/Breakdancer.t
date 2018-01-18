@@ -45,6 +45,9 @@ my $test_out   = File::Spec->join($test_working_dir, $chromosome, 'svs.hq.'.$chr
 my $version = '1.2';
 note("use breakdancer version: $version");
 
+SKIP: {
+    skip "No WGS test BAMs available.", 6;
+
 my $command = Genome::Model::Tools::DetectVariants2::Breakdancer->create(
     reference_build_id => $refbuild_id,
     aligned_reads_input => $tumor_bam,
@@ -91,6 +94,8 @@ $bad_fastq_fh->print( join("\n", '@read1', 'ATCG', '+', 'BLAH!', '') );
 $bad_fastq_fh->close;
 ok(!$command->_validate_ctx_fastqs, 'validate ctx fastqs failed b/c of bad fastq');
 #print $command->_sv_staging_output."\n";<STDIN>;
+
+}; #SKIP
 
 my $no_ctx_working_dir = File::Spec->join($test_base_dir, 'output2');
 

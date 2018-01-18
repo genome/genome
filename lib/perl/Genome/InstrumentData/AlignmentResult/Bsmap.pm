@@ -77,7 +77,7 @@ sub _run_aligner {
     # This is (another) temporary directory. The difference between this and the scratch directory is that
     # this is blown away between calls of _run_aligner when running in force_fragment mode, while
     # the scratch directory will stick around.
-    my $temporary_directory = File::Temp->tempdir("_run_aligner_XXXXX", DIR => $scratch_directory);
+    my $temporary_directory = File::Temp::tempdir("_run_aligner_XXXXX", DIR => $scratch_directory);
 
     # This is the alignment output directory.  Whatever you put here will be synced up to the
     # final alignment directory that gets a disk allocation.

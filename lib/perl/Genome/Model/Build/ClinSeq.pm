@@ -117,4 +117,12 @@ sub normal_microarray_build {
     }
 }
 
+sub _disk_usage_result_subclass_names {
+    my $self = shift;
+
+    return [qw(
+        Genome::Model::ClinSeq::Command::AnnotateSnvsVcf::Result
+    )];
+}
+
 1;

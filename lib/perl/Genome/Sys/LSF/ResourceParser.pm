@@ -30,8 +30,8 @@ sub parse_resource_requirements {
     # Compound syntax
     # num1*{simple_string1} + num2*{simple_string2} + ...
     my $compound_string = qr/
-        \d+\*{$simple_string}
-        (\s*\+\s*\d+\*{$simple_string})*
+        \d+\*\{$simple_string\}
+        (\s*\+\s*\d+\*\{$simple_string\})*
     /xms;
 
     my $admissable_res_req = qr/^( | $simple_string | $compound_string )$/xms;

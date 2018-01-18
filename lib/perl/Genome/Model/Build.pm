@@ -610,6 +610,18 @@ sub _additional_associated_disk_allocations : Overrides(Genome::Role::ObjectWith
     return @allocations;
 }
 
+sub _disk_usage_result_subclass_names {
+    my $self = shift;
+
+    $self->fatal_message('Please define _disk_usage_result_subclass_names for build type \''. $self->class .'\'!');
+}
+
+sub disk_usage_results {
+    my $self = shift;
+
+    return $self->results(subclass_name => $self->_disk_usage_result_subclass_names);
+}
+
 sub disk_usage_allocations {
     my $self = shift;
 
@@ -1479,7 +1491,15 @@ sub abandon {
     $self->_abandon_events
         or return;
 
-    $self->reallocate_disk_allocations;
+
+    for my $da ($self->disk_allocations) {
+        Genome::Sys::CommitAction->create(
+            on_commit => sub {
+                $da->purge('abandoning build');
+            },
+        );
+    }
+
     $self->_deactivate_software_results;
 
     my %add_note_args = (header_text => $header_text);
@@ -1768,6 +1788,39 @@ sub add_from_build { # rename "add an underlying build" or something...
     }
     $bridge = Genome::Model::Build::Link->create(from_build_id => $from_id, to_build_id => $to_id, role => $role);
     return $bridge;
+}
+
+sub purge {
+    my $self = shift;
+
+    $self->_deactivate_software_results;
+
+    my $reason = 'purging build ' . $self->__display_name__;
+
+    for my $result ($self->disk_usage_results) {
+
+        next unless $result->disk_allocation;
+
+        my @active_users = grep { $_->active } $result->users;
+
+        if(@active_users) {
+            my $anp = $self->model->analysis_project;
+            if ($anp) {
+                #ignore our own AnP when checking for other users
+                @active_users = grep { $_->user_id ne $anp->id } @active_users;
+            }
+        }
+
+        unless (@active_users) { #nothing else still actively uses this, so go ahead and remove
+            $result->disk_allocation->purge($reason);
+        }
+    }
+
+    for my $alloc ($self->disk_allocations) {
+        $alloc->purge($reason);
+    }
+
+    return 1;
 }
 
 sub delete {

@@ -30,15 +30,6 @@ function teardown {
     $BATS_TEST_DIRNAME/../bin/genome-env -D -u $WORKSPACE/ur "$BATS_TEST_DIRNAME/testexec/U.sh"
 }
 
-@test "basic test: genome-env -W" {
-    export PERL5LIB="$WORKSPACE/workflow/lib:$PERL5LIB"
-    $BATS_TEST_DIRNAME/../bin/genome-env -D -W "$BATS_TEST_DIRNAME/testexec/W.sh"
-}
-
-@test "basic test: genome-env -w" {
-    $BATS_TEST_DIRNAME/../bin/genome-env -D -w $WORKSPACE/workflow "$BATS_TEST_DIRNAME/testexec/W.sh"
-}
-
 @test "basic test: genome-env -M" {
     $BATS_TEST_DIRNAME/../bin/genome-env -D -M "$BATS_TEST_DIRNAME/testexec/M.sh"
 }

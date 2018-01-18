@@ -17,6 +17,7 @@ class Genome::Disk::Group {
     ],
     has => [
         disk_group_name => { is => 'Text' },
+        name => { via => '__self__', to => 'disk_group_name' },
         permissions => { is => 'Number' },
         setgid => { is => 'Number', is_transient => 1, is_optional => 1 }, #transient during transition from "sticky" column
         subdirectory => { is => 'Text' },
@@ -95,49 +96,6 @@ class Genome::Disk::Group {
     data_source => 'Genome::DataSource::Oltp',
     doc => "Represents a disk group (eg, " . Genome::Config::get('disk_group_dev') . "), which contains any number of disk volumes",
 };
-
-
-sub create {
-    my $class = shift;
-    my $self = $class->SUPER::create(@_);
-
-    if (defined($self)) {
-        $self->validate;
-    }
-
-    return $self;
-}
-
-sub get {
-    my $class = shift;
-    if (wantarray) {
-        return $class->_get_many(@_);
-    } else {
-        return $class->_get_single(@_);
-    }
-}
-
-sub _get_many {
-    my $class = shift;
-
-    my @objs = $class->SUPER::get(@_);
-    for my $obj (@objs) {
-        $obj->validate;
-    }
-
-    return @objs;
-}
-
-sub _get_single {
-    my $class = shift;
-
-    my $self = $class->SUPER::get(@_);
-    if (defined($self)) {
-        $self->validate;
-    }
-
-    return $self;
-}
 
 sub validate {
     my $self = shift;

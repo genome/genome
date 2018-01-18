@@ -14,7 +14,11 @@ use Module::Runtime qw(module_notional_filename use_package_optimistically);
 
 my @log_levels;
 BEGIN {
-    @log_levels = keys %Log::Dispatch::LEVELS;
+    @log_levels = keys %Log::Dispatch::CanonicalLevelNames;
+    unless (@log_levels) {
+        #older versions stored this differently
+        @log_levels = keys %Log::Dispatch::LEVELS;
+    }
 }
 
 role Genome::Role::Logger {

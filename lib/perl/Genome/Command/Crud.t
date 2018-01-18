@@ -154,10 +154,10 @@ like($help_text,
     qr(USAGE\s+person create),
     'Person Create help header');
 like($help_text,
-    qr(REQUIRED PARAMS\s+name\s+Name of the person\s+title\s+Title),
+    qr(REQUIRED PARAMS(?:\s+name\s+Name of the person|\s+title\s+Title){2}),
     'Person Create help required params');
 like($help_text,
-    qr(OPTIONAL PARAMS\s+mom\s+The person's Mom\s+friends\s+Friends of this person\s+best-friend\s+Best friend of this person\s+has-pets\s+Does this person have pets\?.*?job\s+The person's job)s,
+    qr(OPTIONAL PARAMS(?:\s+mom\s+The person's Mom|\s+friends\s+Friends of this person|\s+best-friend\s+Best friend of this person|\s+has-pets\s+Does this person have pets\?.*?|\s+job\s+The person's job){5})s,
     'Person Create help optional params');
 like($help_text,
     qr(DESCRIPTION\s+This command creates a person\.),

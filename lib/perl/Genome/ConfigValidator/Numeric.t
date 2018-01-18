@@ -16,7 +16,13 @@ my @tests = (
     ['123 abc', 0],
 );
 for my $test (@tests) {
-    my ($value, $expected) = @{$test};
-    my $message = sprintf(q('%s' should %s check), $value, ($expected ? 'pass' : 'fail'));
-    is($validator->check($value), $expected, $message);
+    my ($value, $expected_to_validate) = @{$test};
+    my $message = sprintf(q('%s' should %s check), $value, ($expected_to_validate ? 'pass' : 'fail'));
+
+    my $validates = $validator->check($value);
+    if ($expected_to_validate) {
+        ok($validates, $message);
+    } else {
+        ok(!$validates, $message);
+    }
 }

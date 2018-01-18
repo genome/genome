@@ -92,6 +92,7 @@
                                  ],
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1",
                                     "XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING" : "1"
@@ -119,6 +120,8 @@
                                  "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                  "environment" : {
                                     "FOO" : "bar",
+                                    "LSB_SUB_ADDITIONAL" : "docker(hello-world)",
+                                    "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                                     "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                     "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                  },
@@ -128,7 +131,7 @@
                                     "numProcessors" : 1,
                                     "outFile" : "/tmp/ptero-lsf-logfile-28740132-2b5a-4893-a364-e628bb931cd3.out",
                                     "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-b56a93d7-8691-44bc-ae2e-e63ed16e4a14.err --stdout /tmp/ptero-lsf-logfile-b56a93d7-8691-44bc-ae2e-e63ed16e4a14.out' > /tmp/ptero-lsf-logfile-b56a93d7-8691-44bc-ae2e-e63ed16e4a14-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-b56a93d7-8691-44bc-ae2e-e63ed16e4a14-postexec.log",
-                                    "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
+                                    "preExecCmd" : "/docker_run.py /usr/bin/ptero-lsf-pre-exec; exit 0;",
                                     "queue" : "long",
                                     "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                                  },
@@ -213,6 +216,7 @@
                                                                ],
                                                                "environment" : {
                                                                   "FOO" : "bar",
+                                                                  "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                                                                   "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1",
                                                                   "XGENOME_SOFTWARE_RESULT_ASYNC_LOCKING" : "1"
@@ -240,6 +244,8 @@
                                                                "cwd" : "/home/archive/dmorton/genome/lib/perl/Genome",
                                                                "environment" : {
                                                                   "FOO" : "bar",
+                                                                  "LSB_SUB_ADDITIONAL" : "docker(hello-world)",
+                                                                  "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                                                                   "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                                                                   "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                                                                },
@@ -249,7 +255,7 @@
                                                                   "numProcessors" : 1,
                                                                   "outFile" : "/tmp/ptero-lsf-logfile-3d67cf8b-f715-4578-9845-67a5912ad0c2.out",
                                                                   "postExecCmd" : "bash -c '/usr/bin/ptero-lsf-post-exec --stderr /tmp/ptero-lsf-logfile-db854ac9-7779-4eb6-b675-1592c21041c3.err --stdout /tmp/ptero-lsf-logfile-db854ac9-7779-4eb6-b675-1592c21041c3.out' > /tmp/ptero-lsf-logfile-db854ac9-7779-4eb6-b675-1592c21041c3-postexec.log 2>&1 && rm -f /tmp/ptero-lsf-logfile-db854ac9-7779-4eb6-b675-1592c21041c3-postexec.log",
-                                                                  "preExecCmd" : "/usr/bin/ptero-lsf-pre-exec; exit 0;",
+                                                                  "preExecCmd" : "/docker_run.py /usr/bin/ptero-lsf-pre-exec; exit 0;",
                                                                   "queue" : "long",
                                                                   "resReq" : "select[gtmp>1 && mem>3000] span[hosts=1] rusage[gtmp=1 && mem=3000]"
                                                                },
@@ -302,6 +308,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                      "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
@@ -329,6 +336,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                      "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },
@@ -356,6 +364,7 @@
                   ],
                   "environment" : {
                      "FOO" : "bar",
+                     "XGENOME_LSB_SUB_ADDITIONAL" : "docker(hello-world)",
                      "XGENOME_PTERO_LSF_SERVICE_URL" : "http://lsf.example.com/v1",
                      "XGENOME_PTERO_SHELL_COMMAND_SERVICE_URL" : "http://example.com/v1"
                   },

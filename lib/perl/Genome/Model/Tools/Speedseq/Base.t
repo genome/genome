@@ -10,7 +10,7 @@ my $pkg = 'Genome::Model::Tools::Speedseq::Base';
 use_ok ($pkg);
 
 my $version = '0.1.0-gms';
-my $expected_path = '/gscmnt/sata849/info/speedseq_freeze/v3/speedseq/bin/speedseq';
+my $expected_path = '/gscmnt/ams1102/info/speedseq_freeze/v3/speedseq/bin/speedseq';
 
 
 my $path = $pkg->path_for_version($version);

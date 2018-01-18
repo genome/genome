@@ -6,6 +6,7 @@ use warnings;
 use above 'Genome';
 use Test::More;
 use Genome::Utility::Test;
+use File::Spec;
 
 my $class = 'Genome::Model::SmallRna::Command::AnnotateCluster';
 use_ok($class);
@@ -17,7 +18,11 @@ my $exp_out_dir = $data_dir . '/v1';
 my $cluster_bed_file = $data_dir.'/top_sorted_clusters.bed';
 my $exp_out_file     = $exp_out_dir.'/annotation_intersect.tsv';
 
-my $annot_files = '/gscmnt/sata141/techd/jhundal/miRNA/Annotation_Files/BED_FILES/Curated_clusters_FINAL_ANNOTATION.bed,/gscmnt/sata141/techd/jhundal/miRNA/Annotation_Files/BED_FILES/miRBasev16_BioMart_annotation_combined.bed,/gscmnt/sata141/techd/jhundal/miRNA/Annotation_Files/BED_FILES/NCBI-human.combined-annotation_58_37c_v2_modified.bed';
+my $annot_files = join(',', map {
+        File::Spec->join( $data_dir, 'Annotation_Files', $_)
+    }
+    qw(Curated_clusters_FINAL_ANNOTATION.bed miRBasev16_BioMart_annotation_combined.bed NCBI-human.combined-annotation_58_37c_v2_modified.bed)
+);
 
 my $annot_name = 'Curated_Clusters,miRBase_BioMart,TGI';
 

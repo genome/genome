@@ -81,7 +81,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
         (
             select
                 --Index Illumina
-                to_char(i.analysis_id) id,
+                i.analysis_id id,
                 i.library_id library_id,
                 i.index_sequence index_sequence,
                 i.flow_cell_id,
@@ -93,7 +93,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 i.sd_below_insert_size old_sd_below_insert_size,
                 i.filt_clusters clusters,
                 i.analysis_software_version,
-                (case when i.index_sequence is null then to_char(i.lane) else to_char(i.lane) || '-' || i.index_sequence end) subset_name,
+                (case when i.index_sequence is null then i.lane::text else i.lane::text || '-' || i.index_sequence end) subset_name,
 
                 --Constant
                 0 is_external,
@@ -111,7 +111,7 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 --Fwd
                 r1.sls_seq_id fwd_seq_id,
                 (case when r1.seq_id is not null then 'Paired End Read 1' else null end) fwd_run_type,
-                nvl(r1.read_length,-1) fwd_read_length,
+                coalesce(r1.read_length,-1) fwd_read_length,
                 (case when r1.seq_id is not null then r2.kilobases_read else -1 end) fwd_kilobases_read,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) fwd_clusters,
                 (case when r1.seq_id is not null then i.filt_clusters else null end) fwd_filt_clusters,
@@ -135,10 +135,9 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 --Misc Paths
                 archive2.path archive_path,
                 gerald_bam.path bam_path,
-                collect_gc_bias.path gc_bias_path,
-                fastqc.path fastqc_path,
-                '/gscmnt/sata114/info/medseq/adaptor_sequences/solexa_adaptor_pcr_primer'
-                    || (case when sam.sample_type = 'rna' then '_SMART' else '' end) adaptor_path
+                NULL gc_bias_path,
+                NULL fastqc_path,
+                NULL adaptor_path
 
                 from index_illumina i
                     join flow_cell_illumina fc on fc.flow_cell_id = i.flow_cell_id
@@ -153,22 +152,16 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                         and archive2.data_type = 'illumina fastq tgz'
                     left join seq_fs_path gerald_bam on gerald_bam.seq_id = i.seq_id
                         and gerald_bam.data_type = 'gerald bam'
-                    left join seq_fs_path collect_gc_bias on collect_gc_bias.seq_id = i.seq_id
-                        and collect_gc_bias.data_type = 'collect gc bias'
-                    left join seq_fs_path fastqc on fastqc.seq_id = i.seq_id
-                        and fastqc.data_type = 'fastqc'
                     left join read_illumina r1
                         on run_type = 'Paired End'
                         and r1.ii_seq_id = i.seq_id
                         and r1.read_number = 1
-                    join GSC.library_summary lib on lib.library_id = i.library_id
-                    join GSC.organism_sample sam on sam.organism_sample_id = lib.sample_id
         )
         index_illumina
 EOS
     ,
     id_by => [
-        id => { is => 'Text', },
+        id => { is => 'Number', },
     ],
     has => [
         library_id                      => { is => 'Number', },

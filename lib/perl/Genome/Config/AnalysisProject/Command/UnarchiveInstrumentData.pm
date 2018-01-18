@@ -21,31 +21,24 @@ class Genome::Config::AnalysisProject::Command::UnarchiveInstrumentData {
 
 sub execute {
     my $self = shift;
-    my $anp = $self->analysis_project;
 
-
-    for my $instrument_data ($anp->instrument_data) {
-        my @allocations = $instrument_data->disk_allocations;
-
-        if (@allocations) {
-            for my $allocation (@allocations) {
-                if ($allocation->is_archived) {
-                    say 'genome disk allocation unarchive --analysis-project ' . $anp->id . ' ' . $allocation->id;
-                }
-            }
-        }
-
-        $self->unarchive_additional_data($instrument_data);
+    my $unarchive_cmd = Genome::InstrumentData::Command::Unarchive->create(
+        instrument_data => [$self->analysis_project->instrument_data],
+        analysis_project => $self->analysis_project,
+        volume => $self->volume,
+    );
+    unless ($unarchive_cmd) {
+        $self->fatal_message('Failed to create unarchive instrument data command!');
     }
+    unless ($unarchive_cmd->execute) {
+        $self->fatal_message('Failed to execute unarchive instrument data command!');
+    }
+
+    return 1;
 }
 
 sub valid_statuses {
     return ('In Progress', 'Hold', 'Pending');
-}
-
-sub unarchive_additional_data {
-    #this is a hook for overriding--by default do nothing;
-    return 1;
 }
 
 1;

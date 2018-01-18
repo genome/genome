@@ -2,7 +2,8 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 8;
+#use Test::More tests => 8;
+use Test::More skip_all => 'This test is disabled for relying on non-test data.';
 use Genome::Utility::Test;
 use Genome::Model::ClinSeq::TestData;
 

@@ -13,6 +13,8 @@ use Test::More;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::Qc::Result;
+use Genome::Test::Factory::Qc::Config;
 
 my $pkg = 'Genome::Model::SomaticValidation::Command::AlignmentStatsSummary';
 use_ok($pkg);
@@ -21,6 +23,28 @@ my $result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup
 my $bam_flagstat_path = File::Spec->join(__FILE__.".d", "test.bam.flagstat");
 my $ind_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object();
 my $inst_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
+
+my $test_qc_config = Genome::Test::Factory::Qc::Config->setup_object(
+   name => 'test_qc_config',
+   type => 'wgs',
+); 
+
+my $test_qc_result = Genome::Test::Factory::Qc::Result->setup_object(
+   alignment_result => $ind_result,
+   config_name => 'test_qc_config'
+);
+
+Sub::Install::reinstall_sub({
+    into => "Genome::Qc::Result",
+    as => 'get_unflattened_metrics',
+    code => sub {
+        return (
+            FIRST_OF_PAIR  => {PF_MISMATCH_RATE => 0.03},
+            SECOND_OF_PAIR => {PF_MISMATCH_RATE => 0.05},
+        );
+    },
+});
+
 Sub::Install::reinstall_sub({
     into => "Genome::InstrumentData::AlignmentResult::Merged",
     as => 'bam_flagstat_path',
@@ -86,7 +110,7 @@ my $expected_metrics = {
         'Total Unique Mapped Bases' => "-20",
         'Aligned %' => "94.82",
         'Unique %' => "94.28",
-        'Error Rate' => "NA",
+        'Error Rate' => "4.00",
         'Total # Reads' => "4688",
         '%pairs mapping across chromosomes' => "1.64",
 };

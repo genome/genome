@@ -14,7 +14,7 @@ class Genome::Model::Tools::BioSamtools::RepeatContent {
         repeats_file => {
             doc => 'A RepeatMasker table of repeats for the genome.',
             is => 'Text',
-            example_values => ['/gscmnt/gc13001/info/model_data/jwalker_scratch/RepeatEval/hg19.fa.out'],
+            example_values => ['/gscmnt/gc2764/cad/jwalker/scratch/RepeatEval/hg19.fa.out'],
         }
     ],
 };

@@ -144,12 +144,29 @@ sub _alignment_metrics_from_result {
     for my $lane (@per_lane_alignments) {
         $total_bases += $lane->total_base_count;
         $total_mapped_bases += $lane->total_aligned_base_count;
-        my $filt_error_rate_avg;
+        my @QC_results = Genome::Qc::Result->get(alignment_result => $lane);
         if ($mismatches ne "NA" and $lane->instrument_data->can("filt_error_rate_avg")
             and defined($lane->instrument_data->filt_error_rate_avg)) {
             $mismatches += $lane->total_base_count * $lane->instrument_data->filt_error_rate_avg / 100;
         }
+        elsif ($mismatches ne "NA" and @QC_results) {
+            if (@QC_results == 1) {
+                my $error_rate_avg = $self->_get_error_rate_avg($QC_results[0]);
+                if ($error_rate_avg) {
+                    $mismatches += $lane->total_base_count * $error_rate_avg;
+                }
+                else {
+                    $self->warning_message('Fail to get any PF_MISMATCH_RATE for QC_result '.$QC_results[0]->id);
+                    $mismatches = "NA";
+                }
+            }
+            else {
+                $self->warning_message('Got multiple QC results for alignment_result '.$lane->id);
+                $mismatches = "NA";
+            }
+        }
         else {
+            $self->warning_message('Neither filt_error_rate_avg nor QC result is available for alignment_result '.$lane->id);
             $mismatches = "NA";
         }
         push @inserts, $lane->instrument_data->library->original_insert_size;
@@ -210,4 +227,20 @@ sub _alignment_metrics_from_result {
     return $data;
 }
 
+
+sub _get_error_rate_avg {
+    my ($self, $qc_result) = @_;
+    my %result_metrics = $qc_result->get_unflattened_metrics;
+    my ($read_1_mismatch_rate, $read_2_mismatch_rate) = ($result_metrics{FIRST_OF_PAIR}->{PF_MISMATCH_RATE}, $result_metrics{SECOND_OF_PAIR}->{PF_MISMATCH_RATE});
+
+    if (defined $read_1_mismatch_rate and defined $read_2_mismatch_rate) {
+        return ($read_1_mismatch_rate + $read_2_mismatch_rate)/2;
+    }
+    elsif (defined $read_1_mismatch_rate or defined $read_2_mismatch_rate) {
+        return defined $read_1_mismatch_rate ? $read_1_mismatch_rate : $read_2_mismatch_rate;
+    }
+    else {
+        return;
+    }
+}
 1;

@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Genome::Logger;
 
 use Carp qw(confess);
 use List::Util 'shuffle';
@@ -129,19 +128,19 @@ sub candidate_volumes_without_mount_path {
     if (defined $exclude_mount_path) {
         $candidate_volume_params{'exclude'} = $exclude_mount_path;
     }
-    return $self->_get_candidate_volumes(
+    return $self->get_candidate_volumes(
         %candidate_volume_params);
 }
 
 # Returns a list of volumes that meets the given criteria
-sub _get_candidate_volumes {
-    my ($self, %params) = @_;
+sub get_candidate_volumes {
+    my ($class, %params) = @_;
 
     my $disk_group_name = delete $params{disk_group_name};
     my $exclude = delete $params{exclude};
 
     if (%params) {
-        confess "Illegal arguments to _get_candidate_volumes: "
+        confess "Illegal arguments to get_candidate_volumes: "
             . join(', ', keys %params);
     }
 
@@ -203,19 +202,29 @@ sub _get_allocation_without_lock_impl {
                 );
                 last;
             }
+        } else {
+            $self->debug_message(
+                'Insufficient space on <%s>. (%s KB used, %s KB allocated, %s KB soft limit)',
+                $candidate_volume->mount_path,
+                $candidate_volume->used_kb,
+                scalar($candidate_volume->allocated_kb),
+                $candidate_volume->soft_limit_kb,
+            );
         }
     }
 
     unless (defined $chosen_allocation) {
-        Carp::confess $self->error_message(sprintf(
-            "Could not create allocation in specified disk group (%s), "
+        Carp::confess $self->error_message(
+            "Could not create allocation for %s kilobytes at <%s> in specified disk group (%s), "
             . "which contains %d volumes:\n%s\n",
+            $self->parameters->kilobytes_requested,
+            $self->parameters->allocation_path,
             $self->parameters->disk_group_name, scalar(@$candidate_volumes),
             join("\n", map { $_->mount_path } @$candidate_volumes),
-        ));
+        );
     }
 
-    Genome::Logger->debugf("Allocation (%s) created at %s",
+    $self->debug_message("Allocation (%s) created at %s",
         $chosen_allocation->id, $chosen_allocation->absolute_path);
 
     return $chosen_allocation;
@@ -275,7 +284,7 @@ sub _attempt_allocation_creation {
     if ($candidate_volume->is_allocated_over_soft_limit) {
         Genome::Utility::Instrumentation::inc('disk.allocation.'
             . 'get_allocation_without_lock.rollback.over_allocated');
-        Genome::Logger->debugf(
+        $self->debug_message(
                 "%s's allocated_kb exceeded soft limit (%d kB), "
                 . "rolling back allocation.",
                 $candidate_volume->mount_path,
@@ -287,7 +296,7 @@ sub _attempt_allocation_creation {
     } elsif ($candidate_volume->is_used_over_soft_limit) {
         Genome::Utility::Instrumentation::inc('disk.allocation.'
             . 'get_allocation_without_lock.rollback.over_used');
-        Genome::Logger->debugf(
+        $self->debug_message(
                 "%s's used_kb exceeded soft limit (%d %s), "
                 . "rolling back allocation.",
                 $candidate_volume->mount_path,

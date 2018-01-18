@@ -183,7 +183,7 @@ sub create
 
             my $entrez_id = undef;
             my $entrez_genes = $ensembl_gene->get_all_DBEntries('EntrezGene');
-            if ( defined(@$entrez_genes)) {
+            if ( defined($entrez_genes) and @$entrez_genes) {
                 $entrez_id = @$entrez_genes[0]->primary_id;
             }
 

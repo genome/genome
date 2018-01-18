@@ -191,7 +191,7 @@ sub create {
 
     for my $input ('aligned_reads_input', 'control_aligned_reads_input') {
         if($self->$input) {
-            my $canonical_path = Cwd::abs_path($self->$input);
+            my $canonical_path = Genome::Sys->abs_path($self->$input);
             unless($canonical_path) {
                 die $self->error_message('Failed to resolve real path to ' . $input);
             }

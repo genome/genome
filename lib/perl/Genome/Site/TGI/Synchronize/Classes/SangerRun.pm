@@ -11,7 +11,7 @@ require List::MoreUtils;
 
 class Genome::Site::TGI::Synchronize::Classes::SangerRun {
     is => 'Genome::Site::TGI::Synchronize::Classes::LimsBase',
-    table_name => '( select run_name from gsc_run@oltp ) sanger_run',
+    table_name => '( select run_name from gsc_run ) sanger_run',
     id_by => {
         run_name => { is => 'Text', },
     },

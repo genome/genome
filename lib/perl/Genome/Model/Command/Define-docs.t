@@ -17,9 +17,9 @@ chomp @sub_commands;
 
 my @sub_commands_expected = qw/
   clin-seq
+  cwl-pipeline
   de-novo-assembly
   differential-expression
-  gene-prediction
   genotype-microarray
   imported-annotation
   imported-reference-sequence

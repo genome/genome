@@ -118,12 +118,12 @@ sub validate_existing_directory {
     }
 
     unless ( -e $directory ) {
-        Carp::croak("Can't validate_existing_director: $directory: Path does not exist");
+        Carp::croak("Can't validate_existing_directory: $directory: Path does not exist");
     }
 
 
     unless ( -d $directory ) {
-        Carp::croak("Can't validate_existing_director: $directory: path exists but is not a directory");
+        Carp::croak("Can't validate_existing_directory: $directory: path exists but is not a directory");
     }
 
     return 1;
@@ -203,6 +203,12 @@ sub _can_write_to_directory {
     return 1;
 }
 
+sub abs_path {
+    my ($self, $path) = @_;
+
+    return Cwd::abs_path($path);
+}
+
 # MD5
 
 sub md5sum {
@@ -247,7 +253,7 @@ sub snapshot_revision {
     die $class->error_message('Did not find both modules loaded (UR and Genome).') unless @libs == 2;
 
     # assemble list of "important" libs
-    @libs = map { File::Basename::dirname($_) } @libs;
+    @libs = map { File::Basename::dirname($class->abs_path($_)) } @libs;
     push @libs, UR::Util->used_libs;
 
     # remove trailing slashes
@@ -314,7 +320,7 @@ sub _find_in_genome_db_paths {
 
     my @base_dirs = split(':',$base_dirs);
     my @dirs =
-        map { -l $_ ? Cwd::abs_path($_) : ($_) }
+        map { -l $_ ? $class->abs_path($_) : ($_) }
         map {
             my $path = join("/",$_,$subdir);
             (-e $path ? ($path) : ())
@@ -865,7 +871,12 @@ sub rsync_directory {
 
 sub line_count {
     my ($self, $path) = @_;
-    my ($line_count) = qx(wc -l $path) =~ /^(\d+)/;
+    my $line_count;
+    if ($self->file_is_gzipped($path)) {
+        ($line_count) = qx(zcat $path | wc -l) =~ /^(\d+)/;
+    } else {
+        ($line_count) = qx(wc -l $path) =~ /^(\d+)/;
+    }
     return $line_count;
 }
 
@@ -1755,7 +1766,7 @@ sub capture {
 sub disconnect_default_handles {
     my $class = shift;
 
-    for my $ds (qw(Genome::DataSource::GMSchema)) {
+    for my $ds (qw(Genome::DataSource::GMSchema Genome::DataSource::Oltp)) {
         if($ds->has_default_handle) {
             $class->debug_message("Disconnecting $ds default handle.");
             $ds->disconnect_default_dbh();
