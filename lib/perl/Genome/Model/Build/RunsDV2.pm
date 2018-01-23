@@ -105,6 +105,7 @@ sub _dv2_result_subclass_names {
         Genome::Model::Tools::DetectVariants2::Result::Combine::IntersectSnv
         Genome::Model::Tools::DetectVariants2::Result::Combine::IntersectIndel
         Genome::Model::Tools::DetectVariants2::Result::Combine::LqUnion
+        Genome::Model::Tools::DetectVariants2::Result::Combine::UnionCnv
         Genome::Model::Tools::DetectVariants2::Result::Combine::UnionSv
         Genome::Model::Tools::DetectVariants2::Result::Combine::UnionuniqueIndel
         Genome::Model::Tools::DetectVariants2::Result::Combine::UnionuniqueSnv
