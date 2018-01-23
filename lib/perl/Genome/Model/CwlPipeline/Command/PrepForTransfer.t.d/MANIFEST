@@ -1,13 +1,13 @@
-subject.name	file.name	md5sum
-sample-A	buildA.CalculateHsMetrics.txt	97cb2e9c8b21e846bc9062ac783c7760
-sample-A	buildA.CollectAlignmentSummaryMetrics.txt	261b60b3343e1293ce499b2c18349227
-sample-A	buildA.CollectInsertSizeMetrics.txt	3577b66e0732c3441ab4b87196db22e7
-sample-B	buildB.CalculateHsMetrics.txt	cb1801ab07dd9f550e911295952a9432
-sample-B	buildB.CollectignmentSummaryMetrics.txt	59b1c0fd6d332e8f56c77bffec577433
-sample-B	buildB.CollectInsertSizeMetrics.txt	09a428c339e6199f6cf61dd2ac879ef5
-sample-C	buildC.CalculateHsMetrics.txt	50f533c31e9d282ac1b0807f209c9bd9
-sample-C	buildC.CollectAlignmentSummaryMetrics.txt	cfc4affcc071c9093d98ab82495178cb
-sample-C	buildC.CollectInsertSizeMetrics.txt	812949b1b3af0eae7a3b9c4fa0a69722
-sample-D	buildD.CalculateHsMetrics.txt	7a52fb589b53ed4e1c81492d41e0efd8
-sample-D	buildD.CollectAlignmentSummaryMetrics.txt	dfc5e4b6c44d705b5a525a7f74f63506
-sample-D	buildD.CollectInsertSizeMetrics.txt	733dd65ad4ef0dbb9a3867b800baebef
+subject.name	file.name	build.id	build.completion_time	md5sum
+sample-A	buildA.CalculateHsMetrics.txt	buildA	1999-04-05 18:04:01	97cb2e9c8b21e846bc9062ac783c7760
+sample-A	buildA.CollectAlignmentSummaryMetrics.txt	buildA	1999-04-05 18:04:01	261b60b3343e1293ce499b2c18349227
+sample-A	buildA.CollectInsertSizeMetrics.txt	buildA	1999-04-05 18:04:01	3577b66e0732c3441ab4b87196db22e7
+sample-B	buildB.CalculateHsMetrics.txt	buildB	1999-04-06 18:04:01	cb1801ab07dd9f550e911295952a9432
+sample-B	buildB.CollectignmentSummaryMetrics.txt	buildB	1999-04-06 18:04:01	59b1c0fd6d332e8f56c77bffec577433
+sample-B	buildB.CollectInsertSizeMetrics.txt	buildB	1999-04-06 18:04:01	09a428c339e6199f6cf61dd2ac879ef5
+sample-C	buildC.CalculateHsMetrics.txt	buildC	1999-04-07 18:04:01	50f533c31e9d282ac1b0807f209c9bd9
+sample-C	buildC.CollectAlignmentSummaryMetrics.txt	buildC	1999-04-07 18:04:01	cfc4affcc071c9093d98ab82495178cb
+sample-C	buildC.CollectInsertSizeMetrics.txt	buildC	1999-04-07 18:04:01	812949b1b3af0eae7a3b9c4fa0a69722
+sample-D	buildD.CalculateHsMetrics.txt	buildD	1999-04-08 18:04:01	7a52fb589b53ed4e1c81492d41e0efd8
+sample-D	buildD.CollectAlignmentSummaryMetrics.txt	buildD	1999-04-08 18:04:01	dfc5e4b6c44d705b5a525a7f74f63506
+sample-D	buildD.CollectInsertSizeMetrics.txt	buildD	1999-04-08 18:04:01	733dd65ad4ef0dbb9a3867b800baebef

@@ -38,6 +38,7 @@ for my $dir (@dirs) {
        model_id => $model->id,
        data_directory => File::Spec->catfile($data_dir,$dir),
     );
+    $build->date_completed('1999-04-0' . (ord($dir)-60) . ' 18:04:01');
     push @builds, $build;
     my @files = grep {-f $_} glob($build->data_directory .'/results/*');
     $files_by_build{$build->id} = \@files;
