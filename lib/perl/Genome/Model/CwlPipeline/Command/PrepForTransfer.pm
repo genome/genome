@@ -41,6 +41,8 @@ sub execute {
     my @headers = qw/
                         subject.name
                         file.name
+                        build.id
+                        build.completion_time
                     /;
     if ($self->md5sum) {
         push @headers, 'md5sum';
@@ -69,6 +71,8 @@ sub execute {
             my %data = (
                 'subject.name' => $build->model->subject->name,
                 'file.name' => $symlink_name,
+                'build.id' => $build->id,
+                'build.completion_time' => $build->date_completed,
             );
             if ($self->md5sum) {
                 my $md5sum = Genome::Sys->md5sum($file_path);
