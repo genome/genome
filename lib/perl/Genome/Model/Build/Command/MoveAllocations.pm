@@ -80,7 +80,7 @@ sub execute {
             push @allocations_to_move, $build_allocation if $build_allocation->status eq 'active';
         } else {
             my $build_dir = $build->data_directory;
-            $self->warning_message('No allocation for build directory %s', $build_dir) if -d $build_dir;
+            $self->warning_message('No allocation for build directory %s', $build_dir) if $build_dir && -d $build_dir;
         }
 
         my $disk_group = $self->disk_group // $self->_resolve_disk_group_for_build($build);
