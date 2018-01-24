@@ -1385,43 +1385,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>bacterial',
   [
-    '>core-gene-coverage',
-    [
-      'cell-type=s',
-      [
-        'ARCHAEA',
-        'BACTERIA'
-      ],
-      'fasta-file=s',
-      undef,
-      'fraction-of-length=s',
-      undef,
-      'output-file=s',
-      'files',
-      'percent-id=s',
-      undef,
-      'archaea-group-file=s',
-      'files',
-      'archaea-query-file=s',
-      'files',
-      'bacterial-group-file=s',
-      'files',
-      'bacterial-query-file=s',
-      'files',
-      'debug!',
-      undef,
-      'minimum-percent-coverage=s',
-      undef,
-      'run-locally!',
-      undef,
-      'survey-type=s',
-      [
-        'geneset',
-        'assembly'
-      ],
-      'help!',
-      undef
-    ],
     '>parse-ace-files',
     [
       'acedb-path=s',
@@ -5947,23 +5910,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>hash',
-    [
-      'file-name=s',
-      'files',
-      'directory=s',
-      'files',
-      'version=s',
-      'files',
-      'hash-length=s',
-      undef,
-      'file-format=s',
-      'files',
-      'read-type=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>cmt-file',
     [
       'sequencing-technologies=s@',
@@ -5992,6 +5938,23 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>hash',
+    [
+      'file-name=s',
+      'files',
+      'directory=s',
+      'files',
+      'version=s',
+      'files',
+      'hash-length=s',
+      undef,
+      'file-format=s',
+      'files',
+      'read-type=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>read-names-database',
     [
       'directory=s',
@@ -6002,25 +5965,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'create-new!',
       undef,
-      'help!',
-      undef
-    ],
-    '>core-gene-survey',
-    [
-      'assembly-directory=s',
-      'files',
-      'percent-id=s',
-      undef,
-      'fraction-of-length=s',
-      undef,
-      'domain=s',
-      'files',
-      'version=s',
-      'files',
-      'fasta-file=s',
-      'files',
-      'output-file=s',
-      'files',
       'help!',
       undef
     ],
