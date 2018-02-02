@@ -32,6 +32,16 @@ sub execute {
     my $build_count = scalar(@builds);
     my @errors;
     for my $build (@builds) {
+        my $anp = $build->model->analysis_project;
+        unless ($anp) {
+            $self->fatal_message(
+                'Failed to restart build (%s): %s.',
+                $build->__display_name__,
+                'Model is missing analysis project!'
+            );
+        }
+        my $guard = $anp->set_env;
+
         my $transaction = UR::Context::Transaction->begin();
         local $@;
         my $successful = eval { $self->_restart_build($build) };
