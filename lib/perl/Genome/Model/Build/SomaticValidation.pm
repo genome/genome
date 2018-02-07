@@ -360,6 +360,7 @@ sub _disk_usage_result_subclass_names {
         Genome::InstrumentData::AlignmentResult::Speedseq
         Genome::InstrumentData::AlignmentResult::Merged::Speedseq
         Genome::Qc::Result
+        Genome::Model::Build::SomaticValidation::IdentifyDnpResult
     ));
 
     return \@classes;
