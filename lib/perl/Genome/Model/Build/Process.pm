@@ -19,7 +19,8 @@ class Genome::Model::Build::Process {
 
 sub workflow_name {
     my $self = shift;
-    return $self->build->workflow_name;
+
+    return join(" - ", $self->build->workflow_name, $self->id);
 }
 
 sub lsf_project_name {
