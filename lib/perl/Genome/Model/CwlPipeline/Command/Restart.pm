@@ -63,6 +63,10 @@ sub _restart_build {
         die 'Can only restart failed builds.';
     }
 
+    my $anp = $build->model->analysis_project;
+    my $guard;
+    $guard = $anp->set_env if $anp;
+
     $build->status('Scheduled');
     $build->date_completed(undef);
 
