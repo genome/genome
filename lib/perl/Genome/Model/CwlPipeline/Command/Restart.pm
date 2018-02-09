@@ -71,9 +71,6 @@ sub _restart_build {
         File::Spec->join($build->data_directory, 'build.xml')
     );
 
-    my $now = time();
-    $xml =~ s/operation name="([^"]+)"/operation name="$1 - restart $now"/;
-
     return $build->_launch(\%params, $xml);
 }
 
