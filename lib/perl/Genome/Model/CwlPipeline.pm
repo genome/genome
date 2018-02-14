@@ -156,7 +156,7 @@ sub determine_input_objects {
     my %inputs;
     for my $name (keys %data) {
         my $value = $class->determine_input_object($name, $data{$name});
-        unless($value) {
+        unless(defined $value) {
             $class->fatal_message('Unable to determine input for name "%s" and value "%s".', $name, $data{$name});
         }
 
