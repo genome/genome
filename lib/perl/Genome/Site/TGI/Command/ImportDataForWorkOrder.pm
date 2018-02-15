@@ -205,7 +205,7 @@ sub _import_anp_associations {
     if (my $anp = $self->analysis_project) {
         my $cmd = Genome::Config::AnalysisProject::Command::AddInstrumentData->create(
             analysis_project => $anp,
-            instrument_data => \@data,
+            instrument_data => [Genome::InstrumentData->get([map $_->id, @data])],
         );
 
         unless ($cmd->execute) {
