@@ -16,7 +16,7 @@ our @lims_classes = (
         'Genome::Site::TGI::Synchronize::Classes::'.$_
     } (qw/ 
         OrganismTaxon OrganismIndividual PopulationGroup OrganismSample LibrarySummary
-        IndexIllumina Genotyping
+        IndexIllumina
         LimsProject LimsProjectSample
         InstrumentDataAnalysisProjectBridge
     /)
