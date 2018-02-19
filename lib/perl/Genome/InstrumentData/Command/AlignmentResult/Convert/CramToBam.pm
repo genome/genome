@@ -41,12 +41,7 @@ sub execute {
 
     $self->_run_conversion('-b', $cram_file, $bam_file);
 
-    unless ($self->_verify_file($bam_file)) {
-        $self->fatal_message('Failed to convert to BAM file.');
-    } else {
-        unlink $cram_file;
-        $result->filetype('bam');
-    }
+    $result->filetype('bam');
 
     return 1;
 }
