@@ -135,7 +135,7 @@ sub process_input_data {
 
     for my $name (keys %data) {
         my $value = $self->determine_input_object($name, $data{$name});
-        unless ($value) {
+        unless (defined $value) {
             $self->fatal_message('Failed to determine input for name "%s" and value "%s".', $name, $data{$name});
         }
 
