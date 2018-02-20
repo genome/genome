@@ -20,6 +20,13 @@ my $class = 'Genome::Model::CwlPipeline::Command::Restart';
 use_ok($class);
 
 my $anp = Genome::Test::Factory::AnalysisProject->setup_object;
+my $env_file = Genome::Sys->create_temp_file_path;
+Genome::Sys->write_file($env_file, "testing: 123\n");
+Genome::Config::AnalysisProject::Command::AddEnvironmentFile->execute(
+    environment_file => $env_file,
+    analysis_project => $anp,
+);
+
 my $model = Genome::Test::Factory::Model::CwlPipeline->setup_object(
     name => 'testing restart command',
 );
