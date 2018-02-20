@@ -31297,26 +31297,6 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>feature-list',
   [
-    '>dump-merged-list',
-    [
-      'alternate-reference=s',
-      undef,
-      'merge!',
-      undef,
-      'short-name!',
-      undef,
-      'track-name=s',
-      [
-        'tiled_region',
-        'target_region'
-      ],
-      'feature-list=s',
-      undef,
-      'output-path=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>create',
     [
       'name=s',
@@ -31346,6 +31326,85 @@ $Genome::Command::OPTS_SPEC = [
       'subject=s',
       undef,
       'description=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>dump-interval-list',
+    [
+      'feature-list=s',
+      undef,
+      'merge!',
+      undef,
+      'reference-build=s',
+      undef,
+      'track-name=s',
+      [
+        'tiled_region',
+        'target_region'
+      ],
+      'output-path=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>import',
+    [
+      'name=s',
+      'files',
+      'reference=s',
+      undef,
+      'content-type=s',
+      [
+        'exome',
+        'targeted',
+        'validation',
+        'roi',
+        undef
+      ],
+      'is-1-based!',
+      undef,
+      'new-feature-list=s',
+      undef,
+      'source=s',
+      'files',
+      'description=s',
+      'files',
+      'file-path=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>change-format',
+    [
+      'format=s',
+      [
+        '1-based',
+        'true-BED',
+        'multi-tracked',
+        'multi-tracked 1-based'
+      ],
+      'feature-list=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>dump-merged-list',
+    [
+      'alternate-reference=s',
+      undef,
+      'merge!',
+      undef,
+      'short-name!',
+      undef,
+      'track-name=s',
+      [
+        'tiled_region',
+        'target_region'
+      ],
+      'feature-list=s',
+      undef,
+      'output-path=s',
       'files',
       'help!',
       undef
@@ -31416,47 +31475,6 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'filter=s',
       'files',
-      'help!',
-      undef
-    ],
-    '>import',
-    [
-      'name=s',
-      'files',
-      'reference=s',
-      undef,
-      'content-type=s',
-      [
-        'exome',
-        'targeted',
-        'validation',
-        'roi',
-        undef
-      ],
-      'is-1-based!',
-      undef,
-      'new-feature-list=s',
-      undef,
-      'source=s',
-      'files',
-      'description=s',
-      'files',
-      'file-path=s',
-      'files',
-      'help!',
-      undef
-    ],
-    '>change-format',
-    [
-      'format=s',
-      [
-        '1-based',
-        'true-BED',
-        'multi-tracked',
-        'multi-tracked 1-based'
-      ],
-      'feature-list=s',
-      undef,
       'help!',
       undef
     ],
