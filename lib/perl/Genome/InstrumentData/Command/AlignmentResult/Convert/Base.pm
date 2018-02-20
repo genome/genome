@@ -93,6 +93,12 @@ sub _run_conversion {
 
     $self->_reindex($destination_file);
 
+    unless ($self->_verify_file($destination_file)) {
+        $self->fatal_message('Failed to convert file.');
+    } else {
+        unlink $source_file;
+    }
+
     my @alloc = $self->alignment_result->disk_allocations;
     for (@alloc) {
         $_->reallocate;
