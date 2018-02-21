@@ -26,64 +26,72 @@ sub unarchive_lims_data {
 
     if ($instrument_data->class ne 'Genome::InstrumentData::Solexa') { return 1; }
 
-    my $bam_path = $instrument_data->bam_path;
-    if (defined($bam_path)) {
+    my $bam_or_archive = $instrument_data->bam_path;
+    my $is_bam;
+    if (my $bam_path = $instrument_data->bam_path) {
         if (-e $bam_path) {
             return 1;
         }
-    } else {
-        if (defined($instrument_data->archive_path)) {
-            $self->warning_message('Skipping old data with archive_path: '. $instrument_data->__display_name__);
+        $bam_or_archive = $bam_path;
+        $is_bam = 1;
+    } elsif (my $archive_path = $instrument_data->archive_path) {
+        if (-e $archive_path) {
             return 1;
         }
+        $bam_or_archive = $archive_path;
+        $is_bam = 0;
     }
 
-    $self->status_message('Working on missing BAM %s for instrument data %s', $bam_path, $instrument_data->id);
+    $self->status_message('Working on missing BAM/archive %s for instrument data %s', $bam_or_archive, $instrument_data->id);
 
     my $dv = $self->volume;
-    my ($bam_filename, $bam_dirname) = File::Basename::fileparse($bam_path);
+    my ($data_filename, $data_dirname) = File::Basename::fileparse($bam_or_archive);
 
-    my ($unarchived_bam_path) = glob(File::Spec->join($dv->mount_path,'*','csf_*',$bam_filename));
-    if (!defined($unarchived_bam_path)) {
+    my ($unarchived_path) = glob(File::Spec->join($dv->mount_path,'*','csf_*',$data_filename));
+    if (!defined($unarchived_path)) {
         # Try one more tine allowing for an additional directory in the path, ie. "condensed"
-        ($unarchived_bam_path) = glob(File::Spec->join($dv->mount_path,'*','*','csf_*',$bam_filename));
+        ($unarchived_path) = glob(File::Spec->join($dv->mount_path,'*','*','csf_*',$data_filename));
     }
-    unless ($unarchived_bam_path) {
+    unless ($unarchived_path) {
         Genome::Sys->shellcmd(
             cmd => [$lims_unarchive_script_path,$instrument_data->id,$dv->mount_path],
         );
     } else {
         my $allocation = $self->get_or_create_allocation($instrument_data);
 
-        my ($unarchived_bam_filename,$unarchived_bam_dirname) = File::Basename::fileparse($unarchived_bam_path);
-        $unarchived_bam_dirname =~ s/\/$//;
-        my @unarchived_bam_dirnames = File::Spec->splitdir($unarchived_bam_dirname);
-        my $allocation_bam_dirname = File::Spec->join($allocation->absolute_path,$unarchived_bam_dirnames[-1]);
-        if (-e $allocation_bam_dirname) {
-            $self->warning_message('Already found allocated path, skipping: %s', $allocation_bam_dirname);
-            $self->warning_message('Please remove the unarchived path: %s', $unarchived_bam_dirname);
+        my ($unarchived_filename,$unarchived_dirname) = File::Basename::fileparse($unarchived_path);
+        $unarchived_dirname =~ s/\/$//;
+        my @unarchived_dirnames = File::Spec->splitdir($unarchived_dirname);
+        my $allocation_dirname = File::Spec->join($allocation->absolute_path,$unarchived_dirnames[-1]);
+        if (-e $allocation_dirname) {
+            $self->warning_message('Already found allocated path, skipping: %s', $allocation_dirname);
+            $self->warning_message('Please remove the unarchived path: %s', $unarchived_dirname);
             return;
         }
 
-        unless ($self->validate_bam_is_complete($unarchived_bam_path,$instrument_data)) {
-            $self->status_message('It appears the unarchiving is still in progress for: %s', $unarchived_bam_path);
-            return;
+        if ($is_bam) {
+            unless ($self->validate_bam_is_complete($unarchived_path,$instrument_data)) {
+                $self->status_message('It appears the unarchiving is still in progress for: %s', $unarchived_path);
+                return;
+            }
+        } else {
+            $self->status_message('Assuming that unarchive is complete for: %s. If not will get truncated results!', $unarchived_path);
         }
 
-        $self->debug_message('Rsync contents of %s to %s ', $unarchived_bam_dirname, $allocation_bam_dirname);
+        $self->debug_message('Rsync contents of %s to %s ', $unarchived_dirname, $allocation_dirname);
         unless (
             Genome::Sys->rsync_directory(
-                source_directory => $unarchived_bam_dirname,
-                target_directory => $allocation_bam_dirname,
+                source_directory => $unarchived_dirname,
+                target_directory => $allocation_dirname,
             )
           ) {
-            $self->fatal_message('Failed to rsync from %s to %s', $unarchived_bam_dirname, $allocation_bam_dirname);
+            $self->fatal_message('Failed to rsync from %s to %s', $unarchived_dirname, $allocation_dirname);
         }
         unless ($ENV{UR_DBI_NO_COMMIT}) {
             Genome::Sys::CommitAction->create(
                 on_commit => sub {
-                    unless(Genome::Sys->remove_directory_tree($unarchived_bam_dirname)) {
-                        $self->warning_message('Failed to remove directory: %s', $unarchived_bam_dirname);
+                    unless(Genome::Sys->remove_directory_tree($unarchived_dirname)) {
+                        $self->warning_message('Failed to remove directory: %s', $unarchived_dirname);
                     }
                 }
             );
@@ -91,12 +99,17 @@ sub unarchive_lims_data {
         $allocation->reallocate();
         UR::Context->commit();
 
-        my $allocated_bam_path = File::Spec->join($allocation_bam_dirname,$unarchived_bam_filename);
-        if (-e $allocated_bam_path) {
-            $instrument_data->bam_path($allocated_bam_path);
+        my $allocated_path = File::Spec->join($allocation_dirname,$unarchived_filename);
+        if (-e $allocated_path) {
+            if ($is_bam) {
+                $instrument_data->bam_path($allocated_path);
+            } else {
+                $instrument_data->archive_path($allocated_path);
+            }
+
             UR::Context->commit();
         } else {
-            $self->fatal_message('Failed to find the new allocated BAM path: %s', $allocated_bam_path);
+            $self->fatal_message('Failed to find the new allocated BAM/archive path: %s', $allocated_path);
         }
     }
 }
@@ -144,7 +157,7 @@ sub validate_bam_is_complete {
     my $bam_path = shift;
     my $instrument_data = shift;
 
-    if (-e $bam_path .'.md5') {
+    if (-e $bam_path .'.md5' && -s $bam_path .'.md5') {
         $self->status_message('Calculating md5 for BAM: '. $bam_path);
         my $calculated_md5 = Genome::Sys->md5sum($bam_path);
         my $md5_fh = Genome::Sys->open_file_for_reading($bam_path .'.md5');
