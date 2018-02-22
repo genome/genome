@@ -13,6 +13,7 @@ class Genome::Model::CwlPipeline::Command::PrepForTransfer {
             is => 'Genome::Model::Build::CwlPipeline',
             is_many => 1,
             doc => 'The build(s) to prepare for data transfer',
+            shell_args_position => 1,
         },
         directory => {
             is => 'Text',
