@@ -522,8 +522,18 @@ sub workflow_name {
 sub ptero_workflow_proxy {
     my $self = shift;
 
-    return unless $self->process;
-    return $self->process->ptero_workflow_proxy;
+    return unless @{[$self->process]};
+    return $self->latest_process->ptero_workflow_proxy;
+}
+
+sub latest_process {
+    my $self = shift;
+
+    my @process = $self->process;
+
+    @process = sort { $b->created_at cmp $a->created_at } @process;
+
+    return $process[0];
 }
 
 sub calculate_estimated_kb_usage {
@@ -1235,7 +1245,7 @@ sub _get_running_master_lsf_job {
 
     my $job_id = $self->the_master_event->lsf_job_id;
     if (not defined($job_id)) {
-        my $process = $self->process;
+        my $process = $self->latest_process;
         if ($process) {
             $job_id = $process->lsf_job_id;
         }
