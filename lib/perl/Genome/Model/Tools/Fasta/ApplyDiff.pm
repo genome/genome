@@ -393,6 +393,3 @@ sub parse_header{
 }
 
 1;
-
-#$HeadURL$
-#$Id$

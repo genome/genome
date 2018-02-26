@@ -82,9 +82,6 @@ is(Genome::Info::IUB::reference_iub_to_base('V'), 'A', "reference_iub_to_base: V
 is(Genome::Info::IUB::reference_iub_to_base('N'), 'A', "reference_iub_to_base: N returns A");
 is(Genome::Info::IUB::reference_iub_to_base('ACTGRYMKSWBDHVN'), 'ACTGACAGCACAAAA', "reference_iub_to_base: ACTGRYMKSWBDHVN returns ACTGACAGCACAAAA");
 
-#$HeadURL$
-#$Id$
-
 sub cmp_warn {
     my $do = shift;
     my $warn = shift;

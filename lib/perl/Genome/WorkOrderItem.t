@@ -104,6 +104,3 @@ done_testing();
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$

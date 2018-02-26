@@ -51,6 +51,3 @@ is(compare($nav, $expected_nav), 0, 'Expected and generated nav file matches');
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$

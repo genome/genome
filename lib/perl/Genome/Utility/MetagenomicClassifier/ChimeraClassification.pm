@@ -429,7 +429,3 @@ This module is distributed in the hope that it will be useful, but WITHOUT ANY W
 B<Eddie Belter> I<ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL: svn+ssh://svn/srv/svn/gscpan/perl_modules/trunk/Genome/Utility/MetagenomicClassifier/SequenceClassification.pm $
-#$Id: SequenceClassification.pm 43284 2009-02-04 22:15:30Z ebelter $
-

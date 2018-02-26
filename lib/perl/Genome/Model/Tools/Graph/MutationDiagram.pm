@@ -178,6 +178,3 @@ sub resolve_domain_provider {
 }
 
 1;
-
-#$HeadURL: svn+ssh://svn/srv/svn/gscpan/perl_modules/trunk/Genome/Model/ReferenceAlignment/Report/MutationDiagram.pm $
-#$Id: MutationDiagram.pm 53299 2009-11-20 22:45:10Z eclark $

@@ -38,7 +38,3 @@ while ((my $fq = $io->next_seq) && ($count++<500)) {
 ok($ok, "Reads trimmed successfully");
 
 done_testing();
-
-
-#HeadURL$
-#$Id$

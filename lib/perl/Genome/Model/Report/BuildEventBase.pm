@@ -53,6 +53,3 @@ sub _add_build_event_dataset {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

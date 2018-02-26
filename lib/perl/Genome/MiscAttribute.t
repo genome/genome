@@ -24,6 +24,3 @@ is($a->instrument_data_id, $x->id, "entity id is correct");
 
 #my @d = Genome::InstrumentData::Solexa->get(full_path => "/my/path");
 #is(scalar(@d),1, "got expected object returned by query");
-
-#$HeadURL$
-#$Id$

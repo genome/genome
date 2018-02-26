@@ -42,6 +42,3 @@ sub command_name_brief {
 
 
 1;
-
-#$HeadURL: svn+ssh://svn/srv/svn/gscpan/perl_modules/trunk/Genome/InstrumentData/Command.pm $
-#$Id: Command.pm 53104 2009-11-17 23:00:44Z fdu $

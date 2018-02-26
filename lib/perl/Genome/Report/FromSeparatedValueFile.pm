@@ -80,6 +80,3 @@ sub _add_to_report_xml {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

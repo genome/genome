@@ -185,6 +185,3 @@ sub _add_model_info {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

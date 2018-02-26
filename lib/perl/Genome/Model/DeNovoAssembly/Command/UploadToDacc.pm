@@ -227,6 +227,3 @@ sub _md5_for_file {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

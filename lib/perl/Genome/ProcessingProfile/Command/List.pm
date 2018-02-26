@@ -102,6 +102,3 @@ sub _build_sub_command {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

@@ -206,6 +206,3 @@ This module is distributed in the hope that it will be useful, but WITHOUT ANY W
 B<Eddie Belter> <ebelter@genome.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$

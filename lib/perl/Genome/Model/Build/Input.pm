@@ -49,7 +49,3 @@ class Genome::Model::Build::Input {
 };
 
 1;
-
-#$HeadURL$
-#$Id$
-

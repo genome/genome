@@ -125,6 +125,3 @@ sub _string_for_hmp_all_ranks_format {
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$

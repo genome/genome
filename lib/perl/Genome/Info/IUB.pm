@@ -368,5 +368,3 @@ B<David Larson> I<dlarson@watson.wustl.edu>
 
 =cut
 
-#$HeadURL: svn+ssh://svn/srv/svn/gscpan/perl_modules/trunk/Genome/Info/CodonToAminoAcid.pm $
-#$Id: CodonToAminoAcid.pm 34977 2008-05-23 22:34:14Z ebelter $

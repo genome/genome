@@ -108,6 +108,3 @@ sub default_version {
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$

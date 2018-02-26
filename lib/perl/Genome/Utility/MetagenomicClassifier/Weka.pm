@@ -249,6 +249,3 @@ sub classify {
 }
 
 1;
-
-#$HeadURL: $
-#$Id: $

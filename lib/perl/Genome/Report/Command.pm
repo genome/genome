@@ -55,6 +55,3 @@ sub report {
 #<>#
 
 1;
-
-#$HeadURL$
-#$Id$

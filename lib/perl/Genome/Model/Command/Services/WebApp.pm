@@ -174,6 +174,3 @@ sub url {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

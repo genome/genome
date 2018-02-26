@@ -240,6 +240,3 @@ sub _print_reports {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

@@ -134,6 +134,3 @@ sub assembler_params {
 #<>#
 
 1;
-
-#$HeadURL: svn+ssh://svn/srv/svn/gscpan/perl_modules/trunk/Genome/Model/Build/DeNovoAssembly/Newbler.pm $
-#$Id: Newbler.pm 59774 2010-06-09 23:46:44Z ebelter $
