@@ -61,7 +61,7 @@ sub execute {
     } else {
         Genome::Sys->shellcmd(
             cmd => ['cat', $file],
-            input_files => $file,
+            input_files => [$file],
         );
     }
 

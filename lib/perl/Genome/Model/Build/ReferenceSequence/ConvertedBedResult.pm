@@ -76,5 +76,9 @@ sub _validate_source_bed {
     return 1;
 }
 
+sub _allocation_disk_group_name {
+    Genome::Config::get('disk_group_references');
+}
+
 1;
 
