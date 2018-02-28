@@ -89,7 +89,7 @@ sub resolve_allocation_subdirectory {
     return File::Spec->join('model_data', 'interval-list', $self->id);
 }
 
-sub resovle_allocation_disk_group_name {
+sub resolve_allocation_disk_group_name {
     Genome::Config::get('disk_group_references');
 }
 
