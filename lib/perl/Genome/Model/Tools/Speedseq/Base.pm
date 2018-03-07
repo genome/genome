@@ -59,9 +59,9 @@ sub help_detail {
 }
 
 my %TOOL_VERSIONS = (
-    'test'     => '/gscmnt/ams1102/info/speedseq_freeze/v1/speedseq/bin/speedseq',
-    '0.0.3a-gms' => '/gscmnt/ams1102/info/speedseq_freeze/v2/speedseq/bin/speedseq',
-    '0.1.0-gms' => '/gscmnt/ams1102/info/speedseq_freeze/v3/speedseq/bin/speedseq',
+    'test'     => '/gscmnt/gc2560/core/speedseq_freeze/v1/speedseq/bin/speedseq',
+    '0.0.3a-gms' => '/gscmnt/gc2560/core/speedseq_freeze/v2/speedseq/bin/speedseq',
+    '0.1.0-gms' => '/gscmnt/gc2560/core/speedseq_freeze/v3/speedseq/bin/speedseq',
 );
 
 sub available_versions {
