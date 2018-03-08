@@ -48,5 +48,11 @@ sub summary_report_pdf_file {
     return $self->summarize_differential_expression_directory .'/summary.pdf';
 }
 
+sub _disk_usage_result_subclass_names {
+    my $self = shift;
+
+    return [];
+}
+
 1;
 
