@@ -851,6 +851,3 @@ Optimization, Testing, Data Management:
  B<Anthony Brummett> I<abrummet@genome.wustl.edu>
 
 =cut
-
-#$HeadURL: svn+ssh://svn/srv/svn/gscpan/perl_modules/trunk/Genome/Model/Tools/Annotate/TranscriptVariants.pm $
-#$Id: TranscriptVariants.pm 44679 2009-03-16 17:55:52Z adukes $

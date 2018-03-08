@@ -61,6 +61,3 @@ sub trim
 }
 
 1;
-
-#$HeadURL$
-#$Id$

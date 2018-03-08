@@ -245,6 +245,3 @@ sub get_model_type_names {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

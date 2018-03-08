@@ -246,5 +246,3 @@ sub _stop_codons {
 
 =cut
 
-#$HeadURL$
-#$Id$

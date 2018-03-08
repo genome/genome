@@ -1397,6 +1397,3 @@ while (my $variant = $reader->next) {
     B<Brian Derickson l<bdericks@genome.wustl.edu>
 
     =cut
-
-#$HeadURL$
-#$Id$

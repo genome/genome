@@ -141,6 +141,3 @@ sub _validate_report_name_for_build {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

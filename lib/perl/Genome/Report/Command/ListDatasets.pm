@@ -51,6 +51,3 @@ sub execute {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

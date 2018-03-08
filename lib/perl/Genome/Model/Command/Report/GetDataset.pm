@@ -129,6 +129,3 @@ sub _csv {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

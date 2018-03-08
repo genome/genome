@@ -73,7 +73,3 @@ This script is distributed in the hope that it will be useful, but WITHOUT ANY W
 B<Eddie Belter> <ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$
-

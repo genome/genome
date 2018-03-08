@@ -29,7 +29,3 @@ class Genome::MiscAttribute {
 };
 
 1;
-
-
-#$HeadURL$
-#$Id$

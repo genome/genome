@@ -49,6 +49,3 @@ is(compare($acenav, $expected_acenav), 0, 'Expected and generated acenav files m
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$

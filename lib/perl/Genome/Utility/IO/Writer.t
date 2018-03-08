@@ -110,6 +110,3 @@ ok(!$writer, 'Failed as expected - create writer w/o "write_one" method');
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$

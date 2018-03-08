@@ -115,7 +115,3 @@ ok( ! Genome::Model::Tools::Fasta->create(), "Create w/o fasta file - failed as 
 ok( ! Genome::Model::Tools::Fasta->create(fasta_file => $ORIG_DIR.'/file.txt'), "Create w/ non existing fasta - failed as expected");
 ok( ! Genome::Model::Tools::Fasta->create(fasta_file => $ORIG_DIR.'/file.fake'), "Create w/ invalid fasta ext - failed as expected");
 chdir $CWD;
-
-
-#$HeadURL$
-#$Id$

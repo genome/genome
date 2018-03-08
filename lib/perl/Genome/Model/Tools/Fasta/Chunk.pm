@@ -146,6 +146,3 @@ sub _write_to_file {
     
     
 1;
-
-#$HeadURL$
-#$Id$

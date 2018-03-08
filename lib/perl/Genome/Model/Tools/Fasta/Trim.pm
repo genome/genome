@@ -63,6 +63,3 @@ sub output_qual_file {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

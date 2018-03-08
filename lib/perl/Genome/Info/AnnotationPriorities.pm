@@ -120,7 +120,4 @@ B<Eddie Belter> I<ebelter@watson.wustl.edu>
 
 =cut
 
-#$HeadURL: svn+ssh://svn/srv/svn/gscpan/perl_modules/branches/adukes/annotation_update/Genome/Info/AnnotationPriorities.pm $
-#$Id: AnnotationPriorities.pm 55387 2010-02-15 22:16:40Z adukes $
-
 1;

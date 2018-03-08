@@ -230,6 +230,3 @@ sub _trim {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

@@ -232,9 +232,3 @@ sub event_statuses {
 # illumina: copy sequence files
 # 3730: analyze traces
 
-
-
-
-
-#$HeadURL$
-#$Id$

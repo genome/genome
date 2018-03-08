@@ -23,6 +23,3 @@ sub validate_target_region {
 }
 
 1;
-
-#$HeadURL: svn+ssh://svn/srv/svn/gscpan/perl_modules/trunk/Genome/InstrumentData/Command/Import.pm $
-#$Id: Import.pm 53285 2009-11-20 21:28:55Z fdu $

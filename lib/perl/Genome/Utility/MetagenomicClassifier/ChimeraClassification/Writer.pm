@@ -155,7 +155,3 @@ sub _write_verbose {
 Lynn Carmichael <lcarmich@watson.wustl.edu>
 
 =cut
-
-#$HeadURL: $
-#$Id: $
-

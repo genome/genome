@@ -142,6 +142,3 @@ sub list {
 }
 
 1;
-
-#$HeadURL$
-#$Id$

@@ -346,6 +346,3 @@ This module is distributed in the hope that it will be useful, but WITHOUT ANY W
 B<Eddie Belter> I<ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$

@@ -47,6 +47,3 @@ is_deeply(\@navs, $navs->{navs}, 'Navs match');
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$

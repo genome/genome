@@ -126,6 +126,3 @@ sub _compare_read_name_files {
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$
