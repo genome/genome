@@ -13,6 +13,7 @@ class Genome::Model::CwlPipeline::Command::Restart {
             is => 'Genome::Model::Build::CwlPipeline',
             is_many => 1,
             doc => 'The build(s) to restart',
+            shell_args_position => 1,
         },
     ],
     doc => 'relaunch a failed build',
