@@ -18,7 +18,7 @@ class Genome::Config::AnalysisProject::Command::ShowConfig {
             value => 'Genome::Config::Profile::Item',
         },
         show => {
-            default_value => 'id,file_path,updated_at,is_concrete,analysis_menu_item.name,status',
+            default_value => 'id,file_path,updated_at,is_concrete,analysis_menu_item.name,status,tags.name',
         },
     ],
     has_optional_input => [
