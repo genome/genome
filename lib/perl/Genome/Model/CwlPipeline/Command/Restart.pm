@@ -64,6 +64,10 @@ sub _restart_build {
         die 'Can only restart failed builds.';
     }
 
+    unless($build->run_by eq Genome::Sys->username) {
+        die 'Cannot restart a build originally started by ' . $build->run_by;
+    }
+
     my $anp = $build->model->analysis_project;
     my $guard;
     $guard = $anp->set_env if $anp;
