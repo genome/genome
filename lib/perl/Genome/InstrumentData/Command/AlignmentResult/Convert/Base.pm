@@ -97,6 +97,9 @@ sub _run_conversion {
         $self->fatal_message('Failed to convert file.');
     } else {
         unlink $source_file;
+        for $extra in (qw(.bai .crai)) {
+            unlink $source_file . $extra if -e $source_file . $extra;
+        }
     }
 
     my @alloc = $self->alignment_result->disk_allocations;
