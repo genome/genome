@@ -235,8 +235,4 @@ sub _lookup_files {
     return @matches;
 }
 
-sub reference_sequence_directory {
-    return join('/', Genome::Config::get('model_root'), 'reference_sequences');
-}
-
 1;
