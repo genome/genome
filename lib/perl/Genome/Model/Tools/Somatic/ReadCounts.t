@@ -33,12 +33,15 @@ my $output_file             = $test_output_dir . 'readcounts.out';
 my $expected_dir            = $test_input_dir;
 my $expected_output_file    = $expected_dir . 'readcounts.expected';
 
+my $refseq = Genome::Model::Build::ReferenceSequence->get(name => 'NCBI-human-build36');
+my $fasta = $refseq->full_consensus_path('fa');
+
 my $read_counts = Genome::Model::Tools::Somatic::ReadCounts->create(
     tumor_bam   => $tumor_bam,
     normal_bam  => $normal_bam,
     sites_file  => $sites_file,
     output_file => $output_file,
-    reference_sequence => Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa',
+    reference_sequence => $fasta,
     minimum_mapping_quality => 30,
     bam_readcount_version => 0.6,
 );
