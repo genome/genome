@@ -22,8 +22,7 @@ class Genome::Model::Tools::Sam::SplitBam {
         },
         reference_index => {
             is => 'Text',
-            doc => 'The reference fasta index for creating sub-bams: default_value='. $DEFAULT_REFERENCE_INDEX,
-            default_value => $DEFAULT_REFERENCE_INDEX,
+            doc => 'The reference fasta index for creating sub-bams',
         },
         size => {
             is => 'Integer',
