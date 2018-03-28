@@ -28,7 +28,6 @@ class Genome::Model::Tools::Tcga::MergePerLaneSamFilesWorker {
             is => 'String',
             is_input => 1,
             doc => 'The ref_list used for SamToBam.',
-            example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa.fai'],
             is_optional => 1,
         },
     ],

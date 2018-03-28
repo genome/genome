@@ -48,7 +48,6 @@ class Genome::Model::Tools::Varscan::CopySegmentParallel {
             is => 'Text',
             doc => "Reference FASTA file for BAMs",
             is_optional => 0,
-            example_values => [(Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')]
         },
         skip_if_output_present => {
             is => 'Text',

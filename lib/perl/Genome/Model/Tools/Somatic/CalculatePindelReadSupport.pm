@@ -29,7 +29,6 @@ class Genome::Model::Tools::Somatic::CalculatePindelReadSupport {
         refseq =>{
             type => 'String',
             is_optional => 1,
-            example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fasta'],
             doc => "reference sequence to use for reference assembly",
         },
         use_old_pindel => {
