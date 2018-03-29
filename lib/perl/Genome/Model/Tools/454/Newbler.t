@@ -45,7 +45,7 @@ foreach my $subdir (@version_subdirs) {
 	$expected_path = Genome::Config::get('sw') . '/454/'.$subdir.'_'.$version.'/applicationsBin';
     }
 
-    my $ref_seq_dir = Genome::Config::reference_sequence_directory() . '/refseq-for-test';
+    my $ref_seq_dir = $data_dir . '/refseq-for-test';
     my @fasta_files = glob($ref_seq_dir .'/11.fasta');
     is(scalar(@fasta_files),1,'correct number of test fasta files found');
 

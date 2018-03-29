@@ -19,10 +19,14 @@ my $size = 1000;
 my $expected_number_bam_files = 6;
 my $tmp_out_dir = File::Temp::tempdir(CLEANUP => 1);
 
+my $refseq = Genome::Model::Build::ReferenceSequence->get(name => 'NCBI-human-build36');
+my $index = $refseq->full_consensus_path('fa') . '.fai';
+
 my $cmd_1 = Genome::Model::Tools::Sam::SplitBam->create(
     bam_file => $bam_file,
     output_directory => $tmp_out_dir,
     size => $size,
+    reference_index => $index,
 );
 
 ok($cmd_1, 'created command');

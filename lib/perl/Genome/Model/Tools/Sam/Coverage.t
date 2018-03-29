@@ -32,7 +32,8 @@ my $compare_to_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-
 my $aligned_file_name = "normal.tiny.bam"; 
 my $output_file_name = "coverage.out";
 
-my $ref_file = Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa';
+my $ref = Genome::Model::Build::ReferenceSequence->get(name => 'NCBI-human-build36');
+my $ref_file = $ref->full_consensus_path('fa');
 
 my $aligned_file = $data_dir."/".$aligned_file_name;
 my $output_file = $tmp_dir."/".$output_file_name;

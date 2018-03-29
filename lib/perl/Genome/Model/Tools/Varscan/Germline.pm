@@ -59,8 +59,7 @@ class Genome::Model::Tools::Varscan::Germline {
         },
         reference => {
             is => 'Text',
-            doc => "Reference FASTA file for BAMs (default= genome model)" ,
-            is_optional => 1,
+            doc => "Reference FASTA file for BAMs" ,
             is_input => 1,
         },
         heap_space => {
@@ -133,8 +132,7 @@ sub execute {                               # replace with real execution logic.
 
     ## Get reference ##
 
-    my $reference = Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa';
-    $reference = $self->reference if($self->reference);
+    my $reference = $self->reference;
 
     ## Get Varscan parameters ##
 

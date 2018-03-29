@@ -8,7 +8,6 @@ use File::Basename;
 use File::Temp;
 use POSIX qw(mkfifo);
 
-my $DEFAULT_REFERENCE_INDEX = Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa.fai';
 my $DEFAULT_SIZE = '1000000';
 
 class Genome::Model::Tools::Sam::SplitBam {
@@ -22,12 +21,11 @@ class Genome::Model::Tools::Sam::SplitBam {
         },
         reference_index => {
             is => 'Text',
-            doc => 'The reference fasta index for creating sub-bams: default_value='. $DEFAULT_REFERENCE_INDEX,
-            default_value => $DEFAULT_REFERENCE_INDEX,
+            doc => 'The reference fasta index for creating sub-bams',
         },
         size => {
             is => 'Integer',
-            doc => 'The number of alignments to include in each bam file: default_value='. $DEFAULT_SIZE,
+            doc => 'The number of alignments to include in each bam file',
             default_value => $DEFAULT_SIZE,
         },
     ],

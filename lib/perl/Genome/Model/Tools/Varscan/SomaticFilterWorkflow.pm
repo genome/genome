@@ -24,7 +24,6 @@ class Genome::Model::Tools::Varscan::SomaticFilterWorkflow {
     reference => {
         is => 'Text',
         doc => "Reference FASTA file for BAMs",
-        example_values => [(Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')],
     },
     outdir => {
         is => 'FilesystemPath',
