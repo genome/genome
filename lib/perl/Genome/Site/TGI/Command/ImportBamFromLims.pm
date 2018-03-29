@@ -85,6 +85,10 @@ sub _process_instrument_data {
         target_directory => $allocation->absolute_path,
     );
 
+    Genome::Sys->shellcmd(
+        cmd => ['chgrp', '-R', $self->_user_group, $allocation->absolute_path],
+    );
+
     my $new_path = File::Spec->join($allocation->absolute_path, $bam_file);
     $data->bam_path($new_path);
 
@@ -175,6 +179,27 @@ sub _resolve_disk_group {
     my $dg = Genome::Config::get('disk_group_alignments');
 
     return Genome::Disk::Group->get(disk_group_name => $dg);
+}
+
+sub _user_group {
+    my $self = shift;
+
+    unless (exists $self->{_user_group}) {
+        $self->{_user_group} = $self->_resolve_user_group;
+    }
+
+    return $self->{_user_group};
+}
+
+sub _resolve_user_group {
+    my $self = shift;
+
+    my $anp = $self->analysis_project;
+    my $guard = $anp->set_env;
+
+    my $group = Genome::Config::get('sys_group');
+
+    return $group;
 }
 
 1;
