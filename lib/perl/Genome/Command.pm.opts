@@ -28155,17 +28155,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>generate-backbone',
-      [
-        'fasta-file=s',
-        'files',
-        'output-file=s',
-        'files',
-        'debug!',
-        undef,
-        'help!',
-        undef
-      ],
       '>get-breakpoint-fasta',
       [
         'bp-ids=s',
@@ -29047,6 +29036,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'output-snp=s',
         'files',
+        'reference=s',
+        'files',
         'samtools-use-baq!',
         undef,
         'samtools-version=s',
@@ -29066,8 +29057,6 @@ $Genome::Command::OPTS_SPEC = [
         'output-indel-filtered=s',
         'files',
         'output-snp-filtered=s',
-        'files',
-        'reference=s',
         'files',
         'samtools-params=s',
         'files',
