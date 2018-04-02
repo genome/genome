@@ -21,7 +21,7 @@ my @alignment_results = Genome::InstrumentData::AlignmentResult->get(id => \@ali
 my $set = Genome::InstrumentData::AlignmentResult->define_set(id => \@alignment_result_ids);
 
 my @sr = grep { ! $_->test_name } Genome::Model::Tools::Htseq::Count::Result->get("alignment_results.id in" => \@alignment_result_ids);
-is(scalar(@sr), 3, "got three existing results") or die; 
+is(scalar(@sr), 2, "got existing results") or die; 
 
 # put our test name here temporarily so we don't regenerate the underlying results
 for (@sr) {
