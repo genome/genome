@@ -5,6 +5,7 @@ use warnings;
 
 use File::Basename qw();
 use File::Spec qw();
+use Try::Tiny qw(try catch);
 
 use Genome;
 
@@ -79,22 +80,30 @@ sub _process_instrument_data {
         return;
     }
 
-    my ($bam_file) = File::Basename::fileparse($data->bam_path);
-    Genome::Sys->rsync_directory(
-        source_directory => $lims_path,
-        target_directory => $allocation->absolute_path,
-    );
 
-    Genome::Sys->shellcmd(
-        cmd => ['chgrp', '-R', $self->_user_group, $allocation->absolute_path],
-    );
+    try {
+        my ($bam_file) = File::Basename::fileparse($data->bam_path);
+        Genome::Sys->rsync_directory(
+            source_directory => $lims_path,
+            target_directory => $allocation->absolute_path,
+        );
 
-    my $new_path = File::Spec->join($allocation->absolute_path, $bam_file);
-    $data->bam_path($new_path);
+        Genome::Sys->shellcmd(
+            cmd => ['chgrp', '-R', $self->_user_group, $allocation->absolute_path],
+        );
 
-    $allocation->reallocate;
+        my $new_path = File::Spec->join($allocation->absolute_path, $bam_file);
+        $data->bam_path($new_path);
 
-    $self->status_message('Updated instrument data %s to path: %s.', $data->__display_name__, $new_path);
+        $allocation->reallocate;
+
+        $self->status_message('Updated instrument data %s to path: %s.', $data->__display_name__, $new_path);
+    }
+    catch {
+        my $error = $_;
+        $allocation->deallocate;
+        $self->error_message('Failed to unarchive instrument data %s. -- %s', $data->__display_name__, $error);
+    }
 
     return 1;
 }
