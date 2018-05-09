@@ -125,15 +125,7 @@ sub _prepare_configuration_hashes_for_instrument_data {
             my $instrument_data_properties = delete $model_instance->{instrument_data_properties};
             if($instrument_data_properties) {
                 while((my $model_property, my $instrument_data_property) = each %$instrument_data_properties) {
-                    if (ref $instrument_data_property eq 'ARRAY') {
-                        $model_instance->{$model_property} = [
-                            grep { defined($_) }
-                            map { $instrument_data->$_ }
-                            @$instrument_data_property
-                        ];
-                    } else {
-                        $model_instance->{$model_property} = $instrument_data->$instrument_data_property;
-                    }
+                    $model_instance->{$model_property} = $self->_value_for_instrument_data_property($instrument_data, $instrument_data_property);
                 }
             }
         }
@@ -141,6 +133,20 @@ sub _prepare_configuration_hashes_for_instrument_data {
         $config_hash->{$model_type} = $self->_process_mapped_samples($instrument_data, $config_hash->{$model_type}) if $model_type->requires_subject_mapping;
     }
     return $config_hash;
+}
+
+sub _value_for_instrument_data_property {
+    my ($self, $instrument_data, $instrument_data_property) = @_;
+
+    if (ref $instrument_data_property eq 'ARRAY') {
+        return [
+            grep { defined($_) }
+            map { $instrument_data->$_ }
+            @$instrument_data_property
+        ];
+    } else {
+        return $instrument_data->$instrument_data_property;
+    }
 }
 
 sub _process_mapped_samples {
