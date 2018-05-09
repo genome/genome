@@ -124,6 +124,12 @@ sub _prepare_configuration_hashes_for_instrument_data {
         for my $model_instance (@{$config_hash->{$model_type}}) {
             my $instrument_data_properties = delete $model_instance->{instrument_data_properties};
             if($instrument_data_properties) {
+                if(my $input_data = delete $instrument_data_properties->{input_data}) {
+                    while ((my $input_name, my $instrument_data_property) = each %$input_data) {
+                        $model_instance->{input_data}{$input_name} = $self->_value_for_instrument_data_property($instrument_data, $instrument_data_property);
+                    }
+                }
+
                 while((my $model_property, my $instrument_data_property) = each %$instrument_data_properties) {
                     $model_instance->{$model_property} = $self->_value_for_instrument_data_property($instrument_data, $instrument_data_property);
                 }
