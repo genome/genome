@@ -30,6 +30,8 @@ class Genome::Model::View::Solr::Xml {
                     $solr_type = 'model - ClinSeq';
                 } elsif ($pp_type =~ /microarray/i) {
                     $solr_type = 'model - microarray';
+                } elsif ($pp_type eq 'cwl pipeline') {
+                    $solr_type = $model->short_pipeline_name() || 'cwl';
                 } else {
                     $solr_type = 'model - other';
                 }
