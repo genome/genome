@@ -861,7 +861,7 @@ sub rsync_directory {
 
     my $source = join('/', $source_dir, $pattern);
     my $rv = Genome::Sys->shellcmd(
-        cmd => "rsync -rlHpgt $source $target_dir",
+        cmd => ['rsync', '-rlHpgt', $source, $target_dir],
     );
     unless ($rv) {
         confess "Could not copy data matching pattern $source to $target_dir";
