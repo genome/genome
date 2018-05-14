@@ -7,6 +7,7 @@ use feature qw(switch);
 use Genome;
 
 use Set::Scalar;
+use Scalar::Util qw(blessed);
 
 class Genome::Model::CwlPipeline {
     is => 'Genome::Model',
@@ -170,6 +171,11 @@ sub determine_input_object {
     my $class = shift;
     my $name = shift;
     my $value_identifier = shift;
+
+    if (blessed($value_identifier)) {
+        #already an object
+        return $value_identifier;
+    }
 
     if (ref $value_identifier eq 'HASH' and exists $value_identifier->{value_class_name} and exists $value_identifier->{value_id}) {
         my $value_class = $value_identifier->{value_class_name};
