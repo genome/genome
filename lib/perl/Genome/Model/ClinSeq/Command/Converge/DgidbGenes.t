@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More;
+use Test::More skip_all => 'test data was removed';
 
 my $expected_out = Genome::Config::get('test_inputs') . '/Genome-Model-ClinSeq-Command-Converge-DgidbGenes/2015-02-05/';
 ok(-d $expected_out, "directory of expected output exists: $expected_out") or die;

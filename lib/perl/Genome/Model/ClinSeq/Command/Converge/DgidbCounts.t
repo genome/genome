@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More;
+use Test::More skip_all => 'test data was removed';
 
 my $expected_out =
     Genome::Config::get('test_inputs') . '/Genome-Model-ClinSeq-Command-Converge-DgidbCounts/2015-02-05/';
