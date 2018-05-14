@@ -857,14 +857,20 @@ sub rsync_directory {
     unless (-d $target_dir) {
         Genome::Sys->create_directory($target_dir);
     }
-    $pattern = '' unless $pattern;
 
-    my $source = join('/', $source_dir, $pattern);
+    my @pattern_option = ();
+    if ($pattern) {
+        push @pattern_option,
+            '--include=' . $pattern,
+            '--exclude=*';
+    }
+
+    $source_dir .= '/' unless substr($source_dir,-1) eq '/';
     my $rv = Genome::Sys->shellcmd(
-        cmd => ['rsync', '-rlHpgt', $source, $target_dir],
+        cmd => ['rsync', '-rlHpgt', @pattern_option, $source_dir, $target_dir],
     );
     unless ($rv) {
-        confess "Could not copy data matching pattern $source to $target_dir";
+        confess "Could not copy data from $source_dir to $target_dir";
     }
     return 1;
 }
