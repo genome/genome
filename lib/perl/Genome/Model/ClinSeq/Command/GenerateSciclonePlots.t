@@ -9,7 +9,7 @@ BEGIN {
 }
 
 use above "Genome";
-use Test::More;
+use Test::More skip_all => 'test data was removed';
 
 use_ok('Genome::Model::ClinSeq::Command::GenerateSciclonePlots') or die;
 
