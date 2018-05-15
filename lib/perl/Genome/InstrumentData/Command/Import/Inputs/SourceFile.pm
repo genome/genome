@@ -42,7 +42,7 @@ sub _resolve_format {
         sra => 'sra',
     );
     my $source_file = $self->path;
-    $source_file =~ s/\.gz//;
+    $source_file =~ s/\.gz$//;
     my ($source_file_base_name, $path, $suffix) = File::Basename::fileparse(
         $source_file, keys %suffixes_to_original_format
     );
