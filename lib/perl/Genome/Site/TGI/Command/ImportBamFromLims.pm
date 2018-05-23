@@ -120,6 +120,9 @@ sub _resolve_lims_bam_path {
     my $guard = Genome::Config::set_env('lsb_sub_additional', "docker($docker_image)");
     my $cmd = [qw(db ii analysis_id), $data->id, qw(-mp get_disk_archive->archive_path)];
 
+    local $ENV{LSF_DOCKER_PRESERVE_ENVIRONMENT} = 'false';
+    local $ENV{LSB_DOCKER_MOUNT_GSC} = 'false';
+
     my $log_allocation = Genome::Disk::Allocation->get(owner_class_name => $self->class);
     my $log_dir = $log_allocation->absolute_path;
     my $log_file = File::Spec->join($log_dir, $data->id);
