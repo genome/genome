@@ -134,6 +134,26 @@ sub _prepare_configuration_hashes_for_instrument_data {
                     $model_instance->{$model_property} = $self->_value_for_instrument_data_property($instrument_data, $instrument_data_property);
                 }
             }
+
+            my $requires_subject_mapping = delete $model_instance->{input_data_requires_subject_mapping};
+            if ($requires_subject_mapping) {
+                my (@processed) = @{ $self->_process_mapped_samples($instrument_data, [{config_profile_item => $model_instance->{config_profile_item} }]) };
+                unless (@processed) {
+                    $self->fatal_message('Failed to map subject into configuration.');
+                }
+
+                if (@processed > 1) {
+                    $self->fatal_message('Sorry, we do not currently support making multiple models for config-declared subject mappings.');
+                }
+
+                my $processed = $processed[0];
+
+                delete $processed->{config_profile_item};
+
+                while (my ($key, $value) = each %$processed) {
+                    $model_instance->{input_data}{$key} = $value;
+                }
+            }
         }
 
         $config_hash->{$model_type} = $self->_process_mapped_samples($instrument_data, $config_hash->{$model_type}) if $model_type->requires_subject_mapping;

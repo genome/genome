@@ -4,8 +4,9 @@ use strict;
 use warnings;
 
 use Test::Exception;
-use Test::More tests => 32;
+use Test::More tests => 57;
 use Test::Deep qw(cmp_bag);
+
 
 use above 'Genome';
 
@@ -26,31 +27,56 @@ isa_ok($profile, 'Genome::Config::Profile', 'created profile');
 
 my %models;
 
+dies_ok { $profile->process_models_for_instrument_data($instrument_data->[0][0]); } 'fails when no mapping defined';
+
+my $subject_mapping = Genome::Config::AnalysisProject::SubjectMapping->create(
+    analysis_project => $analysis_project
+);
+
+my $sample = $instrument_data->[0][0]->sample;
+
+$subject_mapping->add_subject_bridge(subject => $sample, label => 'best_sample');
+$subject_mapping->add_input(key => 'some_key', value => 'some_value');
+
+
 for my $set (@$instrument_data) {
     my @next_models = $profile->process_models_for_instrument_data($set->[0]);
-    is(scalar(@next_models), 1, 'resulted in one model as expected');
+    is(scalar(@next_models), 2, 'resulted in one model as expected');
     ok(!exists $models{$next_models[0]->id}, 'model was newly created');
     $models{$next_models[0]->id} = $next_models[0];
+    $models{$next_models[1]->id} = $next_models[1];
 
     my @next_models2 = $profile->process_models_for_instrument_data($set->[1]);
-    is(scalar(@next_models), 1, 'resulted in one model as expected');
+    is(scalar(@next_models), 2, 'resulted in one model as expected');
     ok(exists $models{$next_models2[0]->id}, 'used existing model');
+    ok(exists $models{$next_models2[1]->id}, 'used existing model');
     $models{$next_models2[0]->id} = $next_models2[0];
+    $models{$next_models2[1]->id} = $next_models2[1];
 
     my @i = $next_models2[0]->instrument_data;
     cmp_bag(\@i, $set, 'model has expected instrument data assigned');
+    my @i2 = $next_models2[1]->instrument_data;
+    cmp_bag(\@i2, $set, 'model has expected instrument data assigned');
 }
 
-is(scalar keys %models, 3, 'created expected number of models');
+is(scalar keys %models, 6, 'created expected number of models');
 
 for my $m (values %models) {
     my @inputs = $m->inputs;
     my %inputs = map { $_->name => $_->value_id } @inputs;
 
-    #test that static inputs were included
-    is($inputs{bird1}, 'turkey', 'set first bird input');
-    is($inputs{bird2}, 'eagle', 'set second bird input');
-    is($inputs{bird3}, 'dove', 'set third bird input');
+    ok(exists $inputs{this_uses_mappings}, 'test mapping indicator set');
+
+    if ($inputs{this_uses_mappings}) {
+        $DB::single = 1;
+        is($inputs{best_sample}, $sample->id, 'sample attached');
+        is($inputs{some_key}, 'some_value', 'extra key attached');
+    } else {
+        #test that static inputs were included
+        is($inputs{bird1}, 'turkey', 'set first bird input');
+        is($inputs{bird2}, 'eagle', 'set second bird input');
+        is($inputs{bird3}, 'dove', 'set third bird input');
+    }
 
     #test that dynamic inputs were included
     ok($inputs{library}, 'library input is set');
@@ -115,6 +141,7 @@ models:
   'Genome::Model::CwlPipeline':
      - processing_profile_id: $ppid
        input_data:
+           this_uses_mappings: 0
            bird1: turkey
            bird2: eagle
            bird3: dove
@@ -123,6 +150,15 @@ models:
                library: library
                flow_cell: flow_cell_id
            subject: sample
+     - processing_profile_id: $ppid
+       input_data_requires_subject_mapping: 1
+       input_data:
+           this_uses_mappings: 1
+       instrument_data_properties:
+           subject: sample
+           input_data:
+               library: library
+               flow_cell: flow_cell_id
 YML
     ;
 
