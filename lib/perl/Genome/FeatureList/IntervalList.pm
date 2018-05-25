@@ -30,6 +30,11 @@ class Genome::FeatureList::IntervalList {
             doc => 'whether to merge adjacent regions of the BED file',
             default => 1,
         },
+        short_name => {
+            is => 'Boolean',
+            doc => 'whether to replace region names with short names',
+            default => 1,
+        },
     ],
 };
 
@@ -61,6 +66,7 @@ sub _run {
         feature_list => $self->feature_list,
         track_name => $self->track_name,
         merge => $self->merge,
+        short_name => $self->short_name,
         result_users => $self->_user_data_for_nested_results,
         @alt_reference,
     );

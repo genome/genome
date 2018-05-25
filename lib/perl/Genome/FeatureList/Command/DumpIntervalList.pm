@@ -21,6 +21,11 @@ class Genome::FeatureList::Command::DumpIntervalList {
             doc => 'For multi-tracked BED files, which track to use',
             valid_values => Genome::FeatureList::IntervalList->__meta__->property(property_name => 'track_name')->valid_values,
         },
+        short_name => {
+            is => 'Boolean',
+            doc => 'whether to replace region names with short names',
+            default => 1,
+        },
         merge => {
             is => 'Boolean',
             doc => 'whether to merge adjacent regions of the BED file',
@@ -48,6 +53,7 @@ sub execute {
         reference_build => $self->reference_build,
         track_name => $self->track_name,
         merge => $self->merge,
+        short_name => $self->short_name,
         users => $result_users,
     );
 
