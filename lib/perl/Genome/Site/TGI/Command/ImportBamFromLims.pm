@@ -103,7 +103,7 @@ sub _process_instrument_data {
         my $error = $_;
         $allocation->deallocate;
         $self->error_message('Failed to unarchive instrument data %s. -- %s', $data->__display_name__, $error);
-    }
+    };
 
     return 1;
 }
