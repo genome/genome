@@ -69,6 +69,8 @@ sub _process_instrument_data {
         return;
     }
 
+    $self->debug_message('Found LIMS path: %s', $lims_path);
+
     if ($lims_path =~ m!^/gscarchive!) {
         $self->warning_message('Skipping instrument data %s because it appears to be in the old archive.', $data->__display_name__);
         return 1;
