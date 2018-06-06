@@ -203,6 +203,9 @@ EOS
         fwd_base_quality_sum             => { },
         rev_base_quality_sum             => { },
     ],
+    has_calculated_constant => [
+        bam_path                         => { calculate => \&_resolve_bam_path },
+    ],
     data_source => 'Genome::DataSource::Dwrac',
 };
 
@@ -277,7 +280,7 @@ sub lims_property_name_to_genome_property_name {
     return $name;
 }
 
-sub bam_path {
+sub _resolve_bam_path {
     my $self = shift;
 
     my $id = $self->id;
