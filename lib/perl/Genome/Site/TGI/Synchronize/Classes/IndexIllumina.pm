@@ -134,7 +134,6 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
 
                 --Misc Paths
                 archive2.path archive_path,
-                gerald_bam.path bam_path,
                 NULL gc_bias_path,
                 NULL fastqc_path,
                 NULL adaptor_path
@@ -150,8 +149,6 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                         )
                     left join seq_fs_path archive2 on archive2.seq_id = i.seq_id
                         and archive2.data_type = 'illumina fastq tgz'
-                    left join seq_fs_path gerald_bam on gerald_bam.seq_id = i.seq_id
-                        and gerald_bam.data_type = 'gerald bam'
                     left join read_illumina r1
                         on run_type = 'Paired End'
                         and r1.ii_seq_id = i.seq_id
@@ -188,7 +185,6 @@ EOS
         old_sd_below_insert_size         => { },
         adaptor_path                     => { },
         archive_path                     => { },
-        bam_path                         => { },
         gc_bias_path                     => { },
         analysis_software_version        => { },
         clusters                         => { },
@@ -221,14 +217,13 @@ sub genome_class_for_create { return 'Genome::InstrumentData::Solexa'; }
 # TODO not updated. Fix?
 # run_name [on flow_cell_illumina]
 sub properties_to_copy {
-    return ( 'id', 'library_id', properties_to_keep_updated() );
+    return ( 'id', 'library_id', 'bam_path', properties_to_keep_updated() );
 }
 
 sub properties_to_keep_updated {
     return (qw/ 
         adaptor_path
         analysis_software_version
-        bam_path
         clusters
         fastqc_path
         flow_cell_id
@@ -264,6 +259,7 @@ sub properties_to_keep_updated {
         /);
 }
 
+
 sub lims_property_name_to_genome_property_name {
     my ($class, $name) = @_;
     my %lims_to_genome = (
@@ -279,6 +275,20 @@ sub lims_property_name_to_genome_property_name {
     );
     return $lims_to_genome{$name} if exists $lims_to_genome{$name};
     return $name;
+}
+
+sub bam_path {
+    my $self = shift;
+
+    my $id = $self->id;
+    my @bam_path_data = `db index_illumina analysis_id $id -mp gerald_bam_path`;
+    chomp @bam_path_data;
+
+    for (@bam_path_data) {
+        return $_ if $_ =~ /bam$/;
+    }
+
+    return;
 }
 
 1;
