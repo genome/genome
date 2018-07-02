@@ -69,6 +69,8 @@ sub _process_instrument_data {
         return;
     }
 
+    $self->debug_message('Found LIMS path: %s', $lims_path);
+
     if ($lims_path =~ m!^/gscarchive!) {
         $self->warning_message('Skipping instrument data %s because it appears to be in the old archive.', $data->__display_name__);
         return 1;
@@ -103,7 +105,7 @@ sub _process_instrument_data {
         my $error = $_;
         $allocation->deallocate;
         $self->error_message('Failed to unarchive instrument data %s. -- %s', $data->__display_name__, $error);
-    }
+    };
 
     return 1;
 }
@@ -119,6 +121,9 @@ sub _resolve_lims_bam_path {
 
     my $guard = Genome::Config::set_env('lsb_sub_additional', "docker($docker_image)");
     my $cmd = [qw(db ii analysis_id), $data->id, qw(-mp get_disk_archive->archive_path)];
+
+    local $ENV{LSF_DOCKER_PRESERVE_ENVIRONMENT} = 'false';
+    local $ENV{LSB_DOCKER_MOUNT_GSC} = 'false';
 
     my $log_allocation = Genome::Disk::Allocation->get(owner_class_name => $self->class);
     my $log_dir = $log_allocation->absolute_path;
