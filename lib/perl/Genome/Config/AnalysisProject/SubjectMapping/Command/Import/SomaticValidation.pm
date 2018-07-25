@@ -6,14 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::SubjectMapping::Command::Import::SomaticValidation {
-    is => 'Genome::Config::AnalysisProject::Command::Base',
-    has_input => [
-        file_path => {
-            is => 'Text',
-            shell_args_position => 2,
-            doc => 'path to a newline-delimited, tab-separated list of samples, variant lists, and tags (See description section of --help for details.)'
-        }
-    ],
+    is => 'Genome::Config::AnalysisProject::SubjectMapping::Command::Import::Base',
 };
 
 sub help_brief {
@@ -37,10 +30,6 @@ A header is optional and should be preceded with a '#' if present.
 Both tumor and normal subject can be specified by either ID or Name.
 Tags may also be specified by either ID or Name.
 EOS
-}
-
-sub valid_statuses {
-    return ("Pending", "Hold", "In Progress");
 }
 
 my @subjects = ('tumor_sample', 'normal_sample');
@@ -86,20 +75,6 @@ sub execute {
     return $count;
 }
 
-sub _create_subject {
-    my $self = shift;
-    my $mapping = shift;
-    my $label = shift;
-    my $subject_identifier = shift;
-
-    my $subject = Genome::Subject->get($subject_identifier) || Genome::Subject->get(name => $subject_identifier);
-    die($self->error_message("Unable to find a subject from identifier: %s", $subject_identifier)) unless $subject;
-    Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
-        subject_mapping => $mapping,
-        subject_id => $subject,
-        label => $_,
-    );
-}
 
 sub _create_input {
     my $self = shift;
@@ -110,22 +85,8 @@ sub _create_input {
     my $result = Genome::Model::Tools::DetectVariants2::Result::Base->get($value);
     die($self->error_message("Unable to find a variant list with ID: %s", $value)) unless $result;
 
-    Genome::Config::AnalysisProject::SubjectMapping::Input->create(
-        subject_mapping => $mapping,
-        value => $value,
-        key => $key,
-    );
+    $self->SUPER::_create_input($mapping, $key, $value);
 }
 
-sub _link_to_tag {
-    my $self = shift;
-    my $mapping = shift;
-    my $tag_string = shift;
-
-    my $tag = Genome::Config::Tag->get($tag_string) || Genome::Config::Tag->get(name => $tag_string);
-    die($self->error_message("Unable to find a tag from identifier: %s", $tag_string)) unless $tag;
-
-    $tag->add_subject_mapping($mapping);
-}
 
 1;
