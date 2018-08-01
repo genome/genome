@@ -1622,6 +1622,15 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        '>cwl-pipeline',
+        [
+          'analysis-project=s',
+          undef,
+          'file-path=s',
+          'files',
+          'help!',
+          undef
+        ],
         'help!',
         undef
       ],
@@ -31856,6 +31865,15 @@ $Genome::Command::OPTS_SPEC = [
         '>import',
         [
           '>somatic-validation',
+          [
+            'analysis-project=s',
+            undef,
+            'file-path=s',
+            'files',
+            'help!',
+            undef
+          ],
+          '>cwl-pipeline',
           [
             'analysis-project=s',
             undef,
