@@ -32,7 +32,7 @@ sub _create_subject {
     Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
         subject_mapping => $mapping,
         subject_id => $subject,
-        label => $_,
+        label => $label,
     );
 }
 
