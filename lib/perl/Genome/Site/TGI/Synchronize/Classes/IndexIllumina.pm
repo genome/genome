@@ -204,7 +204,7 @@ EOS
         rev_base_quality_sum             => { },
     ],
     has_calculated_constant => [
-        bam_path                         => { calculate => \&_resolve_bam_path },
+        bam_path                         => { calculate => q{ $self->_resolve_bam_path } },
     ],
     data_source => 'Genome::DataSource::Dwrac',
 };
