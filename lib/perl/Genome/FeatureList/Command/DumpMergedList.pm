@@ -31,6 +31,12 @@ class Genome::FeatureList::Command::DumpMergedList {
             default_value => 1,
             is_optional => 1,
         },
+        strip_chr => {
+            is => 'Boolean',
+            doc => 'Whether or not to forcibly remove "chr" from the beginning of chromosome names (ignored if alternate reference is specified)',
+            default_value => 0,
+            is_optional => 1,
+        },
         short_name => {
             is => 'Boolean',
             doc => 'A command line option to merge or not merge the feature list',
@@ -90,11 +96,13 @@ sub execute {
         $bed = $feature_list->merged_bed_file(
             short_name => $self->short_name,
             track_name => $self->track_name,
+            strip_chr => $self->strip_chr,
         );
     } else {
         $bed = $feature_list->processed_bed_file(
             short_name => $self->short_name,
             track_name => $self->track_name,
+            strip_chr => $self->strip_chr,
         );
     }
 
