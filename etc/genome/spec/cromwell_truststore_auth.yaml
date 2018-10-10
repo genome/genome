@@ -1,0 +1,3 @@
+---
+env: XGENOME_CROMWELL_TRUSTSTORE_AUTH
+default_value: changeit
