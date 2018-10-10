@@ -149,6 +149,7 @@ sub run_cromwell {
     delete local $ENV{BSUB_QUIET};
 
     my $config_file = $self->_generate_cromwell_config($tmp_dir, $results_dir);
+    my $labels_file = $self->_generate_cromwell_labels;
 
     my $truststore_file = Genome::Config::get('cromwell_truststore_file');
     my $truststore_auth = Genome::Config::get('cromwell_truststore_auth');
@@ -162,6 +163,7 @@ sub run_cromwell {
             '-jar', '/opt/cromwell.jar',
             'run',
             '-t', 'cwl',
+            '-l', $labels_file,
             '-i', $yaml,
             $model->main_workflow_file,
         ],
@@ -275,6 +277,22 @@ EOCONFIG
 
     Genome::Sys->write_file($config_file, $config);
     return $config_file;
+}
+
+sub _generate_cromwell_labels {
+    my $self = shift;
+    my $build = $self->build;
+
+    my $labels_file = File::Spec->join($build->data_directory, 'cromwell.labels');
+
+    my $data = {
+        build => $build->id,
+        model => $build->model->id,
+        analysis_project => $build->model->analysis_project->id,
+    };
+
+    YAML::DumpFile($labels_file, $data);
+    return $labels_file;
 }
 
 sub preserve_results {
