@@ -33,7 +33,7 @@ sub execute {
     my $cwl_runner = Genome::Config::get('cwl_runner');
     if ($cwl_runner eq 'cromwell') {
         $self->run_cromwell($yaml, $tmp_dir, $results_dir);
-        #TODO oull results out of cromwell's hierarchy and cleanup
+        #TODO pull results out of cromwell's hierarchy and cleanup
     } elsif ($cwl_runner eq 'toil') {
         $self->run_toil($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir, $results_dir);
