@@ -7,6 +7,7 @@ use File::Spec;
 use Genome;
 use Genome::Utility::File::Mode qw();
 use YAML;
+use JSON qw(to_json);
 
 class Genome::Model::CwlPipeline::Command::Run {
     is => 'Command::V2',
@@ -291,7 +292,7 @@ sub _generate_cromwell_labels {
         analysis_project => $build->model->analysis_project->id,
     };
 
-    YAML::DumpFile($labels_file, $data);
+    Genome::Sys->write_file($labels_file, to_json($data));
     return $labels_file;
 }
 
