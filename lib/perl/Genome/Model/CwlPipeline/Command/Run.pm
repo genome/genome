@@ -33,7 +33,7 @@ sub execute {
     my $cwl_runner = Genome::Config::get('cwl_runner');
     if ($cwl_runner eq 'cromwell') {
         $self->run_cromwell($yaml, $tmp_dir, $results_dir);
-        #TODO pull results out of cromwell's hierarchy and cleanup
+        $self->cleanup($tmp_dir);
     } elsif ($cwl_runner eq 'toil') {
         $self->run_toil($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir, $results_dir);
@@ -171,7 +171,7 @@ sub run_cromwell {
         input_files => [$model->main_workflow_file, $yaml],
     );
 
-    #$self->_copy_cromwell_outputs();
+    $self->_stage_cromwell_outputs($results_dir);
 }
 
 sub _generate_cromwell_config {
@@ -296,6 +296,44 @@ sub _generate_cromwell_labels {
     return $labels_file;
 }
 
+sub _stage_cromwell_outputs {
+    my $self = shift;
+    my $results_dir = shift;
+
+    my $build = $self->build;
+
+    my $results = Genome::Cromwell->query({ label => $build->id });
+    if ($results->{totalResultsCount} != 1) {
+        $self->fatal_message('Failed to find workflow.  Got: %s', $results);
+    }
+
+    my $workflow_id = $results->{results}->[0]->{id};
+    my $output_result = Genome::Cromwell->outputs($workflow_id);
+
+    my $outputs = $output_result->{outputs};
+
+    for my $output_name (keys %$outputs) {
+        my $info = $outputs->{$output_name};
+        
+        my $location = $info->{location};
+        my @secondary = map { $_->{location} } @{ $info->{secondaryFiles} };
+
+        for my $source ($location, @secondary) { 
+            my (undef, $dir, $file) = File::Spec->splitpath($source);
+
+            my $destination = File::Spec->join($results_dir, $file);
+            if (-e $destination) { 
+                $self->fatal_message('Cannot stage results. Multiple outputs with identical names: %s', $file);
+            }
+
+            Genome::Sys->move_file($source, $destination);
+        }
+    }
+
+    return 1;
+}
+
+
 sub preserve_results {
     my $self = shift;
     my $results_dir = shift;
@@ -314,9 +352,11 @@ sub cleanup {
 
     Genome::Sys->remove_directory_tree($tmp_dir);
 
-    for my $dir (glob("$results_dir/tmp*")) {
-        if (-d $dir) {
-            Genome::Sys->remove_directory_tree($dir);
+    if ($results_dir) {
+        for my $dir (glob("$results_dir/tmp*")) {
+            if (-d $dir) {
+                Genome::Sys->remove_directory_tree($dir);
+            }
         }
     }
 
