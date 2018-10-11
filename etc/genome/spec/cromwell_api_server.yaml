@@ -1,0 +1,3 @@
+---
+env: XGENOME_CROMWELL_API_SERVER
+default_value: "http://localhost:8000/"
