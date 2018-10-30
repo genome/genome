@@ -51,8 +51,6 @@ my $aligner_version = $aligner_tools_class_name->default_version;
 my $aligner_label   = $aligner_name.$aligner_version;
 $aligner_label =~ s/\./\_/g;
 
-#was the path for BSMAP2.1 - new path is in the more canonical location
-#my $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
 my $BSMAP_VERSION = 'v2.74';
 my $TEST_DATE = '2015-03-02';
 my $expected_shortcut_path = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::AlignmentResult::Bsmap', File::Spec->join($BSMAP_VERSION, $TEST_DATE));

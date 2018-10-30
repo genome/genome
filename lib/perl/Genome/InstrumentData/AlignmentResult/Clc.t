@@ -12,6 +12,7 @@ use File::Path;
 use Sys::Hostname;
 
 use above "Genome";
+use Genome::Utility::Test;
 use Test::More;
 use Genome::Test::Factory::SoftwareResult::User;
 
@@ -22,8 +23,10 @@ else {
     plan tests => 25;
 }
 
-use_ok('Genome::InstrumentData::AlignmentResult::Clc');
+my $class = 'Genome::InstrumentData::AlignmentResult::Clc';
+use_ok($class);
 
+my $data_dir = Genome::Utility::Test->data_dir($class, 'v1');
 
 #
 # Configuration for the aligner name, etc
@@ -53,7 +56,7 @@ my $picard_version = Genome::Model::Tools::Picard->default_picard_version;
 my $aligner_label   = $aligner_name;
 $aligner_label =~ s/\./\_/g;
 
-my $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
+my $expected_shortcut_path = "$data_dir/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
 
 my $FAKE_INSTRUMENT_DATA_ID=-123456;
 
