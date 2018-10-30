@@ -207,7 +207,7 @@ sub version {
 }
 
 sub path_to_db_files {
-    return '/gscmnt/gc4096/info/reference_sequences/chimera-detector-16SrRNA/';
+    return '/gscmnt/gc2560/core/reference_sequences/chimera-detector-16SrRNA/';
 }
 
 sub version_db_nast_file {
