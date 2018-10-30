@@ -31,6 +31,9 @@ my $expected_merged_stats_file = $expected_data_dir .'/PDL_NOTCH1_merged_stats_e
 my $merged_stats_file = $tmp_dir .'/NOTCH1_merged_stats.tsv';
 my $stats_file = $tmp_dir .'/NOTCH1_1k_NOTCH1_STATS.tsv';
 
+my $ref_build = Genome::Model::Build->get('101947881');
+my $fasta = $ref_build->full_consensus_path('fa');
+
 my $ref_cov = Genome::Model::Tools::RefCov::WholeGenome->create(
     stats_file => $stats_file,
     merged_stats_file => $merged_stats_file,
@@ -40,7 +43,7 @@ my $ref_cov = Genome::Model::Tools::RefCov::WholeGenome->create(
     #THIS TAKES TOO LONG FOR THIS TEST
     genome_normalized_coverage => 0,
     min_depth_filter => 1,
-    reference_fasta => '/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa',
+    reference_fasta => $fasta,
 );
 isa_ok($ref_cov,'Genome::Model::Tools::RefCov::WholeGenome');
 ok($ref_cov->execute,'execute WholeGenome command '. $ref_cov->command_name);
