@@ -6,6 +6,7 @@ use Test::More;
 use Sys::Hostname;
 
 use above 'Genome';
+use Genome::Utility::Test;
 $ENV{'TEST_MODE'} = 1;
 
 BEGIN {
@@ -36,3 +37,7 @@ sub aligner_name { "rtg map" }
 sub library_id { '144224' }
 sub aligner_params { '' }
 
+sub base_dir {
+    my $class = 'Genome::InstrumentData::AlignmentResult::RtgMap';
+    return Genome::Utility::Test->data_dir($class,'v1');
+}

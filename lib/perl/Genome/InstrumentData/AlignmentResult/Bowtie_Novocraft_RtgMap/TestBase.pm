@@ -15,7 +15,8 @@ sub expected_shortcut_path {
     $self->{expected_shortcut_path} ||= do {
         my $aligner_label = $self->aligner_name() . $self->aligner_version();
         $aligner_label =~ s/\./\_/g;
-        "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456";
+        my $base_dir = $self->base_dir();
+        "$base_dir/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456";
     };
 }
 
