@@ -25,6 +25,9 @@ my $temp_large_indels = $temp_dir."/large_indels.bed";
 copy($base_dir."/large_indels.bed", $temp_large_indels)
     or die "failed to copy large_indels.bed to temp_dir: $!";
 
+my $ref_build = Genome::Model::Build::ImportedReferenceSequence->get(name => 'GRCh37-lite-build37');
+my $fasta = $ref_build->full_consensus_path('fa');
+
 my $cmd = Genome::Model::Tools::Validation::LongIndelsGenerateMergedAssemblies->create(
     long_indel_bed_file => $temp_large_indels,
     output_dir => $temp_dir,
@@ -32,7 +35,7 @@ my $cmd = Genome::Model::Tools::Validation::LongIndelsGenerateMergedAssemblies->
     reference_transcripts => "NCBI-human.ensembl/67_37l_v2",
     tumor_bam => $base_dir."/tumor.bam",
     normal_bam => $base_dir."/normal.bam",
-    reference_fasta => "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa",
+    reference_fasta => $fasta,
 );
 
 ok($cmd, "Command created successfully");

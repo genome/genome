@@ -26,7 +26,8 @@ my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Va
 my $input_indels = indel_fof($test_data_dir);
 my $tumor_bam = "$test_data_dir/tumor.bam";
 my $normal_bam = "$test_data_dir/normal.bam";
-my $reference_fasta = "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa";
+my $reference_build = Genome::Model::Build::ImportedReferenceSequence->get(name => 'GRCh37-lite-build37');
+my $reference_fasta = $reference_build->full_consensus_path('fa');
 
 # Outputs
 my $output_dir = File::Temp::tempdir('VarscanValidationXXXXX', CLEANUP => 1, TMPDIR => 1);
