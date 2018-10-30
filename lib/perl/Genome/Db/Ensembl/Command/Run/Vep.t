@@ -36,6 +36,9 @@ for my $file_type ('ensembl', 'vcf', 'vcf.gz') {
 
     my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash();
 
+    my $ref = Genome::Model::Build::ImportedReferenceSequence->get(name => 'GRCh37-lite-build37');
+    my $fasta = $ref->full_consensus_path('fa');
+
     my %params = (
         input_file => $input_file,
         format => $format,
@@ -48,7 +51,7 @@ for my $file_type ('ensembl', 'vcf', 'vcf.gz') {
         hgnc => 1,
         hgvs => 1,
         reference_version => "GRCh37",
-        fasta => "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa",
+        fasta => $fasta,
     );
 
     if ($file_type eq 'vcf' || $file_type eq 'vcf.gz') {
