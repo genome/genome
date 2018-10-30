@@ -22,13 +22,16 @@ my $expected_data_dir = $data_dir;
 my $alignment_file_path = $data_dir .'/test.bam';
 my $regions_file = $data_dir .'/test.bed';
 
+my $ref_build = Genome::Model::Build->get('101947881');
+my $fasta = $ref_build->full_consensus_path('fa');
+
 my $expected_stats_file = $expected_data_dir .'/PDL_test_STATS.tsv';
 my $ref_cov = Genome::Model::Tools::RefCov::ExomeCapture->create(
     output_directory => $tmp_dir,
     alignment_file_path => $alignment_file_path,
     roi_file_path => $regions_file,
     evaluate_gc_content => 1,
-    reference_fasta => '/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa',
+    reference_fasta => $fasta,
 );
 isa_ok($ref_cov,'Genome::Model::Tools::RefCov::ExomeCapture');
 ok($ref_cov->execute,'execute Standard command '. $ref_cov->command_name);
@@ -42,7 +45,7 @@ my $q20_ref_cov = Genome::Model::Tools::RefCov::ExomeCapture->create(
     alignment_file_path => $alignment_file_path,
     roi_file_path => $regions_file,
     min_base_quality => 20,
-    reference_fasta => '/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa',
+    reference_fasta => $fasta,
 );
 isa_ok($q20_ref_cov,'Genome::Model::Tools::RefCov::ExomeCapture');
 ok($q20_ref_cov->execute,'execute Standard command '. $q20_ref_cov->command_name);
@@ -56,7 +59,7 @@ my $q20_q1_ref_cov = Genome::Model::Tools::RefCov::ExomeCapture->create(
     roi_file_path => $regions_file,
     min_base_quality => 20,
     min_mapping_quality => 1,
-    reference_fasta => '/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa',
+    reference_fasta => $fasta,
 );
 isa_ok($q20_q1_ref_cov,'Genome::Model::Tools::RefCov::ExomeCapture');
 ok($q20_q1_ref_cov->execute,'execute Standard command '. $q20_q1_ref_cov->command_name);
