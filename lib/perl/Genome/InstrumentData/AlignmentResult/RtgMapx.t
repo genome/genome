@@ -6,6 +6,7 @@ use Test::More;
 use Sys::Hostname;
 
 use above 'Genome';
+use Genome::Utility::Test;
 use File::Copy;
 
 $ENV{'TEST_MODE'} = 1;
@@ -43,6 +44,7 @@ my $aligner_name = "rtg mapx";
 
 my $aligner_tools_class_name = "Genome::Model::Tools::Rtg";
 my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner_name);
+my $data_dir = Genome::Utility::Test->data_dir($alignment_result_class_name, 'v1');
 
 my $samtools_version = Genome::Model::Tools::Sam->default_samtools_version;
 my $picard_version = Genome::Model::Tools::Picard->default_picard_version;
@@ -53,7 +55,7 @@ my $aligner_version = $aligner_tools_class_name->default_rtg_version;
 my $aligner_label   = $aligner_name.$aligner_version;
 $aligner_label =~ s/\.|\s/\_/g;
 
-my $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
+my $expected_shortcut_path = "$data_dir/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
 
 my $FAKE_INSTRUMENT_DATA_ID=-123456;
 eval "use $alignment_result_class_name";

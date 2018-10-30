@@ -6,6 +6,7 @@ use Test::More;
 use Sys::Hostname;
 
 use above 'Genome';
+use Genome::Utility::Test;
 
 BEGIN {
     if (`uname -a` =~ /x86_64/) {
@@ -34,3 +35,7 @@ sub aligner_name { "bowtie" }
 sub library_id { '-1234545' }
 sub aligner_params { undef }
 
+sub base_dir {
+    my $class = 'Genome::InstrumentData::AlignmentResult::Bowtie';
+    return Genome::Utility::Test->data_dir($class,'v1');
+}
