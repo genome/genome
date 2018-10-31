@@ -101,22 +101,17 @@ sub execute {
     my $multiple_regions = ( $self->allow_multiple_output_regions ? " -multiple" : "" );
 
     unless( defined $chain_file ) {
-        if( $lift_direction eq 'hg19ToHg18' ) {
-            my $alloc = Genome::Disk::Allocation->get(allocation_path => 'model_data/chain_files/hg19Tohg18');
-            $self->fatal_message("Couldn't find chain file for hg19Tohg18") unless $alloc;
+        unless ($lift_direction) { 
+            die "no chain file specified, and no lift direction specified from which we can derive a chain file!";
+        }
 
-            $chain_file = File::Spec->join($alloc->absolute_path, "hg19ToHg18.over.chain");
-        }
-        elsif( $lift_direction eq 'hg18ToHg19' ) {
-            my $alloc = Genome::Disk::Allocation->get(allocation_path => 'model_data/chain_files/hg18Tohg19');
-            $self->fatal_message("Couldn't find chain file for hg19Tohg18") unless $alloc;
+        my $lift_direction_alloc_name = $lift_direction;
+        $lift_direction_alloc_name =~ s/H/h/g;
 
-            $chain_file = File::Spec->join($alloc->absolute_path, "hg18ToHg19.over.chain");
-        }
-        else {
-            die "no chain file specified, and not lift direction specified from which we can derive a chain file!";
-        }
-        # Invalid values of --lift-direction are already handled
+        my $alloc = Genome::Disk::Allocation->get(allocation_path => "model_data/chain_files/$lift_direction_alloc_name");
+        $self->fatal_message("Couldn't find chain file for $lift_direction") unless $alloc;
+
+        $chain_file = File::Spec->join($alloc->absolute_path, "$lift_direction.over.chain");
     }
 
     # Allow unmapped loci to be an optional output, by providing liftOver a dummy file to write to
