@@ -61,7 +61,7 @@ my @use_associations = Genome::SoftwareResult::User->get(user_id => $result->id)
 is(scalar(@use_associations),2, "linked to two other results");
 
 my @uses = map { $_->software_result } @use_associations;
-is(scalar(@uses), 2, "uses to other results");
+is(scalar(@uses), 2, "uses two other results");
 
 for my $used_sr (@uses) {
     my $dir = $used_sr->output_dir;
