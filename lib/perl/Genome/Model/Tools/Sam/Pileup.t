@@ -29,7 +29,8 @@ my $bam_file = $data_dir .'/test.bam';
 my $example_output_file = $data_dir .'/expected/test.pileup.gz';
 
 my $output_file = $tmp_dir."/test.pileup.gz";
-my $refseq_path = "/gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa";
+my $refseq_build = Genome::Model::Build->get('101947881');
+my $refseq_path = $refseq_build->full_consensus_path('fa');
 my $region_file = $data_dir."/test.region.gz";
 
 
