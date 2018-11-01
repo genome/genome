@@ -80,9 +80,25 @@ sub get_id {
 sub sanitize {
     my $self = shift;
 
+    $self->sanitize_disk_group;
     $self->group_subdirectory($self->disk_group->subdirectory);
+
     $self->sanitize_mount_path;
     $self->sanitize_exclude_mount_path;
+}
+
+sub sanitize_disk_group {
+    my $self = shift;
+
+    #sometimes someone specifies a specific disk volume in place of a whole group
+    #so correct the values here and helpfully add the specific volume for them!
+    my $dgn = sanitize_directory_path($self->disk_group_name);
+    if ($dgn =~ m!/!) { #maybe it's a mount path
+        if (my $dv = Genome::Disk::Volume->get(mount_path => $dgn)) {
+            $self->mount_path($dgn);
+            $self->disk_group_name($dv->disk_group_name);
+        }
+    }
 }
 
 sub sanitize_mount_path {
