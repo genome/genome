@@ -7,12 +7,17 @@ use File::Spec;
 use Genome;
 use Genome::Utility::File::Mode qw();
 use YAML;
+use JSON qw(to_json);
 
 class Genome::Model::CwlPipeline::Command::Run {
     is => 'Command::V2',
     has => [
         build => {
             is => 'Genome::Model::Build::CwlPipeline',
+        },
+        lsf_resource => {
+            is_param => 1,
+            value => '-R "select[mem>8000] rusage[mem=8000]" -M 8000000',
         },
     ],
     doc => 'wrapper command to run "cwltoil"'
@@ -25,8 +30,16 @@ sub execute {
 
     my $yaml = $self->prepare_yaml;
     my ($tmp_dir, $results_dir) = $self->prepare_directories;
-    $self->run_toil($yaml, $tmp_dir, $results_dir);
-    $self->cleanup($tmp_dir, $results_dir);
+    my $cwl_runner = Genome::Config::get('cwl_runner');
+    if ($cwl_runner eq 'cromwell') {
+        $self->run_cromwell($yaml, $tmp_dir, $results_dir);
+        $self->cleanup($tmp_dir);
+    } elsif ($cwl_runner eq 'toil') {
+        $self->run_toil($yaml, $tmp_dir, $results_dir);
+        $self->cleanup($tmp_dir, $results_dir);
+    } else {
+        $self->fatal_message('Unknown CWL runner: %s', $cwl_runner);
+    }
     $self->preserve_results($results_dir);
 
     return 1;
@@ -124,6 +137,203 @@ sub run_toil {
     );
 }
 
+sub run_cromwell {
+    my $self = shift;
+    my $yaml = shift;
+    my $tmp_dir = shift;
+    my $results_dir = shift;
+
+    my $build = $self->build;
+    my $model = $build->model;
+
+    #cromwell relies on reading the output from bsub
+    delete local $ENV{BSUB_QUIET};
+
+    my $config_file = $self->_generate_cromwell_config($tmp_dir, $results_dir);
+    my $labels_file = $self->_generate_cromwell_labels;
+
+    my $truststore_file = Genome::Config::get('cromwell_truststore_file');
+    my $truststore_auth = Genome::Config::get('cromwell_truststore_auth');
+
+    Genome::Sys->shellcmd(
+        cmd => [
+            '/usr/bin/java',
+            sprintf('-Dconfig.file=%s', $config_file),
+            sprintf('-Djavax.net.ssl.trustStorePassword=%s', $truststore_auth),
+            sprintf('-Djavax.net.ssl.trustStore=%s', $truststore_file),
+            '-jar', '/opt/cromwell.jar',
+            'run',
+            '-t', 'cwl',
+            '-l', $labels_file,
+            '-i', $yaml,
+            $model->main_workflow_file,
+        ],
+        input_files => [$model->main_workflow_file, $yaml],
+    );
+
+    $self->_stage_cromwell_outputs($results_dir);
+}
+
+sub _generate_cromwell_config {
+    my $self = shift;
+    my $tmp_dir = shift;
+
+    my $build = $self->build;
+    my $log_dir = $build->log_directory;
+
+    my $primary_docker_image = $build->model->primary_docker_image;
+
+    my $default_queue = Genome::Config::get('lsf_queue_build_worker_alt');
+
+    my $server = Genome::Config::get('cromwell_server');
+    my $auth = Genome::Config::get('cromwell_auth');
+    my $user = Genome::Config::get('cromwell_user');
+
+    my $config_file = File::Spec->join($build->data_directory, 'cromwell.config');
+
+    my $config = <<'EOCONFIG'
+include required(classpath("application"))
+
+backend {
+  default = "LSF"
+  providers {
+    LSF {
+      actor-factory = "cromwell.backend.impl.sfs.config.ConfigBackendLifecycleActorFactory"
+      config {
+        runtime-attributes = """
+        Int cpu = 1
+        Int? memory_kb
+        Int? memory_mb
+        String? docker
+        """
+
+        submit = """
+        bsub \
+        -J ${job_name} \
+        -cwd ${cwd} \
+EOCONFIG
+    ;
+    $config .= <<EOCONFIG
+        -o /dev/null \\
+        -e $log_dir/cromwell-%J.err \\
+        -a '$primary_docker_image' \\
+        -q '$default_queue' \\
+EOCONFIG
+        ;
+    $config .= <<'EOCONFIG'
+        ${"-M " + memory_kb} \
+        ${"-n " + cpu} \
+        ${"-R \"select[mem>" + memory_mb + "] rusage[mem=" + memory_mb + "]\""} \
+        /bin/bash ${script}
+        """
+
+        submit-docker = """
+        LSF_DOCKER_VOLUMES=${cwd}:${docker_cwd} \
+        bsub \
+        -J ${job_name} \
+        -cwd ${cwd} \
+EOCONFIG
+    ;
+    $config .= <<EOCONFIG
+        -o /dev/null \\
+        -e $log_dir/cromwell-%J.err \\
+        -q '$default_queue' \\
+EOCONFIG
+        ;
+    $config .= <<'EOCONFIG'
+        ${"-a \"docker(" + docker + ")\""} \
+        ${"-M " + memory_kb} \
+        ${"-n " + cpu} \
+        ${"-R \"select[mem>" + memory_mb + "] rusage[mem=" + memory_mb + "]\""} \
+        /bin/bash ${script}
+        """
+
+        kill = "bkill ${job_id}"
+        docker-kill = "bkill ${job_id}"
+        check-alive = "bjobs -noheader -o stat ${job_id} | /bin/grep 'PEND\\|RUN'"
+        job-id-regex = "Job <(\\d+)>.*"
+EOCONFIG
+;
+    $config .= <<EOCONFIG
+        root = "$tmp_dir/cromwell-executions"
+      }
+    }
+  }
+}
+workflow-options {
+  workflow-log-dir = "$log_dir/cromwell-workflow-logs"
+}
+database {
+  profile = "slick.jdbc.MySQLProfile$"
+  db {
+    driver = "com.mysql.jdbc.Driver"
+    url = "jdbc:$server"
+    user = "$user"
+    password = "$auth"
+    connectionTimeout = 5000
+  }
+}
+EOCONFIG
+;
+
+    Genome::Sys->write_file($config_file, $config);
+    return $config_file;
+}
+
+sub _generate_cromwell_labels {
+    my $self = shift;
+    my $build = $self->build;
+
+    my $labels_file = File::Spec->join($build->data_directory, 'cromwell.labels');
+
+    my $data = {
+        build => $build->id,
+        model => $build->model->id,
+        analysis_project => $build->model->analysis_project->id,
+    };
+
+    Genome::Sys->write_file($labels_file, to_json($data));
+    return $labels_file;
+}
+
+sub _stage_cromwell_outputs {
+    my $self = shift;
+    my $results_dir = shift;
+
+    my $build = $self->build;
+
+    my $results = Genome::Cromwell->query({ label => $build->id });
+    if ($results->{totalResultsCount} != 1) {
+        $self->fatal_message('Failed to find workflow.  Got: %s', $results);
+    }
+
+    my $workflow_id = $results->{results}->[0]->{id};
+    my $output_result = Genome::Cromwell->outputs($workflow_id);
+
+    my $outputs = $output_result->{outputs};
+
+    for my $output_name (keys %$outputs) {
+        my $info = $outputs->{$output_name};
+        
+        my $location = $info->{location};
+        my @secondary = map { $_->{location} } @{ $info->{secondaryFiles} };
+
+        for my $source ($location, @secondary) { 
+            my (undef, $dir, $file) = File::Spec->splitpath($source);
+
+            my $destination = File::Spec->join($results_dir, $file);
+            if (-e $destination) { 
+                $self->fatal_message('Cannot stage results. Multiple outputs with identical names: %s', $file);
+            }
+
+            Genome::Sys->move_file($source, $destination);
+        }
+    }
+
+    return 1;
+}
+
+
 sub preserve_results {
     my $self = shift;
     my $results_dir = shift;
@@ -142,9 +352,11 @@ sub cleanup {
 
     Genome::Sys->remove_directory_tree($tmp_dir);
 
-    for my $dir (glob("$results_dir/tmp*")) {
-        if (-d $dir) {
-            Genome::Sys->remove_directory_tree($dir);
+    if ($results_dir) {
+        for my $dir (glob("$results_dir/tmp*")) {
+            if (-d $dir) {
+                Genome::Sys->remove_directory_tree($dir);
+            }
         }
     }
 
