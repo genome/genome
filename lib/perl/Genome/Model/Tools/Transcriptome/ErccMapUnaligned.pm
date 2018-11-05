@@ -12,12 +12,12 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
         build => {
             is => 'Genome::Model::Build::RnaSeq',
             doc => 'A RNASeq build that has ERCC transcripts spiked in.',
-            is_optional => '1,',
+            is_optional => '1',
         },
         bam_file => {
             is => 'FilePath',
             doc => 'A path to a BAM file that has ERCC transcripts spiked in.',
-            is_optional => '1,',
+            is_optional => '1',
         },
         ercc_fasta_file => {
             is => 'FilePath',
