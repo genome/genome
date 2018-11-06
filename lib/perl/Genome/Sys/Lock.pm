@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Carp qw(carp croak);
-use Genome::Utility::Instrumentation qw();
 use List::MoreUtils qw(all);
 use Params::Validate qw(validate HASHREF);
 
@@ -99,14 +98,7 @@ sub lock_resource {
         }
     }
 
-    if (all { $_->has_lock($args{resource_lock}) } backends($args{scope})) {
-        Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.consistent');
-    } else {
-        Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.inconsistent');
-    }
-
     return $args{resource_lock};
-
 }
 
 sub PROXY_CONSTRUCTOR_PARAMS_SPEC {

@@ -5,7 +5,6 @@ use warnings;
 
 use Genome;
 use Genome::Sys::LockProxy qw();
-use Genome::Utility::Instrumentation;
 use Genome::Utility::File::Mode qw(mode);
 
 use Carp qw(croak confess);
@@ -205,8 +204,6 @@ sub allocate { return shift->create(@_); }
 sub create {
     my ($class, %params) = @_;
 
-    Genome::Utility::Instrumentation::inc('disk.allocation.create');
-
     # TODO Switch from %params to BoolExpr and pass in BX to autogenerate_new_object_id
     unless (exists $params{id}) {
         $params{id} = $class->__meta__->autogenerate_new_object_id;
@@ -227,10 +224,7 @@ sub create {
         die $class->error_message('Cannot create disk allocation in an archive group: '.$params{disk_group_name});
     }
 
-    my $self;
-    Genome::Utility::Instrumentation::timer('disk.allocation.create', sub {
-        $self = $class->_execute_system_command('_create', %params);
-    });
+    my $self = $class->_execute_system_command('_create', %params);
 
     if ($self) {
         if ($ENV{UR_DBI_NO_COMMIT}) {
@@ -248,8 +242,6 @@ sub deallocate { return shift->delete(@_); }
 sub delete {
     my ($class, %params) = @_;
 
-    Genome::Utility::Instrumentation::inc('disk.allocation.delete');
-
     $class->_execute_system_command('_delete', %params);
     return 1;
 }
@@ -257,15 +249,11 @@ sub delete {
 sub reallocate {
     my ($class, %params) = @_;
 
-    Genome::Utility::Instrumentation::inc('disk.allocation.reallocate');
-
     return $class->_execute_system_command('_reallocate', %params);
 }
 
 sub move {
     my ($class, %params) = @_;
-
-    Genome::Utility::Instrumentation::inc('disk.allocation.move');
 
     return $class->_execute_system_command('_move', %params);
 }
@@ -273,23 +261,17 @@ sub move {
 sub copy {
     my ($class, %params) = @_;
 
-    Genome::Utility::Instrumentation::inc('disk.allocation.copy');
-
     return $class->_execute_system_command('_copy', %params);
 }
 
 sub archive {
     my ($class, %params) = @_;
 
-    Genome::Utility::Instrumentation::inc('disk.allocation.archive');
-
     return $class->_execute_system_command('_archive', %params);
 }
 
 sub unarchive {
     my ($class, %params) = @_;
-
-    Genome::Utility::Instrumentation::inc('disk.allocation.unarchive');
 
     return $class->_execute_system_command('_unarchive', %params);
 }
@@ -616,7 +598,7 @@ sub _execute_system_command {
 
         my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
         my @statements = (
-            qq(Genome::Utility::Instrumentation::timer('disk.allocation.require', sub { require $class })),
+            qq(require $class),
             sprintf('%s->%s(%s)', $class, $method, $param_string),
             q(UR::Context->commit),
         );
@@ -813,10 +795,7 @@ sub get_parent_allocation {
     my ($class, $path) = @_;
     Carp::confess("no path defined") unless defined $path;
 
-    my $allocation;
-    Genome::Utility::Instrumentation::timer('disk.allocation.get_parent_allocation', sub {
-        $allocation = $class->_get_parent_allocation_impl($path);
-    });
+    my $allocation = $class->_get_parent_allocation_impl($path);
 
     return $allocation if $allocation;
     return;
@@ -906,17 +885,15 @@ sub _verify_no_child_allocations {
     }
 
     my ($err, $errstr, $row_arrayref);
-    Genome::Utility::Instrumentation::timer('disk.allocation.child_allocation_query', sub {
-        my $dbh = $data_source->get_default_handle();
-        my $query_object = $dbh->prepare($query_string);
-        $query_object->bind_param(1, $path . "/%");
-        $query_object->execute();
+    my $dbh = $data_source->get_default_handle();
+    my $query_object = $dbh->prepare($query_string);
+    $query_object->bind_param(1, $path . "/%");
+    $query_object->execute();
 
-        $row_arrayref = $query_object->fetchrow_arrayref();
-        $err = $dbh->err;
-        $errstr = $dbh->errstr;
-        $query_object->finish();
-    });
+    $row_arrayref = $query_object->fetchrow_arrayref();
+    $err = $dbh->err;
+    $errstr = $dbh->errstr;
+    $query_object->finish();
 
     if ($err) {
         die $class->error_message(sprintf(

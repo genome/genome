@@ -15,7 +15,6 @@ use File::Basename;
 use Try::Tiny qw(try catch);
 
 use Genome::Sys::LockMigrationProxy qw();
-use Genome::Utility::Instrumentation;
 
 use warnings;
 use strict;
@@ -1088,8 +1087,6 @@ sub _compute_alignment_metrics {
         $self->proper_paired_end_base_count ($res->{proper_paired_end_bp});
         $self->singleton_read_count         ($res->{singleton});
         $self->singleton_base_count         ($res->{singleton_bp});
-
-        Genome::Utility::Instrumentation::inc('alignment_result.read_count', $self->total_read_count);
     }
 
     return 1;

@@ -85,15 +85,12 @@ sub candidate_volumes {
     my $self = shift;
 
     my @candidate_volumes;
-    Genome::Utility::Instrumentation::timer(
-        'disk.allocation.create.candidate_volumes.selection', sub {
-            if (defined $self->parameters->mount_path) {
-                @candidate_volumes = $self->candidate_volumes_from_mount_path;
-            } else {
-                @candidate_volumes =
-                    $self->candidate_volumes_without_mount_path;
-            }
-    });
+    if (defined $self->parameters->mount_path) {
+        @candidate_volumes = $self->candidate_volumes_from_mount_path;
+    } else {
+        @candidate_volumes =
+            $self->candidate_volumes_without_mount_path;
+    }
 
     return @candidate_volumes;
 }
@@ -169,12 +166,7 @@ sub get_candidate_volumes {
 sub _get_allocation_without_lock {
     my ($self, $candidate_volumes) = @_;
 
-    my $allocation_object;
-    Genome::Utility::Instrumentation::timer(
-        'disk.allocation.create.get_allocation_without_lock', sub {
-            $allocation_object = $self->_get_allocation_without_lock_impl(
-                $candidate_volumes);
-    });
+    my $allocation_object = $self->_get_allocation_without_lock_impl($candidate_volumes);
     return $allocation_object;
 }
 
@@ -195,11 +187,6 @@ sub _get_allocation_without_lock_impl {
             $chosen_allocation = $self->_attempt_allocation_creation(
                 $candidate_volume);
             if ($chosen_allocation) {
-                # we can pretend $attempts is a unit of time to get the metrics we want
-                Genome::Utility::Instrumentation::timing(
-                    'disk.allocation.create.get_allocation_without_lock.attempts',
-                    $attempts * 1000,
-                );
                 last;
             }
         } else {
@@ -247,21 +234,17 @@ sub _verify_allocation_path_unused {
     # this path and then destroyed for some arbitrary reason, the user will
     # lose their files.
 
-    Genome::Utility::Instrumentation::timer(
-        'disk.allocation.create.candidate_volumes'
-        .  '.existing_allocation_path_check', sub {
-            my $candidate_path = Genome::Disk::Allocation->_absolute_path(
-                $candidate_volume->mount_path,
-                $self->parameters->group_subdirectory,
-                $self->parameters->allocation_path);
-            if ( -e $candidate_path ) {
-                confess sprintf("The allocation path %s already exists. "
-                    . "If you are attempting to create an allocation "
-                    . "for an existing path, please move the path to a "
-                    .  "temporary location before continuing.",
-                    $candidate_path);
-            }
-    });
+    my $candidate_path = Genome::Disk::Allocation->_absolute_path(
+        $candidate_volume->mount_path,
+        $self->parameters->group_subdirectory,
+        $self->parameters->allocation_path);
+    if ( -e $candidate_path ) {
+        confess sprintf("The allocation path %s already exists. "
+            . "If you are attempting to create an allocation "
+            . "for an existing path, please move the path to a "
+            .  "temporary location before continuing.",
+            $candidate_path);
+    }
 }
 
 sub _attempt_allocation_creation {
@@ -282,8 +265,6 @@ sub _attempt_allocation_creation {
     }
 
     if ($candidate_volume->is_allocated_over_soft_limit) {
-        Genome::Utility::Instrumentation::inc('disk.allocation.'
-            . 'get_allocation_without_lock.rollback.over_allocated');
         $self->debug_message(
                 "%s's allocated_kb exceeded soft limit (%d kB), "
                 . "rolling back allocation.",
@@ -294,8 +275,6 @@ sub _attempt_allocation_creation {
         return;
 
     } elsif ($candidate_volume->is_used_over_soft_limit) {
-        Genome::Utility::Instrumentation::inc('disk.allocation.'
-            . 'get_allocation_without_lock.rollback.over_used');
         $self->debug_message(
                 "%s's used_kb exceeded soft limit (%d %s), "
                 . "rolling back allocation.",
@@ -315,11 +294,7 @@ sub create_directory_or_delete_allocation {
     # If we cannot create the directory delete the new allocation
     my $dir;
     eval {
-        Genome::Utility::Instrumentation::timer(
-            'disk.allocation.create.create_directory', sub {
-                $dir = Genome::Sys->create_directory(
-                    $allocation_object->absolute_path);
-        });
+        $dir = Genome::Sys->create_directory($allocation_object->absolute_path);
     };
     my $error = $@;
     unless (defined($dir) and ( -d $dir ) and not $error) {
