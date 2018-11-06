@@ -21,8 +21,6 @@ use lib $plugins_dir;
 
 BEGIN {
     if ($ENV{UR_DBI_NO_COMMIT}) {
-        Genome::Config::set_env('statsd_host', '');
-        Genome::Config::set_env('statsd_port', '');
         Genome::Config::set_env('db_pause', '');
     }
 
