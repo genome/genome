@@ -110,7 +110,7 @@ sub _resolve_workflow_for_build {
     );
 
     my $cmd = Genome::WorkflowBuilder::Command->create(
-        name => 'Toil Runner',
+        name => 'CWL Runner',
         command => 'Genome::Model::CwlPipeline::Command::Run',
     );
     $wf->add_operation($cmd);
