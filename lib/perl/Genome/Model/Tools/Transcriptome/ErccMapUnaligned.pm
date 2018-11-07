@@ -12,23 +12,23 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
         build => {
             is => 'Genome::Model::Build::RnaSeq',
             doc => 'A RNASeq build that has ERCC transcripts spiked in.',
-            is_optional => '1,',
+            is_optional => '1',
         },
         bam_file => {
             is => 'FilePath',
             doc => 'A path to a BAM file that has ERCC transcripts spiked in.',
-            is_optional => '1,',
+            is_optional => '1',
         },
         ercc_fasta_file => {
             is => 'FilePath',
             doc => 'The FASTA format sequence for all ERCC transcripts.',
-            default_value => '/gscmnt/gc9008/info/model_data/2861523156/build0bfc1bd5fcfc474c9db737a520ae109d/appended_sequences.fa',
+            example_values => ['/gscmnt/gc2560/core/model_data/2861523156/build0bfc1bd5fcfc474c9db737a520ae109d/appended_sequences.fa'],
             is_optional => '1',
         },
         ercc_spike_in_file => {
             is => 'FilePath',
             doc => 'The control analysis file provided by Agilent for the ERCC spike-in.',
-            default_value => '/gscmnt/gc13025/info/RNASeq/ERCC/metadata/ERCC_Controls_Analysis-v1.txt',
+            example_values => ['/gscmnt/gc2560/core/RNASeq/ERCC/metadata/ERCC_Controls_Analysis-v1.txt'],
             is_optional => '1',
         },
         samtools_version => {
