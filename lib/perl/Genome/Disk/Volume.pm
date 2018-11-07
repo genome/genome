@@ -149,11 +149,8 @@ sub allocated_kb {
 
     # We only want to time the sum aggregate, not including any time to connect to the DB
     Genome::Disk::Allocation->__meta__->data_source->get_default_handle();
-    my ($allocated_kb, $allocation_count);
-    Genome::Utility::Instrumentation::timer('disk.volume.allocated_kb', sub {
-        $allocated_kb = ($set->sum($field) or 0);
-        $allocation_count = $set->count();
-    });
+    my $allocated_kb = ($set->sum($field) or 0);
+    my $allocation_count = $set->count();
 
     if (wantarray) {
         return $allocated_kb, $allocation_count;

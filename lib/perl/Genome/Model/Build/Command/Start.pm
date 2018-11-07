@@ -5,7 +5,6 @@ use warnings;
 
 use Genome;
 
-use Genome::Utility::Instrumentation;
 use Time::HiRes;
 
 use Data::Dumper 'Dumper';
@@ -110,9 +109,7 @@ sub execute {
             next;
         }
 
-        Genome::Utility::Instrumentation::timer('command.model.build.start', sub {
-            $self->create_and_start_build($model);
-        });
+        $self->create_and_start_build($model);
     }
 
     $self->display_builds_started();

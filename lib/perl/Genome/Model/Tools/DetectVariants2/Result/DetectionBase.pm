@@ -7,7 +7,6 @@ use Sys::Hostname;
 use File::Path 'rmtree';
 
 use Genome;
-use Genome::Utility::Instrumentation qw();
 use Data::Dump qw(pp);
 
 class Genome::Model::Tools::DetectVariants2::Result::DetectionBase {
@@ -214,21 +213,17 @@ sub _validate_found_allocation {
         $class->warning_message("Found link to %s allocation (%s).  "
             . "Removing symlink.", $allocation->status, $allocation->id);
         unlink $instance_output;
-        Genome::Utility::Instrumentation::increment('dv2.result.removed_symlink')
     } elsif ($allocation->is_archived) {
-        Genome::Utility::Instrumentation::increment('dv2.result.noticed_archived_allocation');
         die $class->error_message("Allocation linked from %s (%s) is archived.",
             $instance_output, $allocation->id);
     } elsif ($result) {
         # Finding a result and an allocation means either:
         # 1) This work was already done, but for whatever reason we didn't find the software result before we decided to do the work.
         # 2) We're doing different work but pointing it at a place where work has already been done for something else. Can't replace it.
-        Genome::Utility::Instrumentation::increment('dv2.result.found_duplicate');
         die $class->error_message("Found allocation and software result for path $instance_output, cannot create new result!");
     } else {
         # Allocation exists without a result the whole time the result is being created. Ideally locks
         # would prevent us from getting here during that window but our locks are not 100% reliable.
-        Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_allocation');
         die $class->error_message(
             "Found allocation at (%s) but no software result for its owner ID (%s). ".
             "This is either because the software result is currently being generated or because the allocation has been orphaned. ".
@@ -246,10 +241,8 @@ sub _validate_missing_allocation {
             # If a test name is set, we can remove the symlink and proceed
             $class->warning_message("The software result for the existing symlink has a test name set; removing symlink.");
             unlink $instance_output;
-            Genome::Utility::Instrumentation::increment('dv2.result.removed_symlink')
         } else {
             # A result without an allocation... this really shouldn't ever happen, unless someone deleted the allocation row from the database?
-            Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_result');
             die $class->error_message("Found a software result (" . $result->__display_name__ . ") that has output directory " .
                 "($instance_output) but no allocation.");
         }
@@ -257,7 +250,6 @@ sub _validate_missing_allocation {
         if (! -e $allocation_dir) {
             $class->warning_message("No allocation or software result and symlink ($instance_output) target ($allocation_dir) does not exist; removing symlink.");
             unlink $instance_output;
-            Genome::Utility::Instrumentation::increment('dv2.result.removed_symlink')
         }
     }
 }

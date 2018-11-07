@@ -9,8 +9,6 @@ use File::Basename qw(basename);
 use Sys::Hostname qw(hostname);
 use Carp;
 
-use Genome::Utility::Instrumentation qw();
-
 require Genome::Config;
 
 my $command = -e $0 ? join(' ', abs_path($0), @ARGV) : join(' ', $0, @ARGV);
@@ -71,13 +69,8 @@ sub log_dbi {
     my $receiver = shift;
     my $method = shift;
     my @args = @_;
-    my $rv = $receiver->$method(@args);
-    if ($rv) {
-        Genome::Utility::Instrumentation::inc(join('.', 'genome_usage', $method));
-    } else {
-        Genome::Utility::Instrumentation::inc(join('.', 'genome_usage', $method . '_failed'));
-    }
-    return $rv;
+
+    return $receiver->$method(@args);
 }
 
 sub genome_path {

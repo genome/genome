@@ -13,7 +13,6 @@ use Sys::Hostname qw(hostname);
 use Time::HiRes;
 
 require Genome::Logger;
-use Genome::Utility::Instrumentation;
 
 use Mouse;
 with qw(Genome::Sys::Lock::Backend);
@@ -56,7 +55,6 @@ sub lock {
     my $initial_time = time;
     my $last_wait_announce_time = $initial_time;
 
-    my $lock_attempts = 1;
     my $ret;
     while(!($ret = symlink($tempdir,$symlink_path))) {
         # TONY: The only allowable failure is EEXIST, right?
@@ -109,7 +107,6 @@ sub lock {
         if ($lsf_id ne "NONE") {
             my ($job_info,$events) = Genome::Model::Event->lsf_state($lsf_id);
             unless ($job_info) {
-                Genome::Utility::Instrumentation::increment('sys.lock.lock.found_orphan');
                 Genome::Logger->warning("Invalid lock for resource $resource_lock\n"
                     ." lock info was:\n". $info_content ."\n"
                     ."Removing old resource lock $resource_lock\n");
@@ -118,27 +115,8 @@ sub lock {
         }
 
         sleep $block_sleep;
-        $lock_attempts += 1;
     }
     $self->owned_resources->{$resource_lock} = $$;
-
-    my $total_lock_stop_time = Time::HiRes::time();
-    my $lock_time_miliseconds = 1000 * ($total_lock_stop_time - $total_lock_start_time);
-
-    my $caller_name = _resolve_caller_name(caller());
-
-    Genome::Utility::Instrumentation::timing("lock_resource.$caller_name", $lock_time_miliseconds);
-    Genome::Utility::Instrumentation::timing("lock_resource_attempts.$caller_name",
-        $lock_attempts);
-
-    Genome::Utility::Instrumentation::timing('lock_resource.total', $lock_time_miliseconds);
-    Genome::Utility::Instrumentation::timing('lock_resource_attempts.total',
-        $lock_attempts);
-
-    # I don't think the conditional is actually needed but being safe
-    if ($resource_lock) {
-        Genome::Utility::Instrumentation::increment('sys.lock.lock.success');
-    }
 
     return $resource_lock;
 }
@@ -157,7 +135,6 @@ sub unlock {
     my $target = readlink($symlink_path);
     if (!$target) {
         if ($! == ENOENT) {
-            Genome::Utility::Instrumentation::increment('sys.lock.unlock.stolen_from_me');
             Genome::Logger->fatal("Tried to unlock something that's not locked -- $resource_lock.\n");
         } else {
             Genome::Logger->error("Couldn't readlink $symlink_path: $!\n");
@@ -171,7 +148,6 @@ sub unlock {
         unless ($self->is_my_lock_target($target)) {
              my $basename = File::Basename::basename($target);
              my $expected_details = $self->_resolve_lock_owner_details;
-             Genome::Utility::Instrumentation::increment('sys.lock.unlock.stolen_from_me');
              delete $self->owned_resources->{$resource_lock}; # otherwise the lock would be forcefully cleaned up when process exits
              Genome::Logger->fatal("This lock does not look like it belongs to me.  $basename does not match $expected_details.\n");
         }
@@ -179,19 +155,16 @@ sub unlock {
 
     my $unlink_rv = unlink($symlink_path);
     if (!$unlink_rv) {
-        Genome::Utility::Instrumentation::increment('sys.lock.unlock.unlink_failed');
         Genome::Logger->fatal("Failed to remove lock symlink '$symlink_path':  $!\n");
     }
 
     my $rmdir_rv = File::Path::rmtree($target);
     if (!$rmdir_rv) {
-        Genome::Utility::Instrumentation::increment('sys.lock.unlock.rmtree_failed');
         Genome::Logger->fatal("Failed to remove lock symlink target '$target', but we successfully unlocked.\n");
     }
 
     delete $self->owned_resources->{$resource_lock};
 
-    Genome::Utility::Instrumentation::increment('sys.lock.unlock.success');
     return 1;
 }
 

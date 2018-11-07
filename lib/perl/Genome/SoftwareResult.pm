@@ -16,8 +16,6 @@ use Carp;
 
 use JSON;
 
-use Genome::Utility::Instrumentation;
-
 require Genome::Model::Build;
 
 class Genome::SoftwareResult {
@@ -101,38 +99,27 @@ sub _faster_get {
     my $class = shift;
     my @args = @_;
 
-    my $statsd_prefix = "software_result_get.full_time.";
-    my $statsd_class_suffix = "$class";
-    $statsd_class_suffix =~ s/::/_/g;
-    my @objects;
+    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@args);
+    # NOTE we do this so that get can be noisy when called directly.
+    my @objects = $class->SUPER::get(lookup_hash => $lookup_hash);
+    if (@objects > 1) {
+        die $class->error_message(
+            'Multiple results found for lookup hash %s!',
+            $lookup_hash
+        );
+    }
 
-    Genome::Utility::Instrumentation::timer(
-        $statsd_prefix . 'total',
-        $statsd_prefix . $statsd_class_suffix,
-        sub {
-            my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@args);
-            # NOTE we do this so that get can be noisy when called directly.
-            @objects = $class->SUPER::get(lookup_hash => $lookup_hash);
-            if (@objects > 1) {
-                die $class->error_message(
-                    'Multiple results found for lookup hash %s!',
-                    $lookup_hash
-                );
-            }
-
-            if (@objects) {
-                my $calculated_lookup_hash = $objects[0]->calculate_lookup_hash();
-                my $lookup_hash_property = $objects[0]->lookup_hash;
-                if ($calculated_lookup_hash ne $lookup_hash_property) {
-                    die $class->error_message(
-                        "SoftwareResult lookup_hash (%s) does not match it's calculated lookup_hash (%s).  Cannot trust that the correct SoftwareResult was retrieved.",
-                        $lookup_hash_property,
-                        $calculated_lookup_hash
-                    );
-                }
-            }
+    if (@objects) {
+        my $calculated_lookup_hash = $objects[0]->calculate_lookup_hash();
+        my $lookup_hash_property = $objects[0]->lookup_hash;
+        if ($calculated_lookup_hash ne $lookup_hash_property) {
+            die $class->error_message(
+                "SoftwareResult lookup_hash (%s) does not match it's calculated lookup_hash (%s).  Cannot trust that the correct SoftwareResult was retrieved.",
+                $lookup_hash_property,
+                $calculated_lookup_hash
+            );
         }
-    );
+    }
 
     return $objects[0];
 }

@@ -444,11 +444,6 @@ sub _verify_bwa_samxe_did_happen {
     my $threshold = 55;
     my $fail_percentile = sprintf("%.2f", $fail_ct * $batch_size * 100 / $rp_ct);
 
-    # NOTE: To get distribution statistics, we're pretending this is a timing.
-    Genome::Utility::Instrumentation::timing(
-        'alignment_result.bwa.infer_insert_size_fail_percent',
-        $fail_percentile);
-
     if ($fail_percentile > $threshold) {
         $fail_percentile = 100 if $fail_percentile > 100; #a calculation bug
         $self->error_message("samxe failed to infer insert size on $fail_percentile% read pairs. The current threshold is $threshold%");

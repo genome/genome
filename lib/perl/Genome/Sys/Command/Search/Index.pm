@@ -1,7 +1,6 @@
 package Genome::Sys::Command::Search::Index;
 
 use Genome;
-use Genome::Utility::Instrumentation qw(increment timer);
 
 class Genome::Sys::Command::Search::Index {
     is => 'Command',
@@ -223,15 +222,11 @@ sub index_queued {
         last if $signaled_to_quit;
 
         my $modified_index;
-        timer('genome.sys.search.index.index_queue.modify_index', sub {
-            $modified_index = $self->modify_index($action, $subject_class, $subject_id)
-        });
+        $modified_index = $self->modify_index($action, $subject_class, $subject_id);
         if ($modified_index) {
-            increment('genome.sys.search.index.index_queue.modify_index.success');
             $index_queue_item->delete();
         } else {
             # Move it to the back of the line.
-            increment('genome.sys.search.index.index_queue.modify_index.failure');
             $index_queue_item->timestamp(UR::Context->now);
         }
     }

@@ -7,7 +7,6 @@ use Genome;
 use Genome::Sys;  # ensure our overrides take precedence
 
 use Time::HiRes;
-use Genome::Utility::Instrumentation;
 
 use Data::Dumper;
 require Carp;
