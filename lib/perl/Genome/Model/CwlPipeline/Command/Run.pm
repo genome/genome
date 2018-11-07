@@ -264,7 +264,7 @@ workflow-options {
   workflow-log-dir = "$log_dir/cromwell-workflow-logs"
 }
 database {
-  profile = "slick.jdbc.MySQLProfile$"
+  profile = "slick.jdbc.MySQLProfile\$"
   db {
     driver = "com.mysql.jdbc.Driver"
     url = "jdbc:$server"
