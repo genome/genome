@@ -6,6 +6,7 @@ use warnings;
 use JSON qw(to_json from_json);
 use HTTP::Request;
 use LWP::UserAgent;
+use IO::Socket::SSL qw();
 
 use Genome;
 
@@ -25,7 +26,11 @@ class Genome::Cromwell {
         user_agent => {
             is => 'LWP::UserAgent',
             is_constant => 1,
-            calculate => q{ LWP::UserAgent->new(); },
+            calculate => q{
+                my $ua = LWP::UserAgent->new();
+                $ua->ssl_opts( verify_hostname => 0,  SSL_verify_mode => IO::Socket::SSL::SSL_VERIFY_NONE );
+                return $ua;
+            },
         },
     ],
 };
