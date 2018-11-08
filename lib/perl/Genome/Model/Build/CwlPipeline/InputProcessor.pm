@@ -39,18 +39,20 @@ sub simple_inputs {
         my $name = $input->property_name;
         my $type = $input->input_type;
 
+        my $value = $self->$name;
+        next unless defined $value;
         for ($type) {
             when ('File') {
                 $inputs{$name} = {
                     class => 'File',
-                    path => '' . $self->$name,
+                    path => '' . $value,
                 };
             }
             when ('Text') {
-                $inputs{$name} = '' . $self->$name;
+                $inputs{$name} = '' . $value;
             }
             when ('Number') {
-                $inputs{$name} = 0 + $self->$name;
+                $inputs{$name} = 0 + $value;
             }
             default {
                 $self->fatal_message('Unknown input type %s in simple input %s.', $type, $name);
