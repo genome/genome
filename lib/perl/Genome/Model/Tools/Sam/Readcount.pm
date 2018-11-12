@@ -119,34 +119,32 @@ sub command {
 
     my $version = $self->use_version;
 
-    my $command = sprintf "%s %s -f %s -l %s", $self->readcount_path, $self->bam_file, $self->reference_fasta, $self->region_list;
+    my @command = ($self->readcount_path, $self->bam_file, '-f', $self->reference_fasta, '-l', $self->region_list);
 
     if ($self->minimum_mapping_quality) {
-        $command .= " -q " . $self->minimum_mapping_quality;
+        push @command, '-q', $self->minimum_mapping_quality;
     }
     if ($self->minimum_base_quality) {
-        $command .= " -b " . $self->minimum_base_quality;
+        push @command, '-b', $self->minimum_base_quality;
     }
     if ($self->comma_separated_format && ($version eq "0.3" or $version eq "0.4")) {
-        $command .= " -d";
+        push @command, '-d';
     }
     if(defined $self->max_count) {
-        $command .= " -d " . $self->max_count;
+        push @command,  '-d', $self->max_count;
     }
     if($self->per_library) {
-        $command .= " -p";
+        push @command,  '-p';
     }
     if($self->insertion_centric) {
         $self->assert_version_has_insertion_centric($version);
-        $command .= " -i";
+        push @command,  '-i';
     }
     if($self->version_has_warning_suppression($version)) {
-        $command .= " -w 1";    # suppress error messages to a single report
-    } else {
-        $command .= ' 2> /dev/null';
+        push @command,  '-w', '1';    # suppress error messages to a single report
     }
 
-    return $command;
+    return \@command;
 }
 
 sub validate {
@@ -177,12 +175,19 @@ sub execute {
         return 1;
     }
 
-    Genome::Sys->shellcmd(
-        cmd => $self->command . " > " . $self->output_file,
+
+    my @params = (
+        cmd => $self->command,
+        redirect_stdout => $self->output_file,
         input_files => [$self->bam_file, $self->reference_fasta, $self->region_list],
         output_files => [$self->output_file],
         allow_zero_size_output_files => 1,
     );
+    unless ($self->version_has_warning_suppression($self->use_version)) {
+        push @params, redirect_stderr => '/dev/null';
+    }
+
+    Genome::Sys->shellcmd(@params);
     $self->debug_message('Done running BAM Readcounts.');
 
     return 1;

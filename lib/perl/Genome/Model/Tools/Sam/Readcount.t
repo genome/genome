@@ -55,15 +55,15 @@ subtest 'testing command strings' => sub {
     plan tests => 5;
 
     my %expected_command = (
-        0.3 => qr"/usr/bin/bam-readcount0.3 $test_data_dir/tiny.bam -f .+/model_data/2741951221/build101947881/all_sequences.fa -l $test_data_dir/regions 2> /dev/null",
-        0.4 => qr"/usr/bin/bam-readcount0.4 $test_data_dir/tiny.bam -f .+/model_data/2741951221/build101947881/all_sequences.fa -l $test_data_dir/regions 2> /dev/null",
+        0.3 => qr"/usr/bin/bam-readcount0.3 $test_data_dir/tiny.bam -f .+/model_data/2741951221/build101947881/all_sequences.fa -l $test_data_dir/regions",
+        0.4 => qr"/usr/bin/bam-readcount0.4 $test_data_dir/tiny.bam -f .+/model_data/2741951221/build101947881/all_sequences.fa -l $test_data_dir/regions",
         0.5 => qr"/usr/bin/bam-readcount0.5 $test_data_dir/tiny.bam -f .+/model_data/2741951221/build101947881/all_sequences.fa -l $test_data_dir/regions -w 1",
         0.6 => qr"/usr/bin/bam-readcount0.6 $test_data_dir/tiny.bam -f .+/model_data/2741951221/build101947881/all_sequences.fa -l $test_data_dir/regions -w 1",
     );
 
     for my $version (keys %expected_command) {
         $cmd->use_version($version);
-        like($cmd->command, $expected_command{$version}, "The command string looks as expected for version $version");
+        like(join(' ', @{ $cmd->command }), $expected_command{$version}, "The command string looks as expected for version $version");
     }
 
     $cmd->use_version('0.4');
