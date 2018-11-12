@@ -84,9 +84,9 @@ sub _process_instrument_data {
 
 
     try {
-        my ($bam_file) = File::Basename::fileparse($data->bam_path);
+        my ($bam_file, $lims_source_dir) = File::Basename::fileparse($lims_path);
         Genome::Sys->rsync_directory(
-            source_directory => $lims_path,
+            source_directory => $lims_source_dir,
             target_directory => $allocation->absolute_path,
         );
 
@@ -120,7 +120,7 @@ sub _resolve_lims_bam_path {
     chomp $docker_image;
 
     my $guard = Genome::Config::set_env('lsb_sub_additional', "docker($docker_image)");
-    my $cmd = [qw(db ii analysis_id), $data->id, qw(-mp get_disk_archive->archive_path)];
+    my $cmd = [qw(db ii analysis_id), $data->id, qw(-mp gerald_bam_path)];
 
     local $ENV{LSF_DOCKER_PRESERVE_ENVIRONMENT} = 'false';
     local $ENV{LSB_DOCKER_MOUNT_GSC} = 'false';
