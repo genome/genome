@@ -46,17 +46,6 @@ sub _process_instrument_data {
     my $self = shift;
     my $data = shift;
 
-    my $bam_path = $data->bam_path;
-    unless ($bam_path) {
-        $self->error_message('Skipping instrument data %s with no bam_path.', $data->__display_name__);
-        return;
-    }
-
-    if (-e $bam_path) {
-        $self->warning_message('Skipping instrument data %s because %s currently exists.', $data->__display_name__, $bam_path);
-        return 1;
-    }
-
     my @alloc = $data->disk_allocations;
     if (@alloc) {
         $self->error_message('Skipping instrument data %s because it already has allocated disk: %s', $data->__display_name__, join(" ", map $_->absolute_path, @alloc));
