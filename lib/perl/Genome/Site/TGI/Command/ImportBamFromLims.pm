@@ -132,10 +132,9 @@ sub _resolve_lims_bam_path {
 
     #not allowed to `docker run`, so `bsub` this query
     #can't nest interactive jobs, so write the output to a file and then read it in
-    Genome::Sys::LSF::bsub::bsub(
+    Genome::Sys->bsub_and_wait(
         cmd => $cmd,
         queue => Genome::Config::get('lsf_queue_build_worker'),
-        wait_for_completion => 1,
         log_file => $log_file,
     );
 
