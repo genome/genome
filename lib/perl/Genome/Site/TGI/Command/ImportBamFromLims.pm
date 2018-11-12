@@ -124,6 +124,7 @@ sub _resolve_lims_bam_path {
 
     local $ENV{LSF_DOCKER_PRESERVE_ENVIRONMENT} = 'false';
     local $ENV{LSB_DOCKER_MOUNT_GSC} = 'false';
+    local $ENV{LSF_DOCKER_VOLUMES} = undef; #lims-env breaks if /gsc is present.
 
     my $log_allocation = Genome::Disk::Allocation->get(owner_class_name => $self->class);
     my $log_dir = $log_allocation->absolute_path;
