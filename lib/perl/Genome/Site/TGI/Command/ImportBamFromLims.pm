@@ -46,17 +46,6 @@ sub _process_instrument_data {
     my $self = shift;
     my $data = shift;
 
-    my $bam_path = $data->bam_path;
-    unless ($bam_path) {
-        $self->error_message('Skipping instrument data %s with no bam_path.', $data->__display_name__);
-        return;
-    }
-
-    if (-e $bam_path) {
-        $self->warning_message('Skipping instrument data %s because %s currently exists.', $data->__display_name__, $bam_path);
-        return 1;
-    }
-
     my @alloc = $data->disk_allocations;
     if (@alloc) {
         $self->error_message('Skipping instrument data %s because it already has allocated disk: %s', $data->__display_name__, join(" ", map $_->absolute_path, @alloc));
@@ -84,9 +73,9 @@ sub _process_instrument_data {
 
 
     try {
-        my ($bam_file) = File::Basename::fileparse($data->bam_path);
+        my ($bam_file, $lims_source_dir) = File::Basename::fileparse($lims_path);
         Genome::Sys->rsync_directory(
-            source_directory => $lims_path,
+            source_directory => $lims_source_dir,
             target_directory => $allocation->absolute_path,
         );
 
@@ -120,10 +109,11 @@ sub _resolve_lims_bam_path {
     chomp $docker_image;
 
     my $guard = Genome::Config::set_env('lsb_sub_additional', "docker($docker_image)");
-    my $cmd = [qw(db ii analysis_id), $data->id, qw(-mp get_disk_archive->archive_path)];
+    my $cmd = [qw(db ii analysis_id), $data->id, qw(-mp gerald_bam_path)];
 
     local $ENV{LSF_DOCKER_PRESERVE_ENVIRONMENT} = 'false';
     local $ENV{LSB_DOCKER_MOUNT_GSC} = 'false';
+    local $ENV{LSF_DOCKER_VOLUMES} = undef; #lims-env breaks if /gsc is present.
 
     my $log_allocation = Genome::Disk::Allocation->get(owner_class_name => $self->class);
     my $log_dir = $log_allocation->absolute_path;
@@ -131,10 +121,9 @@ sub _resolve_lims_bam_path {
 
     #not allowed to `docker run`, so `bsub` this query
     #can't nest interactive jobs, so write the output to a file and then read it in
-    Genome::Sys::LSF::bsub::bsub(
+    Genome::Sys->bsub_and_wait(
         cmd => $cmd,
         queue => Genome::Config::get('lsf_queue_build_worker'),
-        wait_for_completion => 1,
         log_file => $log_file,
     );
 
