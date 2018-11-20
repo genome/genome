@@ -271,6 +271,7 @@ database {
     user = "$user"
     password = "$auth"
     connectionTimeout = 5000
+    maxConnections = 10
   }
 }
 EOCONFIG
