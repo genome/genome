@@ -844,6 +844,8 @@ sub rsync_directory {
     my $target_dir = delete $params{target_directory};
     my $pattern = delete $params{file_pattern};
 
+    my $chmod = delete $params{chmod};
+
     unless ($source_dir) {
         Carp::confess "Not given directory to copy from!";
     }
@@ -857,16 +859,22 @@ sub rsync_directory {
         Genome::Sys->create_directory($target_dir);
     }
 
-    my @pattern_option = ();
+    my @long_opts = ();
     if ($pattern) {
-        push @pattern_option,
+        push @long_opts,
             '--include=' . $pattern,
             '--exclude=*';
     }
+    if ($chmod) {
+        push @long_opts, '--chmod=' . $chmod;
+    }
 
     $source_dir .= '/' unless substr($source_dir,-1) eq '/';
+
+    my $opts = $chmod? '-rlHpgt' : 'rlHgt';
+
     my $rv = Genome::Sys->shellcmd(
-        cmd => ['rsync', '-rlHpgt', @pattern_option, $source_dir, $target_dir],
+        cmd => ['rsync', $opts, @long_opts, $source_dir, $target_dir],
     );
     unless ($rv) {
         confess "Could not copy data from $source_dir to $target_dir";
