@@ -77,10 +77,8 @@ sub _process_instrument_data {
         Genome::Sys->rsync_directory(
             source_directory => $lims_source_dir,
             target_directory => $allocation->absolute_path,
-        );
-
-        Genome::Sys->shellcmd(
-            cmd => ['chgrp', '-R', $self->_user_group, $allocation->absolute_path],
+            chmod => 'Dug=rx,Fug=r',
+            chown => ':' . $self->_user_group,
         );
 
         my $new_path = File::Spec->join($allocation->absolute_path, $bam_file);
