@@ -11,7 +11,7 @@ class Genome::Disk::Volume::View::SearchResult::Xml {
         default_aspects => {
             is => 'ARRAY',
             default => [
-                'dv_id',
+                'id',
                 'mount_path',
                 'disk_group_names',
             ]

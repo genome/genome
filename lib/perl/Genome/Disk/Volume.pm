@@ -12,9 +12,9 @@ use List::Util qw(max);
 use Scope::Guard;
 
 class Genome::Disk::Volume {
-    table_name => 'DISK_VOLUME',
+    table_name => 'disk.volume',
     id_by => [
-        dv_id => {is => 'Number'},
+        id => {is => 'Number'},
     ],
     has => [
         hostname => { is => 'Text' },
@@ -25,19 +25,8 @@ class Genome::Disk::Volume {
             valid_values => ['inactive', 'active'],
         },
         can_allocate => {
-            is => 'Number',
-            valid_values => [0, 1],
+            is => 'Boolean', default_value => 1,
         },
-
-        # TODO remove this field when we switch to postgres
-        _placeholder_creation_event_id => {
-            is => 'Number',
-            is_optional => 1,
-            default_value => '1',
-            column_name => 'creation_event_id',
-            doc => 'This is here because of RT #88076.  Remove when we switch to postgres',
-        },
-
         total_kb => { is => 'Number' },
         total_gb => {
             calculate_from => 'total_kb',
@@ -116,7 +105,7 @@ class Genome::Disk::Volume {
             calculate => q| return Genome::Disk::Allocation->get(mount_path => $mount_path); |,
         },
     ],
-    data_source => 'Genome::DataSource::Oltp',
+    data_source => 'Genome::DataSource::GMSchema',
     doc => 'Represents a particular disk volume (eg, sata483)',
 };
 

@@ -11,7 +11,7 @@ class Genome::Disk::Volume::View::Status::Xml {
         default_aspects => {
             is => 'ARRAY',
             value => [
-                'dv_id',
+                'id',
                 'mount_path',
                 'disk_status',
                 'can_allocate',
