@@ -88,7 +88,7 @@ class Genome::Disk::Volume {
     has_many_optional => [
         disk_group_names => {
             via => 'groups',
-            to => 'disk_group_name',
+            to => 'name',
         },
         groups => {
             is => 'Genome::Disk::Group',
