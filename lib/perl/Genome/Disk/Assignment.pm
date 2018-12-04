@@ -4,13 +4,13 @@ use strict;
 use warnings;
 
 class Genome::Disk::Assignment {
-    table_name => 'DISK_VOLUME_GROUP',
+    table_name => 'disk.volume_group_bridge',
     id_by => [
-        dg_id => {
+        group_id => {
             is => 'Number',
             doc => 'disk group ID',
         },
-        dv_id => {
+        volume_id => {
             is => 'Number',
             doc => 'disk volume ID'
         },
@@ -18,7 +18,7 @@ class Genome::Disk::Assignment {
     has => [
         group => {
             is => 'Genome::Disk::Group',
-            id_by => 'dg_id',
+            id_by => 'group_id',
         },
         disk_group_name => { via => 'group' },
         user_name => { via => 'group' },
@@ -26,7 +26,7 @@ class Genome::Disk::Assignment {
         subdirectory => { via => 'group' },
         volume => {
             is => 'Genome::Disk::Volume',
-            id_by => 'dv_id',
+            id_by => 'volume_id',
         },
         mount_path => { via => 'volume' },
         total_kb   => { via => 'volume' },
@@ -39,7 +39,7 @@ class Genome::Disk::Assignment {
             calculate => q| return $mount_path .'/'. $subdirectory; |,
         },
     ],
-    data_source => 'Genome::DataSource::Oltp',
+    data_source => 'Genome::DataSource::GMSchema',
 };
 
 1;

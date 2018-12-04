@@ -68,8 +68,8 @@ for (1..5) {
     push @volumes, $volume;
 
     my $assignment = Genome::Disk::Assignment->create(
-        dv_id => $volume->id,
-        dg_id => $group->id,
+        volume_id => $volume->id,
+        group_id => $group->id,
     );
     ok($assignment, "made disk assignment $_") or die;
 }

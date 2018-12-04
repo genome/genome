@@ -89,8 +89,8 @@ sub create_test_volumes {
                 );
                 my $group = Genome::Disk::Group->get(disk_group_name => $disk_group_name);
                 my $assignment = Genome::Disk::Assignment->create(
-                    dg_id => $group->id,
-                    dv_id => $volume->id,
+                    group_id => $group->id,
+                    volume_id => $volume->id,
                 );
                 $tb->ok($assignment, "assigned volume to group ($disk_group_name)");
                 system("mkdir -p " . join('/', $volume->mount_path, $volume->groups->subdirectory));

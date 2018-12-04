@@ -53,8 +53,8 @@ my $group = Genome::Disk::Group->create(
 ok($group, 'successfully made testing group') or die;
 
 my $assignment = Genome::Disk::Assignment->create(
-    dg_id => $group->id,
-    dv_id => $volume->id,
+    group_id => $group->id,
+    volume_id => $volume->id,
 );
 ok($assignment, 'assigned volume to testing group');
 

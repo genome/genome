@@ -77,8 +77,8 @@ sub create_test_volume_with_group {
     my $volume = create_test_volume($mount_path);
     die "Could not create test volume with mount path $mount_path" unless $volume;
     my $assignment = Genome::Disk::Assignment->create(
-        dv_id => $volume->id,
-        dg_id => $group->id,
+        volume_id => $volume->id,
+        group_id => $group->id,
     );
     return $volume;
 }
