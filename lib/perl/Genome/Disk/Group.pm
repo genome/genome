@@ -11,15 +11,15 @@ use Module::Find qw(findsubmod usesub);
 usesub Genome::Disk::Group::Validate;
 
 class Genome::Disk::Group {
-    table_name => 'DISK_GROUP',
+    table_name => 'disk.group',
     id_by => [
-        dg_id => { is => 'Number' },
+        id => { is => 'Number' },
     ],
     has => [
-        disk_group_name => { is => 'Text' },
-        name => { via => '__self__', to => 'disk_group_name' },
+        disk_group_name => { via => '__self__', to => 'name' },
+        name => { is => 'Text', },
         permissions => { is => 'Number' },
-        setgid => { is => 'Number', is_transient => 1, is_optional => 1 }, #transient during transition from "sticky" column
+        setgid => { is => 'Boolean', default => 0, column_name => 'sticky' },
         subdirectory => { is => 'Text' },
         unix_uid => { is => 'Number' },
         unix_gid => { is => 'Number' },
@@ -93,7 +93,7 @@ class Genome::Disk::Group {
             reverse_id_by => 'group',
         },
     ],
-    data_source => 'Genome::DataSource::Oltp',
+    data_source => 'Genome::DataSource::GMSchema',
     doc => "Represents a disk group (eg, " . Genome::Config::get('disk_group_dev') . "), which contains any number of disk volumes",
 };
 

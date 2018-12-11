@@ -19,6 +19,7 @@ our @lims_classes = (
         IndexIllumina
         LimsProject LimsProjectSample
         InstrumentDataAnalysisProjectBridge
+        DiskGroup DiskVolume DiskAssignment
     /)
 );
 

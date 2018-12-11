@@ -13,7 +13,7 @@ class Genome::Disk::Command::Group::List {
             value => 'Genome::Disk::Group',
         },
         show => { 
-            default_value => 'disk_group_name,dg_id,user_name,group_name,subdirectory' 
+            default_value => 'disk_group_name,id,user_name,group_name,subdirectory' 
         },
     ],
     doc => 'Lists Genome::Disk::Group objects',

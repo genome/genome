@@ -4,7 +4,7 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
   <xsl:template name="genome_disk_volume" match="object[./types[./isa[@type='Genome::Disk::Volume']]]">
     <xsl:variable name="href">
-        <xsl:text>/disk/allocationmonitor/listallocations?dv_id=</xsl:text><xsl:value-of select='@id'/>
+        <xsl:text>/disk/allocationmonitor/listallocations?id=</xsl:text><xsl:value-of select='@id'/>
     </xsl:variable>
 
     <div class="search_result">

@@ -11,7 +11,7 @@ class Genome::Disk::Group::View::SearchResult::Xml {
         default_aspects => {
             is => 'ARRAY',
             default => [
-                'dg_id',
+                'id',
                 'disk_group_name',
                 'user_name',
                 'group_name',
