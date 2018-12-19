@@ -121,7 +121,12 @@ sub _prepare_configuration_hashes_for_instrument_data {
             $config_hash->{$model_type} = [$config_hash->{$model_type}];
         }
 
-        for my $model_instance (@{$config_hash->{$model_type}}) {
+        my $subject_mapping_attempts = 0;
+        my $subject_mapping_successes = 0;
+
+        my @processed_model_instances;
+
+        MODEL_INSTANCE: for my $model_instance (@{$config_hash->{$model_type}}) {
             my $instrument_data_properties = delete $model_instance->{instrument_data_properties};
             if($instrument_data_properties) {
                 if(my $input_data = delete $instrument_data_properties->{input_data}) {
@@ -137,9 +142,12 @@ sub _prepare_configuration_hashes_for_instrument_data {
 
             my $requires_subject_mapping = delete $model_instance->{input_data_requires_subject_mapping};
             if ($requires_subject_mapping) {
+                $subject_mapping_attempts++;
                 my (@processed) = @{ $self->_process_mapped_samples($instrument_data, [{config_profile_item => $model_instance->{config_profile_item} }]) };
                 unless (@processed) {
-                    $self->fatal_message('Failed to map subject into configuration.');
+                    #tags didn't match, etc.
+                    $self->debug_message('Failed to map subject into configuration.');
+                    next MODEL_INSTANCE;
                 }
 
                 if (@processed > 1) {
@@ -147,6 +155,7 @@ sub _prepare_configuration_hashes_for_instrument_data {
                 }
 
                 my $processed = $processed[0];
+                $subject_mapping_successes++;
 
                 delete $processed->{config_profile_item};
 
@@ -154,8 +163,15 @@ sub _prepare_configuration_hashes_for_instrument_data {
                     $model_instance->{input_data}{$key} = $value;
                 }
             }
+
+            push @processed_model_instances, $model_instance;
         }
 
+        if ($subject_mapping_attempts and not $subject_mapping_successes) {
+            $self->fatal_message('Failed to map subject into any configurations for model type %s.', $model_type);
+        }
+
+        $config_hash->{$model_type} = \@processed_model_instances;
         $config_hash->{$model_type} = $self->_process_mapped_samples($instrument_data, $config_hash->{$model_type}) if $model_type->requires_subject_mapping;
     }
     return $config_hash;
