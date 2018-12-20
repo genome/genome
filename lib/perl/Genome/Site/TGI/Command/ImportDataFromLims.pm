@@ -1,4 +1,4 @@
-package Genome::Site::TGI::Command::ImportBamFromLims;
+package Genome::Site::TGI::Command::ImportDataFromLims;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ use Try::Tiny qw(try catch);
 
 use Genome;
 
-class Genome::Site::TGI::Command::ImportBamFromLims {
+class Genome::Site::TGI::Command::ImportDataFromLims {
     is => 'Command::V2',
     has_input => {
         instrument_data => {
@@ -22,12 +22,12 @@ class Genome::Site::TGI::Command::ImportBamFromLims {
             doc => 'The Analysis Project for which this instrument data is being imported',
         },
     },
-    doc => 'Import BAM data into the GMS out of the LIMS system',
+    doc => 'Import instrument data files into the GMS out of the LIMS system',
 };
 
 sub help_detail {
     return <<EOHELP
-This command looks up the current BAM path in the LIMS system and copies it to an allocation.
+This command looks up the current data path in the LIMS system and copies it to an allocation.
 EOHELP
 }
 
@@ -52,9 +52,9 @@ sub _process_instrument_data {
         return;
     }
 
-    my $lims_path = $self->_resolve_lims_bam_path($data);
+    my $lims_path = $self->_resolve_lims_path($data);
     unless ($lims_path) {
-        $self->error_message('Skipping instrument data %s because no LIMS BAM path could be found.', $data->__display_name__);
+        $self->error_message('Skipping instrument data %s because no LIMS path could be found.', $data->__display_name__);
         return;
     }
 
@@ -73,7 +73,15 @@ sub _process_instrument_data {
 
 
     try {
-        my ($bam_file, $lims_source_dir) = File::Basename::fileparse($lims_path);
+        my ($bam_file, $lims_source_dir);
+        if ($lims_path =~ /\.bam$/) {
+            ($bam_file, $lims_source_dir) = File::Basename::fileparse($lims_path);
+        } elsif (-d $lims_path) {
+            $lims_source_dir = $lims_path;
+        } else {
+            die $self->error_message('Unknown LIMS filetype: %s', $lims_path);
+        }
+
         Genome::Sys->rsync_directory(
             source_directory => $lims_source_dir,
             target_directory => $allocation->absolute_path,
@@ -81,12 +89,15 @@ sub _process_instrument_data {
             chown => ':' . $self->_user_group,
         );
 
-        my $new_path = File::Spec->join($allocation->absolute_path, $bam_file);
-        $data->bam_path($new_path);
+        if ($bam_file) {
+            my $new_path = File::Spec->join($allocation->absolute_path, $bam_file);
+            $data->bam_path($new_path);
+            $self->status_message('Updated instrument data %s to path: %s.', $data->__display_name__, $new_path);
+        } else {
+            $self->status_message('Data imported for %s to path: %s.', $data->__display_name__, $allocation->absolute_path);
+        }
 
         $allocation->reallocate;
-
-        $self->status_message('Updated instrument data %s to path: %s.', $data->__display_name__, $new_path);
     }
     catch {
         my $error = $_;
@@ -97,7 +108,7 @@ sub _process_instrument_data {
     return 1;
 }
 
-sub _resolve_lims_bam_path {
+sub _resolve_lims_path {
     my $self = shift;
     my $data = shift;
 
@@ -107,7 +118,7 @@ sub _resolve_lims_bam_path {
     chomp $docker_image;
 
     my $guard = Genome::Config::set_env('lsb_sub_additional', "docker($docker_image)");
-    my $cmd = [qw(db ii analysis_id), $data->id, qw(-mp gerald_bam_path)];
+    my $cmd = [qw(db ii analysis_id), $data->id, qw(-mp absolute_path)];
 
     local $ENV{LSF_DOCKER_PRESERVE_ENVIRONMENT} = 'false';
     local $ENV{LSB_DOCKER_MOUNT_GSC} = 'false';
@@ -131,7 +142,7 @@ sub _resolve_lims_bam_path {
     my $path;
     while (!$path and @data) {
         my $next = shift @data;
-        $path = $next if $next =~ m!^/gscmnt/!;
+        $path = $next if ($next =~ m!^/gscmnt/! and $next !~ m!^/storage./!);
     }
 
     chomp $path if $path;
