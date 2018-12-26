@@ -8,13 +8,8 @@ use Genome::Sys::LSF::bsub qw();
 
 plan tests => 10;
 
-do {
-    no warnings 'redefine';
-    *Genome::Sys::LSF::bsub::_queues = sub { qw(long short) };
-};
-
 my $fake_queue = 'fake_queue';
-my @queues = Genome::Sys::LSF::bsub::_queues();
+my @queues = (map { Genome::Config::get($_) } qw(lsf_queue_build_worker lsf_queue_short));
 
 ok( !Genome::Sys::LSF::bsub::_valid_lsf_queue($fake_queue),
     qq('$fake_queue' is not a valid queue));
