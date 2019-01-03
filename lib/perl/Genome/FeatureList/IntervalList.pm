@@ -30,6 +30,11 @@ class Genome::FeatureList::IntervalList {
             doc => 'whether to merge adjacent regions of the BED file',
             default => 1,
         },
+        strip_chr => {
+            is => 'Boolean',
+            doc => 'whether to forcibly remove "chr" from the beginning of chromosome names (ignored if specified reference build is different from feature list reference)',
+            default => 0,
+        },
     ],
 };
 
@@ -61,6 +66,7 @@ sub _run {
         feature_list => $self->feature_list,
         track_name => $self->track_name,
         merge => $self->merge,
+        strip_chr => $self->strip_chr,
         result_users => $self->_user_data_for_nested_results,
         @alt_reference,
     );
