@@ -331,7 +331,7 @@ sub _stage_cromwell_outputs {
                     $self->fatal_message('Cannot stage results. Multiple outputs with identical names: %s', $file);
                 }
 
-                Genome::Sys->move_file($source, $destination);
+                Genome::Sys->move($source, $destination);
             }
         }
     }
