@@ -65,7 +65,7 @@ sub execute {
         $self->index_queued;
     }
     elsif ($self->subject_text eq 'batch') {
-        $self->index_queued($self->max_changes_per_commit);
+        $self->index_queued(max_changes_count => $self->max_changes_per_commit);
     }
     elsif ($self->subject_text eq 'daemon') {
         $self->daemon;
