@@ -17,7 +17,7 @@ class Genome::Model::CwlPipeline::Command::Run {
         },
         lsf_resource => {
             is_param => 1,
-            value => '-R "select[mem>8000] rusage[mem=8000]" -M 8000000',
+            value => Genome::Config::get('lsf_resource_cwl_runner'),
         },
     ],
     doc => 'wrapper command to run "cwltoil"'
