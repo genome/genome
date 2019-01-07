@@ -1,0 +1,3 @@
+---
+default_value: "-R 'select[mem>8000] rusage[mem=8000]' -M 8000000"
+env: XGENOME_LSF_RESOURCE_CWL_RUNNER
