@@ -316,29 +316,40 @@ sub _stage_cromwell_outputs {
     for my $output_name (keys %$outputs) {
         my $info = $outputs->{$output_name};
         
-        if (ref $info ne 'ARRAY') { $info = [ $info ]; }
-
-        ITEM: for my $item (@$info) {
-            my $location = $item->{location};
-            next ITEM unless $location; #not a file output
-            my @secondary = map { $_->{location} } @{ $item->{secondaryFiles} };
-
-            for my $source ($location, @secondary) {
-                my (undef, $dir, $file) = File::Spec->splitpath($source);
-
-                my $destination = File::Spec->join($results_dir, $file);
-                if (-e $destination) {
-                    $self->fatal_message('Cannot stage results. Multiple outputs with identical names: %s', $file);
-                }
-
-                Genome::Sys->move($source, $destination);
-            }
-        }
+        $self->_stage_cromwell_output($results_dir, $info); 
     }
 
     return 1;
 }
 
+sub _stage_cromwell_output {
+    my $self = shift;
+    my $results_dir = shift;
+    my $item = shift;
+
+    if (ref $item eq 'ARRAY') {
+        map $self->_stage_cromwell_output($results_dir, $_), @$item;
+        return 1;
+    }
+
+    my $location = $item->{location};
+    return unless $location;
+
+    my @secondary = map { $_->{location} } @{ $item->{secondaryFiles} };
+
+    for my $source ($location, @secondary) {
+        my (undef, $dir, $file) = File::Spec->splitpath($source);
+
+        my $destination = File::Spec->join($results_dir, $file);
+        if (-e $destination) {
+            $self->fatal_message('Cannot stage results. Multiple outputs with identical names: %s', $file);
+        }
+
+        Genome::Sys->move($source, $destination);
+    }
+
+    return 1;
+}
 
 sub preserve_results {
     my $self = shift;
