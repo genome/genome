@@ -333,6 +333,7 @@ sub _stage_cromwell_output {
         return 1;
     }
 
+    return unless ref $item eq 'HASH';
     my $location = $item->{location};
     return unless $location;
 
