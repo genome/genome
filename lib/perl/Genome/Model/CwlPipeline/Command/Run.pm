@@ -363,6 +363,7 @@ sub preserve_results {
     my $results_dir = shift;
 
     for my $file ($results_dir, glob("$results_dir/*")) {
+        next unless -e $file; #sometimes workflows produce dangling symlinks, yay!
         Genome::Utility::File::Mode::mode($file)->rm_all_writable;
     }
 
