@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Carp qw(confess);
+use File::Spec;
 
 class Genome::Model::Tools::Sambamba::Base {
     is => 'Genome::Model::Tools::Base',
@@ -13,9 +14,19 @@ class Genome::Model::Tools::Sambamba::Base {
 
 sub versions {
     my $class = shift;
-    my %versions = (
-        '0.6.5' => '/gscmnt/gc13001/info/tools/sambamba_v0.6.5/sambamba_v0.6.5'
-    );
+
+    my @versions = ('0.6.5');
+
+    my %versions;
+    for my $version (@versions) {
+        my $alloc = Genome::Disk::Allocation->get(allocation_path => 'tools/sambamba_v'.$version);
+        unless ($alloc) {
+            $class->fatal_message('failed to locate expected version %s', $version);
+        }
+
+        $versions{$version} = File::Spec->join($alloc->absolute_path, 'sambamba_v'.$version);
+    }
+
     return %versions;
 }
 
