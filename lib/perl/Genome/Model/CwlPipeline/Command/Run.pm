@@ -8,6 +8,7 @@ use Genome;
 use Genome::Utility::File::Mode qw();
 use YAML;
 use JSON qw(to_json);
+use File::Compare qw();
 
 class Genome::Model::CwlPipeline::Command::Run {
     is => 'Command::V2',
@@ -342,7 +343,12 @@ sub _stage_cromwell_output {
 
         my $destination = File::Spec->join($results_dir, $file);
         if (-e $destination) {
-            $self->fatal_message('Cannot stage results. Multiple outputs with identical names: %s', $file);
+            if( File::Compare::compare($source, $destination) == 0 ) {
+                $self->warning_message('Skipping staging of %s--an identical file was already staged.', $source);
+                return 1;
+            } else {
+                $self->fatal_message('Cannot stage results. Multiple differing outputs with identical names: %s', $file);
+            }
         }
 
         Genome::Sys->move($source, $destination);
