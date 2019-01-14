@@ -17,7 +17,7 @@ class Genome::Disk::Volume {
         id => {is => 'Number'},
     ],
     has => [
-        hostname => { is => 'Text' },
+        hostname => { is => 'Text', default => 'unknown' },
         physical_path => { is => 'Text' },
         mount_path => { is => 'Text' },
         disk_status => {
