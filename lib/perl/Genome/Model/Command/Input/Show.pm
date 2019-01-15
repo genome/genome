@@ -127,7 +127,7 @@ sub write_inputs_for_model_or_build {
     for my $name (sort keys %inputs) {
         my $name_part = justify($name, 'right', $max_name_length, " ", "");
         my $is_many_part = sprintf('  %s  ',
-                $self->_format_is_many($is_many{$name}), $color);
+                $self->_format_is_many($is_many{$name}, $color));
         my $value_part = $self->_format_values($inputs{$name},
                 $max_name_length + length($is_many_header) + 2,
                 $max_value_length,
