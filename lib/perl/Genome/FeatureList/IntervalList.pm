@@ -35,6 +35,11 @@ class Genome::FeatureList::IntervalList {
             doc => 'whether to forcibly remove "chr" from the beginning of chromosome names (ignored if specified reference build is different from feature list reference)',
             default => 0,
         },
+        preserve_region_names => {
+            is => 'Boolean',
+            doc => 'whether to keep the "long" region names from the feature-list or replace them with the short names',
+            default => 0,
+        },
     ],
 };
 
@@ -68,6 +73,7 @@ sub _run {
         merge => $self->merge,
         strip_chr => $self->strip_chr,
         result_users => $self->_user_data_for_nested_results,
+        short_name => !$self->preserve_region_names,
         @alt_reference,
     );
     unless ($bed_dumper and $bed_dumper->execute) {
