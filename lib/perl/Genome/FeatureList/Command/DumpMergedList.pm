@@ -27,7 +27,7 @@ class Genome::FeatureList::Command::DumpMergedList {
         },
         merge => {
             is => 'Boolean',
-            doc => 'A command line option to merge or not merge the feature list',
+            doc => 'Whether to merge or not merge the feature list',
             default_value => 1,
             is_optional => 1,
         },
@@ -39,7 +39,7 @@ class Genome::FeatureList::Command::DumpMergedList {
         },
         short_name => {
             is => 'Boolean',
-            doc => 'A command line option to merge or not merge the feature list',
+            doc => 'Whether to replace the region names in the feature list with short names',
             default_value => 1,
             is_optional => 1,
         },
