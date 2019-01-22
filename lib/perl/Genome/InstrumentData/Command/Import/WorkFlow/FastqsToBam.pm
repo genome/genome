@@ -95,10 +95,7 @@ sub _fastqs_to_bam {
         push @cmd, 'F2='. $fastqs[1];
     }
     $self->debug_message("Bam path: $output_bam_path");
-    if ( not $cmd ) {
-        $self->error_message('Failed to create sam to fastq command!');
-        return;
-    }
+
     my $success = try {
         Genome::Sys->shellcmd(
             cmd => \@cmd,
