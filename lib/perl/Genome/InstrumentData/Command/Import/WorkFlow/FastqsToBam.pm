@@ -89,10 +89,10 @@ sub _fastqs_to_bam {
 
     my $output_bam_path = $self->output_path;
 
-    my $cmd = '/gapp/x64linux/opt/java/jre/jre1.8.0_31/bin/java -Xmx16g -jar /gscmnt/gc2560/core/software/picard/2.15.0/picard.jar FastqToSam O='. $output_bam_path .' SM='. $self->library->sample->name .' LB='. $self->library->name .' RG='. UR::Object::Type->autogenerate_new_object_id_uuid .' F1='. $fastqs[0];
+    my @cmd = (qw(/gapp/x64linux/opt/java/jre/jre1.8.0_31/bin/java -Xmx16g -jar /gscmnt/gc2560/core/software/picard/2.15.0/picard.jar FastqToSam), 'O='. $output_bam_path, 'SM='. $self->library->sample->name, 'LB='. $self->library->name, 'RG='. UR::Object::Type->autogenerate_new_object_id_uuid, 'F1='. $fastqs[0]);
     if ( $fastqs[1] ) {
         $self->debug_message("Fastq 2: $fastqs[1]");
-        $cmd .= ' F2='. $fastqs[1];
+        push @cmd, 'F2='. $fastqs[1];
     }
     $self->debug_message("Bam path: $output_bam_path");
     if ( not $cmd ) {
@@ -101,7 +101,7 @@ sub _fastqs_to_bam {
     }
     my $success = try {
         Genome::Sys->shellcmd(
-            cmd => $cmd,
+            cmd => \@cmd,
             input_files => \@fastqs,
             output_files => [ $output_bam_path ],
         );
