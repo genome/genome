@@ -6,6 +6,7 @@ use warnings;
 use File::Spec;
 use Genome;
 use Genome::Utility::File::Mode qw();
+use Genome::Utility::Text qw();
 use YAML;
 use JSON qw(to_json);
 use File::Compare qw();
@@ -314,22 +315,39 @@ sub _stage_cromwell_outputs {
 
     my $outputs = $output_result->{outputs};
 
+    my $prefix = $self->_determine_output_prefix;
     for my $output_name (keys %$outputs) {
         my $info = $outputs->{$output_name};
         
-        $self->_stage_cromwell_output($results_dir, $info); 
+        $self->_stage_cromwell_output($results_dir, $info, $prefix);
     }
 
     return 1;
+}
+
+sub _determine_output_prefix {
+    my $self = shift;
+
+    my $build = $self->build;
+
+    my $prefix;
+    my (@prefix_input) = grep { $_->name eq 'output_prefix' } $build->inputs;
+    if (@prefix_input) {
+        $prefix = join('_', sort map { $_->value_id } @prefix_input);
+        $prefix = Genome::Utility::Text::sanitize_string_for_filesystem($prefix);
+    }
+
+    return $prefix;
 }
 
 sub _stage_cromwell_output {
     my $self = shift;
     my $results_dir = shift;
     my $item = shift;
+    my $prefix = shift;
 
     if (ref $item eq 'ARRAY') {
-        map $self->_stage_cromwell_output($results_dir, $_), @$item;
+        map $self->_stage_cromwell_output($results_dir, $_, $prefix), @$item;
         return 1;
     }
 
@@ -341,6 +359,10 @@ sub _stage_cromwell_output {
 
     for my $source ($location, @secondary) {
         my (undef, $dir, $file) = File::Spec->splitpath($source);
+
+        if ($prefix) {
+            $file = join('-', $prefix, $file);
+        }
 
         my $destination = File::Spec->join($results_dir, $file);
         if (-e $destination) {

@@ -10,7 +10,7 @@ BEGIN {
 };
 
 use File::Spec;
-use Test::More tests => 19;
+use Test::More tests => 20;
 
 my $class = 'Genome::Model::CwlPipeline::Command::Run';
 
@@ -52,16 +52,33 @@ my @test_structures = (
 
 my $build = Genome::Model::Build::CwlPipeline->__define__();
 
+my $desired_prefix = 'turkey';
+Genome::Model::Build::Input->create(
+    build_id => $build->id,
+    name => 'output_prefix',
+    value_id => $desired_prefix,
+    value_class_name => 'UR::Value::Text',
+);
+Genome::Model::Build::Input->create(
+    build_id => $build->id,
+    name => 'not_output_prefix',
+    value_id => 'ignored',
+    value_class_name => 'UR::Value::Text',
+);
+
 my $cmd = $class->create(build => $build);
 
+my $prefix = $cmd->_determine_output_prefix;
+is($prefix, $desired_prefix, 'determined prefix');
+
 for my $test (@test_structures) {
-    $cmd->_stage_cromwell_output($results_dir, $test);
+    $cmd->_stage_cromwell_output($results_dir, $test, $prefix);
 }
 
 for my $path (@paths) {
     ok(!-e $path, 'file was moved out');
 }
 for my $file (@files) {
-    my $dest = File::Spec->join($results_dir, $file);
-    ok(-e $dest, 'file was moved in');
+    my $dest = File::Spec->join($results_dir, "$prefix-$file");
+    ok(-e $dest, 'file was moved in with correct prefix applied');
 }
