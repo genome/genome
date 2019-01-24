@@ -43,10 +43,6 @@ class Genome::FeatureList::Command::DumpIntervalList {
 sub execute {
     my $self = shift;
 
-    if ($self->preserve_region_names and $self->merge) {
-        $self->fatal_message('The --preserve-region-names option has no effect unless --nomerge is also specified.  Running the region merger reassigns the region names.');
-    }
-
     my $result_users = {
         sponsor => Genome::Config::AnalysisProject->system_analysis_project,
         requestor => $self->reference_build,
