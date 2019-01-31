@@ -150,21 +150,25 @@ sub _prepare_configuration_hashes_for_instrument_data {
                     next MODEL_INSTANCE;
                 }
 
-                if (@processed > 1) {
-                    $self->fatal_message('Sorry, we do not currently support making multiple models for config-declared subject mappings.');
-                }
-
-                my $processed = $processed[0];
                 $subject_mapping_successes++;
 
-                delete $processed->{config_profile_item};
+                for my $processed (@processed) {
 
-                while (my ($key, $value) = each %$processed) {
-                    $model_instance->{input_data}{$key} = $value;
+                    #we need a copy of the instance and input_data to fill in, but a deep copy would copy objects (which is bad)
+                    my $per_mapping_instance = {%$model_instance};
+                    $per_mapping_instance->{input_data} = {%{$per_mapping_instance->{input_data}}};
+
+                    delete $processed->{config_profile_item};
+
+                    while (my ($key, $value) = each %$processed) {
+                        $per_mapping_instance->{input_data}{$key} = $value;
+                    }
+
+                    push @processed_model_instances, $per_mapping_instance;
                 }
+            } else {
+                push @processed_model_instances, $model_instance;
             }
-
-            push @processed_model_instances, $model_instance;
         }
 
         if ($subject_mapping_attempts and not $subject_mapping_successes) {

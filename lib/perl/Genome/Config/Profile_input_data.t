@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Test::Exception;
-use Test::More tests => 57;
+use Test::More tests => 87;
 use Test::Deep qw(cmp_bag);
 
 
@@ -38,6 +38,7 @@ my $sample = $instrument_data->[0][0]->sample;
 $subject_mapping->add_subject_bridge(subject => $sample, label => 'best_sample');
 $subject_mapping->add_input(key => 'some_key', value => 'some_value');
 
+my $more_instrument_data = _setup_instrument_data($analysis_project);
 
 for my $set (@$instrument_data) {
     my @next_models = $profile->process_models_for_instrument_data($set->[0]);
@@ -61,6 +62,10 @@ for my $set (@$instrument_data) {
 
 is(scalar keys %models, 6, 'created expected number of models');
 
+for my $set(@$more_instrument_data) {
+    dies_ok { $profile->process_models_for_instrument_data($set->[0]) } 'no subject mapping found for instrument data from other sample';
+}
+
 for my $m (values %models) {
     my @inputs = $m->inputs;
     my %inputs = map { $_->name => $_->value_id } @inputs;
@@ -81,6 +86,36 @@ for my $m (values %models) {
     ok($inputs{library}, 'library input is set');
     ok($inputs{flow_cell}, 'flow_cell input is set');
 }
+
+
+my $second_subject_mapping = Genome::Config::AnalysisProject::SubjectMapping->create(
+    analysis_project => $analysis_project
+);
+
+$second_subject_mapping->add_subject_bridge(subject => $sample, label => 'second_best_sample');
+$second_subject_mapping->add_input(key => 'some_other_key', value => 'some_other_value');
+
+for my $set (@$instrument_data) {
+    my @next_models = $profile->process_models_for_instrument_data($set->[0]);
+    is(scalar(@next_models), 3, 'found old and created 1 new model for the new subject mapping');
+    my @new = grep { !exists $models{$_->id} } @next_models;
+    is(scalar(@new), 1, 'found new model');
+
+    my @next_models2 = $profile->process_models_for_instrument_data($set->[1]);
+    is(scalar(@next_models), 3, 'found old and new models');
+    my @new2 = grep { !exists $models{$_->id} } @next_models;
+    cmp_bag(\@new, \@new2, 'reused new model correctly');
+
+    my @i = $new[0]->instrument_data;
+    cmp_bag(\@i, $set, 'model has expected instrument data assigned');
+
+    my %inputs = map { $_->name => $_->value_id } $new[0]->inputs;
+    is($inputs{second_best_sample}, $sample->id, 'sample attached');
+    is($inputs{best_sample}, undef, 'sample only attached from single subject mapping');
+    is($inputs{some_other_key}, 'some_other_value', 'other input attached');
+    is($inputs{some_key}, undef, 'other input only attached from single subject mapping');
+}
+
 
 
 sub _setup_instrument_data {
