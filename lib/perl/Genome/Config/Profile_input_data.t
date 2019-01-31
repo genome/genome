@@ -68,7 +68,6 @@ for my $m (values %models) {
     ok(exists $inputs{this_uses_mappings}, 'test mapping indicator set');
 
     if ($inputs{this_uses_mappings}) {
-        $DB::single = 1;
         is($inputs{best_sample}, $sample->id, 'sample attached');
         is($inputs{some_key}, 'some_value', 'extra key attached');
     } else {
