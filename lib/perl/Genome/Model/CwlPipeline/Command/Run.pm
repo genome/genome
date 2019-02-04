@@ -42,6 +42,7 @@ sub execute {
         $self->fatal_message('Unknown CWL runner: %s', $cwl_runner);
     }
     $self->preserve_results($results_dir);
+    $self->process_outputs($results_dir);
 
     return 1;
 }
@@ -383,6 +384,25 @@ sub cleanup {
                 Genome::Sys->remove_directory_tree($dir);
             }
         }
+    }
+
+    return 1;
+}
+
+sub process_outputs {
+    my $self = shift;
+    my $results_dir = shift;
+
+    my $build = $self->build;
+    my $pp = $build->processing_profile;
+    my $da = Genome::Disk::Allocation->get(owner => $pp);
+    my $dir = $da->absolute_path;
+
+    my $postprocessing_script = File::Spec->join($dir, 'process_outputs.pl');
+    if (-e $postprocessing_script) {
+        Genome::Sys->shellcmd(
+            cmd => [$^X, $postprocessing_script, $build->id, $results_dir],
+        );
     }
 
     return 1;
