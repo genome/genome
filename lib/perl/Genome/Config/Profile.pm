@@ -9,6 +9,7 @@ use Genome;
 use UR::Util;
 
 use feature qw(switch);
+no if $] >= 5.018, warnings => qw( experimental::smartmatch );
 
 class Genome::Config::Profile {
     is => 'UR::Object',

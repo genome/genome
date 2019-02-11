@@ -3,6 +3,7 @@ package Genome::ProcessingProfile::Command::View;
 use strict;
 use warnings;
 use feature 'switch';
+no if $] >= 5.018, warnings => qw( experimental::smartmatch );
 
 use Genome;
 use List::MoreUtils "uniq";

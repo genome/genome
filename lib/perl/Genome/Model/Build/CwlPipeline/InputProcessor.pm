@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use feature qw(switch);
+no if $] >= 5.018, warnings => qw( experimental::smartmatch );
 
 use Genome;
 
