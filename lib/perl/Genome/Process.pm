@@ -297,14 +297,27 @@ sub update_status {
     return $self->status;
 }
 
+sub lsf_job_id_header {
+    return 'workflow lsf job_id';
+}
+
 sub lsf_job_id {
     my $self = shift;
 
-    my $id_note = $self->notes(header_text => 'workflow lsf job_id');
-    if ($id_note) {
-        return $id_note->body_text;
+    my $new_value = shift;
+    if ($new_value) {
+        my $existing = $self->notes(header_text => $self->lsf_job_id_header);
+        if ($existing) {
+            $existing->delete;
+        }
+        $self->add_note(header_text => $self->lsf_job_id_header, body_text => $new_value);
     } else {
-        return;
+        my $id_note = $self->notes(header_text => $self->lsf_job_id_header);
+        if ($id_note) {
+            return $id_note->body_text;
+        } else {
+            return;
+        }
     }
 }
 
