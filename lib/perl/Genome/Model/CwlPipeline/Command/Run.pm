@@ -211,6 +211,7 @@ backend {
         """
 
         submit = """
+        LSF_DOCKER_PRESERVE_ENVIRONMENT=false \
         bsub \
         -J ${job_name} \
         -cwd ${cwd} \
@@ -232,6 +233,7 @@ EOCONFIG
 
         submit-docker = """
         LSF_DOCKER_VOLUMES=${cwd}:${docker_cwd} \
+        LSF_DOCKER_PRESERVE_ENVIRONMENT=false \
         bsub \
         -J ${job_name} \
         -cwd ${cwd} \
