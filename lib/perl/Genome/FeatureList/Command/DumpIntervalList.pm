@@ -26,6 +26,11 @@ class Genome::FeatureList::Command::DumpIntervalList {
             doc => 'whether to merge adjacent regions of the BED file',
             default => 1,
         },
+        preserve_region_names => {
+            is => 'Boolean',
+            doc => 'whether to retain the region names from the feature-list (or replace them with "short" names)',
+            default => 0,
+        },
     },
     has_optional_output => {
         output_path => {
@@ -48,6 +53,7 @@ sub execute {
         reference_build => $self->reference_build,
         track_name => $self->track_name,
         merge => $self->merge,
+        preserve_region_names => $self->preserve_region_names,
         users => $result_users,
     );
 
