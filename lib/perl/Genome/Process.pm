@@ -231,7 +231,7 @@ sub _dispatch_process {
     unless ($transaction->commit()) {
         $transaction->rollback();
         $self->fatal_message(
-            "Failed to submit process (%s): %s",
+            "Failed to dispatch process (%s): %s",
             $self->id, $transaction->error_message || 'Reason Unknown'
         );
     }
@@ -254,6 +254,9 @@ sub _dispatch_process {
         resource_string => Genome::Config::get('lsf_resource_cwl_runner'),
     );
 
+    unless ($job_id) {
+        $self->fatal_message('Failed to dispatch process (%s): bsub did not succeed.', $self->id);
+    }
     $self->lsf_job_id($job_id);
     Genome::Sys::CommitAction->create(
         on_commit => sub {
