@@ -205,8 +205,8 @@ backend {
       config {
         runtime-attributes = """
         Int cpu = 1
-        Int? memory_kb
-        Int? memory_mb
+        Int memory_kb = 4096000
+        Int memory_mb = 4096
         String? docker
         """
 
