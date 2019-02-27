@@ -227,7 +227,7 @@ EOCONFIG
     $config .= <<'EOCONFIG'
         -M ${memory_kb} \
         -n ${cpu} \
-        -R "select[mem>${memory_mb}] rusage[mem=${memory_mb}]" \
+        -R "span[hosts=1] select[mem>${memory_mb}] rusage[mem=${memory_mb}]" \
         /bin/bash ${script}
         """
 
@@ -249,7 +249,7 @@ EOCONFIG
         -a "docker(${docker})" \
         -M ${memory_kb} \
         -n ${cpu} \
-        -R "select[mem>${memory_mb}] rusage[mem=${memory_mb}]" \
+        -R "span[hosts=1] select[mem>${memory_mb}] rusage[mem=${memory_mb}]" \
         /bin/bash ${script}
         """
 
