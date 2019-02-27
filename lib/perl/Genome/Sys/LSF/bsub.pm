@@ -7,6 +7,7 @@ use Genome::Sys;
 use Exporter qw(import);
 use Params::Validate qw(:types);
 use List::MoreUtils qw(any);
+use Genome::Sys::LSF::ResourceParser qw();
 
 our @EXPORT = qw(bsub);
 our @EXPORT_OK = qw(bsub);
@@ -38,6 +39,7 @@ sub bsub {
 sub args_builder {
     my %args = _args(@_);
     my $command = delete $args{cmd};
+    my $resource_string = delete $args{resource_string};
 
     my @args;
     for my $flag (_flags()) {
@@ -52,6 +54,19 @@ sub args_builder {
 
     if (ref($command) ne 'ARRAY') {
         $command = [$command];
+    }
+
+    if ($resource_string) {
+        my $parsed = Genome::Sys::LSF::ResourceParser::parse_lsf_params($resource_string);
+        if (exists $parsed->{options}{resReq}) {
+            push @args, '-R', $parsed->{options}{resReq};
+        }
+        if (exists $parsed->{options}{numProcessors}) {
+            push @args, '-n', $parsed->{options}{numProcessors};
+        }
+        if (exists $parsed->{rLimits}{RSS}) {
+            push @args, '-M', $parsed->{rLimits}{RSS};
+        }
     }
 
     return (@args, @$command);
@@ -152,6 +167,10 @@ sub _args_spec {
         },
         cmd => {
             type => SCALAR | ARRAYREF,
+        },
+        resource_string => {
+            optional => 1,
+            type => SCALAR,
         },
     };
 }

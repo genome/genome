@@ -141,6 +141,8 @@ sub run {
             $self->_submit_process($transaction);
         } elsif ($backend eq 'inline') {
             $self->_execute_process($transaction);
+        } elsif ($backend eq 'simple') {
+            $self->_dispatch_process($transaction);
         } else {
             $self->fatal_message('Unknown backend chosen to run process: %s', $backend);
         }
@@ -222,6 +224,49 @@ sub _submit_process {
     $cmd->submit();
 }
 
+sub _dispatch_process {
+    my $self = shift;
+    my $transaction = shift;
+
+    unless ($transaction->commit()) {
+        $transaction->rollback();
+        $self->fatal_message(
+            "Failed to dispatch process (%s): %s",
+            $self->id, $transaction->error_message || 'Reason Unknown'
+        );
+    }
+
+    my $job_group = join('/',
+        Genome::Config::get('lsf_job_group'),
+        Genome::Sys->username,
+    );
+
+    my $log_file_base = File::Spec->join($self->log_directory, 'process-%J');
+
+    my $job_id = Genome::Sys->bsub(
+        queue => Genome::Config::get('lsf_queue_build_worker'),
+        cmd => [qw(genome process run), $self->id],
+        hold_job => 1,
+        err_file => "${log_file_base}.err",
+        out_file => "${log_file_base}.out",
+        project => $self->lsf_project_name,
+        job_group => $job_group,
+        resource_string => Genome::Config::get('lsf_resource_cwl_runner'),
+    );
+
+    unless ($job_id) {
+        $self->fatal_message('Failed to dispatch process (%s): bsub did not succeed.', $self->id);
+    }
+    $self->lsf_job_id($job_id);
+    Genome::Sys::CommitAction->create(
+        on_commit => sub {
+            Genome::Sys->shellcmd(cmd => ['bresume', $job_id]);
+        },
+    );
+
+    return 1;
+}
+
 sub create {
     my $class = shift;
 
@@ -297,14 +342,27 @@ sub update_status {
     return $self->status;
 }
 
+sub lsf_job_id_header {
+    return 'workflow lsf job_id';
+}
+
 sub lsf_job_id {
     my $self = shift;
 
-    my $id_note = $self->notes(header_text => 'workflow lsf job_id');
-    if ($id_note) {
-        return $id_note->body_text;
+    my $new_value = shift;
+    if ($new_value) {
+        my $existing = $self->notes(header_text => $self->lsf_job_id_header);
+        if ($existing) {
+            $existing->delete;
+        }
+        $self->add_note(header_text => $self->lsf_job_id_header, body_text => $new_value);
     } else {
-        return;
+        my $id_note = $self->notes(header_text => $self->lsf_job_id_header);
+        if ($id_note) {
+            return $id_note->body_text;
+        } else {
+            return;
+        }
     }
 }
 
