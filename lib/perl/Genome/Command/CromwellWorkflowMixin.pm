@@ -82,7 +82,17 @@ sub _write_cromwell_workflow {
     @calls = sort { $data->{calls}{$a}->[0]{start} cmp $data->{calls}{$b}->[0]{start} } @calls;
     for my $call_name (@calls) {
         for my $call (@{ $data->{calls}{$call_name} }) {
-            my $shard = $call->{shardIndex};
+            my $shard = $call->{shardIndex} // -1;
+
+            if ($self->summary_threshold > -1) {
+                next if $shard > $self->summary_threshold;
+
+                if ($shard == $self->summary_threshold) {
+                    $handle->print($self->_format_cromwell_line('summary threshold reached', '', '', '', '', '', $call_name, $indent+1));
+                    next;
+                }
+            }
+
             $shard = undef if $shard < 0;
 
             if (my $subworkflow_id = $call->{subWorkflowId}) {
