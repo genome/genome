@@ -248,7 +248,7 @@ sub _dispatch_process {
         cmd => [qw(genome process run), $self->id],
         hold_job => 1,
         err_file => "${log_file_base}.err",
-        out_file => "${log_file_base}.out",
+        log_file => "${log_file_base}.out",
         project => $self->lsf_project_name,
         job_group => $job_group,
         resource_string => Genome::Config::get('lsf_resource_cwl_runner'),
