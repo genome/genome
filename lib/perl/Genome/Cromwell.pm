@@ -46,6 +46,17 @@ sub outputs {
     return $self->_make_request('GET', $url);
 }
 
+sub metadata {
+    my $class = shift;
+    my $workflow_id = shift;
+
+    my $self = $class->_singleton_object;
+    my $url = $self->_request_url($workflow_id, 'metadata');
+    $url .= '?excludeKey=submittedFiles&excludeKey=inputs&excludeKey=outputs&expandSubWorkflows=false';
+
+    return $self->_make_request('GET', $url);
+}
+
 sub query {
    my $class = shift;
    my $query_options = shift;
