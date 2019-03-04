@@ -15,7 +15,7 @@ class Genome::Command::CromwellWorkflowMixin {
             is => 'Int',
             is_optional => 1,
             default_value => '5',
-            doc => "Scatter stages with thsi many steps will be summarized. Use zero to summarize every step. Use a negative value to never summarize.",
+            doc => "Scatter stages with this many steps will be summarized. Use zero to summarize every step. Use a negative value to never summarize.",
         },
         logs => {
             is => 'Boolean',
