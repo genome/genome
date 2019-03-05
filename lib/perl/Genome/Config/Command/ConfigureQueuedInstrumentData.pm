@@ -65,6 +65,7 @@ sub execute {
             next;
         }
         eval {
+            $self->_verify_or_import_instrument_data($current_pair);
             $analysis_project->get_configuration_profile->process_models_for_instrument_data($current_inst_data);
         };
 
@@ -229,6 +230,24 @@ sub _lock {
             }
         );
     }
+}
+
+sub _verify_or_import_instrument_data {
+    my $self = shift;
+    my $current_pair = shift;
+
+    my $instrument_data = $current_pair->instrument_data;
+    return 1 if @{[$instrument_data->disk_allocations]};
+
+    $self->_import_instrument_data($current_pair);
+}
+
+sub _import_instrument_data {
+    my $self = shift;
+    my $current_pair = shift;
+
+    #site-specific override required
+    $self->fatal_message(q{I don't know how to import %s for analysis.}, $current_pair->instrument_data->id);
 }
 
 1;
