@@ -9,6 +9,7 @@ use above "Genome";
 use Carp::Always;
 
 use Genome::Test::Factory::Config::Profile::Item;
+use Genome::Test::Factory::DiskAllocation;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::Imported;
 use Genome::Test::Factory::AnalysisProject;
@@ -295,6 +296,7 @@ sub generate_rna_seq_instrument_data {
         target_region_set_name => 'turkey',
         run_type => 'Paired',
     );
+    my $da = Genome::Test::Factory::DiskAllocation->setup_object(owner => $inst_data);
 
     my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
         config_hash => {
@@ -358,6 +360,7 @@ sub _generate_som_val_instrument_data {
         rev_clusters => 10,
         run_type => 'Paired',
     );
+    my $da_1 = Genome::Test::Factory::DiskAllocation->setup_object(owner => $inst_data_1);
 
     my $inst_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
         library_id => $library_2->id,
@@ -367,6 +370,7 @@ sub _generate_som_val_instrument_data {
         rev_clusters => 10,
         run_type => 'Paired',
     );
+    my $da_2 = Genome::Test::Factory::DiskAllocation->setup_object(owner => $inst_data_2);
 
     map $som_val_project->add_part(role => 'instrument_data', entity => $_), ($inst_data_1, $inst_data_2);
 
@@ -423,6 +427,7 @@ sub _generate_lane_qc_instrument_data {
         run_name => 'sans',
         subset_name => 3,
     );
+    my $sans_da = Genome::Test::Factory::DiskAllocation->setup_object(owner => $sans_data);
 
     #Lane QC stuff plus genotype data
     my $plus_sample = Genome::Test::Factory::Sample->setup_object(
@@ -439,6 +444,7 @@ sub _generate_lane_qc_instrument_data {
         run_name => 'plus',
         subset_name => 2,
     );
+    my $plus_da = Genome::Test::Factory::DiskAllocation->setup_object(owner => $plus_data);
 
     my $genotype_microarray_model = Genome::Model::GenotypeMicroarray->create(
         processing_profile_id => '2166945',
