@@ -1622,29 +1622,6 @@ sub generate_send_and_save_report {
     $self->add_report($report)
         or return;
 
-    # Do not send report for automated production/tester builds if it is a init, fail or succ report
-    my $username = $self->build_event->user_name;
-    return 1 if ( Genome::Sys->user_has_role($username, 'production') or $username eq 'apipe-tester' )
-        and grep { $generator_class eq 'Genome::Model::Report::'.$_ } (qw/ BuildInitialized BuildSucceeded BuildFailed /);
-    # or user does not exist
-    return 1 if not getpwnam($username);
-
-    my $to = Genome::Sys::User->get(username => $username);
-    return 1 if not $to;
-
-    my $email_confirmation = Genome::Report::Email->send_report(
-        report => $report,
-        to => $to->id,
-        from => Genome::Config::get('email_pipeline'),
-        replyto => Genome::Config::get('email_noreply'),
-        # maybe not the best/correct place for this information but....
-        xsl_files => [ $generator->get_xsl_file_for_html ],
-    );
-    unless ( $email_confirmation ) {
-        $self->error_message('Couldn\'t email build report ('.lc($report->name).')');
-        return;
-    }
-
     return $report;
 }
 
