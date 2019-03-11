@@ -123,7 +123,7 @@ sub execute {
     if ($backend eq 'ptero') {
         return $self->_execute_with_ptero($inputs, $p{polling_interval});
 
-    } elsif ($backend eq 'inline') {
+    } elsif ($backend eq 'inline' or $backend eq 'simple') {
         return $self->execute_inline($inputs);
 
     } else {
