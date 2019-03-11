@@ -355,7 +355,8 @@ sub lsf_job_id {
         if ($existing) {
             $existing->delete;
         }
-        $self->add_note(header_text => $self->lsf_job_id_header, body_text => $new_value);
+        my $n = $self->add_note(header_text => $self->lsf_job_id_header, body_text => $new_value);
+        $n->body_text($new_value); #ignore any system-generated sudo message for this note.
     } else {
         my $id_note = $self->notes(header_text => $self->lsf_job_id_header);
         if ($id_note) {
