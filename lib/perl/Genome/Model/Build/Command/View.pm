@@ -9,6 +9,7 @@ class Genome::Model::Build::Command::View {
     is => [
         'Genome::Command::Viewer',
         'Genome::Command::PteroWorkflowMixin',
+        'Genome::Command::CromwellWorkflowMixin',
     ],
     has => [
         build => {
@@ -93,20 +94,36 @@ sub write_report {
         }
     }
 
-    my @process = $self->build->process;
+    if (my $cromwell_wf = $self->_cromwell_workflow_id_for_build) {
+        $self->_display_cromwell_workflow($handle, $cromwell_wf);
+    } else {
+        my @process = $self->build->process;
 
-    if (@process > 1) {
-        @process = sort { $a->created_at cmp $b->created_at } @process;
-    }
-
-    for (@process) {
         if (@process > 1) {
-            $handle->say("\nProcess " . $_->id . ' at ' . $_->created_at . ":");
+            @process = sort { $a->created_at cmp $b->created_at } @process;
         }
-        $self->_display_ptero_workflow($handle, $_->workflow_name);
+
+        for (@process) {
+            if (@process > 1) {
+                $handle->say("\nProcess " . $_->id . ' at ' . $_->created_at . ":");
+            }
+            $self->_display_ptero_workflow($handle, $_->workflow_name);
+        }
     }
 
     1;
+}
+
+sub _cromwell_workflow_id_for_build {
+    my $self = shift;
+
+    my $results = Genome::Cromwell->query( [{ label => 'build:' . $self->build->id }] );
+    if ($results->{totalResultsCount} != 1) {
+        $self->debug_message('Did not find cromwell workflow.');
+        return;
+    }
+
+    return $results->{results}->[0]->{id};
 }
 
 sub _display_build {
