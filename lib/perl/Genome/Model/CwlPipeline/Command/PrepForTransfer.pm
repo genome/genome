@@ -19,6 +19,12 @@ class Genome::Model::CwlPipeline::Command::PrepForTransfer {
             is => 'Text',
             doc => 'The directory to prepare and write symlinks',
         },
+        symlink_prefix => {
+            is => 'Text',
+            doc => 'The prefix for each symlink created.',
+            default_value => 'build_id',
+            valid_values => ['build_id', 'subject_name'],
+        },
         md5sum => {
             is => 'Boolean',
             is_optional => 1,
@@ -65,9 +71,17 @@ sub execute {
     for my $build ($self->builds) {
         my $results_directory = File::Spec->join($build->data_directory,'results');
         my @file_paths = grep {-f $_} glob($results_directory .'/*');
+        my $symlink_prefix;
+        if ($self->symlink_prefix eq 'build_id') {
+            $symlink_prefix = $build->id;
+        } elsif ($self->symlink_prefix eq 'subject_name') {
+            $symlink_prefix = $build->model->subject->name;
+        } else {
+            $self->fatal_message('Failed to identify symlink_prefix %s', $self->symlink_prefix);
+        }   
         for my $file_path (@file_paths) {
             my ($file_name, $dir, $suffix) = File::Basename::fileparse($file_path);
-            my $symlink_name = $build->id .'.'. $file_name;
+            my $symlink_name = $symlink_prefix .'.'. $file_name;
             my $symlink_path = File::Spec->join($self->directory,$symlink_name);
             my %data = (
                 'subject.name' => $build->model->subject->name,
