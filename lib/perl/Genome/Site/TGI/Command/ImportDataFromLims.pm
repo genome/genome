@@ -156,7 +156,7 @@ sub _create_allocation {
     my $data = shift;
 
     my %params = (
-        disk_group_name => $self->_disk_group->disk_group_name,
+        disk_group_name => Genome::Config::get('disk_group_alignments'),
         allocation_path => File::Spec->join('instrument_data',$data->id),
         kilobytes_requested => $data->calculate_alignment_estimated_kb_usage,
         owner_class_name => $data->class,
@@ -170,27 +170,6 @@ sub _create_allocation {
     }
 
     return Genome::Disk::Allocation->get(allocation_path => $params{allocation_path});
-}
-
-sub _disk_group {
-    my $self = shift;
-
-    unless (exists $self->{_disk_group}) {
-        $self->{_disk_group} = $self->_resolve_disk_group;
-    }
-
-    return $self->{_disk_group};
-}
-
-sub _resolve_disk_group {
-    my $self = shift;
-
-    my $anp = $self->analysis_project;
-    my $guard = $anp->set_env;
-
-    my $dg = Genome::Config::get('disk_group_alignments');
-
-    return Genome::Disk::Group->get(disk_group_name => $dg);
 }
 
 sub _user_group {
