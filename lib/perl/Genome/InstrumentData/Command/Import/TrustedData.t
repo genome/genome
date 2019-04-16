@@ -10,11 +10,22 @@ use strict;
 use warnings;
 
 use File::Spec;
+use Sub::Install qw(reinstall_sub);
 use Test::More tests => 10;
 
 use above "Genome";
 use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::Library;
+
+my $rsync_version = `rsync --version`;
+if ($rsync_version =~ m/protocol version 30$/sm) {
+    Sub::Install::reinstall_sub({
+        into => 'Genome::Sys',
+        as => 'rsync_directory',
+        code => sub {return 1},
+    });
+}
+
 
 my $class = 'Genome::InstrumentData::Command::Import::TrustedData';
 use_ok($class) or die 'cannot continue without import class';
