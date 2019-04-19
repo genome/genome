@@ -29,6 +29,10 @@ class Genome::InstrumentData::Command::Import::TrustedData {
             example_values => ['bam', 'fastq', 'sanger fastq', 'genotype microarray'],
             doc => 'The format of the instrument data. Setting certain values (e.g. "bam") will enable additional features in the GMS.',
         },
+        read_count => {
+            is => 'Number',
+            doc => 'The read count for the instrument data',
+        },
     ],
     has_optional_input => [
         description  => {
@@ -92,6 +96,7 @@ sub execute {
         import_format => $self->import_format,
         import_source_name => $self->import_source_name,
         original_data_path => $self->source_directory,
+        read_count => $self->read_count,
     );
     unless ($entity) {
         $self->fatal_message('Could not instantiate new instrument data.');

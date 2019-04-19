@@ -60,6 +60,7 @@ my $cmd = $class->create(
     source_directory => $test_dir,
     import_format => 'numbers',
     description => 'junk data for testing the importer',
+    read_count => 500,
     instrument_data_properties => [map { join('=', $_, $extra_properties{$_}) } sort keys %extra_properties],
 );
 isa_ok($cmd, $class, 'created command object');
