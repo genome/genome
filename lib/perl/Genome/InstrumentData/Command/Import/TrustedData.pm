@@ -84,10 +84,11 @@ sub execute {
     $properties{subset_name} //= 'unknown';
     $properties{sequencing_platform} //= 'solexa';
 
+    $properties{description} = $self->description if $self->description;
+
     my $entity = Genome::InstrumentData::Imported->create(
         %properties,
         library => $self->library,
-        description => $self->description,
         import_format => $self->import_format,
         import_source_name => $self->import_source_name,
         original_data_path => $self->source_directory,
