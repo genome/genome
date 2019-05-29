@@ -93,6 +93,11 @@ sub execute {
         }
     }
 
+    unless (@builds_to_abandon) {
+        $self->status_message("Found no matching builds to abandon.");
+        return 1;
+    }
+
     my $abandon_cmd = Genome::Model::Build::Command::Abandon->create(
         builds => \@builds_to_abandon,
     );
