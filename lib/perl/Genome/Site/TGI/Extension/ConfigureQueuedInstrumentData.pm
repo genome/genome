@@ -18,12 +18,17 @@ sub _import_lims_data {
     my $self = shift;
     my $current_pair = shift;
 
-    my $importer = Genome::Site::TGI::Command::ImportDataFromLims->create(
-        instrument_data => $current_pair->instrument_data,
-        analysis_project => $current_pair->analysis_project,
-    );
+    my @cmd = ($^X);
+    push @cmd, '-I', $_ for UR::Util::used_libs;
+    push @cmd,
+        '-MGenome',
+        '-e', 'Genome::Site::TGI::Command->execute_with_shell_params_and_exit()',
+        'import-data-from-lims',
+        '--instrument-data', $current_pair->instrument_data_id,
+        '--analysis-project', $current_pair->analysis_project_id,
+    ;
 
-    unless($importer->execute) {
-        $self->fatal_message('Failed to import data from LIMS.');
-    }
+    Genome::Sys->shellcmd(cmd => \@cmd);
 }
+
+1;
