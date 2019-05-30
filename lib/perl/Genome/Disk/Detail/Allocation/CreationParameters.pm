@@ -96,7 +96,12 @@ sub sanitize_disk_group {
     if ($dgn =~ m!/!) { #maybe it's a mount path
         if (my $dv = Genome::Disk::Volume->get(mount_path => $dgn)) {
             $self->mount_path($dgn);
-            $self->disk_group_name($dv->disk_group_name);
+
+            my @disk_groups = $dv->disk_group_names;
+            $self->fatal_message('Failed to infer disk group for mount path %s', $dgn)
+                unless @disk_groups == 1;
+
+            $self->disk_group_name($disk_groups[0]);
         }
     }
 }
