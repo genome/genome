@@ -10,15 +10,20 @@ BEGIN {
 };
 
 use File::Spec;
-use Test::More tests => 20;
+use Test::More tests => 23;
 
 my $class = 'Genome::Model::CwlPipeline::Command::Run';
 
 use_ok($class);
 
-my $workflow_dir = Genome::Sys->create_temp_directory();
-my $results_dir = Genome::Sys->create_temp_directory();
+my $build = Genome::Model::Build::CwlPipeline->__define__();
+$build->data_directory( Genome::Sys->create_temp_directory );
 
+my $cmd = $class->create(build => $build);
+
+my ($workflow_dir, $results_dir) = $cmd->prepare_directories;
+ok(-d $workflow_dir, 'created scratch directory');
+ok(-d $results_dir, 'created results directory');
 
 my @files;
 my @paths;
@@ -49,9 +54,6 @@ my @test_structures = (
     { location => $paths[7], secondaryFiles => [ { location => $paths[8] } ] },
 );
 
-
-my $build = Genome::Model::Build::CwlPipeline->__define__();
-
 my $desired_prefix = 'turkey';
 Genome::Model::Build::Input->create(
     build_id => $build->id,
@@ -66,7 +68,6 @@ Genome::Model::Build::Input->create(
     value_class_name => 'UR::Value::Text',
 );
 
-my $cmd = $class->create(build => $build);
 
 my $prefix = $cmd->_determine_output_prefix;
 is($prefix, $desired_prefix, 'determined prefix');
@@ -82,3 +83,7 @@ for my $file (@files) {
     my $dest = File::Spec->join($results_dir, "$prefix-$file");
     ok(-e $dest, 'file was moved in with correct prefix applied');
 }
+
+$cmd->cleanup;
+ok(!-d $workflow_dir, 'cleaned up scratch directory');
+

@@ -87,12 +87,10 @@ sub prepare_directories {
     my $self = shift;
     my $build = $self->build;
 
+    my $tmp_dir = $build->get_or_create_scratch_directory;
+
     my $data_directory = $build->data_directory;
-
-    my $tmp_dir = File::Spec->join($data_directory, 'tmp');
     my $results_dir = File::Spec->join($data_directory, 'results');
-
-    Genome::Sys->create_directory($tmp_dir);
     Genome::Sys->create_directory($results_dir);
 
     return ($tmp_dir, $results_dir);
@@ -400,7 +398,8 @@ sub cleanup {
     my $tmp_dir = shift;
     my $results_dir = shift;
 
-    Genome::Sys->remove_directory_tree($tmp_dir);
+    my $build = $self->build;
+    $build->cleanup_scratch_directory;
 
     if ($results_dir) {
         for my $dir (glob("$results_dir/tmp*")) {
