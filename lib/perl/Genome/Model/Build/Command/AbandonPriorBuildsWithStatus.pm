@@ -11,7 +11,7 @@ class Genome::Model::Build::Command::AbandonPriorBuildsWithStatus {
         status => {
             is => 'Text',
             doc => 'Status of builds to abandon prior builds',
-            valid_values => Genome::Model::Build->__meta__->property(property_name => 'status')->valid_values,
+            valid_values => [ grep $_ ne 'Abandoned', @{ Genome::Model::Build->__meta__->property(property_name => 'status')->valid_values } ],
         },
         models => {
             is => 'Genome::Model',
