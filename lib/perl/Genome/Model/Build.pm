@@ -9,6 +9,7 @@ use Carp;
 use Data::Dumper 'Dumper';
 use File::stat;
 use File::Path;
+use File::Spec;
 use File::Find 'find';
 use File::Next;
 use File::Basename qw/ dirname fileparse /;
@@ -2668,6 +2669,54 @@ sub has_imported_instrument_data {
     my $self = shift;
     my @instrument_data = $self->instrument_data('subclass_name isa' => 'Genome::InstrumentData::Imported');
     return scalar(@instrument_data)? 1 : 0;
+}
+
+sub get_or_create_scratch_directory {
+    my $self = shift;
+
+    my $tmp_path = File::Spec->join($self->data_directory, 'tmp');
+    unless (-d $tmp_path) {
+        my $allocation_path = $self->_scratch_allocation_path;
+        my $scratch_allocation = Genome::Disk::Allocation->get(allocation_path => $allocation_path);
+
+        unless ($scratch_allocation) {
+            my $disk_group = Genome::Config::get('disk_group_scratch');
+            my $kb_requested = 50_000_000; #TODO pick a size somehow
+
+            $scratch_allocation = Genome::Disk::Allocation->create(
+                allocation_path => $allocation_path,
+                owner_class_name => $self->class,
+                owner_id => $self->id,
+                kilobytes_requested => $kb_requested,
+                disk_group_name => $disk_group,
+            );
+        }
+
+        Genome::Sys->create_symlink($scratch_allocation->absolute_path,$tmp_path);
+    }
+
+    return $tmp_path;
+}
+
+sub cleanup_scratch_directory {
+    my $self = shift;
+
+    my $allocation_path = $self->_scratch_allocation_path;
+    my $allocation = Genome::Disk::Allocation->get(
+        allocation_path => $allocation_path
+    );
+    $allocation->deallocate if $allocation;
+
+    my $tmp_path = File::Spec->join($self->data_directory, 'tmp');
+    unlink($tmp_path) if -l $tmp_path;
+
+    return 1;
+}
+
+sub _scratch_allocation_path {
+    my $self = shift;
+
+    return File::Spec->join('model_data', 'scratch', $self->id);
 }
 
 1;
