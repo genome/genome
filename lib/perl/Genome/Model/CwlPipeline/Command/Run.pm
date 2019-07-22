@@ -383,6 +383,8 @@ sub _stage_cromwell_output {
             } else {
                 File::Copy::Recursive::fmove($source, $destination);
             }
+        } elsif (-d $source) {
+            File::Copy::Recursive::dirmove($source, $destination);
         } else {
             Genome::Sys->move($source, $destination);
         }
