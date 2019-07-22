@@ -10,6 +10,7 @@ use Genome::Utility::Text qw();
 use YAML;
 use JSON qw(to_json);
 use File::Compare qw();
+use File::Copy::Recursive qw();
 
 class Genome::Model::CwlPipeline::Command::Run {
     is => 'Command::V2',
@@ -375,7 +376,16 @@ sub _stage_cromwell_output {
             }
         }
 
-        Genome::Sys->move($source, $destination);
+        if (-l $source) {
+            if ($prefix) {
+                my $target = readlink $source;
+                symlink(join('-', $prefix, $target), $destination);
+            } else {
+                File::Copy::Recursive::fmove($source, $destination);
+            }
+        } else {
+            Genome::Sys->move($source, $destination);
+        }
     }
 
     return 1;
