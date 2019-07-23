@@ -10,7 +10,7 @@ BEGIN {
 };
 
 use File::Spec;
-use Test::More tests => 23;
+use Test::More tests => 25;
 
 my $class = 'Genome::Model::CwlPipeline::Command::Run';
 
@@ -38,6 +38,15 @@ for my $dir ('first', 'second', 'third') {
     }
 }
 
+my $symlink_path = $paths[6] . '.2';
+my $symlink_file = $files[6] . '.2';
+
+symlink($files[6], $symlink_path);
+
+push @files, $symlink_file;
+push @paths, $symlink_path;
+
+
 my @test_structures = (
     [
         [
@@ -49,7 +58,7 @@ my @test_structures = (
         ],
     ],
     [
-        { location => $paths[6], secondaryFiles => [] },
+        { location => $paths[6], secondaryFiles => [ { location => $symlink_path } ] },
     ],
     { location => $paths[7], secondaryFiles => [ { location => $paths[8] } ] },
 );
