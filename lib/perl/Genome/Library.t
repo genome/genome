@@ -60,4 +60,21 @@ subtest 'is_rna' => sub{
 
 };
 
+subtest 'is_10x' => sub{
+    plan tests => 4;
+
+    $library->protocol('karate chop');
+    is($library->is_10x_gex, 0, 'is NOT 10x_gex when protocol is karate chop');
+
+    $library->protocol("10x_SC-5'GEX");
+    is($library->is_10x_gex, 1, "is 10x_gex when protocol is 10x_SC-5'GEX");
+
+    $library->protocol("10x_SC-5'Enriched BCELL");
+    is($library->is_10x_vdj, 1, "is 10x_vdj when protocol is 10x_SC-5'Enriched BCELL");
+
+    $library->protocol("10x_SC_ATAC_SEQ");
+    is($library->is_10x_atac, 1, "is 10x_atac when protocol is 10x_SC_ATAC_SEQ");
+
+};
+
 done_testing();
