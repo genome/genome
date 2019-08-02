@@ -9,7 +9,7 @@ use warnings;
 
 use above "Genome";
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 subtest 'use and roles' => sub{
     plan tests => 2;
