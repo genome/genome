@@ -171,7 +171,7 @@ sub is_10x_gex {
 
     return 1 if Genome::Utility::List::in(
         $self->protocol, (
-            "10x_SC-5'GEX",
+            "10x_SC-3'GEX",
             "10x_SC-3'GEX V3",
             "10x_SC-5'GEX"
         )
