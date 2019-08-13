@@ -122,6 +122,7 @@ sub command {
     my $bam_file = $self->bam_file;
     #handle crams here
     if ($bam_file =~ /\.cram$/i) {
+        $self->status_message("converting CRAM to BAM...");
         #create temp directory for bam
         my $tempdir = Genome::Sys->create_temp_directory();
         unless($tempdir) {
@@ -135,11 +136,13 @@ sub command {
         if( -s $outbam ){
             $bam_file = $outbam;
         } else {
-            die("couldn't convert cram to bam");
+            $self->error_message("couldn't convert cram to bam");
+            die;
         }
         `/gscuser/cmiller/usr/bin/samtools index $bam_file`;
         unless( -s $outbam . ".bai" ){
-            die("couldn't index bam");
+            $self->error_message("couldn't index bam");
+            die;
         }
     }
 
