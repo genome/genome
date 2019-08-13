@@ -119,7 +119,31 @@ sub command {
 
     my $version = $self->use_version;
 
-    my @command = ($self->readcount_path, $self->bam_file, '-f', $self->reference_fasta, '-l', $self->region_list);
+    my $bam_file = $self->bam_file;
+    #handle crams here
+    if ($bam_file =~ /\.cram$/i) {
+        #create temp directory for bam
+        my $tempdir = Genome::Sys->create_temp_directory();
+        unless($tempdir) {
+            $self->error_message("Unable to create temporary file $!");
+            die;
+        }
+        my $fasta = $self->reference_fasta;
+        my $outbam = $tempdir . "/file.bam";
+        #tying this to my samtools install isn't awesome, but we need a version that supports cram, which legacy gms doesn't have
+        `/gscuser/cmiller/usr/bin/samtools view -T $fasta -b -o $outbam $bam_file`;
+        if( -s $outbam ){
+            $bam_file = $outbam;
+        } else {
+            die("couldn't convert cram to bam");
+        }
+        `/gscuser/cmiller/usr/bin/samtools index $bam_file`;
+        unless( -s $outbam . ".bai" ){
+            die("couldn't index bam");
+        }
+    }
+
+    my @command = ($self->readcount_path, $bam_file, '-f', $self->reference_fasta, '-l', $self->region_list);
 
     if ($self->minimum_mapping_quality) {
         push @command, '-q', $self->minimum_mapping_quality;
