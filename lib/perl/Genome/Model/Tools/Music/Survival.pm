@@ -412,7 +412,7 @@ sub create_sample_gene_matrix_variant {
         }
 
         #check to see if this gene is on the list (if there is a list at all)
-        if( defined @{$mutated_genes_to_include} ) {
+        if( defined($mutated_genes_to_include) and @{$mutated_genes_to_include} ) {
             next unless (scalar grep { m/^$gene$/ } @{$mutated_genes_to_include});
         }
 
