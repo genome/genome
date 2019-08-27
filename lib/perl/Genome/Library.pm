@@ -154,6 +154,45 @@ sub is_rna {
     return 0;
 }
 
+sub is_10x_atac {
+    my $self = shift;
+
+    return 1 if Genome::Utility::List::in(
+        $self->protocol, (
+            "10x_SC_ATAC_SEQ"
+        )
+    );
+
+    return 0;
+}
+
+sub is_10x_gex {
+    my $self = shift;
+
+    return 1 if Genome::Utility::List::in(
+        $self->protocol, (
+            "10x_SC-3'GEX",
+            "10x_SC-3'GEX V3",
+            "10x_SC-5'GEX"
+        )
+    );
+
+    return 0;
+}
+
+sub is_10x_vdj {
+    my $self = shift;
+
+    return 1 if Genome::Utility::List::in(
+        $self->protocol, (
+            "10x_SC-5'Enriched BCELL",
+            "10x_SC-5'Enriched TCELL"
+        )
+    );
+
+    return 0;
+}
+
 sub lock_id {
     my $class = shift;
     my %args = @_;
