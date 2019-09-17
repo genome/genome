@@ -22,8 +22,13 @@ sub execute {
     my $self = shift;
 
     my @builds = $self->builds;
-    for my $build (@builds) {
-         $build->cleanup_scratch_directory;
+    BUILD: for my $build (@builds) {
+        if ($build->status eq 'Running') {
+            $self->warning_message('Skipping Running build: %s.  To clean it up, stop the build before running this command.', $build->__display_name__);
+            next BUILD;
+        }
+
+        $build->cleanup_scratch_directory;
     }
 
     return 1;
