@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Test::Exception;
-use Test::More tests => 87;
+use Test::More tests => 93;
 use Test::Deep qw(cmp_bag);
 
 
@@ -84,6 +84,7 @@ for my $m (values %models) {
 
     #test that dynamic inputs were included
     ok($inputs{library}, 'library input is set');
+    is($inputs{common_name}, 'normal', 'common_name input is set');
     ok($inputs{flow_cell}, 'flow_cell input is set');
 }
 
@@ -121,7 +122,7 @@ for my $set (@$instrument_data) {
 sub _setup_instrument_data {
     my $anp = shift;
 
-    my $sample = Genome::Test::Factory::Sample->setup_object();
+    my $sample = Genome::Test::Factory::Sample->setup_object(common_name => 'normal');
     my $lib1 = Genome::Test::Factory::Library->setup_object(sample => $sample);
     my $lib2 = Genome::Test::Factory::Library->setup_object(sample => $sample);
 
@@ -182,6 +183,7 @@ models:
        instrument_data_properties:
            input_data:
                library: library
+               common_name: library->sample->common_name
                flow_cell: flow_cell_id
            subject: sample
      - processing_profile_id: $ppid
@@ -192,6 +194,7 @@ models:
            subject: sample
            input_data:
                library: library
+               common_name: library->sample->common_name
                flow_cell: flow_cell_id
 YML
     ;
