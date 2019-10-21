@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use List::MoreUtils qw/ any uniq /;
+use Try::Tiny qw/ try catch /;
 
 use Genome;
 use UR::Util;
@@ -188,12 +189,33 @@ sub _value_for_instrument_data_property {
     if (ref $instrument_data_property eq 'ARRAY') {
         return [
             grep { defined($_) }
-            map { $instrument_data->$_ }
+            map { $self->_apply_method_chain_for_instrument_data_property($instrument_data,$_) }
             @$instrument_data_property
         ];
     } else {
-        return $instrument_data->$instrument_data_property;
+        return $self->_apply_method_chain_for_instrument_data_property($instrument_data,$instrument_data_property);
     }
+}
+
+sub _apply_method_chain_for_instrument_data_property {
+    my ($self, $instrument_data, $instrument_data_property) = @_;
+
+    unless ($instrument_data_property) {
+        die 'bad call to _apply_method_chain_for_instrument_data_property: missing instrument_data_property';
+    }
+    my @chain = split('->', $instrument_data_property);
+
+    my $current_result = $instrument_data;
+
+    try {
+        for my $next_property (@chain) {
+            $current_result = $current_result->$next_property;
+        }
+    } catch {
+        $self->fatal_message('Configuration error processing %s: %s', $instrument_data_property, $_);
+    };
+
+    return $current_result;
 }
 
 sub _process_mapped_samples {
