@@ -239,6 +239,7 @@ sub _dispatch_process {
     my $job_group = join('/',
         Genome::Config::get('lsf_job_group'),
         Genome::Sys->username,
+        'process',
     );
 
     my $log_file_base = File::Spec->join($self->log_directory, 'process-%J');
