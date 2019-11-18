@@ -163,6 +163,7 @@ sub _get_ptero_lsf_parameters {
     my $default_job_group = join('/',
         Genome::Config::get('lsf_job_group'),
         Genome::Sys->username,
+        'ptero-workers',
     );
     $set_lsf_option->('jobGroup', $default_job_group);
 
