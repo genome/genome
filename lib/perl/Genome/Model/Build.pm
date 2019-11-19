@@ -637,7 +637,7 @@ sub disk_usage_allocations {
     my $self = shift;
 
     my @allocations;
-    push @allocations, $self->disk_allocation if $self->disk_allocation;
+    push @allocations, $self->disk_allocations if @{[$self->disk_allocations]};
 
     push @allocations, $self->user_allocations;
     push @allocations, $self->symlinked_allocations;
