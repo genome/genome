@@ -283,7 +283,7 @@ database {
     url = "jdbc:$server"
     user = "$user"
     password = "$auth"
-    connectionTimeout = 5000
+    connectionTimeout = 30000
     numThreads = 5
   }
 }
