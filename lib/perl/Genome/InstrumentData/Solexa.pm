@@ -100,11 +100,6 @@ class Genome::InstrumentData::Solexa {
         },
     ],
     has_optional => [
-        # TODO Need to remove, depends on LIMS tables
-        flow_cell => {
-            is => 'Genome::InstrumentData::FlowCell',
-            id_by => 'flow_cell_id',
-        },
         old_filt_error_rate_avg => {
             is => 'Float',
             via => 'attributes',
