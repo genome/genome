@@ -12,25 +12,6 @@ class Genome::InstrumentData::Solexa::View::Status::Xml {
             is => 'ARRAY',
             value => [
                 {
-                    name => 'flow_cell',
-                    perspective => 'default',
-                    toolkit => 'xml',
-                    aspects => [
-                        'flow_cell_id',
-                        'machine_name',
-                        'run_name',
-                        'run_type',
-                        {
-                            name => 'lanes',
-                            perspective => 'default',
-                            toolkit => 'xml',
-                            aspects => [
-                                'id',
-                            ],
-                        },
-                    ],
-                },
-                {
                     name => 'library',
                     perspective => 'default',
                     toolkit => 'xml',
@@ -88,6 +69,7 @@ class Genome::InstrumentData::Solexa::View::Status::Xml {
                 'target_region_set_name',
                 'index_sequence',
                 'project_name',
+                'flow_cell_id',
             ]
         }
     ]

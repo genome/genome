@@ -34,17 +34,7 @@ ok($library, 'library');
 my @sanger_id = map { Genome::InstrumentData::Sanger->create(id => '0'.$_.'jan00.101amaa', library => $library) } (1..4);
 is(scalar(@sanger_id), 4, 'create instrument data') or die;
 
-my $flow_cell = Genome::InstrumentData::FlowCell->create(
-    id => 'TEST_FLOW_CELL',
-    creation_event_id => 1,
-    group_name => 1,
-    machine_name => 1,
-    run_name => 1,
-    run_type => 1,
-    team_name => 1,
-);
-ok($flow_cell, 'create flow cell') or die;
-my $solexa_id = Genome::InstrumentData::Solexa->create(flow_cell_id => $flow_cell->id, library => $library);
+my $solexa_id = Genome::InstrumentData::Solexa->create(flow_cell_id => 'TEST_FLOW_CELL', library => $library);
 ok($solexa_id, 'create solexa inst data') or die;
 
 for my $data (@sanger_id, $solexa_id) {

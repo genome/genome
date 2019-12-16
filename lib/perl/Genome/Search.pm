@@ -67,7 +67,6 @@ sub searchable_classes {
         Genome::ModelGroup
         Genome::Model
         Genome::ProcessingProfile
-        Genome::InstrumentData::FlowCell
         Genome::WorkOrder
         Genome::Site::TGI::Project
         Genome::InstrumentData::Imported
