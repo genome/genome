@@ -169,13 +169,7 @@ sub is_10x_atac {
 sub is_10x_gex {
     my $self = shift;
 
-    return 1 if Genome::Utility::List::in(
-        $self->protocol, (
-            "10x_SC-3'GEX",
-            "10x_SC-3'GEX V3",
-            "10x_SC-5'GEX"
-        )
-    );
+    return 1 if $self->protocol =~ /^10x.*GEX/i;
 
     return 0;
 }
@@ -183,12 +177,7 @@ sub is_10x_gex {
 sub is_10x_vdj {
     my $self = shift;
 
-    return 1 if Genome::Utility::List::in(
-        $self->protocol, (
-            "10x_SC-5'Enriched BCELL",
-            "10x_SC-5'Enriched TCELL"
-        )
-    );
+    return 1 if $self->protocol =~ /10x.*SC.5.*Enriched.[TB]CELL/i;
 
     return 0;
 }
