@@ -61,7 +61,7 @@ subtest 'is_rna' => sub{
 };
 
 subtest 'is_10x' => sub{
-    plan tests => 4;
+    plan tests => 7;
 
     $library->protocol('karate chop');
     is($library->is_10x_gex, 0, 'is NOT 10x_gex when protocol is karate chop');
@@ -75,6 +75,12 @@ subtest 'is_10x' => sub{
     $library->protocol("10x_SC_ATAC_SEQ");
     is($library->is_10x_atac, 1, "is 10x_atac when protocol is 10x_SC_ATAC_SEQ");
 
+    $library->protocol("10x_3'_FeatureBarcoding");
+    is($library->is_10x_barcoded, 1, "is 10x_barcoded when protocol is 10x_3'_FeatureBarcoding");
+
+    $library->protocol("10x_SC-3'GEX V3_FeatureBarcoded");
+    is($library->is_10x_barcoded, 1, "is 10x_barcoded when protocol is 10x_SC-3'GEX V3_FeatureBarcoded");
+    is($library->is_10x_gex, 1, "is 10x_gex when protocol is 10x_SC-3'GEX V3_FeatureBarcoded");
 };
 
 done_testing();
