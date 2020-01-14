@@ -1755,7 +1755,7 @@ sub get_bam_file {
                     die $self->error_message("Alignment result with class (%s) and id (%s) has neither ".
                         "merged results nor valid bam paths. This likely means that this alignment result ".
                         "needs to be removed and realigned because data has been lost. ".
-                        "Please create an apipe-support ticket for this.", $self->class, $self->id);
+                        "Please set a test name with `genome software-result set-test-name` or create a support ticket for this.", $self->class, $self->id);
                     #There is no way to recreate per lane bam if merged bam
                     #does not exist and per lane bam is removed. Software
                     #result of this per lane alignment needs to be removed and
