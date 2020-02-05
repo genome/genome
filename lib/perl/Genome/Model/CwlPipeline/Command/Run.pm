@@ -344,7 +344,7 @@ sub _stage_cromwell_outputs {
     my $prefix = $self->_determine_output_prefix;
     for my $output_name (keys %$outputs) {
         my $info = $outputs->{$output_name};
-        
+
         $self->_stage_cromwell_output($results_dir, $info, $prefix);
     }
 
