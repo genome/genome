@@ -24,7 +24,7 @@ class Genome::Model::CwlPipeline::Command::Run {
             value => Genome::Config::get('lsf_resource_cwl_runner'),
         },
     ],
-    doc => 'wrapper command to run "cwltoil"'
+    doc => 'wrapper command to run the workflow for a build'
 };
 
 sub sub_command_category { 'pipeline steps' }
