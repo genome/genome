@@ -21,6 +21,7 @@ sub run {
     }
 
     local $ENV{LSB_SUB_ADDITIONAL} = Genome::Config::get('lsb_sub_additional') || $ENV{LSB_SUB_ADDITIONAL};
+    local $ENV{LSF_DOCKER_VOLUMES} = Genome::Config::get('docker_volumes') || $ENV{LSF_DOCKER_VOLUMES};
 
     my @output = Genome::Sys->capture(@$executable, @args);
 

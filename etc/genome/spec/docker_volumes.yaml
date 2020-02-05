@@ -1,0 +1,4 @@
+# Specify addtional volumes to mount when running docker
+---
+env: XGENOME_DOCKER_VOLUMES
+default_value: ''
