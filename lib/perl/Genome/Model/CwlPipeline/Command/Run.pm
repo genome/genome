@@ -213,6 +213,8 @@ sub _generate_cromwell_config {
     my $auth = Genome::Config::get('cromwell_auth');
     my $user = Genome::Config::get('cromwell_user');
 
+    my $docker_volumes = Genome::Config::get('docker_volumes');
+
     my $config_file = File::Spec->join($build->data_directory, 'cromwell.config');
 
     my $config = <<'EOCONFIG'
@@ -232,6 +234,15 @@ backend {
         """
 
         submit = """
+EOCONFIG
+    ;
+    if ($docker_volumes) {
+        $config .= <<EOCONFIG
+        LSF_DOCKER_VOLUMES='$docker_volumes' \
+EOCONFIG
+        ;
+    }
+    $config .= <<'EOCONFIG'
         LSF_DOCKER_PRESERVE_ENVIRONMENT=false \
         bsub \
         -J ${job_name} \
@@ -254,7 +265,18 @@ EOCONFIG
         """
 
         submit-docker = """
-        LSF_DOCKER_VOLUMES=${cwd}:${docker_cwd} \
+EOCONFIG
+    ;
+
+    my $vol = '${cwd}:${docker_cwd}';
+    if ($docker_volumes) {
+        $vol = join(' ', $vol, $docker_volumes);
+    }
+    $config .= <<EOCONFIG
+        LSF_DOCKER_VOLUMES='$vol' \
+EOCONFIG
+    ;
+    $config .= <<'EOCONFIG'
         LSF_DOCKER_PRESERVE_ENVIRONMENT=false \
         bsub \
         -J ${job_name} \
