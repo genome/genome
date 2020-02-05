@@ -149,6 +149,10 @@ sub run_cromwell {
     my $build = $self->build;
     my $model = $build->model;
 
+    my $main_workflow_file = $model->main_workflow_file;
+
+    my $wf_type = $self->_determine_workflow_type($main_workflow_file);
+
     #cromwell relies on reading the output from bsub
     delete local $ENV{BSUB_QUIET};
 
@@ -166,15 +170,26 @@ sub run_cromwell {
             sprintf('-Djavax.net.ssl.trustStore=%s', $truststore_file),
             '-jar', '/opt/cromwell.jar',
             'run',
-            '-t', 'cwl',
+            '-t', $wf_type,
             '-l', $labels_file,
             '-i', $yaml,
-            $model->main_workflow_file,
+            $main_workflow_file,
         ],
-        input_files => [$model->main_workflow_file, $yaml],
+        input_files => [$main_workflow_file, $yaml],
     );
 
     $self->_stage_cromwell_outputs($results_dir);
+}
+
+sub _determine_workflow_type {
+    my $self = shift;
+    my $main_workflow_file = shift;
+
+    if($main_workflow_file =~ /\.wdl$/) {
+        return 'wdl';
+    } else {
+        return 'cwl';
+    }
 }
 
 sub _generate_cromwell_config {
