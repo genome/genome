@@ -132,7 +132,7 @@ sub check_available_space {
 
 sub export_directory {
     my $self = shift;
-    return File::Spec->join($self->target_export_directory, $self->build->id);
+    return File::Spec->join($self->target_export_directory, "build" . $self->build->id);
 }
 
 1;
