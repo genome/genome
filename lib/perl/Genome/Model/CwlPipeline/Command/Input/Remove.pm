@@ -1,5 +1,10 @@
 package Genome::Model::CwlPipeline::Command::Input::Remove;
 
+use strict;
+use warnings;
+
+use Genome;
+
 class Genome::Model::CwlPipeline::Command::Input::Remove {
     is => 'Command::V2',
     has_input => [

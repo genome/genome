@@ -1,5 +1,10 @@
 package Genome::Model::CwlPipeline::Command::Input::Add;
 
+use strict;
+use warnings;
+
+use Genome;
+
 class Genome::Model::CwlPipeline::Command::Input::Add {
     is => 'Command::V2',
     has_input => [
