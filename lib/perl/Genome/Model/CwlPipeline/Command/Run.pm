@@ -24,7 +24,7 @@ class Genome::Model::CwlPipeline::Command::Run {
             value => Genome::Config::get('lsf_resource_cwl_runner'),
         },
     ],
-    doc => 'wrapper command to run "cwltoil"'
+    doc => 'wrapper command to run the workflow for a build'
 };
 
 sub sub_command_category { 'pipeline steps' }
@@ -149,6 +149,10 @@ sub run_cromwell {
     my $build = $self->build;
     my $model = $build->model;
 
+    my $main_workflow_file = $model->main_workflow_file;
+
+    my $wf_type = $self->_determine_workflow_type($main_workflow_file);
+
     #cromwell relies on reading the output from bsub
     delete local $ENV{BSUB_QUIET};
 
@@ -166,15 +170,26 @@ sub run_cromwell {
             sprintf('-Djavax.net.ssl.trustStore=%s', $truststore_file),
             '-jar', '/opt/cromwell.jar',
             'run',
-            '-t', 'cwl',
+            '-t', $wf_type,
             '-l', $labels_file,
             '-i', $yaml,
-            $model->main_workflow_file,
+            $main_workflow_file,
         ],
-        input_files => [$model->main_workflow_file, $yaml],
+        input_files => [$main_workflow_file, $yaml],
     );
 
     $self->_stage_cromwell_outputs($results_dir);
+}
+
+sub _determine_workflow_type {
+    my $self = shift;
+    my $main_workflow_file = shift;
+
+    if($main_workflow_file =~ /\.wdl$/) {
+        return 'wdl';
+    } else {
+        return 'cwl';
+    }
 }
 
 sub _generate_cromwell_config {
@@ -198,6 +213,8 @@ sub _generate_cromwell_config {
     my $auth = Genome::Config::get('cromwell_auth');
     my $user = Genome::Config::get('cromwell_user');
 
+    my $docker_volumes = Genome::Config::get('docker_volumes');
+
     my $config_file = File::Spec->join($build->data_directory, 'cromwell.config');
 
     my $config = <<'EOCONFIG'
@@ -217,6 +234,15 @@ backend {
         """
 
         submit = """
+EOCONFIG
+    ;
+    if ($docker_volumes) {
+        $config .= <<EOCONFIG
+        LSF_DOCKER_VOLUMES='$docker_volumes' \
+EOCONFIG
+        ;
+    }
+    $config .= <<'EOCONFIG'
         LSF_DOCKER_PRESERVE_ENVIRONMENT=false \
         bsub \
         -J ${job_name} \
@@ -239,7 +265,18 @@ EOCONFIG
         """
 
         submit-docker = """
-        LSF_DOCKER_VOLUMES=${cwd}:${docker_cwd} \
+EOCONFIG
+    ;
+
+    my $vol = '${cwd}:${docker_cwd}';
+    if ($docker_volumes) {
+        $vol = join(' ', $vol, $docker_volumes);
+    }
+    $config .= <<EOCONFIG
+        LSF_DOCKER_VOLUMES='$vol' \
+EOCONFIG
+    ;
+    $config .= <<'EOCONFIG'
         LSF_DOCKER_PRESERVE_ENVIRONMENT=false \
         bsub \
         -J ${job_name} \
@@ -329,7 +366,7 @@ sub _stage_cromwell_outputs {
     my $prefix = $self->_determine_output_prefix;
     for my $output_name (keys %$outputs) {
         my $info = $outputs->{$output_name};
-        
+
         $self->_stage_cromwell_output($results_dir, $info, $prefix);
     }
 
