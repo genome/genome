@@ -25,6 +25,11 @@ class Genome::Model::CwlPipeline::Command::Input::Remove {
             doc => 'value(s) to set as input(s)',
             shell_args_position => 3,
         },
+        value_class_name => {
+            is => 'Text',
+            doc => 'If set, the "value(s)" will be treated as IDs for objects of this class--resolution will be skipped',
+            is_optional => 1,
+        },
     ],
     doc => 'remove inputs from the model',
 };
@@ -45,21 +50,27 @@ sub execute {
     my $count = 0;
 
     for my $model ($self->model) {
-        for my $value_identifier ($self->value) {
-            my $value = $model->determine_input_object($self->name, $value_identifier);
+        VALUE: for my $value_identifier ($self->value) {
 
-            if ($value) {
-                my @input = Genome::Model::Input->get(
-                    model_id => $model->id,
-                    value_id => $value->id,
-                    value_class_name => $value->class,
-                    name => $self->name
-                );
+            my $value_class_name = $self->value_class_name;
+            unless ($value_class_name) {
+                my $value = $model->determine_input_object($self->name, $value_identifier);
+                $value_class_name = $value->class;
+                $value_identifier = $value->id;
 
-                for my $i (@input) {
-                    $i->delete;
-                    $count++;
-                }
+                next VALUE unless $value;
+            }
+
+            my @input = Genome::Model::Input->get(
+                model_id => $model->id,
+                value_id => $value_identifier,
+                value_class_name => $value_class_name,
+                name => $self->name
+            );
+
+            for my $i (@input) {
+                $i->delete;
+                $count++;
             }
         }
     }

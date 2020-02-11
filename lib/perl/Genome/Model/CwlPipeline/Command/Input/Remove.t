@@ -10,7 +10,7 @@ BEGIN {
 use above 'Genome';
 use Genome::Test::Factory::InstrumentData::Solexa;
 
-use Test::More tests => 6;
+use Test::More tests => 9;
 
 my $class = 'Genome::Model::CwlPipeline::Command::Input::Remove';
 use_ok($class);
@@ -46,3 +46,16 @@ ok($remove_cmd->execute, 'executed command');
 my @inputs = $m->inputs;
 is(scalar(@inputs), 1, 'removed one input');
 is($inputs[0]->value, $other_value, 'other input remains');
+
+my $remove_cmd_manual = $class->create(
+    model => $m,
+    name => 'instrument_data',
+    value => $other_value->id,
+    value_class_name => $other_value->class,
+);
+isa_ok($remove_cmd_manual, $class, 'created manual command');
+
+ok($remove_cmd_manual->execute, 'executed manual command');
+
+@inputs = $m->inputs;
+is(scalar(@inputs), 0, 'removed other input');
