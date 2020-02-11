@@ -166,6 +166,14 @@ sub is_10x_atac {
     return 0;
 }
 
+sub is_10x_barcoded {
+    my $self = shift;
+
+    return 1 if $self->protocol =~ /^10x.*featurebarcod/i;
+
+    return 0;
+}
+
 sub is_10x_gex {
     my $self = shift;
 
