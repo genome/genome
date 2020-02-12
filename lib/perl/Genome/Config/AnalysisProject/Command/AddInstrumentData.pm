@@ -55,7 +55,9 @@ sub execute {
             instrument_data => $instrument_data,
         );
     }
-
+    if($analysis_project->status eq "Hold"){
+        $self->status_message("Analysis project is in a \"Hold\" state. Models will not be created until it is released");
+    }
     return 1;
 }
 
