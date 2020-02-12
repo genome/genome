@@ -55,7 +55,9 @@ sub execute {
             instrument_data => $instrument_data,
         );
     }
-
+    if ($analysis_project->status ne 'In Progress') {
+        $self->status_message('Analysis Project is in a "%s" state. Assigned Instrument Data will not be processed until it has been released.', $analysis_project->status);
+    }
     return 1;
 }
 
