@@ -5,11 +5,10 @@ use above 'Genome';
 
 use Genome::Model::Build::Command::DetermineError;
 
-use Test::More tests => 5;
+use Test::More tests => 3;
 use File::Temp;
 
 # constants defined at the bottom
-sub PTERO_ERROR_LOG();
 sub WORKFLOW_ERROR_LOG();
 sub OUTPUT_LOG();
 
@@ -19,21 +18,6 @@ sub _write_to_temp_file {
     $fh->close;
     return $fh;
 }
-
-subtest 'parse ptero error log' => sub {
-    plan tests => 5;
-
-    my $error_log = _write_to_temp_file(PTERO_ERROR_LOG);
-
-    my($error_source_file, $error_source_line, $error_host, $error_date, $error_text)
-        = Genome::Model::Build::Command::DetermineError::parse_error_log($error_log->filename);
-
-    is($error_source_file, '/path/to/ptero/error.pm', 'error source file');
-    is($error_source_line, 1027, 'error source line');
-    is($error_host, 'blade1-2-3.example.com', 'error host');
-    is($error_date, '2014/12/04 12:25:42', 'error date');
-    is($error_text, 'FATAL: This is a fake error', 'error text');
-};
 
 subtest 'workflow error log' => sub {
     plan tests => 5;
@@ -65,21 +49,6 @@ subtest 'parse output log' => sub {
     is($output_text, 'TERM_MEMLIMIT: job killed after reaching LSF memory usage limit.', 'output_text');
 };
 
-subtest 'find ptero die or warn in log' => sub {
-    plan tests => 5;
-
-    my $log = _write_to_temp_file(PTERO_ERROR_LOG);
-
-    my($error_source_file, $error_source_line, $error_host, $error_date, $error_text)
-        = Genome::Model::Build::Command::DetermineError::find_die_or_warn_in_log($log->filename);
-
-    is($error_source_file, '/path/to/ptero/error.pm', 'error source file');
-    is($error_source_line, 1027, 'error source line');
-    is($error_host, 'blade1-2-3.example.com', 'error host');
-    is($error_date, '2014/12/04 12:25:42', 'error date');
-    is($error_text, 'FATAL: This is a fake error', 'error');
-};
-
 subtest 'find workflow die or warn in log' => sub {
     plan tests => 5;
 
@@ -94,60 +63,6 @@ subtest 'find workflow die or warn in log' => sub {
     is($error_text, 'Workflow did not return correctly.', 'error text');
 };
 
-use constant PTERO_ERROR_LOG => <<'PTERO_ERROR';
-2014-12-04 11:11:49,483 INFO flow.main naked_main 57: Loading command (workflow-wrapper)
-2014-12-04 11:11:49,499 INFO flow_workflow.commands.workflow_wrapper _execute 80: Executing (blade4-3-2.example.com): workflow-wrapper.pl command shortcut Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledContigReference /tmp/tmpb8fz8b /tmp/tmp4K29zg
-[2014/12/04 11:11:49.499618] Starting log annotation on host: blade4-3-2.example.com
-[2014/12/04 11:11:51.583241] =========
-[2014/12/04 11:11:51.583241] Attempting to shortcut command Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledContigReference...
-[2014/12/04 11:11:51.583241] vvvvvvvvv
-[2014/12/04 11:11:53.287182] ^^^^^^^^^
-[2014/12/04 11:11:53.287182] Failed to shortcut command Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledContigReference...
-[2014/12/04 11:11:53.287182] =========
-2014-12-04 11:11:53,340 INFO flow_workflow.commands.workflow_wrapper _finish 102: Non-zero exit-code: 1 from perl_wrapper.
-2014-12-04 11:11:53,341 INFO flow.util.exit exit_process 15: Exitting process: signalling children.
-2014-12-04 11:11:53,732 INFO flow.util.exit exit_process 23: Children killed, exiting with code 1
-2014-12-04 12:25:36,234 INFO flow.main naked_main 57: Loading command (lsf-pre-exec)
-2014-12-04 12:25:36,235 INFO flow.shell_command.lsf.commands.pre_exec _execute 29: Begin LSF pre exec
-2014-12-04 12:25:36,245 INFO flow.brokers.amqp.connection_manager _disconnect 147: Closing AMQP connection
-2014-12-04 12:25:36,246 INFO flow.shell_command.lsf.commands.pre_exec _teardown 43: End LSF pre exec
-2014-12-04 12:25:36,246 INFO flow.util.exit exit_process 15: Exitting process: signalling children.
-2014-12-04 12:25:36,333 INFO flow.util.exit exit_process 23: Children killed, exiting with code 0
-2014-12-04 12:25:37,258 INFO flow.main naked_main 57: Loading command (workflow-wrapper)
-2014-12-04 12:25:37,265 INFO flow_workflow.commands.workflow_wrapper _execute 80: Executing (blade1-2-3.example.com): workflow-wrapper.pl command execute Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledContigReference /tmp/tmpVSPp6Y /tmp/tmppORDux
-[2014/12/04 12:25:37.265717] Starting log annotation on host: blade1-2-3.example.com
-[2014/12/04 12:25:38.593359] =========
-[2014/12/04 12:25:38.593359] Attempting to execute command Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledContigReference...
-[2014/12/04 12:25:38.593359] vvvvvvvvv
-[2014/12/04 12:25:42.728920] Generated model name "H_KA-312451-1106998_SV_Contigs-human".
-[2014/12/04 12:25:42.821850] FATAL: This is a fake error at /path/to/ptero/error.pm line 1027
-[2014/12/04 12:25:42.821850]    UR::Context::create_entity('UR::Context::Process=HASH(0x2e86be8)', 'Genome::Model::ImportedReferenceSequence', 'UR::BoolExpr=HASH(0x7899e98)') called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/UR/Object.pm line 20
-[2014/12/04 12:25:42.821850]    UR::Object::create('Genome::Model::ImportedReferenceSequence', 'UR::BoolExpr=HASH(0x7899e98)') called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/Genome/Model.pm line 495
-[2014/12/04 12:25:42.821850]    Genome::Model::create('Genome::Model::ImportedReferenceSequence', 'UR::BoolExpr=HASH(0x7899e98)') called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/Genome/ModelDeprecated.pm line 183
-[2014/12/04 12:25:42.821850]    Genome::ModelDeprecated::create('Genome::Model::ImportedReferenceSequence', 'subject_type', 'species_name', 'subject_name', 'human', 'subject_class_name', 'Genome::Taxon', 'subject_id', 1653198737, ...) called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/Genome/Model/Command/Define/ImportedReferenceSequence.pm line 305
-[2014/12/04 12:25:42.821850]    Genome::Model::Command::Define::ImportedReferenceSequence::_get_or_create_model('Genome::Model::Command::Define::ImportedReferenceSequence=HAS...', 'Genome::Taxon=HASH(0x79897a8)') called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/Genome/Model/Command/Define/ImportedReferenceSequence.pm line 201
-[2014/12/04 12:25:42.821850]    Genome::Model::Command::Define::ImportedReferenceSequence::execute('Genome::Model::Command::Define::ImportedReferenceSequence=HAS...') called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/Command/V2.pm line 214
-[2014/12/04 12:25:42.821850]    Command::V2::execute('Genome::Model::Command::Define::ImportedReferenceSequence=HAS...') called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/Genome/Model/SomaticValidation/Command/ValidateSvs/CreateAssembledContigReference.pm line 116
-[2014/12/04 12:25:42.821850]    Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledContigReference::execute('Genome::Model::SomaticValidation::Command::ValidateSvs::Creat...') called at /gsc/scripts/opt/genome/snapshots/genome-3546/lib/perl/Command/V2.pm line 214
-[2014/12/04 12:25:42.821850]    Command::V2::execute('Genome::Model::SomaticValidation::Command::ValidateSvs::Creat...') called at /usr/bin/workflow-wrapper.pl line 199
-[2014/12/04 12:25:42.821850]    eval {...} called at /usr/bin/workflow-wrapper.pl line 199
-[2014/12/04 12:25:42.821850]    main::run_command('execute', 'Genome::Model::SomaticValidation::Command::ValidateSvs::Creat...', '/tmp/tmpVSPp6Y', '/tmp/tmppORDux') called at /usr/bin/workflow-wrapper.pl line 225
-[2014/12/04 12:25:42.821850]    eval {...} called at /usr/bin/workflow-wrapper.pl line 225
-[2014/12/04 12:25:42.821850]    main::safely_wrap('command', 'execute', 'Genome::Model::SomaticValidation::Command::ValidateSvs::Creat...', '/tmp/tmpVSPp6Y', '/tmp/tmppORDux') called at /usr/bin/workflow-wrapper.pl line 264
-[2014/12/04 12:25:42.821850] 
-[2014/12/04 12:25:42.821850] ^^^^^^^^^
-[2014/12/04 12:25:42.821850] Crashed in execute for command Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledContigReference.
-[2014/12/04 12:25:42.821850] =========
-2014-12-04 12:25:42,865 INFO flow_workflow.commands.workflow_wrapper _finish 102: Non-zero exit-code: 1 from perl_wrapper.
-2014-12-04 12:25:42,866 INFO flow.util.exit exit_process 15: Exitting process: signalling children.
-2014-12-04 12:25:42,945 INFO flow.util.exit exit_process 23: Children killed, exiting with code 1
-2014-12-04 12:25:43,251 INFO flow.main naked_main 57: Loading command (lsf-post-exec)
-2014-12-04 12:25:43,252 INFO flow.shell_command.lsf.commands.post_exec _execute 33: Begin LSF post exec
-2014-12-04 12:25:43,263 INFO flow.brokers.amqp.connection_manager _disconnect 147: Closing AMQP connection
-2014-12-04 12:25:43,264 INFO flow.shell_command.lsf.commands.post_exec _teardown 81: End LSF post exec
-2014-12-04 12:25:43,264 INFO flow.util.exit exit_process 15: Exitting process: signalling children.
-2014-12-04 12:25:43,346 INFO flow.util.exit exit_process 23: Children killed, exiting with code 0
-PTERO_ERROR
 
 use constant OUTPUT_LOG => <<'OUTPUT';
 [2014/11/23 04:42:13.243745] Starting log annotation on host: blade1-2-2.example.com

@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 use Genome;
-use Genome::Model::Build::Command::DetermineError::PteroHelper;
 
 use IPC::System::Simple qw(capture);
 use File::ReadBackwards;
@@ -22,9 +21,6 @@ our $WORKFLOW_DATE_AND_HOST = qr{
         \s                                                   # and
         (?<host>[^\:]+)\:                                    # host
     }x;
-our $PTERO_DATE = qr{
-        \[(?<date>\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]
-    }x;
 our $FLOW_DATE = qr{
         (?<date>\d{4}-\d{2}-\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+
     }x;
@@ -36,7 +32,6 @@ our $ERROR_LOCATION = qr{
 our $ERROR_FINDING_REGEX = qr{
                 (?:
                     $WORKFLOW_DATE_AND_HOST
-                    | $PTERO_DATE
                     | $FLOW_DATE
                 )
                 \s
@@ -50,14 +45,11 @@ our $ERROR_FINDING_REGEX = qr{
 our $EXCEPTION_FINDING_REGEX = qr{
                 (?:
                     $WORKFLOW_DATE_AND_HOST
-                    | $PTERO_DATE
                     | $FLOW_DATE
                 )
                 \s
                 (?<error_text>.*) \s (?<!called\s) $ERROR_LOCATION
         }x;
-
-our $PTERO_HOST_FINDING_REGEX = qr{Starting log annotation on host:\s(.*)};
 
 class Genome::Model::Build::Command::DetermineError {
     is => 'Command::V2',
@@ -167,16 +159,7 @@ sub handle_failed {
 
     $self->error_type("Failed");
 
-    try {
-        if (my $ptero_proxy = $self->build->ptero_workflow_proxy) {
-            $self->handle_failed_from_ptero($ptero_proxy);
-        } else {
-            $self->_search_error_logs;
-        }
-    } catch {
-        die $_;
-        $self->_search_error_logs;
-    };
+    $self->_search_error_logs;
 }
 
 sub _search_error_logs {
@@ -248,8 +231,6 @@ sub parse_error_log {
                     last SCAN_FILE;
                 }
             },
-            $PTERO_HOST_FINDING_REGEX,
-                sub { $found_host = $1 },
 
             $ERROR_FINDING_REGEX,
                 sub {
@@ -311,12 +292,6 @@ sub find_die_or_warn_in_log {
     for(1) {
         Genome::Sys->iterate_file_lines(
             $backwards_fh,
-            $PTERO_HOST_FINDING_REGEX,
-                sub {
-                    $error_host = $1;
-                    last SCAN_FILE if $error_text;
-                },
-
             $EXCEPTION_FINDING_REGEX,
                 sub {
                     unless($error_text) {
@@ -435,7 +410,9 @@ sub get_unstartable_key {
 sub _is_blacklisted_file {
     my $error_source_file = shift;
 
-    for my $blacklist (qw( Genome/Ptero/Wrapper.pm )) {
+    my @blacklisted_modules = ();
+
+    for my $blacklist (@blacklisted_modules) {
         return 1 if index($error_source_file, $blacklist) == (length($error_source_file) - length($blacklist));
     }
 

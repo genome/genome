@@ -1,7 +1,0 @@
-{
-"command_outputs" :["cfoo cbar", "cbaz cbar"],
-"model_outputs" : [
-    [["mfoo mbar", "mfoo mbar2"], ["mbaz mbar", "mbaz mbar2"]],
-    [["mqux mbar", "mqux mbar2"]]
-]
-}

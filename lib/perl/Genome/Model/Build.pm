@@ -17,13 +17,9 @@ use List::MoreUtils qw(uniq);
 use Regexp::Common;
 use Date::Manip;
 
-use Genome::Ptero::Utils;
 use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 use Genome::Utility::Vcf;
-
-use Ptero::HTTP qw();
-use Ptero::Statuses qw();
 
 require Scope::Guard;
 
@@ -518,13 +514,6 @@ sub build_event {
 sub workflow_name {
     my $self = shift;
     return $self->build_id . ' all stages';
-}
-
-sub ptero_workflow_proxy {
-    my $self = shift;
-
-    return unless @{[$self->process]};
-    return $self->latest_process->ptero_workflow_proxy;
 }
 
 sub latest_process {
@@ -1184,15 +1173,7 @@ sub stop {
         $self->_kill_job($job);
         $self = Genome::Model::Build->load($self->id);
     } else {
-        $self->status_message("No LSF job found, looking for PTero workflow...");
-        my $wf_proxy = $self->ptero_workflow_proxy;
-        if (defined $wf_proxy) {
-            $self->status_message("Found PTero workflow (%s), canceling it now.",
-                $wf_proxy->url);
-            $wf_proxy->cancel();
-        } else {
-            $self->status_message("No PTero workflow found.");
-        }
+        $self->status_message("No LSF job found.");
     }
 
     $self->add_note(
@@ -2445,92 +2426,8 @@ sub _heartbeat {
         $heartbeat{message} = 'Build is not running/scheduled.';
         return %heartbeat;
     }
-
-    return $self->_ptero_heartbeat(%heartbeat);
 }
 
-sub _ptero_heartbeat {
-    my $self = shift;
-    my %heartbeat = @_;
-
-    my $proxy = $self->ptero_workflow_proxy;
-    unless ($proxy) {
-        $heartbeat{message} = 'No PTero workflow found.';
-        return %heartbeat;
-    }
-
-    unless ($proxy->is_running) {
-        $heartbeat{message} = 'PTero workflow is not running.';
-        return %heartbeat;
-    }
-
-    my @executions = Genome::Ptero::Utils::get_all_executions_for_proxy($proxy);
-    my @not_succeeded_executions = grep { !Ptero::Statuses::is_success($_->{status}) } @executions;
-    my @detailed_executions = map { Ptero::Proxy::Workflow::Execution->new(url => $_->{details_url}) } @not_succeeded_executions;
-
-    EXECUTION: for my $e_proxy (@detailed_executions) {
-        my $e = $e_proxy->concrete_execution;
-        next EXECUTION unless $e->{data} && keys %{$e->{data}};
-        next EXECUTION unless $e->{data}{jobUrl} =~ m!^http://lsf!; #only care about real executions of real steps
-
-        if( Ptero::Statuses::is_abnormal($e->{status}) ) {
-            $heartbeat{message} = sprintf('Abnormal status "%s" reported for Ptero execution %s.', $e->{status}, $e->{name});
-            last EXECUTION;
-        }
-
-        my $lsf_info = Ptero::HTTP::make_request_and_decode_response(method => 'GET', url => $e->{data}{jobUrl});
-        my $lsf_job_id = $lsf_info->{lsfJobId};
-
-        my $bjobs_output = $self->collect_bjobs_output($lsf_job_id);
-        unless($bjobs_output) {
-            $heartbeat{message} = "Expected bjobs (LSF ID: $lsf_job_id) output but received none.";
-            last EXECUTION;
-        }
-
-        my @pids = $self->pids_from_bjobs_output($bjobs_output);
-        unless(@pids) {
-            $heartbeat{message} = "No PIDs found in bjobs output (LSF ID: $lsf_job_id). This may be normal if the job just started.";
-            last EXECUTION;
-        }
-        my $execution_host = $self->execution_host_from_bjobs_output($bjobs_output);
-        unless ($execution_host) {
-            $heartbeat{message} = 'Expected execution host.';
-            last EXECUTION;
-        }
-
-        my $error = $self->check_for_pid_heartbeat_errors($execution_host, @pids);
-        if ($error) {
-            $heartbeat{message} = $error;
-            last EXECUTION;
-        }
-
-        if($e_proxy->child_workflow_urls) {
-            my $children = $e_proxy->child_workflow_proxies;
-            if ( grep { $_->is_running } @$children ) {
-                next EXECUTION; #let the child determine the heartbeat status
-            }
-        }
-
-        my $command = $lsf_info->{command};
-        my ($command_class) = $command =~ /--command-class (\S+) /;
-
-        my $stdout = $e->{data}{stdout_log};
-        my $stderr = $e->{data}{stderr_log};
-        my $max_elapsed_time = ($command_class && $command_class->can('max_elapsed_log_time')) ? $command_class->max_elapsed_log_time : undef;
-        my $output_error = $self->check_for_output_heartbeat_errors($stdout, $stderr, $max_elapsed_time);
-        if ($output_error) {
-            $heartbeat{message} = $output_error;
-            last EXECUTION;
-        }
-    }
-
-    unless ($heartbeat{message}) {
-        $heartbeat{message} = 'OK. PTero workflow seems to be running!';
-        $heartbeat{is_ok} = 1;
-    }
-
-    return %heartbeat;
-}
 
 sub collect_bjobs_output {
     my $self = shift;

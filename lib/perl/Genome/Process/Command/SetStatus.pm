@@ -34,7 +34,7 @@ sub help_detail {
     my $self = shift;
     return <<EOP;
 Used internally by the Genome::Process infrastructure to set the status of a process
-while it is being run in a workflow using PTero.
+while it is being run in a workflow.
 EOP
 }
 
