@@ -16,6 +16,13 @@ class Genome::Model::Build::Command::Export {
         target_export_directory => {
             is => 'Text',
         },
+        create_tarball => {
+            is => 'Boolean',
+            is_optional => 1,
+            is_input => 1,
+            default => 0,
+            doc =>'create a .tar file containing the build directory. Useful for globus transfers that eat symlinks',
+        },
     ],
 };
 
@@ -30,6 +37,18 @@ sub execute {
     $self->check_available_space($allocation);
 
     my $export_directory = $self->export_directory;
+    my $tempdir;
+    if($self->create_tarball){
+        #create temp directory for pre-tarball files
+        $tempdir = Genome::Sys->create_temp_directory();
+        unless($tempdir) {
+            $self->error_message("Unable to create temporary file $!");
+            die;
+        }
+        $export_directory = File::Spec->join($tempdir, "build" . $self->build->id);
+    }
+   
+
     $allocation->copy(output_dir => $export_directory);
 
     my $resolve_dangling_symlinks;
@@ -44,7 +63,9 @@ sub execute {
     $resolve_symlinks = sub {
         my $path = $File::Find::name;
         if (-l $path) {
+            #print STDERR "path: $path\n";
             my $symlink_target = abs_path($path);
+            #print STDERR "symlink_target: $symlink_target\n";
             if (-e $symlink_target) {
                 #Only do this if symlink doesn't point to somewhere within
                 #this directory structure
@@ -56,9 +77,11 @@ sub execute {
                         Genome::Carp::confessf('Path %s escaped from export directory', $path);
                     }
                     if (-f $symlink_target) {
+                        #print STDERR "copying file\n";
                         Genome::Sys->copy_file($symlink_target, $path);
                     }
                     elsif (-d $symlink_target) {
+                        #print STDERR "copying dir\n";
                         Genome::Sys->rsync_directory(source_directory => $symlink_target, target_directory => $path);
 
                         $find->($path);
@@ -97,6 +120,14 @@ sub execute {
 
     $find->($export_directory);
 
+    if($self->create_tarball){
+        my $tarball = File::Spec->join($self->target_export_directory, "build" . $self->build->id . ".tar");   
+        my $cmd = "tar -cf $tarball -C $tempdir build" . $self->build->id;
+        system("$cmd") and do {
+            $self->fatal_message("Failed to run $cmd\n Exit code was $?");
+        };
+    };
+
     #TODO: Handle software result allocation that are being used by this build but aren't
     #symlinked in the build's data directory
 
@@ -132,7 +163,7 @@ sub check_available_space {
 
 sub export_directory {
     my $self = shift;
-    return File::Spec->join($self->target_export_directory, $self->build->id);
+    return File::Spec->join($self->target_export_directory, "build" . $self->build->id);
 }
 
 1;
