@@ -22,8 +22,8 @@ class Genome::Cromwell {
         },
         server_url => {
             is => 'Text',
-            is_constant => 1,
-            value => Genome::Config::get('cromwell_api_server'),
+            is_calculated => 1,
+            calculate => q{ Genome::Config::get('cromwell_api_server') },
         },
         user_agent => {
             is => 'LWP::UserAgent',
