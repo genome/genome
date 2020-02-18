@@ -7,6 +7,8 @@ use JSON qw(to_json from_json);
 use HTTP::Request;
 use LWP::UserAgent;
 use IO::Socket::SSL qw();
+use IPC::Run qw();
+use Scope::Guard;
 
 use Genome;
 
@@ -109,5 +111,48 @@ sub _make_request {
     my $content = $response->decoded_content;
     return from_json($content);
 }
+
+sub cromwell_jar_cmdline {
+    my $class = shift;
+    my $config = shift;
+
+    my $truststore_file = Genome::Config::get('cromwell_truststore_file');
+    my $truststore_auth = Genome::Config::get('cromwell_truststore_auth');
+
+    my @cmd = (
+        '/usr/bin/java',
+        sprintf('-Dconfig.file=%s', $config),
+        sprintf('-Djavax.net.ssl.trustStorePassword=%s', $truststore_auth),
+        sprintf('-Djavax.net.ssl.trustStore=%s', $truststore_file),
+        '-jar', '/opt/cromwell.jar',
+    );
+    return @cmd;
+}
+
+sub spawn_local_server {
+    my $class = shift;
+    my $config = shift;
+
+    my @jar_cmdline = $class->cromwell_jar_cmdline($config);
+
+    $class->debug_message('Spawning local cromwell server: %s', join(' ', @jar_cmdline));
+
+    my $in = '';
+    my $out = '';
+
+    my $harness = IPC::Run::start([@jar_cmdline, 'server'], \$in, \$out);
+    my $env_guard = Genome::Config::set_env('cromwell_api_server', 'http://localhost:8000/');
+
+    $harness->pump until $out =~ /Cromwell [^ ]+ service started on/;
+
+    my $guard_closure = sub {
+        $env_guard = undef;
+        $harness->kill_kill();
+    };
+
+    my $server_guard = Scope::Guard->new($guard_closure);
+    return $server_guard;
+}
+
 
 1;
