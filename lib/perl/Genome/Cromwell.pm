@@ -101,15 +101,21 @@ sub _make_request {
         push @request_args, \@headers;
     }
 
-    my $req = HTTP::Request->new(@request_args);
-    my $response = $self->user_agent->request($req);
+    ATTEMPT: for (1..5) {
+        my $req = HTTP::Request->new(@request_args);
+        my $response = $self->user_agent->request($req);
 
-    unless ($response->is_success) {
-        $self->fatal_message('Error querying server: %s', $response->status_line);
+        unless ($response->is_success) {
+            $self->error_message('Error querying server: %s', $response->status_line);
+            sleep 5;
+            next ATTEMPT;
+        }
+
+        my $content = $response->decoded_content;
+        return from_json($content);
     }
 
-    my $content = $response->decoded_content;
-    return from_json($content);
+    $self->fatal_message('Failed to query server after serveral attempts.');
 }
 
 sub cromwell_jar_cmdline {
