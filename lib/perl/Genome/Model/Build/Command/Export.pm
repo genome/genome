@@ -117,7 +117,7 @@ sub execute {
 
     if($self->create_tarball){
         my $tarball = File::Spec->join($self->target_export_directory, "build" . $self->build->id . ".tar");   
-        my $rv = Genome::Sys->shellcmd(cmd => ["tar","-cf",$tarball,"-C",$tempdir,"build" . $self->build->id]);
+        my $rv = Genome::Sys->shellcmd(cmd => ["tar","-cf",$tarball,"-C",$tempdir,"build" . $self->build->id], output_files => [ $tarball ]);
         unless ($rv) {
             $self->fatal_message("Could not create tar file");
         }
