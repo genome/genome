@@ -14,7 +14,6 @@ use Genome::Disk::Group::Validate::GenomeDiskGroups;
 use Genome::Utility::Inputs qw(encode);
 use Cwd qw(abs_path);
 use File::DirCompare;
-use Genome::Ptero::Utils qw(ptero_proxy);
 
 class Genome::Process {
     roles => [qw(
@@ -138,7 +137,7 @@ sub run {
     } else {
         my $backend = Genome::Config::get('workflow_builder_backend');
         if ($backend eq 'ptero') {
-            $self->_submit_process($transaction);
+            $self->fatal_message('Sorry, PTero is no longer supported. Configure a different workflow_builder_backend.');
         } elsif ($backend eq 'inline') {
             $self->_execute_process($transaction);
         } elsif ($backend eq 'simple') {
@@ -371,11 +370,6 @@ sub lsf_job_id {
 sub workflow_name {
     my $self = shift;
     return sprintf('Genome::Process(%s)', $self->id);
-}
-
-sub ptero_workflow_proxy {
-    my $self = shift;
-    return ptero_proxy($self->workflow_name);
 }
 
 sub lsf_project_name {

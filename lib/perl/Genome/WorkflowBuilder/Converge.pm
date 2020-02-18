@@ -74,39 +74,6 @@ sub notify_output_link {
     return;
 }
 
-sub get_ptero_builder_task {
-    require Ptero::Builder::Detail::Workflow::Task;
-
-    my $self = shift;
-
-    $self->validate;
-
-    my %params = (
-        name => $self->name,
-        methods => [
-            $self->_get_ptero_converge_method(),
-        ],
-    );
-    if (defined $self->parallel_by) {
-        $params{parallel_by} = $self->parallel_by;
-    }
-    return Ptero::Builder::Detail::Workflow::Task->new(%params);
-}
-
-sub _get_ptero_converge_method {
-    require Ptero::Builder::Detail::Workflow::Converge;
-
-    my $self = shift;
-    my ($output_name) = $self->output_properties;
-    return Ptero::Builder::Detail::Workflow::Converge->new(
-        name => 'converge',
-        parameters => {
-            input_names => [$self->input_properties],
-            output_name => $output_name,
-        },
-    );
-}
-
 sub _execute_inline {
     my ($self, $inputs) = @_;
 

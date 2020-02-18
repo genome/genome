@@ -8,7 +8,6 @@ use Genome;
 class Genome::Model::Build::Command::View {
     is => [
         'Genome::Command::Viewer',
-        'Genome::Command::PteroWorkflowMixin',
         'Genome::Command::CromwellWorkflowMixin',
     ],
     has => [
@@ -104,10 +103,7 @@ sub write_report {
         }
 
         for (@process) {
-            if (@process > 1) {
-                $handle->say("\nProcess " . $_->id . ' at ' . $_->created_at . ":");
-            }
-            $self->_display_ptero_workflow($handle, $_->workflow_name);
+            $handle->say("\nProcess " . $_->id . ' at ' . $_->created_at . ".");
         }
     }
 

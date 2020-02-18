@@ -15,35 +15,6 @@ class Genome::WorkflowBuilder::Block {
     ],
 };
 
-sub get_ptero_builder_task {
-    require Ptero::Builder::Detail::Workflow::Task;
-
-    my $self = shift;
-
-    $self->validate;
-
-    my %params = (
-        name => $self->name,
-        methods => [
-            $self->_get_ptero_block_method(),
-        ],
-    );
-    if (defined $self->parallel_by) {
-        $params{parallel_by} = $self->parallel_by;
-    }
-    return Ptero::Builder::Detail::Workflow::Task->new(%params);
-}
-
-sub _get_ptero_block_method {
-    require Ptero::Builder::Detail::Workflow::Block;
-
-    my $self = shift;
-    my ($output_name) = $self->output_properties;
-    return Ptero::Builder::Detail::Workflow::Block->new(
-        name => 'block',
-    );
-}
-
 sub input_properties {
     return $_[0]->properties;
 }

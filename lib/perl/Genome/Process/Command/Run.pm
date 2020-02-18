@@ -113,12 +113,12 @@ sub submit {
             local %ENV = %env_copy;
             my $wf_proxy = $dag->submit(inputs => $inputs, process => $self->process);
             $self->status_message("Successfully launched process (%s) and ".
-                "submitted PTero workflow (%s)", $self->process->id, $wf_proxy->url);
+                "submitted workflow (%s)", $self->process->id, $wf_proxy->url);
         },
     );
     unless ($commit_observer) {
         $self->error_message(sprintf "Failed to add commit observer to "
-            ."submit PTero workflow for process (%s).", $self->process->id);
+            ."submit workflow for process (%s).", $self->process->id);
     }
 }
 

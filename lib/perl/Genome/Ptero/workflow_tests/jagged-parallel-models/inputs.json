@@ -1,6 +1,0 @@
-{
-    "model_prefix_lists" : [["mfoo", "mbaz"], ["mqux"]],
-    "model_suffixes" : [" mbar", " mbar2"],
-    "command_prefixes" : ["cfoo", "cbaz"],
-    "command_suffix" : " cbar"
-}
