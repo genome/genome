@@ -42,7 +42,7 @@ sub execute {
         #create temp directory for pre-tarball files
         $tempdir = Genome::Sys->create_temp_directory();
         unless($tempdir) {
-            $self->fatal_message("Unable to create temporary directory $!");
+            $self->fatal_message("Unable to create temporary directory: $!");
         }
         $export_directory = File::Spec->join($tempdir, "build" . $self->build->id);
     }
