@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use File::Basename qw();
+
 class Genome::Model::Build::Command::View {
     is => [
         'Genome::Command::Viewer',
@@ -92,6 +94,21 @@ sub write_report {
                     $method_name, @items);
         }
     }
+
+    my $cromwell_server_guard;
+    my @n = $build->notes(header_text => 'hsqldb_server_file');
+    if (@n == 1) {
+        my $path = $n[0]->body_text;
+        my (undef,$dir) = File::Basename::fileparse($path);
+        unless (-e $dir) {
+            $handle->say("\nCromwell build used local database, but it is no longer available.");
+            return 1;
+        }
+
+        my $config_file = File::Spec->join($build->data_directory, 'cromwell.config');
+        $cromwell_server_guard = Genome::Cromwell->spawn_local_server($config_file);
+    }
+
 
     if (my $cromwell_wf = $self->_cromwell_workflow_id_for_build) {
         $self->_display_cromwell_workflow($handle, $cromwell_wf);
