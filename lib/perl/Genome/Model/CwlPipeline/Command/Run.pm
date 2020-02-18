@@ -173,6 +173,7 @@ sub run_cromwell {
         input_files => [$main_workflow_file, $yaml],
     );
 
+    my $guard = Genome::Cromwell->spawn_local_server($config_file);
     $self->_stage_cromwell_outputs($results_dir);
 }
 
