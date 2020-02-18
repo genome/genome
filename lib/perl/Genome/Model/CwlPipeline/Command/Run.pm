@@ -159,16 +159,11 @@ sub run_cromwell {
     my $config_file = $self->_generate_cromwell_config($tmp_dir, $results_dir);
     my $labels_file = $self->_generate_cromwell_labels;
 
-    my $truststore_file = Genome::Config::get('cromwell_truststore_file');
-    my $truststore_auth = Genome::Config::get('cromwell_truststore_auth');
+    my @jar_cmdline = Genome::Cromwell->cromwell_jar_cmdline($config_file);
 
     Genome::Sys->shellcmd(
         cmd => [
-            '/usr/bin/java',
-            sprintf('-Dconfig.file=%s', $config_file),
-            sprintf('-Djavax.net.ssl.trustStorePassword=%s', $truststore_auth),
-            sprintf('-Djavax.net.ssl.trustStore=%s', $truststore_file),
-            '-jar', '/opt/cromwell.jar',
+            @jar_cmdline,
             'run',
             '-t', $wf_type,
             '-l', $labels_file,
