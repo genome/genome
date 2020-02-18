@@ -215,7 +215,8 @@ sub _generate_cromwell_config {
 
     my $docker_volumes = Genome::Config::get('docker_volumes');
 
-    my $config_file = File::Spec->join($build->data_directory, 'cromwell.config');
+    my $data_dir = $build->data_directory;
+    my $config_file = File::Spec->join($data_dir,'cromwell.config');
 
     my $config = <<'EOCONFIG'
 include required(classpath("application"))
@@ -313,6 +314,10 @@ EOCONFIG
 workflow-options {
   workflow-log-dir = "$log_dir/cromwell-workflow-logs"
 }
+EOCONFIG
+;
+    if ($server =~ /^mysql:/) {
+        $config .= <<EOCONFIG
 database {
   profile = "slick.jdbc.MySQLProfile\$"
   db {
@@ -326,6 +331,53 @@ database {
 }
 EOCONFIG
 ;
+    } elsif ($server =~ /^hsqldb:/) {
+        my $dbfile_location;
+        if ($server =~ /;/) {
+            $self->fatal_message('Cannot currently handle hsqldb server string with semicolons. Got: %s', $server);
+        } elsif ($server eq 'hsqldb:tmp') {
+            $dbfile_location = "$tmp_dir/cromwell-db/cromwell-db";
+            $server = "hsqldb:file:$dbfile_location";
+            $self->debug_message('Using temporary hsqldb location: %s', $server);
+        } elsif ($server eq 'hsqldb:build') {
+            $dbfile_location = "$data_dir/cromwell-db/cromwell-db";
+            $server = "hsqldb:file:$dbfile_location";
+            $self->debug_message('Using build hsqldb location: %s', $server);
+        } else {
+            ($dbfile_location) = $server =~ /hsqldb:file:([^:]+)/;
+            unless ($dbfile_location) {
+                $self->fatal_message('Could not parse hsqldb file location from server string. Expected "hsqldb:tmp", "hsqldb:build", or "hsqldb:file:/path/to/cromwell-db". Got: %s', $server);
+            }
+            $self->debug_message('Using supplied hsqldb location: %s', $dbfile_location);
+        }
+
+        my $note = $build->add_note(header_text => 'hsqldb_server_file', body_text => $dbfile_location);
+        $note->body_text($dbfile_location); #ignore any system-generated sudo message for this note.
+
+        $config .= <<EOCONFIG
+database {
+  profile = "slick.jdbc.HsqldbProfile\$"
+  db {
+    driver = "org.hsqldb.jdbcDriver"
+    url = """
+    jdbc:$server;
+    shutdown=false;
+    hsqldb.default_table_type=cached;hsqldb.tx=mvcc;
+    hsqldb.result_max_memory_rows=10000;
+    hsqldb.large_data=true;
+    hsqldb.applog=1;
+    hsqldb.lob_compressed=true;
+    hsqldb.script_format=3
+    """
+    connectionTimeout = 120000
+    numThreads = 1
+   }
+}
+EOCONFIG
+;
+    } else {
+        $self->fatal_message('Expected mysql or hsqldb cromwell server url but got: %s', $server);
+    }
 
     Genome::Sys->write_file($config_file, $config);
     return $config_file;
