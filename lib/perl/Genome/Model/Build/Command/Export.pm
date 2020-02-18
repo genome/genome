@@ -16,6 +16,13 @@ class Genome::Model::Build::Command::Export {
         target_export_directory => {
             is => 'Text',
         },
+        create_tarball => {
+            is => 'Boolean',
+            is_optional => 1,
+            is_input => 1,
+            default => 0,
+            doc =>'create a .tar file containing the build directory. Useful for globus transfers that eat symlinks',
+        },
     ],
 };
 
@@ -30,6 +37,17 @@ sub execute {
     $self->check_available_space($allocation);
 
     my $export_directory = $self->export_directory;
+    my $tempdir;
+    if($self->create_tarball){
+        #create temp directory for pre-tarball files
+        $tempdir = Genome::Sys->create_temp_directory();
+        unless($tempdir) {
+            $self->fatal_message("Unable to create temporary directory: $!");
+        }
+        $export_directory = File::Spec->join($tempdir, "build" . $self->build->id);
+    }
+   
+
     $allocation->copy(output_dir => $export_directory);
 
     my $resolve_dangling_symlinks;
@@ -96,6 +114,14 @@ sub execute {
     };
 
     $find->($export_directory);
+
+    if($self->create_tarball){
+        my $tarball = File::Spec->join($self->target_export_directory, "build" . $self->build->id . ".tar");   
+        my $rv = Genome::Sys->shellcmd(cmd => ["tar","-cf",$tarball,"-C",$tempdir,"build" . $self->build->id], output_files => [ $tarball ]);
+        unless ($rv) {
+            $self->fatal_message("Could not create tar file");
+        }
+    };
 
     #TODO: Handle software result allocation that are being used by this build but aren't
     #symlinked in the build's data directory
