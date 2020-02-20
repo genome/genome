@@ -605,7 +605,7 @@ sub _execute_system_command {
         my $perl_program_string = join('; ', @statements);
 
         my @cmd = (
-            'genome-perl',
+            $^X,
             @includes,
             @_execute_system_command_perl5opt,
             '-e',
