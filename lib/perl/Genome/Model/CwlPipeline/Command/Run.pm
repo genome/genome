@@ -347,8 +347,10 @@ EOCONFIG
             $self->debug_message('Using supplied hsqldb location: %s', $dbfile_location);
         }
 
-        my $note = $build->add_note(header_text => 'hsqldb_server_file', body_text => $dbfile_location);
-        $note->body_text($dbfile_location); #ignore any system-generated sudo message for this note.
+        #shell out so this is saved immediately for the benefit of `genome model build view` while this build runs.
+        Genome::Sys->shellcmd(
+            cmd => [qw(genome model build add-note --header-text=hsqldb_server_file), "--body-text=$dbfile_location", $build->id],
+        );
 
         $config .= <<EOCONFIG
 database {
