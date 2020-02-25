@@ -45,7 +45,7 @@ sub outputs {
     my $self = $class->_singleton_object;
     my $url = $self->_request_url($workflow_id, 'outputs');
 
-    return $self->_make_request('GET', $url);
+    return $self->_make_json_request('GET', $url);
 }
 
 sub metadata {
@@ -56,7 +56,7 @@ sub metadata {
     my $url = $self->_request_url($workflow_id, 'metadata');
     $url .= '?excludeKey=submittedFiles&excludeKey=inputs&excludeKey=outputs&expandSubWorkflows=false';
 
-    return $self->_make_request('GET', $url);
+    return $self->_make_json_request('GET', $url);
 }
 
 sub query {
@@ -66,7 +66,18 @@ sub query {
     my $self = $class->_singleton_object;
     my $url = $self->_request_url('query');
 
-    return $self->_make_request('POST', $url, $query_options);
+    return $self->_make_json_request('POST', $url, $query_options);
+}
+
+sub timing {
+    my $class = shift;
+    my $workflow_id = shift;
+
+    my $self = $class->_singleton_object;
+    my $url = $self->_request_url($workflow_id, 'timing');
+
+    my $content = $self->_make_request('GET', $url);
+    return $content;
 }
 
 sub _request_url {
@@ -79,6 +90,13 @@ sub _request_url {
     $url .= join('/', 'api', 'workflows', $self->api_version, @parts);
 
     return $url;
+}
+
+sub _make_json_request {
+    my $class = shift;
+
+    my $content = $class->_make_request(@_);
+    return from_json($content);
 }
 
 sub _make_request {
@@ -111,8 +129,7 @@ sub _make_request {
             next ATTEMPT;
         }
 
-        my $content = $response->decoded_content;
-        return from_json($content);
+        return $response->decoded_content;
     }
 
     $self->fatal_message('Failed to query server after serveral attempts.');
