@@ -418,6 +418,8 @@ sub _stage_cromwell_outputs {
         $self->_stage_cromwell_output($results_dir, $info, $prefix);
     }
 
+    $self->_generate_timing_report($workflow_id);
+
     return 1;
 }
 
@@ -485,6 +487,19 @@ sub _stage_cromwell_output {
     }
 
     return 1;
+}
+
+sub _generate_timing_report {
+    my $self = shift;
+    my $workflow_id = shift;
+
+    my $data_dir = $self->build->data_directory;
+    my $timing_file = File::Spec->join($data_dir, 'timing.html');
+
+    my $report = Genome::Cromwell->timing($workflow_id);
+    Genome::Sys->write_file($timing_file, $report);
+
+    return $timing_file;
 }
 
 sub preserve_results {
