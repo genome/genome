@@ -105,6 +105,11 @@ sub write_report {
             return 1;
         }
 
+        if ($build->status eq 'Running') {
+            $handle->say("\nCromwell build used local database. It is locked while build is running.");
+            return 1;
+        }
+
         my $config_file = File::Spec->join($build->data_directory, 'cromwell.config');
         $cromwell_server_guard = Genome::Cromwell->spawn_local_server($config_file);
     }
