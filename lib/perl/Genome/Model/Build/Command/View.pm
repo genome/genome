@@ -95,37 +95,39 @@ sub write_report {
         }
     }
 
-    my $cromwell_server_guard;
-    my @n = $build->notes(header_text => 'hsqldb_server_file');
-    if (@n == 1) {
-        my $path = $n[0]->body_text;
-        my (undef,$dir) = File::Basename::fileparse($path);
-        unless (-e $dir) {
-            $handle->say("\nCromwell build used local database, but it is no longer available.");
-            return 1;
+    if ($self->workflow) {
+        my $cromwell_server_guard;
+        my @n = $build->notes(header_text => 'hsqldb_server_file');
+        if (@n == 1) {
+            my $path = $n[0]->body_text;
+            my (undef,$dir) = File::Basename::fileparse($path);
+            unless (-e $dir) {
+                $handle->say("\nSkipping workflow view: Cromwell build used local database, but it is no longer available.");
+                return 1;
+            }
+
+            if ($build->status eq 'Running') {
+                $handle->say("\nSkippping workflow view: Cromwell build used local database. It is locked while build is running.");
+                return 1;
+            }
+
+            my $config_file = File::Spec->join($build->data_directory, 'cromwell.config');
+            $cromwell_server_guard = Genome::Cromwell->spawn_local_server($config_file);
         }
 
-        if ($build->status eq 'Running') {
-            $handle->say("\nCromwell build used local database. It is locked while build is running.");
-            return 1;
-        }
 
-        my $config_file = File::Spec->join($build->data_directory, 'cromwell.config');
-        $cromwell_server_guard = Genome::Cromwell->spawn_local_server($config_file);
-    }
+        if (my $cromwell_wf = $self->_cromwell_workflow_id_for_build) {
+            $self->_display_cromwell_workflow($handle, $cromwell_wf);
+        } else {
+            my @process = $self->build->process;
 
+            if (@process > 1) {
+                @process = sort { $a->created_at cmp $b->created_at } @process;
+            }
 
-    if (my $cromwell_wf = $self->_cromwell_workflow_id_for_build) {
-        $self->_display_cromwell_workflow($handle, $cromwell_wf);
-    } else {
-        my @process = $self->build->process;
-
-        if (@process > 1) {
-            @process = sort { $a->created_at cmp $b->created_at } @process;
-        }
-
-        for (@process) {
-            $handle->say("\nProcess " . $_->id . ' at ' . $_->created_at . ".");
+            for (@process) {
+                $handle->say("\nProcess " . $_->id . ' at ' . $_->created_at . ".");
+            }
         }
     }
 
