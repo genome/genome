@@ -208,6 +208,7 @@ sub _generate_cromwell_config {
         Genome::Sys->username,
         'workers'
     );
+    my $user_group = Genome::Config::get('lsf_user_group');
 
     my $server = Genome::Config::get('cromwell_server');
     my $auth = Genome::Config::get('cromwell_auth');
@@ -255,6 +256,7 @@ EOCONFIG
         -a '$primary_docker_image' \\
         -q '$default_queue' \\
         -g '$job_group' \\
+        -G '$user_group' \\
 EOCONFIG
         ;
     $config .= <<'EOCONFIG'
@@ -288,6 +290,7 @@ EOCONFIG
         -e $log_dir/cromwell-%J.err \\
         -q '$default_queue' \\
         -g '$job_group' \\
+        -G '$user_group' \\
 EOCONFIG
         ;
     $config .= <<'EOCONFIG'

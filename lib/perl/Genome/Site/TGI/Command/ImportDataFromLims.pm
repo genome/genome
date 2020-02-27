@@ -133,6 +133,7 @@ sub _resolve_lims_path {
     Genome::Sys->bsub_and_wait(
         cmd => $cmd,
         queue => Genome::Config::get('lsf_queue_build_worker'),
+        user_group => Genome::Config::get('lsf_user_group'),
         log_file => $log_file,
     );
 
