@@ -47,9 +47,7 @@ sub execute {
 
         for my $s (@symlinks) {
             my $t = readlink $s;
-            my @d = File::Spec->splitdir($t);
-            my $p = File::Spec->catdir(@d[4..$#d]);
-            my $a = Genome::Disk::Allocation->get(allocation_path => $p);
+            my $a = Genome::Disk::Allocation->get_allocation_for_path($t);
 
             next unless $a && $a->owner_class_name->isa('Genome::Model::Tools::DetectVariants2::Result::Base');
 
