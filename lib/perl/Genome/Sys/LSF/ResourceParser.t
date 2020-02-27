@@ -324,10 +324,12 @@ parse_ok("-q short -R 'rusage[tmp=100]'", {
         'rLimits' => {}
 
     });
-parse_ok("-q long -R 'rusage[tmp=100]'", {
+parse_ok("-g /genome/test -G compute-test -q long -R 'rusage[tmp=100]'", {
         'options' => {
             'queue' => 'long',
-            'resReq' => 'rusage[tmp=100]'
+            'resReq' => 'rusage[tmp=100]',
+            'jobGroup' => '/genome/test',
+            'userGroup' => 'compute-test',
         },
         'rLimits' => {}
     });

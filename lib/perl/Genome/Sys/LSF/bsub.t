@@ -6,7 +6,7 @@ use Test::Builder;
 use Test::Fatal qw(exception);
 use Genome::Sys::LSF::bsub qw();
 
-plan tests => 11;
+plan tests => 12;
 
 my $fake_queue = 'fake_queue';
 my @queues = (map { Genome::Config::get($_) } qw(lsf_queue_build_worker lsf_queue_short));
@@ -70,6 +70,13 @@ my @cases = (
             resource_string => '-R "select[mem>9876] rusage[mem=9753] span[hosts=1]" -M 10000000 -n 4',
             cmd => 'true',
         ], ['-R', 'select[mem>9876] rusage[mem=9753] span[hosts=1]','-n', 4,  '-M', '10000000', 'true'], 'parsed resource request',
+    ],
+    [
+        [
+            job_group => '/genome/test',
+            user_group => 'compute-test',
+            cmd => 'true',
+        ], [qw(-g /genome/test -G compute-test true)], 'job and user groups',
     ]
 );
 for my $case (@cases) {
