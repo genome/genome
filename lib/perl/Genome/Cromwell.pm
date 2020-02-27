@@ -7,6 +7,8 @@ use JSON qw(to_json from_json);
 use HTTP::Request;
 use LWP::UserAgent;
 use IO::Socket::SSL qw();
+use IPC::Run qw();
+use Scope::Guard;
 
 use Genome;
 
@@ -20,8 +22,8 @@ class Genome::Cromwell {
         },
         server_url => {
             is => 'Text',
-            is_constant => 1,
-            value => Genome::Config::get('cromwell_api_server'),
+            is_calculated => 1,
+            calculate => q{ Genome::Config::get('cromwell_api_server') },
         },
         user_agent => {
             is => 'LWP::UserAgent',
@@ -43,7 +45,7 @@ sub outputs {
     my $self = $class->_singleton_object;
     my $url = $self->_request_url($workflow_id, 'outputs');
 
-    return $self->_make_request('GET', $url);
+    return $self->_make_json_request('GET', $url);
 }
 
 sub metadata {
@@ -54,7 +56,7 @@ sub metadata {
     my $url = $self->_request_url($workflow_id, 'metadata');
     $url .= '?excludeKey=submittedFiles&excludeKey=inputs&excludeKey=outputs&expandSubWorkflows=false';
 
-    return $self->_make_request('GET', $url);
+    return $self->_make_json_request('GET', $url);
 }
 
 sub query {
@@ -64,7 +66,18 @@ sub query {
     my $self = $class->_singleton_object;
     my $url = $self->_request_url('query');
 
-    return $self->_make_request('POST', $url, $query_options);
+    return $self->_make_json_request('POST', $url, $query_options);
+}
+
+sub timing {
+    my $class = shift;
+    my $workflow_id = shift;
+
+    my $self = $class->_singleton_object;
+    my $url = $self->_request_url($workflow_id, 'timing');
+
+    my $content = $self->_make_request('GET', $url);
+    return $content;
 }
 
 sub _request_url {
@@ -77,6 +90,13 @@ sub _request_url {
     $url .= join('/', 'api', 'workflows', $self->api_version, @parts);
 
     return $url;
+}
+
+sub _make_json_request {
+    my $class = shift;
+
+    my $content = $class->_make_request(@_);
+    return from_json($content);
 }
 
 sub _make_request {
@@ -99,15 +119,63 @@ sub _make_request {
         push @request_args, \@headers;
     }
 
-    my $req = HTTP::Request->new(@request_args);
-    my $response = $self->user_agent->request($req);
+    ATTEMPT: for (1..5) {
+        my $req = HTTP::Request->new(@request_args);
+        my $response = $self->user_agent->request($req);
 
-    unless ($response->is_success) {
-        $self->fatal_message('Error querying server: %s', $response->status_line);
+        unless ($response->is_success) {
+            $self->error_message('Error querying server: %s', $response->status_line);
+            sleep 5;
+            next ATTEMPT;
+        }
+
+        return $response->decoded_content;
     }
 
-    my $content = $response->decoded_content;
-    return from_json($content);
+    $self->fatal_message('Failed to query server after serveral attempts.');
 }
+
+sub cromwell_jar_cmdline {
+    my $class = shift;
+    my $config = shift;
+
+    my $truststore_file = Genome::Config::get('cromwell_truststore_file');
+    my $truststore_auth = Genome::Config::get('cromwell_truststore_auth');
+
+    my @cmd = (
+        '/usr/bin/java',
+        sprintf('-Dconfig.file=%s', $config),
+        sprintf('-Djavax.net.ssl.trustStorePassword=%s', $truststore_auth),
+        sprintf('-Djavax.net.ssl.trustStore=%s', $truststore_file),
+        '-jar', '/opt/cromwell.jar',
+    );
+    return @cmd;
+}
+
+sub spawn_local_server {
+    my $class = shift;
+    my $config = shift;
+
+    my @jar_cmdline = $class->cromwell_jar_cmdline($config);
+
+    $class->debug_message('Spawning local cromwell server: %s', join(' ', @jar_cmdline));
+
+    my $in = '';
+    my $out = '';
+
+    my $harness = IPC::Run::start([@jar_cmdline, 'server'], \$in, \$out);
+    my $env_guard = Genome::Config::set_env('cromwell_api_server', 'http://localhost:8000/');
+
+    $harness->pump until $out =~ /Cromwell [^ ]+ service started on/;
+
+    my $guard_closure = sub {
+        $env_guard = undef;
+        $harness->kill_kill();
+    };
+
+    my $server_guard = Scope::Guard->new($guard_closure);
+    return $server_guard;
+}
+
 
 1;

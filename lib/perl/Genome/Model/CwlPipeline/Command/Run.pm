@@ -159,16 +159,11 @@ sub run_cromwell {
     my $config_file = $self->_generate_cromwell_config($tmp_dir, $results_dir);
     my $labels_file = $self->_generate_cromwell_labels;
 
-    my $truststore_file = Genome::Config::get('cromwell_truststore_file');
-    my $truststore_auth = Genome::Config::get('cromwell_truststore_auth');
+    my @jar_cmdline = Genome::Cromwell->cromwell_jar_cmdline($config_file);
 
     Genome::Sys->shellcmd(
         cmd => [
-            '/usr/bin/java',
-            sprintf('-Dconfig.file=%s', $config_file),
-            sprintf('-Djavax.net.ssl.trustStorePassword=%s', $truststore_auth),
-            sprintf('-Djavax.net.ssl.trustStore=%s', $truststore_file),
-            '-jar', '/opt/cromwell.jar',
+            @jar_cmdline,
             'run',
             '-t', $wf_type,
             '-l', $labels_file,
@@ -178,6 +173,7 @@ sub run_cromwell {
         input_files => [$main_workflow_file, $yaml],
     );
 
+    my $guard = Genome::Cromwell->spawn_local_server($config_file);
     $self->_stage_cromwell_outputs($results_dir);
 }
 
@@ -215,7 +211,8 @@ sub _generate_cromwell_config {
 
     my $docker_volumes = Genome::Config::get('docker_volumes');
 
-    my $config_file = File::Spec->join($build->data_directory, 'cromwell.config');
+    my $data_dir = $build->data_directory;
+    my $config_file = File::Spec->join($data_dir,'cromwell.config');
 
     my $config = <<'EOCONFIG'
 include required(classpath("application"))
@@ -313,6 +310,10 @@ EOCONFIG
 workflow-options {
   workflow-log-dir = "$log_dir/cromwell-workflow-logs"
 }
+EOCONFIG
+;
+    if ($server =~ /^mysql:/) {
+        $config .= <<EOCONFIG
 database {
   profile = "slick.jdbc.MySQLProfile\$"
   db {
@@ -326,6 +327,55 @@ database {
 }
 EOCONFIG
 ;
+    } elsif ($server =~ /^hsqldb:/) {
+        my $dbfile_location;
+        if ($server =~ /;/) {
+            $self->fatal_message('Cannot currently handle hsqldb server string with semicolons. Got: %s', $server);
+        } elsif ($server eq 'hsqldb:tmp') {
+            $dbfile_location = "$tmp_dir/cromwell-db/cromwell-db";
+            $server = "hsqldb:file:$dbfile_location";
+            $self->debug_message('Using temporary hsqldb location: %s', $server);
+        } elsif ($server eq 'hsqldb:build') {
+            $dbfile_location = "$data_dir/cromwell-db/cromwell-db";
+            $server = "hsqldb:file:$dbfile_location";
+            $self->debug_message('Using build hsqldb location: %s', $server);
+        } else {
+            ($dbfile_location) = $server =~ /hsqldb:file:([^:]+)/;
+            unless ($dbfile_location) {
+                $self->fatal_message('Could not parse hsqldb file location from server string. Expected "hsqldb:tmp", "hsqldb:build", or "hsqldb:file:/path/to/cromwell-db". Got: %s', $server);
+            }
+            $self->debug_message('Using supplied hsqldb location: %s', $dbfile_location);
+        }
+
+        #shell out so this is saved immediately for the benefit of `genome model build view` while this build runs.
+        Genome::Sys->shellcmd(
+            cmd => [qw(genome model build add-note --header-text=hsqldb_server_file), "--body-text=$dbfile_location", $build->id],
+        );
+
+        $config .= <<EOCONFIG
+database {
+  profile = "slick.jdbc.HsqldbProfile\$"
+  db {
+    driver = "org.hsqldb.jdbcDriver"
+    url = """
+    jdbc:$server;
+    shutdown=false;
+    hsqldb.default_table_type=cached;hsqldb.tx=mvcc;
+    hsqldb.result_max_memory_rows=10000;
+    hsqldb.large_data=true;
+    hsqldb.applog=1;
+    hsqldb.lob_compressed=true;
+    hsqldb.script_format=3
+    """
+    connectionTimeout = 120000
+    numThreads = 1
+   }
+}
+EOCONFIG
+;
+    } else {
+        $self->fatal_message('Expected mysql or hsqldb cromwell server url but got: %s', $server);
+    }
 
     Genome::Sys->write_file($config_file, $config);
     return $config_file;
@@ -369,6 +419,8 @@ sub _stage_cromwell_outputs {
 
         $self->_stage_cromwell_output($results_dir, $info, $prefix);
     }
+
+    $self->_generate_timing_report($workflow_id);
 
     return 1;
 }
@@ -437,6 +489,19 @@ sub _stage_cromwell_output {
     }
 
     return 1;
+}
+
+sub _generate_timing_report {
+    my $self = shift;
+    my $workflow_id = shift;
+
+    my $data_dir = $self->build->data_directory;
+    my $timing_file = File::Spec->join($data_dir, 'timing.html');
+
+    my $report = Genome::Cromwell->timing($workflow_id);
+    Genome::Sys->write_file($timing_file, $report);
+
+    return $timing_file;
 }
 
 sub preserve_results {
