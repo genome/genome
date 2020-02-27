@@ -13,8 +13,9 @@ use Scope::Guard;
 
 class Genome::Disk::Volume {
     table_name => 'disk.volume',
+    id_generator => '-uuid',
     id_by => [
-        id => {is => 'Number'},
+        id => { is => 'Text', len => 32 },
     ],
     has => [
         hostname => { is => 'Text', default => 'unknown' },
