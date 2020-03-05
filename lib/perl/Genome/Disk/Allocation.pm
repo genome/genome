@@ -966,8 +966,16 @@ END {
 sub get_allocation_for_path {
     my ($class, $path) = @_;
 
+    #If we found this assume we have an absolute path; if we don't, assume we got an allocation path.
+    my $mount_path = $class->_get_mount_path_from_full_path($path);
+    if ($mount_path) {
+        $path =~ s/^$mount_path//;
+    }
+
+    $path =~ s!^/!!; #either this is left over from the mount path, or it might be present on an allocation path passed directly. Either way, we don't want it!
     my @parts = split(/\//, $path);
-    @parts = @parts[4..$#parts]; # Remove mount path and group subdirectory
+
+    shift @parts if $mount_path; #remove group subdirectory from absolute path
 
     my $allocation;
     # Try finding allocation by allocation path, removing subdirectories from the end after each attempt

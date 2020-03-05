@@ -753,9 +753,7 @@ sub symlinked_allocations {
         my %allocations;
         for my $symlink ( keys %symlinks ) {
             my $target = $symlinks{$symlink};
-            my @tokens = split(m#/+#, $target);
-            my $allocation_path = join('/', @tokens[4..$#tokens]);
-            my @allocations = Genome::Disk::Allocation->get(allocation_path => $allocation_path);
+            my @allocations = Genome::Disk::Allocation->get_allocation_for_path($target);
             next if not @allocations or @allocations > 1;
             my $allocation = $allocations[0];
             next if $allocations{$allocation->id};
