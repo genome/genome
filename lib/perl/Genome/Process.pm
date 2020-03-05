@@ -251,6 +251,7 @@ sub _dispatch_process {
         log_file => "${log_file_base}.out",
         project => $self->lsf_project_name,
         job_group => $job_group,
+        user_group => Genome::Config::get('lsf_user_group'),
         resource_string => Genome::Config::get('lsf_resource_cwl_runner'),
     );
 

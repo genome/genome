@@ -7,7 +7,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(parse_lsf_params parse_resource_requirements);
 
-use Getopt::Long qw(GetOptionsFromString);
+use Getopt::Long qw(GetOptionsFromString :config no_ignore_case);
 use IO::String;
 
 sub parse_resource_requirements {
@@ -137,6 +137,7 @@ my %formatters = (
     'b' => \&string_formatter,
     'e' => \&string_formatter,
     'g' => \&string_formatter,
+    'G' => \&string_formatter,
     'i' => \&string_formatter,
     'J' => \&string_formatter,
     'u' => \&string_formatter,
@@ -163,6 +164,7 @@ my %valid_options = (
     'b' => 'beginTime',
     'e' => 'errFile',
     'g' => 'jobGroup',
+    'G' => 'userGroup',
     'i' => 'inFile',
     'J' => 'jobName',
     'u' => 'mail_user',

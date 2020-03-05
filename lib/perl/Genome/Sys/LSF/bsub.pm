@@ -146,6 +146,11 @@ sub _args_spec {
             option_flag => '-g',
             type => SCALAR,
         },
+        user_group => {
+            optional => 1,
+            option_flag => '-G',
+            type => SCALAR,
+        },
         job_name => {
             optional => 1,
             option_flag => '-J',
