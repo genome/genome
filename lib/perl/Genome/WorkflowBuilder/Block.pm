@@ -61,7 +61,9 @@ sub _add_property_xml_elements {
 sub _execute_inline {
     my ($self, $inputs) = @_;
 
-    return {result => 1};
+    my $outputs = { result => 1, %$inputs };
+
+    return $outputs;
 }
 
 1;
