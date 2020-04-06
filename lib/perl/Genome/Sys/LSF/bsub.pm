@@ -21,7 +21,16 @@ sub run {
     }
 
     local $ENV{LSB_SUB_ADDITIONAL} = Genome::Config::get('lsb_sub_additional') || $ENV{LSB_SUB_ADDITIONAL};
-    local $ENV{LSF_DOCKER_VOLUMES} = Genome::Config::get('docker_volumes') || $ENV{LSF_DOCKER_VOLUMES};
+
+    my $docker_volumes = $ENV{LSF_DOCKER_VOLUMES};
+    if (my $config_docker_volumes = Genome::Config::get('docker_volumes')) {
+        if ($docker_volumes) {
+            $docker_volumes .= ' ' . $config_docker_volumes;
+        } else {
+            $docker_volumes = $config_docker_volumes;
+        }
+    }
+    local $ENV{LSF_DOCKER_VOLUMES} = $docker_volumes;
 
     my @output = Genome::Sys->capture(@$executable, @args);
 
