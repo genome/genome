@@ -165,13 +165,6 @@ sub get_candidate_volumes {
 
 sub _get_allocation_without_lock {
     my ($self, $candidate_volumes) = @_;
-
-    my $allocation_object = $self->_get_allocation_without_lock_impl($candidate_volumes);
-    return $allocation_object;
-}
-
-sub _get_allocation_without_lock_impl {
-    my ($self, $candidate_volumes) = @_;
     # We randomize to avoid the rare repeated contention case
     my @randomized_candidate_volumes = (@$candidate_volumes,
         shuffle(@$candidate_volumes));
