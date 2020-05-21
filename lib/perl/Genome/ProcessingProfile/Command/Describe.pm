@@ -37,7 +37,6 @@ sub execute {
         );
 
         for my $param ( sort { $a cmp $b } $pp->params_for_class ) {
-            $DB::single = 1 if $param eq 'refcov_wingspan_values';
             my @values = $pp->$param;
             foreach my $value (@values) {
                 if (Scalar::Util::blessed($value)) {
