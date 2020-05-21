@@ -237,7 +237,7 @@ sub _verify_or_import_instrument_data {
     my $current_pair = shift;
 
     my $instrument_data = $current_pair->instrument_data;
-    return 1 if @{[$instrument_data->disk_allocations]};
+    return 1 if @{[$instrument_data->disk_allocations(status => 'active')]};
 
     $self->_import_instrument_data($current_pair);
 }
