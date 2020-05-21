@@ -211,6 +211,14 @@ sub _generate_cromwell_config {
     my $user = Genome::Config::get('cromwell_user');
 
     my $docker_volumes = Genome::Config::get('docker_volumes');
+    if ($ENV{LSF_DOCKER_VOLUMES}) {
+        if ($docker_volumes) {
+            $docker_volumes .= $ENV{LSF_DOCKER_VOLUMES} . ' ' . $docker_volumes;
+        } else {
+            $docker_volumes = $ENV{LSF_DOCKER_VOLUMES};
+        }
+    }
+
 
     my $data_dir = $build->data_directory;
     my $config_file = File::Spec->join($data_dir,'cromwell.config');
