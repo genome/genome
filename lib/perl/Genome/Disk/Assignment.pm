@@ -7,11 +7,11 @@ class Genome::Disk::Assignment {
     table_name => 'disk.volume_group_bridge',
     id_by => [
         group_id => {
-            is => 'Number',
+            is => 'Text',
             doc => 'disk group ID',
         },
         volume_id => {
-            is => 'Number',
+            is => 'Text',
             doc => 'disk volume ID'
         },
     ],

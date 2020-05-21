@@ -12,8 +12,9 @@ usesub Genome::Disk::Group::Validate;
 
 class Genome::Disk::Group {
     table_name => 'disk.group',
+    id_generator => '-uuid',
     id_by => [
-        id => { is => 'Number' },
+        id => { is => 'Text', len => 32 },
     ],
     has => [
         disk_group_name => { via => '__self__', to => 'name' },
