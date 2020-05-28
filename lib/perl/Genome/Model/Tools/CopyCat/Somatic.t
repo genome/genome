@@ -63,7 +63,8 @@ for my $file (@diffable_files){
 my @non_diffable_files = qw| alts.paired.dat
                              segs.paired.dat |;
 
-for my $file (@non_diffable_files){
+SKIP: for my $file (@non_diffable_files){
+    skip 'line tolerance test is non-deterministic and would need to be reworked if retained', 2;
     my $expected = File::Spec->join($expected_output_dir, $file);
     my $actual = File::Spec->join($output_directory, $file);
     my ($actual_wc) = split(" ", `wc -l $actual`);    
