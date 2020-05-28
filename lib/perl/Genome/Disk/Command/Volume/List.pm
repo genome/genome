@@ -61,16 +61,16 @@ sub is_volume_mounted {
         _populate_cached_is_mounted();
     }
 
-    my $mount_path = $volume->mount_path;
+    my $path = $volume->is_remote_volume ? $volume->physical_path : $volume->mount_path;
 
-    if (! exists($cached_is_mounted{$mount_path}) && $self->accurate_size) {
-        my $dir = IO::Dir->new($mount_path);
+    if (! exists($cached_is_mounted{$path}) && $self->accurate_size) {
+        my $dir = IO::Dir->new($path);
         $dir->read if $dir;
         _populate_cached_is_mounted();
-        $cached_is_mounted{$mount_path} //= 0;
+        $cached_is_mounted{$path} //= 0;
     }
 
-    return $cached_is_mounted{$volume->mount_path}
+    return $cached_is_mounted{$path}
 }
 
 sub _populate_cached_is_mounted {

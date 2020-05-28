@@ -272,13 +272,20 @@ sub is_mounted {
 
     # We can't use Filesys::Df::df because it doesn't report the mount path only the stats.
     my $mount_path = $self->mount_path;
-    my @df_output = qx(df -P $mount_path 2> /dev/null);
+    my $path_to_df = $self->is_remote_volume ? $self->physical_path : $mount_path;
+    my @df_output = qx(df -P $path_to_df 2> /dev/null);
     if ($! && $! !~ /No such file or directory/) {
         die $self->error_message(sprintf('Failed to `df %s` to check if volume is mounted: %s', $mount_path, $!));
     }
 
-    my ($df_output) = grep { /\s$mount_path$/ } @df_output;
+    my ($df_output) = grep { /\s$path_to_df$/ } @df_output;
     return ($df_output ? 1 : 0);
+}
+
+sub is_remote_volume {
+    my $self = shift;
+
+    return $self->hostname =~ /\./;
 }
 
 sub df {
@@ -288,7 +295,12 @@ sub df {
         die $self->error_message(sprintf('Volume %s is not mounted!', $self->mount_path));
     }
 
-    return Filesys::Df::df($self->mount_path);
+    if ($self->is_remote_volume) {
+        #for now, take our allocation records on faith
+        return { used => scalar($self->allocated_kb), blocks => $self->total_kb };
+    } else {
+        return Filesys::Df::df($self->mount_path);
+    }
 }
 
 sub sync_total_kb {
