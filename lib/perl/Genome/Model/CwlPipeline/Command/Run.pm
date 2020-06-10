@@ -314,6 +314,27 @@ EOCONFIG
 ;
     $config .= <<EOCONFIG
         root = "$tmp_dir/cromwell-executions"
+EOCONFIG
+;
+    if(Genome::Config::get('cromwell_call_caching')) {
+        $config .= <<'EOCONFIG'
+        filesysytems {
+          local {
+            caching {
+              duplication-strategy: [
+                "hard-link", "soft-link", "copy"
+              ]
+              hashing-strategy: "fingerprint"
+              fingerprint-size: 10485760
+              check-sibling-md5: false
+            }
+          }
+        }
+EOCONFIG
+;
+    }
+
+    $config .= <<EOCONFIG
       }
     }
   }
@@ -386,6 +407,16 @@ EOCONFIG
 ;
     } else {
         $self->fatal_message('Expected mysql or hsqldb cromwell server url but got: %s', $server);
+    }
+
+    if (Genome::Config::get('cromwell_call_caching')) {
+        $config .= <<EOCONFIG
+call-caching {
+  enabled = true
+  invalidate-bad-cache-results = true
+}
+EOCONFIG
+;
     }
 
     Genome::Sys->write_file($config_file, $config);
