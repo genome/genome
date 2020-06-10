@@ -191,8 +191,12 @@ sub _determine_workflow_type {
 sub _generate_cromwell_config {
     my $self = shift;
     my $tmp_dir = shift;
-
     my $build = $self->build;
+
+    my $data_dir = $build->data_directory;
+    my $config_file = File::Spec->join($data_dir,'cromwell.config');
+    return $config_file if -e $config_file;
+
     my $log_dir = $build->log_directory;
 
     my $primary_docker_image = $build->model->primary_docker_image;
@@ -218,10 +222,6 @@ sub _generate_cromwell_config {
             $docker_volumes = $ENV{LSF_DOCKER_VOLUMES};
         }
     }
-
-
-    my $data_dir = $build->data_directory;
-    my $config_file = File::Spec->join($data_dir,'cromwell.config');
 
     my $config = <<'EOCONFIG'
 include required(classpath("application"))
@@ -428,6 +428,8 @@ sub _generate_cromwell_labels {
     my $build = $self->build;
 
     my $labels_file = File::Spec->join($build->data_directory, 'cromwell.labels');
+
+    return $labels_file if -e $labels_file;
 
     my $data = {
         build => $build->id,
