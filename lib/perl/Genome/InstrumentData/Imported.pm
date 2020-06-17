@@ -422,9 +422,16 @@ sub bam_path {
 
     my $bam_file = $allocation->absolute_path . "/all_sequences.bam";
 
-    return if not -e $bam_file;
+    return $bam_file if -e $bam_file;
 
-    return $bam_file;
+    my @possible_bams = glob($allocation->absolute_path . "/*.bam");
+    if (@possible_bams == 1) {
+        return $possible_bams[0];
+    } elsif (@possible_bams > 1) {
+        $self->fatal_message('Multiple BAMs found in allocation for imported instrument data: %s.  Name one "all_sequences.bam" to have it used here.', $self->__display_name__);
+    }
+
+    return; #some other format besides BAM (e.g., FASTQs)
 }
 
 sub get_read_groups_set {
