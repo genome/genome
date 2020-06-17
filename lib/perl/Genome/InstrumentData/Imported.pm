@@ -417,8 +417,7 @@ sub bam_path {
 
     my ($allocation) = $self->disk_allocation;
     unless ($allocation) {
-        $self->error_message("Found no disk allocation for imported instrument data " . $self->id, ", so cannot find bam!");
-        die $self->error_message;
+        $self->fatal_message("Found no disk allocation for imported instrument data %s, so cannot find bam!", $self->__display_name__);
     }
 
     my $bam_file = $allocation->absolute_path . "/all_sequences.bam";
