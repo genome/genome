@@ -41,3 +41,5 @@ SKIP: {
     ok(scalar(@image_lines) > 0, 'theoretically included some docker images');
 }
 
+#test-tracker wants all tests to return a true value, (but "skip" returns undef)
+1;
