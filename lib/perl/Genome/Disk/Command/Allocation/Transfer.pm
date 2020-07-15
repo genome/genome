@@ -142,12 +142,16 @@ sub transfer {
         $allocation->allocation_path,
     );
 
-    my $ssh_cmd = sprintf('ssh -p %s -i %s -o StrictHostKeyChecking=no', $port, $key);
+    my @ssh_opts = ('ssh', '-p', $port, '-i', $key, '-o', 'StrictHostKeyChecking=no');
 
     my $remote_destination = sprintf('%s@%s:%s', $user, $host, $destination_path);
 
+    #first ensure directory exists as target for rsync
     Genome::Sys->shellcmd(
-        cmd => ['rsync', '-av', '-e', $ssh_cmd, $source_path, $remote_destination]
+        cmd => [@ssh_opts, sprintf('%s@%s', $user, $host), 'mkdir', '-p', $destination_path],
+    );
+    Genome::Sys->shellcmd(
+        cmd => ['rsync', '-av', '-e', join(' ', @ssh_opts), $source_path, $remote_destination],
     );
 }
 
