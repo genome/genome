@@ -324,7 +324,7 @@ EOCONFIG
               duplication-strategy: [
                 "hard-link", "soft-link", "copy"
               ]
-              hashing-strategy: "fingerprint"
+              hashing-strategy: "xxh64"
               fingerprint-size: 10485760
               check-sibling-md5: false
             }
