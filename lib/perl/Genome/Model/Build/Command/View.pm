@@ -116,8 +116,11 @@ sub write_report {
         }
 
 
-        if (my $cromwell_wf = $self->_cromwell_workflow_id_for_build) {
-            $self->_display_cromwell_workflow($handle, $cromwell_wf);
+        my @cromwell_wf = $self->_cromwell_workflow_id_for_build;
+        if (@cromwell_wf) {
+            for my $wf (@cromwell_wf) {
+                $self->_display_cromwell_workflow($handle, $wf);
+            }
         } else {
             my @process = $self->build->process;
 
@@ -138,12 +141,12 @@ sub _cromwell_workflow_id_for_build {
     my $self = shift;
 
     my $results = Genome::Cromwell->query( [{ label => 'build:' . $self->build->id }] );
-    if ($results->{totalResultsCount} != 1) {
+    if ($results->{totalResultsCount} < 1) {
         $self->debug_message('Did not find cromwell workflow.');
         return;
     }
 
-    return $results->{results}->[0]->{id};
+    return map { $_->{id} } @{ $results->{results} };
 }
 
 sub _display_build {
