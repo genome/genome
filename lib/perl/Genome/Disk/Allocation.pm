@@ -667,6 +667,14 @@ sub _update_owner_for_move {
     }
     elsif ($owner->isa('Genome::Model::Build')) {
         $owner->data_directory($self->absolute_path);
+    } elsif ($owner->isa('Genome::InstrumentData::Solexa')) {
+        if ($owner->bam_path) {
+            my $path = $self->absolute_path;
+            my (undef, undef, $file) = File::Spec->split_path($owner->bam_path);
+            $owner->bam_path(
+                File::Spec->join($path, $file)
+            );
+        }
     }
 
     return 1;
