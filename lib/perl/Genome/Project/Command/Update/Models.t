@@ -20,11 +20,19 @@ use_ok('Genome::Project::Command::Update::Models') or die;
 my $project = Genome::Project->create(name => 'test project for ' . __FILE__);
 isa_ok($project, 'Genome::Project', 'created test project');
 
+my $user = Genome::Sys::User->__define__(email => 'testingaccount@example.com', username => ('testing' . time));
+my $role = Genome::Sys::User::Role->get(name => 'production') || Genome::Sys::User::Role->__define__(name => 'production');
+
+Genome::Sys::User::RoleMember->__define__(
+    user_email => $user->email,
+    role_id  => $role->id,
+);
+
 my @models;
 my @instrument_data;
 for(1..3) {
     my $m = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
-        created_by => 'apipe-builder', # matches default in Genome::Project::Command::Update::Models::model_user
+        created_by => $user->username,
     );
     my $i = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
     $m->add_instrument_data($i);
