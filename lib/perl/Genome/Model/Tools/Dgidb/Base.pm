@@ -8,7 +8,7 @@ use HTTP::Request::Common;
 
 
 
-my $DOMAIN   = 'http://dgidb.org/';
+my $DOMAIN   = 'https://dgidb.org/';
 
 class Genome::Model::Tools::Dgidb::Base {
     is => 'Command',
