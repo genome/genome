@@ -14,6 +14,8 @@ use File::Temp 'tempdir';
 use Filesys::Df qw();
 use Sub::Install;
 
+use Genome::Test::Factory::InstrumentData::Solexa;
+
 use_ok('Genome::Disk::Allocation') or die;
 
 Sub::Install::reinstall_sub({
@@ -114,6 +116,22 @@ $rv = $allocation->move(
 ok($rv, 'successfully moved allocation given disk group instead of mount path');
 is($allocation->mount_path, $volumes[0]->mount_path, 'allocation moved to only other volume in group');
 ok(-d $original_path, 'new allocation path exists');
+
+my $instrument_data_owner = Genome::Test::Factory::InstrumentData::Solexa->setup_object;
+my %instrument_data_allocation_params = (
+    %params,
+    allocation_path => 'testing/instrument-data/1/2/3/',
+    owner_class_name => $instrument_data_owner->class,
+    owner_id => $instrument_data_owner->id,
+);
+my $instrument_data_allocation = Genome::Disk::Allocation->create(%instrument_data_allocation_params);
+$instrument_data_owner->bam_path( $instrument_data_allocation->absolute_path . '/testing.bam');
+ok($instrument_data_allocation, 'created test allocation for instrument data');
+my $id_rv = $allocation->move(
+    target_mount_path => $volumes[1]->mount_path,
+);
+ok($id_rv, 'moved instrument data allocation');
+is($instrument_data_owner->bam_path, $instrument_data_allocation->absolute_path . '/testing.bam', 'updated bam path');
 
 done_testing();
 
