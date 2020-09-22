@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
+use Net::SSLeay;
 
 my $class = 'Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb';
 use_ok($class);
@@ -73,14 +74,18 @@ my $cmd = Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb->create(
 );
 
 ok($cmd,          'command created ok');
-ok($cmd->execute, 'command completed successfully');
+SKIP: {
+    skip('SSL version is too old', 5) if $Net::SSLeay::VERSION < 1.74;
 
-my $output_dir = $cmd->output_dir;
-is($output_dir, $tmp_test_tsv . '.dgidb', 'output dir named ok');
+    ok($cmd->execute, 'command completed successfully');
 
-for my $file_name (qw(all_interactions.tsv expert_antineoplastic.tsv kinase_only.tsv)) {
-    my $output_file = File::Spec->join($output_dir, $file_name);
-    ok(-e $output_file, 'output file was generated: ' . $file_name);
+    my $output_dir = $cmd->output_dir;
+    is($output_dir, $tmp_test_tsv . '.dgidb', 'output dir named ok');
+
+    for my $file_name (qw(all_interactions.tsv expert_antineoplastic.tsv kinase_only.tsv)) {
+        my $output_file = File::Spec->join($output_dir, $file_name);
+        ok(-e $output_file, 'output file was generated: ' . $file_name);
+    }
 }
 
 done_testing;

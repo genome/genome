@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw (compare_ok);
+use Net::SSLeay;
 
 my $class = "Genome::Db::Tgi::Command::ImportFromDgidbByCategory";
 
@@ -19,9 +20,13 @@ use_ok($class);
 my $data_dir = Genome::Utility::Test->data_dir_ok($class, "v1");
 my $temp_file = Genome::Sys->create_temp_file_path;
 
-my $cmd = $class->create(output_file => $temp_file, categories => ["kinase"]);
-ok($cmd->execute, "Command executed correctly");
-ok(-s $temp_file);
+SKIP: {
+    skip('SSL version is too old', 2) if $Net::SSLeay::VERSION < 1.74;
+
+    my $cmd = $class->create(output_file => $temp_file, categories => ["kinase"]);
+    ok($cmd->execute, "Command executed correctly");
+    ok(-s $temp_file);
+}
 
 done_testing;
 
