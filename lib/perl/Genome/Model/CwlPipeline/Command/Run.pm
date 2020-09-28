@@ -234,7 +234,6 @@ backend {
       config {
         runtime-attributes = """
         Int cpu = 1
-        Int memory_kb = 4096000
         Int memory_mb = 4096
         String? docker
         """
@@ -265,9 +264,9 @@ EOCONFIG
 EOCONFIG
         ;
     $config .= <<'EOCONFIG'
-        -M ${memory_kb} \
+        -M ${memory_mb}M \
         -n ${cpu} \
-        -R "span[hosts=1] select[mem>${memory_mb}] rusage[mem=${memory_mb}]" \
+        -R "span[hosts=1] select[mem>${memory_mb}M] rusage[mem=${memory_mb}M]" \
         /bin/bash ${script}
         """
 
@@ -300,9 +299,9 @@ EOCONFIG
         ;
     $config .= <<'EOCONFIG'
         -a "docker(${docker})" \
-        -M ${memory_kb} \
+        -M ${memory_mb}M \
         -n ${cpu} \
-        -R "span[hosts=1] select[mem>${memory_mb}] rusage[mem=${memory_mb}]" \
+        -R "span[hosts=1] select[mem>${memory_mb}M] rusage[mem=${memory_mb}M]" \
         /bin/bash ${script}
         """
 
