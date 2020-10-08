@@ -7,6 +7,8 @@ use File::Basename qw();
 use File::Spec qw();
 use Sub::Override;
 use Try::Tiny qw(try catch);
+use Scope::Guard;
+use IPC::System::Simple qw();
 
 use Genome;
 
@@ -35,7 +37,6 @@ class Genome::Site::TGI::Command::ImportDataFromLims {
         remote_port => {
             is => 'Number',
             doc => 'remote port to use for SSH--required for remote volumes',
-            default_value => 22,
         },
         authorization_key => {
             is => 'Text',
@@ -110,12 +111,29 @@ sub _process_instrument_data {
         if ($allocation->volume->is_remote_volume) {
             my $source_path = $lims_source_dir . '/';
             my $destination_path = $allocation->absolute_path;
-            my $user = $self->remote_user;
-            my $host = $self->remote_host;
+            my $user = $self->remote_user // $self->_resolve_autoconnect_parameters->{remote_user};
+            my $host = $self->remote_host // $self->_resolve_autoconnect_parameters->{remote_host};
+            my $port = $self->remote_port // $self->_resolve_autoconnect_parameters->{remote_port};
+            my $auth = $self->authorization_key // $self->_resolve_autoconnect_parameters->{authorization_key};
 
-            my @ssh_opts = ('ssh', '-p', $self->remote_port, '-i', $self->authorization_key, '-o', 'StrictHostKeyChecking=no');
+            my @ssh_opts = ('ssh', '-p', $port, '-i', $auth, '-o', 'StrictHostKeyChecking=no');
 
             my $remote_destination = sprintf('%s@%s:%s', $user, $host, $destination_path);
+
+            my $max_attempts = 10;
+            for(1..10) {
+                my $connection_test = Genome::Sys->capture(
+                    IPC::System::Simple::EXIT_ANY,
+                    @ssh_opts, sprintf('%s@%s', $user, $host), '/bin/echo', 'success',
+                );
+                if ($IPC::System::Simple::EXITVAL == 0 and $connection_test =~ /success/) {
+                    $self->debug_message('SSH server ready.');
+                    last;
+                } else {
+                    $self->debug_message('Connection not ready on attempt %s', $_);
+                    sleep 3 * $_;
+                }
+            }
 
             #first ensure directory exists as target for rsync
             Genome::Sys->shellcmd(
@@ -208,10 +226,24 @@ sub _create_allocation {
         owner_id => $data->id,
     );
 
-    if ($self->remote_host) {
-        my @volumes = Genome::Disk::Detail::Allocation::Creator->get_candidate_volumes(disk_group_name => $params{disk_group_name});
-        if (my @bad = grep !$_->is_remote_volume, @volumes) {
-            $self->fatal_message('Remote options specified but disk group contains non-remote volumes: %s', join(',', map $_->mount_path, @bad));
+    my @volumes = Genome::Disk::Detail::Allocation::Creator->get_candidate_volumes(disk_group_name => $params{disk_group_name});
+    my (@local_volumes, @remote_volumes);
+    for my $v (@volumes) {
+        if ($v->is_remote_volume) {
+            push @remote_volumes, $v;
+        } else {
+            push @local_volumes, $v;
+        }
+    }
+    if (@remote_volumes and @local_volumes) {
+        $self->fatal_message('Disk group %s contains both local and remote volumes.  Please correct the disk group.', $params{disk_group_name});
+    }
+
+    if (@remote_volumes) {
+        if(!$self->remote_host) {
+            unless ($self->_resolve_autoconnect_parameters(map $_->mount_path, @remote_volumes)) {
+                $self->fatal_message('Disk group %s contains remote volumes, but no remote options specified.', $params{disk_group_name});
+            }
         }
 
         my $creator_override = Sub::Override->new('Genome::Disk::Detail::Allocation::Creator::create_directory_or_delete_allocation', sub { return 1; }); #we're handling directory creation remotely
@@ -222,6 +254,9 @@ sub _create_allocation {
             %params,
         );
     } else {
+        if ($self->remote_host) {
+            $self->fatal_message('Remote parameters specificed but disk group is set to local.  Confirm disk group settings.');
+        }
         my $create_cmd = Genome::Disk::Command::Allocation::Create->create(%params);
         unless ($create_cmd->execute) {
             $self->error_message('Could not create allocation for instrument data: %s', $data->__display_name__);
@@ -272,6 +307,43 @@ sub _resolve_disk_group {
     my $dg = Genome::Config::get('disk_group_alignments');
 
     return $dg;
+}
+
+sub _resolve_autoconnect_parameters {
+    my $self = shift;
+    my @mount_path = @_;
+
+    return unless Genome::Sys->username eq 'prod-builder';
+
+    unless ($self->{_resolve_autoconnect_parameters}) {
+
+        die 'cannot initialize without mount path(s)' unless @mount_path;
+
+        my $remote_info = Genome::Sys->capture(qw(ssh -q -i /gscuser/prod-builder/.ssh/mgi-svc-bga-run_ssh_user_rsa_key mgi-svc-bga-run@compute1-client-1.ris.wustl.edu /usr/bin/perl /home/MGI-SVC-BGA-run/auto_syncs/spawn_sshd.pl), @mount_path);
+        chomp $remote_info;
+        my ($port, $host, $job_id) = split("\t", $remote_info);
+
+        if ($port and $host and $job_id) {
+            $self->{_resolve_autoconnect_parameters} = {
+                remote_host => $host,
+                remote_port => $port,
+                remote_user => 'mgi-svc-bga-run',
+                authorization_key => '/gscuser/prod-builder/.ssh/mgi-svc-bga-run_ssh_user_rsa_key',
+                job_id => $job_id,
+            };
+            my $class = $self->class;
+            my $callback = sub {
+                $class->debug_message('Cleaning up SSH server.');
+                Genome::Sys->shellcmd(
+                    cmd => [qw(ssh -q -i /gscuser/prod-builder/.ssh/mgi-svc-bga-run_ssh_user_rsa_key mgi-svc-bga-run@compute1-client-1.ris.wustl.edu bkill), $job_id],
+                );
+                delete $self->{_resolve_autoconnect_parameters};
+            };
+            $self->{_resolve_autoconnect_parameters_guard} = Scope::Guard->new($callback);
+        }
+    }
+
+    return $self->{_resolve_autoconnect_parameters};
 }
 
 1;
