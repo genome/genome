@@ -138,6 +138,7 @@ sub _process_instrument_data {
             #first ensure directory exists as target for rsync
             Genome::Sys->shellcmd(
                 cmd => [@ssh_opts, sprintf('%s@%s', $user, $host), 'mkdir', '-p', $destination_path],
+                keep_dbh_connection_open => 1,
             );
             Genome::Sys->shellcmd(
                 cmd => ['rsync', '-av', '-e', join(' ', @ssh_opts), $source_path, $remote_destination],
@@ -336,6 +337,7 @@ sub _resolve_autoconnect_parameters {
                 $class->debug_message('Cleaning up SSH server.');
                 Genome::Sys->shellcmd(
                     cmd => [qw(ssh -q -i /gscuser/prod-builder/.ssh/mgi-svc-bga-run_ssh_user_rsa_key mgi-svc-bga-run@compute1-client-1.ris.wustl.edu bkill), $job_id],
+                    keep_dbh_connection_open => 1,
                 );
                 delete $self->{_resolve_autoconnect_parameters};
             };
