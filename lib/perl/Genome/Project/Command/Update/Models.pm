@@ -22,13 +22,6 @@ class Genome::Project::Command::Update::Models {
             doc => 'match models to the project based on these values',
         },
     ],
-    has_constant => {
-        model_user => {
-            is => 'Text',
-            doc => 'user whose models to add to the project',
-            value => 'apipe-builder',
-        },
-    },
     doc => 'add models to a project that have matching instrument data or samples',
 };
 
@@ -46,7 +39,7 @@ sub execute {
 
         my $model_getter = '_models_for_' . $self->match_type;
         my @models =
-            grep { $_->created_by eq $self->model_user or $_->run_as eq $self->model_user }
+            grep { Genome::Sys->user_has_role($_->created_by, 'production') or Genome::Sys->user_has_role($_->run_as, 'production') }
             $self->$model_getter(@parts);
 
         my @new_parts =
