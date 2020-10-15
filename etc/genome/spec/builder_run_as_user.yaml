@@ -1,0 +1,3 @@
+---
+env: XGENOME_BUILDER_RUN_AS_USER
+default_value: prod-builder
