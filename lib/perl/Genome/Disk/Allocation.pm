@@ -646,10 +646,10 @@ sub _log_change_for_rollback {
 sub _update_owner_for_move {
     my $self = shift;
     my $owner_class = $self->owner_class_name;
-    eval "require $owner_class";
+    eval "$owner_class->class";
     my $error = $@;
     if ($error) {
-        if ($error =~ /Can't locate [\w|\/|\.]+ in \@INC/) {
+        if ($error =~ /Can't locate object method "class" via package/) {
             # Some allocations are owned by classes that no longer exist. In this case,
             # we just return successfully, as there's no owner to update.
             return 1;
