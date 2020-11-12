@@ -101,7 +101,7 @@ sub _resolve_properties_for_environment {
         }
         when ('prod-builder') {
             return (
-                run_as => 'prod-builder',
+                run_as => Genome::Config::get('builder_run_as_user'),
                 is_cle => 0,
             );
         }
