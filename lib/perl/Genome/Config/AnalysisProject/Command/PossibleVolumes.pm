@@ -39,3 +39,5 @@ sub execute {
 
     return 1;
 }
+
+1;
