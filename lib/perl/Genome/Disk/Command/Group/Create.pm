@@ -12,7 +12,7 @@ class Genome::Disk::Command::Group::Create {
     has_input => [
         name => {
             is => 'Text',
-            doc => 'name of the new disk group',
+            doc => 'unqiue name for the new disk group',
         },
         subdirectory => {
             is => 'Text',
@@ -24,6 +24,20 @@ class Genome::Disk::Command::Group::Create {
         },
     ],
 };
+
+sub _is_hidden_in_docs { !Genome::Sys->current_user_is_admin }
+
+sub help_brief {
+    return 'create a new disk group';
+}
+
+sub help_synopsis {
+    return 'genome disk group create --name newdiskgroup --subdirectory gmsroot --unix-group root';
+}
+
+sub help_detail {
+    return 'Creates a new disk group to which volumes can be assigned.  The name should be unique.';
+}
 
 sub execute {
     my $self = shift;

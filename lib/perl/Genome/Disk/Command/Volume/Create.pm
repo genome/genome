@@ -32,6 +32,20 @@ class Genome::Disk::Command::Volume::Create {
     ],
 };
 
+sub _is_hidden_in_docs { !Genome::Sys->current_user_is_admin }
+
+sub help_brief {
+    return 'create a new disk volume';
+}
+
+sub help_synopsis {
+    return 'genome disk volume create --mount-path /path/to/mount --total-kb 1024 --hostname fileserver.example.com --phsyical-path /vol/to/mount --disk-group some_existing_group';
+}
+
+sub help_detail {
+    return 'Creates a new disk volume within a group.  The volume needs to be currently mounted.';
+}
+
 sub execute {
     my $self = shift;
 
