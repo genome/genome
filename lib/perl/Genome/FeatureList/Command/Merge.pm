@@ -339,25 +339,51 @@ sub _converted_bed_path {
     my $feature_list = shift;
     my $target_reference = shift;
 
-    my $converted_bed_result = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
-        source_reference => $feature_list->reference,
-        target_reference => $target_reference,
-        source_bed       => $feature_list->file_path,
-        source_md5       => Genome::Sys->md5sum($feature_list->file_path),
-        users => {
-            requestor => $target_reference,
-            sponsor   => Genome::Sys->current_user(),
-        },
-    );
-    unless ($converted_bed_result) {
-        die $class->error_message(
-            'Failure converting feature-list %s to reference %s.',
-            $feature_list->__display_name__,
-            $target_reference->__display_name__,
-        );
-    }
+    if ($feature_list->is_multitracked) {
+        #have to convert each track individually
+        my @paths;
+        for my $track_name (@{ Genome::FeatureList::Command::DumpMergedList->__meta__->property(property_name => 'track_name')->valid_values }) {
+            my $header_path = Genome::Sys->create_temp_file_path;
+            Genome::Sys->write_file($header_path, qq{track name="$track_name"\n});
 
-    return $converted_bed_result->target_bed;
+            my $track_path = Genome::Sys->create_temp_file_path;
+            my $cmd = Genome::FeatureList::Command::DumpMergedList->create(
+                track_name => $track_name,
+                alternate_reference => $target_reference,
+                feature_list => $feature_list,
+                output_path => $track_path,
+            );
+            unless ($cmd->execute) {
+                $class->fatal_message('Failed to convert track %s for list %s', $track_name, $feature_list->__display_name__);
+            }
+
+            push @paths, $header_path, $track_path;
+        }
+
+        my $combined_file = Genome::Sys->create_temp_file_path;
+        Genome::Sys->concatenate_files(\@paths, $combined_file);
+        return $combined_file;
+    } else {
+        my $converted_bed_result = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
+            source_reference => $feature_list->reference,
+            target_reference => $target_reference,
+            source_bed       => $feature_list->file_path,
+            source_md5       => Genome::Sys->md5sum($feature_list->file_path),
+            users => {
+                requestor => $target_reference,
+                sponsor   => Genome::Sys->current_user(),
+            },
+        );
+        unless ($converted_bed_result) {
+            die $class->error_message(
+                'Failure converting feature-list %s to reference %s.',
+                $feature_list->__display_name__,
+                $target_reference->__display_name__,
+            );
+        }
+
+        return $converted_bed_result->target_bed;
+    }
 }
 
 
