@@ -83,7 +83,7 @@ sub disk_usage_for_path {
     }
 
     return unless -d $path;
-    my $cmd = "du -sk $path 2>&1";
+    my $cmd = "du -sk --apparent-size $path 2>&1";
     my @du_output = split( /\n/, qx{$cmd} );
     my $last_line = pop @du_output;
     my $kb_used = ( split( ' ', $last_line, 2 ) )[0];
