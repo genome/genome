@@ -14,7 +14,7 @@ use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::Model::CwlPipeline;
 
 use Sub::Install;
-use Test::More tests => 4;
+use Test::More tests => 6;
 
 my $class = 'Genome::Model::CwlPipeline::Command::Restart';
 use_ok($class);
@@ -46,6 +46,13 @@ my $override = Sub::Install::reinstall_sub({
 $build->start;
 $build->status('Failed'); #inline test ends up unstartable, but this is atypical.
 
+Genome::Model::Metric->create(
+    build_id => $build->id,
+    name => 'rebuild requested',
+    value => 1,
+);
+ok($build->rebuild_requested, 'rebuild initially requested for test');
+
 undef $override;
 $override = Sub::Install::reinstall_sub({
     into => 'Genome::Model::CwlPipeline::Command::Run',
@@ -57,5 +64,5 @@ my $cmd = $class->create(
 );
 isa_ok($cmd, $class, 'created command');
 ok($cmd->execute, 'executed command, and it succeeded');
-
+ok(!$build->rebuild_requested, 'rebuild is not requested after build restarted');
 is($build->status, 'Succeeded', 'build succeeded on second attempt');

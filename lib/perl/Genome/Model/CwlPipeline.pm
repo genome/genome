@@ -26,6 +26,13 @@ class Genome::Model::CwlPipeline {
             doc => 'short name for pipeline to include in default model names',
         },
     },
+    has_metric => {
+        rebuild_requested => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'flag for a build to indicate that it should be rebuilt',
+        },
+    },
 };
 
 sub create {

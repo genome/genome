@@ -80,7 +80,12 @@ sub _restart_build {
         File::Spec->join($build->data_directory, 'build.xml')
     );
 
-    return $build->_launch(\%params, $xml);
+    my $rv = $build->_launch(\%params, $xml);
+    if ($rv) {
+        $build->rebuild_requested(0);
+    }
+
+    return $rv;
 }
 
 1;
