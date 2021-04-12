@@ -17,6 +17,7 @@ use File::Copy qw();
 use File::Path;
 use File::Spec;
 use File::stat qw(stat lstat);
+use filetest qw(access);
 use IO::File;
 use JSON;
 use List::MoreUtils "each_array";
