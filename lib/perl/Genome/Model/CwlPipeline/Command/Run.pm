@@ -318,6 +318,8 @@ EOCONFIG
 ;
     if(Genome::Config::get('cromwell_call_caching')) {
         $config .= <<'EOCONFIG'
+        exit-code-timeout-seconds = 600
+
         filesysytems {
           local {
             caching {
