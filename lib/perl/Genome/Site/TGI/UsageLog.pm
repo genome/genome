@@ -60,7 +60,7 @@ sub record_usage {
     }
 }
 
-sub dsn { 'dbi:Pg:dbname=genome_usage;host=gms-postgres.gsc.wustl.edu' }
+sub dsn { 'dbi:Pg:dbname=genome_usage;host=gms-postgres.gsc.wustl.edu;sslcert=/gscmnt/gc2560/core/gms-database-certs/gms-postgres.crt;sslkey=/gscmnt/gc2560/core/gms-database-certs/gms-postgres.pem;sslrootcert=/gscmnt/gc2560/core/gms-database-certs/gms-postgres.server.crt' }
 sub db_username { Genome::Config::get('usage_log_db_username') }
 sub db_password { Genome::Config::get('usage_log_db_password') }
 sub db_opts { { AutoCommit => 1, PrintError => 0, RaiseError => 0 } }
