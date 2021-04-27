@@ -150,8 +150,22 @@ sub _copy_file_to_allocation {
 
     my $filename = File::Basename::basename($original_file_path);
     my $destination_file_path = File::Spec->catdir($allocation->absolute_path, $filename);
-    Genome::Sys->copy_file($original_file_path, $destination_file_path);
-    $allocation->reallocate();
+    if ($ENV{UR_DBI_NO_COMMIT}) {
+        Genome::Sys->copy_file($original_file_path, $destination_file_path);
+        $allocation->reallocate();
+    }
+    else {
+        my $model_config = 'model.' . $self->id . '.yaml';
+        Genome::Sys->shellcmd(
+            cmd => [
+                '/usr/bin/gsutil/gsutil',
+                'cp',
+                $original_file_path,
+                'gs://gms_environment_config/' . $model_config,
+            ],
+            input_files => [$original_file_path],
+        );
+    }
     $allocation->archivable(0);
     return $destination_file_path;
 }
