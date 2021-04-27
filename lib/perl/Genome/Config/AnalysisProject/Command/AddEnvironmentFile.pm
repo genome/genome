@@ -54,19 +54,33 @@ sub execute {
         );
     }
 
-    my $env_filename = 'env.' . $analysis_project->id . '.yaml';
-    Genome::Sys->shellcmd(
-        cmd => [
-            '/usr/bin/gsutil/gsutil',
-            'cp',
-            $self->environment_file,
-            'gs://gms_environment_config/' . $env_filename,
-        ],
-        input_files => [$self->environment_file],
-    );
+    if($ENV{UR_DBI_NO_COMMIT}) {
+        my $config_subpath = Genome::Config::config_subpath;
+        my $filename = $config_subpath->basename;
 
-    $self->status_message('Environment file queued for installation');
+        my $dir = File::Spec->join($allocation->absolute_path, $config_subpath->dir->stringify);
+        Genome::Sys->create_directory($dir);
 
+        my $installed_path = File::Spec->join($dir, $filename);
+        Genome::Sys->copy_file($self->environment_file, $installed_path);
+        $allocation->reallocate();
+
+        $self->status_message('Environment file installed to %s', $installed_path);
+    }
+    else {
+        my $env_filename = 'env.' . $analysis_project->id . '.yaml';
+        Genome::Sys->shellcmd(
+            cmd => [
+                '/usr/bin/gsutil/gsutil',
+                'cp',
+                $self->environment_file,
+                'gs://gms_environment_config/' . $env_filename,
+            ],
+            input_files => [$self->environment_file],
+        );
+
+        $self->status_message('Environment file queued for installation');
+    }
     return 1;
 }
 
