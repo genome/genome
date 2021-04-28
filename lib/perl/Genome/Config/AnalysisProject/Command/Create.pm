@@ -21,11 +21,11 @@ class Genome::Config::AnalysisProject::Command::Create {
             valid_values => ['cle', 'prod-builder', 'ad-hoc'],
             doc => 'The environment in which the analysis will be run. "cle" is for CLIA-related analysis, "prod-builder" is for using production compute resources, and "ad-hoc" for any other analysis',
         },
-        no_config => {
+        prompt_for_config => {
             is => 'Boolean',
             is_optional => 1,
             default_value => 0,
-            doc => 'If specified, you will not be prompted for any menu items and the project will be created without config.'
+            doc => 'If specified, you will be prompted for menu items to add to the project.'
         },
         analysis_menu_items => {
             is                  => 'Genome::Config::AnalysisMenu::Item',
@@ -122,7 +122,7 @@ sub _get_menu_items {
 
     if ($self->analysis_menu_items()) {
         return [$self->analysis_menu_items];
-    } elsif ($self->no_config()) {
+    } elsif (not $self->prompt_for_config()) {
         return [];
     } else {
         my $class_name = 'Genome::Config::AnalysisMenu::Item';
