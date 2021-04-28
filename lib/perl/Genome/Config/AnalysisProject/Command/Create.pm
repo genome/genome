@@ -125,6 +125,19 @@ sub _get_menu_items {
     } elsif ($self->no_config()) {
         return [];
     } else {
+
+        my $add_config = $self->_ask_user_question(
+            'Would you like to add configuration from the preset config menu items?',
+            60,
+            'y|n',
+            'y',
+            '(y)es, add config / (n)o, start with no config',
+        );
+        unless ($add_config eq 'y') {
+            return [];
+        }
+
+        $self->status_message("Below are the available configuration options. Use (c) to add all of the listed configurations or select which configurations to add. Use (x) to abort.\n");
         my $class_name = 'Genome::Config::AnalysisMenu::Item';
         return [$self->resolve_param_value_from_cmdline_text(
                 {
