@@ -64,7 +64,7 @@ sub _get_default_template_name {
 sub _parse_database_connection_info_from_config {
     my %connection;
     my $server = Genome::Config::get('ds_gmschema_server');
-    foreach my $key ( qw( dbname host port ) ) {
+    foreach my $key ( qw( dbname host port sslkey sslcert sslservercert ) ) {
         no warnings 'uninitialized';
         ($connection{$key}) = $server =~ m/$key=(.*?)(?:;|$)/;
     }
@@ -226,8 +226,10 @@ sub _dbh_for_production_db {
     delete @ENV{ @ENV_VARS_FOR_TEST_DB };
     my $db_settings = $self->_parse_database_connection_info_from_config();
     my $conn = sprintf('dbi:Pg:dbname=%s;host=%s', $db_settings->{dbname}, $db_settings->{host});
-    if ($db_settings->{port}) {
-        $conn .= ';port=' . $db_settings->{port};
+    for my $key (qw(port sslkey sslcert sslservercert)) {
+        if ($db_settings->{$key}) {
+            $conn .= ";$key=" . $db_settings->{$key};
+        }
     }
     DBI->connect($conn,
                  Genome::Config::get('ds_gmschema_login'),
