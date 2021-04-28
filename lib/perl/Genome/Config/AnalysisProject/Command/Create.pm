@@ -130,7 +130,7 @@ sub _get_menu_items {
                 {
                     name => 'analysis_menu_items',
                     class => $class_name,
-                    value => [$class_name->get(status => 'active')],
+                    value => [map $_->id, $class_name->get(status => 'active')],
                 }
             )];
     }
