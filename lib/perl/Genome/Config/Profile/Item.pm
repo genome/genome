@@ -155,17 +155,17 @@ sub _copy_file_to_allocation {
         $allocation->reallocate();
     }
     else {
-        my $model_config = 'model.' . $self->id . $filename . '.yaml';
+        my $config_file = 'model.' . $self->id . $filename . '.yaml';
         Genome::Sys->shellcmd(
             cmd => [
                 '/usr/bin/gsutil/gsutil',
                 'cp',
                 $original_file_path,
-                'gs://gms_environment_config/' . $model_config,
+                'gs://gms_environment_config/' . $config_file,
             ],
             input_files => [$original_file_path],
         );
-        $self->status_message('Model config file queued for installation')
+        $self->status_message('Config file queued for installation')
     }
     $allocation->archivable(0);
     return $destination_file_path;
