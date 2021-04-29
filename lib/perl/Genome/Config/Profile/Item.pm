@@ -165,6 +165,7 @@ sub _copy_file_to_allocation {
             ],
             input_files => [$original_file_path],
         );
+        $self->status_message('Model config file queued for installation')
     }
     $allocation->archivable(0);
     return $destination_file_path;
