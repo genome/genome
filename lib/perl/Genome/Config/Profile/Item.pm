@@ -155,7 +155,7 @@ sub _copy_file_to_allocation {
         $allocation->reallocate();
     }
     else {
-        my $model_config = 'model.' . $self->id . '.yaml';
+        my $model_config = 'model.' . $self->id . $filename . '.yaml';
         Genome::Sys->shellcmd(
             cmd => [
                 '/usr/bin/gsutil/gsutil',
