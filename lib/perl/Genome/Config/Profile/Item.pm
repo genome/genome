@@ -150,8 +150,23 @@ sub _copy_file_to_allocation {
 
     my $filename = File::Basename::basename($original_file_path);
     my $destination_file_path = File::Spec->catdir($allocation->absolute_path, $filename);
-    Genome::Sys->copy_file($original_file_path, $destination_file_path);
-    $allocation->reallocate();
+    if ($ENV{UR_DBI_NO_COMMIT}) {
+        Genome::Sys->copy_file($original_file_path, $destination_file_path);
+        $allocation->reallocate();
+    }
+    else {
+        my $config_file = 'model.' . $self->id . $filename . '.yaml';
+        Genome::Sys->shellcmd(
+            cmd => [
+                '/usr/bin/gsutil/gsutil',
+                'cp',
+                $original_file_path,
+                'gs://gms_environment_config/' . $config_file,
+            ],
+            input_files => [$original_file_path],
+        );
+        $self->status_message('Config file queued for installation')
+    }
     $allocation->archivable(0);
     return $destination_file_path;
 }
