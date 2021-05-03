@@ -156,7 +156,7 @@ sub _copy_file_to_allocation {
     }
     else {
         my ($file_name, $file_dirs, $file_suffix) = File::Basename::fileparse($config_path, qr/\.[^.]+/);
-        my $config_file = 'model.' . $self->id . '.' . $file_name . '.yaml';
+        my $config_file = join('.', 'model', $self->id, $file_name, 'yaml');
         Genome::Sys->shellcmd(
             cmd => [
                 '/usr/bin/gsutil/gsutil',
