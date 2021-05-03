@@ -155,7 +155,7 @@ sub _copy_file_to_allocation {
         $allocation->reallocate();
     }
     else {
-        my ($file_name, $file_dirs, $file_suffix) = File::Basename::fileparse($config_path, qr/\.[^.]+/);
+        my ($file_name) = File::Basename::fileparse($original_file_path, qr/\.[^.]+/);
         my $config_file = join('.', 'model', $self->id, $file_name, 'yaml');
         Genome::Sys->shellcmd(
             cmd => [
