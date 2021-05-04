@@ -323,14 +323,14 @@ sub _create {
     my %parameters = @_;
     $parameters{allocation_id} = delete $parameters{id};
 
-    my $create_flag = delete $parameters{create_remotely} // 0;
+    my $skip_allocation_path_creation = delete $parameters{skip_allocation_path_creation} // 0;
 
     my $pars = Genome::Disk::Detail::Allocation::CreationParameters->create(
         %parameters);
 
     my $creator = Genome::Disk::Detail::Allocation::Creator->create(
         parameters => $pars);
-    return $creator->create_allocation( create_flag => $create_flag );
+    return $creator->create_allocation( skip_allocation_path_creation => $skip_allocation_path_creation );
 }
 
 

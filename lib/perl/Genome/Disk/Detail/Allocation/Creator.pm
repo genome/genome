@@ -22,7 +22,7 @@ sub create_allocation {
     my $self = shift;
 
     my %parameters = @_;
-    my $create_remotely = delete $parameters{create_flag} // 0;
+    my $skip_allocation_path_creation = delete $parameters{skip_allocation_path_creation} // 0;
 
     $self->verify_no_parent_allocation;
     $self->wait_for_database_pause;
@@ -32,7 +32,7 @@ sub create_allocation {
     my $allocation_object = $self->_get_allocation_without_lock(
         \@candidate_volumes);
 
-    unless ($create_remotely) {
+    unless ($skip_allocation_path_creation) {
         $self->create_directory_or_delete_allocation($allocation_object);
     }
 
