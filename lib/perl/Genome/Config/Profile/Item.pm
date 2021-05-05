@@ -132,7 +132,7 @@ sub has_model_for {
 sub _create_allocation_for_file {
     my $self = shift;
     my $file_to_store = shift;
-    my $skip_allocation_path_creation = shift // 1;
+    my $skip_allocation_path_creation = (shift // 1) && !$ENV{UR_DBI_NO_COMMIT};
 
     my $allocation = Genome::Disk::Allocation->create(
         owner_id            => $self->id,

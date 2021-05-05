@@ -32,7 +32,7 @@ sub create_allocation {
     my $allocation_object = $self->_get_allocation_without_lock(
         \@candidate_volumes);
 
-    if ($ENV{UR_DBI_NO_COMMIT} or not $skip_allocation_path_creation) {
+    unless ($skip_allocation_path_creation) {
         $self->create_directory_or_delete_allocation($allocation_object);
     }
 
