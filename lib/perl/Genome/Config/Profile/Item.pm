@@ -140,7 +140,7 @@ sub _create_allocation_for_file {
         allocation_path     => 'analysis_configuration/' . $self->id,
         owner_class_name    => $self->class,
         kilobytes_requested => $self->_get_size_in_kb($file_to_store),
-	skip_allocation_path_creation => $skip_allocation_path_creation,
+        skip_allocation_path_creation => $skip_allocation_path_creation,
     );
 
     return $self->_copy_file_to_allocation($file_to_store, $allocation, $skip_allocation_path_creation);
