@@ -28,7 +28,7 @@ sub help_synopsis {
 
 sub help_detail {
     return <<"EOS"
-This command is used to replace the existing environment configuration file for an analysis-project.
+This command is used to update the existing environment configuration file for an analysis-project.
 EOS
 }
 
@@ -55,7 +55,7 @@ sub execute {
         Genome::Sys->copy_file($self->environment_file, $installed_path);
         $allocation->reallocate();
 
-        $self->status_message('Environment file replaced at %s', $installed_path);
+        $self->status_message('Environment file updated at %s', $installed_path);
     }
     else {
         my $env_filename = 'env.' . $analysis_project->id . '.yaml';
@@ -69,7 +69,7 @@ sub execute {
             input_files => [$self->environment_file],
         );
 
-        $self->status_message('Environment file queued for replacement');
+        $self->status_message('Environment file queued for update');
     }
     return 1;
 }
