@@ -8,7 +8,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Test::More tests => 3;
+use Test::More tests => 2;
 use Test::Exception;
 
 my $class = 'Genome::Config::AnalysisProject::Command::UpdateEnvironmentFile';
