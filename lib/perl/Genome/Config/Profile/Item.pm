@@ -166,7 +166,7 @@ sub _copy_file_to_allocation {
                 '/usr/bin/gsutil/gsutil',
                 'cp',
                 $original_file_path,
-                'gs://gms_environment_config/' . $config_file,
+                Genome::Config::get('gcp_config_bucket') . $config_file,
             ],
             input_files => [$original_file_path],
         );
