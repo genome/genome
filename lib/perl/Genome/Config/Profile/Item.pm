@@ -101,7 +101,8 @@ sub concretize {
     return if $self->is_concrete();
 
     my $original_file_path = $self->file_path;
-    return $self->_create_allocation_for_file($original_file_path);
+    my $skip_allocation_path_creation = 0;
+    return $self->_create_allocation_for_file($original_file_path, $skip_allocation_path_creation);
 }
 
 sub create_from_file_path {
@@ -131,6 +132,7 @@ sub has_model_for {
 sub _create_allocation_for_file {
     my $self = shift;
     my $file_to_store = shift;
+    my $skip_allocation_path_creation = (shift // 1) && !$ENV{UR_DBI_NO_COMMIT};
 
     my $allocation = Genome::Disk::Allocation->create(
         owner_id            => $self->id,
@@ -138,19 +140,21 @@ sub _create_allocation_for_file {
         allocation_path     => 'analysis_configuration/' . $self->id,
         owner_class_name    => $self->class,
         kilobytes_requested => $self->_get_size_in_kb($file_to_store),
+        skip_allocation_path_creation => $skip_allocation_path_creation,
     );
 
-    return $self->_copy_file_to_allocation($file_to_store, $allocation);
+    return $self->_copy_file_to_allocation($file_to_store, $allocation, $skip_allocation_path_creation);
 }
 
 sub _copy_file_to_allocation {
     my $self = shift;
     my $original_file_path = shift;
     my $allocation = shift;
+    my $skip_allocation_path_creation = shift // 1;
 
     my $filename = File::Basename::basename($original_file_path);
     my $destination_file_path = File::Spec->catdir($allocation->absolute_path, $filename);
-    if ($ENV{UR_DBI_NO_COMMIT}) {
+    if ($ENV{UR_DBI_NO_COMMIT} or not $skip_allocation_path_creation) {
         Genome::Sys->copy_file($original_file_path, $destination_file_path);
         $allocation->reallocate();
     }

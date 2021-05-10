@@ -21,6 +21,9 @@ class Genome::Disk::Detail::Allocation::Creator {
 sub create_allocation {
     my $self = shift;
 
+    my %parameters = @_;
+    my $skip_allocation_path_creation = delete $parameters{skip_allocation_path_creation} // 0;
+
     $self->verify_no_parent_allocation;
     $self->wait_for_database_pause;
 
@@ -29,7 +32,9 @@ sub create_allocation {
     my $allocation_object = $self->_get_allocation_without_lock(
         \@candidate_volumes);
 
-    $self->create_directory_or_delete_allocation($allocation_object);
+    unless ($skip_allocation_path_creation) {
+        $self->create_directory_or_delete_allocation($allocation_object);
+    }
 
     Genome::Timeline::Event::Allocation->created('initial creation',
         $allocation_object);

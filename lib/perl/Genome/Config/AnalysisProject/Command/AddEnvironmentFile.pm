@@ -51,6 +51,7 @@ sub execute {
             disk_group_name => Genome::Config::get('disk_group_references'),
             allocation_path => 'analysis_project/' . $analysis_project->id,
             kilobytes_requested => ((-s $self->environment_file)/1024 + 1),
+            skip_allocation_path_creation => 1,
         );
     }
 
