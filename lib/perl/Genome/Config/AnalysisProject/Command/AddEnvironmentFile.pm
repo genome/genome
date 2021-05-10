@@ -75,7 +75,7 @@ sub execute {
                 '/usr/bin/gsutil/gsutil',
                 'cp',
                 $self->environment_file,
-                'gs://gms_environment_config/' . $env_filename,
+                Genome::Config::get('gcp_config_bucket') . $env_filename,
             ],
             input_files => [$self->environment_file],
         );
