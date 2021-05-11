@@ -72,6 +72,7 @@ sub execute {
         my $env_filename = 'env.' . $analysis_project->id . '.yaml';
         Genome::Sys->shellcmd(
             cmd => [
+                '/usr/bin/python3',
                 '/usr/bin/gsutil/gsutil',
                 'cp',
                 $self->environment_file,
