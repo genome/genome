@@ -163,6 +163,7 @@ sub _copy_file_to_allocation {
         my $config_file = join('.', 'model', $self->id, $file_name, 'yaml');
         Genome::Sys->shellcmd(
             cmd => [
+                '/usr/bin/python3',
                 '/usr/bin/gsutil/gsutil',
                 'cp',
                 $original_file_path,
