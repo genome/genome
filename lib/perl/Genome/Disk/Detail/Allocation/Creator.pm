@@ -243,7 +243,7 @@ sub _verify_allocation_path_unused {
 }
 
 sub _attempt_allocation_creation {
-    my ($self, $skip_allocation_path_creation, $candidate_volume) = @_;
+    my ($self, $skip_disk_query, $candidate_volume) = @_;
     my $candidate_allocation = Genome::Disk::Allocation->SUPER::create(
         mount_path => $candidate_volume->mount_path,
         $self->parameters->as_hash,
@@ -268,7 +268,7 @@ sub _attempt_allocation_creation {
         Genome::Disk::Allocation::_commit_unless_testing();
         return;
 
-    } elsif (!$skip_allocation_path_creation && $candidate_volume->is_used_over_soft_limit) {
+    } elsif (!$skip_disk_query && $candidate_volume->is_used_over_soft_limit) {
         $self->debug_message(
                 "%s's used_kb exceeded soft limit (%d %s), "
                 . "rolling back allocation.",
