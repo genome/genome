@@ -28,10 +28,8 @@ sub create_allocation {
     $self->wait_for_database_pause;
 
     my @candidate_volumes = $self->candidate_volumes;
-
     my $allocation_object = $self->_get_allocation_without_lock(
-        \@candidate_volumes);
-
+        $skip_allocation_path_creation, \@candidate_volumes);
     unless ($skip_allocation_path_creation) {
         $self->create_directory_or_delete_allocation($allocation_object);
     }
@@ -169,7 +167,7 @@ sub get_candidate_volumes {
 }
 
 sub _get_allocation_without_lock {
-    my ($self, $candidate_volumes) = @_;
+    my ($self, $skip_allocation_path_creation, $candidate_volumes) = @_;
     # We randomize to avoid the rare repeated contention case
     my @randomized_candidate_volumes = (@$candidate_volumes,
         shuffle(@$candidate_volumes));
@@ -177,13 +175,12 @@ sub _get_allocation_without_lock {
     my $attempts = 0;
     my $chosen_allocation;
     for my $candidate_volume (@randomized_candidate_volumes) {
-        if ($candidate_volume->has_space(
+        if ($candidate_volume->has_space($skip_allocation_path_creation,
                 $self->parameters->kilobytes_requested)) {
             $self->_verify_allocation_path_unused($candidate_volume);
-
             $attempts++;
             $chosen_allocation = $self->_attempt_allocation_creation(
-                $candidate_volume);
+                $skip_allocation_path_creation, $candidate_volume);
             if ($chosen_allocation) {
                 last;
             }
@@ -246,8 +243,7 @@ sub _verify_allocation_path_unused {
 }
 
 sub _attempt_allocation_creation {
-    my ($self, $candidate_volume) = @_;
-
+    my ($self, $skip_disk_query, $candidate_volume) = @_;
     my $candidate_allocation = Genome::Disk::Allocation->SUPER::create(
         mount_path => $candidate_volume->mount_path,
         $self->parameters->as_hash,
@@ -272,7 +268,7 @@ sub _attempt_allocation_creation {
         Genome::Disk::Allocation::_commit_unless_testing();
         return;
 
-    } elsif ($candidate_volume->is_used_over_soft_limit) {
+    } elsif (!$skip_disk_query && $candidate_volume->is_used_over_soft_limit) {
         $self->debug_message(
                 "%s's used_kb exceeded soft limit (%d %s), "
                 . "rolling back allocation.",
