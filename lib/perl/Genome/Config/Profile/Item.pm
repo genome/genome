@@ -74,6 +74,11 @@ UR::Observer->register_callback(subject_class_name => __PACKAGE__, aspect => 'cr
 
 sub delete {
     my $self = shift;
+
+    for my $bridge ($self->tag_bridges) {
+        $bridge->delete();
+    }
+
     eval {
         if ($self->allocation) {
             $self->allocation->delete();
