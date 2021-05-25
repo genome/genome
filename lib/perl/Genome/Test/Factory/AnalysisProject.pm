@@ -46,6 +46,10 @@ sub setup_system_analysis_project {
     my $class = shift;
     my $anp = $class->setup_object();
 
+    my $env_file = Genome::Sys->create_temp_file_path;
+    Genome::Sys->write_file($env_file, 'not_a_real_config_file: 1');
+    Genome::Config::AnalysisProject::Command::AddEnvironmentFile->execute(environment_file => $env_file, analysis_project => $anp);
+
     Genome::Config::set_env('system_analysis_project_name', $anp->name);
 
     return $anp;
