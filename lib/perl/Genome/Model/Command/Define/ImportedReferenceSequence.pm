@@ -366,6 +366,10 @@ sub _create_build {
         }
     }
 
+    my $anp = $model->analysis_project;
+    my $guard;
+    $guard = $anp->set_env if $anp;
+
     my $build = Genome::Model::Build->create(@build_parameters);
     if($build) {
         $self->status_message('Created build of id ' . $build->build_id);
