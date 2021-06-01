@@ -23,6 +23,11 @@ use_ok($pkg) or die();
 my $test_dir = Genome::Utility::Test->data_dir_ok($pkg);
 
 my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+
+my $env_file = Genome::Sys->create_temp_file_path;
+Genome::Sys->write_file($env_file, 'not_a_real_config_file: 1');
+Genome::Config::AnalysisProject::Command::AddEnvironmentFile->execute(environment_file => $env_file, analysis_project => $anp);
+
 my $model = Genome::Test::Factory::Model::SomaticValidation->setup_object();
 $anp->add_model_bridge(model_id => $model->id);
 my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id, status => 'Running');
