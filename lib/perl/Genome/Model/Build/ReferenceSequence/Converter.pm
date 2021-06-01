@@ -32,7 +32,7 @@ class Genome::Model::Build::ReferenceSequence::Converter {
     has_metric => [
         algorithm => { # README - If adding an algorithm, please add to the list of valid algorithms
             is => 'Text',
-            valid_values => [qw/ convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op drop_extra_contigs chr_md5/],
+            valid_values => [qw/ convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op drop_extra_contigs chr_md5 synonym_file/],
             doc => 'method to use to convert from the source to the destination',
         },
         resource => {
@@ -154,6 +154,44 @@ sub chr_md5 {
     my $new_chrom = $chr_map->{$chrom};
     return ($new_chrom, $start, $stop);
 }
+
+sub synonym_file {
+    my $self = shift;
+    my ($chrom, $start, $stop) = @_;
+
+    my $synonym_map = $self->_synonym_hash_ref();
+    my $new_chrom = $synonym_map->{$chrom};
+
+    unless ($new_chrom) {
+        $self->fatal_message('No synonym found to map source chromosome %s to destination reference.', $chrom);
+    }
+    return ($new_chrom, $start, $stop);
+}
+
+sub _synonym_hash_ref {
+    my $self = shift;
+
+    unless ($self->{_synonym_hash_ref}) {
+        my $synonyms_file = $self->resource;
+        unless ($synonyms_file and -s $synonyms_file) {
+            $self->fatal_message('No synoynms file found for converter %s', $self->id);
+        }
+
+        my $synonym_map = {};
+        my $fh = Genome::Sys->open_file_for_reading($synonyms_file);
+        while (my $line = $fh->getline) {
+            chomp $line;
+            my ($destination, $source) = split("\t", $line);
+
+            $synonym_map->{$source} = $destination;
+            $self->{_synonym_hash_ref} = $synonym_map;
+        }
+        $fh->close;
+    }
+
+    return $self->{_synonym_hash_ref};
+}
+
 
 sub lift_over {
     my $self = shift;
