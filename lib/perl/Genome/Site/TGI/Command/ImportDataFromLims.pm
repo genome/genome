@@ -177,7 +177,7 @@ sub _resolve_lims_path {
 
     my $id = $data->id;
 
-    my $docker_image = `lims-config docker_images.lims_perl_environment`;
+    my $docker_image = 'registry.gsc.wustl.edu/genome/lims_perl_xenial_environment:latest';
     chomp $docker_image;
 
     my $guard = Genome::Config::set_env('lsb_sub_additional', "docker($docker_image)");
