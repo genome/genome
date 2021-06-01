@@ -228,6 +228,10 @@ sub _create_allocation {
     );
 
     my @volumes = Genome::Disk::Detail::Allocation::Creator->get_candidate_volumes(disk_group_name => $params{disk_group_name});
+    unless (@volumes) {
+        #sometimes users pass volumes when a group is needed.  The allocation system tolerates this, so let's tolerate it here, too.
+        push @volumes, Genome::Disk::Volume->get(mount_path => $params{disk_group_name});
+    }
     my (@local_volumes, @remote_volumes);
     for my $v (@volumes) {
         if ($v->is_remote_volume) {
