@@ -11,7 +11,7 @@ use warnings;
 
 use File::Spec;
 use Sub::Install qw(reinstall_sub);
-use Test::More tests => 10;
+use Test::More tests => 11;
 
 use above "Genome";
 use Genome::Test::Factory::AnalysisProject;
@@ -78,4 +78,5 @@ for my $key (sort keys %extra_properties) {
     is ($result->$key, $extra_properties{$key}, "assigned $key");
 }
 
-
+my @glob = glob(File::Spec->join($test_dir, '*'));
+is(scalar(@glob), 5, 'original source files were not deleted by default');

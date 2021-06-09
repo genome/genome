@@ -840,6 +840,8 @@ sub rsync_directory {
     my $chmod = delete $params{chmod};
     my $chown = delete $params{chown};
 
+    my $remove_source_files = delete $params{remove_source_files};
+
     unless ($source_dir) {
         Carp::confess "Not given directory to copy from!";
     }
@@ -864,6 +866,10 @@ sub rsync_directory {
     }
     if ($chown) {
         push @long_opts, '--chown=' . $chown;
+    }
+
+    if($remove_source_files) {
+        push @long_opts, '--remove-source-files';
     }
 
     $source_dir .= '/' unless substr($source_dir,-1) eq '/';
