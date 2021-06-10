@@ -44,6 +44,11 @@ class Genome::InstrumentData::Command::Import::TrustedData {
             is_many => 1,
             doc => 'Name and value pairs to add to the instrument data. Separate name and value with an equals (=) and name/value pairs with a comma (,).',
         },
+        remove_source_files => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'By default this tool makes a copy of the instrument data files in an allocation.  This option will delete the original source files leaving only the allocated copy.',
+        },
     ],
     has_optional_transient => [
         _new_instrument_data => {
@@ -118,6 +123,7 @@ sub execute {
         target_directory => $allocation->absolute_path,
         chmod => 'Dug=rx,Fug=r',
         chown => ':' . Genome::Config::get('sys_group'),
+        remove_source_files => $self->remove_source_files,
     );
 
     Genome::Config::AnalysisProject::InstrumentDataBridge->create(
