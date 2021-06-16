@@ -217,7 +217,7 @@ sub _generate_cromwell_config {
     my $docker_volumes = Genome::Config::get('docker_volumes');
     if ($ENV{LSF_DOCKER_VOLUMES}) {
         if ($docker_volumes) {
-            $docker_volumes .= $ENV{LSF_DOCKER_VOLUMES} . ' ' . $docker_volumes;
+            $docker_volumes = $ENV{LSF_DOCKER_VOLUMES} . ' ' . $docker_volumes;
         } else {
             $docker_volumes = $ENV{LSF_DOCKER_VOLUMES};
         }
