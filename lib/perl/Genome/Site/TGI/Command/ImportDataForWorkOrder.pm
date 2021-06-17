@@ -36,6 +36,17 @@ sub execute {
         scalar(@existing),
     );
 
+    if ($self->analysis_project) {
+        my $cmd = Genome::Config::AnalysisProject::Command::AddInstrumentData->create(
+            instrument_data => \@existing,
+            analysis_project => $self->analysis_project,
+        );
+
+        unless ($cmd->execute) {
+            $self->fatal_message('Failed to assign existing instrument data to analysis project.');
+        }
+    }
+
     my %found;
     $found{$_->id}++ for @existing;
     my @to_import = grep { !$found{$_->entity_id} } @items;
