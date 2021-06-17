@@ -75,4 +75,15 @@ sub execute {
     return $new_group->id;
 }
 
+sub exit_code_for_return_value {
+    my $self = shift;
+    my $return_value = shift;
+    if (! $return_value) {
+        $return_value = 1;
+    } else {
+        $return_value = 0;
+    }
+    return $return_value;
+}
+
 1;
