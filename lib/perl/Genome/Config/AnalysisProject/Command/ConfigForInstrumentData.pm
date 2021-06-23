@@ -21,6 +21,12 @@ class Genome::Config::AnalysisProject::Command::ConfigForInstrumentData {
             doc => 'Display report in color.'
         },
     ],
+    has_optional => [
+        config_file => {
+            is => 'Path',
+            doc => 'a specific config file to evaluate instead of existing AnP config',
+        },
+    ],
     doc => 'compare instdata to AnP configs to show matches, models and mismatches',
 };
 
@@ -29,14 +35,25 @@ sub execute {
     my @instrument_data = $self->instrument_data;
 
     for my $id (@instrument_data) {
-        my @analysis_projects = $id->analysis_projects;
-        unless(@analysis_projects) {
-            $self->warning_message('No analysis-projects associated with instrument data %s.', $id->__display_name__);
-            return 1;
-        }
+        if (my $config_file = $self->config_file) {
+            my $parsed_file = Genome::Config::Parser->parse($config_file);
+            my @rules = Genome::Config::Rule->create_from_hash($parsed_file->{rules});
 
-        for my $ap (@analysis_projects) {
-            $self->_display_matches($id, $ap);
+            print sprintf("Comparing Instrument Data %s to supplied config file:\n",
+                $self->_color($id->id,'cyan'),
+            );
+
+            $self->_display_match($id, $config_file, 0, @rules);
+        } else {
+            my @analysis_projects = $id->analysis_projects;
+            unless(@analysis_projects) {
+                $self->warning_message('No analysis-projects associated with instrument data %s.', $id->__display_name__);
+                return 1;
+            }
+
+            for my $ap (@analysis_projects) {
+                $self->_display_matches($id, $ap);
+            }
         }
     }
 
@@ -75,36 +92,44 @@ sub _display_matches {
     printf("  CQID Status: %s\n", $cqid_status);
 
     for my $map (@maps) {
-        my @rules = $map->rules;
+        $self->_display_match($instrument_data, $map->config->file_path, !$map->config->has_model_for($instrument_data), $map->rules);
+    }
+}
 
-        my @mismatches;
-        for my $rule (@rules) {
-            my ($match, $actual) = $map->evaluate_rule($rule,$instrument_data);
-            unless($match) {
-                push @mismatches, [$rule, $actual];
-            }
+sub _display_match {
+    my $self = shift;
+    my $instrument_data = shift;
+    my $file_path = shift;
+    my $model_missing = shift;
+    my @rules = @_;
+
+    my @mismatches;
+    for my $rule (@rules) {
+        my ($match, $actual) = Genome::Config::RuleModelMap->evaluate_rule($rule,$instrument_data);
+        unless($match) {
+            push @mismatches, [$rule, $actual];
+        }
+    }
+
+    if(@mismatches) {
+        print sprintf("  Mismatches for config %s:\n",
+            $self->_color($file_path,'red')
+        );
+        for my $m (@mismatches) {
+            print sprintf("    got %s for rule %s\n",
+                $self->_color($m->[1],'cyan'),
+                $self->_color($m->[0]->__display_name__,'magenta')
+            );
         }
 
-        if(@mismatches) {
-            print sprintf("  Mismatches for config %s:\n",
-                $self->_color($map->config->file_path,'red')
+    } else {
+        unless ($model_missing) {
+            print sprintf("  Matches config %s.\n",
+                $self->_color($file_path,'green')
             );
-            for my $m (@mismatches) {
-                print sprintf("    got %s for rule %s\n",
-                    $self->_color($m->[1],'cyan'),
-                    $self->_color($m->[0]->__display_name__,'magenta')
-                );
-            }
-
         } else {
-            if ($map->config->has_model_for($instrument_data)) {
-                print sprintf("  Matches config %s.\n",
-                    $self->_color($map->config->file_path,'green')
-                );
-            } else {
-                printf("  Missing expected model for matched config %s.\n",
-                    $self->_color($map->config->file_path, 'blue'));
-            }
+            printf("  Missing expected model for matched config %s.\n",
+                $self->_color($file_path, 'blue'));
         }
     }
 }
