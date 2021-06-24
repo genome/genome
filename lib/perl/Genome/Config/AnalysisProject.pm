@@ -200,4 +200,15 @@ sub system_analysis_project {
     return $anp;
 }
 
+sub possible_volumes {
+    my $self = shift;
+
+    my $guard = $self->set_env;
+
+    my @group_names = map { Genome::Config::get($_) } (qw(disk_group_models disk_group_alignments disk_group_scratch));
+    my @volumes = Genome::Disk::Volume->get(disk_group_names => \@group_names);
+
+    return sort map { $_->mount_path } @volumes;
+}
+
 1;

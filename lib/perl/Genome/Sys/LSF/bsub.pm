@@ -16,6 +16,8 @@ sub run {
     my $executable = shift;
     my @args = args_builder(@_);
 
+    my %args = @_;
+
     if (ref($executable) ne 'ARRAY') {
         $executable = [$executable];
     }
@@ -32,14 +34,22 @@ sub run {
     }
     local $ENV{LSF_DOCKER_VOLUMES} = $docker_volumes;
 
-    my @output = Genome::Sys->capture(@$executable, @args);
+    if (exists $args{interactive} and $args{interactive}) {
+        Genome::Sys->shellcmd(
+            cmd => [@$executable, @args],
+        );
 
-    my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
-    unless ($job_id) {
-        die "Could not get job id from bsub output!";
+        return -1; #not a valid job ID.
+    } else {
+        my @output = Genome::Sys->capture(@$executable, @args);
+
+        my $job_id = ($output[-1] =~ /^Job <(\d+)> is submitted to/)[0];
+        unless ($job_id) {
+            die "Could not get job id from bsub output!";
+        }
+
+        return $job_id;
     }
-
-    return $job_id;
 }
 
 sub bsub {
@@ -173,6 +183,11 @@ sub _args_spec {
         wait_for_completion => {
             optional => 1,
             option_flag => '-K',
+            type => BOOLEAN,
+        },
+        interactive => {
+            optional => 1,
+            option_flag => '-Is',
             type => BOOLEAN,
         },
         post_exec_cmd => {

@@ -9,6 +9,13 @@ use Genome;
 
 class Genome::Config::AnalysisProject::Command::PossibleVolumes {
     is => 'Genome::Config::AnalysisProject::Command::Base',
+    has_optional => [
+        use_docker_format => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'If set, will output in a format suitable for the "-v" option to `docker run`.',
+        },
+    ],
 };
 
 sub help_brief {
@@ -28,13 +35,12 @@ sub valid_statuses {
 sub execute {
     my $self = shift;
 
-    my $guard = $self->analysis_project->set_env;
+    my @possible_volumes = $self->analysis_project->possible_volumes;
 
-    my @group_names = map { Genome::Config::get($_) } (qw(disk_group_models disk_group_alignments disk_group_scratch));
-    my @volumes = Genome::Disk::Volume->get(disk_group_names => \@group_names);
-
-    for my $v (sort { $a->mount_path cmp $b->mount_path } @volumes) {
-        say $v->mount_path;
+    if ($self->use_docker_format) {
+        say join(" ", map { "$_:$_" } @possible_volumes);
+    } else {
+        say $_ for @possible_volumes;
     }
 
     return 1;
