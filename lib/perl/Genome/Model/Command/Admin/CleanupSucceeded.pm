@@ -98,7 +98,7 @@ sub _submit_abandon_jobs {
         my $anp_guard = $anp->set_env;
         my $volume_guard = Genome::Config::set_env('docker_volumes', join(' ', map { "$_:$_" } @vol));
         my $image_guard = Genome::Config::set_env('lsb_sub_additional', sprintf('docker0(%s)', $ENV{LSB_DOCKER_IMAGE})); #use the current image regardless of the AnP config
-        unless($ENV{LSF_DOCKER_NETWORK} = 'host') {
+        unless($ENV{LSF_DOCKER_NETWORK} eq 'host') {
             $self->fatal_message('Parent container must have LSF_DOCKER_NETWORK=host set.');
         }
 
