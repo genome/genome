@@ -17,9 +17,9 @@ class Genome::Model::Metric {
         value => {
             is => 'Text',
             len => 1000,
-            column_name => 'METRIC_VALUE',
+            column_name => 'metric_value',
         },
-        name => { is => 'Text', len => 100, column_name => 'METRIC_NAME' },
+        name => { is => 'Text', len => 100, column_name => 'metric_name' },
     ],
     has => [
         model => { is => 'Genome::Model', via => 'build' },
