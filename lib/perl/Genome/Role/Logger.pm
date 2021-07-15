@@ -19,6 +19,9 @@ BEGIN {
         #older versions stored this differently
         @log_levels = keys %Log::Dispatch::LEVELS;
     }
+
+    no warnings qw(redefine);
+    sub Log::Dispatch::Base::_get_callbacks { return; }
 }
 
 role Genome::Role::Logger {
