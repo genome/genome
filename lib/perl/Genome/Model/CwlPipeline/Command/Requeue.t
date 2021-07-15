@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 18;
+use Test::More tests => 20;
 
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Model::CwlPipeline;
@@ -39,6 +39,10 @@ run_test($build, $reason, undef);
 is(scalar(@notes), 2, 'created a second note given the second request');
 my @with_reason = grep { $_->body_text eq $reason } @notes;
 is(scalar(@with_reason), 1, 'found note with supplied reason');
+
+ok(UR::Context->commit(), 'can sync rebuild request to db');
+$build->rebuild_requested(0);
+ok(UR::Context->commit(), 'can replace value later (such as when restarting build');
 
 run_test($user_build, $reason, 'wrong user');
 my @user_notes = $user_build->notes(header_text => 'Rebuild Requested');
