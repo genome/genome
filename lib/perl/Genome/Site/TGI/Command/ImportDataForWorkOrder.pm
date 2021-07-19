@@ -36,7 +36,7 @@ sub execute {
         scalar(@existing),
     );
 
-    if ($self->analysis_project) {
+    if ($self->analysis_project and @existing) {
         my $cmd = Genome::Config::AnalysisProject::Command::AddInstrumentData->create(
             instrument_data => \@existing,
             analysis_project => $self->analysis_project,
