@@ -21,6 +21,11 @@ class Genome::Model::Command::Services::ListBuildQueue {
             default => 50,
             is_optional => 1,
         },
+        per_analysis_project_max => {
+            doc => 'maximum number of scheduled builds for a user within one AnP (assumes run_as will be used)',
+            default => 10,
+            is_optional => 1,
+        },
         running_max => {
             doc => 'maximum number of running builds per user (assumes run_as will be used)',
             default => 150,
@@ -90,6 +95,8 @@ sub execute {
         ITER: for my $iterator_params (@iterator_params) {
             my $models = Genome::Model->create_iterator(%{$iterator_params}, run_as => $run_as);
 
+            my %full_anps;
+
             MODEL: while (my $model = $models->next) {
                 if ($scheduled_count >= $self->max) {
                     Genome::Logger->infof(
@@ -109,6 +116,22 @@ sub execute {
                     );
                     next RUN_AS;
                 }
+
+                my $anp_id = $model->analysis_project->id;
+                next MODEL if $full_anps{$anp_id};
+
+                my $per_anp_scheduled = builds_for($run_as, 'Scheduled', $anp_id);
+                if ($per_anp_scheduled >= $self->per_analysis_project_max) {
+                    Genome::Logger::infof(
+                        "%s's scheduled count for AnP %s (%d) meets or exceeds maximum (%d)\n",
+                        $run_as,
+                        $anp_id,
+                        $self->per_analysis_project_max,
+                    );
+                    $full_anps{$anp_id} = 1;
+                    next MODEL;
+                }
+
                 $scheduled_count++;
                 $running_count++;
                 $self->print($model->id);
@@ -139,8 +162,14 @@ sub run_as_list {
 sub builds_for {
     my $username = shift;
     my $status = shift;
+    my $anp_id = shift;
 
-    my $set = Genome::Model::Build->define_set(run_by => $username, status => $status);
+    my @query = (run_by => $username, status => $status);
+    if ($anp_id) {
+        push @query, ('model.analysis_project.id' => $anp_id);
+    }
+
+    my $set = Genome::Model::Build->define_set(@query);
     return $set->count();
 }
 
