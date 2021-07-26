@@ -64,7 +64,7 @@ sub process_file {
     my $self = shift;
     my $file = shift;
 
-    my $canonical_cwl = `/usr/local/bin/cwltool --pack $file`;
+    my $canonical_cwl = `/usr/bin/cwltool --pack $file`;
     my $data = JSON::decode_json($canonical_cwl);
 
     my $steps = $data->{'$graph'};
