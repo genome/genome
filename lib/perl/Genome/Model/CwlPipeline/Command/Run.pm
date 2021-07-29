@@ -307,7 +307,7 @@ EOCONFIG
         """
 
         kill = "bkill ${job_id}"
-        docker-kill = "bkill ${job_id}"
+        kill-docker = "bkill ${job_id}"
         check-alive = "bjobs -noheader -o stat ${job_id} | /bin/grep 'PEND\\|RUN'"
         job-id-regex = "Job <(\\d+)>.*"
 EOCONFIG
