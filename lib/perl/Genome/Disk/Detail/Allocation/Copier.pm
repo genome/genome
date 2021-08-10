@@ -32,8 +32,8 @@ sub copy {
 
     my $unlocker = Scope::Guard->new(sub { $allocation_lock->unlock if $allocation_lock });
 
-    my $original_absolute_path = $allocation_object->absolute_path;
-    
+    my $original_path = $allocation_object->is_archived ? $allocation_object->archive_path : $allocation_object->absolute_path;
+
     # make shadow allocation
     my %creation_params = $self->_get_copy_shadow_params($allocation_object);
 
@@ -41,26 +41,10 @@ sub copy {
     # additional disk usage during the copy.
     my $shadow_allocation = Genome::Disk::Allocation->shadow_get_or_create(%creation_params);
     my %rsync_params = (
-        source_directory => $original_absolute_path,
+        source_directory => $original_path,
         target_directory => $output_dir,
     );
     my $shadow_absolute_path = $shadow_allocation->absolute_path;
-    if ($allocation_object->is_archived) {
-        Genome::Sys->create_directory($shadow_absolute_path);
-        eval {
-            Genome::Disk::Detail::Allocation::Unarchiver->_do_unarchive_cmd($allocation_object,$shadow_allocation);
-            $rsync_params{source_directory} = $shadow_absolute_path;
-        };
-        my $unarchive_error_message = $@;
-        if ($unarchive_error_message) {
-            if ($shadow_absolute_path and -d $shadow_absolute_path and not $ENV{UR_DBI_NO_COMMIT}) {
-                if (Genome::Sys->remove_directory_tree($shadow_absolute_path)) {
-                    $shadow_allocation->delete;
-                }
-            }
-            confess "Could not unarchive to shadow allocation, received error:\n$unarchive_error_message";
-        }
-    }
 
     # copy files to output_dir
     my $copy_rv = eval {
@@ -75,12 +59,12 @@ sub copy {
         }
         confess(sprintf(
             "Could not copy allocation %s from %s to %s: %s",
-            $allocation_object->id, $original_absolute_path,
+            $allocation_object->id, $original_path,
             $shadow_absolute_path, $copy_error_message));
     }
 
     Genome::Timeline::Event::Allocation->copied(
-        sprintf("copied from %s to %s", $original_absolute_path,
+        sprintf("copied from %s to %s", $original_path,
                 $output_dir),
         $allocation_object,
     );

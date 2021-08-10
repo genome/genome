@@ -60,16 +60,20 @@ $allocation->owner_class_name('Foo::Bar');
 my $rv = $allocation->archive();
 ok($rv, 'archive successfully executed');
 
-is($allocation->mount_path, $volumes[1]->mount_path, 'allocation moved to archive volume');
+is($allocation->status, 'archived', 'allocation archived');
+ok(-e $allocation->archive_path, 'allocation moved to archive volume');
 
-my $tar_path = $allocation->tar_path;
-my $output = `tar -tf $tar_path`;
-my @tar_files = map { chomp $_; s/\/$//; basename($_) } split("\n", $output);
-my $total_tar_files = scalar @tar_files;
-my $total_expected_files = (scalar @files) + (scalar @dirs);
-is($total_tar_files, $total_expected_files, 'found expected number of files/dirs in tarball');
-for my $file (@files, @dirs) {
-    ok((grep { $file =~ /$_/ } @tar_files), "found $file in tarball");
+my @archive_files;
+sub archive_wanted {
+    return if $File::Find::name eq $allocation->archive_path;
+    push @archive_files, $File::Find::name;
+}
+find(\&archive_wanted, $allocation->archive_path);
+
+is((scalar @archive_files), ((scalar @files) + (scalar @dirs)), 'expected number of files in archive directory');
+for my $file (@archive_files) {
+    my $filename = basename($file);
+    ok((grep { $_ =~ /$filename/ } (@files, @dirs)), "found $file in archive directory");
 }
 
 # Remove the original files
@@ -78,7 +82,9 @@ Genome::Sys->remove_directory_tree($original_absolute_path);
 # Now unarchive
 $rv = $allocation->unarchive();
 ok($rv, 'unarchive successfully executed');
-is($allocation->mount_path, $volumes[0]->mount_path, 'allocation moved back to expected active volume');
+
+is($allocation->status, 'active', 'allocation unarchived');
+ok(-e $allocation->absolute_path, 'allocation moved to active volume');
 
 my @allocation_files;
 sub wanted {

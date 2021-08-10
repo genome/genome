@@ -208,55 +208,18 @@ sub create_dummy_volume {
     return $volume;
 }
 
-# FIXME Rather than having a mix of archive/active volume logic here, it would probably be cleaner 
-# to have archive/active subclasses of volume. Would need a subclassify method, but that's it.
-sub archive_volume_prefix {
-    return '/gscarchive';
-}
-
-sub active_volume_prefix {
-    return '/gscmnt';
-}
-
-sub is_archive {
-    my $self = shift;
-    my $archive_prefix = $self->archive_volume_prefix;
-    if ($self->mount_path =~ /^$archive_prefix/) {
-        return 1;
-    }
-    return 0;
-}
-
 sub archive_mount_path {
     my $self = shift;
-    return if $self->is_archive;
-    my $mount = $self->mount_path;
-    my $archive_volume_prefix = $self->archive_volume_prefix;
-    my $active_volume_prefix = $self->active_volume_prefix;
-    $mount =~ s/$active_volume_prefix/$archive_volume_prefix/;
-    return $mount;
-}
 
-sub archive_volume {
-    my $self = shift;
-    return if $self->is_archive;
-    return Genome::Disk::Volume->get(mount_path => $self->archive_mount_path);
+    my $mount = $self->mount_path;
+    $mount =~ s!/Active(/|$)!/Archive$1!;
+    return $mount;
 }
 
 sub active_mount_path {
     my $self = shift;
-    return if not $self->is_archive;
-    my $mount = $self->mount_path;
-    my $archive_volume_prefix = $self->archive_volume_prefix;
-    my $active_volume_prefix = $self->active_volume_prefix;
-    $mount =~ s/$archive_volume_prefix/$active_volume_prefix/;
-    return $mount;
-}
 
-sub active_volume {
-    my $self = shift;
-    return if not $self->is_archive;
-    return Genome::Disk::Volume->get(mount_path => $self->active_mount_path);
+    return $self->mount_path;
 }
 
 sub is_mounted {
@@ -280,6 +243,16 @@ sub is_mounted {
 
     my ($df_output) = grep { /\s$path_to_df$/ } @df_output;
     return ($df_output ? 1 : 0);
+}
+
+sub archive_is_mounted {
+    my $self = shift;
+
+    if ($ENV{UR_DBI_NO_COMMIT}) { 
+        return 1;
+    }
+
+    return -d $self->archive_mount_path;
 }
 
 sub is_remote_volume {

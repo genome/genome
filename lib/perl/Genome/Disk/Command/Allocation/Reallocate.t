@@ -32,13 +32,9 @@ my $archived_allocation = Genome::Disk::Allocation->create(
     owner_id => 'test',
 );
 my $arch_vol = $archived_allocation->volume;
-my $prefix = $arch_vol->archive_volume_prefix . "/foo";
-$arch_vol->mount_path($prefix);
-$archived_allocation->mount_path($prefix);
 $archived_allocation->status('archived');
 ok($archived_allocation->volume);
 ok($archived_allocation, 'Successfully created archived test allocation') or die;
-print $archived_allocation->volume->mount_path . "\n";
 ok($archived_allocation->is_archived, 'Archived allocation is archived') or die;
 
 my $cmd = Genome::Disk::Command::Allocation::Reallocate->create(

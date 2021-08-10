@@ -24,9 +24,9 @@ use_ok('Genome::Disk::Volume') or die;
 
 $Genome::Disk::Allocation::CREATE_DUMMY_VOLUMES_FOR_TESTING = 0;
 
-my ($analysis_project, $test_dir, $group, $volume, $archive_volume);
+my ($analysis_project, $test_dir, $group, $volume);
 subtest 'setup' => sub{
-    plan tests => 5;
+    plan tests => 3;
 
     $analysis_project = Genome::Config::AnalysisProject->__define__(name => 'test AnP for Unarchive.t');
 
@@ -49,37 +49,17 @@ subtest 'setup' => sub{
     );
     ok($group, 'created test disk group');
 
-    # Create temp archive volume
-    my $archive_volume_path = tempdir(
-        "test_volume_XXXXXXX",
-        DIR => $test_dir,
-        CLEANUP => 1,
-        UNLINK => 1,
-    );
-    $archive_volume = Genome::Disk::Volume->create(
-        hostname => 'test',
-        physical_path => 'test',
-        mount_path => $archive_volume_path,
-        disk_status => 'active',
-        can_allocate => 1,
-        total_kb => Filesys::Df::df($archive_volume_path)->{blocks},
-    );
-    ok($archive_volume, 'created test volume');
-
     # Create temp active volume
-    my $volume_path = tempdir(
-        "test_volume_XXXXXXX",
-        DIR => $test_dir,
-        CLEANUP => 1,
-        UNLINK => 1,
-    );
+    my $active_dir = File::Spec->join($test_dir, 'Active');
+    Genome::Sys->create_directory($active_dir);
+
     $volume = Genome::Disk::Volume->create(
         hostname => 'test',
         physical_path => 'test',
-        mount_path => $volume_path,
+        mount_path => $active_dir,
         disk_status => 'active',
         can_allocate => 1,
-        total_kb => Filesys::Df::df($volume_path)->{blocks},
+        total_kb => Filesys::Df::df($active_dir)->{blocks},
     );
     ok($volume, 'created test volume');
 
@@ -89,27 +69,7 @@ subtest 'setup' => sub{
     );
     ok($assignment, 'added volume to test group successfully');
     Genome::Sys->create_directory(join('/', $volume->mount_path, $group->subdirectory));
-
-    my $archive_assignment = Genome::Disk::Assignment->create(
-        group => $group,
-        volume => $archive_volume,
-    );
-    ok($archive_assignment, 'added archive volume to test group successfully');
-    Genome::Sys->create_directory(join('/', $archive_volume->mount_path, $group->subdirectory));
-
-    # Override these methods so archive/active volume linking works for our test volumes
-    Sub::Install::reinstall_sub({
-            code => sub { return $archive_volume->mount_path },
-            into => 'Genome::Disk::Volume',
-            as => 'archive_volume_prefix',
-        });
-
-    Sub::Install::reinstall_sub({
-            code => sub { return $volume->mount_path },
-            into => 'Genome::Disk::Volume',
-            as => 'active_volume_prefix',
-        });
-
+    Genome::Sys->create_directory(join('/', $volume->archive_mount_path, $group->subdirectory));
 };
 
 subtest 'unarchive allocation fails with unsupported owner' => sub{
@@ -183,32 +143,23 @@ sub _create_an_archived_allocation {
     die 'No owner given to create allocation!' if not $owner;
 
     # Make test allocation
-    my $allocation_path = tempdir(
-        "allocation_test_1_XXXXXX",
-        CLEANUP => 1,
-        UNLINK => 1,
-        DIR => $test_dir,
-    );
+    my $allocation_path = File::Spec->join('some', 'allocation', 'path', time(), rand());
     my $allocation = Genome::Disk::Allocation->create(
         disk_group_name => $group->disk_group_name,
         allocation_path => $allocation_path,
         kilobytes_requested => 100,
         owner_class_name => $owner->class,
         owner_id => $owner->id,
-        mount_path => $archive_volume->mount_path,
+        mount_path => $volume->mount_path,
     );
     ok($allocation, 'created test allocation');
     $allocation->status('archived');
+    Genome::Sys->create_directory($allocation->archive_path);
     ok($allocation->is_archived, 'allocation is archived prior to running command, as expected');
 
     # Create a test tarball
-    system("touch " . $allocation->absolute_path . "/a.out");
-    Genome::Sys->tar(
-        tar_path => $allocation->absolute_path . "/archive.tar",
-        input_directory => $allocation->absolute_path,
-    );
-    ok(-e join('/', $allocation->absolute_path, 'archive.tar'), 'archive tarball successfully created');
-    unlink join('/', $allocation->absolute_path, 'a.out');
+    system("touch " . $allocation->archive_path . "/a.out");
+    ok(-e join('/', $allocation->archive_path, 'a.out'), 'archive file successfully created');
 
     return $allocation;
 }

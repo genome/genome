@@ -42,13 +42,13 @@ subtest 'idempotent move' => sub {
         allocation_id => $allocation->id);
     my $shadow = Genome::Disk::Allocation->create(
         $mover->_get_move_shadow_params($allocation),
-        mount_path => $volumes[2]->mount_path,
+        mount_path => $volumes[1]->mount_path,
     );
 
     $allocation->move(
-        target_mount_path => $volumes[2]->mount_path,
+        target_mount_path => $volumes[1]->mount_path,
     );
 
     isnt($allocation->mount_path, $volumes[0]->mount_path, 'is not on old volume');
-    is($allocation->mount_path, $volumes[2]->mount_path, 'is on new volume');
+    is($allocation->mount_path, $volumes[1]->mount_path, 'is on new volume');
 };

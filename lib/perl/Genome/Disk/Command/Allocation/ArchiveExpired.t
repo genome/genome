@@ -38,23 +38,6 @@ my $group = Genome::Disk::Group->create(
 );
 ok($group, 'created test disk group');
 
-# Create temp archive volume
-my $archive_volume_path = tempdir(
-    "test_volume_XXXXXXX",
-    DIR => $test_dir,
-    CLEANUP => 1,
-    UNLINK => 1,
-);
-my $archive_volume = Genome::Disk::Volume->create(
-    hostname => 'test',
-    physical_path => 'test',
-    mount_path => $archive_volume_path,
-    disk_status => 'active',
-    can_allocate => 1,
-    total_kb => Filesys::Df::df($archive_volume_path)->{blocks},
-);
-ok($archive_volume, 'created test volume');
-
 # Create temp active volume
 my $volume_path = tempdir(
     "test_volume_XXXXXXX",
@@ -65,7 +48,7 @@ my $volume_path = tempdir(
 my $volume = Genome::Disk::Volume->create(
     hostname => 'test',
     physical_path => 'test',
-    mount_path => $volume_path,
+    mount_path => File::Spec->join($volume_path, "Active"),
     disk_status => 'active',
     can_allocate => 1,
     total_kb => Filesys::Df::df($volume_path)->{blocks},
@@ -77,14 +60,8 @@ my $assignment = Genome::Disk::Assignment->create(
     volume => $volume,
 );
 ok($assignment, 'added volume to test group successfully');
-Genome::Sys->create_directory(join('/', $volume->mount_path, $group->subdirectory));
-
-my $archive_assignment = Genome::Disk::Assignment->create(
-    group => $group,
-    volume => $archive_volume
-);
-ok($archive_assignment, 'added archive volume to test group successfully');
-Genome::Sys->create_directory(join('/', $archive_volume->mount_path, $group->subdirectory));
+Genome::Sys->create_directory(File::Spec->join($volume->mount_path, $group->subdirectory));
+Genome::Sys->create_directory(File::Spec->join($volume->archive_mount_path, $group->subdirectory));
 
 # Make test allocation
 my $allocation_path = tempdir(
@@ -109,17 +86,10 @@ my $should_allocation = Genome::Disk::Allocation->create(
     owner_class_name => 'UR::Value',
     owner_id => 'test',
     mount_path => $volume->mount_path,
-    archive_after_time => time()-10000
+    archive_after_time => Date::Format::time2str(UR::Context->date_template, time()-10000),
 );
 ok($should_allocation, 'created test allocation');
 system("touch " . $should_allocation->absolute_path . "/a.out");
-
-# Override these methods so archive/active volume linking works for our test volumes
-no warnings 'redefine';
-*Genome::Disk::Volume::archive_volume_prefix = sub { return $archive_volume->mount_path };
-*Genome::Disk::Volume::active_volume_prefix = sub { return $volume->mount_path };
-use warnings;
-
 
 # Make another allocation
 $shouldnt_allocation_path = tempdir(
@@ -134,7 +104,7 @@ my $shouldnt_allocation = Genome::Disk::Allocation->create(
     owner_class_name => 'UR::Value',
     owner_id => 'test',
     mount_path => $volume->mount_path,
-    archive_after_time => time()+10000
+    archive_after_time => Date::Format::time2str(UR::Context->date_template, time()+10000),
 );
 ok($shouldnt_allocation, 'created test allocation that should not get archived');
 system("touch " . $shouldnt_allocation->absolute_path . "/a.out");
@@ -147,13 +117,12 @@ my $cmd = Genome::Disk::Command::Allocation::ArchiveExpired->create(
 );
 ok($cmd, 'created archive expired command');
 ok($cmd->execute, 'successfully executed archive expired command');
-is($should_allocation->volume->id, $archive_volume->id, 'allocation moved to archive volume');
-is($shouldnt_allocation->volume->id, $volume->id, 'shouldnt be archived allocation has not moved to archive volume');
+ok(-e $should_allocation->archive_path, 'allocation moved to archive volume');
+ok(!-e $shouldnt_allocation->archive_path, 'shouldnt be archived allocation has not moved to archive volume');
 
 ok($should_allocation->is_archived, 'should be archived allocation is now archived');
 ok(!$shouldnt_allocation->is_archived, 'shouldnt be archived allocation is not archived');
 
 done_testing();
-
 
 1;
