@@ -122,10 +122,11 @@ sub execute {
 
                 my $per_anp_scheduled = builds_for($run_as, 'Scheduled', $anp_id);
                 if ($per_anp_scheduled >= $self->per_analysis_project_max) {
-                    Genome::Logger::infof(
+                    Genome::Logger->infof(
                         "%s's scheduled count for AnP %s (%d) meets or exceeds maximum (%d)\n",
                         $run_as,
                         $anp_id,
+                        $per_anp_scheduled,
                         $self->per_analysis_project_max,
                     );
                     $full_anps{$anp_id} = 1;
