@@ -68,7 +68,7 @@ sub execute {
 
         # avoid extra DB queries below if we are just going to skip anyway
         if ($scheduled_count >= $self->max) {
-            Genome::Logger->infof(
+            $self->status_message(
                 "%s's scheduled count (%d) meets or exceeds specified maximum (%d)\n",
                 $run_as,
                 $scheduled_count,
@@ -83,7 +83,7 @@ sub execute {
         }
         my $running_count = $scheduled_count + builds_for($run_as, 'Running');
         if($running_count > $max_running) {
-            Genome::Logger->infof(
+            $self->status_message(
                 "%s's running count (%d) meets or exceeds maximum (%d)\n",
                 $run_as,
                 $running_count,
@@ -99,7 +99,7 @@ sub execute {
 
             MODEL: while (my $model = $models->next) {
                 if ($scheduled_count >= $self->max) {
-                    Genome::Logger->infof(
+                    $self->status_message(
                         "%s's scheduled count (%d) reached specified maximum (%d)\n",
                         $run_as,
                         $scheduled_count,
@@ -108,7 +108,7 @@ sub execute {
                     next RUN_AS;
                 }
                 if($running_count > $max_running) {
-                    Genome::Logger->infof(
+                    $self->status_message(
                         "%s's running count (%d) reached maximum (%d)\n",
                         $run_as,
                         $running_count,
@@ -122,7 +122,7 @@ sub execute {
 
                 my $per_anp_scheduled = builds_for($run_as, 'Scheduled', $anp_id);
                 if ($per_anp_scheduled >= $self->per_analysis_project_max) {
-                    Genome::Logger->infof(
+                    $self->status_message(
                         "%s's scheduled count for AnP %s (%d) meets or exceeds maximum (%d)\n",
                         $run_as,
                         $anp_id,
