@@ -48,10 +48,10 @@ $build->status('Failed'); #inline test ends up unstartable, but this is atypical
 
 Genome::Model::Metric->create(
     build_id => $build->id,
-    name => 'rebuild requested',
-    value => 1,
+    name => 'action requested',
+    value => 'restart',
 );
-ok($build->rebuild_requested, 'rebuild initially requested for test');
+is($build->action_requested, 'restart', 'rebuild initially requested for test');
 
 undef $override;
 $override = Sub::Install::reinstall_sub({
@@ -64,5 +64,5 @@ my $cmd = $class->create(
 );
 isa_ok($cmd, $class, 'created command');
 ok($cmd->execute, 'executed command, and it succeeded');
-ok(!$build->rebuild_requested, 'rebuild is not requested after build restarted');
+ok(!$build->action_requested, 'rebuild is not requested after build restarted');
 is($build->status, 'Succeeded', 'build succeeded on second attempt');
