@@ -7,6 +7,7 @@ use Genome;
 
 class Genome::Model::Command::Admin::PurgeDiskAllocationsForAbandonedBuilds {
     is => 'Command::V2',
+    roles => ['Genome::Model::Command::Submittable'],
     doc => 'Purge remaining allocations for abandoned builds.',
     has => [
         submit_purge_jobs => {
@@ -61,30 +62,17 @@ sub _submit_purge_jobs {
     for my $anp_id (keys %builds_by_anp) {
         my $anp = Genome::Config::AnalysisProject->get($anp_id);
 
-        my @vol = $anp->possible_volumes;
-
-        my $anp_guard = $anp->set_env;
-        my $volume_guard = Genome::Config::set_env('docker_volumes', join(' ', map { "$_:$_" } @vol));
-        my $image_guard = Genome::Config::set_env('lsb_sub_additional', sprintf('docker0(%s)', $ENV{LSB_DOCKER_IMAGE})); #use the current image regardless of the AnP config
-        unless($ENV{LSF_DOCKER_NETWORK} eq 'host') {
-            $self->fatal_message('Parent container must have LSF_DOCKER_NETWORK=host set.');
-        }
-
         for my $build_class (keys %{$builds_by_anp{$anp_id}}) {
-
-            local $ENV{UR_NO_REQUIRE_USER_VERIFY} = 1; 
-
             my @build_ids = keys %{ $builds_by_anp{$anp_id}{$build_class} };
             my $connector = (scalar(@build_ids) == 1)? '=' : ':';
 
-            Genome::Sys::LSF::bsub::bsub(
-                cmd => [
+            $self->_submit_jobs(
+                $anp,
+                [
                     qw(genome disk allocation purge --reason),
                     'purging leftover allocation for abandoned build',
                     'status=active,owner_class_name=' . $build_class . ',owner_id' . $connector . join("/", @build_ids),
                 ],
-                user_group => Genome::Config::get('lsf_user_group'),
-                interactive => 1,
             );
         }
     }
