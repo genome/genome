@@ -61,7 +61,6 @@ sub execute {
                 next BUILD;
             }
 
-            $DB::single = 1;
             unless($build->model->analysis_project->created_by eq Genome::Sys->username or Genome::Sys->current_user_is_admin) {
                 $self->error_message('Cannot %s builds for an analysis project owned by %s. (If this is your AnP, see `genome-analysis-project take-ownership`.', $action, $build->model->analysis_project->created_by);
                 next BUILD;
