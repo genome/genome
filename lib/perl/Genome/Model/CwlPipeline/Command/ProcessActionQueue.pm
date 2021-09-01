@@ -7,6 +7,7 @@ use Genome;
 
 class Genome::Model::CwlPipeline::Command::ProcessActionQueue {
     is => 'Command::V2',
+    roles => ['Genome::Model::Command::Submittable'],
     has => [
         max_count => {
             is => 'Number',
