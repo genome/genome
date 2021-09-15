@@ -82,7 +82,7 @@ sub _restart_build {
 
     my $rv = $build->_launch(\%params, $xml);
     if ($rv) {
-        $build->rebuild_requested(0);
+        $build->action_requested(0);
     }
 
     return $rv;

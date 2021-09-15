@@ -27,10 +27,11 @@ class Genome::Model::CwlPipeline {
         },
     },
     has_metric => {
-        rebuild_requested => {
+        action_requested => {
             is => 'Text',
             is_optional => 1,
-            doc => 'flag for a build to indicate that it should be rebuilt',
+            doc => 'flag for a build to indicate that it should be acted upon--for use with production user',
+            valid_values => ['restart', 'stop', 'abandon', '0'],
         },
     },
 };
