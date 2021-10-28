@@ -9,7 +9,7 @@ use Genome;
 use Genome::Utility::File::Mode qw();
 use Genome::Utility::Text qw();
 use YAML;
-use JSON qw(to_json);
+use JSON qw(to_json from_json);
 use File::Compare qw();
 use File::Copy::Recursive qw();
 
@@ -38,6 +38,8 @@ sub execute {
     if ($cwl_runner eq 'cromwell') {
         $self->run_cromwell($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir);
+    } elsif ($cwl_runner eq 'cromwell_gcp') {
+        $self->run_cromwell_gcp($yaml, $results_dir);
     } elsif ($cwl_runner eq 'toil') {
         $self->run_toil($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir, $results_dir);
@@ -175,6 +177,96 @@ sub run_cromwell {
 
     my $guard = Genome::Cromwell->spawn_local_server($config_file);
     $self->_stage_cromwell_outputs($results_dir);
+}
+
+sub run_cromwell_gcp {
+    my $self = shift;
+    my $yaml = shift;
+    my $results_dir = shift;
+
+    my $zip_deps = Genome::Config::get('workflow_deps_zip');
+    my $workflow_options = Genome::Config::get('cromwell_workflow_options');
+
+    my $logdir = $self->build->log_directory;
+    my $cromwell_url = Genome::Cromwell->server_url;
+    my $lsb_sub_additional = Genome::Config::get('lsb_sub_additional');
+    my $queue = Genome::Config::get('lsf_queue_build_worker');
+    my $user_group = Genome::Config::get('lsf_user_group');
+    my $main_workflow_file = $self->build->model->main_workflow_file;
+
+    my $poll_interval_seconds = 30;
+
+    # Cloudize workflow
+    my $cloud_yaml = $yaml =~ s/.ya?ml/_cloud.yaml/r;
+    my $guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:latest)');
+    delete local $ENV{BOTO_CONFIG};
+
+    Genome::Sys::LSF::bsub::bsub(
+        queue => $queue,
+        user_group => $user_group,
+        resource_string => 'rusage[mem=512M:internet2_upload_mbps=500]',
+        wait_for_completion => 1,
+        log_file => "$logdir/cloudize_workflow.log",
+        cmd => [
+            "python3",
+            "/opt/cloudize-workflow.py",
+            "griffith-lab-cromwell",
+            $main_workflow_file,
+            $yaml,
+            "--output=$cloud_yaml"] );
+    $guard = Genome::Config::set_env('lsb_sub_additional', $lsb_sub_additional);
+
+    print "input yaml $yaml\ncloud yaml $cloud_yaml\n";
+    my $workflow_id = Genome::Cromwell->submit_workflow(
+        $main_workflow_file, $cloud_yaml, $zip_deps, $workflow_options )->{id};
+
+    print "Submitted workflow id=" . $workflow_id . "\n";
+
+    # Poll until done
+    my $status;
+    do {
+        sleep $poll_interval_seconds;
+        $status = Genome::Cromwell->status($workflow_id)->{status};
+    } while ($status eq "Running" || $status eq "Submitted");
+
+    # Pull Outputs
+    my $guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:latest)');
+    if ($status eq "Succeeded") {
+        Genome::Sys::LSF::bsub::bsub(
+            queue => $queue,
+            user_group => $user_group,
+            resource_string => 'rusage[mem=512M:internet2_download_mbps=500]',
+            wait_for_completion => 1,
+            log_file => "$logdir/pull_outputs.log",
+            cmd => [
+                "python3", "/home/maruska/cloud-workflows/scripts/pull_outputs.py",
+                $workflow_id, "--output=$results_dir", "--cromwell-url=$cromwell_url"
+            ]
+            );
+        $self->_generate_timing_report($workflow_id);
+    } else {
+        $self->fatal_message("Workflow $workflow_id has non-succeeded status $status using workflow definition $main_workflow_file. Logs at $logdir");
+    }
+    $guard = Genome::Config::set_env('lsb_sub_additional', $lsb_sub_additional);
+    $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
+}
+
+sub _fetch_cromwell_log {
+    my $self = shift;
+    my $workflow_id = shift;
+    my $workflow_options = shift;
+    my $logdir = shift;
+
+    my $workflow_opts = from_json(Genome::Sys->read_file($workflow_options));
+    my $final_workflow_log_dir = %$workflow_opts{'final_workflow_log_dir'};
+
+    Genome::Sys->shellcmd(
+        cmd => [
+            '/usr/bin/python3',
+            '/usr/bin/gsutil/gsutil', 'cp',
+            $final_workflow_log_dir . "/workflow." . $workflow_id . ".log",
+            $logdir . "/" . $workflow_id . ".log"
+        ]);
 }
 
 sub _determine_workflow_type {
