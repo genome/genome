@@ -190,7 +190,6 @@ sub run_cromwell_gcp {
 
     my $logdir = $self->build->log_directory;
     my $cromwell_url = Genome::Cromwell->server_url;
-    my $lsb_sub_additional = Genome::Config::get('lsb_sub_additional');
     my $queue = Genome::Config::get('lsf_queue_build_worker');
     my $user_group = Genome::Config::get('lsf_user_group');
     my $main_workflow_file = $self->build->model->main_workflow_file;
@@ -249,8 +248,6 @@ sub run_cromwell_gcp {
     }
 
     $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
-
-    $guard = Genome::Config::set_env('lsb_sub_additional', $lsb_sub_additional);
 }
 
 sub _fetch_cromwell_log {
