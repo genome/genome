@@ -186,6 +186,7 @@ sub run_cromwell_gcp {
 
     my $zip_deps = Genome::Config::get('workflow_deps_zip');
     my $workflow_options = Genome::Config::get('cromwell_workflow_options');
+    my $bucket = Genome::Config::get('google_cloud_storage_bucket');
 
     my $logdir = $self->build->log_directory;
     my $cromwell_url = Genome::Cromwell->server_url;
@@ -209,12 +210,11 @@ sub run_cromwell_gcp {
         log_file => "$logdir/cloudize_workflow.log",
         cmd => [
             "python3",
-            "/opt/cloudize-workflow.py",
-            "griffith-lab-cromwell",
+            "/opt/scripts/cloudize-workflow.py",
+            $bucket,
             $main_workflow_file,
             $yaml,
             "--output=$cloud_yaml"] );
-    $guard = Genome::Config::set_env('lsb_sub_additional', $lsb_sub_additional);
 
     print "input yaml $yaml\ncloud yaml $cloud_yaml\n";
     my $workflow_id = Genome::Cromwell->submit_workflow(
@@ -230,7 +230,6 @@ sub run_cromwell_gcp {
     } while ($status eq "Running" || $status eq "Submitted");
 
     # Pull Outputs
-    my $guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:latest)');
     if ($status eq "Succeeded") {
         Genome::Sys::LSF::bsub::bsub(
             queue => $queue,
@@ -239,7 +238,7 @@ sub run_cromwell_gcp {
             wait_for_completion => 1,
             log_file => "$logdir/pull_outputs.log",
             cmd => [
-                "python3", "/home/maruska/cloud-workflows/scripts/pull_outputs.py",
+                "python3", "/opt/scripts/pull_outputs.py",
                 $workflow_id, "--output=$results_dir", "--cromwell-url=$cromwell_url"
             ]
             );
@@ -247,8 +246,10 @@ sub run_cromwell_gcp {
     } else {
         $self->fatal_message("Workflow $workflow_id has non-succeeded status $status using workflow definition $main_workflow_file. Logs at $logdir");
     }
-    $guard = Genome::Config::set_env('lsb_sub_additional', $lsb_sub_additional);
+
     $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
+
+    $guard = Genome::Config::set_env('lsb_sub_additional', $lsb_sub_additional);
 }
 
 sub _fetch_cromwell_log {
