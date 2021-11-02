@@ -35,7 +35,7 @@ class Genome::Cromwell {
                 return $ua;
             },
         },
-        ],
+    ],
 };
 
 sub status {
