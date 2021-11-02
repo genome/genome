@@ -132,17 +132,17 @@ sub _send_request {
     my $req = shift;
 
     my $self = $class->_singleton_object;
-  ATTEMPT: for (1..5) {
-      my $response = $self->user_agent->request($req);
+    ATTEMPT: for (1..5) {
+        my $response = $self->user_agent->request($req);
 
-      unless ($response->is_success) {
-          $self->fatal_message('Error querying server: %s', $response->status_line);
-          sleep 5;
-          next ATTEMPT;
-      }
+        unless ($response->is_success) {
+            $self->fatal_message('Error querying server: %s', $response->status_line);
+            sleep 5;
+            next ATTEMPT;
+        }
 
-      return $response->decoded_content;
-  }
+        return $response->decoded_content;
+    }
 
     $self->fatal_message('Failed to query server after serveral attempts.');
 }
