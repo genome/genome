@@ -186,7 +186,7 @@ sub run_cromwell_gcp {
 
     my $zip_deps = Genome::Config::get('workflow_deps_zip');
     my $workflow_options = Genome::Config::get('cromwell_workflow_options');
-    my $bucket = Genome::Config::get('google_cloud_storage_bucket');
+    my $bucket = Genome::Config::get('cromwell_gcp_bucket');
 
     my $logdir = $self->build->log_directory;
     my $cromwell_url = Genome::Cromwell->server_url;
