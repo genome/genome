@@ -243,11 +243,11 @@ sub run_cromwell_gcp {
             ]
             );
         $self->_generate_timing_report($workflow_id);
+        $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
     } else {
+        $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
         $self->fatal_message("Workflow $workflow_id has non-succeeded status $status using workflow definition $main_workflow_file. Logs at $logdir");
     }
-
-    $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
 }
 
 sub _fetch_cromwell_log {
