@@ -197,7 +197,7 @@ sub run_cromwell_gcp {
     my $poll_interval_seconds = 30;
 
     # Cloudize workflow
-    my $cloud_yaml = $yaml =~ s/.ya?ml/_cloud.yaml/r;
+    my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.yaml/;
     my $guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.0.0)');
     delete local $ENV{BOTO_CONFIG};
 
@@ -257,7 +257,7 @@ sub _fetch_cromwell_log {
     my $logdir = shift;
 
     my $workflow_opts = from_json(Genome::Sys->read_file($workflow_options));
-    my $final_workflow_log_dir = %$workflow_opts{'final_workflow_log_dir'};
+    my $final_workflow_log_dir = $workflow_opts->{final_workflow_log_dir};
 
     Genome::Sys->shellcmd(
         cmd => [
