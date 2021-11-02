@@ -216,11 +216,12 @@ sub run_cromwell_gcp {
             $yaml,
             "--output=$cloud_yaml"] );
 
-    print "input yaml $yaml\ncloud yaml $cloud_yaml\n";
+    $self->debug_message('input yaml: %s', $yaml);
+    $self->debug_message('cloud yaml: %s', $cloud_yaml);
     my $workflow_id = Genome::Cromwell->submit_workflow(
         $main_workflow_file, $cloud_yaml, $zip_deps, $workflow_options )->{id};
 
-    print "Submitted workflow id=" . $workflow_id . "\n";
+    $self->status_message('Submitted workflow with ID: %s', $workflow_id);
 
     # Poll until done
     my $status;
