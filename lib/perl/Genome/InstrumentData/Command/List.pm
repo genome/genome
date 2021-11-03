@@ -79,6 +79,7 @@ my %DEFAULT_SHOW = (
         is_paired_end
         clusters
         target_region_set_name
+        disk_allocations.status
     )],
 
     imported => [qw(
@@ -86,6 +87,7 @@ my %DEFAULT_SHOW = (
         sample_name
         sequencing_platform
         import_format
+        disk_allocations.status
     )],
 
     any => [qw(
@@ -94,6 +96,7 @@ my %DEFAULT_SHOW = (
         library_name
         run_name
         subset_name
+        disk_allocations.status
     )],
 );
 sub _default_show {

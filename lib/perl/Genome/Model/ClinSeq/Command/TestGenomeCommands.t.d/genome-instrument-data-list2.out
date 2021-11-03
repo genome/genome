@@ -1,8 +1,8 @@
-ID    FLOW_CELL_ID   LANE   INDEX_SEQUENCE   SAMPLE_NAME                               LIBRARY_NAME                                   READ_LENGTH   IS_PAIRED_END   CLUSTERS   TARGET_REGION_SET_NAME
---    ------------   ----   --------------   -----------                               ------------                                   -----------   -------------   --------   ----------------------
--39   TEST1ABXX      1      -38              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib1   100           0               12345639   <NULL>
--41   TEST1ABXX      2      -40              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib1   100           0               12345637   <NULL>
--44   TEST1ABXX      1      -43              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib2   100           0               12345634   <NULL>
--46   TEST1ABXX      2      -45              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib2   100           0               12345632   <NULL>
--49   TEST1ABXX      1      -48              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib3   100           0               12345629   <NULL>
--51   TEST1ABXX      2      -50              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib3   100           0               12345627   <NULL>
+ID    FLOW_CELL_ID   LANE   INDEX_SEQUENCE   SAMPLE_NAME                               LIBRARY_NAME                                   READ_LENGTH   IS_PAIRED_END   CLUSTERS   TARGET_REGION_SET_NAME   DISK_ALLOCATIONS.STATUS
+--    ------------   ----   --------------   -----------                               ------------                                   -----------   -------------   --------   ----------------------   -----------------------
+-39   TEST1ABXX      1      -38              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib1   100           0               12345639   <NULL>                   <NULL>
+-41   TEST1ABXX      2      -40              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib1   100           0               12345637   <NULL>                   <NULL>
+-44   TEST1ABXX      1      -43              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib2   100           0               12345634   <NULL>                   <NULL>
+-46   TEST1ABXX      2      -45              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib2   100           0               12345632   <NULL>                   <NULL>
+-49   TEST1ABXX      1      -48              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib3   100           0               12345629   <NULL>                   <NULL>
+-51   TEST1ABXX      2      -50              H_TEST-ClinSeqGenomeCommands-tumor_cdna   H_TEST-ClinSeqGenomeCommands-tumor_cdna-lib3   100           0               12345627   <NULL>                   <NULL>
