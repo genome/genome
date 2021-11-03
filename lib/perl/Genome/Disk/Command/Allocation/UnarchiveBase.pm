@@ -25,11 +25,10 @@ class Genome::Disk::Command::Allocation::UnarchiveBase {
 sub execute {
     my $self = shift;
 
-    unless ($self->requestor) {
-        $self->requestor(Genome::Sys->current_user);
-    }
+    my $name = $self->requestor ? $self->requestor->name : Genome::Sys->username;
+
     $self->status_message("Unarchiving allocation(s) for Analysis Project %s at the request of %s.",
-            $self->analysis_project->__display_name__, $self->requestor->name);
+            $self->analysis_project->__display_name__, $name);
 
     return $self->_execute();
 }
@@ -37,9 +36,11 @@ sub execute {
 sub reason {
     my $self = shift;
 
+    my $req_id = $self->requestor ? $self->requestor->id : Genome::Sys->username;
+
     my %reason = (
         'analysis_project'=>$self->analysis_project->id,
-        'requestor'=> $self->requestor->id
+        'requestor'=> $req_id,
     );
     return to_json(\%reason);
 }
