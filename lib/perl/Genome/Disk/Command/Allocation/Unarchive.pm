@@ -32,7 +32,6 @@ sub _execute {
 
     for my $allocation ($self->allocations) {
         $self->status_message("Unarchiving allocation " . $allocation->id);
-        $self->_link_allocation_to_analysis_project($allocation);
         my $rv = $allocation->unarchive(reason => $self->reason);
         unless ($rv) {
             Carp::confess "Could not unarchive alloation " . $allocation->id;
@@ -41,35 +40,6 @@ sub _execute {
     }
 
     $self->status_message("Done unarchiving, exiting...");
-    return 1;
-}
-
-sub _link_allocation_to_analysis_project {
-    my $self = shift;
-    my $allocation = shift;
-
-    my $owner = $allocation->owner;
-    unless ($owner) {
-        $self->fatal_message('This allocation appears to be orphaned: %s', $allocation->id);
-    }
-
-    if($owner->isa('Genome::SoftwareResult')) {
-        $owner->add_user(label => 'sponsor', user => $self->analysis_project);
-    } elsif ($owner->isa('Genome::Model::Build')) {
-        unless($owner->model->analysis_project) {
-            $self->fatal_message('No analysis project set on model for build %s.  Please use `genome analysis-project add-model` to correct this.', $owner->__display_name__);
-        }
-    } elsif ( $owner->isa('Genome::InstrumentData::Imported') ) {
-        if ( not $self->analysis_project->analysis_project_bridges(instrument_data => $owner) ) {
-            $self->analysis_project->add_analysis_project_bridge(
-                instrument_data => $owner,
-                status => 'skipped',
-            );
-        }
-    } else {
-        $self->fatal_message('Setting the analysis project of %s is currently not handled.  Please open a support request to unarchive this allocation.', $owner->__display_name__);
-    }
-
     return 1;
 }
 

@@ -9,7 +9,7 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More tests => 8;
+use Test::More tests => 7;
 use File::Temp 'tempdir';
 use Filesys::Df qw();
 require Sub::Install;
@@ -72,21 +72,8 @@ subtest 'setup' => sub{
     Genome::Sys->create_directory(join('/', $volume->archive_mount_path, $group->subdirectory));
 };
 
-subtest 'unarchive allocation fails with unsupported owner' => sub{
-    plan tests => 5;
-
-    my $allocation = _create_an_archived_allocation(UR::Value->get('test'));
-    my $cmd = Genome::Disk::Command::Allocation::Unarchive->create(
-        allocations => [$allocation],
-        analysis_project => $analysis_project,
-    );
-    ok($cmd, 'created unarchive command');
-    throws_ok(sub { $cmd->execute }, qr/currently not handled/, 'command fails with unsupported owner');
-
-};
-
 subtest 'unarchive allocation programmatically' => sub{
-    plan tests => 7;
+    plan tests => 6;
 
     my $sr = Genome::InstrumentData::AlignmentResult::Speedseq->__define__(test_name => 'testing Unarchive.t');
     my $allocation = _create_an_archived_allocation($sr);
@@ -98,9 +85,6 @@ subtest 'unarchive allocation programmatically' => sub{
     ok($cmd->execute, 'successfully executed unarchive command');
     is($allocation->volume->id, $volume->id, 'allocation moved to active volume');
     ok($allocation->is_archived == 0, 'allocation is not archived');
-    my @users = $sr->users;
-    is($users[0]->user, $analysis_project, 'analysis project linked to SR whose allocation was unarchived');
-
 };
 
 subtest 'unarchive allocation from the CLI' => sub{
@@ -118,7 +102,7 @@ subtest 'unarchive allocation from the CLI' => sub{
 };
 
 subtest 'unarchive allocation owned by imported instrument data' => sub{
-    plan tests => 7;
+    plan tests => 5;
 
     my $imported = Genome::InstrumentData::Imported->create();
     ok($imported, 'create imported instrument data');
@@ -130,10 +114,6 @@ subtest 'unarchive allocation owned by imported instrument data' => sub{
         ),
         'unarchive imported instrument data',
     );
-    my $bridge = $analysis_project->analysis_project_bridges(instrument_data => $imported);
-    ok($bridge, 'added imported instrument data to analysis project');
-    is($bridge->status, 'skipped', 'bridge status is skipped');
-
 };
 
 done_testing();
