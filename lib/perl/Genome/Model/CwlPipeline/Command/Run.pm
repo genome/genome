@@ -3,8 +3,10 @@ package Genome::Model::CwlPipeline::Command::Run;
 use strict;
 use warnings;
 
+use Cwd;
 use Data::Dumper;
 use File::Spec;
+use File::Basename;
 use Genome;
 use Genome::Utility::File::Mode qw();
 use Genome::Utility::Text qw();
@@ -184,11 +186,11 @@ sub run_cromwell_gcp {
     my $yaml = shift;
     my $results_dir = shift;
 
-    my $zip_deps = Genome::Config::get('workflow_deps_zip');
     my $workflow_options = Genome::Config::get('cromwell_workflow_options');
     my $bucket = Genome::Config::get('cromwell_gcp_bucket');
 
     my $logdir = $self->build->log_directory;
+    my $data_dir = $self->build->data_directory;
     my $cromwell_url = Genome::Cromwell->server_url;
     my $queue = Genome::Config::get('lsf_queue_build_worker');
     my $user_group = Genome::Config::get('lsf_user_group');
@@ -217,8 +219,16 @@ sub run_cromwell_gcp {
 
     $self->debug_message('input yaml: %s', $yaml);
     $self->debug_message('cloud yaml: %s', $cloud_yaml);
+
+    # Zip dependencies
+    my $deps_zip = "$data_dir/deps.zip";
+    my $prev_dir = getcwd;
+    chdir(dirname($main_workflow_file));
+    Genome::Sys->shellcmd(cmd => ['zip', '-r', $deps_zip, '.']);
+    chdir($prev_dir);
+
     my $workflow_id = Genome::Cromwell->submit_workflow(
-        $main_workflow_file, $cloud_yaml, $zip_deps, $workflow_options )->{id};
+        $main_workflow_file, $cloud_yaml, $deps_zip, $workflow_options )->{id};
 
     $self->status_message('Submitted workflow with ID: %s', $workflow_id);
 

@@ -1,8 +1,0 @@
-# The `workflow_deps_zip` configuration variable is the path to a zip
-# file containing the dependencies of the submitted workflow. This
-# should typically be $ANALYSIS_WDLS/workflows.zip. This is only used
-# when cwl_runner=cromwell_gcp
-#
----
-env: XGENOME_WORKFLOW_DEPS_ZIP
-default: ""
