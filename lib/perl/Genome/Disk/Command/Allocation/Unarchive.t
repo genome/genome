@@ -79,7 +79,7 @@ subtest 'unarchive allocation programmatically' => sub{
     my $allocation = _create_an_archived_allocation($sr);
     my $cmd = Genome::Disk::Command::Allocation::Unarchive->create(
         allocations => [$allocation],
-        analysis_project => $analysis_project,
+        reason => 'testing unarchive',
     );
 
     ok($cmd->execute, 'successfully executed unarchive command');
@@ -94,7 +94,7 @@ subtest 'unarchive allocation from the CLI' => sub{
     Genome::Config::AnalysisProject::ModelBridge->create(analysis_project => $analysis_project, model => $model);
     my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
     my $allocation = _create_an_archived_allocation($build);
-    my @args = ($allocation->id, '--analysis-project', $analysis_project->id);
+    my @args = ($allocation->id, '--reason', 'testing unarchive CLI ');
     my $rv = Genome::Disk::Command::Allocation::Unarchive->_execute_with_shell_params_and_return_exit_code(@args);
     ok($rv == 0, 'successfully executed command using simulated command line arguments');
     is($allocation->volume->id, $volume->id, 'allocation updated as expected after archive');
@@ -110,7 +110,6 @@ subtest 'unarchive allocation owned by imported instrument data' => sub{
     ok(
         Genome::Disk::Command::Allocation::Unarchive->execute(
             allocations => [$allocation],
-            analysis_project => $analysis_project,
         ),
         'unarchive imported instrument data',
     );
