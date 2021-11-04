@@ -73,7 +73,15 @@ sub _purge_archived {
     my $allocation_object = shift;
 
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        $allocation_object->_cleanup_archive_directory($allocation_object->archive_path);
+        my $archive_path = $allocation_object->archive_path;
+        $self->status_message(q{Removing archive path '%s'}, $archive_path);
+        unless (Genome::Sys->remove_directory_tree($archive_path)) {
+            $self->error_message(
+                'Error removing archive directory for allocation %s',
+                $allocation_object->id
+            );
+            return;
+        }
     }
 
     $self->_finalize_purge($allocation_object);

@@ -5,13 +5,18 @@ use warnings;
 use Genome;
 
 class Genome::Disk::Command::Allocation::Unarchive {
-    is => 'Genome::Disk::Command::Allocation::UnarchiveBase',
+    is => 'Command::V2',
     has => [
         allocations => {
             is => 'Genome::Disk::Allocation',
             is_many => 1,
             shell_args_position => 1,
             doc => 'allocations to be unarchived',
+        },
+        reason => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'a note about why this unarchiving is taking place',
         },
     ],
     doc => 'unarchives the given allocations',
@@ -25,15 +30,14 @@ sub help_brief {
     return 'unarchives the given allocations';
 }
 
-sub _execute {
+sub execute {
     my $self = shift;
 
     $self->status_message("Starting unarchive command...");
 
     for my $allocation ($self->allocations) {
         $self->status_message("Unarchiving allocation " . $allocation->id);
-        $self->_link_allocation_to_analysis_project($allocation);
-        my $rv = $allocation->unarchive(reason => $self->reason);
+        my $rv = $allocation->unarchive(reason => $self->_reason);
         unless ($rv) {
             Carp::confess "Could not unarchive alloation " . $allocation->id;
         }
@@ -44,33 +48,16 @@ sub _execute {
     return 1;
 }
 
-sub _link_allocation_to_analysis_project {
+sub _reason {
     my $self = shift;
-    my $allocation = shift;
 
-    my $owner = $allocation->owner;
-    unless ($owner) {
-        $self->fatal_message('This allocation appears to be orphaned: %s', $allocation->id);
+    my $reason = 'unarchived by ' . Genome::Sys->username;
+    if (my $provided_reason = $self->reason) {
+        $reason .= ' because: ' . $provided_reason;
     }
 
-    if($owner->isa('Genome::SoftwareResult')) {
-        $owner->add_user(label => 'sponsor', user => $self->analysis_project);
-    } elsif ($owner->isa('Genome::Model::Build')) {
-        unless($owner->model->analysis_project) {
-            $self->fatal_message('No analysis project set on model for build %s.  Please use `genome analysis-project add-model` to correct this.', $owner->__display_name__);
-        }
-    } elsif ( $owner->isa('Genome::InstrumentData::Imported') ) {
-        if ( not $self->analysis_project->analysis_project_bridges(instrument_data => $owner) ) {
-            $self->analysis_project->add_analysis_project_bridge(
-                instrument_data => $owner,
-                status => 'skipped',
-            );
-        }
-    } else {
-        $self->fatal_message('Setting the analysis project of %s is currently not handled.  Please open a support request to unarchive this allocation.', $owner->__display_name__);
-    }
-
-    return 1;
+    return $reason;
 }
+
 
 1;

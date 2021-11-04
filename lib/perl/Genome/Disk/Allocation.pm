@@ -220,10 +220,6 @@ sub create {
         }
     }
 
-    if ( Genome::Disk::Group->is_archive($params{disk_group_name}) ) {
-        die $class->error_message('Cannot create disk allocation in an archive group: '.$params{disk_group_name});
-    }
-
     my $self = $class->_execute_system_command('_create', %params);
 
     if ($self) {
@@ -287,19 +283,13 @@ for my $status (@$statuses) {
 
 sub archive_path {
     my $self = shift;
-    my $mount_path = $self->volume->is_archive
-                   ? $self->volume->mount_path
-                   : $self->volume->archive_mount_path;
+    my $archive_mount_path = $self->volume->archive_mount_path;
+
     return File::Spec->join(
-        $mount_path,
+        $archive_mount_path,
         $self->group_subdirectory,
         $self->allocation_path,
     );
-}
-
-sub tar_path {
-    my $self = shift;
-    return File::Spec->join($self->archive_path, 'archive.tar');
 }
 
 sub archivable {
@@ -368,15 +358,13 @@ sub _get_deletion_observers {
     my $path = $self->absolute_path;
 
     if ($self->is_archived) {
-        return sub {$class->_cleanup_archive_directory($path)};
-
-    } else {
-        return (
-            $class->_mark_for_deletion_closure($path),
-            $class->_remove_directory_closure($path),
-        );
+        $path = $self->archive_path;
     }
 
+    return (
+        $class->_mark_for_deletion_closure($path),
+        $class->_remove_directory_closure($path),
+    );
 }
 
 sub _reallocate {
@@ -425,22 +413,6 @@ sub _archive {
         %parameters);
 
     return $archiver->archive;
-}
-
-sub unarchive_shadow_path {
-    my $allocation_path = shift;
-    return sprintf("%s-unarchive_allocation_destination", $allocation_path);
-}
-
-sub unarchive_shadow_params {
-    my $self = shift;
-    return (
-        disk_group_name => $self->disk_group_name,
-        kilobytes_requested => $self->kilobytes_requested,
-        owner_class_name => "UR::Value",
-        owner_id => "shadow_allocation",
-        allocation_path => unarchive_shadow_path($self->allocation_path),
-    );
 }
 
 sub _unarchive {
@@ -937,20 +909,6 @@ sub _check_kb_requested {
 sub _retrieve_mode {
     return 'get' if $ENV{UR_DBI_NO_COMMIT};
     return 'load';
-}
-
-sub _cleanup_archive_directory {
-    my ($class, $directory) = @_;
-    my $cmd = "if [ -d $directory ] ; then rm -rf $directory ; else exit 1; fi";
-    unless ($ENV{UR_DBI_NO_COMMIT}) {
-        my $guard = Genome::Config::set_env('lsb_sub_additional', ''); #no docker for archives
-        my ($job_id, $status) = Genome::Sys->bsub_and_wait(
-            queue => Genome::Config::get('archive_lsf_queue'),
-            cmd => "$cmd",
-        );
-        confess "Failed to execute $cmd via LSF job $job_id, received status $status" unless $status eq 'DONE';
-    }
-    return 1;
 }
 
 # Cleans up directories, useful when no commit is on and the test doesn't clean up its allocation directories

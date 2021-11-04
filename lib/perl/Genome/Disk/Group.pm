@@ -106,12 +106,6 @@ sub validate {
     }
 }
 
-sub is_archive {
-    my ($self, $disk_group_name) = @_;
-    $disk_group_name //= $self->disk_group_name;
-    return List::MoreUtils::any { $disk_group_name eq $_ } Genome::Config::get('disk_group_archive');
-}
-
 memoize('_resolve_user_name');
 sub _resolve_user_name {
     my($self, $uid) = @_;
