@@ -6,7 +6,6 @@ use warnings;
 use Cwd;
 use Data::Dumper;
 use File::Spec;
-use File::Basename;
 use Genome;
 use Genome::Utility::File::Mode qw();
 use Genome::Utility::Text qw();
@@ -208,7 +207,7 @@ sub run_cromwell_gcp {
         user_group => $user_group,
         resource_string => 'rusage[mem=512M:internet2_upload_mbps=500]',
         wait_for_completion => 1,
-        log_file => "$logdir/cloudize_workflow.log",
+        log_file => File::Spec->join($logdir, 'cloudize_workflow.log'),
         cmd => [
             "python3",
             "/opt/scripts/cloudize-workflow.py",
@@ -223,7 +222,8 @@ sub run_cromwell_gcp {
     # Zip dependencies
     my $deps_zip = "$data_dir/deps.zip";
     my $prev_dir = getcwd;
-    chdir(dirname($main_workflow_file));
+    my(undef, $deps_dir, undef) = File::Spec->splitpath($main_workflow_file);
+    chdir($deps_dir);
     Genome::Sys->shellcmd(cmd => ['zip', '-r', $deps_zip, '.']);
     chdir($prev_dir);
 
