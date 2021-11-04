@@ -220,7 +220,7 @@ sub run_cromwell_gcp {
     $self->debug_message('cloud yaml: %s', $cloud_yaml);
 
     # Zip dependencies
-    my $deps_zip = "$data_dir/deps.zip";
+    my $deps_zip = File::Spec->join($data_dir, 'deps.zip');
     my $prev_dir = getcwd;
     my(undef, $deps_dir, undef) = File::Spec->splitpath($main_workflow_file);
     chdir($deps_dir);
@@ -246,7 +246,7 @@ sub run_cromwell_gcp {
             user_group => $user_group,
             resource_string => 'rusage[mem=512M:internet2_download_mbps=500]',
             wait_for_completion => 1,
-            log_file => "$logdir/pull_outputs.log",
+            log_file => File::Spec->join($logdir, 'pull_outputs.log'),
             cmd => [
                 "python3", "/opt/scripts/pull_outputs.py",
                 $workflow_id, "--output=$results_dir", "--cromwell-url=$cromwell_url"
@@ -273,8 +273,8 @@ sub _fetch_cromwell_log {
         cmd => [
             '/usr/bin/python3',
             '/usr/bin/gsutil/gsutil', 'cp',
-            $final_workflow_log_dir . "/workflow." . $workflow_id . ".log",
-            $logdir . "/" . $workflow_id . ".log"
+            File::Spec->join($final_workflow_log_dir, "workflow." . $workflow_id . ".log"),
+            File::Spec->join($logdir, $workflow_id . ".log")
         ]);
 }
 
