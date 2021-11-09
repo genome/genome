@@ -3,13 +3,14 @@ package Genome::Model::CwlPipeline::Command::Run;
 use strict;
 use warnings;
 
+use Cwd;
 use Data::Dumper;
 use File::Spec;
 use Genome;
 use Genome::Utility::File::Mode qw();
 use Genome::Utility::Text qw();
 use YAML;
-use JSON qw(to_json);
+use JSON qw(to_json from_json);
 use File::Compare qw();
 use File::Copy::Recursive qw();
 
@@ -38,6 +39,8 @@ sub execute {
     if ($cwl_runner eq 'cromwell') {
         $self->run_cromwell($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir);
+    } elsif ($cwl_runner eq 'cromwell_gcp') {
+        $self->run_cromwell_gcp($yaml, $results_dir);
     } elsif ($cwl_runner eq 'toil') {
         $self->run_toil($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir, $results_dir);
@@ -175,6 +178,104 @@ sub run_cromwell {
 
     my $guard = Genome::Cromwell->spawn_local_server($config_file);
     $self->_stage_cromwell_outputs($results_dir);
+}
+
+sub run_cromwell_gcp {
+    my $self = shift;
+    my $yaml = shift;
+    my $results_dir = shift;
+
+    my $workflow_options = Genome::Config::get('cromwell_workflow_options');
+    my $bucket = Genome::Config::get('cromwell_gcp_bucket');
+
+    my $logdir = $self->build->log_directory;
+    my $data_dir = $self->build->data_directory;
+    my $cromwell_url = Genome::Cromwell->server_url;
+    my $queue = Genome::Config::get('lsf_queue_build_worker');
+    my $user_group = Genome::Config::get('lsf_user_group');
+    my $main_workflow_file = $self->build->model->main_workflow_file;
+
+    my $poll_interval_seconds = 30;
+
+    # Cloudize workflow
+    my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.yaml/;
+    my $guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.0.0)');
+    delete local $ENV{BOTO_CONFIG};
+
+    Genome::Sys::LSF::bsub::bsub(
+        queue => $queue,
+        user_group => $user_group,
+        resource_string => 'rusage[mem=512M:internet2_upload_mbps=500]',
+        wait_for_completion => 1,
+        log_file => File::Spec->join($logdir, 'cloudize_workflow.log'),
+        cmd => [
+            "python3",
+            "/opt/scripts/cloudize-workflow.py",
+            $bucket,
+            $main_workflow_file,
+            $yaml,
+            "--output=$cloud_yaml"] );
+
+    $self->debug_message('input yaml: %s', $yaml);
+    $self->debug_message('cloud yaml: %s', $cloud_yaml);
+
+    # Zip dependencies
+    my $deps_zip = File::Spec->join($data_dir, 'deps.zip');
+    my $prev_dir = getcwd;
+    my(undef, $deps_dir, undef) = File::Spec->splitpath($main_workflow_file);
+    chdir($deps_dir);
+    Genome::Sys->shellcmd(cmd => ['zip', '-r', $deps_zip, '.']);
+    chdir($prev_dir);
+
+    my $workflow_id = Genome::Cromwell->submit_workflow(
+        $main_workflow_file, $cloud_yaml, $deps_zip, $workflow_options )->{id};
+
+    $self->status_message('Submitted workflow with ID: %s', $workflow_id);
+
+    # Poll until done
+    my $status;
+    do {
+        sleep $poll_interval_seconds;
+        $status = Genome::Cromwell->status($workflow_id)->{status};
+    } while ($status eq "Running" || $status eq "Submitted");
+
+    # Pull Outputs
+    if ($status eq "Succeeded") {
+        Genome::Sys::LSF::bsub::bsub(
+            queue => $queue,
+            user_group => $user_group,
+            resource_string => 'rusage[mem=512M:internet2_download_mbps=500]',
+            wait_for_completion => 1,
+            log_file => File::Spec->join($logdir, 'pull_outputs.log'),
+            cmd => [
+                "python3", "/opt/scripts/pull_outputs.py",
+                $workflow_id, "--output=$results_dir", "--cromwell-url=$cromwell_url"
+            ]
+            );
+        $self->_generate_timing_report($workflow_id);
+        $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
+    } else {
+        $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
+        $self->fatal_message("Workflow $workflow_id has non-succeeded status $status using workflow definition $main_workflow_file. Logs at $logdir");
+    }
+}
+
+sub _fetch_cromwell_log {
+    my $self = shift;
+    my $workflow_id = shift;
+    my $workflow_options = shift;
+    my $logdir = shift;
+
+    my $workflow_opts = from_json(Genome::Sys->read_file($workflow_options));
+    my $final_workflow_log_dir = $workflow_opts->{final_workflow_log_dir};
+
+    Genome::Sys->shellcmd(
+        cmd => [
+            '/usr/bin/python3',
+            '/usr/bin/gsutil/gsutil', 'cp',
+            File::Spec->join($final_workflow_log_dir, "workflow." . $workflow_id . ".log"),
+            File::Spec->join($logdir, $workflow_id . ".log")
+        ]);
 }
 
 sub _determine_workflow_type {

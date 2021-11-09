@@ -5,6 +5,7 @@ use warnings;
 
 use JSON qw(to_json from_json);
 use HTTP::Request;
+use HTTP::Request::Common qw(POST);
 use LWP::UserAgent;
 use IO::Socket::SSL qw();
 use IPC::Run qw();
@@ -37,6 +38,15 @@ class Genome::Cromwell {
     ],
 };
 
+sub status {
+    my $class = shift;
+    my $workflow_id = shift;
+
+    my $self = $class->_singleton_object;
+    my $url = $self->_request_url($workflow_id, 'status');
+
+    return $self->_make_json_request('GET', $url);
+}
 
 sub outputs {
     my $class = shift;
@@ -80,6 +90,24 @@ sub timing {
     return $content;
 }
 
+sub submit_workflow {
+    my $class = shift;
+    my ($definition, $inputs, $dependencies, $options) = @_;
+
+    my $self = $class->_singleton_object;
+    my $url = $self->_request_url();
+    my $content = [ workflowSource  => [$definition],
+                    workflowInputs => [$inputs],
+                    workflowDependencies => [$dependencies],
+                    workflowOptions => [$options] ];
+    my $req = POST( $url,
+                    Content_Type => 'multipart/form-data',
+                    Content => $content );
+
+    return from_json($self->_send_request($req));
+}
+
+
 sub _request_url {
     my $class = shift;
     my @parts = @_;
@@ -97,6 +125,26 @@ sub _make_json_request {
 
     my $content = $class->_make_request(@_);
     return from_json($content);
+}
+
+sub _send_request {
+    my $class = shift;
+    my $req = shift;
+
+    my $self = $class->_singleton_object;
+    ATTEMPT: for (1..5) {
+        my $response = $self->user_agent->request($req);
+
+        unless ($response->is_success) {
+            $self->fatal_message('Error querying server: %s', $response->status_line);
+            sleep 5;
+            next ATTEMPT;
+        }
+
+        return $response->decoded_content;
+    }
+
+    $self->fatal_message('Failed to query server after serveral attempts.');
 }
 
 sub _make_request {
@@ -118,21 +166,7 @@ sub _make_request {
     } else {
         push @request_args, \@headers;
     }
-
-    ATTEMPT: for (1..5) {
-        my $req = HTTP::Request->new(@request_args);
-        my $response = $self->user_agent->request($req);
-
-        unless ($response->is_success) {
-            $self->error_message('Error querying server: %s', $response->status_line);
-            sleep 5;
-            next ATTEMPT;
-        }
-
-        return $response->decoded_content;
-    }
-
-    $self->fatal_message('Failed to query server after serveral attempts.');
+    return $self->_send_request(HTTP::Request->new(@request_args));
 }
 
 sub cromwell_jar_cmdline {
