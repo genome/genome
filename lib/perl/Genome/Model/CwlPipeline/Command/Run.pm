@@ -40,7 +40,7 @@ sub execute {
         $self->run_cromwell($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir);
     } elsif ($cwl_runner eq 'cromwell_gcp') {
-        $self->run_cromwell_gcp($yaml, $results_dir);
+        $self->run_cromwell_gcp($yaml, $tmp_dir, $results_dir);
     } elsif ($cwl_runner eq 'toil') {
         $self->run_toil($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir, $results_dir);
@@ -183,23 +183,23 @@ sub run_cromwell {
 sub run_cromwell_gcp {
     my $self = shift;
     my $yaml = shift;
+    my $tmp_dir = shift;
     my $results_dir = shift;
 
-    my $workflow_options = Genome::Config::get('cromwell_workflow_options');
     my $bucket = Genome::Config::get('cromwell_gcp_bucket');
 
     my $logdir = $self->build->log_directory;
     my $data_dir = $self->build->data_directory;
-    my $cromwell_url = Genome::Cromwell->server_url;
     my $queue = Genome::Config::get('lsf_queue_build_worker');
     my $user_group = Genome::Config::get('lsf_user_group');
     my $main_workflow_file = $self->build->model->main_workflow_file;
+    my $build_id = $self->build->id;
 
-    my $poll_interval_seconds = 30;
-
+    #
     # Cloudize workflow
-    my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.yaml/;
-    my $guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.0.0)');
+    #
+    my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.json/;
+    my $lsb_sub_guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.1.0)');
     delete local $ENV{BOTO_CONFIG};
 
     Genome::Sys::LSF::bsub::bsub(
@@ -227,37 +227,60 @@ sub run_cromwell_gcp {
     Genome::Sys->shellcmd(cmd => ['zip', '-r', $deps_zip, '.']);
     chdir($prev_dir);
 
-    my $workflow_id = Genome::Cromwell->submit_workflow(
-        $main_workflow_file, $cloud_yaml, $deps_zip, $workflow_options )->{id};
 
-    $self->status_message('Submitted workflow with ID: %s', $workflow_id);
+    #
+    # Generate files for run
+    #
+    my $conf_file = $self->_generate_cromwell_config_gcp($tmp_dir);
+    my $opts_file = $self->_generate_workflow_options_gcp();
+    my $labels_file = $self->_generate_cromwell_labels;
 
-    # Poll until done
-    my $status;
-    do {
-        sleep $poll_interval_seconds;
-        $status = Genome::Cromwell->status($workflow_id)->{status};
-    } while ($status eq "Running" || $status eq "Submitted");
+    #
+    # Do the run
+    #
+    my @jar_cmdline = Genome::Cromwell->cromwell_jar_cmdline($conf_file);
+    Genome::Sys->shellcmd(
+        cmd => [
+            @jar_cmdline,
+            'run',
+            '--type', $self->_determine_workflow_type($main_workflow_file),
+            '--labels', $labels_file,
+            '--inputs', $cloud_yaml,
+            '--options', $opts_file,
+            '--imports', $deps_zip,
+            $main_workflow_file,
+        ],
+        input_files => [$main_workflow_file, $yaml, $opts_file, $labels_file, $deps_zip],
+        );
 
-    # Pull Outputs
-    if ($status eq "Succeeded") {
-        Genome::Sys::LSF::bsub::bsub(
-            queue => $queue,
-            user_group => $user_group,
-            resource_string => 'rusage[mem=512M:internet2_download_mbps=500]',
-            wait_for_completion => 1,
-            log_file => File::Spec->join($logdir, 'pull_outputs.log'),
-            cmd => [
-                "python3", "/opt/scripts/pull_outputs.py",
-                $workflow_id, "--output=$results_dir", "--cromwell-url=$cromwell_url"
-            ]
-            );
-        $self->_generate_timing_report($workflow_id);
-        $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
-    } else {
-        $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
-        $self->fatal_message("Workflow $workflow_id has non-succeeded status $status using workflow definition $main_workflow_file. Logs at $logdir");
-    }
+    #
+    # Persist artifacts (logs, outputs)
+    #
+    my $server_guard = Genome::Cromwell->spawn_local_server($conf_file);
+    my $workflow_id = $self->_query_workflow_id();
+    $self->_generate_timing_report($workflow_id);
+    # Pull logs
+    Genome::Sys->shellcmd(
+        cmd => [
+            '/usr/bin/python3', '/usr/bin/gsutil/gsutil', 'cp', '-r',
+            "gs://$bucket/build.$build_id", $data_dir
+        ] );
+    # Fetch outputs files
+    my $outputs_json = File::Spec->join($data_dir, 'outputs.json');
+    my $outputs = Genome::Cromwell->outputs($workflow_id);
+    Genome::Sys->write_file($outputs_json, to_json($outputs));
+    # Pull output files
+    Genome::Sys::LSF::bsub::bsub(
+        queue => $queue,
+        user_group => $user_group,
+        resource_string => 'rusage[mem=512M:internet2_download_mbps=500]',
+        wait_for_completion => 1,
+        log_file => File::Spec->join($logdir, 'pull_outputs.log'),
+        cmd => [
+            'python3', '/opt/scripts/pull_outputs.py',
+            "--output=$results_dir",
+            "--outputs-file=$outputs_json"
+        ] );
 }
 
 sub _fetch_cromwell_log {
@@ -287,6 +310,196 @@ sub _determine_workflow_type {
     } else {
         return 'cwl';
     }
+}
+
+sub _generate_workflow_options_gcp {
+    my $self = shift;
+
+    my $build_id = $self->build->id;
+    my $data_dir = $self->build->data_directory;
+    my $cromwell_gcp_bucket = Genome::Config::get('cromwell_gcp_bucket');
+    my $options_file = File::Spec->join($data_dir, 'gcp_workflow_options.json');
+
+    return $options_file if -e $options_file;
+
+    my $contents = <<"EOCONFIG"
+{
+    "final_workflow_log_dir": "gs://$cromwell_gcp_bucket/build.$build_id",
+    "final_call_logs_dir": "gs://$cromwell_gcp_bucket/build.$build_id",
+    "use_relative_output_paths": false,
+    "default_runtime_attributes": {
+        "preemtible": 1
+    }
+}
+EOCONFIG
+        ;
+    Genome::Sys->write_file($options_file, $contents);
+    return $options_file;
+}
+
+sub _append_shared_config {
+    my $self = shift;
+    my $tmp_dir = shift;
+    my $config = shift;
+
+    my $server = Genome::Config::get('cromwell_server');
+    my $auth = Genome::Config::get('cromwell_auth');
+    my $user = Genome::Config::get('cromwell_user');
+
+    my $build = $self->build;
+    my $data_dir = $build->data_directory;
+    my $log_dir = $build->log_directory;
+
+    $config .= <<"EOCONFIG"
+workflow-options {
+  workflow-log-dir = "$log_dir/cromwell-workflow-logs"
+}
+EOCONFIG
+        ;
+
+    if ($server =~ /^mysql:/) {
+        $config .= <<EOCONFIG
+database {
+  profile = "slick.jdbc.MySQLProfile\$"
+  db {
+    driver = "com.mysql.jdbc.Driver"
+    url = "jdbc:$server"
+    user = "$user"
+    password = "$auth"
+    connectionTimeout = 30000
+    numThreads = 5
+  }
+}
+EOCONFIG
+            ;
+    } elsif ($server =~ /^hsqldb:/) {
+        my $dbfile_location;
+        if ($server =~ /;/) {
+            $self->fatal_message('Cannot currently handle hsqldb server string with semicolons. Got: %s', $server);
+        } elsif ($server eq 'hsqldb:tmp') {
+            $dbfile_location = "$tmp_dir/cromwell-db/cromwell-db";
+            $server = "hsqldb:file:$dbfile_location";
+            $self->debug_message('Using temporary hsqldb location: %s', $server);
+        } elsif ($server eq 'hsqldb:build') {
+            $dbfile_location = "$data_dir/cromwell-db/cromwell-db";
+            $server = "hsqldb:file:$dbfile_location";
+            $self->debug_message('Using build hsqldb location: %s', $server);
+        } else {
+            ($dbfile_location) = $server =~ /hsqldb:file:([^:]+)/;
+            unless ($dbfile_location) {
+                $self->fatal_message('Could not parse hsqldb file location from server string. Expected "hsqldb:tmp", "hsqldb:build", or "hsqldb:file:/path/to/cromwell-db". Got: %s', $server);
+            }
+            $self->debug_message('Using supplied hsqldb location: %s', $dbfile_location);
+        }
+
+        #shell out so this is saved immediately for the benefit of `genome model build view` while this build runs.
+        Genome::Sys->shellcmd(
+            cmd => [qw(genome model build add-note --header-text=hsqldb_server_file), "--body-text=$dbfile_location", $build->id],
+            );
+
+        $config .= <<EOCONFIG
+database {
+  profile = "slick.jdbc.HsqldbProfile\$"
+  db {
+    driver = "org.hsqldb.jdbcDriver"
+    url = """
+    jdbc:$server;
+    shutdown=false;
+    hsqldb.default_table_type=cached;hsqldb.tx=mvcc;
+    hsqldb.result_max_memory_rows=10000;
+    hsqldb.large_data=true;
+    hsqldb.applog=1;
+    hsqldb.lob_compressed=true;
+    hsqldb.script_format=3
+    """
+    connectionTimeout = 120000
+    numThreads = 1
+   }
+}
+EOCONFIG
+            ;
+    } else {
+        $self->fatal_message('Expected mysql or hsqldb cromwell server url but got: %s', $server);
+    }
+
+
+    if (Genome::Config::get('cromwell_call_caching')) {
+        $config .= <<'EOCONFIG'
+call-caching {
+  enabled = true
+  invalidate-bad-cache-results = true
+}
+EOCONFIG
+            ;
+    }
+}
+
+sub _generate_cromwell_config_gcp {
+    my $self = shift;
+    my $tmp_dir = shift;
+
+    my $data_dir = $self->build->data_directory;
+    my $config_file = File::Spec->join($data_dir, 'cromwell_gcp.config');
+    return $config_file if -e $config_file;
+
+    my $cromwell_gcp_project = Genome::Config::get('cromwell_gcp_project');
+    my $cromwell_gcp_service_account = Genome::Config::get('cromwell_gcp_service_account');
+    my $cromwell_gcp_bucket = Genome::Config::get('cromwell_gcp_bucket');
+
+    my $build_id = $self->build->id;
+
+    my $config = <<'EOCONFIG'
+include required(classpath("application"))
+
+google {
+  application-name = "cromwell"
+  auths = [
+    {
+      name = "application-default"
+      scheme = "application_default"
+    }
+  ]
+}
+
+engine.filesystems {
+  gcs.auth = "application-default"
+  local.enabled = true
+}
+
+backend.default = "default"
+backend.providers.default {
+  actor-factory = "cromwell.backend.google.pipelines.v2beta.PipelinesApiLifecycleActorFactory"
+  config {
+    genomics {
+      auth = "application-default"
+      endpoint-url = "https://lifesciences.googleapis.com/"
+      location = "us-central1"
+    }
+    filesystems {
+      gcs {
+        auth = "application-default"
+        caching.duplication-strategy = "reference"
+      }
+    }
+    include "papi_v2_reference_image_manifest.conf"
+  }
+}
+EOCONFIG
+        ;
+
+    $config .= <<"EOCONFIG"
+backend.providers.default.config {
+  project = $cromwell_gcp_project
+  root = "gs://$cromwell_gcp_bucket/build.$build_id"
+  genomics.compute-service-account = "$cromwell_gcp_service_account"
+  filesystems.gcs.project = $cromwell_gcp_project
+}
+EOCONFIG
+        ;
+    $self->_append_shared_config($tmp_dir, $config);
+
+    Genome::Sys->write_file($config_file, $config);
+    return $config_file;
 }
 
 sub _generate_cromwell_config {
@@ -446,82 +659,8 @@ workflow-options {
   workflow-log-dir = "$log_dir/cromwell-workflow-logs"
 }
 EOCONFIG
-;
-    if ($server =~ /^mysql:/) {
-        $config .= <<EOCONFIG
-database {
-  profile = "slick.jdbc.MySQLProfile\$"
-  db {
-    driver = "com.mysql.jdbc.Driver"
-    url = "jdbc:$server"
-    user = "$user"
-    password = "$auth"
-    connectionTimeout = 30000
-    numThreads = 5
-  }
-}
-EOCONFIG
-;
-    } elsif ($server =~ /^hsqldb:/) {
-        my $dbfile_location;
-        if ($server =~ /;/) {
-            $self->fatal_message('Cannot currently handle hsqldb server string with semicolons. Got: %s', $server);
-        } elsif ($server eq 'hsqldb:tmp') {
-            $dbfile_location = "$tmp_dir/cromwell-db/cromwell-db";
-            $server = "hsqldb:file:$dbfile_location";
-            $self->debug_message('Using temporary hsqldb location: %s', $server);
-        } elsif ($server eq 'hsqldb:build') {
-            $dbfile_location = "$data_dir/cromwell-db/cromwell-db";
-            $server = "hsqldb:file:$dbfile_location";
-            $self->debug_message('Using build hsqldb location: %s', $server);
-        } else {
-            ($dbfile_location) = $server =~ /hsqldb:file:([^:]+)/;
-            unless ($dbfile_location) {
-                $self->fatal_message('Could not parse hsqldb file location from server string. Expected "hsqldb:tmp", "hsqldb:build", or "hsqldb:file:/path/to/cromwell-db". Got: %s', $server);
-            }
-            $self->debug_message('Using supplied hsqldb location: %s', $dbfile_location);
-        }
-
-        #shell out so this is saved immediately for the benefit of `genome model build view` while this build runs.
-        Genome::Sys->shellcmd(
-            cmd => [qw(genome model build add-note --header-text=hsqldb_server_file), "--body-text=$dbfile_location", $build->id],
-        );
-
-        $config .= <<EOCONFIG
-database {
-  profile = "slick.jdbc.HsqldbProfile\$"
-  db {
-    driver = "org.hsqldb.jdbcDriver"
-    url = """
-    jdbc:$server;
-    shutdown=false;
-    hsqldb.default_table_type=cached;hsqldb.tx=mvcc;
-    hsqldb.result_max_memory_rows=10000;
-    hsqldb.large_data=true;
-    hsqldb.applog=1;
-    hsqldb.lob_compressed=true;
-    hsqldb.script_format=3
-    """
-    connectionTimeout = 120000
-    numThreads = 1
-   }
-}
-EOCONFIG
-;
-    } else {
-        $self->fatal_message('Expected mysql or hsqldb cromwell server url but got: %s', $server);
-    }
-
-    if (Genome::Config::get('cromwell_call_caching')) {
-        $config .= <<EOCONFIG
-call-caching {
-  enabled = true
-  invalidate-bad-cache-results = true
-}
-EOCONFIG
-;
-    }
-
+        ;
+    $self->_append_shared_config($tmp_dir, $config);
     Genome::Sys->write_file($config_file, $config);
     return $config_file;
 }
@@ -544,10 +683,8 @@ sub _generate_cromwell_labels {
     return $labels_file;
 }
 
-sub _stage_cromwell_outputs {
+sub _query_workflow_id {
     my $self = shift;
-    my $results_dir = shift;
-
     my $build = $self->build;
 
     my $results = Genome::Cromwell->query( [{ label => 'build:' . $build->id, status => 'Succeeded' }] );
@@ -556,6 +693,14 @@ sub _stage_cromwell_outputs {
     }
 
     my $workflow_id = $results->{results}->[0]->{id};
+    return $workflow_id;
+}
+
+sub _stage_cromwell_outputs {
+    my $self = shift;
+    my $results_dir = shift;
+
+    my $workflow_id = $self->_query_workflow_id();
     my $output_result = Genome::Cromwell->outputs($workflow_id);
 
     my $outputs = $output_result->{outputs};
