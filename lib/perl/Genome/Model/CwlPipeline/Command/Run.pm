@@ -189,11 +189,16 @@ sub run_cromwell_gcp {
     my $bucket = Genome::Config::get('cromwell_gcp_bucket');
 
     my $logdir = $self->build->log_directory;
+    mkdir $logdir if !(-d $logdir);
     my $data_dir = $self->build->data_directory;
     my $queue = Genome::Config::get('lsf_queue_build_worker');
     my $user_group = Genome::Config::get('lsf_user_group');
     my $main_workflow_file = $self->build->model->main_workflow_file;
     my $build_id = $self->build->id;
+
+    my $cromwell_service_account = Genome::Config::get('cromwell_gcp_service_account');
+
+    my $poll_interval_seconds = 30;
 
     #
     # Cloudize workflow
@@ -207,7 +212,7 @@ sub run_cromwell_gcp {
         user_group => $user_group,
         resource_string => 'rusage[mem=512M:internet2_upload_mbps=500]',
         wait_for_completion => 1,
-        log_file => File::Spec->join($logdir, 'cloudize_workflow.log'),
+        log_file => File::Spec->join($logdir, '00_cloudize_workflow.log'),
         cmd => [
             "python3",
             "/opt/scripts/cloudize-workflow.py",
@@ -220,68 +225,103 @@ sub run_cromwell_gcp {
     $self->debug_message('cloud yaml: %s', $cloud_yaml);
 
     # Zip dependencies
-    my $deps_zip = File::Spec->join($data_dir, 'deps.zip');
+    my $deps_zip_path = File::Spec->join($data_dir, 'deps.zip');
+    my $deps_zip_url = "gs://$bucket/build.$build_id/deps.zip";
     my $prev_dir = getcwd;
     my(undef, $deps_dir, undef) = File::Spec->splitpath($main_workflow_file);
+
+    print("--- DEPS_DIR $deps_dir \n");
     chdir($deps_dir);
-    Genome::Sys->shellcmd(cmd => ['zip', '-r', $deps_zip, '.']);
+    Genome::Sys->shellcmd(
+        cmd => ['zip', '-r', $deps_zip_path, '.'],
+        redirect_stdout => '/dev/null'
+        );
     chdir($prev_dir);
 
+    # Upload zip file
+    Genome::Sys::LSF::bsub::bsub(
+        queue => $queue,
+        user_group => $user_group,
+        resource_string => 'rusage[internet2_download_mbps=500]',
+        wait_for_completion => 1,
+        log_file => File::Spec->join($logdir, '01_upload_zip.log'),
+        cmd => ['gsutil', 'cp', '-n', $deps_zip_path, $deps_zip_url]
+        );
 
     #
     # Generate files for run
     #
     my $conf_file = $self->_generate_cromwell_config_gcp($tmp_dir);
-    my $opts_file = $self->_generate_workflow_options_gcp();
+    my $options_file = $self->_generate_workflow_options_gcp();
     my $labels_file = $self->_generate_cromwell_labels;
 
     #
     # Do the run
     #
-    my @jar_cmdline = Genome::Cromwell->cromwell_jar_cmdline($conf_file);
-    Genome::Sys->shellcmd(
-        cmd => [
-            @jar_cmdline,
-            'run',
-            '--type', $self->_determine_workflow_type($main_workflow_file),
-            '--labels', $labels_file,
-            '--inputs', $cloud_yaml,
-            '--options', $opts_file,
-            '--imports', $deps_zip,
-            $main_workflow_file,
-        ],
-        input_files => [$main_workflow_file, $yaml, $opts_file, $labels_file, $deps_zip],
-        );
-
-    #
-    # Persist artifacts (logs, outputs)
-    #
-    my $server_guard = Genome::Cromwell->spawn_local_server($conf_file);
-    my $workflow_id = $self->_query_workflow_id();
-    $self->_generate_timing_report($workflow_id);
-    # Pull logs
-    Genome::Sys->shellcmd(
-        cmd => [
-            '/usr/bin/python3', '/usr/bin/gsutil/gsutil', 'cp', '-r',
-            "gs://$bucket/build.$build_id", $data_dir
-        ] );
-    # Fetch outputs files
-    my $outputs_json = File::Spec->join($data_dir, 'outputs.json');
-    my $outputs = Genome::Cromwell->outputs($workflow_id);
-    Genome::Sys->write_file($outputs_json, to_json($outputs));
-    # Pull output files
+    print("--- Files generated. Starting VM.\n");
     Genome::Sys::LSF::bsub::bsub(
         queue => $queue,
         user_group => $user_group,
-        resource_string => 'rusage[mem=512M:internet2_download_mbps=500]',
         wait_for_completion => 1,
-        log_file => File::Spec->join($logdir, 'pull_outputs.log'),
+        log_file => File::Spec->join($logdir, '02_vm_start.log'),
         cmd => [
-            'python3', '/opt/scripts/pull_outputs.py',
-            "--output=$results_dir",
-            "--outputs-file=$outputs_json"
+            "sh", "/opt/gms/start.sh",
+            "--build", $build_id,
+            "--cromwell-conf", $conf_file,
+            "--service-account", $cromwell_service_account,
+            "--workflow-definition", $main_workflow_file,
+            "--workflow-inputs", $cloud_yaml,
+            "--workflow-options", $options_file,
+            "--deps-zip", $deps_zip_url,
+            "--bucket", $bucket
         ] );
+
+    my $result;
+    # Wait for instance VM to terminate itself
+    print("--- VM started. Polling every $poll_interval_seconds seconds.\n");
+    do {
+        sleep $poll_interval_seconds;
+        # TODO(john): use output here to get workflow_id when available
+        # stdout not-empty, parse YAML, metadata.items.first(el => key == 'workflow-id').value
+        $result = `gcloud compute instances describe build-$build_id --zone us-central1-c 2>/dev/null`;
+        print("--- Polled VM and got result $result \n");
+    } while ($result);
+    print("--- Polling done. Pulling artifacts.\n");
+
+    # Pull timing diagram
+    Genome::Sys::LSF::bsub::bsub(
+        queue => $queue,
+        user_group => $user_group,
+        resource_string => 'rusage[internet2_download_mbps=500]',
+        wait_for_completion => 1,
+        log_file => File::Spec->join($logdir, '03_pull_dir.log'),
+        cmd => ['gsutil', 'cp', '-r', '-n', "gs://$bucket/build.$build_id/**", $data_dir]
+        );
+    print("--- Pulled artifacts. Pulling outputs.\n");
+
+    # Fetch outputs files
+    my $outputs_json = File::Spec->join($data_dir, 'outputs.json');
+    # Pull output files
+    if (-e $outputs_json) {
+        Genome::Sys::LSF::bsub::bsub(
+            queue => $queue,
+            user_group => $user_group,
+            resource_string => 'rusage[mem=512M:internet2_download_mbps=500]',
+            wait_for_completion => 1,
+            log_file => File::Spec->join($logdir, '04_pull_outputs.log'),
+            cmd => [
+                'python3', '/opt/scripts/pull_outputs.py',
+                "--outputs-dir=$results_dir",
+                "--outputs-file=$outputs_json"
+            ] );
+    } else {
+        # TODO(john) print something indicative of fatal error
+        $self->fatal_message("Build did not generate output files. See $logdir");
+    }
+
+    print("--- Done done.");
 }
+
 
 sub _fetch_cromwell_log {
     my $self = shift;
