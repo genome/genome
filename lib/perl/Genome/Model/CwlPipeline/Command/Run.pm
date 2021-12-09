@@ -196,15 +196,16 @@ sub run_cromwell_gcp {
     my $main_workflow_file = $self->build->model->main_workflow_file;
     my $build_id = $self->build->id;
 
+    my $cromwell_server_memory_gb = Genome::Config::get('cromwell_gcp_server_memory_gb');
     my $cromwell_service_account = Genome::Config::get('cromwell_gcp_service_account');
 
-    my $poll_interval_seconds = 30;
+    my $poll_interval_seconds = 300;
 
     #
     # Cloudize workflow
     #
     my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.json/;
-    my $lsb_sub_guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.1.0)');
+    my $lsb_sub_guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.1.2)');
     delete local $ENV{BOTO_CONFIG};
 
     Genome::Sys::LSF::bsub::bsub(
@@ -221,16 +222,12 @@ sub run_cromwell_gcp {
             $yaml,
             "--output=$cloud_yaml"] );
 
-    $self->debug_message('input yaml: %s', $yaml);
-    $self->debug_message('cloud yaml: %s', $cloud_yaml);
-
     # Zip dependencies
     my $deps_zip_path = File::Spec->join($data_dir, 'deps.zip');
     my $deps_zip_url = "gs://$bucket/build.$build_id/deps.zip";
     my $prev_dir = getcwd;
     my(undef, $deps_dir, undef) = File::Spec->splitpath($main_workflow_file);
 
-    print("--- DEPS_DIR $deps_dir \n");
     chdir($deps_dir);
     Genome::Sys->shellcmd(
         cmd => ['zip', '-r', $deps_zip_path, '.'],
@@ -252,13 +249,13 @@ sub run_cromwell_gcp {
     # Generate files for run
     #
     my $conf_file = $self->_generate_cromwell_config_gcp($tmp_dir);
-    my $options_file = $self->_generate_workflow_options_gcp();
+    my $options_file = $self->_generate_workflow_options_gcp;
     my $labels_file = $self->_generate_cromwell_labels;
 
     #
     # Do the run
     #
-    print("--- Files generated. Starting VM.\n");
+    $self->debug_message("Files generated. Starting VM.");  # TODO(john): is there an info level?
     Genome::Sys::LSF::bsub::bsub(
         queue => $queue,
         user_group => $user_group,
@@ -273,31 +270,31 @@ sub run_cromwell_gcp {
             "--workflow-inputs", $cloud_yaml,
             "--workflow-options", $options_file,
             "--deps-zip", $deps_zip_url,
-            "--bucket", $bucket
+            "--bucket", $bucket,
+            "--memory-gb", $cromwell_server_memory_gb,
+            "--tmp-dir", $tmp_dir
         ] );
 
     my $result;
     # Wait for instance VM to terminate itself
-    print("--- VM started. Polling every $poll_interval_seconds seconds.\n");
+    $self->debug_message("VM started. Polling every $poll_interval_seconds seconds.");  # TODO(john): info level?
     do {
         sleep $poll_interval_seconds;
-        # TODO(john): use output here to get workflow_id when available
-        # stdout not-empty, parse YAML, metadata.items.first(el => key == 'workflow-id').value
-        $result = `gcloud compute instances describe build-$build_id --zone us-central1-c 2>/dev/null`;
-        print("--- Polled VM and got result $result \n");
-    } while ($result);
-    print("--- Polling done. Pulling artifacts.\n");
+        $result = system("gcloud compute instances describe build-$build_id --zone us-central1-c > /dev/null");
+        $self->debug_message("Polled VM and got result $result");  # TODO(john): info level?
+    } while ($result == 0);
+    $self->debug_message("Polling done. Pulling artifacts.\n");  # TODO(john): info level?
 
-    # Pull timing diagram
+    # Pull build directory
     Genome::Sys::LSF::bsub::bsub(
         queue => $queue,
         user_group => $user_group,
         resource_string => 'rusage[internet2_download_mbps=500]',
         wait_for_completion => 1,
         log_file => File::Spec->join($logdir, '03_pull_dir.log'),
-        cmd => ['gsutil', 'cp', '-r', '-n', "gs://$bucket/build.$build_id/**", $data_dir]
+        cmd => ['gsutil', 'cp', '-r', '-n', "gs://$bucket/build.$build_id/*", $data_dir]
         );
-    print("--- Pulled artifacts. Pulling outputs.\n");
+    $self->debug_message("Pulled artifacts. Pulling outputs.");  # TODO(john): info level?
 
     # Fetch outputs files
     my $outputs_json = File::Spec->join($data_dir, 'outputs.json');
@@ -315,11 +312,12 @@ sub run_cromwell_gcp {
                 "--outputs-file=$outputs_json"
             ] );
     } else {
-        # TODO(john) print something indicative of fatal error
         $self->fatal_message("Build did not generate output files. See $logdir");
     }
-
-    print("--- Done done.");
+    $self->debug_message("Finished Google Cloud run of workflow.\n" .
+                         "Results in $results_dir \n" .
+                         "Compute instance logs and workflow timing in $data_dir \n" .
+                         "Logs for bsubs at $logdir" );
 }
 
 
@@ -364,8 +362,8 @@ sub _generate_workflow_options_gcp {
 
     my $contents = <<"EOCONFIG"
 {
-    "final_workflow_log_dir": "gs://$cromwell_gcp_bucket/build.$build_id",
-    "final_call_logs_dir": "gs://$cromwell_gcp_bucket/build.$build_id",
+    "final_workflow_log_dir": "gs://$cromwell_gcp_bucket/build.$build_id"/logs,
+    "final_call_logs_dir": "gs://$cromwell_gcp_bucket/build.$build_id/logs",
     "use_relative_output_paths": false,
     "default_runtime_attributes": {
         "preemtible": 1
