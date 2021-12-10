@@ -375,103 +375,6 @@ EOCONFIG
     return $options_file;
 }
 
-sub _append_shared_config {
-    my $self = shift;
-    my $tmp_dir = shift;
-    my $config = shift;
-
-    my $server = Genome::Config::get('cromwell_server');
-    my $auth = Genome::Config::get('cromwell_auth');
-    my $user = Genome::Config::get('cromwell_user');
-
-    my $build = $self->build;
-    my $data_dir = $build->data_directory;
-    my $log_dir = $build->log_directory;
-
-    $config .= <<"EOCONFIG"
-workflow-options {
-  workflow-log-dir = "$log_dir/cromwell-workflow-logs"
-}
-EOCONFIG
-        ;
-
-    if ($server =~ /^mysql:/) {
-        $config .= <<EOCONFIG
-database {
-  profile = "slick.jdbc.MySQLProfile\$"
-  db {
-    driver = "com.mysql.jdbc.Driver"
-    url = "jdbc:$server"
-    user = "$user"
-    password = "$auth"
-    connectionTimeout = 30000
-    numThreads = 5
-  }
-}
-EOCONFIG
-            ;
-    } elsif ($server =~ /^hsqldb:/) {
-        my $dbfile_location;
-        if ($server =~ /;/) {
-            $self->fatal_message('Cannot currently handle hsqldb server string with semicolons. Got: %s', $server);
-        } elsif ($server eq 'hsqldb:tmp') {
-            $dbfile_location = "$tmp_dir/cromwell-db/cromwell-db";
-            $server = "hsqldb:file:$dbfile_location";
-            $self->debug_message('Using temporary hsqldb location: %s', $server);
-        } elsif ($server eq 'hsqldb:build') {
-            $dbfile_location = "$data_dir/cromwell-db/cromwell-db";
-            $server = "hsqldb:file:$dbfile_location";
-            $self->debug_message('Using build hsqldb location: %s', $server);
-        } else {
-            ($dbfile_location) = $server =~ /hsqldb:file:([^:]+)/;
-            unless ($dbfile_location) {
-                $self->fatal_message('Could not parse hsqldb file location from server string. Expected "hsqldb:tmp", "hsqldb:build", or "hsqldb:file:/path/to/cromwell-db". Got: %s', $server);
-            }
-            $self->debug_message('Using supplied hsqldb location: %s', $dbfile_location);
-        }
-
-        #shell out so this is saved immediately for the benefit of `genome model build view` while this build runs.
-        Genome::Sys->shellcmd(
-            cmd => [qw(genome model build add-note --header-text=hsqldb_server_file), "--body-text=$dbfile_location", $build->id],
-            );
-
-        $config .= <<EOCONFIG
-database {
-  profile = "slick.jdbc.HsqldbProfile\$"
-  db {
-    driver = "org.hsqldb.jdbcDriver"
-    url = """
-    jdbc:$server;
-    shutdown=false;
-    hsqldb.default_table_type=cached;hsqldb.tx=mvcc;
-    hsqldb.result_max_memory_rows=10000;
-    hsqldb.large_data=true;
-    hsqldb.applog=1;
-    hsqldb.lob_compressed=true;
-    hsqldb.script_format=3
-    """
-    connectionTimeout = 120000
-    numThreads = 1
-   }
-}
-EOCONFIG
-            ;
-    } else {
-        $self->fatal_message('Expected mysql or hsqldb cromwell server url but got: %s', $server);
-    }
-
-
-    if (Genome::Config::get('cromwell_call_caching')) {
-        $config .= <<'EOCONFIG'
-call-caching {
-  enabled = true
-  invalidate-bad-cache-results = true
-}
-EOCONFIG
-            ;
-    }
-}
-
 sub _generate_cromwell_config_gcp {
     my $self = shift;
     my $tmp_dir = shift;
@@ -534,7 +437,6 @@ backend.providers.default.config {
 }
 EOCONFIG
         ;
-    $self->_append_shared_config($tmp_dir, $config);
 
     Genome::Sys->write_file($config_file, $config);
     return $config_file;
@@ -697,8 +599,83 @@ workflow-options {
   workflow-log-dir = "$log_dir/cromwell-workflow-logs"
 }
 EOCONFIG
-        ;
-    $self->_append_shared_config($tmp_dir, $config);
+;
+
+    if ($server =~ /^mysql:/) {
+        $config .= <<EOCONFIG
+database {
+  profile = "slick.jdbc.MySQLProfile\$"
+  db {
+    driver = "com.mysql.jdbc.Driver"
+    url = "jdbc:$server"
+    user = "$user"
+    password = "$auth"
+    connectionTimeout = 30000
+    numThreads = 5
+  }
+}
+EOCONFIG
+;
+    } elsif ($server =~ /^hsqldb:/) {
+        my $dbfile_location;
+        if ($server =~ /;/) {
+            $self->fatal_message('Cannot currently handle hsqldb server string with semicolons. Got: %s', $server);
+        } elsif ($server eq 'hsqldb:tmp') {
+            $dbfile_location = "$tmp_dir/cromwell-db/cromwell-db";
+            $server = "hsqldb:file:$dbfile_location";
+            $self->debug_message('Using temporary hsqldb location: %s', $server);
+        } elsif ($server eq 'hsqldb:build') {
+            $dbfile_location = "$data_dir/cromwell-db/cromwell-db";
+            $server = "hsqldb:file:$dbfile_location";
+            $self->debug_message('Using build hsqldb location: %s', $server);
+        } else {
+            ($dbfile_location) = $server =~ /hsqldb:file:([^:]+)/;
+            unless ($dbfile_location) {
+                $self->fatal_message('Could not parse hsqldb file location from server string. Expected "hsqldb:tmp", "hsqldb:build", or "hsqldb:file:/path/to/cromwell-db". Got: %s', $server);
+            }
+            $self->debug_message('Using supplied hsqldb location: %s', $dbfile_location);
+        }
+
+        #shell out so this is saved immediately for the benefit of `genome model build view` while this build runs.
+        Genome::Sys->shellcmd(
+            cmd => [qw(genome model build add-note --header-text=hsqldb_server_file), "--body-text=$dbfile_location", $build->id],
+            );
+
+        $config .= <<EOCONFIG
+database {
+  profile = "slick.jdbc.HsqldbProfile\$"
+  db {
+    driver = "org.hsqldb.jdbcDriver"
+    url = """
+    jdbc:$server;
+    shutdown=false;
+    hsqldb.default_table_type=cached;hsqldb.tx=mvcc;
+    hsqldb.result_max_memory_rows=10000;
+    hsqldb.large_data=true;
+    hsqldb.applog=1;
+    hsqldb.lob_compressed=true;
+    hsqldb.script_format=3
+    """
+    connectionTimeout = 120000
+    numThreads = 1
+   }
+}
+EOCONFIG
+;
+    } else {
+        $self->fatal_message('Expected mysql or hsqldb cromwell server url but got: %s', $server);
+    }
+
+    if (Genome::Config::get('cromwell_call_caching')) {
+        $config .= <<'EOCONFIG'
+call-caching {
+  enabled = true
+  invalidate-bad-cache-results = true
+}
+EOCONFIG
+;
+    }
+
     Genome::Sys->write_file($config_file, $config);
     return $config_file;
 }
