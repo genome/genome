@@ -41,6 +41,7 @@ sub execute {
         $self->cleanup($tmp_dir);
     } elsif ($cwl_runner eq 'cromwell_gcp') {
         $self->run_cromwell_gcp($yaml, $tmp_dir, $results_dir);
+        $self->cleanup($tmp_dir);
     } elsif ($cwl_runner eq 'toil') {
         $self->run_toil($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir, $results_dir);
@@ -186,18 +187,16 @@ sub run_cromwell_gcp {
     my $tmp_dir = shift;
     my $results_dir = shift;
 
-    my $bucket = Genome::Config::get('cromwell_gcp_bucket');
-
     my $logdir = $self->build->log_directory;
-    mkdir $logdir if !(-d $logdir);
     my $data_dir = $self->build->data_directory;
-    my $queue = Genome::Config::get('lsf_queue_build_worker');
-    my $user_group = Genome::Config::get('lsf_user_group');
     my $main_workflow_file = $self->build->model->main_workflow_file;
     my $build_id = $self->build->id;
 
+    my $bucket = Genome::Config::get('cromwell_gcp_bucket');
     my $cromwell_server_memory_gb = Genome::Config::get('cromwell_gcp_server_memory_gb');
     my $cromwell_service_account = Genome::Config::get('cromwell_gcp_service_account');
+    my $queue = Genome::Config::get('lsf_queue_build_worker');
+    my $user_group = Genome::Config::get('lsf_user_group');
 
     my $poll_interval_seconds = 300;
 
@@ -319,7 +318,6 @@ sub run_cromwell_gcp {
                          "Compute instance logs and workflow timing in $data_dir \n" .
                          "Logs for bsubs at $logdir" );
 }
-
 
 sub _fetch_cromwell_log {
     my $self = shift;
