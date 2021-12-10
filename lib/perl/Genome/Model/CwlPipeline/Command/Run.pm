@@ -598,7 +598,6 @@ workflow-options {
 }
 EOCONFIG
 ;
-
     if ($server =~ /^mysql:/) {
         $config .= <<EOCONFIG
 database {
@@ -699,6 +698,7 @@ sub _generate_cromwell_labels {
 sub _stage_cromwell_outputs {
     my $self = shift;
     my $results_dir = shift;
+
     my $build = $self->build;
 
     my $results = Genome::Cromwell->query( [{ label => 'build:' . $build->id, status => 'Succeeded' }] );
