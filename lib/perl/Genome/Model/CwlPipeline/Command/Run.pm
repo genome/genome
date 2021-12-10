@@ -639,7 +639,7 @@ EOCONFIG
         #shell out so this is saved immediately for the benefit of `genome model build view` while this build runs.
         Genome::Sys->shellcmd(
             cmd => [qw(genome model build add-note --header-text=hsqldb_server_file), "--body-text=$dbfile_location", $build->id],
-            );
+        );
 
         $config .= <<EOCONFIG
 database {
@@ -667,7 +667,7 @@ EOCONFIG
     }
 
     if (Genome::Config::get('cromwell_call_caching')) {
-        $config .= <<'EOCONFIG'
+        $config .= <<EOCONFIG
 call-caching {
   enabled = true
   invalidate-bad-cache-results = true
@@ -698,8 +698,9 @@ sub _generate_cromwell_labels {
     return $labels_file;
 }
 
-sub _query_workflow_id {
+sub _stage_cromwell_outputs {
     my $self = shift;
+    my $results_dir = shift;
     my $build = $self->build;
 
     my $results = Genome::Cromwell->query( [{ label => 'build:' . $build->id, status => 'Succeeded' }] );
@@ -708,14 +709,6 @@ sub _query_workflow_id {
     }
 
     my $workflow_id = $results->{results}->[0]->{id};
-    return $workflow_id;
-}
-
-sub _stage_cromwell_outputs {
-    my $self = shift;
-    my $results_dir = shift;
-
-    my $workflow_id = $self->_query_workflow_id();
     my $output_result = Genome::Cromwell->outputs($workflow_id);
 
     my $outputs = $output_result->{outputs};
