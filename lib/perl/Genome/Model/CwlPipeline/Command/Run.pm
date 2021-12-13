@@ -254,7 +254,7 @@ sub run_cromwell_gcp {
     #
     # Do the run
     #
-    $self->debug_message("Files generated. Starting VM.");  # TODO(john): is there an info level?
+    $self->status_message("Files generated. Starting VM.");
     Genome::Sys::LSF::bsub::bsub(
         queue => $queue,
         user_group => $user_group,
@@ -276,13 +276,13 @@ sub run_cromwell_gcp {
 
     my $result;
     # Wait for instance VM to terminate itself
-    $self->debug_message("VM started. Polling every $poll_interval_seconds seconds.");  # TODO(john): info level?
+    $self->status_message("VM started. Polling every $poll_interval_seconds seconds.");
     do {
         sleep $poll_interval_seconds;
         $result = system("gcloud compute instances describe build-$build_id --zone us-central1-c > /dev/null");
-        $self->debug_message("Polled VM and got result $result");  # TODO(john): info level?
+        $self->status_message("Polled VM and got result $result");
     } while ($result == 0);
-    $self->debug_message("Polling done. Pulling artifacts.\n");  # TODO(john): info level?
+    $self->status_message("Polling done. Pulling artifacts.\n");
 
     # Pull build directory
     Genome::Sys::LSF::bsub::bsub(
@@ -293,7 +293,7 @@ sub run_cromwell_gcp {
         log_file => File::Spec->join($logdir, '03_pull_dir.log'),
         cmd => ['gsutil', 'cp', '-r', '-n', "gs://$bucket/build.$build_id/*", $data_dir]
         );
-    $self->debug_message("Pulled artifacts. Pulling outputs.");  # TODO(john): info level?
+    $self->status_message("Pulled artifacts. Pulling outputs.");
 
     # Fetch outputs files
     my $outputs_json = File::Spec->join($data_dir, 'outputs.json');
@@ -314,10 +314,10 @@ sub run_cromwell_gcp {
     } else {
         $self->fatal_message("Build did not generate output files. See $logdir");
     }
-    $self->debug_message("Finished Google Cloud run of workflow.\n" .
-                         "Results in $results_dir \n" .
-                         "Compute instance logs and workflow timing in $data_dir \n" .
-                         "Logs for bsubs at $logdir" );
+    $self->status_message("Finished Google Cloud run of workflow.\n" .
+                          "Results in $results_dir \n" .
+                          "Compute instance logs and workflow timing in $data_dir \n" .
+                          "Logs for bsubs at $logdir" );
 }
 
 sub _fetch_cromwell_log {
