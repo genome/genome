@@ -1,8 +1,0 @@
-# The `cromwell_workflow_options` configuration variable is the path
-# to a json file containing the configuration for an individal
-# workflow run in Cromwell.
-#
-# This is required only when cwl_runner=cromwell_gcp
----
-env: XGENOME_CROMWELL_WORKFLOW_OPTIONS
-default: ""

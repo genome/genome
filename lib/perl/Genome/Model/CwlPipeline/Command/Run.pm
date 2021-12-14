@@ -40,7 +40,8 @@ sub execute {
         $self->run_cromwell($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir);
     } elsif ($cwl_runner eq 'cromwell_gcp') {
-        $self->run_cromwell_gcp($yaml, $results_dir);
+        $self->run_cromwell_gcp($yaml, $tmp_dir, $results_dir);
+        $self->cleanup($tmp_dir);
     } elsif ($cwl_runner eq 'toil') {
         $self->run_toil($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir, $results_dir);
@@ -183,23 +184,27 @@ sub run_cromwell {
 sub run_cromwell_gcp {
     my $self = shift;
     my $yaml = shift;
+    my $tmp_dir = shift;
     my $results_dir = shift;
-
-    my $workflow_options = Genome::Config::get('cromwell_workflow_options');
-    my $bucket = Genome::Config::get('cromwell_gcp_bucket');
 
     my $logdir = $self->build->log_directory;
     my $data_dir = $self->build->data_directory;
-    my $cromwell_url = Genome::Cromwell->server_url;
+    my $main_workflow_file = $self->build->model->main_workflow_file;
+    my $build_id = $self->build->id;
+
+    my $bucket = Genome::Config::get('cromwell_gcp_bucket');
+    my $cromwell_server_memory_gb = Genome::Config::get('cromwell_gcp_server_memory_gb');
+    my $cromwell_service_account = Genome::Config::get('cromwell_gcp_service_account');
     my $queue = Genome::Config::get('lsf_queue_build_worker');
     my $user_group = Genome::Config::get('lsf_user_group');
-    my $main_workflow_file = $self->build->model->main_workflow_file;
 
-    my $poll_interval_seconds = 30;
+    my $poll_interval_seconds = 300;
 
+    #
     # Cloudize workflow
-    my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.yaml/;
-    my $guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.0.0)');
+    #
+    my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.json/;
+    my $lsb_sub_guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.1.2)');
     delete local $ENV{BOTO_CONFIG};
 
     Genome::Sys::LSF::bsub::bsub(
@@ -207,7 +212,7 @@ sub run_cromwell_gcp {
         user_group => $user_group,
         resource_string => 'rusage[mem=512M:internet2_upload_mbps=500]',
         wait_for_completion => 1,
-        log_file => File::Spec->join($logdir, 'cloudize_workflow.log'),
+        log_file => File::Spec->join($logdir, '00_cloudize_workflow.log'),
         cmd => [
             "python3",
             "/opt/scripts/cloudize-workflow.py",
@@ -216,48 +221,103 @@ sub run_cromwell_gcp {
             $yaml,
             "--output=$cloud_yaml"] );
 
-    $self->debug_message('input yaml: %s', $yaml);
-    $self->debug_message('cloud yaml: %s', $cloud_yaml);
-
     # Zip dependencies
-    my $deps_zip = File::Spec->join($data_dir, 'deps.zip');
+    my $deps_zip_path = File::Spec->join($data_dir, 'deps.zip');
+    my $deps_zip_url = "gs://$bucket/build.$build_id/deps.zip";
     my $prev_dir = getcwd;
     my(undef, $deps_dir, undef) = File::Spec->splitpath($main_workflow_file);
+
     chdir($deps_dir);
-    Genome::Sys->shellcmd(cmd => ['zip', '-r', $deps_zip, '.']);
+    Genome::Sys->shellcmd(
+        cmd => ['zip', '-r', $deps_zip_path, '.'],
+        redirect_stdout => '/dev/null'
+        );
     chdir($prev_dir);
 
-    my $workflow_id = Genome::Cromwell->submit_workflow(
-        $main_workflow_file, $cloud_yaml, $deps_zip, $workflow_options )->{id};
+    # Upload zip file
+    Genome::Sys::LSF::bsub::bsub(
+        queue => $queue,
+        user_group => $user_group,
+        resource_string => 'rusage[internet2_download_mbps=500]',
+        wait_for_completion => 1,
+        log_file => File::Spec->join($logdir, '01_upload_zip.log'),
+        cmd => ['gsutil', 'cp', '-n', $deps_zip_path, $deps_zip_url]
+        );
 
-    $self->status_message('Submitted workflow with ID: %s', $workflow_id);
+    #
+    # Generate files for run
+    #
+    my $conf_file = $self->_generate_cromwell_config_gcp($tmp_dir);
+    my $options_file = $self->_generate_workflow_options_gcp;
+    my $labels_file = $self->_generate_cromwell_labels;
 
-    # Poll until done
-    my $status;
+    #
+    # Do the run
+    #
+    $self->status_message("Files generated. Starting VM.");
+    Genome::Sys::LSF::bsub::bsub(
+        queue => $queue,
+        user_group => $user_group,
+        wait_for_completion => 1,
+        log_file => File::Spec->join($logdir, '02_vm_start.log'),
+        cmd => [
+            "sh", "/opt/gms/start.sh",
+            "--build", $build_id,
+            "--cromwell-conf", $conf_file,
+            "--service-account", $cromwell_service_account,
+            "--workflow-definition", $main_workflow_file,
+            "--workflow-inputs", $cloud_yaml,
+            "--workflow-options", $options_file,
+            "--deps-zip", $deps_zip_url,
+            "--bucket", $bucket,
+            "--memory-gb", $cromwell_server_memory_gb,
+            "--tmp-dir", $tmp_dir
+        ] );
+
+    my $result;
+    # Wait for instance VM to terminate itself
+    $self->status_message("VM started. Polling every $poll_interval_seconds seconds.");
     do {
         sleep $poll_interval_seconds;
-        $status = Genome::Cromwell->status($workflow_id)->{status};
-    } while ($status eq "Running" || $status eq "Submitted");
+        $result = system("gcloud compute instances describe build-$build_id --zone us-central1-c > /dev/null");
+        $self->status_message("Polled VM and got result $result");
+    } while ($result == 0);
+    $self->status_message("Polling done. Pulling artifacts.\n");
 
-    # Pull Outputs
-    if ($status eq "Succeeded") {
+    # Pull build directory
+    Genome::Sys::LSF::bsub::bsub(
+        queue => $queue,
+        user_group => $user_group,
+        resource_string => 'rusage[internet2_download_mbps=500]',
+        wait_for_completion => 1,
+        log_file => File::Spec->join($logdir, '03_pull_dir.log'),
+        cmd => ['gsutil', 'cp', '-r', '-n', "gs://$bucket/build.$build_id/*", $data_dir]
+        );
+    $self->status_message("Pulled artifacts. Pulling outputs.");
+
+    # Fetch outputs files
+    my $outputs_json = File::Spec->join($data_dir, 'outputs.json');
+    # Pull output files
+    if (-e $outputs_json) {
         Genome::Sys::LSF::bsub::bsub(
             queue => $queue,
             user_group => $user_group,
             resource_string => 'rusage[mem=512M:internet2_download_mbps=500]',
             wait_for_completion => 1,
-            log_file => File::Spec->join($logdir, 'pull_outputs.log'),
+            log_file => File::Spec->join($logdir, '04_pull_outputs.log'),
             cmd => [
-                "python3", "/opt/scripts/pull_outputs.py",
-                $workflow_id, "--output=$results_dir", "--cromwell-url=$cromwell_url"
-            ]
-            );
-        $self->_generate_timing_report($workflow_id);
-        $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
+                'python3', '/opt/scripts/pull_outputs.py',
+                "--outputs-dir=$results_dir",
+                "--outputs-file=$outputs_json",
+                "--dir-structure=DEEP"
+            ] );
     } else {
-        $self->_fetch_cromwell_log($workflow_id, $workflow_options, $logdir);
-        $self->fatal_message("Workflow $workflow_id has non-succeeded status $status using workflow definition $main_workflow_file. Logs at $logdir");
+        $self->fatal_message("Build did not generate output files. See $logdir");
     }
+    $self->status_message("Finished Google Cloud run of workflow.\n" .
+                          "Results in $results_dir \n" .
+                          "Compute instance logs and workflow timing in $data_dir \n" .
+                          "Logs for bsubs at $logdir" );
 }
 
 sub _fetch_cromwell_log {
@@ -287,6 +347,98 @@ sub _determine_workflow_type {
     } else {
         return 'cwl';
     }
+}
+
+sub _generate_workflow_options_gcp {
+    my $self = shift;
+
+    my $build_id = $self->build->id;
+    my $data_dir = $self->build->data_directory;
+    my $cromwell_gcp_bucket = Genome::Config::get('cromwell_gcp_bucket');
+    my $options_file = File::Spec->join($data_dir, 'gcp_workflow_options.json');
+
+    return $options_file if -e $options_file;
+
+    my $contents = <<"EOCONFIG"
+{
+    "final_workflow_log_dir": "gs://$cromwell_gcp_bucket/build.$build_id"/logs,
+    "final_call_logs_dir": "gs://$cromwell_gcp_bucket/build.$build_id/logs",
+    "use_relative_output_paths": false,
+    "default_runtime_attributes": {
+        "preemtible": 1
+    }
+}
+EOCONFIG
+        ;
+    Genome::Sys->write_file($options_file, $contents);
+    return $options_file;
+}
+
+sub _generate_cromwell_config_gcp {
+    my $self = shift;
+    my $tmp_dir = shift;
+
+    my $data_dir = $self->build->data_directory;
+    my $config_file = File::Spec->join($data_dir, 'cromwell_gcp.config');
+    return $config_file if -e $config_file;
+
+    my $cromwell_gcp_project = Genome::Config::get('cromwell_gcp_project');
+    my $cromwell_gcp_service_account = Genome::Config::get('cromwell_gcp_service_account');
+    my $cromwell_gcp_bucket = Genome::Config::get('cromwell_gcp_bucket');
+
+    my $build_id = $self->build->id;
+
+    my $config = <<'EOCONFIG'
+include required(classpath("application"))
+
+google {
+  application-name = "cromwell"
+  auths = [
+    {
+      name = "application-default"
+      scheme = "application_default"
+    }
+  ]
+}
+
+engine.filesystems {
+  gcs.auth = "application-default"
+  local.enabled = true
+}
+
+backend.default = "default"
+backend.providers.default {
+  actor-factory = "cromwell.backend.google.pipelines.v2beta.PipelinesApiLifecycleActorFactory"
+  config {
+    genomics {
+      auth = "application-default"
+      endpoint-url = "https://lifesciences.googleapis.com/"
+      location = "us-central1"
+    }
+    filesystems {
+      gcs {
+        auth = "application-default"
+        caching.duplication-strategy = "reference"
+      }
+    }
+    include "papi_v2_reference_image_manifest.conf"
+  }
+}
+EOCONFIG
+        ;
+
+    $config .= <<"EOCONFIG"
+backend.providers.default.config {
+  project = $cromwell_gcp_project
+  root = "gs://$cromwell_gcp_bucket/build.$build_id"
+  genomics.compute-service-account = "$cromwell_gcp_service_account"
+  filesystems.gcs.project = $cromwell_gcp_project
+}
+EOCONFIG
+        ;
+
+    Genome::Sys->write_file($config_file, $config);
+    return $config_file;
 }
 
 sub _generate_cromwell_config {
