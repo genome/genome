@@ -42,7 +42,7 @@ sub execute {
     } elsif ($cwl_runner eq 'cromwell_gcp') {
         $self->run_cromwell_gcp($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir);
-    } elsif ($cwl_runner eq 'toil') {
+    } elsif ($cwl_runner =~ m'^toil') {
         $self->run_toil($yaml, $tmp_dir, $results_dir);
         $self->cleanup($tmp_dir, $results_dir);
     } else {
@@ -108,15 +108,25 @@ sub run_toil {
     my $tmp_dir = shift;
     my $results_dir = shift;
 
+    my $cwl_runner = Genome::Config::get('cwl_runner');
+    my($toil, $version) = split(" ", $cwl_runner);
+    if ($toil ne 'toil') {
+        $self->fatal_message('Called run_toil with non-toil runner: %s', $toil);
+    }
+    my $wrapper = Genome::Model::CwlPipeline::Runner::Toil->cwl_runner_wrapper_for_version($version);
+
     my $build = $self->build;
     my $model = $build->model;
-    my $jobstore_dir = File::Spec->join($build->data_directory, 'jobstore');
+    my $jobstore_dir = File::Spec->join($tmp_dir, 'jobstore');
+    my $work_dir = File::Spec->join($tmp_dir, 'work');
+    my $toil_tmp_output_dir = File::Spec->join($tmp_dir, 'toil-tmp');
     my $log_file = File::Spec->join($build->log_directory, 'toil.log');
 
     my @restart;
     if (-e $jobstore_dir) {
         push @restart, '--restart';
     }
+    Genome::Sys->create_directory($work_dir);
 
     my $primary_docker_image = $model->primary_docker_image;
     local $ENV{LSB_SUB_ADDITIONAL} = $primary_docker_image;
@@ -124,19 +134,34 @@ sub run_toil {
     my $default_queue = Genome::Config::get('lsf_queue_build_worker_alt');
     local $ENV{LSB_DEFAULTQUEUE} = $default_queue;
 
+    my $lsf_group = Genome::Config::get('lsf_user_group');
+    local $ENV{LSB_SUB_USER_GROUP} = $lsf_group;
+
+    local $ENV{LSF_DOCKER_PRESERVE_ENVIRONMENT} = 'false';
+
+    local $ENV{TOIL_CHECK_ENV} = 'True';
+
     #toil relies on reading the output from bsub
     delete local $ENV{BSUB_QUIET};
 
     Genome::Sys->shellcmd(
         cmd => [
-            'cwltoil',
+            '/bin/bash',
+            $wrapper,
             '--disableCaching', '--logLevel=DEBUG',
             @restart,
-            '--workDir', $tmp_dir,
+            '--workDir', $work_dir,
+            '--tmp-outdir-prefix', $toil_tmp_output_dir,
             '--jobStore', $jobstore_dir,
             "--logFile=$log_file",
             "--outdir=$results_dir",
+            "--no-container", #with patched toil, this allows per-job containers
             '--batchSystem', 'lsf',
+            '--writeLogs', $build->log_directory,
+            '--writeLogsFromAllJobs',
+            '--maxLogFileSize', 1_000_000_000, #bytes
+            '--bypass-file-store',
+            '--stats',
             $model->main_workflow_file,
             $yaml
         ],
