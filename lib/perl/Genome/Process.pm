@@ -243,6 +243,8 @@ sub _dispatch_process {
 
     my $log_file_base = File::Spec->join($self->log_directory, 'process-%J');
 
+    local $ENV{LSF_DOCKER_NETWORK} = undef;
+
     my $job_id = Genome::Sys->bsub(
         queue => Genome::Config::get('lsf_queue_build_worker'),
         cmd => [qw(genome process run), $self->id],
