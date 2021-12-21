@@ -1,0 +1,5 @@
+# Specifies the LSF queue to submit interactive jobs to.
+---
+env: XGENOME_LSF_QUEUE_INTERACTIVE
+validators:
+    - LSFQueue

@@ -30,6 +30,7 @@ sub _submit_jobs {
         cmd => $cmd,
         user_group => Genome::Config::get('lsf_user_group'),
         interactive => 1,
+        queue => Genome::Config::get('lsf_queue_interactive'),
     );
 
     return 1;
