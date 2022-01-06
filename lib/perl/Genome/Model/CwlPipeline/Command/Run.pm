@@ -218,6 +218,7 @@ sub run_cromwell_gcp {
     my $build_id = $self->build->id;
 
     my $bucket = Genome::Config::get('cromwell_gcp_bucket');
+    my $cromwell_gcp_project = Genome::Config::get('cromwell_gcp_project');
     my $cromwell_server_memory_gb = Genome::Config::get('cromwell_gcp_server_memory_gb');
     my $cromwell_service_account = Genome::Config::get('cromwell_gcp_service_account');
     my $queue = Genome::Config::get('lsf_queue_build_worker');
@@ -229,7 +230,7 @@ sub run_cromwell_gcp {
     # Cloudize workflow
     #
     my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.json/;
-    my $lsb_sub_guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.1.2)');
+    my $lsb_sub_guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.1.4)');
     delete local $ENV{BOTO_CONFIG};
 
     Genome::Sys::LSF::bsub::bsub(
@@ -295,6 +296,7 @@ sub run_cromwell_gcp {
             "--workflow-options", $options_file,
             "--deps-zip", $deps_zip_url,
             "--bucket", $bucket,
+            "--project", $cromwell_gcp_project,
             "--memory-gb", $cromwell_server_memory_gb,
             "--tmp-dir", $tmp_dir
         ] );
