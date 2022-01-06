@@ -388,7 +388,7 @@ sub _generate_workflow_options_gcp {
 
     my $contents = <<"EOCONFIG"
 {
-    "final_workflow_log_dir": "gs://$cromwell_gcp_bucket/build.$build_id"/logs,
+    "final_workflow_log_dir": "gs://$cromwell_gcp_bucket/build.$build_id/logs",
     "final_call_logs_dir": "gs://$cromwell_gcp_bucket/build.$build_id/logs",
     "use_relative_output_paths": false,
     "default_runtime_attributes": {
