@@ -220,6 +220,7 @@ sub run_cromwell_gcp {
     my $bucket = Genome::Config::get('cromwell_gcp_bucket');
     my $cromwell_server_memory_gb = Genome::Config::get('cromwell_gcp_server_memory_gb');
     my $cromwell_service_account = Genome::Config::get('cromwell_gcp_service_account');
+    my $cromwell_subnet = Genome::Config::get('cromwell_gcp_subnet');
     my $queue = Genome::Config::get('lsf_queue_build_worker');
     my $user_group = Genome::Config::get('lsf_user_group');
 
@@ -295,6 +296,7 @@ sub run_cromwell_gcp {
             "--workflow-options", $options_file,
             "--deps-zip", $deps_zip_url,
             "--bucket", $bucket,
+            "--subnet", $cromwell_subnet,
             "--memory-gb", $cromwell_server_memory_gb,
             "--tmp-dir", $tmp_dir
         ] );
