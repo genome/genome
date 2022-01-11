@@ -617,7 +617,7 @@ sub base_temp_directory {
     my $tmp_location = $ENV{'TMPDIR'} || File::Spec->tmpdir();
     if ($ENV{'LSB_JOBID'}) {
         my $lsf_possible_tempdir = sprintf("%s/%s.tmpdir", $tmp_location, $ENV{'LSB_JOBID'});
-        if (-d $lsf_possible_tempdir) {
+        if (-d -w $lsf_possible_tempdir) {
             $tmp_location = $lsf_possible_tempdir;
         }
     }
