@@ -485,7 +485,7 @@ sub _verify_target_index {
 sub _open_sorted_bam {
     my $self = shift;
 
-    if (-f $self->bam_file && -r _) {
+    if (Genome::Sys->validate_file_for_reading($self->bam_file)) {
         my $bam_reader = Bio::DB::Bam->open( $self->bam_file );
         my $bam_header = $bam_reader->header;
         if ($bam_header->text =~ m/SO:coordinate/i) {
