@@ -100,6 +100,7 @@ my $alignment_result = $pkg->create(
     aligner_version => 'test',
     aligner_params => '',
     merged_alignment_result_id => $merged_alignment_result->id,
+    bam_size => 1024,
     _user_data_for_nested_results => $result_users,
 );
 ok($alignment_result, 'Alignment result created successfully');

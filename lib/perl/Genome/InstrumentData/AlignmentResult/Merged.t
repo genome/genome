@@ -209,6 +209,7 @@ sub generate_individual_alignment_results {
         instrument_data_segment_type => 'read_group',
         instrument_data_segment_id   => 'A:2',
         test_name        => $test_name,
+        bam_size         => 1024,
     );
 
     for my $i (0, 1) {
