@@ -40,6 +40,10 @@ my $override2 = Sub::Override->new(
     'Genome::InstrumentData::AlignmentResult::_prepare_reference_sequences',
     sub { return 1; }
 );
+my $override3 = Sub::Override->new(
+    'Genome::InstrumentData::AlignmentResult::bam_size',
+    sub { return 1024; }
+);
 
 my $aligner_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->__define__(
     reference_build => $ref_seq_build,
