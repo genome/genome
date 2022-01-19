@@ -1,0 +1,3 @@
+---
+env: XGENOME_CROMWELL_GCP_EXECUTIONS_BUCKET
+default_value: ""
