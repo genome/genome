@@ -43,7 +43,7 @@ sub get_test_data {
 
     my $test_variants_file = $test_dir . "/variants.tsv";
     ok (-s $test_variants_file, "test variants file exists and has size at $test_variants_file");
-    ok (-r $test_variants_file, "test variants file is readable by the user running this test $test_variants_file");
+    ok (Genome::Sys->validate_file_for_reading($test_variants_file), "test variants file is readable by the user running this test $test_variants_file");
 
     my @variant_headers = variant_headers();
     my $variant_svr = Genome::Utility::IO::SeparatedValueReader->create(

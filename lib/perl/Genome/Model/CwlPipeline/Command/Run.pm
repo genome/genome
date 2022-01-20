@@ -219,6 +219,7 @@ sub run_cromwell_gcp {
 
     my $inputs_bucket = Genome::Config::get('cromwell_gcp_inputs_bucket');
     my $executions_bucket = Genome::Config::get('cromwell_gcp_executions_bucket');
+    my $cromwell_gcp_project = Genome::Config::get('cromwell_gcp_project');
     my $cromwell_server_memory_gb = Genome::Config::get('cromwell_gcp_server_memory_gb');
     my $cromwell_service_account = Genome::Config::get('cromwell_gcp_service_account');
     my $cromwell_subnet = Genome::Config::get('cromwell_gcp_subnet');
@@ -298,6 +299,7 @@ sub run_cromwell_gcp {
             "--deps-zip", $deps_zip_url,
             "--bucket", $executions_bucket,
             "--subnet", $cromwell_subnet,
+            "--project", $cromwell_gcp_project,
             "--memory-gb", $cromwell_server_memory_gb,
             "--tmp-dir", $tmp_dir
         ] );

@@ -43,7 +43,7 @@ sub _fallback_lsf_resource {
     #factor of four is based on current six jobs per host policy this should be revisited later
     #my $select_check = "select[ncpus >= $cpus && maxmem >= " . ($mem_mb * 4) . " && gtmp >= $tmp_gb] span[hosts=1]";
 
-    #$command = qq(bhosts -R '$select_check' $host_groups | grep ^blade);
+    #$command = qq(bhosts -R '$select_check' $host_groups | grep ^HOST);
     #$command = qq(bhosts -R '$select_check' $host_groups );
     #my @selected_blades = qx($command);
 

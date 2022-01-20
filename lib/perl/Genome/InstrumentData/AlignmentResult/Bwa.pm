@@ -67,7 +67,7 @@ sub required_rusage {
     my $select_check = "select[ncpus >= $cpus && maxmem >= " . ($mem_mb * 4) . " && maxgtmp >= $tmp_gb] span[hosts=1]";
     my $select_cmd = "bhosts -R '$select_check' $host_groups";
 
-    my @selected_blades = grep {m/^blade/} Genome::Sys->capture($select_cmd);
+    my @selected_blades = grep {m/^HOST/} Genome::Sys->capture($select_cmd);
     if (@selected_blades) {
         return $required_usage;
     } else {

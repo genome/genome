@@ -141,11 +141,11 @@ sub get_test_alignment_results {
     );
 
     # Set up alignment results
-    my $ar1 = test_setup_object($ar_class, setup_object_args => [instrument_data_id => $ar1_instrument_data_id, %params] );
+    my $ar1 = test_setup_object($ar_class, setup_object_args => [instrument_data_id => $ar1_instrument_data_id, bam_size => 1024, %params] );
     is($ar1->instrument_data_id, $ar1_instrument_data_id, "AR1 has the proper instrument_data_id");
 
     my $ar2_dir = Genome::Sys->create_temp_directory();
-    my $ar2 = test_setup_object( $ar_class, setup_object_args => [ instrument_data_id => $ar2_instrument_data_id, output_dir => $ar2_dir, %params ] );
+    my $ar2 = test_setup_object( $ar_class, setup_object_args => [ instrument_data_id => $ar2_instrument_data_id, bam_size => 1024, output_dir => $ar2_dir, %params ] );
     is($ar2->instrument_data_id, $ar2_instrument_data_id, "AR2 has the proper instrument_data_id");
 
     my $merge_dir = Genome::Sys->create_temp_directory();

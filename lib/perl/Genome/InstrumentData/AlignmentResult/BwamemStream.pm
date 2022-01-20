@@ -57,7 +57,7 @@ sub required_rusage {
     my $required_usage = "-R '$select $rusage' $options";
 
     my $select_check = "select[ncpus >= $cpus && maxmem >= $mem_mb && maxgtmp >= $tmp_gb] span[hosts=1]";
-    my $select_cmd = "bhosts -R '$select_check' $host_groups | grep ^blade";
+    my $select_cmd = "bhosts -R '$select_check' $host_groups | grep ^HOST";
 
     my @selected_blades = qx($select_cmd);
 
