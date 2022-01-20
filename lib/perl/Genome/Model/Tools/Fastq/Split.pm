@@ -57,8 +57,14 @@ sub execute {
     unless ($fastq_basename && $fastq_dirname && $fastq_suffix) {
         die('Failed to parse fastq file name ' . $self->fastq_file);
     }
-    unless (Genome::Sys->validate_directory_for_read_write_access($fastq_dirname)) {
-        $self->error_message('Failed to validate directory ' . $fastq_dirname . " for read/write access:  $!");
+
+    # User should provide a directory as input, then we can keep output fastqs on tmp
+    # and distribute bfqs in a downstream process
+    # However, by default write fastqs to the source fastq file dir
+    my $output_dir = $self->output_directory || $fastq_dirname;
+
+    unless (Genome::Sys->validate_directory_for_read_write_access($output_dir)) {
+        $self->error_message('Failed to validate directory ' . $output_dir . " for read/write access:  $!");
         die($self->error_message);
     }
 
@@ -73,11 +79,6 @@ sub execute {
     chdir($cwd);
     #If more than one lane processed in the same output_directory, this becomes a problem
     my @tmp_fastqs = grep { $_ !~ /\.$fastq_suffix$/ } grep { /$fastq_basename-\d+$/ } glob($tmp_dir . '/' . $fastq_basename . '*');
-
-    # User should provide a directory as input, then we can keep output fastqs on tmp
-    # and distribute bfqs in a downstream process
-    # However, by default write fastqs to the source fastq file dir
-    my $output_dir = $self->output_directory || $fastq_dirname;
 
     for my $tmp_fastq (@tmp_fastqs){
         my ($tmp_fastq_basename,$tmp_fastq_dirname) = File::Basename::fileparse($tmp_fastq);
