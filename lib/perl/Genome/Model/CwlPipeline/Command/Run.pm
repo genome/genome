@@ -217,8 +217,7 @@ sub run_cromwell_gcp {
     my $main_workflow_file = $self->build->model->main_workflow_file;
     my $build_id = $self->build->id;
 
-    my $inputs_bucket = Genome::Config::get('cromwell_gcp_inputs_bucket');
-    my $executions_bucket = Genome::Config::get('cromwell_gcp_executions_bucket');
+    my $bucket = Genome::Config::get('cromwell_gcp_bucket');
     my $cromwell_gcp_project = Genome::Config::get('cromwell_gcp_project');
     my $cromwell_server_memory_gb = Genome::Config::get('cromwell_gcp_server_memory_gb');
     my $cromwell_service_account = Genome::Config::get('cromwell_gcp_service_account');
@@ -244,14 +243,14 @@ sub run_cromwell_gcp {
         cmd => [
             "python3",
             "/opt/scripts/cloudize-workflow.py",
-            $inputs_bucket,
+            $bucket,
             $main_workflow_file,
             $yaml,
             "--output=$cloud_yaml"] );
 
     # Zip dependencies
     my $deps_zip_path = File::Spec->join($data_dir, 'deps.zip');
-    my $deps_zip_url = "gs://$inputs_bucket/build.$build_id/deps.zip";
+    my $deps_zip_url = "gs://$bucket/build.$build_id/deps.zip";
     my $prev_dir = getcwd;
     my(undef, $deps_dir, undef) = File::Spec->splitpath($main_workflow_file);
 
@@ -297,7 +296,7 @@ sub run_cromwell_gcp {
             "--workflow-inputs", $cloud_yaml,
             "--workflow-options", $options_file,
             "--deps-zip", $deps_zip_url,
-            "--bucket", $executions_bucket,
+            "--bucket", $bucket,
             "--subnet", $cromwell_subnet,
             "--project", $cromwell_gcp_project,
             "--memory-gb", $cromwell_server_memory_gb,
@@ -321,7 +320,7 @@ sub run_cromwell_gcp {
         resource_string => 'rusage[internet2_download_mbps=500]',
         wait_for_completion => 1,
         log_file => File::Spec->join($logdir, '03_pull_dir.log'),
-        cmd => ['gsutil', 'cp', '-r', '-n', "gs://$executions_bucket/build.$build_id/*", $data_dir]
+        cmd => ['gsutil', 'cp', '-r', '-n', "gs://$bucket/build.$build_id/*", $data_dir]
         );
     $self->status_message("Pulled artifacts. Pulling outputs.");
 
@@ -384,15 +383,15 @@ sub _generate_workflow_options_gcp {
 
     my $build_id = $self->build->id;
     my $data_dir = $self->build->data_directory;
-    my $cromwell_gcp_executions_bucket = Genome::Config::get('cromwell_gcp_executions_bucket');
+    my $cromwell_gcp_bucket = Genome::Config::get('cromwell_gcp_bucket');
     my $options_file = File::Spec->join($data_dir, 'gcp_workflow_options.json');
 
     return $options_file if -e $options_file;
 
     my $contents = <<"EOCONFIG"
 {
-    "final_workflow_log_dir": "gs://$cromwell_gcp_executions_bucket/build.$build_id"/logs,
-    "final_call_logs_dir": "gs://$cromwell_gcp_executions_bucket/build.$build_id/logs",
+    "final_workflow_log_dir": "gs://$cromwell_gcp_bucket/build.$build_id"/logs,
+    "final_call_logs_dir": "gs://$cromwell_gcp_bucket/build.$build_id/logs",
     "use_relative_output_paths": false,
     "default_runtime_attributes": {
         "preemtible": 1
@@ -414,7 +413,7 @@ sub _generate_cromwell_config_gcp {
 
     my $cromwell_gcp_project = Genome::Config::get('cromwell_gcp_project');
     my $cromwell_gcp_service_account = Genome::Config::get('cromwell_gcp_service_account');
-    my $cromwell_gcp_executions_bucket = Genome::Config::get('cromwell_gcp_executions_bucket');
+    my $cromwell_gcp_bucket = Genome::Config::get('cromwell_gcp_bucket');
 
     my $build_id = $self->build->id;
 
@@ -460,7 +459,7 @@ EOCONFIG
     $config .= <<"EOCONFIG"
 backend.providers.default.config {
   project = $cromwell_gcp_project
-  root = "gs://$cromwell_gcp_executions_bucket/build.$build_id"
+  root = "gs://$cromwell_gcp_bucket/build.$build_id"
   genomics.compute-service-account = "$cromwell_gcp_service_account"
   filesystems.gcs.project = $cromwell_gcp_project
 }

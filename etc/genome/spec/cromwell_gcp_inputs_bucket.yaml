@@ -1,3 +1,0 @@
----
-env: XGENOME_CROMWELL_GCP_INPUTS_BUCKET
-default_value: ""
