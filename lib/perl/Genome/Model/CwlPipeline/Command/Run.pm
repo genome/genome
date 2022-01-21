@@ -231,7 +231,7 @@ sub run_cromwell_gcp {
     # Cloudize workflow
     #
     my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.json/;
-    my $lsb_sub_guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.3.0)');
+    my $lsb_sub_guard = Genome::Config::set_env('lsb_sub_additional', 'docker(jackmaruska/cloudize-workflow:1.3.1)');
     delete local $ENV{BOTO_CONFIG};
 
     Genome::Sys::LSF::bsub::bsub(
