@@ -10,7 +10,15 @@ BEGIN {
 };
 
 use File::Spec;
+use Sub::Override;
 use Test::More tests => 25;
+
+use Genome::Disk::Volume;
+
+my $override = Sub::Override->new(
+    'Genome::Disk::Volume::has_space',
+    sub { return 1 }
+);
 
 my $class = 'Genome::Model::CwlPipeline::Command::Run';
 
