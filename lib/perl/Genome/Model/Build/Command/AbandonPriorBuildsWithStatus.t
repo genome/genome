@@ -24,6 +24,7 @@ for (('Failed')x3, 'Succeeded', 'Failed', ('Succeeded')x2, 'Scheduled', ('Succee
         model_id => $model->id,
         status => $_,
     );
+    sleep 2; #our build timestamps only have 1s resolution so let's not make them all at the same time
 }
 is(scalar(@{[$model->builds]}), 11, 'created 11 test builds');
 
