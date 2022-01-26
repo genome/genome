@@ -732,11 +732,16 @@ sub _stage_cromwell_outputs {
     my $build = $self->build;
 
     my $results = Genome::Cromwell->query( [{ label => 'build:' . $build->id, status => 'Succeeded' }] );
-    if ($results->{totalResultsCount} != 1) {
-        $self->fatal_message('Failed to find workflow.  Got: %s', scalar(Data::Dumper::Dumper($results)));
+    if ($results->{totalResultsCount} < 1) {
+        $build->fatal_message('Failed to find workflow.  Got: %s', scalar(Data::Dumper::Dumper($results)));
     }
 
-    my $workflow_id = $results->{results}->[0]->{id};
+    my $workflows = $results->{results};
+    if (@$workflows > 1) {
+        $workflows = [sort { $b->{end} cmp $a->{end} } @$workflows];
+    }
+
+    my $workflow_id = $workflows->[0]->{id};
     my $output_result = Genome::Cromwell->outputs($workflow_id);
 
     my $outputs = $output_result->{outputs};
