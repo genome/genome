@@ -18,17 +18,18 @@ my $pkg = 'Genome::Model::Build::Command::AbandonPriorBuildsWithStatus';
 
 use_ok($pkg);
 
+my $last_build;
 my $model = Genome::Test::Factory::Model::CwlPipeline->setup_object;
 for (('Failed')x3, 'Succeeded', 'Failed', ('Succeeded')x2, 'Scheduled', ('Succeeded')x3) {
     my $build = Genome::Test::Factory::Build->setup_object(
         model_id => $model->id,
         status => $_,
     );
+
+    $last_build = $build;
     sleep 2; #our build timestamps only have 1s resolution so let's not make them all at the same time
 }
 is(scalar(@{[$model->builds]}), 11, 'created 11 test builds');
-
-my $last_complete_build = $model->last_complete_build;
 
 my $cmd = $pkg->create(
     models => [$model],
@@ -44,4 +45,4 @@ for my $build ($model->builds) {
 
 is($statuses{Succeeded}, 1, 'left one Succeeded build');
 is($statuses{Abandoned}, 5, 'abandoned other Succeeded builds');
-is($last_complete_build->status, 'Succeeded', 'the remaining Succeeded build is the most recent one');
+is($last_build->status, 'Succeeded', 'the remaining Succeeded build is the most recent one');
