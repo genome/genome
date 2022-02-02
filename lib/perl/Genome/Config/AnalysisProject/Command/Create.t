@@ -17,7 +17,7 @@ use_ok('Genome::Config::AnalysisProject::Command::Create');
 
 my $cmd = Genome::Config::AnalysisProject::Command::Create->create(
     name => 'test proj',
-    environment => 'prod-builder',
+    environment => 'automated',
     no_config => 1,
 );
 ok($cmd, 'constructed create command');

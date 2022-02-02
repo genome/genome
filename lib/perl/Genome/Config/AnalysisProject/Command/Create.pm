@@ -18,8 +18,8 @@ class Genome::Config::AnalysisProject::Command::Create {
         },
         environment => {
             is => 'Text',
-            valid_values => ['cle', 'prod-builder', 'ad-hoc'],
-            doc => 'The environment in which the analysis will be run. "cle" is for CLIA-related analysis, "prod-builder" is for using production compute resources, and "ad-hoc" for any other analysis',
+            valid_values => ['cle', 'automated', 'ad-hoc'],
+            doc => 'The environment in which the analysis will be run. "cle" is for CLIA-related analysis, "automated" is for using production compute resources, and "ad-hoc" for any other analysis',
         },
         no_config => {
             is => 'Boolean',
@@ -99,7 +99,7 @@ sub _resolve_properties_for_environment {
                 is_cle => 1,
             );
         }
-        when ('prod-builder') {
+        when ('automated') {
             return (
                 run_as => Genome::Config::get('builder_run_as_user'),
                 is_cle => 0,
