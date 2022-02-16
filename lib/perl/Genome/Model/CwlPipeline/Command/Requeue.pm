@@ -17,8 +17,8 @@ class Genome::Model::CwlPipeline::Command::Requeue {
         },
         action => {
             is => 'Text',
-            doc => 'what action to request for the build',
-            valid_values => Genome::Model::Build::CwlPipeline->__meta__->property(property_name => 'action_requested')->valid_values,
+            doc => 'what action to request for the build (or "0" to cancel an existing request")',
+            valid_values => Genome::Model::CwlPipeline->__meta__->property(property_name => 'action_requested')->valid_values,
             default => 'restart',
         },
     ],
