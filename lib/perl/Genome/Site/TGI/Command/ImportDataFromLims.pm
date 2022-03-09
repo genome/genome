@@ -55,17 +55,24 @@ EOHELP
 sub execute {
     my $self = shift;
 
+    my $error_count = 0;
+
     my $remote_params_defined =  grep { defined $self->$_ } (qw(remote_host remote_user remote_port authorization_key));
     if ($remote_params_defined != 0 and $remote_params_defined != 4) {
         $self->fatal_message('All four remote parameters must be defined if any are, but found only %s defined.', $remote_params_defined);
     }
 
     for my $i ($self->instrument_data) {
-        $self->_process_instrument_data($i);
+        my $ok = $self->_process_instrument_data($i);
+
+        unless ($ok) {
+            $error_count++;
+        }
+
         UR::Context->commit();
     }
 
-    return 1;
+    return ($error_count == 0);
 }
 
 sub _process_instrument_data {
@@ -97,7 +104,7 @@ sub _process_instrument_data {
         return;
     }
 
-
+    my $error;
     try {
         my ($bam_file, $lims_source_dir);
         if ($lims_path =~ /\.bam$/) {
@@ -163,12 +170,14 @@ sub _process_instrument_data {
         $allocation->reallocate;
     }
     catch {
-        my $error = $_;
+        $error = $_;
         $allocation->deallocate;
         $self->error_message('Failed to unarchive instrument data %s. -- %s', $data->__display_name__, $error);
     };
 
-    return 1;
+    return if $error;
+
+    return 1; #ok!
 }
 
 sub _resolve_lims_path {
