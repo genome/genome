@@ -337,8 +337,7 @@ sub run_cromwell_gcp {
             cmd => [
                 'python3', '/opt/scripts/pull_outputs.py',
                 "--outputs-dir=$results_dir",
-                "--outputs-file=$outputs_json",
-                "--dir-structure=DEEP"
+                "--outputs-file=$outputs_json"
             ] );
     } else {
         $self->fatal_message("Build did not generate output files. See $logdir");
