@@ -58,12 +58,31 @@ sub execute {
         kilobytes_requested => Genome::Sys->disk_usage_for_path($cwl_directory),
         disk_group_name => Genome::Config::get('disk_group_references'),
         allocation_path => 'processing-profile/cwl-pipeline/' . $new_pp->id,
+        skip_allocation_path_creation => 1,
     );
-    #FIXME deallocate on rsync errors or on PP delete
-    Genome::Sys->rsync_directory(
-        source_directory => $cwl_directory,
-        target_directory => $da->absolute_path,
-    );
+
+    if($ENV{UR_DBI_NO_COMMIT}) {
+        #FIXME deallocate on rsync errors or on PP delete
+        Genome::Sys->rsync_directory(
+            source_directory => $cwl_directory,
+            target_directory => $da->absolute_path,
+        );
+    }
+    else {
+        my $pp_dirname = 'pp.' . $new_pp->id;
+        Genome::Sys->shellcmd(
+            cmd => [
+                '/usr/bin/python3',
+                '/usr/bin/gsutil/gsutil',
+                'cp', '-r',
+                $cwl_directory,
+                Genome::Config::get('gcp_config_bucket') . $pp_dirname,
+            ],
+            input_directories => [$cwl_directory],
+        );
+
+        $self->status_message('Processing profile queued for installation');
+    }
 
     $new_pp->main_workflow_file(
         File::Spec->join($da->absolute_path, $self->main_workflow_file)
