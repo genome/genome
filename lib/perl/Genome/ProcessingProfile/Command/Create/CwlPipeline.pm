@@ -74,7 +74,7 @@ sub execute {
             cmd => [
                 '/usr/bin/python3',
                 '/usr/bin/gsutil/gsutil',
-                'cp', '-r',
+                '-m', '-q', 'cp', '-r',
                 $cwl_directory,
                 Genome::Config::get('gcp_config_bucket') . $pp_dirname,
             ],
