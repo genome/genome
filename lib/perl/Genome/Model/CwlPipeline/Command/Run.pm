@@ -303,14 +303,11 @@ sub run_cromwell_gcp {
             "--tmp-dir", $tmp_dir
         ] );
 
-    my $result;
     # Wait for instance VM to terminate itself
     $self->status_message("VM started. Polling every $poll_interval_seconds seconds.");
     do {
         sleep $poll_interval_seconds;
-        $result = system("gcloud compute instances describe build-$build_id --zone us-central1-c > /dev/null");
-        $self->status_message("Polled VM and got result $result");
-    } while ($result == 0);
+    } while ($self->_cloud_instance_is_running);
     $self->status_message("Polling done. Pulling artifacts.\n");
 
     # Pull build directory
@@ -346,6 +343,16 @@ sub run_cromwell_gcp {
                           "Results in $results_dir \n" .
                           "Compute instance logs and workflow timing in $data_dir \n" .
                           "Logs for bsubs at $logdir" );
+}
+
+sub _cloud_instance_is_running {
+    my $self = shift;
+    my $build_id = $self->build->id;
+
+    my $result = system("gcloud compute instances describe build-$build_id --zone us-central1-c > /dev/null");
+    $self->debug_message("Polled VM and got result $result");
+
+    return ($result == 0);
 }
 
 sub _fetch_cromwell_log {
