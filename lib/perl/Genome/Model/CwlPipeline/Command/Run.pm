@@ -227,84 +227,90 @@ sub run_cromwell_gcp {
 
     my $poll_interval_seconds = 300;
 
-    #
-    # Cloudize workflow
-    #
-    my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.json/;
     my $lsb_sub_guard = Genome::Config::set_env('lsb_sub_additional', 'docker(mgibio/cloudize-workflow:1.2.2)');
     delete local $ENV{BOTO_CONFIG};
 
-    Genome::Sys::LSF::bsub::bsub(
-        queue => $queue,
-        user_group => $user_group,
-        resource_string => 'rusage[mem=512M:internet2_upload_mbps=500]',
-        wait_for_completion => 1,
-        log_file => File::Spec->join($logdir, '00_cloudize_workflow.log'),
-        cmd => [
-            "python3",
-            "/opt/scripts/cloudize-workflow.py",
-            $bucket,
-            $main_workflow_file,
-            $yaml,
-            "--output=$cloud_yaml"] );
+    if ($self->_cloud_instance_is_running) {
+        $self->status_message("Detected already running cloud VM for job.  Will monitor for completion every $poll_interval_seconds seconds.");
+    } else {
+        #
+        # Cloudize workflow
+        #
+        my $cloud_yaml = $yaml; $cloud_yaml =~ s/.ya?ml/_cloud.json/;
 
-    # Zip dependencies
-    my $deps_zip_path = File::Spec->join($data_dir, 'deps.zip');
-    my $deps_zip_url = "gs://$bucket/build.$build_id/deps.zip";
-    my $prev_dir = getcwd;
-    my(undef, $deps_dir, undef) = File::Spec->splitpath($main_workflow_file);
+        Genome::Sys::LSF::bsub::bsub(
+            queue => $queue,
+            user_group => $user_group,
+            resource_string => 'rusage[mem=512M:internet2_upload_mbps=500]',
+            wait_for_completion => 1,
+            log_file => File::Spec->join($logdir, '00_cloudize_workflow.log'),
+            cmd => [
+                "python3",
+                "/opt/scripts/cloudize-workflow.py",
+                $bucket,
+                $main_workflow_file,
+                $yaml,
+                "--output=$cloud_yaml"] );
 
-    chdir($deps_dir);
-    Genome::Sys->shellcmd(
-        cmd => ['zip', '-r', $deps_zip_path, '.'],
-        redirect_stdout => '/dev/null'
-        );
-    chdir($prev_dir);
+        # Zip dependencies
+        my $deps_zip_path = File::Spec->join($data_dir, 'deps.zip');
+        my $deps_zip_url = "gs://$bucket/build.$build_id/deps.zip";
+        my $prev_dir = getcwd;
+        my(undef, $deps_dir, undef) = File::Spec->splitpath($main_workflow_file);
 
-    # Upload zip file
-    Genome::Sys::LSF::bsub::bsub(
-        queue => $queue,
-        user_group => $user_group,
-        resource_string => 'rusage[internet2_download_mbps=500]',
-        wait_for_completion => 1,
-        log_file => File::Spec->join($logdir, '01_upload_zip.log'),
-        cmd => ['gsutil', 'cp', '-n', $deps_zip_path, $deps_zip_url]
-        );
+        chdir($deps_dir);
+        Genome::Sys->shellcmd(
+            cmd => ['zip', '-r', $deps_zip_path, '.'],
+            redirect_stdout => '/dev/null'
+            );
+        chdir($prev_dir);
 
-    #
-    # Generate files for run
-    #
-    my $conf_file = $self->_generate_cromwell_config_gcp($tmp_dir);
-    my $options_file = $self->_generate_workflow_options_gcp;
-    my $labels_file = $self->_generate_cromwell_labels;
+        # Upload zip file
+        Genome::Sys::LSF::bsub::bsub(
+            queue => $queue,
+            user_group => $user_group,
+            resource_string => 'rusage[internet2_download_mbps=500]',
+            wait_for_completion => 1,
+            log_file => File::Spec->join($logdir, '01_upload_zip.log'),
+            cmd => ['gsutil', 'cp', '-n', $deps_zip_path, $deps_zip_url]
+            );
 
-    #
-    # Do the run
-    #
-    $self->status_message("Files generated. Starting VM.");
-    Genome::Sys::LSF::bsub::bsub(
-        queue => $queue,
-        user_group => $user_group,
-        wait_for_completion => 1,
-        log_file => File::Spec->join($logdir, '02_vm_start.log'),
-        cmd => [
-            "sh", "/opt/gms/start.sh",
-            "--build", $build_id,
-            "--cromwell-conf", $conf_file,
-            "--service-account", $cromwell_service_account,
-            "--workflow-definition", $main_workflow_file,
-            "--workflow-inputs", $cloud_yaml,
-            "--workflow-options", $options_file,
-            "--deps-zip", $deps_zip_url,
-            "--bucket", $bucket,
-            "--subnet", $cromwell_subnet,
-            "--project", $cromwell_gcp_project,
-            "--memory-gb", $cromwell_server_memory_gb,
-            "--tmp-dir", $tmp_dir
-        ] );
+        #
+        # Generate files for run
+        #
+        my $conf_file = $self->_generate_cromwell_config_gcp($tmp_dir);
+        my $options_file = $self->_generate_workflow_options_gcp;
+        my $labels_file = $self->_generate_cromwell_labels;
+
+        #
+        # Do the run
+        #
+        $self->status_message("Files generated. Starting VM.");
+        Genome::Sys::LSF::bsub::bsub(
+            queue => $queue,
+            user_group => $user_group,
+            wait_for_completion => 1,
+            log_file => File::Spec->join($logdir, '02_vm_start.log'),
+            cmd => [
+                "sh", "/opt/gms/start.sh",
+                "--build", $build_id,
+                "--cromwell-conf", $conf_file,
+                "--service-account", $cromwell_service_account,
+                "--workflow-definition", $main_workflow_file,
+                "--workflow-inputs", $cloud_yaml,
+                "--workflow-options", $options_file,
+                "--deps-zip", $deps_zip_url,
+                "--bucket", $bucket,
+                "--subnet", $cromwell_subnet,
+                "--project", $cromwell_gcp_project,
+                "--memory-gb", $cromwell_server_memory_gb,
+                "--tmp-dir", $tmp_dir
+            ] );
+
+        $self->status_message("VM started. Polling every $poll_interval_seconds seconds.");
+    }
 
     # Wait for instance VM to terminate itself
-    $self->status_message("VM started. Polling every $poll_interval_seconds seconds.");
     do {
         sleep $poll_interval_seconds;
     } while ($self->_cloud_instance_is_running);
