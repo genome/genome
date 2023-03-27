@@ -601,7 +601,7 @@ EOCONFIG
         $config .= <<'EOCONFIG'
         exit-code-timeout-seconds = 600
 
-        filesysytems {
+        filesystems {
           local {
             caching {
               duplication-strategy: [
