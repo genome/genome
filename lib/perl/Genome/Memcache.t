@@ -26,3 +26,5 @@ SKIP: {
 
     cmp_ok($m->get($key), 'eq', $now, "getting cache item $now");
 }
+
+done_testing;
