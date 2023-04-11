@@ -41,12 +41,6 @@ sub required_rusage {
 
     my $queue = Genome::Config::get('lsf_queue_alignment_default');
 
-    my $host_groups;
-    $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);
-    $host_groups =~ s/\/\s+/\ /g;
-    $host_groups =~ s/^HOSTS:\s+//;
-    $host_groups =~ s/\+\d+//g;
-
     my $select  = "select[ncpus >= $cpus && mem >= $mem_mb && gtmp >= $tmp_gb] span[hosts=1]";
     my $rusage  = "rusage[mem=$mem_mb, gtmp=$tmp_gb]";
     my $options = "-M $mem_kb -n $cpus -q $queue";
@@ -56,14 +50,13 @@ sub required_rusage {
     #check to see if our resource requests are feasible (This uses "maxmem" to check theoretical availability)
     #factor of four is based on current six jobs per host policy this should be revisited later
     my $select_check = "select[ncpus >= $cpus && maxmem >= " . ($mem_mb * 4) . " && maxgtmp >= $tmp_gb] span[hosts=1]";
-    my $select_cmd = "bhosts -R '$select_check' $host_groups | grep ^HOST";
 
-    my @selected_blades = qx($select_cmd);
+    my $hosts_found = Genome::Sys->eligible_hosts($select_check, $queue);
 
-    if (@selected_blades) {
+    if ($hosts_found) {
         return $required_usage;
     } else {
-        die $class->error_message("Failed to find hosts that meet resource requirements ($required_usage). [Looked with `$select_cmd`]");
+        die $class->error_message("Failed to find hosts that meet resource requirements ($required_usage).");
     }
 }
 

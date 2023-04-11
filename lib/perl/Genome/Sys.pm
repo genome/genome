@@ -1950,6 +1950,24 @@ sub touch {
     return 1;
 }
 
+sub eligible_hosts {
+    my ($class, $resource_request, $queue) = @_;
+
+    my $host_groups;
+    $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);
+    return unless $host_groups;
+
+    chomp $host_groups;
+    $host_groups =~ s/\+\d+//g;
+    $host_groups =~ s/\/\s?/\ /g;
+    $host_groups =~ s/^HOSTS:\s+//;
+
+    my $select_cmd = "bhosts -R '$resource_request' $host_groups | grep ^HOST";
+    my @selected_blades = qx($select_cmd);
+
+    return @selected_blades ? 1 : 0;
+}
+
 1;
 
 __END__
