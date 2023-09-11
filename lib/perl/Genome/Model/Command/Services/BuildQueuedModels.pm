@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Try::Tiny qw(try catch);
+
 class Genome::Model::Command::Services::BuildQueuedModels {
     is => 'Command::V2',
     roles => ['Genome::Model::Command::Submittable'],
@@ -93,10 +95,15 @@ sub execute {
         }
 
         if ($self->submit_jobs) {
-            $self->_submit_jobs(
-                $anp,
-                [qw(genome model build start --force --unstartable-ok), $model->id],
-            );
+            try {
+                $self->_submit_jobs(
+                    $anp,
+                    [qw(genome model build start --force --unstartable-ok), $model->id],
+                );
+            } catch {
+                my $error = $_;
+                $self->error_message('Failed to bsub build start for %s: %s', $model->id, $error);
+            };
         } else {
             my $cmd = Genome::Model::Build::Command::Start->create(
                 models => [$model],
