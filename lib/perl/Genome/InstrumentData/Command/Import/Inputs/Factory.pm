@@ -11,6 +11,7 @@ require List::MoreUtils;
 use Params::Validate qw( :types );
 use Text::CSV;
 use Tie::File;
+use Fcntl;
 
 class Genome::InstrumentData::Command::Import::Inputs::Factory {
     has_optional => {
@@ -136,7 +137,8 @@ sub _load_file {
 
     die $self->error_message('File (%s) is empty!', $file) if not -s $file;
     $self->file($file);
-    tie my @lines, 'Tie::File', $file;
+    tie my @lines, 'Tie::File', $file, mode => O_RDONLY
+        or $self->fatal_message('Failed to load file %s: %s', $file, $!);
     $self->_lines(\@lines);
     $parser->parse($lines[0])
         or $self->fatal_message('Failed to parse header line! %s', $lines[0]);
