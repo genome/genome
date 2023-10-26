@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Carp qw(confess);
+use Try::Tiny qw(try catch finally);
 
 class Genome::Disk::Detail::Allocation::Archiver {
     is => 'Genome::Disk::Detail::StrictObject',
@@ -29,7 +30,9 @@ sub archive {
     my $current_allocation_path = $allocation_object->absolute_path;
     my $archive_allocation_path = $allocation_object->archive_path();
 
-    eval {
+    my $msg;
+    my $creating_directory = 0;
+    try {
         if ($allocation_object->is_archived) {
             confess sprintf("Allocation %s is already archived!",
                 $allocation_object->id);
@@ -61,6 +64,7 @@ sub archive {
             $self->fatal_message('volume for %s is not mounted', $allocation_object->absolute_path);
         }
 
+        $creating_directory = 1;
         Genome::Sys->create_directory($archive_allocation_path);
         Genome::Sys->rsync_directory(
             source_directory => $current_allocation_path,
@@ -69,27 +73,29 @@ sub archive {
 
         my $rv = $allocation_object->_commit_unless_testing;
         confess "Could not commit!" unless $rv;
-    };
-    my $error = $@; # Record error so it can be investigated after unlocking
+    } catch {
+        my $error = $_; # Record error so it can be investigated after unlocking
 
-    # If only there were finally blocks...
-    if ($allocation_lock) {
-        $allocation_lock->unlock();
-    }
-
-    if ($error) {
-        eval {
-            Genome::Sys->remove_directory_tree($archive_allocation_path);
-        };
-        my $cleanup_error = $@;
-        my $msg = sprintf("Could not archive allocation %s, error:\n%s",
+        my $cleanup_error;
+        if ($creating_directory) {
+            local $@;
+            eval {
+                Genome::Sys->remove_directory_tree($archive_allocation_path);
+            };
+            $cleanup_error = $@;
+        }
+        $msg = sprintf("Could not archive allocation %s, error:\n%s",
             $allocation_object->id, $error);
         if ($cleanup_error) {
             $msg .= sprintf("\n\nWhile cleaning up archive, "
                 . "encoutered error:\n%s", $cleanup_error);
         }
-        confess $msg;
-    }
+    } finally {
+        if ($allocation_lock) {
+            $allocation_lock->unlock();
+        }
+    };
+    confess $msg if $msg;
 
     Genome::Timeline::Event::Allocation->archived(
         'archived',

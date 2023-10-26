@@ -10,8 +10,10 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Test::Exception;
 use File::Temp 'tempdir';
 use Filesys::Df qw();
+use Sub::Override;
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
@@ -93,6 +95,15 @@ subtest 'call archive command with allocation' => sub {
     ok($cmd->execute, 'successfully executed archive command');
     ok(-e $allocation->archive_path, 'allocation moved to archive volume');
     ok($allocation->is_archived, 'allocation is now archived');
+
+    # Repeated command should do nothing
+    my $cmd2 = Genome::Disk::Command::Allocation::Archive->create(
+        allocations => [$allocation],
+    );
+    ok($cmd2, 'created repeated archive command');
+    dies_ok(sub { $cmd2->execute }, 'repeated archive command fails');
+    ok(-e $allocation->archive_path, 'allocation still on archive volume');
+    ok($allocation->is_archived, 'allocation is still archived');
 };
 
 subtest 'call archive command with allocation from command line' => sub {
@@ -116,6 +127,23 @@ subtest 'call archive command with path from command line' => sub {
     ok($allocation->is_archived, 'allocation is now archived');
 };
 
+subtest 'archive failure keeps active allocation' => sub {
+    my $allocation = $allocation_creator->();
+
+    # Create command object and execute it
+    my $cmd = Genome::Disk::Command::Allocation::Archive->create(
+        allocations => [$allocation],
+    );
+    ok($cmd, 'created archive command');
+
+    my $fake_rsync = Sub::Override->new('Genome::Sys::rsync_directory', sub { die 'oh no the transfer failed' });
+
+    dies_ok(sub { $cmd->execute }, 'executed archive command--failed as expected');
+    ok(!-e $allocation->archive_path, 'archive path does not exist');
+    ok(-e $allocation->absolute_path, 'allocation active path still exists');
+    ok(!$allocation->is_archived, 'allocation is not archived');
+
+};
 done_testing();
 
 1;
