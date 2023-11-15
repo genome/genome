@@ -530,6 +530,10 @@ backend {
         Int cpu = 1
         Int memory_mb = 4096
         String? docker
+EOCONFIG
+    ;
+    $config .= <<EOCONFIG
+        String queue = "${default_queue}"
         """
 
         submit = """
@@ -552,12 +556,12 @@ EOCONFIG
         -o /dev/null \\
         -e $log_dir/cromwell-%J.err \\
         -a '$primary_docker_image' \\
-        -q '$default_queue' \\
         -g '$job_group' \\
         -G '$user_group' \\
 EOCONFIG
         ;
     $config .= <<'EOCONFIG'
+        -q '${queue}' \
         -M ${memory_mb}M \
         -n ${cpu} \
         -R "span[hosts=1] select[mem>${memory_mb}M] rusage[mem=${memory_mb}M]" \
@@ -586,12 +590,12 @@ EOCONFIG
     $config .= <<EOCONFIG
         -o /dev/null \\
         -e $log_dir/cromwell-%J.err \\
-        -q '$default_queue' \\
         -g '$job_group' \\
         -G '$user_group' \\
 EOCONFIG
         ;
     $config .= <<'EOCONFIG'
+        -q '${queue}' \
         -a "docker(${docker})" \
         -M ${memory_mb}M \
         -n ${cpu} \
