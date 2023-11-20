@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Genome::Carp qw(croakf);
 use Genome::Utility::File::Mode qw(mode);
+use Genome::Utility::List qw();
 
 use autodie qw(chown);
 use Carp;
@@ -1788,10 +1789,12 @@ sub capture {
 sub disconnect_default_handles {
     my $class = shift;
 
-    for my $ds (qw(Genome::DataSource::GMSchema Genome::DataSource::Oltp)) {
-        if($ds->has_default_handle) {
-            $class->debug_message("Disconnecting $ds default handle.");
-            $ds->disconnect_default_dbh();
+    for my $ds (UR::DataSource->is_loaded) {
+        if (Genome::Utility::List::in( $ds->class, (qw(Genome::DataSource::GMSchema Genome::DataSource::Oltp)))) {
+            if ($ds->has_default_handle) {
+                $class->debug_message("Disconnecting $ds default handle.");
+                $ds->disconnect_default_dbh();
+            }
         }
     }
 
