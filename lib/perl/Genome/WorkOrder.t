@@ -6,7 +6,7 @@ use warnings;
 use above 'Genome';
 
 use Data::Dumper 'Dumper';
-use Test::More;
+use Test::More skip_all => 'requires connection to LIMS db';
 
 use_ok('Genome::WorkOrder');
 
