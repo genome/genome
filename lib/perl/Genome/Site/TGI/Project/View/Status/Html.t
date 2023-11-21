@@ -5,7 +5,8 @@ use warnings;
 
 use above "Genome";
 
-use Test::More tests => 6;
+use Test::More skip_all => 'requires connection to LIMS db';
+#use Test::More tests => 6;
 
 use_ok('Genome::Site::TGI::Project::View::Status::Html') or die "test cannot continue...";
 
