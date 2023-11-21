@@ -14,6 +14,7 @@ use File::Spec;
 use Genome::Utility::Test qw/compare_ok/;
 use Sub::Install qw();
 use IPC::System::Simple qw(capture);
+use Sub::Override;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -113,7 +114,9 @@ sub create_test_objects {
     );
     ok($somatic_variation_build->isa("Genome::Model::Build::SomaticVariation"), "Generated a somatic variation build");
 
+    my $override = Sub::Override->new('Genome::Model::Build::SomaticVariation::calculate_estimated_kb_usage', sub { return 102400; });
     my $somatic_variation_build_data_dir = $somatic_variation_build->get_or_create_data_directory();
+    $override->restore();
 
     Genome::Sys->rsync_directory(
         source_directory => File::Spec->join($main_dir, "somatic_variation_build_data"),
