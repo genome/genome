@@ -48,6 +48,8 @@ use Genome::Site::TGI::LegacyTime;
 use Genome::Sys;
 use Genome::Site::TGI::Extension::Sys;      # extensions to Genome::Sys
 
+use DBIx::RetryConnect Pg => sub { return {total_delay => 90} };
+
 BEGIN {
     unless ($ENV{UR_DBI_NO_COMMIT}) {
         require Genome::Site::TGI::Extension::Logger;
