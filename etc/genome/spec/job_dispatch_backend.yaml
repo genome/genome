@@ -1,0 +1,3 @@
+---
+env: XGENOME_JOB_DISPATCH_BACKEND
+default_value: lsf

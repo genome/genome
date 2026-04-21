@@ -185,6 +185,8 @@ sub run_cromwell {
     #cromwell relies on reading the output from bsub
     delete local $ENV{BSUB_QUIET};
 
+    local $ENV{ENROOT_CACHE_PATH} = File::Spec->join($tmp_dir, '.enroot_cache');
+
     my $config_file = $self->_generate_cromwell_config($tmp_dir, $results_dir);
     my $labels_file = $self->_generate_cromwell_labels;
 
@@ -521,7 +523,23 @@ sub _generate_cromwell_config {
 include required(classpath("application"))
 
 backend {
-  default = "LSF"
+EOCONFIG
+    ;
+
+    my $job_dispatch_backend = Genome::Config::get('job_dispatch_backend');
+    if ($job_dispatch_backend eq 'lsf') {
+        $config .= <<'EOCONFIG';
+    default = "LSF"
+EOCONFIG
+    } elsif ($job_dispatch_backend eq 'slurm') {
+        $config .= <<'EOCONFIG';
+    default = "SLURM"
+EOCONFIG
+    } else {
+        $self->fatal_message('Unknown job dispatch backend: %s', $job_dispatch_backend);
+    }
+
+    $config .= <<'EOCONFIG'
   providers {
     LSF {
       actor-factory = "cromwell.backend.impl.sfs.config.ConfigBackendLifecycleActorFactory"
@@ -552,10 +570,13 @@ EOCONFIG
         -cwd ${cwd} \
 EOCONFIG
     ;
+
+    my ($slurm_primary_docker_image) = $primary_docker_image =~ m/docker\(.+\)/;
+
     $config .= <<EOCONFIG
         -o /dev/null \\
         -e $log_dir/cromwell-%J.err \\
-        -a '$primary_docker_image' \\
+        -a '$slurm_primary_docker_image' \\
         -g '$job_group' \\
         -G '$user_group' \\
 EOCONFIG
@@ -609,6 +630,116 @@ EOCONFIG
         job-id-regex = "Job <(\\d+)>.*"
 EOCONFIG
 ;
+    $config .= <<EOCONFIG
+        root = "$tmp_dir/cromwell-executions"
+EOCONFIG
+;
+    if(Genome::Config::get('cromwell_call_caching')) {
+        $config .= <<'EOCONFIG'
+        exit-code-timeout-seconds = 600
+
+        filesystems {
+          local {
+            caching {
+              duplication-strategy: [
+                "hard-link", "soft-link", "copy"
+              ]
+              hashing-strategy: "xxh64"
+              fingerprint-size: 10485760
+              check-sibling-md5: false
+            }
+          }
+        }
+EOCONFIG
+;
+    }
+
+    $config .= <<'EOCONFIG'
+      }
+    }
+
+    SLURM {
+      actor-factory = "cromwell.backend.impl.sfs.config.ConfigBackendLifecycleActorFactory"
+      config {
+        runtime-attributes = """
+        Int cpu = 1
+        Int memory_mb = 4096
+        String? docker
+EOCONFIG
+    ;
+    $config .= <<EOCONFIG
+        String queue = "${default_queue}"
+EOCONFIG
+    ;
+    $config .= <<'EOCONFIG'
+        """
+        submit = """
+        sbtach \
+        -J ${job_name} \
+        -cwd ${cwd} \
+EOCONFIG
+    ;
+
+
+    $config .= <<EOCONFIG
+        -o /dev/null \\
+        -e $log_dir/cromwell-%J.err \\
+        -A '$user_group' \\
+        --container-image '$primary_docker_image' \\
+EOCONFIG
+        ;
+    if ($docker_volumes) {
+        my $slurm_docker_volumes = $docker_volumes;
+        $slurm_docker_volumes =~ s/ /,/g;
+        $config .= <<EOCONFIG
+        --container-mounts '$slurm_docker_volumes' \\
+EOCONFIG
+        ;
+    }
+    $config .= <<'EOCONFIG'
+        -p '${queue}' \
+        --mem ${memory_mb} \
+        -N 1 \
+        -n 1 \
+        -c ${cpu} \
+        --wrap "/bin/bash ${script}"
+        """
+
+        submit-docker = """
+        unset SLURM_SPANK__SLURM_SPANK_OPTION_pyxis_container_env
+        unset SLURM_SPANK__SLURM_SPANK_OPTION_pyxis_container_image
+        unset PYXIS_CONTAINER_IMAGE
+        sbatch \
+        -J ${job_name} \
+        -D ${cwd} \
+EOCONFIG
+    ;
+
+    my $slurm_vol = $vol;
+    $slurm_vol =~ s/ /,/g;
+
+    $config .= <<ECONFIG
+        -o /dev/null \\
+        -e $log_dir/cromwell-%J.err \\
+        -A '$user_group' \\
+        --container-mounts '$slurm_vol' \\
+ECONFIG
+    ;
+    $config .= <<'EOCONFIG'
+        -p ${queue} \
+        --container-image '${docker}' \
+        -N 1 \
+        -n 1 \
+        -c ${cpu} \
+        --mem ${memory_mb} \
+        --wrap "/bin/bash ${script}"
+        """
+        kill = "scancel ${job_id}"
+        kill-docker = "scancel ${job_id}"
+        check-alive = "squeue -j ${job_id}"
+        job-id-regex = "Submitted batch job (\\d+).*"
+EOCONFIG
+    ;
     $config .= <<EOCONFIG
         root = "$tmp_dir/cromwell-executions"
 EOCONFIG
