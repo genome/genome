@@ -263,7 +263,14 @@ sub _dispatch_process {
     $self->lsf_job_id($job_id);
     Genome::Sys::CommitAction->create(
         on_commit => sub {
-            Genome::Sys->shellcmd(cmd => ['bresume', $job_id]);
+            my $backend = Genome::Config::get('job_dispatch_backend') || 'lsf';
+            if ($backend eq 'slurm') {
+                Genome::Sys->shellcmd(cmd => ['scontrol', 'release', $job_id]);
+            } elsif( $backend eq 'lsf') {
+                Genome::Sys->shellcmd(cmd => ['bresume', $job_id]);
+            } else {
+                $self->fatal_message('Unable to resume job for unknown backend: %s', $backend);
+            }
         },
     );
 
