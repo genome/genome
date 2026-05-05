@@ -1,0 +1,5 @@
+# The 'usage_log_db_server' configuration variable holds database server
+# connection details for the usage_log database.  Its value is used to build the
+# DBI connection string after the DBI driver name.
+--- 
+env: XGENOME_USAGE_LOG_DB_SERVER
