@@ -8,6 +8,7 @@ use Exporter qw(import);
 use Params::Validate qw(:types);
 use List::MoreUtils qw(any);
 use Genome::Sys::LSF::ResourceParser qw();
+use File::Spec qw();
 
 our @EXPORT = qw(bsub);
 our @EXPORT_OK = qw(bsub);
@@ -23,6 +24,18 @@ sub run {
     }
 
     local $ENV{LSB_SUB_ADDITIONAL} = Genome::Config::get('lsb_sub_additional') || $ENV{LSB_SUB_ADDITIONAL};
+
+    if ($ENV{LSB_SUB_ADDITIONAL} =~ /^docker0/) {
+        $ENV{LSB_SUB_ADDITIONAL} =~ s/^docker0/docker/;
+        my $dir = File::Spec->join($ENV{HOME}, '.genome');
+        Genome::Sys->create_directory($dir);
+        my $env_file = File::Spec->join($dir, 'docker0workaround.env');
+        Genome::Sys->write_file(
+            $env_file,
+            join('=', 'PERL5LIB', $ENV{PERL5LIB}) . "\n",
+        );
+        $ENV{LSF_DOCKER_ENV_FILE} = $env_file;
+    }
 
     my $docker_volumes = $ENV{LSF_DOCKER_VOLUMES};
     if (my $config_docker_volumes = Genome::Config::get('docker_volumes')) {
