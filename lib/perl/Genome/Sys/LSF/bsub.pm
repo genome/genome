@@ -29,11 +29,17 @@ sub run {
         $ENV{LSB_SUB_ADDITIONAL} =~ s/^docker0/docker/;
         my $dir = File::Spec->join($ENV{HOME}, '.genome');
         Genome::Sys->create_directory($dir);
-        my $env_file = File::Spec->join($dir, 'docker0workaround.env');
-        Genome::Sys->write_file(
-            $env_file,
-            join('=', 'PERL5LIB', $ENV{PERL5LIB}) . "\n",
-        );
+
+        my $lib = $ENV{PERL5LIB};
+        my $lib_md5 = Genome::Sys->md5sum_data($lib);
+
+        my $env_file = File::Spec->join($dir, 'docker0workaround.' . $lib_md5 . '.env');
+        unless (-e $env_file) {
+            Genome::Sys->write_file(
+                $env_file,
+                join('=', 'PERL5LIB', $ENV{PERL5LIB}) . "\n",
+            );
+        }
         $ENV{LSF_DOCKER_ENV_FILE} = $env_file;
     }
 
