@@ -1257,7 +1257,7 @@ sub _get_job {
     if ($backend eq 'lsf') {
         require Genome::Sys::LSF::JobIterator;
     } elsif ($backend eq 'slurm') {
-        $arg = "--job $job_id";
+        $arg = "--job $job_id,$job_id"; #passing a list prevents squeue from erroring when job not found
         require Genome::Sys::SLURM::JobIterator;
     } else {
         $self->fatal_message('unknown job dispatch backend: %s', $backend);
