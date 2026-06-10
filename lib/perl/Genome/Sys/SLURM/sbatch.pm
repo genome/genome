@@ -26,6 +26,8 @@ sub run {
     }
     local $ENV{LSB_SUB_ADDITIONAL} = $docker_image;
     local $ENV{PYXIS_CONTAINER_IMAGE} = $docker_image;
+    unshift @args,
+        '--container-image', $docker_image;
 
     if (!defined $ENV{LSF_DOCKER_PRESERVE_ENVIRONMENT} or $ENV{LSF_DOCKER_PRESERVE_ENVIRONMENT} eq 'true') {
         unshift @args,
@@ -42,8 +44,13 @@ sub run {
             $docker_volumes = $config_docker_volumes;
         }
     }
+
     local $ENV{LSF_DOCKER_VOLUMES} = $docker_volumes if $docker_volumes;
     local $ENV{PYXIS_CONTAINER_MOUNTS} = $docker_volumes if $docker_volumes;
+    if ($docker_volumes) {
+        unshift @args,
+            '--container-mounts', $docker_volumes;
+    }
 
     if (exists $args{interactive} and $args{interactive}) {
         if($executable->[0] eq 'sbatch') {
