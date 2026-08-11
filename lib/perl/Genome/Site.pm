@@ -9,7 +9,7 @@ BEGIN {
 
 use Carp qw(croak);
 use File::Spec qw();
-use Sys::Hostname qw(hostname);
+use Net::Domain qw(hostfqdn);
 use UR::Util qw();
 use Module::Runtime qw(require_module);
 
@@ -44,7 +44,7 @@ sub site_pkg {
 
 sub site_dirs {
     # look for a config module matching all or part of the hostname
-    my $hostname = hostname();
+    my $hostname = hostfqdn();
     my @hwords = map { s/-/_/g; $_ } reverse split(/\./, $hostname);
 }
 

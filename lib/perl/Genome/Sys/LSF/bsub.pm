@@ -8,6 +8,7 @@ use Exporter qw(import);
 use Params::Validate qw(:types);
 use List::MoreUtils qw(any);
 use Genome::Sys::LSF::ResourceParser qw();
+use Genome::Sys::SLURM::sbatch qw();
 use File::Spec qw();
 
 our @EXPORT = qw(bsub);
@@ -72,7 +73,14 @@ sub run {
 }
 
 sub bsub {
-    return run('bsub', @_);
+    my $backend = Genome::Config::get('job_dispatch_backend') || 'lsf';
+    if ($backend eq 'slurm') {
+        return Genome::Sys::SLURM::sbatch::sbatch(@_);
+    } elsif ($backend eq 'lsf') {
+        return run('bsub', @_);
+    } else {
+        die "Unknown job dispatch backend: $backend";
+    }
 }
 
 sub args_builder {

@@ -20,6 +20,7 @@ use Date::Manip;
 use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 use Genome::Utility::Vcf;
+use Genome::Utility::List qw();
 
 require Scope::Guard;
 
@@ -1200,9 +1201,14 @@ sub stop {
 sub _kill_job {
     my ($self, $job) = @_;
 
-    Genome::Sys->shellcmd(
-        cmd => 'bkill '.$job->{Job},
-    );
+    my $backend = Genome::Config::get('job_dispatch_backend') || 'lsf';
+    if ($backend eq 'slurm') {
+        Genome::Sys->shellcmd(cmd => ['scancel', $job->{Job}]);
+    } elsif( $backend eq 'lsf') {
+        Genome::Sys->shellcmd(cmd => ['bkill', $job->{Job}]);
+    } else {
+        $self->fatal_message('Unable to resume job for unknown backend: %s', $backend);
+    }
 
     my $i = 0;
     do {
@@ -1215,7 +1221,7 @@ sub _kill_job {
             $self->error_message("Build master job did not die after 60 seconds.");
             return 0;
         }
-    } while ($job && ($job->{Status} ne 'EXIT' && $job->{Status} ne 'DONE'));
+    } while ($job && !Genome::Utility::List::in($job->{Status}, 'EXIT', 'DONE', 'COMPLETED', 'EXITED', 'CANCELLED'));
 
     return 1;
 }
@@ -1235,7 +1241,7 @@ sub _get_running_master_lsf_job {
     my $job = $self->_get_job($job_id);
     return if not defined $job;
 
-    if ( $job->{Status} eq 'EXIT' or $job->{Status} eq 'DONE' ) {
+    if ( Genome::Utility::List::in($job->{Status}, 'EXIT', 'DONE', 'COMPLETED', 'EXITED', 'CANCELLED') ) {
         return;
     }
 
@@ -1243,12 +1249,22 @@ sub _get_running_master_lsf_job {
 }
 
 sub _get_job {
-    use Genome::Sys::LSF::JobIterator;
     my $self = shift;
     my $job_id = shift;
 
+    my $backend = Genome::Config::get('job_dispatch_backend') || 'lsf';
+    my $arg = $job_id;
+    if ($backend eq 'lsf') {
+        require Genome::Sys::LSF::JobIterator;
+    } elsif ($backend eq 'slurm') {
+        $arg = "--job $job_id,$job_id"; #passing a list prevents squeue from erroring when job not found
+        require Genome::Sys::SLURM::JobIterator;
+    } else {
+        $self->fatal_message('unknown job dispatch backend: %s', $backend);
+    }
+
     my @jobs = ();
-    my $iter = Job::Iterator->new($job_id);
+    my $iter = Job::Iterator->new($arg);
     while (my $job = $iter->next) {
         push @jobs, $job;
     }
