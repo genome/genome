@@ -571,7 +571,7 @@ EOCONFIG
 EOCONFIG
     ;
 
-    my ($slurm_primary_docker_image) = $primary_docker_image =~ m/docker\(.+\)/;
+    my ($slurm_primary_docker_image) = $primary_docker_image =~ m/docker\((.+)\)/;
 
     $config .= <<EOCONFIG
         -o /dev/null \\
